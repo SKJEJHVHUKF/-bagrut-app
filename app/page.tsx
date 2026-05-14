@@ -1,368 +1,412 @@
 'use client';
 
+import React, { useState } from 'react';
+import Link from 'next/link';
+import {
+  Sparkles,
+  BookOpen,
+  Brain,
+  Trophy,
+  Clock,
+  BookX,
+  HelpCircle,
+  Zap,
+  Check,
+  ChevronDown,
+  Rocket,
+  Infinity as InfinityIcon,
+  Gift,
+  ArrowLeft,
+  GraduationCap,
+} from 'lucide-react';
 
-import React, { useState, useEffect } from 'react';
+const SUBJECTS = [
+  { name: 'מתמטיקה 5 יח׳', emoji: '📐', topics: 6, color: 'from-purple-500/20 to-fuchsia-500/20', glow: 'shadow-purple-500/30' },
+  { name: 'מתמטיקה יב׳', emoji: '🔢', topics: 6, color: 'from-violet-500/20 to-purple-500/20', glow: 'shadow-violet-500/30' },
+  { name: 'פיזיקה', emoji: '⚛️', topics: 6, color: 'from-sky-500/20 to-blue-500/20', glow: 'shadow-sky-500/30' },
+  { name: 'אנגלית', emoji: '🇬🇧', topics: 4, color: 'from-orange-500/20 to-amber-500/20', glow: 'shadow-orange-500/30' },
+  { name: 'היסטוריה', emoji: '📜', topics: 5, color: 'from-amber-500/20 to-yellow-500/20', glow: 'shadow-amber-500/30' },
+  { name: 'תנ"ך', emoji: '📕', topics: 5, color: 'from-emerald-500/20 to-green-500/20', glow: 'shadow-emerald-500/30' },
+  { name: 'כימיה', emoji: '🧪', topics: 5, color: 'from-pink-500/20 to-rose-500/20', glow: 'shadow-pink-500/30' },
+];
 
-const SUBJECTS = {
-  math: { name: 'מתמטיקה', emoji: '📐', tabCls: 'tab-math', gridCls: 's-math', badge: { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' }, topics: [{ name: 'גבולות ורציפות', emoji: '∞', sub: 'גבולות, אסימפטוטות' }, { name: 'נגזרות', emoji: '∂', sub: 'כללי גזירה, אקסטרמום' }, { name: 'אינטגרלים', emoji: '∫', sub: 'מסוים ובלתי מסוים' }, { name: 'סדרות', emoji: '⋯', sub: 'חשבוניות, הנדסיות' }, { name: 'הסתברות', emoji: '🎲', sub: 'קומבינטוריקה' }, { name: 'מטריצות', emoji: '⊞', sub: 'פעולות, דטרמיננטה' }] },
-  math12: { name: 'מתמטיקה יב', emoji: '🔢', tabCls: 'tab-math', gridCls: 's-math', badge: { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' }, topics: [{ name: 'מספרים מרוכבים', emoji: 'ℂ', sub: 'צורה קטבית, פעולות' }, { name: 'פולינומים', emoji: '🔷', sub: 'חלוקה, שורשים' }, { name: 'וקטורים', emoji: '➡️', sub: 'מכפלה סקלרית, וקטורית' }, { name: 'גאומטריה אנליטית', emoji: '📍', sub: 'קו, מעגל, חרוט' }, { name: 'טריגונומטריה', emoji: '⚪', sub: 'משוואות, זהויות' }, { name: 'סטטיסטיקה', emoji: '📊', sub: 'התפלגות, רגרסיה' }] },
-  physics: { name: 'פיזיקה', emoji: '⚛️', tabCls: 'tab-physics', gridCls: 's-physics', badge: { color: '#38bdf8', bg: 'rgba(56,189,248,0.12)', border: 'rgba(56,189,248,0.25)' }, topics: [{ name: 'מכניקה', emoji: '🔧', sub: 'כוחות, תנועה' }, { name: 'חשמל', emoji: '⚡', sub: 'מעגלים, שדות' }, { name: 'גלים', emoji: '🌊', sub: 'גלים, עדשות' }, { name: 'תרמודינמיקה', emoji: '🌡️', sub: 'חוקי החום' }, { name: 'קוונטים', emoji: '🔬', sub: 'פוטון, אפקט פוטואלקטרי' }, { name: 'כבידה', emoji: '🪐', sub: 'כוח כבידה, מסלולים' }] },
-  english: { name: 'אנגלית', emoji: '🇬🇧', tabCls: 'tab-english', gridCls: 's-english', badge: { color: '#fb923c', bg: 'rgba(251,146,60,0.12)', border: 'rgba(251,146,60,0.25)' }, topics: [{ name: 'Reading', emoji: '📖', sub: 'הבנת הנקרא' }, { name: 'Grammar', emoji: '📝', sub: 'דקדוק ותחביר' }, { name: 'Vocabulary', emoji: '💬', sub: 'אוצר מילים' }, { name: 'Writing', emoji: '✍️', sub: 'כתיבה' }] },
-  history: { name: 'היסטוריה', emoji: '📜', tabCls: 'tab-history', gridCls: 's-history', badge: { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)' }, topics: [{ name: 'השואה', emoji: '✡️', sub: 'מדיניות נאצית' }, { name: 'מלחמת עולם א׳', emoji: '🗺️', sub: 'סיבות, מהלך' }, { name: 'מלחמת עולם ב׳', emoji: '⚔️', sub: 'חזיתות ותוצאות' }, { name: 'הקמת המדינה', emoji: '🇮🇱', sub: 'ציונות, הכרזה' }, { name: 'המהפכה הצרפתית', emoji: '🗼', sub: 'סיבות ומורשת' }] },
-  bible: { name: 'תנ"ך', emoji: '📕', tabCls: 'tab-bible', gridCls: 's-bible', badge: { color: '#34d399', bg: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.25)' }, topics: [{ name: 'בראשית', emoji: '🌿', sub: 'בריאה, אבות' }, { name: 'שמות', emoji: '🔥', sub: 'יציאת מצרים' }, { name: 'שמואל', emoji: '👑', sub: 'שאול ודוד' }, { name: 'מלכים', emoji: '🏛️', sub: 'שלמה, פיצול' }, { name: 'נביאים', emoji: '📣', sub: 'ישעיהו, ירמיהו' }] },
-  chem: { name: 'כימיה', emoji: '🧪', tabCls: 'tab-chem', gridCls: 's-chem', badge: { color: '#f472b6', bg: 'rgba(244,114,182,0.12)', border: 'rgba(244,114,182,0.25)' }, topics: [{ name: 'מבנה האטום', emoji: '⚛️', sub: 'מודלים, קשרים' }, { name: 'כימיה אורגנית', emoji: '🧬', sub: 'פחמימנים' }, { name: 'שיווי משקל', emoji: '⚖️', sub: 'לה-שטליה' }, { name: 'חומצות ובסיסים', emoji: '🔬', sub: 'pH, טיטרציה' }, { name: 'אלקטרוכימיה', emoji: '🔋', sub: 'תאים, אלקטרוליזה' }] }
-};
+const PAIN_POINTS = [
+  { icon: Clock, title: 'אין זמן לבזבז', desc: 'חיפוש שאלות בגרות באינטרנט לוקח שעות. אצלנו - לחיצה אחת.' },
+  { icon: BookX, title: 'ספרי לימוד יקרים ומעייפים', desc: 'במקום מאות שקלים על ספרים, קבל שאלות מותאמות בחינם.' },
+  { icon: HelpCircle, title: 'אין למי לשאול', desc: 'כל שאלה מגיעה עם הסבר מלא ומפורט בעברית.' },
+  { icon: Zap, title: 'שעמום הורג את הריכוז', desc: 'אינטראקטיבי, מהיר וממכר - כמו משחק בטלפון.' },
+];
 
-export default function Home() {
-  const [screen, setScreen] = useState('home');
-  const [currentSubject, setCurrentSubject] = useState('math');
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [currentQ, setCurrentQ] = useState(0);
-  const [score, setScore] = useState(0);
-  const [answered, setAnswered] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+const STEPS = [
+  { num: '01', icon: BookOpen, title: 'בחר מקצוע ונושא', desc: '7 מקצועות בגרות, עשרות נושאים. בחר את מה שצריך לתרגל עכשיו.' },
+  { num: '02', icon: Brain, title: 'ה-AI יוצר שאלות במיוחד בשבילך', desc: 'מנוע Claude של Anthropic מייצר שאלות ברמת בגרות אמיתית.' },
+  { num: '03', icon: Trophy, title: 'תרגל, קבל הסברים ושפר את הציון', desc: 'תשובה מיידית, הסבר מפורט, וסטטיסטיקות התקדמות.' },
+];
 
-  const subject = SUBJECTS[currentSubject as keyof typeof SUBJECTS];
-  const letters = ['א', 'ב', 'ג', 'ד'];
+const FAQ_ITEMS = [
+  { q: 'האם זה באמת חינם?', a: 'כן, לחלוטין! כל התכונות הנוכחיות חינמיות. בעתיד נשיק חבילת Pro עם תכונות מתקדמות, אבל הליבה תישאר חינם תמיד.' },
+  { q: 'מאיפה השאלות?', a: 'מנוע הבינה המלאכותית של Anthropic (Claude) מייצר את השאלות ברמת בגרות ישראלית אמיתית. הוא מאומן על תכנים אקדמיים ויודע איך נראית שאלת בגרות.' },
+  { q: 'האם זה יעזור לי להשתפר בבגרות?', a: 'תרגול קבוע = שיפור מובטח. ככל שתתרגל יותר שאלות, תכיר יותר דפוסים, ותרגיש בטוח יותר ביום הבגרות עצמו.' },
+  { q: 'אני צריך להירשם?', a: 'לא! פשוט לחץ על "צור שאלות לבגרות", בחר מקצוע ונושא, ותתחיל לתרגל מיידית. אין רישום, אין סיסמה, אין חיכוך.' },
+  { q: 'מה קורה אם אני טועה בשאלה?', a: 'תקבל הסבר מלא בעברית - למה התשובה הנכונה היא הנכונה, ולמה התשובה שבחרת לא נכונה. כך באמת לומדים.' },
+];
 
-  const getCacheKey = () => `quiz_${currentSubject}_${selectedTopic}`;
-
-  const startQuiz = async () => {
-    if (!selectedTopic) return;
-    setLoading(true);
-    setScreen('quiz');
-    setCurrentQ(0);
-    setScore(0);
-    setQuestions([]);
-    setAnswered([]);
-    setSelectedAnswer(null);
-    setIsCorrect(null);
-
-    try {
-      // בדוק cache
-      const cacheKey = getCacheKey();
-      const cachedQuestions = localStorage.getItem(cacheKey);
-
-      if (cachedQuestions) {
-        setQuestions(JSON.parse(cachedQuestions));
-        setLoading(false);
-        return;
-      }
-
-      // אם אין cache, טעינה מ-API
-      const res = await fetch('/api/questions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: currentSubject, topic: selectedTopic })
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-
-      // שמור ב-cache
-      localStorage.setItem(cacheKey, JSON.stringify(data.questions));
-      setQuestions(data.questions);
-    } catch (e) {
-      alert('שגיאה בטעינת השאלות. נסה שוב.');
-      setScreen('home');
-    }
-    setLoading(false);
-  };
-
-  const checkAnswer = (idx: number) => {
-    const q = questions[currentQ];
-    const ok = idx === q.correct;
-    setSelectedAnswer(idx);
-    setIsCorrect(ok);
-    setAnswered([...answered, { question: q.question, correct: ok }]);
-    if (ok) setScore(score + 1);
-  };
-
-  const nextQuestion = () => {
-    setSelectedAnswer(null);
-    setIsCorrect(null);
-    if (currentQ >= questions.length - 1) {
-      setScreen('results');
-    } else {
-      setCurrentQ(currentQ + 1);
-    }
-  };
-
-  const renderHome = () => (
-    <div className="home-inner">
-      <div className="hero">
-        <div className="hero-badge">⚡ AI אמיתי · שאלות בגרות</div>
-        <h1>10 דקות<br />ואתה מוכן</h1>
-        <p>שאלות בגרות אמיתיות, הסבר מיידי לכל תשובה, בכל מקצוע</p>
-      </div>
-      <div className="section-label">בחר מקצוע</div>
-      <div className="subject-tabs">
-        {Object.entries(SUBJECTS).map(([key, s]) => (
-          <button key={key} className={`subject-tab ${s.tabCls} ${currentSubject === key ? 'active' : ''}`} onClick={() => { setCurrentSubject(key); setSelectedTopic(null); }}>
-            {s.emoji} {s.name}
-          </button>
-        ))}
-      </div>
-      <div className="section-label">בחר נושא</div>
-      <div className="topics-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        {subject.topics.map((t, i) => (
-          <div key={i} className={`topic-card ${selectedTopic === t.name ? 'selected' : ''}`} onClick={() => setSelectedTopic(t.name)}>
-            <span className="topic-check">✓</span>
-            <span className="topic-emoji">{t.emoji}</span>
-            <div className="topic-name">{t.name}</div>
-            <div className="topic-sub">{t.sub}</div>
-          </div>
-        ))}
-      </div>
-      <button className="start-btn" onClick={startQuiz} disabled={!selectedTopic}>
-        התחל תרגול →
-      </button>
-    </div>
-  );
-
-  const renderQuiz = () => {
-    if (loading || questions.length === 0) {
-      return (
-        <div className="quiz-inner">
-          <div className="loading-state">
-            <div className="loader-ring"></div>
-            <div className="loading-tip">
-              <strong>{subject.emoji} {subject.name} — {selectedTopic}</strong>
-              <span>🤖 AI מייצר שאלות בגרות אמיתיות...</span>
-              <span style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '8px' }}>זה עשוי לקחת 10-30 שניות</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    const q = questions[currentQ];
-    const pct = Math.round((currentQ / questions.length) * 100);
-
-    return (
-      <div className="quiz-inner">
-        <div className="quiz-topbar">
-          <button className="back-icon-btn" onClick={() => setScreen('home')}>←</button>
-          <div className="progress-track">
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${pct}%` }}></div>
-            </div>
-            <div className="progress-labels">
-              <span className="progress-step">שאלה {currentQ + 1} מ-{questions.length}</span>
-              <span className="progress-score">{score} נכון</span>
-            </div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', flex: 1, flexDirection: 'column', gap: '12px' }}>
-          <div className="quiz-meta-strip">
-            <span className="meta-subject-badge" style={{ color: subject.badge.color, background: subject.badge.bg, borderColor: subject.badge.border }}>
-              {subject.emoji} {subject.name}
-            </span>
-            <span className="meta-topic-label">{selectedTopic}</span>
-          </div>
-          <div className="question-card">
-            <div className="q-number">שאלה {currentQ + 1}</div>
-            <div className="q-text">{q.question}</div>
-          </div>
-          <div className="answers">
-            {q.answers.map((ans: string, i: number) => (
-              <button
-                key={i}
-                className={`answer-btn ${selectedAnswer === i ? (isCorrect ? 'correct' : 'wrong') : ''}`}
-                onClick={() => checkAnswer(i)}
-                disabled={selectedAnswer !== null}
-              >
-                <span className="answer-letter">{letters[i]}</span>
-                <span>{ans}</span>
-              </button>
-            ))}
-          </div>
-          {selectedAnswer !== null && (
-            <>
-              <div className="explanation-box" style={{ display: 'block' }}>
-                <div className="ex-label">{isCorrect ? '✅ נכון!' : '❌ טעות'} — הסבר</div>
-                <div className="ex-text">{q.explanation}</div>
-              </div>
-              <button
-                className="start-btn"
-                onClick={nextQuestion}
-                style={{ marginTop: '12px' }}
-              >
-                {currentQ >= questions.length - 1 ? 'לתוצאות →' : 'השאלה הבאה →'}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderResults = () => {
-    const total = questions.length;
-    const pct = Math.round((score / total) * 100);
-    const [emoji, title, sub] = pct === 100 ? ['🏆', 'מושלם!', 'ציון 100 — אתה מוכן לבגרות!'] : pct >= 80 ? ['🔥', 'מצוין!', `${pct}% — כמעט שם!`] : pct >= 60 ? ['👍', 'לא רע!', `${pct}% — חזור על מה שפספסת`] : ['💪', 'יש מה לשפר', `${pct}% — תנסה שוב`];
-
-    return (
-      <div className="results-inner">
-        <div className="result-hero">
-          <span className="result-emoji">{emoji}</span>
-          <div className="result-title">{title}</div>
-          <div className="result-sub">{sub}</div>
-        </div>
-        <div className="stats-row">
-          <div className="stat-box stat-correct">
-            <div className="stat-val">{score}</div>
-            <div className="stat-lbl">נכון ✓</div>
-          </div>
-          <div className="stat-box stat-wrong">
-            <div className="stat-val">{total - score}</div>
-            <div className="stat-lbl">טעות ✗</div>
-          </div>
-          <div className="stat-box">
-            <div className="stat-val" style={{ color: 'var(--text2)' }}>{total}</div>
-            <div className="stat-lbl">שאלות</div>
-          </div>
-        </div>
-        <div className="action-row">
-          <button className="start-btn" onClick={startQuiz}>סבב נוסף באותו נושא 🔁</button>
-          <button className="btn-outline" onClick={() => setScreen('home')}>בחר נושא אחר</button>
-        </div>
-      </div>
-    );
-  };
+export default function Landing() {
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   return (
-    <>
-      <style>{`
-        :root { --bg: #0a0e27; --surface: #12172f; --surface2: #1a2050; --surface3: #252d5e; --border: #2d3a6f; --border2: #3d4d8f; --text: #f0f2ff; --text2: #9aa5d1; --text3: #5f6d9f; --correct: #10b981; --wrong: #ef4444; --accent: #6366f1; --accent2: #ec4899; --radius: 24px; --radius-sm: 14px; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: var(--font-heebo), sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; overflow-x: hidden; }
-        .bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-        .bg-orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.25; }
-        .bg-orb-1 { width: 600px; height: 600px; top: -250px; right: -150px; background: #6366f1; animation: orb1 15s ease-in-out infinite alternate; }
-        .bg-orb-2 { width: 500px; height: 500px; bottom: -200px; left: -150px; background: #ec4899; animation: orb2 18s ease-in-out infinite alternate; }
-        .bg-orb-3 { width: 400px; height: 400px; top: 30%; left: 20%; background: #10b981; animation: orb3 12s ease-in-out infinite alternate; opacity: 0.12; }
-        @keyframes orb1 { to { transform: translate(-10%,15%) scale(1.15); } }
-        @keyframes orb2 { to { transform: translate(10%,-10%) scale(0.95); } }
-        @keyframes orb3 { to { transform: translate(-12%,12%) scale(1.25); } }
-        .app { width: 100%; max-width: 520px; display: flex; flex-direction: column; position: relative; z-index: 1; box-shadow: 0 25px 50px rgba(0,0,0,0.5); border-radius: 32px; background: rgba(10,14,39,0.8); backdrop-filter: blur(20px); margin: 20px; }
-        .header { padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); background: rgba(10,14,39,0.9); position: sticky; top: 0; z-index: 10; border-radius: 32px 32px 0 0; }
-        .logo { font-family: var(--font-frank-ruhl), serif; font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .subject-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 24px; padding: 6px 16px; font-size: 12px; font-weight: 700; color: var(--text2); transition: all 0.3s; letter-spacing: 0.05em; }
-        .screen { display: none; flex: 1; flex-direction: column; animation: fadeUp 0.4s cubic-bezier(.4,0,.2,1); }
-        .screen.active { display: flex; }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
-        .home-inner { padding: 0 28px 40px; display: flex; flex-direction: column; flex: 1; }
-        .hero { padding: 40px 0 32px; text-align: center; }
-        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.15)); border: 1.5px solid rgba(99,102,241,0.4); border-radius: 28px; padding: 8px 18px; font-size: 13px; font-weight: 700; color: #6366f1; margin-bottom: 20px; }
-        .hero h1 { font-family: var(--font-frank-ruhl), serif; font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; background: linear-gradient(160deg, #f0f2ff 30%, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .hero p { color: var(--text2); font-size: 15px; line-height: 1.8; max-width: 320px; margin: 0 auto; font-weight: 500; }
-        .section-label { font-size: 12px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; margin-top: 8px; }
-        .subject-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 20px; scrollbar-width: none; }
-        .subject-tabs::-webkit-scrollbar { display: none; }
-        .subject-tab { flex-shrink: 0; background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; padding: 10px 18px; font-family: var(--font-heebo), sans-serif; font-size: 14px; font-weight: 700; color: var(--text2); cursor: pointer; transition: all 0.25s; white-space: nowrap; }
-        .subject-tab:hover { color: var(--text); border-color: var(--accent); transform: translateY(-2px); }
-        .subject-tab.active { color: #fff; border-color: var(--accent); background: rgba(99,102,241,0.2); }
-        .tab-math.active { border-color: #a78bfa; background: rgba(167,139,250,0.2); color: #a78bfa; }
-        .tab-physics.active { border-color: #38bdf8; background: rgba(56,189,248,0.2); color: #38bdf8; }
-        .tab-english.active { border-color: #fb923c; background: rgba(251,146,60,0.2); color: #fb923c; }
-        .tab-history.active { border-color: #f59e0b; background: rgba(245,158,11,0.2); color: #f59e0b; }
-        .tab-bible.active { border-color: #34d399; background: rgba(52,211,153,0.2); color: #34d399; }
-        .tab-chem.active { border-color: #f472b6; background: rgba(244,114,182,0.2); color: #f472b6; }
-        .topics-grid { display: grid; gap: 12px; margin-bottom: 24px; }
-        .topic-card { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px 16px 16px; cursor: pointer; transition: all 0.25s cubic-bezier(.4,0,.2,1); text-align: center; position: relative; overflow: hidden; }
-        .topic-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0, rgba(99,102,241,0.1), transparent); pointer-events: none; }
-        .topic-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 12px 32px rgba(99,102,241,0.15); }
-        .topic-card.selected { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 16px 40px rgba(99,102,241,0.25); }
-        .topic-check { position: absolute; top: 12px; left: 12px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; opacity: 0; transform: scale(0.3); transition: all 0.25s cubic-bezier(.34,1.56,.64,1); background: var(--accent); }
-        .topic-card.selected .topic-check { opacity: 1; transform: scale(1); }
-        .topic-emoji { font-size: 32px; margin-bottom: 10px; display: block; line-height: 1; }
-        .topic-name { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; position: relative; z-index: 1; }
-        .topic-sub { font-size: 12px; color: var(--text3); margin-top: 4px; position: relative; z-index: 1; }
-        .start-btn { width: 100%; padding: 16px; border: none; border-radius: var(--radius); font-family: var(--font-heebo), sans-serif; font-size: 16px; font-weight: 800; color: #fff; cursor: pointer; background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%); box-shadow: 0 8px 24px rgba(99,102,241,0.4); transition: all 0.25s cubic-bezier(.4,0,.2,1); margin-top: auto; letter-spacing: 0.05em; }
-        .start-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(99,102,241,0.6); }
-        .start-btn:active:not(:disabled) { transform: translateY(-1px); }
-        .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-        .quiz-inner { padding: 20px 28px 32px; display: flex; flex-direction: column; flex: 1; gap: 16px; }
-        .quiz-topbar { display: flex; align-items: center; gap: 14px; }
-        .back-icon-btn { width: 40px; height: 40px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: all 0.2s; flex-shrink: 0; font-family: 'Heebo', sans-serif; color: var(--text2); }
-        .back-icon-btn:hover { border-color: var(--accent); color: var(--text); background: var(--surface2); }
-        .progress-track { flex: 1; }
-        .progress-bar { height: 6px; background: var(--surface2); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #ec4899); border-radius: 3px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
-        .progress-labels { display: flex; justify-content: space-between; margin-top: 8px; }
-        .progress-step { font-size: 12px; color: var(--text3); font-weight: 600; }
-        .progress-score { font-size: 12px; font-weight: 800; color: var(--correct); }
-        .quiz-meta-strip { display: flex; align-items: center; gap: 10px; }
-        .meta-subject-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 24px; font-size: 13px; font-weight: 700; border: 1.5px solid; white-space: nowrap; background: rgba(99,102,241,0.1); }
-        .meta-topic-label { font-size: 13px; color: var(--text3); font-weight: 600; }
-        .question-card { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: 24px; padding: 28px; position: relative; overflow: hidden; }
-        .question-card::after { content: ''; position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(ellipse, rgba(99,102,241,0.15), transparent 70%); pointer-events: none; }
-        .q-number { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
-        .q-text { font-size: 17px; line-height: 1.8; font-weight: 600; color: var(--text); position: relative; z-index: 1; }
-        .answers { display: flex; flex-direction: column; gap: 11px; }
-        .answer-btn { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 15px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s ease; font-family: var(--font-heebo), sans-serif; color: var(--text); font-size: 15px; font-weight: 600; line-height: 1.5; text-align: right; }
-        .answer-btn:hover:not(:disabled) { border-color: var(--accent); background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); transform: translateX(-3px); box-shadow: 0 4px 12px rgba(99,102,241,0.1); }
-        .answer-btn:disabled { cursor: default; }
-        .answer-btn.correct { border-color: var(--correct); background: rgba(16,185,129,0.1); color: var(--correct); }
-        .answer-btn.wrong { border-color: var(--wrong); background: rgba(239,68,68,0.1); color: var(--wrong); }
-        .answer-letter { min-width: 34px; height: 34px; background: var(--surface2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: var(--accent); flex-shrink: 0; transition: all 0.2s; border: 1.5px solid var(--border); }
-        .answer-btn.correct .answer-letter { background: rgba(16,185,129,0.15); color: var(--correct); border-color: var(--correct); }
-        .answer-btn.wrong .answer-letter { background: rgba(239,68,68,0.15); color: var(--wrong); border-color: var(--wrong); }
-        .explanation-box { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border: 1.5px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: 16px 18px; animation: fadeUp 0.35s ease; }
-        .ex-label { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
-        .ex-text { font-size: 14px; line-height: 1.8; color: var(--text2); font-weight: 500; }
-        .loading-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 50px 40px; }
-        .loader-ring { width: 64px; height: 64px; position: relative; }
-        .loader-ring::before, .loader-ring::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 3px solid transparent; }
-        .loader-ring::before { border-top-color: #6366f1; animation: spin 0.9s linear infinite; }
-        .loader-ring::after { border-bottom-color: #ec4899; animation: spin 1.3s linear infinite reverse; inset: 8px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-tip { text-align: center; font-size: 15px; color: var(--text2); line-height: 1.8; max-width: 280px; font-weight: 500; }
-        .loading-tip strong { color: var(--text); display: block; margin-bottom: 6px; font-size: 16px; font-weight: 800; }
-        .results-inner { padding: 32px 28px 40px; display: flex; flex-direction: column; align-items: center; gap: 28px; flex: 1; }
-        .result-hero { text-align: center; }
-        .result-emoji { font-size: 60px; line-height: 1; margin-bottom: 16px; display: block; animation: bounce 0.8s ease; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        .result-title { font-family: var(--font-frank-ruhl), serif; font-size: 32px; font-weight: 900; margin-bottom: 8px; background: linear-gradient(135deg, #f0f2ff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .result-sub { font-size: 15px; color: var(--text2); line-height: 1.7; font-weight: 500; }
-        .stats-row { display: flex; gap: 12px; width: 100%; }
-        .stat-box { flex: 1; background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 18px; text-align: center; }
-        .stat-val { font-size: 26px; font-weight: 900; margin-bottom: 4px; }
-        .stat-lbl { font-size: 12px; color: var(--text3); font-weight: 700; letter-spacing: 0.05em; }
-        .stat-correct .stat-val { color: var(--correct); }
-        .stat-wrong .stat-val { color: var(--wrong); }
-        .action-row { display: flex; flex-direction: column; gap: 12px; width: 100%; }
-        .btn-outline { background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 15px; font-family: var(--font-heebo), sans-serif; font-size: 15px; font-weight: 700; color: var(--text2); cursor: pointer; transition: all 0.25s; letter-spacing: 0.05em; }
-        .btn-outline:hover { color: var(--text); background: var(--surface); border-color: var(--accent); }
-      `}</style>
-
-      <div className="bg-layer">
-        <div className="bg-orb bg-orb-1"></div>
-        <div className="bg-orb bg-orb-2"></div>
-        <div className="bg-orb bg-orb-3"></div>
+    <div className="min-h-screen bg-slate-950 text-slate-50 relative overflow-x-hidden" style={{ fontFamily: 'var(--font-heebo), sans-serif' }}>
+      {/* Animated background blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-600/30 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-pink-600/25 blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+        <div className="absolute top-[40%] left-[30%] w-[400px] h-[400px] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" style={{ animationDuration: '12s', animationDelay: '4s' }} />
       </div>
 
-      <div className="app">
-        <div className="header">
-          <span className="logo">בגרות בכיס ✦</span>
-          <span className="subject-pill">כל המקצועות</span>
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/60 border-b border-white/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+              <GraduationCap className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-black bg-gradient-to-l from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              בגרות בכיס
+            </span>
+          </div>
+          <Link
+            href="/quiz"
+            className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 px-4 sm:px-5 py-2 rounded-xl text-sm font-bold transition-all"
+          >
+            <span className="hidden sm:inline">כניסה לתרגול</span>
+            <span className="sm:hidden">לתרגול</span>
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-20 sm:pb-28 text-center">
+        <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-md border border-purple-500/30 rounded-full px-4 py-1.5 mb-6 sm:mb-8">
+          <Sparkles className="w-4 h-4 text-purple-400" />
+          <span className="text-xs sm:text-sm font-bold text-purple-200">מבוסס AI של Anthropic · Claude</span>
         </div>
 
-        <div className={`screen ${screen === 'home' ? 'active' : ''}`}>
-          {renderHome()}
+        <h1 className="text-4xl sm:text-6xl md:text-7xl font-black leading-tight mb-6 sm:mb-8">
+          <span className="block bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+            הבגרות שלך,
+          </span>
+          <span className="block bg-gradient-to-l from-purple-400 via-pink-400 to-amber-400 bg-clip-text text-transparent">
+            בכיס שלך
+          </span>
+        </h1>
+
+        <p className="text-base sm:text-xl text-slate-300 max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed">
+          תרגול חכם של שאלות בגרות אמיתיות, נוצרות בזמן אמת ע&quot;י בינה מלאכותית.
+          <br className="hidden sm:block" />
+          הסבר מיידי לכל תשובה. בעברית. בחינם.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 sm:mb-16">
+          <Link
+            href="/quiz"
+            className="group relative inline-flex items-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-8 py-4 rounded-2xl font-bold text-white shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 hover:-translate-y-1 transition-all"
+          >
+            <Sparkles className="w-5 h-5" />
+            <span className="text-lg">צור שאלות לבגרות</span>
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          </Link>
+          <a
+            href="#how-it-works"
+            className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 px-6 py-4 rounded-2xl font-bold text-slate-200 transition-all"
+          >
+            <span>איך זה עובד?</span>
+            <ChevronDown className="w-5 h-5" />
+          </a>
         </div>
 
-        <div className={`screen ${screen === 'quiz' ? 'active' : ''}`}>
-          {renderQuiz()}
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 sm:gap-8 max-w-2xl mx-auto">
+          {[
+            { icon: BookOpen, value: '7', label: 'מקצועות' },
+            { icon: InfinityIcon, value: '∞', label: 'שאלות' },
+            { icon: Gift, value: '100%', label: 'חינם' },
+          ].map((s, i) => (
+            <div key={i} className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 sm:p-6 hover:border-purple-500/40 transition-all">
+              <s.icon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400 mx-auto mb-2" />
+              <div className="text-2xl sm:text-4xl font-black bg-gradient-to-l from-white to-purple-300 bg-clip-text text-transparent">{s.value}</div>
+              <div className="text-xs sm:text-sm text-slate-400 mt-1 font-semibold">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Pain Points */}
+      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="text-center mb-12 sm:mb-16">
+          <div className="inline-block text-xs sm:text-sm font-bold text-pink-400 uppercase tracking-widest mb-3">הבעיה</div>
+          <h2 className="text-3xl sm:text-5xl font-black mb-4">
+            <span className="bg-gradient-to-l from-white to-pink-200 bg-clip-text text-transparent">
+              כל תלמיד מכיר את זה
+            </span>
+          </h2>
+          <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto">
+            בגרות זה לחץ. מצאנו דרך להפוך את התרגול לפשוט, מהיר ואפילו מהנה.
+          </p>
         </div>
 
-        <div className={`screen ${screen === 'results' ? 'active' : ''}`}>
-          {renderResults()}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          {PAIN_POINTS.map((p, i) => (
+            <div
+              key={i}
+              className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8 hover:border-purple-500/50 hover:bg-white/[0.07] hover:-translate-y-1 transition-all duration-300"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <p.icon className="w-6 h-6 text-purple-300" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-bold mb-2">{p.title}</h3>
+                  <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{p.desc}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-    </>
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="text-center mb-12 sm:mb-16">
+          <div className="inline-block text-xs sm:text-sm font-bold text-purple-400 uppercase tracking-widest mb-3">הפתרון</div>
+          <h2 className="text-3xl sm:text-5xl font-black mb-4">
+            <span className="bg-gradient-to-l from-white to-purple-200 bg-clip-text text-transparent">
+              3 שלבים. ככה זה עובד.
+            </span>
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          {STEPS.map((s, i) => (
+            <div
+              key={i}
+              className="group relative bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8 hover:border-purple-500/50 hover:bg-white/[0.07] hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+            >
+              <div className="absolute top-2 left-4 text-7xl sm:text-8xl font-black text-white/[0.04] select-none">
+                {s.num}
+              </div>
+              <div className="relative z-10">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-5 shadow-lg shadow-purple-500/40 group-hover:scale-110 transition-transform">
+                  <s.icon className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">{s.title}</h3>
+                <p className="text-slate-400 leading-relaxed">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Subjects */}
+      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="text-center mb-12 sm:mb-16">
+          <div className="inline-block text-xs sm:text-sm font-bold text-amber-400 uppercase tracking-widest mb-3">מקצועות</div>
+          <h2 className="text-3xl sm:text-5xl font-black mb-4">
+            <span className="bg-gradient-to-l from-white to-amber-200 bg-clip-text text-transparent">
+              7 מקצועות בגרות, מקום אחד
+            </span>
+          </h2>
+          <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto">
+            מכל המקצועות העיקריים, ברמת 5 יחידות. בקרוב יתווספו עוד.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+          {SUBJECTS.map((s, i) => (
+            <Link
+              key={i}
+              href="/quiz"
+              className={`group relative bg-gradient-to-br ${s.color} backdrop-blur-md border border-white/10 rounded-2xl p-5 sm:p-6 text-center hover:border-white/30 hover:-translate-y-1 hover:shadow-2xl ${s.glow} transition-all duration-300`}
+            >
+              <div className="text-4xl sm:text-5xl mb-3 group-hover:scale-110 transition-transform inline-block">
+                {s.emoji}
+              </div>
+              <div className="font-bold text-sm sm:text-base mb-1">{s.name}</div>
+              <div className="text-xs text-slate-400">{s.topics} נושאים</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="text-center mb-12 sm:mb-16">
+          <div className="inline-block text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest mb-3">מחיר</div>
+          <h2 className="text-3xl sm:text-5xl font-black mb-4">
+            <span className="bg-gradient-to-l from-white to-emerald-200 bg-clip-text text-transparent">
+              חינם להתחיל. תמיד.
+            </span>
+          </h2>
+          <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto">
+            בחר את המסלול שמתאים לך. ה-Free תמיד יישאר חינם.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Free Tier */}
+          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 hover:border-emerald-500/40 transition-all">
+            <div className="flex items-center gap-2 mb-2">
+              <Gift className="w-5 h-5 text-emerald-400" />
+              <span className="text-emerald-400 font-bold text-sm uppercase tracking-wider">חינמי</span>
+            </div>
+            <div className="flex items-baseline gap-2 mb-6">
+              <span className="text-5xl font-black">₪0</span>
+              <span className="text-slate-400">לתמיד</span>
+            </div>
+            <ul className="space-y-3 mb-8">
+              {[
+                'כל 7 המקצועות',
+                'שאלות AI אינסופיות',
+                'הסברים מפורטים בעברית',
+                'תוצאות וסטטיסטיקות',
+                'גישה ממכל מכשיר',
+              ].map((f, i) => (
+                <li key={i} className="flex items-center gap-3 text-slate-300">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3 h-3 text-emerald-400" strokeWidth={3} />
+                  </div>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/quiz"
+              className="block w-full text-center bg-white/10 hover:bg-white/15 border border-white/20 px-6 py-3.5 rounded-xl font-bold transition-all"
+            >
+              התחל עכשיו - חינם
+            </Link>
+          </div>
+
+          {/* Pro Tier */}
+          <div className="relative bg-gradient-to-br from-purple-600/20 via-pink-600/15 to-amber-500/10 backdrop-blur-md border-2 border-purple-500/40 rounded-3xl p-8 shadow-2xl shadow-purple-500/20">
+            <div className="absolute -top-3 right-6 bg-gradient-to-l from-purple-600 to-pink-600 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-lg">
+              בקרוב
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Rocket className="w-5 h-5 text-purple-300" />
+              <span className="text-purple-300 font-bold text-sm uppercase tracking-wider">Pro</span>
+            </div>
+            <div className="flex items-baseline gap-2 mb-6">
+              <span className="text-5xl font-black bg-gradient-to-l from-purple-300 to-pink-300 bg-clip-text text-transparent">בהשקה</span>
+            </div>
+            <ul className="space-y-3 mb-8">
+              {[
+                'כל מה שכלול בחינמי',
+                'שמירת היסטוריית תרגול',
+                'מבחני סימולציה מלאים',
+                'סטטיסטיקות וגרפי שיפור',
+                'צ\'אט עם AI לעזרה אישית',
+                'דוחות התקדמות שבועיים',
+              ].map((f, i) => (
+                <li key={i} className="flex items-center gap-3 text-slate-200">
+                  <div className="w-5 h-5 rounded-full bg-purple-500/30 border border-purple-400/50 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3 h-3 text-purple-200" strokeWidth={3} />
+                  </div>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              className="block w-full text-center bg-white/5 border border-purple-500/30 px-6 py-3.5 rounded-xl font-bold text-purple-200 cursor-not-allowed opacity-80"
+              disabled
+            >
+              בקרוב · רשימת המתנה
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="text-center mb-12 sm:mb-16">
+          <div className="inline-block text-xs sm:text-sm font-bold text-blue-400 uppercase tracking-widest mb-3">שאלות נפוצות</div>
+          <h2 className="text-3xl sm:text-5xl font-black mb-4">
+            <span className="bg-gradient-to-l from-white to-blue-200 bg-clip-text text-transparent">
+              שאלות לפני שמתחילים?
+            </span>
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          {FAQ_ITEMS.map((item, i) => (
+            <div
+              key={i}
+              className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:border-purple-500/40 transition-all"
+            >
+              <button
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                className="w-full px-6 py-5 flex items-center justify-between gap-4 text-right hover:bg-white/[0.03] transition-colors"
+              >
+                <span className="text-base sm:text-lg font-bold">{item.q}</span>
+                <ChevronDown
+                  className={`w-5 h-5 text-purple-400 flex-shrink-0 transition-transform ${
+                    openFaq === i ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {openFaq === i && (
+                <div className="px-6 pb-5 text-slate-300 leading-relaxed border-t border-white/5 pt-4">
+                  {item.a}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="relative bg-gradient-to-br from-purple-600/30 via-pink-600/20 to-amber-500/20 backdrop-blur-md border border-purple-500/30 rounded-3xl p-8 sm:p-16 text-center overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl" />
+
+          <div className="relative z-10">
+            <Sparkles className="w-12 h-12 text-purple-300 mx-auto mb-6" />
+            <h2 className="text-3xl sm:text-5xl font-black mb-4">
+              <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+                מוכן להפוך את הבגרות לקלה?
+              </span>
+            </h2>
+            <p className="text-slate-300 text-base sm:text-xl max-w-2xl mx-auto mb-8">
+              לחיצה אחת. בלי רישום. בלי כסף. בלי תירוצים.
+            </p>
+            <Link
+              href="/quiz"
+              className="group inline-flex items-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-bold text-white text-lg shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 hover:-translate-y-1 transition-all"
+            >
+              <Sparkles className="w-6 h-6" />
+              <span>צור שאלות לבגרות</span>
+              <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-white/10 mt-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <GraduationCap className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-sm font-bold text-slate-300">בגרות בכיס</span>
+          </div>
+          <div className="text-xs text-slate-500 text-center sm:text-left">
+            © 2026 בגרות בכיס · נוצר עם Claude AI של Anthropic
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
