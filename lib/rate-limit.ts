@@ -1,18 +1,21 @@
 /**
- * Simple in-memory IP-based rate limiter.
- * Protects /api/questions from abuse (e.g., someone hammering the
- * endpoint to drain the Anthropic API quota).
+ * In-memory rate limiter with fingerprinting.
  *
- * Limits:
- *   - 10 requests per minute per IP (short burst protection)
- *   - 60 requests per hour per IP (long-term protection)
+ * Tracks by a fingerprint that combines client IP + a hash of the User-Agent.
+ * This makes simple IP rotation less effective — an attacker would also need
+ * to randomize their User-Agent to bypass per-fingerprint limits.
  *
- * Notes / limitations:
- *   - Works within a single serverless instance. Vercel may spin up
- *     multiple instances under heavy load, in which case each instance
- *     enforces the limit independently. Good enough for a hobby/free
- *     project. For production-grade, switch to Upstash Redis.
- *   - The in-memory map self-cleans expired entries on every check.
+ * Limits per fingerprint:
+ *   - 10 requests per minute (short burst protection)
+ *   - 60 requests per hour (long-term protection)
+ *
+ * Additionally tracks **global** request volume across all IPs:
+ *   - 200 requests per minute total (DDoS / cost-spike protection)
+ *
+ * Notes:
+ *   - Works within a single serverless instance. For multi-instance
+ *     consistency, switch to Upstash Redis (free tier 10K commands/day).
+ *   - In-memory entries self-clean periodically to bound memory.
  */
 
 type Bucket = {
@@ -24,13 +27,19 @@ type Bucket = {
 
 const buckets = new Map<string, Bucket>();
 
-// Limits
+// Per-fingerprint limits
 const MINUTE_LIMIT = 10;
 const HOUR_LIMIT = 60;
+
+// Global circuit breaker - protects against distributed attacks
+const GLOBAL_MINUTE_LIMIT = 200;
+let globalMinuteCount = 0;
+let globalMinuteResetAt = Date.now() + 60_000;
+
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 
-// Cleanup interval - prune expired entries to keep memory bounded
+// Cleanup
 let lastCleanup = Date.now();
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -44,13 +53,41 @@ function cleanup(now: number) {
 
 export type RateLimitResult =
   | { allowed: true; remaining: number }
-  | { allowed: false; reason: 'minute' | 'hour'; retryAfterSeconds: number };
+  | { allowed: false; reason: 'minute' | 'hour' | 'global'; retryAfterSeconds: number };
 
-export function checkRateLimit(ip: string): RateLimitResult {
+/**
+ * Cheap, deterministic 32-bit hash. We don't need cryptographic strength here —
+ * just a way to fold the User-Agent into the fingerprint so attackers can't
+ * trivially bypass the limiter by rotating IPs while keeping the same UA.
+ */
+function fnv1a(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+export function checkRateLimit(fingerprint: string): RateLimitResult {
   const now = Date.now();
   cleanup(now);
 
-  let bucket = buckets.get(ip);
+  // ===== Global circuit breaker =====
+  if (globalMinuteResetAt < now) {
+    globalMinuteCount = 0;
+    globalMinuteResetAt = now + MINUTE_MS;
+  }
+  if (globalMinuteCount >= GLOBAL_MINUTE_LIMIT) {
+    return {
+      allowed: false,
+      reason: 'global',
+      retryAfterSeconds: Math.ceil((globalMinuteResetAt - now) / 1000),
+    };
+  }
+
+  // ===== Per-fingerprint =====
+  let bucket = buckets.get(fingerprint);
   if (!bucket) {
     bucket = {
       minuteCount: 0,
@@ -58,10 +95,9 @@ export function checkRateLimit(ip: string): RateLimitResult {
       hourCount: 0,
       hourResetAt: now + HOUR_MS,
     };
-    buckets.set(ip, bucket);
+    buckets.set(fingerprint, bucket);
   }
 
-  // Reset windows if elapsed
   if (bucket.minuteResetAt < now) {
     bucket.minuteCount = 0;
     bucket.minuteResetAt = now + MINUTE_MS;
@@ -71,7 +107,6 @@ export function checkRateLimit(ip: string): RateLimitResult {
     bucket.hourResetAt = now + HOUR_MS;
   }
 
-  // Enforce limits
   if (bucket.minuteCount >= MINUTE_LIMIT) {
     return {
       allowed: false,
@@ -87,24 +122,52 @@ export function checkRateLimit(ip: string): RateLimitResult {
     };
   }
 
-  // Allowed - increment counters
   bucket.minuteCount += 1;
   bucket.hourCount += 1;
+  globalMinuteCount += 1;
   return { allowed: true, remaining: MINUTE_LIMIT - bucket.minuteCount };
 }
 
 /**
- * Extract the client IP from a Fetch Request.
- * On Vercel, x-forwarded-for is set with the real client IP first.
+ * Build a fingerprint from request headers.
+ * Combines client IP (from x-forwarded-for) with a hash of the User-Agent.
  */
-export function getClientIp(request: Request): string {
+export function getFingerprint(request: Request): string {
   const xff = request.headers.get('x-forwarded-for');
+  let ip = 'unknown';
   if (xff) {
-    // First entry is the original client (subsequent are proxies)
     const first = xff.split(',')[0]?.trim();
-    if (first) return first;
+    if (first) ip = first;
+  } else {
+    const xri = request.headers.get('x-real-ip');
+    if (xri) ip = xri.trim();
   }
-  const xri = request.headers.get('x-real-ip');
-  if (xri) return xri.trim();
-  return 'unknown';
+  const ua = request.headers.get('user-agent') || '';
+  return `${ip}::${fnv1a(ua)}`;
+}
+
+/**
+ * Detect obvious automated clients via User-Agent.
+ * Not bulletproof (UAs can be spoofed) but stops casual scraping.
+ */
+const BOT_UA_PATTERNS = [
+  /bot/i,
+  /crawl/i,
+  /spider/i,
+  /scraper/i,
+  /curl\//i,
+  /wget\//i,
+  /python-requests/i,
+  /python-urllib/i,
+  /http-client/i,
+  /go-http-client/i,
+  /postman/i,
+  /insomnia/i,
+  /^$/, // empty UA - very suspicious for a browser request
+];
+
+export function looksLikeBot(request: Request): boolean {
+  const ua = (request.headers.get('user-agent') || '').trim();
+  if (!ua) return true;
+  return BOT_UA_PATTERNS.some((re) => re.test(ua));
 }

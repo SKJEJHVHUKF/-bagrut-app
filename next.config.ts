@@ -1,7 +1,30 @@
 import type { NextConfig } from "next";
 
+// Content-Security-Policy
+// Allows what the app actually needs and blocks everything else.
+//   - Next.js requires 'unsafe-inline' for hydration scripts/styles
+//   - Tailwind injects inline styles
+//   - next/font/google ships fonts under our own /static path, so we
+//     don't need to whitelist Google's CDN
+//   - 'upgrade-insecure-requests' forces any http subresource to https
+const csp = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+  "upgrade-insecure-requests",
+].join('; ');
+
 const securityHeaders = [
-  // Block embedding the site in iframes (clickjacking protection)
+  // Most powerful header — controls what the browser will execute/load
+  { key: "Content-Security-Policy", value: csp },
+  // Block embedding in iframes (clickjacking protection)
   { key: "X-Frame-Options", value: "DENY" },
   // Prevent MIME-sniffing
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -15,9 +38,12 @@ const securityHeaders = [
   // Disable powerful browser features we don't use
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+    value: "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=()",
   },
-  // Cross-origin policies
+  // Cross-origin isolation
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  // DNS prefetching
   { key: "X-DNS-Prefetch-Control", value: "on" },
 ];
 
