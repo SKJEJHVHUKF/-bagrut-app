@@ -17,8 +17,36 @@ import {
   Infinity as InfinityIcon,
   Gift,
   ArrowLeft,
-  GraduationCap,
 } from 'lucide-react';
+
+// Custom Logo Component
+function BagrutLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+  const sizes = {
+    sm: { box: 'w-8 h-8', icon: 'w-4 h-4', radius: 'rounded-xl' },
+    md: { box: 'w-10 h-10', icon: 'w-5 h-5', radius: 'rounded-2xl' },
+    lg: { box: 'w-16 h-16', icon: 'w-9 h-9', radius: 'rounded-3xl' },
+  };
+  const s = sizes[size];
+
+  return (
+    <div className={`relative ${s.box} ${s.radius} bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400 flex items-center justify-center shadow-xl shadow-purple-500/50 ring-1 ring-white/20`}>
+      <svg viewBox="0 0 24 24" fill="none" className={`${s.icon} text-white drop-shadow-md`}>
+        {/* Main 4-point star (representing knowledge/brilliance) */}
+        <path
+          d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
+          fill="currentColor"
+        />
+        {/* Inner highlight for depth */}
+        <path
+          d="M12 8L13 11L16 12L13 13L12 16L11 13L8 12L11 11L12 8Z"
+          fill="rgba(255,255,255,0.5)"
+        />
+      </svg>
+      {/* Small glow accent in corner */}
+      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-200 rounded-full blur-[2px] opacity-80" />
+    </div>
+  );
+}
 
 const SUBJECTS = [
   { name: 'מתמטיקה 5 יח׳', emoji: '📐', topics: 6, color: 'from-purple-500/20 to-fuchsia-500/20', glow: 'shadow-purple-500/30' },
@@ -66,11 +94,9 @@ export default function Landing() {
       {/* Navbar */}
       <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/60 border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
-              <GraduationCap className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-black bg-gradient-to-l from-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <div className="flex items-center gap-3">
+            <BagrutLogo size="md" />
+            <span className="text-xl sm:text-2xl font-black bg-gradient-to-l from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
               בגרות בכיס
             </span>
           </div>
@@ -396,10 +422,8 @@ export default function Landing() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/10 mt-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-white" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <BagrutLogo size="sm" />
             <span className="text-sm font-bold text-slate-300">בגרות בכיס</span>
           </div>
           <div className="text-xs text-slate-500 text-center sm:text-left">
