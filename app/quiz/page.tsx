@@ -347,7 +347,16 @@ export default function Quiz() {
       <div className="app">
         <div className="header">
           <span className="logo">בגרות בכיס ✦</span>
-          <span className="subject-pill">כל המקצועות</span>
+          <form action="/auth/signout" method="post" style={{ margin: 0 }}>
+            <button
+              type="submit"
+              className="subject-pill"
+              style={{ cursor: 'pointer', background: 'transparent', fontFamily: 'inherit' }}
+              title="התנתק"
+            >
+              ← התנתק
+            </button>
+          </form>
         </div>
 
         <div className={`screen ${screen === 'home' ? 'active' : ''}`}>
