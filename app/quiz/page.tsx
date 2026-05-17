@@ -402,7 +402,7 @@ export default function Quiz() {
         .question-card { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: 24px; padding: 28px; position: relative; overflow: hidden; }
         .question-card::after { content: ''; position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(ellipse, rgba(99,102,241,0.15), transparent 70%); pointer-events: none; }
         .q-number { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
-        .q-text { font-size: 17px; line-height: 1.8; font-weight: 600; color: var(--text); position: relative; z-index: 1; }
+        .q-text { font-size: 17px; line-height: 1.8; font-weight: 600; color: var(--text); position: relative; z-index: 1; unicode-bidi: plaintext; text-align: start; }
         .answers { display: flex; flex-direction: column; gap: 11px; }
         .answer-btn { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 15px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s ease; font-family: var(--font-heebo), sans-serif; color: var(--text); font-size: 15px; font-weight: 600; line-height: 1.5; text-align: right; }
         .answer-btn:hover:not(:disabled) { border-color: var(--accent); background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); transform: translateX(-3px); box-shadow: 0 4px 12px rgba(99,102,241,0.1); }
@@ -433,7 +433,10 @@ export default function Quiz() {
         .lesson-tip:hover { border-color: rgba(245,158,11,0.4); }
         .lesson-label { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; }
         .lesson-icon { font-size: 16px; line-height: 1; }
-        .lesson-text { font-size: 14px; line-height: 1.85; color: var(--text); font-weight: 500; }
+        /* unicode-bidi: plaintext + text-align: start handles mixed Hebrew + math
+           cleanly. Without it, "P(רק בנים) = C(5,3)/C(8,3)" renders as garbled
+           order because the browser flips LTR fragments inside an RTL block. */
+        .lesson-text { font-size: 14px; line-height: 1.85; color: var(--text); font-weight: 500; unicode-bidi: plaintext; text-align: start; }
         .loading-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 50px 40px; }
         .loader-ring { width: 64px; height: 64px; position: relative; }
         .loader-ring::before, .loader-ring::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 3px solid transparent; }
