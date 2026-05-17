@@ -3,6 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import {
   Send,
   Sparkles,
@@ -295,22 +299,44 @@ export default function ChatPage() {
 
 function MessageBubble({ role, content }: { role: 'user' | 'assistant'; content: string }) {
   const isUser = role === 'user';
+
+  // User messages: plain text. Their input is treated as data, never rendered
+  // as markdown (avoids HTML/script injection via a user typing $$...$$).
+  if (isUser) {
+    return (
+      <div className="flex justify-start">
+        <div
+          className="max-w-[85%] bg-gradient-to-l from-purple-600 to-pink-600 text-white px-4 py-3 rounded-2xl rounded-tl-md shadow-lg shadow-purple-500/20"
+          style={{
+            unicodeBidi: 'plaintext',
+            textAlign: 'start',
+            whiteSpace: 'pre-wrap',
+            lineHeight: 1.7,
+          }}
+        >
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  // Assistant messages: full markdown + LaTeX rendering.
+  // - remark-math parses $...$ (inline) and $$...$$ (display) math
+  // - rehype-katex renders parsed math nodes via KaTeX (white text on dark bg
+  //   inherits from the bubble; katex.min.css handles typography)
+  // - react-markdown renders headings, bold, lists, etc.
   return (
-    <div className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}>
+    <div className="flex justify-end">
       <div
-        className={
-          isUser
-            ? 'max-w-[85%] bg-gradient-to-l from-purple-600 to-pink-600 text-white px-4 py-3 rounded-2xl rounded-tl-md shadow-lg shadow-purple-500/20'
-            : 'max-w-[85%] bg-white/5 backdrop-blur-md border border-white/10 text-slate-100 px-4 py-3 rounded-2xl rounded-tr-md'
-        }
-        style={{
-          unicodeBidi: 'plaintext',
-          textAlign: 'start',
-          whiteSpace: 'pre-wrap',
-          lineHeight: 1.7,
-        }}
+        className="chat-md max-w-[85%] bg-white/5 backdrop-blur-md border border-white/10 text-slate-100 px-4 py-3 rounded-2xl rounded-tr-md"
+        style={{ unicodeBidi: 'plaintext', textAlign: 'start' }}
       >
-        {content}
+        <ReactMarkdown
+          remarkPlugins={[remarkMath]}
+          rehypePlugins={[rehypeKatex]}
+        >
+          {content}
+        </ReactMarkdown>
       </div>
     </div>
   );
