@@ -69,10 +69,6 @@ export default function Quiz() {
   const subject = SUBJECTS[currentSubject as keyof typeof SUBJECTS];
   const letters = ['א', 'ב', 'ג', 'ד'];
 
-  // v2 bump: explanation format changed from string to structured object.
-  // Old cached questions would render blank — this key change auto-invalidates them.
-  const getCacheKey = () => `quiz_v2_${currentSubject}_${selectedTopic}`;
-
   const startQuiz = async () => {
     if (!selectedTopic) return;
     setLoading(true);
@@ -85,17 +81,10 @@ export default function Quiz() {
     setIsCorrect(null);
 
     try {
-      // בדוק cache
-      const cacheKey = getCacheKey();
-      const cachedQuestions = localStorage.getItem(cacheKey);
-
-      if (cachedQuestions) {
-        setQuestions(JSON.parse(cachedQuestions));
-        setLoading(false);
-        return;
-      }
-
-      // אם אין cache, טעינה מ-API
+      // No cache — every quiz attempt asks the API for a fresh set of
+      // questions. Cache was reusing the same 5 questions across attempts
+      // which defeats the purpose of practice. With Haiku 4.5 a fresh
+      // generation only costs ~$0.018 so it's the right trade.
       const res = await fetch('/api/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -123,8 +112,6 @@ export default function Quiz() {
       if (data.error) throw new Error(data.error);
       if (!data.questions) throw new Error('No questions field in response');
 
-      // שמור ב-cache
-      localStorage.setItem(cacheKey, JSON.stringify(data.questions));
       setQuestions(data.questions);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
