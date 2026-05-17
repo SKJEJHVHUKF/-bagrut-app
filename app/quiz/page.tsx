@@ -173,8 +173,8 @@ export default function Quiz() {
             <div className="loader-ring"></div>
             <div className="loading-tip">
               <strong>{subject.emoji} {subject.name} — {selectedTopic}</strong>
-              <span>🎓 המורה הפרטי שלך מכין שאלות עם הסברים מעמיקים...</span>
-              <span style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '8px' }}>זה לוקח 15-45 שניות — הסברים טובים שווים את ההמתנה</span>
+              <span>⚡ מכין לך שאלות עם הסברים מעמיקים...</span>
+              <span style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '8px' }}>בדרך כלל 5-15 שניות</span>
             </div>
           </div>
         </div>
