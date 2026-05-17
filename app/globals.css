@@ -89,15 +89,28 @@ html {
 }
 .chat-md hr { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 1em 0; }
 
-/* KaTeX math — colors, alignment, RTL friendliness */
-.chat-md .katex { color: #f8fafc; font-size: 1.05em; }
+/* KaTeX math — colors, alignment, force LTR inside RTL Hebrew paragraphs.
+   Without this, "f(x) = ln(3x)" reads right-to-left and shows as
+   "ln(3x) = f(x)" — the user reported exactly this. The fix is two layers:
+   1) parent .katex span explicitly direction: ltr (was missing — only
+      .katex-display had it before)
+   2) unicode-bidi: isolate so the math run doesn't leak its direction
+      into the surrounding Hebrew flow
+*/
+.chat-md .katex {
+  color: #f8fafc;
+  font-size: 1.05em;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
 .chat-md .katex-display {
-  margin: 0.6em 0;
+  margin: 0.8em 0;
   padding: 0.4em 0;
   overflow-x: auto;
   overflow-y: hidden;
-  direction: ltr;     /* math is LTR even in Hebrew paragraphs */
+  direction: ltr;
   text-align: center;
+  unicode-bidi: isolate;
 }
 .chat-md .katex-display > .katex { display: inline-block; text-align: center; }
 .chat-md :is(.katex, .katex-display) * { text-shadow: none; }
