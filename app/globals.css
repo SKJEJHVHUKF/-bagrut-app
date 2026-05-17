@@ -90,20 +90,19 @@ html {
 .chat-md hr { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 1em 0; }
 
 /* KaTeX math — colors, alignment, force LTR inside RTL Hebrew paragraphs.
-   Without this, "f(x) = ln(3x)" reads right-to-left and shows as
-   "ln(3x) = f(x)" — the user reported exactly this. The fix is two layers:
-   1) parent .katex span explicitly direction: ltr (was missing — only
-      .katex-display had it before)
-   2) unicode-bidi: isolate so the math run doesn't leak its direction
-      into the surrounding Hebrew flow
+   Applied to both the chat (.chat-md) and the quiz (.math-content).
+   Without `direction: ltr` + `unicode-bidi: isolate`, math like
+   "f(x) = ln(3x)" reads right-to-left inside Hebrew paragraphs and
+   shows reversed. Isolate tells the surrounding RTL flow to treat the
+   math run as one neutral character.
 */
-.chat-md .katex {
+:is(.chat-md, .math-content) .katex {
   color: #f8fafc;
   font-size: 1.05em;
   direction: ltr;
   unicode-bidi: isolate;
 }
-.chat-md .katex-display {
+:is(.chat-md, .math-content) .katex-display {
   margin: 0.8em 0;
   padding: 0.4em 0;
   overflow-x: auto;
@@ -112,5 +111,29 @@ html {
   text-align: center;
   unicode-bidi: isolate;
 }
-.chat-md .katex-display > .katex { display: inline-block; text-align: center; }
-.chat-md :is(.katex, .katex-display) * { text-shadow: none; }
+:is(.chat-md, .math-content) .katex-display > .katex {
+  display: inline-block;
+  text-align: center;
+}
+:is(.chat-md, .math-content) :is(.katex, .katex-display) * { text-shadow: none; }
+
+/* Quiz markdown — minimal styles. The quiz already provides its own
+   typography for question/answer/explanation containers; .math-content
+   only needs to flatten ReactMarkdown's default block margins so
+   short answers don't gain extra vertical space. */
+.math-content > p:first-child { margin-top: 0; }
+.math-content > p:last-child { margin-bottom: 0; }
+.math-content p { margin: 0; }
+.math-content p + p { margin-top: 0.5em; }
+.math-content strong { font-weight: 800; }
+.math-content em { font-style: italic; }
+.math-content ul, .math-content ol { margin: 0.4em 0; padding-inline-start: 1.5em; }
+.math-content li { margin: 0.15em 0; }
+.math-content code:not(pre code) {
+  background: rgba(255,255,255,0.08);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  font-size: 0.92em;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  unicode-bidi: plaintext;
+}

@@ -1,6 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+
+// Renders a string with markdown + LaTeX math.
+// `inline` strips the wrapping <p> so the content can sit inside a flex
+// button / single-line container without taking a full block.
+function MathText({ children, inline = false }: { children: string; inline?: boolean }) {
+  const components = inline
+    ? { p: ({ children }: { children?: ReactNode }) => <>{children}</> }
+    : undefined;
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      rehypePlugins={[rehypeKatex]}
+      components={components}
+    >
+      {children}
+    </ReactMarkdown>
+  );
+}
 
 const SUBJECTS = {
   // ===== Math 5 units (highest level) — שאלון 581/582 =====
@@ -217,7 +239,9 @@ export default function Quiz() {
           </div>
           <div className="question-card">
             <div className="q-number">שאלה {currentQ + 1}</div>
-            <div className="q-text">{q.question}</div>
+            <div className="q-text math-content">
+              <MathText>{q.question}</MathText>
+            </div>
           </div>
           <div className="answers">
             {q.answers.map((ans: string, i: number) => (
@@ -228,7 +252,9 @@ export default function Quiz() {
                 disabled={selectedAnswer !== null}
               >
                 <span className="answer-letter">{letters[i]}</span>
-                <span>{ans}</span>
+                <span className="answer-text math-content">
+                  <MathText inline>{ans}</MathText>
+                </span>
               </button>
             ))}
           </div>
@@ -239,11 +265,17 @@ export default function Quiz() {
               </div>
 
               {/* Structured explanation (new rich format).
-                  Falls back to plain text for legacy/cached entries. */}
+                  Falls back to plain text for legacy/cached entries.
+                  Each text block now renders markdown + LaTeX math via
+                  MathText so the AI can use $...$ / $$...$$ to typeset
+                  fractions, exponents, ln, integrals, etc. — same as in
+                  the /chat page. */}
               {typeof q.explanation === 'string' ? (
                 <div className="explanation-box" style={{ display: 'block' }}>
                   <div className="ex-label">הסבר</div>
-                  <div className="ex-text">{q.explanation}</div>
+                  <div className="ex-text math-content">
+                    <MathText>{q.explanation}</MathText>
+                  </div>
                 </div>
               ) : (
                 <div className="lesson-stack">
@@ -253,7 +285,9 @@ export default function Quiz() {
                         <span className="lesson-icon">✅</span>
                         <span>למה התשובה הנכונה</span>
                       </div>
-                      <div className="lesson-text">{q.explanation.why_correct}</div>
+                      <div className="lesson-text math-content">
+                        <MathText>{q.explanation.why_correct}</MathText>
+                      </div>
                     </div>
                   )}
 
@@ -263,7 +297,9 @@ export default function Quiz() {
                         <span className="lesson-icon">❌</span>
                         <span>למה האחרות שגויות</span>
                       </div>
-                      <div className="lesson-text">{q.explanation.why_wrong}</div>
+                      <div className="lesson-text math-content">
+                        <MathText>{q.explanation.why_wrong}</MathText>
+                      </div>
                     </div>
                   )}
 
@@ -273,7 +309,9 @@ export default function Quiz() {
                         <span className="lesson-icon">📚</span>
                         <span>הרעיון העקרוני</span>
                       </div>
-                      <div className="lesson-text">{q.explanation.concept}</div>
+                      <div className="lesson-text math-content">
+                        <MathText>{q.explanation.concept}</MathText>
+                      </div>
                     </div>
                   )}
 
@@ -283,7 +321,9 @@ export default function Quiz() {
                         <span className="lesson-icon">💡</span>
                         <span>טיפ לזכור</span>
                       </div>
-                      <div className="lesson-text">{q.explanation.remember}</div>
+                      <div className="lesson-text math-content">
+                        <MathText>{q.explanation.remember}</MathText>
+                      </div>
                     </div>
                   )}
                 </div>
