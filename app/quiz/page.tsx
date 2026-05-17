@@ -27,7 +27,9 @@ export default function Quiz() {
   const subject = SUBJECTS[currentSubject as keyof typeof SUBJECTS];
   const letters = ['א', 'ב', 'ג', 'ד'];
 
-  const getCacheKey = () => `quiz_${currentSubject}_${selectedTopic}`;
+  // v2 bump: explanation format changed from string to structured object.
+  // Old cached questions would render blank — this key change auto-invalidates them.
+  const getCacheKey = () => `quiz_v2_${currentSubject}_${selectedTopic}`;
 
   const startQuiz = async () => {
     if (!selectedTopic) return;
@@ -129,8 +131,8 @@ export default function Quiz() {
             <div className="loader-ring"></div>
             <div className="loading-tip">
               <strong>{subject.emoji} {subject.name} — {selectedTopic}</strong>
-              <span>🤖 AI מייצר שאלות בגרות אמיתיות...</span>
-              <span style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '8px' }}>זה עשוי לקחת 10-30 שניות</span>
+              <span>🎓 המורה הפרטי שלך מכין שאלות עם הסברים מעמיקים...</span>
+              <span style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '8px' }}>זה לוקח 15-45 שניות — הסברים טובים שווים את ההמתנה</span>
             </div>
           </div>
         </div>
@@ -180,10 +182,61 @@ export default function Quiz() {
           </div>
           {selectedAnswer !== null && (
             <>
-              <div className="explanation-box" style={{ display: 'block' }}>
-                <div className="ex-label">{isCorrect ? '✅ נכון!' : '❌ טעות'} — הסבר</div>
-                <div className="ex-text">{q.explanation}</div>
+              <div className={`verdict-banner ${isCorrect ? 'verdict-correct' : 'verdict-wrong'}`}>
+                {isCorrect ? '✅ נכון! כל הכבוד' : '❌ טעות — אבל בוא נלמד מזה'}
               </div>
+
+              {/* Structured explanation (new rich format).
+                  Falls back to plain text for legacy/cached entries. */}
+              {typeof q.explanation === 'string' ? (
+                <div className="explanation-box" style={{ display: 'block' }}>
+                  <div className="ex-label">הסבר</div>
+                  <div className="ex-text">{q.explanation}</div>
+                </div>
+              ) : (
+                <div className="lesson-stack">
+                  {q.explanation?.why_correct && (
+                    <div className="lesson-card lesson-correct">
+                      <div className="lesson-label">
+                        <span className="lesson-icon">✅</span>
+                        <span>למה התשובה הנכונה</span>
+                      </div>
+                      <div className="lesson-text">{q.explanation.why_correct}</div>
+                    </div>
+                  )}
+
+                  {q.explanation?.why_wrong && (
+                    <div className="lesson-card lesson-wrong">
+                      <div className="lesson-label">
+                        <span className="lesson-icon">❌</span>
+                        <span>למה האחרות שגויות</span>
+                      </div>
+                      <div className="lesson-text">{q.explanation.why_wrong}</div>
+                    </div>
+                  )}
+
+                  {q.explanation?.concept && (
+                    <div className="lesson-card lesson-concept">
+                      <div className="lesson-label">
+                        <span className="lesson-icon">📚</span>
+                        <span>הרעיון העקרוני</span>
+                      </div>
+                      <div className="lesson-text">{q.explanation.concept}</div>
+                    </div>
+                  )}
+
+                  {q.explanation?.remember && (
+                    <div className="lesson-card lesson-tip">
+                      <div className="lesson-label">
+                        <span className="lesson-icon">💡</span>
+                        <span>טיפ לזכור</span>
+                      </div>
+                      <div className="lesson-text">{q.explanation.remember}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <button
                 className="start-btn"
                 onClick={nextQuestion}
@@ -313,6 +366,25 @@ export default function Quiz() {
         .explanation-box { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border: 1.5px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: 16px 18px; animation: fadeUp 0.35s ease; }
         .ex-label { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
         .ex-text { font-size: 14px; line-height: 1.8; color: var(--text2); font-weight: 500; }
+        /* ===== Verdict banner (correct/wrong header) ===== */
+        .verdict-banner { padding: 14px 18px; border-radius: var(--radius-sm); font-size: 16px; font-weight: 800; text-align: center; letter-spacing: 0.02em; animation: fadeUp 0.35s ease; border: 1.5px solid; }
+        .verdict-correct { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34d399; }
+        .verdict-wrong { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.4); color: #f87171; }
+        /* ===== Lesson cards (rich explanation - 4 sections) ===== */
+        .lesson-stack { display: flex; flex-direction: column; gap: 10px; animation: fadeUp 0.4s ease; }
+        .lesson-card { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; transition: transform 0.2s ease, border-color 0.2s ease; }
+        .lesson-card:hover { transform: translateX(-2px); }
+        .lesson-correct { border-right: 4px solid #10b981; }
+        .lesson-correct:hover { border-color: rgba(16,185,129,0.4); }
+        .lesson-wrong { border-right: 4px solid #ef4444; }
+        .lesson-wrong:hover { border-color: rgba(239,68,68,0.4); }
+        .lesson-concept { border-right: 4px solid #6366f1; }
+        .lesson-concept:hover { border-color: rgba(99,102,241,0.4); }
+        .lesson-tip { border-right: 4px solid #f59e0b; background: linear-gradient(135deg, rgba(245,158,11,0.05) 0%, var(--surface3) 100%); }
+        .lesson-tip:hover { border-color: rgba(245,158,11,0.4); }
+        .lesson-label { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; }
+        .lesson-icon { font-size: 16px; line-height: 1; }
+        .lesson-text { font-size: 14px; line-height: 1.85; color: var(--text); font-weight: 500; }
         .loading-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 50px 40px; }
         .loader-ring { width: 64px; height: 64px; position: relative; }
         .loader-ring::before, .loader-ring::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 3px solid transparent; }
