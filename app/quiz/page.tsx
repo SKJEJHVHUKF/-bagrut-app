@@ -101,14 +101,34 @@ export default function Quiz() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject: currentSubject, topic: selectedTopic })
       });
+
+      // Surface the real failure so we can debug instead of guessing:
+      // - server returned 4xx/5xx → show its `error` field (carries the
+      //   debug suffix we added on the backend)
+      // - server returned ok but no error → show what we actually got
+      // - fetch threw (timeout, network, Vercel killed the function) →
+      //   show the JS error message
+      if (!res.ok) {
+        let serverMsg = '';
+        try {
+          const errData = await res.json();
+          serverMsg = errData?.error ?? '';
+        } catch {
+          serverMsg = await res.text().catch(() => '');
+        }
+        throw new Error(`HTTP ${res.status}: ${serverMsg || '(no body)'}`);
+      }
+
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      if (!data.questions) throw new Error('No questions field in response');
 
       // שמור ב-cache
       localStorage.setItem(cacheKey, JSON.stringify(data.questions));
       setQuestions(data.questions);
     } catch (e) {
-      alert('שגיאה בטעינת השאלות. נסה שוב.');
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`שגיאה: ${msg}`);
       setScreen('home');
     }
     setLoading(false);
