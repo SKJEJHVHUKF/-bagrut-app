@@ -169,6 +169,9 @@ export default function Quiz() {
       <button className="start-btn" onClick={startQuiz} disabled={!selectedTopic}>
         התחל תרגול →
       </button>
+      <a href="/chat" className="chat-link">
+        💬 שאל את המורה — צ&apos;אט עם AI
+      </a>
     </div>
   );
 
@@ -386,6 +389,8 @@ export default function Quiz() {
         .start-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(99,102,241,0.6); }
         .start-btn:active:not(:disabled) { transform: translateY(-1px); }
         .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .chat-link { display: block; text-align: center; margin-top: 12px; padding: 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--surface); color: var(--text2); font-family: var(--font-heebo), sans-serif; font-size: 14px; font-weight: 700; text-decoration: none; transition: all 0.25s; }
+        .chat-link:hover { color: var(--text); border-color: var(--accent2); background: var(--surface2); }
         .quiz-inner { padding: 20px 28px 32px; display: flex; flex-direction: column; flex: 1; gap: 16px; }
         .quiz-topbar { display: flex; align-items: center; gap: 14px; }
         .back-icon-btn { width: 40px; height: 40px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: all 0.2s; flex-shrink: 0; font-family: 'Heebo', sans-serif; color: var(--text2); }
