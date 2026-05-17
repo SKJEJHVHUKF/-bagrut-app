@@ -221,7 +221,10 @@ export default function Quiz() {
       <button className="start-btn" onClick={startQuiz} disabled={!selectedTopic}>
         התחל תרגול →
       </button>
-      <a href="/chat" className="chat-link">
+      <a href="/practice" className="chat-link" style={{ background: 'linear-gradient(135deg, rgba(167,139,250,0.15), rgba(236,72,153,0.15))', borderColor: 'rgba(167,139,250,0.4)' }}>
+        🎯 תרגול מודרך — תרגיל אחד עם רמזים ופתרון מדורג
+      </a>
+      <a href="/chat" className="chat-link" style={{ marginTop: '8px' }}>
         💬 שאל את המורה — צ&apos;אט עם AI
       </a>
       <a href="/history" className="chat-link" style={{ marginTop: '8px' }}>
