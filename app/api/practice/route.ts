@@ -221,12 +221,14 @@ ${DIFFICULTY_HINT[difficulty]}
     // ===== 10. CALL ANTHROPIC =====
     const client = new Anthropic({ apiKey });
     const message = await client.messages.create({
-      // Sonnet 4.6 — quality matters more than speed here, and one
-      // problem is small enough that Sonnet finishes comfortably
-      // inside Vercel's 60s cap. Per-request cost: ~$0.015 (one
-      // problem, ~1000 tokens input + 1500 tokens output).
+      // Sonnet 4.6 — quality matters more than speed here. The earlier
+      // 2000 max_tokens cap led to occasional hangs near the Vercel
+      // 60s edge (user reported "loaded a lot and got nothing"); drop
+      // to 1500 to keep generation safely inside ~25s. The structured
+      // schema (one problem, 3 hints, 3-6 steps, short final answer)
+      // fits comfortably inside that budget.
       model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
+      max_tokens: 1500,
       messages: [{ role: 'user', content: fullPrompt }],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...({ output_config: { format: { type: 'json_schema', schema: exerciseSchema } } } as any),

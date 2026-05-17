@@ -102,6 +102,14 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-2">
             <Link
+              href="/practice"
+              className="group flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-amber-500/50 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all"
+              title="תרגול מודרך"
+            >
+              <span>🎯</span>
+              <span className="hidden sm:inline">תרגול מודרך</span>
+            </Link>
+            <Link
               href="/chat"
               className="group flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/50 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all"
               title="צ'אט עם המורה הפרטי"
@@ -174,6 +182,82 @@ export default function Landing() {
               <div className="text-xs sm:text-sm text-slate-400 mt-1 font-semibold">{s.label}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Three modes — quiz / practice / chat */}
+      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="inline-block text-xs sm:text-sm font-bold text-purple-400 uppercase tracking-widest mb-3">
+            3 דרכים ללמוד
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-black mb-3">
+            <span className="bg-gradient-to-l from-white to-purple-200 bg-clip-text text-transparent">
+              בחר את הדרך שמתאימה לך
+            </span>
+          </h2>
+          <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
+            כל מצב פותר בעיה שונה. אפשר לשלב ביניהם — ולעבור בין מצב לאחר תוך כדי לימוד.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Quiz */}
+          <Link
+            href="/quiz"
+            className="group bg-gradient-to-br from-purple-600/15 to-pink-600/15 backdrop-blur-md border border-purple-500/30 hover:border-purple-500/60 rounded-3xl p-6 transition-all hover:-translate-y-1"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/40 group-hover:scale-110 transition-transform">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-xl font-black mb-2">בחינה מהירה</h3>
+            <p className="text-sm text-slate-300 leading-relaxed mb-4">
+              5 שאלות רב-ברירה עם הסבר מלא לכל תשובה. מצב אידיאלי לבדיקה מהירה של ידע ולסקירה לפני מבחן.
+            </p>
+            <div className="text-xs text-purple-300 font-bold flex items-center gap-1.5">
+              התחל בחינה
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {/* Practice — guided */}
+          <Link
+            href="/practice"
+            className="group bg-gradient-to-br from-amber-500/15 to-orange-500/15 backdrop-blur-md border border-amber-500/30 hover:border-amber-500/60 rounded-3xl p-6 transition-all hover:-translate-y-1 relative"
+          >
+            <div className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-black text-amber-200 uppercase tracking-wider">
+              חדש
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-4 shadow-lg shadow-amber-500/40 group-hover:scale-110 transition-transform">
+              <span className="text-2xl">🎯</span>
+            </div>
+            <h3 className="text-xl font-black mb-2">תרגול מודרך</h3>
+            <p className="text-sm text-slate-300 leading-relaxed mb-4">
+              תרגיל אחד מעמיק עם רמזים פרוגרסיביים ופתרון צעד-אחר-צעד. מתאים ללמידה לעומק של נושא חדש או למי שתקוע.
+            </p>
+            <div className="text-xs text-amber-300 font-bold flex items-center gap-1.5">
+              קבל תרגיל
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {/* Chat */}
+          <Link
+            href="/chat"
+            className="group bg-gradient-to-br from-emerald-500/15 to-teal-500/15 backdrop-blur-md border border-emerald-500/30 hover:border-emerald-500/60 rounded-3xl p-6 transition-all hover:-translate-y-1"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/40 group-hover:scale-110 transition-transform">
+              <span className="text-2xl">💬</span>
+            </div>
+            <h3 className="text-xl font-black mb-2">המורה הפרטי</h3>
+            <p className="text-sm text-slate-300 leading-relaxed mb-4">
+              צ&apos;אט חופשי עם AI. שאל כל שאלה, בקש הסבר, פתח דיאלוג על נושא. כמו מורה פרטי שתמיד זמין.
+            </p>
+            <div className="text-xs text-emerald-300 font-bold flex items-center gap-1.5">
+              התחל לדבר
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+            </div>
+          </Link>
         </div>
       </section>
 
