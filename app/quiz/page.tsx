@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { createClient } from '@/lib/supabase/client';
 
 // Renders a string with markdown + LaTeX math.
 // `inline` strips the wrapping <p> so the content can sit inside a flex
@@ -152,10 +153,39 @@ export default function Quiz() {
     if (ok) setScore(score + 1);
   };
 
+  // Persist the completed session to Supabase. Fire-and-forget so the UX
+  // never blocks waiting for the network. Errors are logged for debugging
+  // but never surfaced to the user — losing a history row is worse UX
+  // than blocking the results screen on a flaky DB call.
+  const saveSession = (finalScore: number, finalAnswered: Array<{ question: string; correct: boolean }>) => {
+    if (!selectedTopic) return;
+    const supabase = createClient();
+    supabase
+      .from('practice_sessions')
+      .insert({
+        // user_id auto-fills from auth.uid() via the column default in SQL
+        subject_key: currentSubject,
+        subject_name: subject.name,
+        subject_emoji: subject.emoji,
+        topic: selectedTopic,
+        score: finalScore,
+        total: questions.length,
+        answered: finalAnswered,
+        questions: questions,
+      })
+      .then(({ error }) => {
+        if (error) console.error('[practice_sessions] insert failed:', error);
+      });
+  };
+
   const nextQuestion = () => {
     setSelectedAnswer(null);
     setIsCorrect(null);
     if (currentQ >= questions.length - 1) {
+      // This is the transition from the last question to the results
+      // screen — the only moment we have the final score AND the full
+      // per-question outcome list. Save now.
+      saveSession(score, answered);
       setScreen('results');
     } else {
       setCurrentQ(currentQ + 1);
@@ -193,6 +223,9 @@ export default function Quiz() {
       </button>
       <a href="/chat" className="chat-link">
         💬 שאל את המורה — צ&apos;אט עם AI
+      </a>
+      <a href="/history" className="chat-link" style={{ marginTop: '8px' }}>
+        📊 ההיסטוריה שלי
       </a>
     </div>
   );
