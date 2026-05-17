@@ -49,8 +49,8 @@ function BagrutLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
 }
 
 const SUBJECTS = [
-  { name: 'מתמטיקה 5 יח׳', emoji: '📐', topics: 6, color: 'from-purple-500/20 to-fuchsia-500/20', glow: 'shadow-purple-500/30' },
-  { name: 'מתמטיקה יב׳', emoji: '🔢', topics: 6, color: 'from-violet-500/20 to-purple-500/20', glow: 'shadow-violet-500/30' },
+  { name: 'מתמטיקה 5 יח׳', emoji: '📐', topics: 12, color: 'from-purple-500/20 to-fuchsia-500/20', glow: 'shadow-purple-500/30' },
+  { name: 'מתמטיקה 4 יח׳', emoji: '🔢', topics: 11, color: 'from-violet-500/20 to-purple-500/20', glow: 'shadow-violet-500/30' },
   { name: 'פיזיקה', emoji: '⚛️', topics: 6, color: 'from-sky-500/20 to-blue-500/20', glow: 'shadow-sky-500/30' },
   { name: 'אנגלית', emoji: '🇬🇧', topics: 4, color: 'from-orange-500/20 to-amber-500/20', glow: 'shadow-orange-500/30' },
   { name: 'היסטוריה', emoji: '📜', topics: 5, color: 'from-amber-500/20 to-yellow-500/20', glow: 'shadow-amber-500/30' },

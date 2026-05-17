@@ -3,8 +3,50 @@
 import React, { useState, useEffect } from 'react';
 
 const SUBJECTS = {
-  math: { name: 'מתמטיקה', emoji: '📐', tabCls: 'tab-math', gridCls: 's-math', badge: { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' }, topics: [{ name: 'גבולות ורציפות', emoji: '∞', sub: 'גבולות, אסימפטוטות' }, { name: 'נגזרות', emoji: '∂', sub: 'כללי גזירה, אקסטרמום' }, { name: 'אינטגרלים', emoji: '∫', sub: 'מסוים ובלתי מסוים' }, { name: 'סדרות', emoji: '⋯', sub: 'חשבוניות, הנדסיות' }, { name: 'הסתברות', emoji: '🎲', sub: 'קומבינטוריקה' }, { name: 'מטריצות', emoji: '⊞', sub: 'פעולות, דטרמיננטה' }] },
-  math12: { name: 'מתמטיקה יב', emoji: '🔢', tabCls: 'tab-math', gridCls: 's-math', badge: { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' }, topics: [{ name: 'מספרים מרוכבים', emoji: 'ℂ', sub: 'צורה קטבית, פעולות' }, { name: 'פולינומים', emoji: '🔷', sub: 'חלוקה, שורשים' }, { name: 'וקטורים', emoji: '➡️', sub: 'מכפלה סקלרית, וקטורית' }, { name: 'גאומטריה אנליטית', emoji: '📍', sub: 'קו, מעגל, חרוט' }, { name: 'טריגונומטריה', emoji: '⚪', sub: 'משוואות, זהויות' }, { name: 'סטטיסטיקה', emoji: '📊', sub: 'התפלגות, רגרסיה' }] },
+  // ===== Math 5 units (highest level) — שאלון 581/582 =====
+  // Topic list reflects the post-2020 reform curriculum.
+  math5: {
+    name: 'מתמטיקה 5 יח׳',
+    emoji: '📐',
+    tabCls: 'tab-math',
+    gridCls: 's-math',
+    badge: { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' },
+    topics: [
+      { name: 'אלגברה', emoji: '🔣', sub: 'משוואות, אי-שוויונים, ערך מוחלט' },
+      { name: 'פונקציות', emoji: '📈', sub: 'לינארית, ריבועית, חקירה' },
+      { name: 'מעריכית ולוגריתמית', emoji: '📊', sub: 'חזקות, שורשים, לוגריתמים' },
+      { name: 'טריגונומטריה', emoji: '🔺', sub: 'זהויות, משוואות, משולשים' },
+      { name: 'חשבון דיפרנציאלי', emoji: '∂', sub: 'נגזרות, חקירת פונקציות, אופטימיזציה' },
+      { name: 'חשבון אינטגרלי', emoji: '∫', sub: 'אינטגרלים, שטחים, נפחים' },
+      { name: 'סדרות', emoji: '⋯', sub: 'חשבונית, הנדסית, מתכנסת' },
+      { name: 'גאומטריה אנליטית', emoji: '📍', sub: 'הישר והמעגל' },
+      { name: 'וקטורים במרחב', emoji: '➡️', sub: 'מכפלות, ישרים, מישורים' },
+      { name: 'מספרים מרוכבים', emoji: 'ℂ', sub: 'צורה קוטבית, דה-מואבר' },
+      { name: 'הסתברות', emoji: '🎲', sub: 'קומבינטוריקה, ברנולי, תרשים עץ' },
+      { name: 'סטטיסטיקה', emoji: '📉', sub: 'התפלגות נורמלית, רגרסיה' },
+    ],
+  },
+  // ===== Math 4 units (intermediate) — שאלון 481/482 =====
+  math4: {
+    name: 'מתמטיקה 4 יח׳',
+    emoji: '🔢',
+    tabCls: 'tab-math',
+    gridCls: 's-math',
+    badge: { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' },
+    topics: [
+      { name: 'אלגברה', emoji: '🔣', sub: 'משוואות, אי-שוויונים, ערך מוחלט' },
+      { name: 'פונקציות', emoji: '📈', sub: 'פולינומיות, רציונליות, חקירה' },
+      { name: 'מעריכית ולוגריתמית', emoji: '📊', sub: 'חזקות, שורשים, לוגריתמים' },
+      { name: 'טריגונומטריה', emoji: '🔺', sub: 'פתרון משולשים, זהויות בסיסיות' },
+      { name: 'חשבון דיפרנציאלי', emoji: '∂', sub: 'נגזרות, חקירת פונקציות' },
+      { name: 'חשבון אינטגרלי', emoji: '∫', sub: 'אינטגרל בלתי-מסוים ומסוים' },
+      { name: 'גאומטריה אוקלידית', emoji: '📐', sub: 'משולשים, מרובעים, מעגלים' },
+      { name: 'גאומטריה אנליטית', emoji: '📍', sub: 'הישר והמעגל' },
+      { name: 'סדרות', emoji: '⋯', sub: 'חשבוניות והנדסיות' },
+      { name: 'הסתברות', emoji: '🎲', sub: 'הסתברות בסיסית, נוסחאות' },
+      { name: 'סטטיסטיקה', emoji: '📉', sub: 'שכיחות, ממוצע, סטיית תקן' },
+    ],
+  },
   physics: { name: 'פיזיקה', emoji: '⚛️', tabCls: 'tab-physics', gridCls: 's-physics', badge: { color: '#38bdf8', bg: 'rgba(56,189,248,0.12)', border: 'rgba(56,189,248,0.25)' }, topics: [{ name: 'מכניקה', emoji: '🔧', sub: 'כוחות, תנועה' }, { name: 'חשמל', emoji: '⚡', sub: 'מעגלים, שדות' }, { name: 'גלים', emoji: '🌊', sub: 'גלים, עדשות' }, { name: 'תרמודינמיקה', emoji: '🌡️', sub: 'חוקי החום' }, { name: 'קוונטים', emoji: '🔬', sub: 'פוטון, אפקט פוטואלקטרי' }, { name: 'כבידה', emoji: '🪐', sub: 'כוח כבידה, מסלולים' }] },
   english: { name: 'אנגלית', emoji: '🇬🇧', tabCls: 'tab-english', gridCls: 's-english', badge: { color: '#fb923c', bg: 'rgba(251,146,60,0.12)', border: 'rgba(251,146,60,0.25)' }, topics: [{ name: 'Reading', emoji: '📖', sub: 'הבנת הנקרא' }, { name: 'Grammar', emoji: '📝', sub: 'דקדוק ותחביר' }, { name: 'Vocabulary', emoji: '💬', sub: 'אוצר מילים' }, { name: 'Writing', emoji: '✍️', sub: 'כתיבה' }] },
   history: { name: 'היסטוריה', emoji: '📜', tabCls: 'tab-history', gridCls: 's-history', badge: { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)' }, topics: [{ name: 'השואה', emoji: '✡️', sub: 'מדיניות נאצית' }, { name: 'מלחמת עולם א׳', emoji: '🗺️', sub: 'סיבות, מהלך' }, { name: 'מלחמת עולם ב׳', emoji: '⚔️', sub: 'חזיתות ותוצאות' }, { name: 'הקמת המדינה', emoji: '🇮🇱', sub: 'ציונות, הכרזה' }, { name: 'המהפכה הצרפתית', emoji: '🗼', sub: 'סיבות ומורשת' }] },
@@ -14,7 +56,7 @@ const SUBJECTS = {
 
 export default function Quiz() {
   const [screen, setScreen] = useState('home');
-  const [currentSubject, setCurrentSubject] = useState('math');
+  const [currentSubject, setCurrentSubject] = useState('math5');
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
