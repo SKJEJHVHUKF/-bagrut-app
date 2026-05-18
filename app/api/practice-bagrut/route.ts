@@ -243,8 +243,11 @@ ${DIFFICULTY_HINT[difficulty]}
     }>(
       client,
       {
+        // 2000 max_tokens (was 2500). Reduces a single attempt to ~25-35s,
+        // leaving room for one retry inside Vercel's 60s function cap if
+        // the first attempt produced malformed JSON.
         model: 'claude-sonnet-4-6',
-        max_tokens: 2500,
+        max_tokens: 2000,
         messages: [{ role: 'user', content: fullPrompt }],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...({ output_config: { format: { type: 'json_schema', schema: questionSchema } } } as any),

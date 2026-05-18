@@ -5,6 +5,7 @@ import { Loader2, Sparkles, RefreshCw } from 'lucide-react';
 import { MathText } from './MathText';
 import { QuestionPartCard, type QuestionPart } from './QuestionPartCard';
 import { markExerciseDone } from '@/lib/progress';
+import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 
 type BagrutQuestion = {
   context: string;
@@ -36,7 +37,7 @@ export function BagrutQuestionView({
     setPartsDone(new Set());
     setDifficulty(d);
     try {
-      const res = await fetch('/api/practice-bagrut', {
+      const res = await fetchWithTimeout('/api/practice-bagrut', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject, topic, difficulty: d }),

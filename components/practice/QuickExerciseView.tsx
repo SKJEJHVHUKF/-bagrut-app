@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { MathText } from './MathText';
 import { markExerciseDone } from '@/lib/progress';
+import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 
 type Exercise = {
   problem: string;
@@ -56,7 +57,7 @@ export function QuickExerciseView({
     setDifficulty(d);
     setDoneMarked(false);
     try {
-      const res = await fetch('/api/practice', {
+      const res = await fetchWithTimeout('/api/practice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject, topic, difficulty: d }),
