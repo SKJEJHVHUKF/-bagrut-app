@@ -11,6 +11,40 @@ Live production: <https://bagrut-app.vercel.app>.
 
 Owner / site admin: **meitalm1020@gmail.com**. Treat their direction as authoritative on product decisions.
 
+---
+
+## Project status (as of 2026-05-18)
+
+### Features completed ✅
+
+| Feature | Route | Notes |
+|---|---|---|
+| Landing page | `/` | Dark glassmorphism, Tailwind, 7 subjects grid, FAQ, pricing |
+| Quiz — 5 MCQ | `/quiz` | Picks subject + topic → 5 AI questions with 4-section explanations |
+| Guided practice | `/practice` | 1 deep exercise with 3 progressive hints + step-by-step solution |
+| AI tutor chat | `/chat` | Haiku 4.5, persists history to Supabase, 20-message daily quota |
+| Chat history | `/history` | Reads `chat_messages` from Supabase, time-ago in Hebrew |
+| Authentication | `/login` `/signup` | Supabase email/password, OAuth callback, protected-route middleware |
+| Rate limiting | `lib/rate-limit.ts` | In-memory, per-fingerprint + global circuit breaker |
+| Security hardening | all API routes | Origin check, bot UA filter, honeypot field, prompt-injection blacklist |
+| Math rendering | global | react-markdown + remark-math + rehype-katex; bidi fix in globals.css |
+| PWA manifest + icons | `/manifest.ts` `apple-icon.tsx` | installable |
+
+### Known bugs / open issues 🐛
+
+1. **`correct` index mismatch** — Sonnet 4.6 with structured outputs occasionally marks an answer index that doesn't match the explanation. Fix: add a post-generation validator in `app/api/questions/route.ts` that checks `parsed.questions[i].answers[parsed.questions[i].correct]` matches what `why_correct` describes; retry once on mismatch.
+2. **Practice page requires login** — `/api/practice` returns 401 to logged-out users but the UI doesn't surface a friendly message; user sees a spinner or vague error.
+
+### Next steps 🚀
+
+1. **Fix the `correct` index bug** — validator + one retry in `app/api/questions/route.ts`. Highest priority; directly harms learning.
+2. **Practice page login wall** — show a clear "יש להתחבר כדי לתרגל" message when the 401 comes back, with a link to `/login`.
+3. **Quiz history** — save quiz attempts (subject, topic, score, timestamp) to a new `quiz_attempts` Supabase table; surface them in `/history`.
+4. **Question pool** — pre-generate questions per topic into Supabase, serve random rows. Cuts per-session cost from ~$0.04 to ~$0.001.
+5. **Pro tier / waitlist** — the landing page already shows a "בקרוב" Pro card; wiring up an email waitlist (Resend or simple Supabase insert) would capture interest.
+
+---
+
 ## Commands
 
 ```bash
