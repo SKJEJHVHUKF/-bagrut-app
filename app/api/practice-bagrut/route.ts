@@ -196,8 +196,9 @@ ${DIFFICULTY_HINT[difficulty]}
 
 מזהה גיוון: ${variationSeed}.`;
 
-    const bagrutContext = buildBagrutContext(subject, topic);
-    const fullPrompt = bagrutContext + '\n\n' + subjectInfo.opener(topic) + tutorInstruction;
+    // Note: previously prepended ~800 tokens of bagrut context here. That
+    // grew per-call cost without proportional quality gain — removed.
+    const fullPrompt = subjectInfo.opener(topic) + tutorInstruction;
 
     const partSchema = {
       type: 'object',

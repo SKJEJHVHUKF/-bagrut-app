@@ -194,8 +194,9 @@ ${DIFFICULTY_HINT[difficulty]}
 
 מזהה גיוון: ${variationSeed} (השתמש בו כדי לוודא שאתה לא חוזר על תרגילים זהים בין סבבים).`;
 
-    const bagrutContext = buildBagrutContext(subject, topic);
-    const fullPrompt = bagrutContext + '\n\n' + subjectInfo.buildPrompt(topic) + tutorInstruction;
+    // Note: previously prepended ~800 tokens of bagrut context here. That
+    // grew per-call cost without proportional quality gain — removed.
+    const fullPrompt = subjectInfo.buildPrompt(topic) + tutorInstruction;
 
     // ===== 9. SCHEMA =====
     const exerciseSchema = {
