@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { buildBagrutContext } from '@/content/bagrut-context';
+import { generateJSON } from '@/lib/anthropic-json';
 
 // Vercel Hobby caps serverless functions at 60s. A single deep problem
 // with 3 hints + ~5 solution steps typically finishes in 15-25s on
@@ -221,30 +222,28 @@ ${DIFFICULTY_HINT[difficulty]}
     };
 
     // ===== 10. CALL ANTHROPIC =====
+    // Sonnet 4.6 with structured output occasionally returns truncated
+    // JSON for Hebrew content. generateJSON retries once on parse error.
+    // max_tokens=2000 leaves comfortable headroom over the previous 1500.
     const client = new Anthropic({ apiKey });
-    const message = await client.messages.create({
-      // Sonnet 4.6 — quality matters more than speed here. The earlier
-      // 2000 max_tokens cap led to occasional hangs near the Vercel
-      // 60s edge (user reported "loaded a lot and got nothing"); drop
-      // to 1500 to keep generation safely inside ~25s. The structured
-      // schema (one problem, 3 hints, 3-6 steps, short final answer)
-      // fits comfortably inside that budget.
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
-      messages: [{ role: 'user', content: fullPrompt }],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...({ output_config: { format: { type: 'json_schema', schema: exerciseSchema } } } as any),
-    });
-
-    const content = message.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Unexpected response shape from Claude');
-    }
-
-    const parsed = JSON.parse(content.text);
+    const { data: parsed } = await generateJSON<{
+      problem?: unknown;
+      hints?: unknown;
+      solution?: { steps?: unknown };
+    }>(
+      client,
+      {
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: fullPrompt }],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...({ output_config: { format: { type: 'json_schema', schema: exerciseSchema } } } as any),
+      },
+      'practice'
+    );
 
     // Sanity checks on the shape we promised the client
-    if (!parsed.problem || !Array.isArray(parsed.hints) || !parsed.solution?.steps) {
+    if (!parsed.problem || !Array.isArray(parsed.hints) || !Array.isArray(parsed.solution?.steps)) {
       throw new Error('Invalid response structure');
     }
 
@@ -252,10 +251,10 @@ ${DIFFICULTY_HINT[difficulty]}
       headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' },
     });
   } catch (error) {
+    // Log full details for ourselves; show a clean message to the student.
     console.error('Practice error:', error);
-    const msg = error instanceof Error ? error.message : 'unknown';
     return Response.json(
-      { error: `שגיאה ביצירת התרגיל. נסה שוב. [debug: ${msg.slice(0, 200)}]` },
+      { error: 'שגיאה ביצירת התרגיל. נסה שוב בעוד רגע.' },
       { status: 500 }
     );
   }

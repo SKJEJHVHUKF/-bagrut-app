@@ -3,6 +3,7 @@ import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { serveFromPool } from '@/lib/question-pool';
 import { buildBagrutContext } from '@/content/bagrut-context';
+import { generateJSON } from '@/lib/anthropic-json';
 
 // Vercel Hobby caps serverless functions at 60s. A full bagrut question
 // with 3-4 parts (each with 3 hints + solution steps) is heavier than the
@@ -232,24 +233,24 @@ ${DIFFICULTY_HINT[difficulty]}
       additionalProperties: false,
     };
 
+    // Sonnet 4.6 — bagrut quality requires it. generateJSON wraps the
+    // call with a one-shot retry on JSON parse errors (the known Hebrew
+    // structured-output glitch).
     const client = new Anthropic({ apiKey });
-    const message = await client.messages.create({
-      // Sonnet 4.6 — bagrut question quality requires it (Haiku produces
-      // math errors). 2500 tokens fits 3-4 parts × (prompt + 3 hints + ~5
-      // steps + final answer) with headroom.
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2500,
-      messages: [{ role: 'user', content: fullPrompt }],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...({ output_config: { format: { type: 'json_schema', schema: questionSchema } } } as any),
-    });
-
-    const content = message.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Unexpected response shape from Claude');
-    }
-
-    const parsed = JSON.parse(content.text);
+    const { data: parsed } = await generateJSON<{
+      context?: unknown;
+      parts?: unknown[];
+    }>(
+      client,
+      {
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2500,
+        messages: [{ role: 'user', content: fullPrompt }],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...({ output_config: { format: { type: 'json_schema', schema: questionSchema } } } as any),
+      },
+      'practice-bagrut'
+    );
 
     if (
       typeof parsed.context !== 'string' ||
@@ -264,9 +265,8 @@ ${DIFFICULTY_HINT[difficulty]}
     });
   } catch (error) {
     console.error('Practice-bagrut error:', error);
-    const msg = error instanceof Error ? error.message : 'unknown';
     return Response.json(
-      { error: `שגיאה ביצירת השאלה. נסה שוב. [debug: ${msg.slice(0, 200)}]` },
+      { error: 'שגיאה ביצירת השאלה. נסה שוב בעוד רגע.' },
       { status: 500 }
     );
   }
