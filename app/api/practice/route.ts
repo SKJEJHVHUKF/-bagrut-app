@@ -54,7 +54,11 @@ const SUBJECTS: Record<string, { name: string; buildPrompt: (topic: string) => s
 // ===== SECURITY CONSTANTS =====
 const MAX_TOPIC_LENGTH = 80;
 const MIN_TOPIC_LENGTH = 2;
-const TOPIC_BLACKLIST = /[ -<>{}[\]\\]|ignore\s+(all\s+)?(previous|prior|above)\s+instructions?|disregard\s+(all\s+)?(previous|prior|above)|system\s*:|assistant\s*:|user\s*:|<\s*\/?\s*(script|iframe|object|embed)/i;
+// Blocks the actually-dangerous chars (HTML / template injection) and
+// known prompt-injection phrases. Earlier version had `[ -<>...]` which
+// silently created a 0x20-0x3C range that *included spaces*, breaking
+// every multi-word topic like "חשבון דיפרנציאלי".
+const TOPIC_BLACKLIST = /[<>{}[\]\\]|ignore\s+(all\s+)?(previous|prior|above)\s+instructions?|disregard\s+(all\s+)?(previous|prior|above)|system\s*:|assistant\s*:|user\s*:|<\s*\/?\s*(script|iframe|object|embed)/i;
 
 function isAllowedOrigin(request: Request): boolean {
   const origin = request.headers.get('origin');
