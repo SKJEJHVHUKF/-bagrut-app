@@ -139,6 +139,7 @@ export function BagrutQuestionView({
           <QuestionPartCard
             key={i}
             part={p}
+            context={question.context}
             onDone={() => onPartDone(i, question.parts.length)}
           />
         ))}

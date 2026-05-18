@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
+import { buildBagrutContext } from '@/content/bagrut-context';
 
 // Vercel Hobby caps serverless functions at 60s. A single deep problem
 // with 3 hints + ~5 solution steps typically finishes in 15-25s on
@@ -188,7 +189,8 @@ ${DIFFICULTY_HINT[difficulty]}
 
 מזהה גיוון: ${variationSeed} (השתמש בו כדי לוודא שאתה לא חוזר על תרגילים זהים בין סבבים).`;
 
-    const fullPrompt = subjectInfo.buildPrompt(topic) + tutorInstruction;
+    const bagrutContext = buildBagrutContext(subject, topic);
+    const fullPrompt = bagrutContext + '\n\n' + subjectInfo.buildPrompt(topic) + tutorInstruction;
 
     // ===== 9. SCHEMA =====
     const exerciseSchema = {

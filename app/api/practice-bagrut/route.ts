@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { serveFromPool } from '@/lib/question-pool';
+import { buildBagrutContext } from '@/content/bagrut-context';
 
 // Vercel Hobby caps serverless functions at 60s. A full bagrut question
 // with 3-4 parts (each with 3 hints + solution steps) is heavier than the
@@ -190,7 +191,8 @@ ${DIFFICULTY_HINT[difficulty]}
 
 מזהה גיוון: ${variationSeed}.`;
 
-    const fullPrompt = subjectInfo.opener(topic) + tutorInstruction;
+    const bagrutContext = buildBagrutContext(subject, topic);
+    const fullPrompt = bagrutContext + '\n\n' + subjectInfo.opener(topic) + tutorInstruction;
 
     const partSchema = {
       type: 'object',
