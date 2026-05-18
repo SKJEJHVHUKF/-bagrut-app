@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
+import { serveFromPool } from '@/lib/question-pool';
 
 // Vercel Hobby caps serverless functions at 60s. A full bagrut question
 // with 3-4 parts (each with 3 hints + solution steps) is heavier than the
@@ -139,6 +140,17 @@ export async function POST(request: Request) {
     }
     if (TOPIC_BLACKLIST.test(topic)) {
       return Response.json({ error: 'Invalid topic' }, { status: 400 });
+    }
+
+    // ===== POOL CHECK — try the pre-generated question pool first =====
+    // If we have a row matching this subject/topic, serve it for free
+    // (no Anthropic call). Falls back to live generation when the pool
+    // is empty for that topic.
+    const pooled = await serveFromPool(supabase, subject, topic, 'bagrut');
+    if (pooled) {
+      return Response.json(pooled, {
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' },
+      });
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
