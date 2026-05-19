@@ -4,6 +4,7 @@ import { PracticeShell } from '@/components/practice/PracticeShell';
 import { BagrutQuestionView } from '@/components/practice/BagrutQuestionView';
 import { QuickExerciseView } from '@/components/practice/QuickExerciseView';
 import { hasLesson } from '@/content/lessons';
+import { poolHas } from '@/lib/pool-availability';
 
 // Subject labels — duplicated minimally from the picker to keep this
 // route self-contained. If the subject key isn't recognised we still
@@ -28,7 +29,16 @@ export default async function ExercisePage({
   const { subject, topic: rawTopic } = await params;
   const { mode: rawMode } = await searchParams;
   const topic = decodeURIComponent(rawTopic);
-  const mode = rawMode === 'quick' ? 'quick' : 'bagrut';
+
+  // Bagrut mode only makes sense if we have a pool — otherwise the student
+  // waits 30-50s per question and we pay live for it. If a stale link
+  // lands here without a pool, silently downgrade to quick mode.
+  const requestedMode = rawMode === 'quick' ? 'quick' : 'bagrut';
+  const mode =
+    requestedMode === 'bagrut' && !poolHas(subject, topic, 'bagrut')
+      ? 'quick'
+      : requestedMode;
+
   const subjectLabel = SUBJECT_LABELS[subject] ?? subject;
   const lessonExists = hasLesson(subject, topic);
 

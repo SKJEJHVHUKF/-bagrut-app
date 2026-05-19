@@ -6,6 +6,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { createClient } from '@/lib/supabase/client';
+import { hasQuestionBank, getQuestions } from '@/content/lessons';
 
 // Renders a string with markdown + LaTeX math.
 // `inline` strips the wrapping <p> so the content can sit inside a flex
@@ -103,23 +104,51 @@ export default function Quiz() {
     setSelectedAnswer(null);
     setIsCorrect(null);
 
+    // ===== STATIC-FIRST PATH =====
+    // If we have a hand-written question bank for this subject/topic,
+    // serve from it instantly — no API call, no loading wait, no cost.
+    // The static PracticeQuestion shape matches what this UI already
+    // expects (question + answers + correct), so we filter to MCQs and
+    // pick 5 at random.
+    if (hasQuestionBank(currentSubject, selectedTopic)) {
+      const bank = getQuestions(currentSubject, selectedTopic)
+        .filter((q) => q.kind === 'mcq' && Array.isArray(q.answers) && typeof q.correct === 'number');
+      // Fisher-Yates shuffle, take 5 (or all available if bank is smaller).
+      const shuffled = [...bank];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const picked = shuffled.slice(0, 5).map((q) => ({
+        question: q.question,
+        answers: q.answers,
+        correct: q.correct,
+        // Adapt the static `solution` into the structured-explanation shape
+        // the existing UI renders.
+        explanation: {
+          why_correct: `${q.solution.explanation}\n\n${q.solution.steps.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}`,
+          why_wrong: '',
+          concept: '',
+          remember: `**תשובה סופית:** ${q.solution.finalAnswer}`,
+        },
+      }));
+
+      if (picked.length > 0) {
+        setQuestions(picked);
+        setLoading(false);
+        return;
+      }
+      // If the bank existed but had no MCQs, fall through to API.
+    }
+
+    // ===== API FALLBACK (temporary, removed after migration) =====
     try {
-      // No cache — every quiz attempt asks the API for a fresh set of
-      // questions. Cache was reusing the same 5 questions across attempts
-      // which defeats the purpose of practice. With Haiku 4.5 a fresh
-      // generation only costs ~$0.018 so it's the right trade.
       const res = await fetch('/api/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject: currentSubject, topic: selectedTopic })
       });
 
-      // Surface the real failure so we can debug instead of guessing:
-      // - server returned 4xx/5xx → show its `error` field (carries the
-      //   debug suffix we added on the backend)
-      // - server returned ok but no error → show what we actually got
-      // - fetch threw (timeout, network, Vercel killed the function) →
-      //   show the JS error message
       if (!res.ok) {
         let serverMsg = '';
         try {

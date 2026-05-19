@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect } from 'react';
-import { BookOpen, Sparkles, Target, AlertTriangle, Lightbulb, ArrowLeft } from 'lucide-react';
+import { BookOpen, Sparkles, Target, AlertTriangle, Lightbulb, ArrowLeft, CheckCircle, Award } from 'lucide-react';
 import type { Lesson } from '@/content/lessons/types';
 import { MathText } from './MathText';
 import { FormulaCard } from './FormulaCard';
 import { WorkedExampleCard } from './WorkedExampleCard';
 import { markLessonViewed } from '@/lib/progress';
+import { poolHas } from '@/lib/pool-availability';
 
 export function LessonView({ lesson }: { lesson: Lesson }) {
   // Mark as "viewed" once the student reaches the lesson page. The exercise
@@ -108,31 +109,80 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         </section>
       )}
 
-      {/* CTA — start practice */}
+      {/* Summary — quick "must remember" cheatsheet right before the CTA.
+          Visually separated from concepts/pitfalls with an emerald accent
+          to feel like the "study sheet" you'd carry into the exam. */}
+      {lesson.summary && lesson.summary.length > 0 && (
+        <section>
+          <div className="text-xs font-black tracking-widest text-emerald-300 mb-3 uppercase flex items-center gap-2">
+            <CheckCircle className="w-3.5 h-3.5" />
+            <span>סיכום — מה לזכור</span>
+          </div>
+          <ul className="bg-emerald-500/5 border border-emerald-500/30 rounded-2xl px-4 py-3 space-y-2">
+            {lesson.summary.map((s, i) => (
+              <li key={i} className="flex gap-2 text-sm text-emerald-50/95 leading-relaxed">
+                <span className="text-emerald-300 flex-shrink-0 mt-0.5">✓</span>
+                <div className="chat-md flex-1">
+                  <MathText>{s}</MathText>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Exam tips — strategy hints (shortcuts, what the grader checks).
+          Distinct from "pitfalls" (which describe student mistakes); these
+          are positive moves. Purple accent to match the brand. */}
+      {lesson.examTips && lesson.examTips.length > 0 && (
+        <section>
+          <div className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase flex items-center gap-2">
+            <Award className="w-3.5 h-3.5" />
+            <span>טיפים לבחינה</span>
+          </div>
+          <ul className="bg-purple-500/5 border border-purple-500/30 rounded-2xl px-4 py-3 space-y-2">
+            {lesson.examTips.map((t, i) => (
+              <li key={i} className="flex gap-2 text-sm text-purple-50/95 leading-relaxed">
+                <span className="text-purple-300 flex-shrink-0 mt-0.5">★</span>
+                <div className="chat-md flex-1">
+                  <MathText>{t}</MathText>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* CTA — start practice. We only show "בגרות מלאה" when there's a
+          ready pool for that topic; otherwise it would mean a 30-50s wait
+          and a live API charge for every student. Quick mode is always
+          available (uses /api/practice and is faster). */}
       <section className="pt-2">
         <div className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase">
           מוכן/ה לתרגל?
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Link
-            href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/exercise?mode=bagrut`}
-            className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-purple-500/40 transition-all"
-          >
-            <Target className="w-5 h-5" />
-            <div className="text-right">
-              <div className="text-sm">בגרות מלאה</div>
-              <div className="text-[10px] font-normal opacity-80">שאלה עם סעיפים, רמזים ופתרון</div>
-            </div>
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          </Link>
+        <div className={`grid grid-cols-1 ${poolHas(lesson.subject, lesson.topic, 'bagrut') ? 'sm:grid-cols-2' : ''} gap-3`}>
+          {poolHas(lesson.subject, lesson.topic, 'bagrut') && (
+            <Link
+              href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/exercise?mode=bagrut`}
+              className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-purple-500/40 transition-all"
+            >
+              <Target className="w-5 h-5" />
+              <div className="text-right">
+                <div className="text-sm">בגרות מלאה</div>
+                <div className="text-[10px] font-normal opacity-80">שאלה עם סעיפים, רמזים ופתרון</div>
+              </div>
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            </Link>
+          )}
           <Link
             href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/exercise?mode=quick`}
-            className="group inline-flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/40 px-6 py-4 rounded-2xl font-bold text-white transition-all"
+            className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-purple-500/40 transition-all"
           >
-            <Sparkles className="w-5 h-5 text-purple-300" />
+            <Sparkles className="w-5 h-5" />
             <div className="text-right">
               <div className="text-sm">תרגול מהיר</div>
-              <div className="text-[10px] font-normal text-slate-300">תרגיל אחד עם רמזים</div>
+              <div className="text-[10px] font-normal opacity-80">תרגיל אחד עם רמזים ופתרון מלא</div>
             </div>
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           </Link>
