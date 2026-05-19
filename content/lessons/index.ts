@@ -1,4 +1,4 @@
-import type { Lesson, PracticeQuestion } from './types';
+import type { Lesson, PracticeQuestion, StaticBagrutQuestion } from './types';
 import { math5Algebra } from './math5/algebra';
 import { math5Functions } from './math5/functions';
 import { math5Derivatives } from './math5/derivatives';
@@ -45,4 +45,14 @@ export function getQuestions(subject: string, topic: string): PracticeQuestion[]
 /** True iff the topic has a non-empty static question bank. */
 export function hasQuestionBank(subject: string, topic: string): boolean {
   return (getLesson(subject, topic)?.questions?.length ?? 0) > 0;
+}
+
+/** Static bagrut-style multi-part questions for the topic (may be empty). */
+export function getBagrutQuestions(subject: string, topic: string): StaticBagrutQuestion[] {
+  return getLesson(subject, topic)?.bagrutQuestions ?? [];
+}
+
+/** True iff the topic has at least one static bagrut question. */
+export function hasBagrutBank(subject: string, topic: string): boolean {
+  return (getLesson(subject, topic)?.bagrutQuestions?.length ?? 0) > 0;
 }

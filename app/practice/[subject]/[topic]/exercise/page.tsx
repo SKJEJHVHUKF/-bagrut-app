@@ -3,7 +3,8 @@ import { BookOpen } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { BagrutQuestionView } from '@/components/practice/BagrutQuestionView';
 import { QuickExerciseView } from '@/components/practice/QuickExerciseView';
-import { hasLesson } from '@/content/lessons';
+import { StaticBagrutExerciseView } from '@/components/practice/StaticBagrutExerciseView';
+import { hasLesson, getBagrutQuestions, hasBagrutBank } from '@/content/lessons';
 import { poolHas } from '@/lib/pool-availability';
 
 // Subject labels — duplicated minimally from the picker to keep this
@@ -30,14 +31,30 @@ export default async function ExercisePage({
   const { mode: rawMode } = await searchParams;
   const topic = decodeURIComponent(rawTopic);
 
-  // Bagrut mode only makes sense if we have a pool — otherwise the student
-  // waits 30-50s per question and we pay live for it. If a stale link
-  // lands here without a pool, silently downgrade to quick mode.
+  // ===== STATIC-FIRST MODE SELECTION =====
+  //
+  // Priority order:
+  //  1) Static bagrut bank exists → render it (zero API call, multi-part,
+  //     hints + solutions per part). Works for BOTH ?mode=quick and
+  //     ?mode=bagrut because the static experience IS the bagrut-style
+  //     practice the owner wants — no separate "quick" path needed.
+  //  2) Old pool in Supabase for bagrut mode → keep existing fallback.
+  //  3) Quick API fallback for everything else.
   const requestedMode = rawMode === 'quick' ? 'quick' : 'bagrut';
-  const mode =
-    requestedMode === 'bagrut' && !poolHas(subject, topic, 'bagrut')
-      ? 'quick'
-      : requestedMode;
+
+  const hasStaticBagrut = hasBagrutBank(subject, topic);
+  const staticBagrutQuestions = hasStaticBagrut ? getBagrutQuestions(subject, topic) : [];
+
+  // Effective mode: if we have a static bank, always serve it.
+  //                 Otherwise, downgrade bagrut→quick when no pool exists.
+  let effectiveMode: 'static-bagrut' | 'bagrut' | 'quick';
+  if (hasStaticBagrut) {
+    effectiveMode = 'static-bagrut';
+  } else if (requestedMode === 'bagrut' && poolHas(subject, topic, 'bagrut')) {
+    effectiveMode = 'bagrut';
+  } else {
+    effectiveMode = 'quick';
+  }
 
   const subjectLabel = SUBJECT_LABELS[subject] ?? subject;
   const lessonExists = hasLesson(subject, topic);
@@ -47,16 +64,17 @@ export default async function ExercisePage({
     : '/practice';
   const backLabel = lessonExists ? 'חזרה לסיכום' : 'בחר נושא אחר';
 
+  // Subtitle + header reflect what the student is actually getting.
+  const isBagrutLike = effectiveMode === 'static-bagrut' || effectiveMode === 'bagrut';
+  const subtitle = isBagrutLike ? 'תרגול בגרות' : 'תרגול מהיר';
+  const headerLabel = isBagrutLike ? '🎯 בגרות מלאה' : '⚡ תרגול מהיר';
+
   return (
-    <PracticeShell
-      subtitle={mode === 'bagrut' ? 'תרגול בגרות' : 'תרגול מהיר'}
-      backHref={backHref}
-      backLabel={backLabel}
-    >
+    <PracticeShell subtitle={subtitle} backHref={backHref} backLabel={backLabel}>
       <div className="space-y-4">
         <header className="space-y-2">
           <div className="text-xs font-black tracking-widest text-purple-300 uppercase flex items-center gap-2">
-            <span>{mode === 'bagrut' ? '🎯 בגרות מלאה' : '⚡ תרגול מהיר'}</span>
+            <span>{headerLabel}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black leading-tight">
             <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
@@ -74,7 +92,14 @@ export default async function ExercisePage({
           )}
         </header>
 
-        {mode === 'bagrut' ? (
+        {effectiveMode === 'static-bagrut' ? (
+          <StaticBagrutExerciseView
+            subject={subject}
+            topic={topic}
+            subjectLabel={subjectLabel}
+            questions={staticBagrutQuestions}
+          />
+        ) : effectiveMode === 'bagrut' ? (
           <BagrutQuestionView subject={subject} topic={topic} subjectLabel={subjectLabel} />
         ) : (
           <QuickExerciseView subject={subject} topic={topic} subjectLabel={subjectLabel} />

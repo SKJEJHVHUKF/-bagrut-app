@@ -72,6 +72,50 @@ export type PracticeQuestion = {
 };
 
 // ============================================================
+// BagrutQuestionPart — single sub-part of a bagrut question.
+// ============================================================
+//
+// The field naming uses snake_case for `answer_type` and `final_answer`
+// to stay compatible with `components/practice/QuestionPartCard` which
+// was originally built to consume the API response shape. The static
+// data passes through the same component untouched.
+
+export type BagrutQuestionPart = {
+  /** Section label — "א", "ב", "ג", "ד" (Hebrew) or "a"/"b"/"c" (English). */
+  label: string;
+  /** The sub-question text. */
+  prompt: string;
+  /** How the student is expected to answer (controls the input widget). */
+  answer_type: 'number' | 'expression' | 'text';
+  /** Exactly 3 hints, escalating from gentle to almost-the-answer. */
+  hints: string[];
+  solution: {
+    steps: string[];
+    final_answer: string;
+  };
+};
+
+// ============================================================
+// StaticBagrutQuestion — a full multi-part bagrut question.
+// ============================================================
+//
+// Equivalent to what `/api/practice-bagrut` used to generate at runtime,
+// but stored statically per topic. The exercise page reads from the
+// lesson's bank and renders without any API call.
+
+export type StaticBagrutQuestion = {
+  /** Unique within the lesson, e.g. "alg-bag-001". */
+  id: string;
+  difficulty: 'easy' | 'mid' | 'hard';
+  /** Shared setup for all sub-parts. Empty string if not needed. */
+  context: string;
+  /** Short sub-topic tag (e.g. "פונקציה ריבועית" or "אינטגרל מסוים"). */
+  topic_tag?: string;
+  /** 3-4 progressive sub-parts. Each is independently answerable. */
+  parts: BagrutQuestionPart[];
+};
+
+// ============================================================
 // Lesson — the full topic package.
 // ============================================================
 //
@@ -99,4 +143,8 @@ export type Lesson = {
   /** Static question bank — quiz and quick-exercise serve from here.
    *  Optional during migration. */
   questions?: PracticeQuestion[];
+
+  /** Multi-part bagrut questions — the "תרגול מהיר" route serves a
+   *  random one from this bank instead of calling /api/practice. */
+  bagrutQuestions?: StaticBagrutQuestion[];
 };

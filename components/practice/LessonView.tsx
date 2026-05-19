@@ -9,6 +9,7 @@ import { FormulaCard } from './FormulaCard';
 import { WorkedExampleCard } from './WorkedExampleCard';
 import { markLessonViewed } from '@/lib/progress';
 import { poolHas } from '@/lib/pool-availability';
+import { hasBagrutBank } from '@/content/lessons';
 
 export function LessonView({ lesson }: { lesson: Lesson }) {
   // Mark as "viewed" once the student reaches the lesson page. The exercise
@@ -161,8 +162,8 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <div className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase">
           מוכן/ה לתרגל?
         </div>
-        <div className={`grid grid-cols-1 ${poolHas(lesson.subject, lesson.topic, 'bagrut') ? 'sm:grid-cols-2' : ''} gap-3`}>
-          {poolHas(lesson.subject, lesson.topic, 'bagrut') && (
+        <div className={`grid grid-cols-1 ${(hasBagrutBank(lesson.subject, lesson.topic) || poolHas(lesson.subject, lesson.topic, 'bagrut')) ? 'sm:grid-cols-2' : ''} gap-3`}>
+          {(hasBagrutBank(lesson.subject, lesson.topic) || poolHas(lesson.subject, lesson.topic, 'bagrut')) && (
             <Link
               href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/exercise?mode=bagrut`}
               className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-purple-500/40 transition-all"
