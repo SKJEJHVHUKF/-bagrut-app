@@ -201,13 +201,13 @@ export default function Landing() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 perspective-1500">
           {/* Quiz */}
           <Link
             href="/quiz"
-            className="group bg-gradient-to-br from-purple-600/15 to-pink-600/15 backdrop-blur-md border border-purple-500/30 hover:border-purple-500/60 rounded-3xl p-6 transition-all hover:-translate-y-1"
+            className="card-3d-strong group bg-gradient-to-br from-purple-600/15 to-pink-600/15 backdrop-blur-md border border-purple-500/30 hover:border-purple-500/60 rounded-3xl p-6 block"
           >
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/40 group-hover:scale-110 transition-transform">
+            <div className="icon-3d w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/40">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <h3 className="text-xl font-black mb-2">בחינה מהירה</h3>
@@ -223,12 +223,12 @@ export default function Landing() {
           {/* Practice — guided */}
           <Link
             href="/practice"
-            className="group bg-gradient-to-br from-amber-500/15 to-orange-500/15 backdrop-blur-md border border-amber-500/30 hover:border-amber-500/60 rounded-3xl p-6 transition-all hover:-translate-y-1 relative"
+            className="card-3d-strong group bg-gradient-to-br from-amber-500/15 to-orange-500/15 backdrop-blur-md border border-amber-500/30 hover:border-amber-500/60 rounded-3xl p-6 relative block"
           >
             <div className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-black text-amber-200 uppercase tracking-wider">
               חדש
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-4 shadow-lg shadow-amber-500/40 group-hover:scale-110 transition-transform">
+            <div className="icon-3d w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-4 shadow-lg shadow-amber-500/40">
               <span className="text-2xl">🎯</span>
             </div>
             <h3 className="text-xl font-black mb-2">תרגול מודרך</h3>
@@ -244,9 +244,9 @@ export default function Landing() {
           {/* Chat */}
           <Link
             href="/chat"
-            className="group bg-gradient-to-br from-emerald-500/15 to-teal-500/15 backdrop-blur-md border border-emerald-500/30 hover:border-emerald-500/60 rounded-3xl p-6 transition-all hover:-translate-y-1"
+            className="card-3d-strong group bg-gradient-to-br from-emerald-500/15 to-teal-500/15 backdrop-blur-md border border-emerald-500/30 hover:border-emerald-500/60 rounded-3xl p-6 block"
           >
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/40 group-hover:scale-110 transition-transform">
+            <div className="icon-3d w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/40">
               <span className="text-2xl">💬</span>
             </div>
             <h3 className="text-xl font-black mb-2">המורה הפרטי</h3>
@@ -341,14 +341,14 @@ export default function Landing() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 perspective-1500">
           {SUBJECTS.map((s, i) => (
             <Link
               key={i}
               href="/quiz"
-              className={`group relative bg-gradient-to-br ${s.color} backdrop-blur-md border border-white/10 rounded-2xl p-5 sm:p-6 text-center hover:border-white/30 hover:-translate-y-1 hover:shadow-2xl ${s.glow} transition-all duration-300`}
+              className={`card-3d group relative bg-gradient-to-br ${s.color} backdrop-blur-md border border-white/10 rounded-2xl p-5 sm:p-6 text-center hover:border-white/30 ${s.glow} block`}
             >
-              <div className="text-4xl sm:text-5xl mb-3 group-hover:scale-110 transition-transform inline-block">
+              <div className="icon-3d text-4xl sm:text-5xl mb-3 inline-block">
                 {s.emoji}
               </div>
               <div className="font-bold text-sm sm:text-base mb-1">{s.name}</div>

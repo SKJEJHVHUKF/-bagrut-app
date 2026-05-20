@@ -137,3 +137,132 @@ html {
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   unicode-bidi: plaintext;
 }
+
+/* ===================================================================
+   3D CSS Utilities — pure CSS, GPU-accelerated, zero JS overhead.
+   Goal: a tasteful "Apple/Linear/Stripe" feel — cards lift and tilt
+   slightly on hover, buttons feel like physical objects, icons gain
+   depth. Avoid full rotations on body content (distracting for study).
+
+   Performance: every transform stays GPU-composited (transform +
+   opacity only). No layout thrash, no paint cycles. Safe for mobile.
+   ================================================================== */
+
+/* Parent perspective — wrap any container whose children should
+   feel like they exist in 3D space. */
+.perspective-1000 { perspective: 1000px; }
+.perspective-1500 { perspective: 1500px; }
+.perspective-2000 { perspective: 2000px; }
+
+/* Card tilt on hover.
+   The card lifts ~6px and tilts ~3° away from the cursor direction.
+   Subtle enough to feel premium, not gimmicky.
+   Use with `transform-style: preserve-3d` on the parent for nested 3D. */
+.card-3d {
+  transform-style: preserve-3d;
+  transition:
+    transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.3s ease;
+  will-change: transform;
+}
+.card-3d:hover {
+  transform: translateY(-6px) translateZ(0) rotateX(2deg) rotateY(-2deg);
+  box-shadow:
+    0 20px 40px -10px rgba(168, 85, 247, 0.35),
+    0 10px 20px -5px rgba(236, 72, 153, 0.20),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* Stronger variant — for the hero/feature cards on the landing page.
+   Tilt is more pronounced, plus a soft glow on hover. */
+.card-3d-strong {
+  transform-style: preserve-3d;
+  transition:
+    transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+.card-3d-strong:hover {
+  transform: translateY(-10px) translateZ(20px) rotateX(4deg) rotateY(-4deg) scale(1.02);
+  box-shadow:
+    0 30px 60px -15px rgba(168, 85, 247, 0.55),
+    0 15px 30px -8px rgba(236, 72, 153, 0.30),
+    0 0 80px -20px rgba(167, 139, 250, 0.40),
+    0 0 0 1px rgba(167, 139, 250, 0.30);
+}
+
+/* "Physical button" — depth on press.
+   Default state: floating slightly above page.
+   Hover: lifts further.
+   Active (pressed): sinks back. Looks like a real button being pushed. */
+.btn-3d {
+  transform: translateZ(0);
+  transition:
+    transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow:
+    0 4px 0 0 rgba(0, 0, 0, 0.35),
+    0 6px 16px -4px rgba(168, 85, 247, 0.45);
+  will-change: transform;
+}
+.btn-3d:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 0 0 rgba(0, 0, 0, 0.35),
+    0 12px 24px -6px rgba(168, 85, 247, 0.55);
+}
+.btn-3d:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 0 rgba(0, 0, 0, 0.35),
+    0 2px 8px -2px rgba(168, 85, 247, 0.35);
+  transition-duration: 0.05s;
+}
+
+/* Icon that does a subtle 3D rotate on hover of the parent.
+   Apply this to an icon inside a button or card; combine with the
+   parent's :hover state via group selectors in JSX. */
+.icon-3d {
+  display: inline-block;
+  transform: translateZ(0);
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+.group:hover .icon-3d,
+.card-3d:hover .icon-3d,
+.card-3d-strong:hover .icon-3d {
+  transform: rotateY(360deg) scale(1.1);
+}
+
+/* Floating animation — for purely decorative elements (the bagrut logo
+   on the landing page, hero badges). Gentle bob up-and-down. */
+@keyframes float-3d {
+  0%, 100% {
+    transform: translateY(0) translateZ(0) rotateX(0);
+  }
+  50% {
+    transform: translateY(-8px) translateZ(10px) rotateX(2deg);
+  }
+}
+.float-3d {
+  animation: float-3d 4s ease-in-out infinite;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Respect users who prefer reduced motion — accessibility. */
+@media (prefers-reduced-motion: reduce) {
+  .card-3d,
+  .card-3d-strong,
+  .btn-3d,
+  .icon-3d,
+  .float-3d {
+    transition: none !important;
+    animation: none !important;
+  }
+  .card-3d:hover,
+  .card-3d-strong:hover {
+    transform: none;
+  }
+}

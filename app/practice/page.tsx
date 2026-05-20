@@ -247,7 +247,7 @@ export default function PracticePage() {
           <div className="text-xs font-black tracking-widest text-purple-300 mb-2 uppercase">
             נושא
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 perspective-1500">
             {subjectInfo.topics.map((t) => {
               const k = `${subject}:${t.name}`;
               const viewed = viewedKeys.has(k);
@@ -258,8 +258,8 @@ export default function PracticePage() {
                   onClick={() => setTopic(t.name)}
                   className={
                     topic === t.name
-                      ? 'text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-purple-600/30 to-pink-600/30 border border-purple-500/60 transition-all'
-                      : 'text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40 transition-all'
+                      ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-purple-600/30 to-pink-600/30 border border-purple-500/60'
+                      : 'card-3d text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40'
                   }
                 >
                   <div className="flex items-start gap-2">
@@ -291,7 +291,7 @@ export default function PracticePage() {
         <button
           onClick={start}
           disabled={!topic || navigating}
-          className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-40 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-purple-500/40 transition-all"
+          className="btn-3d group w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-40 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-bold text-white"
         >
           {navigating ? (
             <Loader2 className="w-5 h-5 animate-spin" />
