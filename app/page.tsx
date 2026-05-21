@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { hasPlan } from '@/lib/study-plan';
 import {
   Sparkles,
   BookOpen,
@@ -152,14 +153,7 @@ export default function Landing() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 sm:mb-16">
-          <Link
-            href="/quiz"
-            className="group relative inline-flex items-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-8 py-4 rounded-2xl font-bold text-white shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 hover:-translate-y-1 transition-all"
-          >
-            <Sparkles className="w-5 h-5" />
-            <span className="text-lg">צור שאלות לבגרות</span>
-            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          </Link>
+          <PrimaryCTA />
           <a
             href="#how-it-works"
             className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 px-6 py-4 rounded-2xl font-bold text-slate-200 transition-all"
@@ -526,5 +520,45 @@ export default function Landing() {
         </div>
       </footer>
     </div>
+  );
+}
+
+/**
+ * Hero CTA — adapts to whether the visitor has a saved study plan.
+ * - With plan: deep-link to /my-plan and label "המשך לתוכנית".
+ * - Without plan: link to /onboarding and label "צור תוכנית אישית".
+ * Renders an empty placeholder on first paint to keep the markup stable
+ * for SSR; the localStorage check runs after mount.
+ */
+function PrimaryCTA() {
+  const [planExists, setPlanExists] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setPlanExists(hasPlan());
+  }, []);
+
+  // SSR / first paint: render an opaque placeholder identical in size.
+  if (planExists === null) {
+    return (
+      <Link
+        href="/onboarding"
+        className="group relative inline-flex items-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-8 py-4 rounded-2xl font-bold text-white shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 hover:-translate-y-1 transition-all"
+      >
+        <Sparkles className="w-5 h-5" />
+        <span className="text-lg">צור תוכנית אישית</span>
+        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href={planExists ? '/my-plan' : '/onboarding'}
+      className="group relative inline-flex items-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-8 py-4 rounded-2xl font-bold text-white shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 hover:-translate-y-1 transition-all"
+    >
+      <Sparkles className="w-5 h-5" />
+      <span className="text-lg">{planExists ? 'המשך לתוכנית שלי' : 'צור תוכנית אישית'}</span>
+      <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+    </Link>
   );
 }
