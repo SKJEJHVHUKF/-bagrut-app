@@ -4,13 +4,14 @@ import { math5Functions } from './math5/functions';
 import { math5Derivatives } from './math5/derivatives';
 import { math5Integrals } from './math5/integrals';
 import { math5Trigonometry } from './math5/trigonometry';
-import { math5Exponential } from './math5/exponential';
 import { math5Sequences } from './math5/sequences';
 import { math5Probability } from './math5/probability';
 import { math5AnalyticGeometry } from './math5/analytic-geometry';
 import { math5Vectors } from './math5/vectors';
 import { math5ComplexNumbers } from './math5/complex-numbers';
 import { math5Statistics } from './math5/statistics';
+import { math5ExpFunctions } from './math5/exp-functions';
+import { math5LnFunction } from './math5/ln-function';
 
 // Lessons are keyed by `${subject}:${topic}`. The topic string must match
 // the topic name shown in the /practice picker exactly.
@@ -20,7 +21,8 @@ const LESSONS: Record<string, Lesson> = {
   'math5:חשבון דיפרנציאלי': math5Derivatives,
   'math5:חשבון אינטגרלי': math5Integrals,
   'math5:טריגונומטריה': math5Trigonometry,
-  'math5:מעריכית ולוגריתמית': math5Exponential,
+  'math5:פונקציה מעריכית': math5ExpFunctions,
+  'math5:פונקציית ln': math5LnFunction,
   'math5:סדרות': math5Sequences,
   'math5:הסתברות': math5Probability,
   'math5:גאומטריה אנליטית': math5AnalyticGeometry,
