@@ -10,18 +10,26 @@ import { WorkedExampleCard } from './WorkedExampleCard';
 import { markLessonViewed } from '@/lib/progress';
 import { poolHas } from '@/lib/pool-availability';
 import { hasBagrutBank } from '@/content/lessons';
+import { markStep } from '@/lib/study-plan';
+import { TopicJourney } from './TopicJourney';
 
 export function LessonView({ lesson }: { lesson: Lesson }) {
   // Mark as "viewed" once the student reaches the lesson page. The exercise
   // route bumps a separate counter when they finish a question.
+  // Also mark the 'understand' step in the personalized study plan so the
+  // TopicJourney header can advance to stage 2.
   useEffect(() => {
     markLessonViewed(lesson.subject, lesson.topic);
+    markStep(lesson.subject, lesson.topic, 'understand');
   }, [lesson.subject, lesson.topic]);
 
   return (
     <article className="space-y-6">
+      {/* 3-step journey header — only renders if the student has a plan */}
+      <TopicJourney subject={lesson.subject} topic={lesson.topic} />
+
       {/* Title + intro */}
-      <header className="space-y-3">
+      <header id="lesson-content" className="space-y-3 scroll-mt-20">
         <div className="text-xs font-black tracking-widest text-purple-300 uppercase flex items-center gap-2">
           <BookOpen className="w-3.5 h-3.5" />
           <span>סיכום לימודי</span>

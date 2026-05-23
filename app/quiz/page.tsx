@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode, Suspense } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
+import { markStep } from '@/lib/study-plan';
 
 // Renders a string with markdown + LaTeX math.
 // `inline` strips the wrapping <p> so the content can sit inside a flex
@@ -80,10 +82,27 @@ const SUBJECTS = {
   chem: { name: 'כימיה', emoji: '🧪', tabCls: 'tab-chem', gridCls: 's-chem', badge: { color: '#f472b6', bg: 'rgba(244,114,182,0.12)', border: 'rgba(244,114,182,0.25)' }, topics: [{ name: 'מבנה האטום', emoji: '⚛️', sub: 'מודלים, קשרים' }, { name: 'כימיה אורגנית', emoji: '🧬', sub: 'פחמימנים' }, { name: 'שיווי משקל', emoji: '⚖️', sub: 'לה-שטליה' }, { name: 'חומצות ובסיסים', emoji: '🔬', sub: 'pH, טיטרציה' }, { name: 'אלקטרוכימיה', emoji: '🔋', sub: 'תאים, אלקטרוליזה' }] }
 };
 
-export default function Quiz() {
+// Next.js 16 requires useSearchParams() to be wrapped in a Suspense boundary
+// so the rest of the tree can pre-render statically. The inner component
+// holds the actual logic; the default export is the Suspense wrapper.
+export default function QuizPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+      <Quiz />
+    </Suspense>
+  );
+}
+
+function Quiz() {
+  const searchParams = useSearchParams();
+  const urlSubject = searchParams.get('subject');
+  const urlTopic = searchParams.get('topic');
+
   const [screen, setScreen] = useState('home');
-  const [currentSubject, setCurrentSubject] = useState('math5');
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [currentSubject, setCurrentSubject] = useState(
+    urlSubject && urlSubject in SUBJECTS ? urlSubject : 'math5'
+  );
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(urlTopic);
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
@@ -94,6 +113,24 @@ export default function Quiz() {
 
   const subject = SUBJECTS[currentSubject as keyof typeof SUBJECTS];
   const letters = ['א', 'ב', 'ג', 'ד'];
+
+  // Deep-link auto-start: if /quiz?subject=...&topic=... has both params and
+  // the topic has a static question bank, jump straight into the quiz.
+  // This is how the TopicJourney "step 2" button gets students into a
+  // topic-specific quiz without making them pick again.
+  useEffect(() => {
+    if (
+      urlSubject &&
+      urlTopic &&
+      urlSubject in SUBJECTS &&
+      hasQuestionBank(urlSubject, urlTopic) &&
+      screen === 'home'
+    ) {
+      // Defer one tick so state updates land before startQuiz runs.
+      setTimeout(() => startQuiz(), 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startQuiz = async () => {
     if (!selectedTopic) return;
@@ -218,6 +255,11 @@ export default function Quiz() {
       // per-question outcome list. Save now.
       saveSession(score, answered);
       setScreen('results');
+      // Mark the 'quiz' step in the personalized study plan so the
+      // TopicJourney can advance to stage 3 (practice).
+      if (selectedTopic) {
+        markStep(currentSubject, selectedTopic, 'quiz');
+      }
     } else {
       setCurrentQ(currentQ + 1);
     }

@@ -5,6 +5,7 @@ import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { MathText } from './MathText';
 import { QuestionPartCard } from './QuestionPartCard';
 import { markExerciseDone } from '@/lib/progress';
+import { markStep } from '@/lib/study-plan';
 import type { StaticBagrutQuestion } from '@/content/lessons/types';
 
 type Props = {
@@ -68,6 +69,7 @@ export function StaticBagrutExerciseView({
       updated.add(i);
       if (updated.size === total) {
         markExerciseDone(subject, topic);
+        markStep(subject, topic, 'practice');
       }
       return updated;
     });
