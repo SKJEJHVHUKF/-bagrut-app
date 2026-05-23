@@ -48,7 +48,9 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
               key={i}
               className="bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3"
             >
-              <div className="text-sm font-black text-purple-200 mb-1.5">{c.title}</div>
+              <div className="text-sm font-black text-purple-200 mb-1.5 chat-md">
+                <MathText inline>{c.title}</MathText>
+              </div>
               <div className="chat-md text-sm text-slate-200 leading-relaxed">
                 <MathText>{c.body}</MathText>
               </div>

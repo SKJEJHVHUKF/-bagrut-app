@@ -6,8 +6,8 @@ import { MathText } from './MathText';
 export function FormulaCard({ formula }: { formula: Formula }) {
   return (
     <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-2xl p-4 sm:p-5">
-      <div className="text-[11px] font-black tracking-widest text-purple-300 mb-2 uppercase">
-        {formula.name}
+      <div className="text-[11px] font-black tracking-widest text-purple-300 mb-2 uppercase chat-md">
+        <MathText inline>{formula.name}</MathText>
       </div>
 
       <div className="bg-slate-950/40 border border-white/10 rounded-xl px-4 py-3 mb-3 chat-md text-center text-lg">
