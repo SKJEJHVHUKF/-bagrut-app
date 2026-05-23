@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BookOpen, Brain, Target, Lock, CheckCircle, ArrowLeft, PlayCircle } from 'lucide-react';
-import { getPlan, type StudyPlan, type PlanTopic } from '@/lib/study-plan';
+import { getPlan, type PlanTopic } from '@/lib/study-plan';
+import { isProUser, type UserLike } from '@/lib/access';
+import { createClient } from '@/lib/supabase/client';
 
 /**
  * TopicJourney — top-of-page header showing the 3-stage journey for the
@@ -23,6 +25,7 @@ export function TopicJourney({
 }) {
   const [planTopic, setPlanTopic] = useState<PlanTopic | null>(null);
   const [hasPlan, setHasPlan] = useState(false);
+  const [pro, setPro] = useState(false);
 
   useEffect(() => {
     const plan = getPlan();
@@ -34,6 +37,15 @@ export function TopicJourney({
     const t = plan.topics.find((x) => x.subject === subject && x.topic === topic);
     setPlanTopic(t ?? null);
   }, [subject, topic]);
+
+  // Pro/admin users get all stages unlocked from the start (no progress
+  // gate). Admin override is built into isProUser via email check.
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setPro(isProUser(data.user as UserLike));
+    });
+  }, []);
 
   // If the student has no plan, skip the journey UI — they're just browsing.
   if (!hasPlan) return null;
@@ -49,8 +61,11 @@ export function TopicJourney({
   const stage2Done = steps.quiz;
   const stage3Done = steps.practice;
 
-  const stage2Locked = !stage1Done;
-  const stage3Locked = !stage2Done;
+  // Progress-based locks (free tier). Pro/admin bypass them entirely so
+  // they can jump into any stage without finishing the previous ones —
+  // useful for testing, reviewing, or just preferring a different order.
+  const stage2Locked = !pro && !stage1Done;
+  const stage3Locked = !pro && !stage2Done;
 
   const completed = (stage1Done ? 1 : 0) + (stage2Done ? 1 : 0) + (stage3Done ? 1 : 0);
 

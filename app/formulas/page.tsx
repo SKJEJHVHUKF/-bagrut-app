@@ -1,0 +1,225 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Search, BookOpen, FileText, Printer } from 'lucide-react';
+import { allLessonKeys, getLesson } from '@/content/lessons';
+import { MathText } from '@/components/practice/MathText';
+
+/**
+ * /formulas — single page that aggregates every formula from every
+ * registered lesson, grouped by topic, with sticky topic navigation
+ * and a search box.
+ *
+ * The data source is purely the existing lesson registry — no new
+ * content authored. Adding a formula in a lesson file automatically
+ * shows up here.
+ */
+export default function FormulasPage() {
+  const [query, setQuery] = useState('');
+
+  // Aggregate all lessons that have at least one formula.
+  const topicBlocks = allLessonKeys()
+    .map(({ subject, topic }) => {
+      const lesson = getLesson(subject, topic);
+      if (!lesson || !lesson.formulas?.length) return null;
+      return { subject, topic, title: lesson.title, formulas: lesson.formulas };
+    })
+    .filter((b): b is NonNullable<typeof b> => b !== null);
+
+  // Filter — match query against topic name or formula name/note.
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? topicBlocks
+        .map((b) => {
+          const matchingFormulas = b.formulas.filter((f) => {
+            const haystack = `${f.name} ${f.note ?? ''} ${b.topic}`.toLowerCase();
+            return haystack.includes(q);
+          });
+          return matchingFormulas.length > 0 ? { ...b, formulas: matchingFormulas } : null;
+        })
+        .filter((b): b is NonNullable<typeof b> => b !== null)
+    : topicBlocks;
+
+  const totalFormulas = filtered.reduce((sum, b) => sum + b.formulas.length, 0);
+
+  function printPage() {
+    if (typeof window !== 'undefined') window.print();
+  }
+
+  return (
+    <div
+      className="min-h-screen bg-slate-950 text-slate-50 relative overflow-x-hidden"
+      style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
+    >
+      <BackgroundOrbs />
+      <TopBar onPrint={printPage} />
+
+      <main className="relative z-10 max-w-3xl mx-auto px-4 py-6 space-y-6">
+        {/* Hero */}
+        <section className="bg-gradient-to-br from-purple-600/15 to-pink-600/15 backdrop-blur-md border border-purple-500/30 rounded-3xl p-6 text-center">
+          <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/40">
+            <FileText className="w-7 h-7 text-white" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black mb-2">
+            <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+              דף נוסחאות
+            </span>
+          </h1>
+          <p className="text-sm text-slate-300">
+            כל הנוסחאות של מתמטיקה 5 יח׳ במקום אחד.{' '}
+            {totalFormulas > 0 && (
+              <span className="text-purple-300 font-bold">{totalFormulas} נוסחאות</span>
+            )}
+          </p>
+        </section>
+
+        {/* Search */}
+        <section className="sticky top-16 z-30 -mx-2 px-2 py-2 bg-slate-950/80 backdrop-blur-md rounded-2xl">
+          <div className="relative">
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="חיפוש נוסחה (לדוגמה: שורשים, נגזרת, וייטה)..."
+              className="w-full bg-white/5 border border-white/10 focus:border-purple-500/60 rounded-xl pr-11 pl-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition-colors"
+            />
+          </div>
+        </section>
+
+        {/* Topic nav chips */}
+        {!q && (
+          <nav className="flex flex-wrap gap-2 pb-2">
+            {topicBlocks.map((b) => (
+              <a
+                key={`${b.subject}:${b.topic}`}
+                href={`#topic-${encodeURIComponent(b.topic)}`}
+                className="text-xs px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/40 text-slate-300 font-bold transition-all"
+              >
+                {b.topic}
+              </a>
+            ))}
+          </nav>
+        )}
+
+        {/* Topic sections */}
+        {filtered.length === 0 ? (
+          <div className="text-center py-12 text-slate-400">
+            <Search className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            <p className="text-sm">לא נמצאו נוסחאות התואמות לחיפוש &quot;{query}&quot;.</p>
+          </div>
+        ) : (
+          filtered.map((block) => (
+            <section
+              key={`${block.subject}:${block.topic}`}
+              id={`topic-${encodeURIComponent(block.topic)}`}
+              className="scroll-mt-32 space-y-3"
+            >
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-lg font-black text-white">
+                  <span className="bg-gradient-to-l from-purple-200 to-pink-200 bg-clip-text text-transparent">
+                    {block.topic}
+                  </span>
+                </h2>
+                <Link
+                  href={`/practice/${block.subject}/${encodeURIComponent(block.topic)}`}
+                  className="text-xs text-purple-300 hover:text-purple-200 inline-flex items-center gap-1 transition-colors"
+                >
+                  <BookOpen className="w-3 h-3" />
+                  <span>לשיעור המלא</span>
+                </Link>
+              </div>
+
+              <div className="space-y-2">
+                {block.formulas.map((f, i) => (
+                  <FormulaRow key={i} name={f.name} latex={f.latex} note={f.note} />
+                ))}
+              </div>
+            </section>
+          ))
+        )}
+      </main>
+    </div>
+  );
+}
+
+function FormulaRow({
+  name,
+  latex,
+  note,
+}: {
+  name: string;
+  latex: string;
+  note?: string;
+}) {
+  return (
+    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 space-y-2 hover:border-purple-500/30 transition-colors">
+      <div className="text-xs font-black text-purple-200 tracking-wide chat-md">
+        <MathText inline>{name}</MathText>
+      </div>
+      <div className="bg-slate-950/40 border border-white/5 rounded-xl px-4 py-3 text-center chat-md text-base">
+        <MathText>{`$$${latex}$$`}</MathText>
+      </div>
+      {note && (
+        <div className="text-[11px] text-slate-400 chat-md leading-relaxed">
+          <MathText inline>{note}</MathText>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BackgroundOrbs() {
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 print:hidden">
+      <div
+        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-600/30 blur-[120px] animate-pulse"
+        style={{ animationDuration: '8s' }}
+      />
+      <div
+        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-pink-600/25 blur-[120px] animate-pulse"
+        style={{ animationDuration: '10s', animationDelay: '2s' }}
+      />
+    </div>
+  );
+}
+
+function TopBar({ onPrint }: { onPrint: () => void }) {
+  return (
+    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/60 border-b border-white/10 print:hidden">
+      <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+        <Link href="/my-plan" className="flex items-center gap-3 group">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400 flex items-center justify-center shadow-xl shadow-purple-500/50 ring-1 ring-white/20">
+            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
+            </svg>
+          </div>
+          <div>
+            <div className="text-base font-black bg-gradient-to-l from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+              בגרות בכיס
+            </div>
+            <div className="text-[10px] text-slate-400 -mt-0.5">דף נוסחאות</div>
+          </div>
+        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onPrint}
+            className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            aria-label="הדפס דף נוסחאות"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">הדפס</span>
+          </button>
+          <Link
+            href="/my-plan"
+            className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+          >
+            <span>חזרה</span>
+            <ArrowLeft className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      </div>
+    </nav>
+  );
+}
