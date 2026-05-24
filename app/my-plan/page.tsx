@@ -18,6 +18,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { getPlan, daysUntilBagrut, clearPlan, type StudyPlan } from '@/lib/study-plan';
 import { topicLockReason, isProUser, isAdmin, type UserLike } from '@/lib/access';
+import { BagrutBadge } from '@/components/practice/BagrutBadge';
 
 export default function MyPlanPage() {
   const router = useRouter();
@@ -253,7 +254,10 @@ function TopicCard({
 
         <div className="flex-1 min-w-0">
           <div className="font-bold text-sm sm:text-base text-white">{topic.topic}</div>
-          <div className="flex items-center gap-3 mt-1">
+          <div className="mt-0.5">
+            <BagrutBadge topic={topic.topic} variant="inline" />
+          </div>
+          <div className="flex items-center gap-3 mt-1.5">
             <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden max-w-[120px]">
               <div
                 className="h-full bg-gradient-to-l from-purple-500 to-pink-500 transition-all"

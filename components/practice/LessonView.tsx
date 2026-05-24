@@ -7,6 +7,7 @@ import type { Lesson } from '@/content/lessons/types';
 import { MathText } from './MathText';
 import { FormulaCard } from './FormulaCard';
 import { WorkedExampleCard } from './WorkedExampleCard';
+import { BagrutBadge } from './BagrutBadge';
 import { markLessonViewed } from '@/lib/progress';
 import { poolHas } from '@/lib/pool-availability';
 import { hasBagrutBank } from '@/content/lessons';
@@ -39,6 +40,13 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
             {lesson.title}
           </span>
         </h1>
+
+        {/* Bagrut banner — shows the student instantly: which paper, weight,
+            point value, appearsIn, and how the topic is examined. Sits
+            BEFORE the prose intro because it's the anchor: "this is why
+            you're studying this". Only renders for math5 topics. */}
+        <BagrutBadge topic={lesson.topic} variant="banner" />
+
         <div className="chat-md text-sm sm:text-base text-slate-300 leading-relaxed">
           <MathText>{lesson.intro}</MathText>
         </div>

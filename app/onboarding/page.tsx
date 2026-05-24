@@ -13,10 +13,16 @@ import {
 } from 'lucide-react';
 import { allLessonKeys } from '@/content/lessons';
 import { createPlan, type ProficiencyLevel } from '@/lib/study-plan';
+import { curriculumIndex } from '@/content/bagrut-curriculum';
+import { BagrutBadge } from '@/components/practice/BagrutBadge';
 
-// All math5 topics available to choose from. In the future we'll surface
-// other subjects (math4, physics, ...) the same way.
-const ALL_TOPICS = allLessonKeys().filter((k) => k.subject === 'math5');
+// All math5 topics, sorted into the canonical bagrut curriculum order
+// (שאלון 581 first, then 582 — see content/bagrut-curriculum.ts).
+// This way the onboarding picker matches the order the student will
+// encounter in their actual exam preparation.
+const ALL_TOPICS = allLessonKeys()
+  .filter((k) => k.subject === 'math5')
+  .sort((a, b) => curriculumIndex(a.topic) - curriculumIndex(b.topic));
 
 const LEVEL_LABELS: Record<ProficiencyLevel, string> = {
   weak: '🟢 חלש',
@@ -310,7 +316,12 @@ function TopicsStep({
                 >
                   {isSelected && <CheckCircle className="w-4 h-4 text-white" />}
                 </div>
-                <span className="font-bold text-sm sm:text-base text-white flex-1">{topic}</span>
+                <div className="flex-1 min-w-0 text-right">
+                  <div className="font-bold text-sm sm:text-base text-white">{topic}</div>
+                  <div className="mt-1">
+                    <BagrutBadge topic={topic} variant="inline" />
+                  </div>
+                </div>
               </button>
 
               {isSelected && (

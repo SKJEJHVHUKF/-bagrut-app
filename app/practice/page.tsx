@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { hasLesson } from '@/content/lessons';
 import { getAllProgress } from '@/lib/progress';
+import { topicsByPaper, paperLabel, type BagrutPaper } from '@/content/bagrut-curriculum';
+import { BagrutBadge } from '@/components/practice/BagrutBadge';
 
 // ===== SUBJECTS (mirror of /quiz subject map, trimmed to the fields we need here) =====
 const SUBJECTS = {
@@ -244,51 +246,62 @@ export default function PracticePage() {
           </div>
         </div>
 
-        {/* Topic grid */}
-        <div className="mb-6">
-          <div className="text-xs font-black tracking-widest text-purple-300 mb-2 uppercase">
-            נושא
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 perspective-1500">
-            {subjectInfo.topics.map((t) => {
-              const k = `${subject}:${t.name}`;
-              const viewed = viewedKeys.has(k);
-              const hasL = hasLesson(subject, t.name);
-              return (
-                <button
-                  key={t.name}
-                  onClick={() => setTopic(t.name)}
-                  className={
-                    topic === t.name
-                      ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-purple-600/30 to-pink-600/30 border border-purple-500/60'
-                      : 'card-3d text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40'
-                  }
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-white">{t.name}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">{t.sub}</div>
+        {/* Topic grid — for math5 we group by bagrut paper (581/582) to
+            match the official curriculum. Other subjects keep the flat
+            layout. The order within each paper is pedagogical (foundations
+            first), matching MATH5_CURRICULUM. */}
+        {subject === 'math5' ? (
+          <Math5TopicsByPaper
+            selectedTopic={topic}
+            onSelect={setTopic}
+            viewedKeys={viewedKeys}
+          />
+        ) : (
+          <div className="mb-6">
+            <div className="text-xs font-black tracking-widest text-purple-300 mb-2 uppercase">
+              נושא
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 perspective-1500">
+              {subjectInfo.topics.map((t) => {
+                const k = `${subject}:${t.name}`;
+                const viewed = viewedKeys.has(k);
+                const hasL = hasLesson(subject, t.name);
+                return (
+                  <button
+                    key={t.name}
+                    onClick={() => setTopic(t.name)}
+                    className={
+                      topic === t.name
+                        ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-purple-600/30 to-pink-600/30 border border-purple-500/60'
+                        : 'card-3d text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40'
+                    }
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm text-white">{t.name}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">{t.sub}</div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {hasL && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/40 text-purple-200">
+                            <BookOpen className="w-2.5 h-2.5" />
+                            סיכום
+                          </span>
+                        )}
+                        {viewed && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-200">
+                            <Check className="w-2.5 h-2.5" />
+                            נלמד
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      {hasL && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/40 text-purple-200">
-                          <BookOpen className="w-2.5 h-2.5" />
-                          סיכום
-                        </span>
-                      )}
-                      {viewed && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-200">
-                          <Check className="w-2.5 h-2.5" />
-                          נלמד
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         <button
           onClick={start}
@@ -311,6 +324,86 @@ export default function PracticePage() {
           לנושאים מסומנים ב-📖 תקבל סיכום לימודי לפני התרגול.
         </p>
       </main>
+    </div>
+  );
+}
+
+// ============================================================
+// Math5TopicsByPaper — bagrut-aligned topic grid.
+// ============================================================
+//
+// Renders 581 first, then 582, with section headers and per-topic
+// BagrutBadge chips. Order within each paper follows MATH5_CURRICULUM
+// (foundation first, applications last).
+
+function Math5TopicsByPaper({
+  selectedTopic,
+  onSelect,
+  viewedKeys,
+}: {
+  selectedTopic: string | null;
+  onSelect: (topic: string) => void;
+  viewedKeys: Set<string>;
+}) {
+  const papers: BagrutPaper[] = ['581', '582'];
+  return (
+    <div className="mb-6 space-y-5">
+      {papers.map((paper) => (
+        <div key={paper}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-black tracking-widest text-purple-300 uppercase">
+              {paperLabel(paper)}
+            </div>
+            <div className="text-[10px] text-slate-500">
+              {paper === '581' ? 'אלגברה ואנליזה אלגברית' : 'אנליזה טרנסצנדנטית • הסתברות'}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 perspective-1500">
+            {topicsByPaper(paper).map((t) => {
+              const k = `math5:${t.key}`;
+              const viewed = viewedKeys.has(k);
+              const hasL = hasLesson('math5', t.key);
+              const isSelected = selectedTopic === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => onSelect(t.key)}
+                  className={
+                    isSelected
+                      ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-purple-600/30 to-pink-600/30 border border-purple-500/60'
+                      : 'card-3d text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40'
+                  }
+                >
+                  <div className="flex items-start gap-2 mb-1.5">
+                    <span className="text-base flex-shrink-0">{t.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-sm text-white">{t.displayName}</div>
+                      <div className="text-[11px] text-slate-400 mt-0.5 line-clamp-2">
+                        {t.examStyle}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      {hasL && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/40 text-purple-200">
+                          <BookOpen className="w-2.5 h-2.5" />
+                          סיכום
+                        </span>
+                      )}
+                      {viewed && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-200">
+                          <Check className="w-2.5 h-2.5" />
+                          נלמד
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <BagrutBadge topic={t.key} variant="inline" />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
