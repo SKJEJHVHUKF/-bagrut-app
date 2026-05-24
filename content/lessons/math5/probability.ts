@@ -175,13 +175,12 @@ $$P(X = k) = \\binom{n}{k} p^k (1-p)^{n-k}, \\quad k = 0, 1, \\ldots, n$$
   ],
 
   summary: [
-    '**צירוף:** $\\binom{n}{k} = \\frac{n!}{k!(n-k)!}$ — בחירה ללא סדר.',
-    '**הסתברות:** $P(A) = \\frac{|A|}{|\\Omega|}$. $P(A^c) = 1 - P(A)$.',
-    '**מותנית:** $P(A|B) = P(A\\cap B)/P(B)$. עצמאות: $P(A\\cap B) = P(A)P(B)$.',
-    '**פירוק מלא:** $P(A) = P(A|B)P(B) + P(A|B^c)P(B^c)$.',
-    '**בייס:** $P(B|A) = P(A|B)P(B)/P(A)$.',
-    '**בינומי:** $P(X=k) = \\binom{n}{k}p^k(1-p)^{n-k}$. $E(X) = np$, $\\sigma^2 = npq$.',
-    '**לפחות = 1 מינוס אפס-אחד.** $P(X \\ge 1) = 1 - P(X=0)$.',
+    '**יסוד** $P(A) = \\dfrac{|A|}{|\\Omega|}$ • $P(A^c) = 1 - P(A)$ • "לפחות 1" $= 1 - P(0)$',
+    '**צירוף** $\\binom{n}{k} = \\dfrac{n!}{k!(n-k)!}$ — בחירה ללא סדר',
+    '**מותנית** $P(A|B) = \\dfrac{P(A \\cap B)}{P(B)}$ • עצמאות $\\Leftrightarrow P(A \\cap B) = P(A)P(B)$',
+    '**פירוק מלא** $P(A) = P(A|B)P(B) + P(A|B^c)P(B^c)$',
+    '**בייס** $P(B|A) = \\dfrac{P(A|B)\\,P(B)}{P(A)}$',
+    '**בינומי** $P(X=k) = \\binom{n}{k}p^k(1-p)^{n-k}$ • $E(X) = np$, $\\sigma^2 = np(1-p)$',
   ],
 
   examTips: [
