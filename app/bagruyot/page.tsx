@@ -128,24 +128,60 @@ export default function BagruyotPage() {
             שאלות בגרות + פתרונות
           </span>
         </h1>
-        <p className="text-sm text-slate-400">
-          {totalCount} שאלות מ-{years.length} שאלוני בגרות. מסונן ל-{filtered.length} שאלות.
-        </p>
+        {totalCount > 0 ? (
+          <p className="text-sm text-slate-400">
+            {totalCount} שאלות מ-{years.length} שאלוני בגרות. מסונן ל-{filtered.length} שאלות.
+          </p>
+        ) : (
+          <p className="text-sm text-slate-400">המאגר עדיין ריק — אנחנו בונים אותו משאלוני בגרות אמיתיים.</p>
+        )}
       </header>
 
-      {/* Search */}
-      <div className="relative mb-3">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="חיפוש בנוסח השאלות..."
-          className="w-full bg-white/[0.03] border border-white/10 focus:border-purple-500/60 rounded-xl pr-10 pl-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors"
-        />
-      </div>
+      {/* Empty repository — show big helpful card and skip filters */}
+      {totalCount === 0 && (
+        <div className="bg-gradient-to-br from-purple-600/10 to-pink-600/10 border border-purple-500/30 rounded-2xl p-6 sm:p-8 space-y-4">
+          <div className="text-base font-black text-white">המאגר עדיין ריק — וזה במכוון</div>
+          <p className="text-sm text-slate-200 leading-relaxed">
+            המאגר הזה מיועד לשאלות מבגרויות <strong>אמיתיות</strong> בלבד, עם פתרונות מאומתים — כדי שכל
+            שאלה שתחפש פה תהיה אותנטית 100%.
+          </p>
+          <p className="text-sm text-slate-300 leading-relaxed">
+            <strong className="text-purple-200">איך עוזרים למלא אותו:</strong>
+          </p>
+          <ul className="space-y-2 text-sm text-slate-300">
+            <li className="flex gap-2">
+              <span className="text-purple-300 flex-shrink-0">1.</span>
+              <span>תורד שאלוני בגרות עבר מאתר משרד החינוך (<code className="text-xs bg-white/5 px-1 rounded">meyda.education.gov.il</code>).</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-purple-300 flex-shrink-0">2.</span>
+              <span>שלח לנו (טקסט או צילום) — נוסיף כל שאלה למאגר עם פתרון מאומת.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-purple-300 flex-shrink-0">3.</span>
+              <span>בינתיים, אפשר להשתמש ב-<Link href="/scan" className="text-purple-200 underline">צילום שאלה</Link> — AI יפתור כל שאלה שתעלה (פיצ׳ר Pro קיים).</span>
+            </li>
+          </ul>
+        </div>
+      )}
 
-      {/* Filters */}
+      {/* Search — hide when repo empty */}
+      {totalCount > 0 && (
+        <div className="relative mb-3">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="חיפוש בנוסח השאלות..."
+            className="w-full bg-white/[0.03] border border-white/10 focus:border-purple-500/60 rounded-xl pr-10 pl-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors"
+          />
+        </div>
+      )}
+
+      {/* Filters — hide when repo empty */}
+      {totalCount > 0 && (
+        <>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
         <FilterSelect
           label="שנה"
@@ -197,6 +233,8 @@ export default function BagruyotPage() {
             />
           ))}
         </div>
+      )}
+        </>
       )}
 
       {/* Bottom nav */}
