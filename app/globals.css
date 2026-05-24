@@ -35,19 +35,35 @@ html {
    Chat assistant markdown styles.
    Applied to the .chat-md container which wraps a ReactMarkdown render.
    Goals:
-   - readable Hebrew + KaTeX-rendered math on the dark glassmorphism bubble
-   - tight vertical rhythm (assistant replies are short)
-   - LTR-friendly math layout inside an RTL Hebrew paragraph
+   - readable Hebrew (RTL) + KaTeX-rendered math (LTR) on dark bubble
+   - tight vertical rhythm
+   - rock-solid bidi: Hebrew prose flows right-to-left; math fragments
+     read left-to-right; punctuation hugs the math correctly.
+
+   Direction strategy:
+   - .chat-md and every text-bearing descendant have explicit `direction: rtl`
+     so they don't fall back to LTR if any parent isn't RTL.
+   - `.katex` (inline math) gets `direction: ltr; unicode-bidi: isolate`
+     so each math run is a self-contained LTR island inside the RTL flow.
+   - `.katex-display` (block math) same, plus centered alignment.
    =================================================================== */
-.chat-md { line-height: 1.75; font-size: 15px; }
+.chat-md {
+  line-height: 1.75;
+  font-size: 15px;
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: isolate;
+}
 .chat-md > * + * { margin-top: 0.65em; }
-.chat-md p { margin: 0; }
+.chat-md p { margin: 0; direction: rtl; text-align: right; }
 .chat-md p + p { margin-top: 0.7em; }
 .chat-md h1, .chat-md h2, .chat-md h3, .chat-md h4 {
   font-weight: 800;
   margin: 0.9em 0 0.4em;
   color: #f5d0fe;
   line-height: 1.3;
+  direction: rtl;
+  text-align: right;
 }
 .chat-md h1 { font-size: 1.25em; }
 .chat-md h2 { font-size: 1.15em; }
@@ -55,8 +71,13 @@ html {
 .chat-md h4 { font-size: 1em; }
 .chat-md strong { font-weight: 800; color: #fde68a; }
 .chat-md em { font-style: italic; color: #f5d0fe; }
-.chat-md ul, .chat-md ol { margin: 0.4em 0; padding-inline-start: 1.5em; }
-.chat-md li { margin: 0.2em 0; }
+.chat-md ul, .chat-md ol {
+  margin: 0.4em 0;
+  padding-inline-start: 1.5em;
+  direction: rtl;
+  text-align: right;
+}
+.chat-md li { margin: 0.2em 0; direction: rtl; text-align: right; }
 .chat-md li > p { display: inline; }
 .chat-md code:not(pre code) {
   background: rgba(255,255,255,0.08);
@@ -86,21 +107,37 @@ html {
   padding-inline-start: 0.8em;
   color: #cbd5e1;
   margin: 0.6em 0;
+  direction: rtl;
+  text-align: right;
 }
 .chat-md hr { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 1em 0; }
+/* Tables (GFM) — RTL with cell content reading per-cell. */
+.chat-md table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.7em 0;
+  direction: rtl;
+}
+.chat-md th, .chat-md td {
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 0.5em 0.7em;
+  text-align: right;
+}
+.chat-md th { background: rgba(167,139,250,0.12); font-weight: 700; }
 
-/* KaTeX math — colors, alignment, force LTR inside RTL Hebrew paragraphs.
-   Applied to both the chat (.chat-md) and the quiz (.math-content).
-   Without `direction: ltr` + `unicode-bidi: isolate`, math like
-   "f(x) = ln(3x)" reads right-to-left inside Hebrew paragraphs and
-   shows reversed. Isolate tells the surrounding RTL flow to treat the
-   math run as one neutral character.
-*/
+/* ============================================================
+   KaTeX math — force LTR with strong isolation. Three layers of
+   isolation so the math NEVER reverses inside RTL Hebrew:
+     1. direction: ltr — math characters read left-to-right
+     2. unicode-bidi: isolate — the run is opaque to surrounding bidi
+     3. display: inline-block — the math is a single inline atom
+   ============================================================ */
 :is(.chat-md, .math-content) .katex {
   color: #f8fafc;
   font-size: 1.05em;
   direction: ltr;
   unicode-bidi: isolate;
+  display: inline-block;
 }
 :is(.chat-md, .math-content) .katex-display {
   margin: 0.8em 0;
@@ -116,6 +153,9 @@ html {
   text-align: center;
 }
 :is(.chat-md, .math-content) :is(.katex, .katex-display) * { text-shadow: none; }
+/* The internal HTML KaTeX produces also gets LTR — defensive. */
+:is(.chat-md, .math-content) .katex .katex-html { direction: ltr; }
+:is(.chat-md, .math-content) .katex .base { direction: ltr; }
 
 /* Quiz markdown — minimal styles. The quiz already provides its own
    typography for question/answer/explanation containers; .math-content
