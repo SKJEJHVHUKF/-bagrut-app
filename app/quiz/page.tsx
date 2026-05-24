@@ -37,26 +37,27 @@ const SUBJECTS = {
     tabCls: 'tab-math',
     gridCls: 's-math',
     badge: { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' },
-    // Topics ordered to match the canonical bagrut curriculum
-    // (content/bagrut-curriculum.ts): שאלון 581 first (algebra foundation
-    // → calculus → sequences → analytic geometry → vectors), then 582
-    // (transcendental functions → probability → statistics → complex).
+    // Topics ordered to match the official Ministry of Education
+    // syllabus for math5 (שאלון 806/581 + 807/582), 2024-2025 curriculum.
+    // Source of truth: content/bagrut-curriculum.ts.
     topics: [
-      // ===== שאלון 581 =====
+      // ===== שאלון 581 (806) =====
+      // אלגברה, גיאו׳ אוקלידית + טריגו, חדו"א של פונקציות אלגבריות
       { name: 'אלגברה', emoji: '🔣', sub: '581 • בכל בגרות • 15-25 נק׳' },
-      { name: 'פונקציות', emoji: '📈', sub: '581 • בכל בגרות • 20-25 נק׳' },
-      { name: 'חשבון דיפרנציאלי', emoji: '∂', sub: '581 • בכל בגרות • 20-25 נק׳' },
-      { name: 'חשבון אינטגרלי', emoji: '∫', sub: '581 • בכל בגרות • 20-25 נק׳' },
-      { name: 'סדרות', emoji: '⋯', sub: '581 • ברוב הבגרויות • 15-20 נק׳' },
-      { name: 'גאומטריה אנליטית', emoji: '📍', sub: '581 • ברוב הבגרויות • 20-25 נק׳' },
-      { name: 'וקטורים במרחב', emoji: '➡️', sub: '581 • ברוב הבגרויות • 15-25 נק׳' },
-      // ===== שאלון 582 =====
+      { name: 'סדרות', emoji: '⋯', sub: '581 • ברוב הבגרויות • 15-25 נק׳' },
+      { name: 'הסתברות', emoji: '🎲', sub: '581 • ברוב הבגרויות • 15-25 נק׳' },
+      { name: 'פונקציות', emoji: '📈', sub: '581/582 • יסודות חקירה — מקדים חדו"א' },
+      { name: 'טריגונומטריה', emoji: '🔺', sub: '581 (במישור) + 582 (במרחב) • 20-25 נק׳' },
+      { name: 'חשבון דיפרנציאלי', emoji: '∂', sub: '581 + 582 • בכל בגרות • 20-25 נק׳' },
+      { name: 'חשבון אינטגרלי', emoji: '∫', sub: '581 + 582 • בכל בגרות • 20-25 נק׳' },
+      // ===== שאלון 582 (807) =====
+      // מעריכית/ln, גיאו׳ אנליטית, וקטורים, מרוכבים
       { name: 'פונקציה מעריכית', emoji: '📊', sub: '582 • בכל בגרות • 20-25 נק׳' },
       { name: 'פונקציית ln', emoji: '🧮', sub: '582 • בכל בגרות • 20-25 נק׳' },
-      { name: 'טריגונומטריה', emoji: '🔺', sub: '582 • בכל בגרות • 20-25 נק׳' },
-      { name: 'הסתברות', emoji: '🎲', sub: '582 • ברוב הבגרויות • 20-25 נק׳' },
-      { name: 'סטטיסטיקה', emoji: '📉', sub: '582 • בכמחצית מהבגרויות • 15-25 נק׳' },
-      { name: 'מספרים מרוכבים', emoji: 'ℂ', sub: '582 • אופציונלי • 15-25 נק׳' },
+      { name: 'גאומטריה אנליטית', emoji: '📍', sub: '582 • ברוב הבגרויות • 20-25 נק׳' },
+      { name: 'וקטורים במרחב', emoji: '➡️', sub: '582 • ברוב הבגרויות • 20-25 נק׳' },
+      { name: 'מספרים מרוכבים', emoji: 'ℂ', sub: '582 • בכל בגרות • 15-25 נק׳' },
+      { name: 'סטטיסטיקה', emoji: '📉', sub: '⚠️ מחוץ לסילבוס העדכני — תוכן רזרבי' },
     ],
   },
   // ===== Math 4 units (intermediate) — שאלון 481/482 =====

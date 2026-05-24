@@ -65,7 +65,11 @@ function BannerBadge({ mapping }: { mapping: TopicMapping }) {
       ? '⭐ נושא ליבה'
       : mapping.weight === 'standard'
         ? '◆ נושא סטנדרטי'
-        : '◇ נושא אופציונלי';
+        : mapping.weight === 'foundational'
+          ? '🔧 יסודות (מקדים לחדו"א)'
+          : mapping.weight === 'out-of-scope'
+            ? '⚠️ מחוץ לסילבוס'
+            : '◇ נושא אופציונלי';
 
   return (
     <section
