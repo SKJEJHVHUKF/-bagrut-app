@@ -1,0 +1,65 @@
+/**
+ * Past Bagrut Questions Repository
+ * ================================
+ *
+ * Real-style bagrut questions from past exams, with full step-by-step
+ * solutions. When a student photographs a question or browses the
+ * archive, we serve answers from here — no API call needed.
+ *
+ * Naming convention for question IDs:
+ *   `b{year}{season}{paper}-q{number}`
+ *   examples: 'b2024s581-q1', 'b2023w582-q3'
+ *
+ * Adding a new question:
+ *   1. Create or open a year-season-paper file under content/past-bagruyot/
+ *      (e.g. `2024-summer-581.ts`).
+ *   2. Append a PastBagrutQuestion object.
+ *   3. Register the file in `content/past-bagruyot/index.ts`.
+ *   4. The /bagruyot picker auto-shows it.
+ */
+
+export type BagrutSeason = 'summer' | 'winter';
+export type BagrutPaper = '581' | '582';
+
+export type PastBagrutPart = {
+  /** Hebrew label — 'א', 'ב', 'ג', 'ד'. */
+  label: string;
+  /** The sub-question text (markdown + LaTeX). */
+  prompt: string;
+  /** Points value of this sub-part (e.g. 8). Optional. */
+  points?: number;
+  /** Type of expected answer — controls future input widgets. */
+  answer_type?: 'number' | 'expression' | 'text' | 'proof';
+  solution: {
+    /** Step-by-step solution, one idea per step. */
+    steps: string[];
+    /** Final answer in succinct form (or "הוכח" for proofs). */
+    final_answer: string;
+  };
+};
+
+export type PastBagrutQuestion = {
+  /** Unique identifier — see naming convention above. */
+  id: string;
+  /** Year of the bagrut session. */
+  year: number;
+  /** Summer or winter session. */
+  season: BagrutSeason;
+  /** Which paper this question is from. */
+  paper: BagrutPaper;
+  /** Question number within the paper (1-7 typically). */
+  questionNumber: number;
+  /** Topic key — should match keys in content/bagrut-curriculum.ts when possible. */
+  topic: string;
+  /** Total point value of the entire question. */
+  totalPoints: number;
+  /** Shared setup / givens for all sub-parts. */
+  context: string;
+  /** Ordered sub-questions. */
+  parts: PastBagrutPart[];
+  /** Provenance of the solution:
+   *  - 'official' — from MOE-published solution key
+   *  - 'authored' — written by us, verified against an answer
+   *  - 'ai-generated' — Claude-generated and reviewed */
+  solutionSource: 'official' | 'authored' | 'ai-generated';
+};
