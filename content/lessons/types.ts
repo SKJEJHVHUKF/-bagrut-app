@@ -41,6 +41,10 @@ export type DiagramSpec =
       sideTicks?: [number, number, number];
       /** Mark equal angles by vertex name, e.g. ['A','B'] = ∠A ≅ ∠B. */
       equalAngles?: string[];
+      /** Optional side labels (a, b, c) drawn at the midpoint of each side.
+       *  Order matches sides opposite to vertices: [opp A, opp B, opp C]
+       *  = [BC, CA, AB]. Used for sine/cosine theorems. */
+      sideLabels?: [string, string, string];
       caption?: string;
     }
   /** Two triangles drawn side-by-side, showing congruence or similarity. */
@@ -74,6 +78,18 @@ export type DiagramSpec =
   | {
       type: 'polygonInscribed';
       sides: number;
+      caption?: string;
+    }
+  /** Unit circle with optional quadrant signs, special angles, and a
+   *  highlighted angle. Used heavily in trigonometry. */
+  | {
+      type: 'unitCircle';
+      /** Show ±/− labels in each quadrant for a chosen function. */
+      showQuadrantSigns?: 'sin' | 'cos' | 'tan' | 'all';
+      /** Highlight a specific angle (in degrees) with a radius + arc. */
+      highlightAngle?: number;
+      /** Show tick marks at 30°, 45°, 60°, 90° etc. */
+      showSpecialAngles?: boolean;
       caption?: string;
     }
   /** A parallelogram with optional diagonals drawn. */

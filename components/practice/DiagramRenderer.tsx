@@ -1,6 +1,7 @@
 'use client';
 
 import type { DiagramSpec } from '@/content/lessons/types';
+import { MathText } from './MathText';
 
 /**
  * DiagramRenderer — renders an array of declarative DiagramSpec objects
@@ -33,8 +34,8 @@ function FigureCard({ spec }: { spec: DiagramSpec }) {
         <DiagramSVG spec={spec} />
       </div>
       {spec.caption && (
-        <figcaption className="mt-2 text-xs text-slate-300 text-center font-bold">
-          {spec.caption}
+        <figcaption className="mt-2 text-xs text-slate-300 text-center font-bold chat-md">
+          <MathText inline>{spec.caption}</MathText>
         </figcaption>
       )}
     </figure>
@@ -66,6 +67,8 @@ function DiagramSVG({ spec }: { spec: DiagramSpec }) {
       return <PolygonInscribedSVG spec={spec} />;
     case 'parallelogram':
       return <ParallelogramSVG spec={spec} />;
+    case 'unitCircle':
+      return <UnitCircleSVG spec={spec} />;
     case 'custom':
       return (
         <svg
@@ -174,6 +177,22 @@ function TriangleSVG({
 
   const ticks = spec.sideTicks ?? [0, 0, 0];
 
+  // Side labels — sideLabels[i] is opposite to vertex i:
+  // sideLabels[0] (opp A) → on BC  | sideLabels[1] (opp B) → on CA | sideLabels[2] (opp C) → on AB
+  const sideLabels = spec.sideLabels;
+  // Midpoints with small outward offset for label placement
+  const sideLabelPos = (p1: {x:number;y:number}, p2: {x:number;y:number}, centerX: number, centerY: number) => {
+    const mx = (p1.x + p2.x) / 2;
+    const my = (p1.y + p2.y) / 2;
+    // Outward direction (away from triangle center)
+    const dx = mx - centerX;
+    const dy = my - centerY;
+    const len = Math.hypot(dx, dy) || 1;
+    const offset = 14;
+    return { x: mx + (dx / len) * offset, y: my + (dy / len) * offset };
+  };
+  const triCenter = { x: (a.x + b.x + c.x) / 3, y: (a.y + b.y + c.y) / 3 };
+
   return (
     <svg viewBox={DEFAULT_VIEWBOX} xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
       <polygon points={`${a.x},${a.y} ${b.x},${b.y} ${c.x},${c.y}`} fill={FILL} stroke={STROKE} strokeWidth="2" />
@@ -185,10 +204,141 @@ function TriangleSVG({
       <SegmentTicks x1={a.x} y1={a.y} x2={b.x} y2={b.y} count={ticks[0]} />
       <SegmentTicks x1={b.x} y1={b.y} x2={c.x} y2={c.y} count={ticks[1]} />
       <SegmentTicks x1={c.x} y1={c.y} x2={a.x} y2={a.y} count={ticks[2]} />
+      {/* Side labels (a, b, c) — opposite vertex labeling convention */}
+      {sideLabels && (() => {
+        const posBC = sideLabelPos(b, c, triCenter.x, triCenter.y);   // opp A
+        const posCA = sideLabelPos(c, a, triCenter.x, triCenter.y);   // opp B
+        const posAB = sideLabelPos(a, b, triCenter.x, triCenter.y);   // opp C
+        return (
+          <>
+            <Label x={posBC.x} y={posBC.y} text={sideLabels[0]} />
+            <Label x={posCA.x} y={posCA.y} text={sideLabels[1]} />
+            <Label x={posAB.x} y={posAB.y} text={sideLabels[2]} />
+          </>
+        );
+      })()}
       {/* Vertex labels */}
       <Label x={a.x} y={a.y} text={A} dx={-10} dy={6} />
       <Label x={b.x} y={b.y} text={B} dx={12} dy={6} />
       <Label x={c.x} y={c.y} text={C} dx={0} dy={-8} />
+    </svg>
+  );
+}
+
+function UnitCircleSVG({
+  spec,
+}: {
+  spec: Extract<DiagramSpec, { type: 'unitCircle' }>;
+}) {
+  const cx = 100;
+  const cy = 100;
+  const r = 70;
+
+  // Convert math-angle (degrees, CCW from +x axis) to SVG coords
+  const pt = (deg: number) => ({
+    x: cx + r * Math.cos((deg * Math.PI) / 180),
+    y: cy - r * Math.sin((deg * Math.PI) / 180),
+  });
+
+  // Quadrant labels: I, II, III, IV
+  const quadrants: { name: string; cx: number; cy: number }[] = [
+    { name: 'I', cx: cx + 35, cy: cy - 35 },
+    { name: 'II', cx: cx - 35, cy: cy - 35 },
+    { name: 'III', cx: cx - 35, cy: cy + 40 },
+    { name: 'IV', cx: cx + 35, cy: cy + 40 },
+  ];
+
+  // Sign per quadrant for sin/cos/tan
+  const signs: Record<'sin' | 'cos' | 'tan', [string, string, string, string]> = {
+    sin: ['+', '+', '−', '−'],   // I, II, III, IV
+    cos: ['+', '−', '−', '+'],
+    tan: ['+', '−', '+', '−'],
+    // 'all' handled separately below
+  } as const;
+
+  const showSigns = spec.showQuadrantSigns;
+
+  // Special angle marks: 30, 45, 60, 90, 120, 135, 150, 180, ...
+  const specialAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
+
+  // Highlighted angle
+  const highlight = spec.highlightAngle;
+
+  return (
+    <svg viewBox={DEFAULT_VIEWBOX} xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* Axes */}
+      <line x1={cx - r - 15} y1={cy} x2={cx + r + 15} y2={cy} stroke={STROKE} strokeWidth="1" opacity="0.5" />
+      <line x1={cx} y1={cy - r - 15} x2={cx} y2={cy + r + 15} stroke={STROKE} strokeWidth="1" opacity="0.5" />
+      {/* Axis labels */}
+      <Label x={cx + r + 12} y={cy} text="x" dx={0} dy={4} />
+      <Label x={cx} y={cy - r - 12} text="y" dx={0} dy={0} />
+      {/* Unit circle */}
+      <circle cx={cx} cy={cy} r={r} fill={FILL} stroke={STROKE} strokeWidth="2" />
+      {/* Special angles ticks */}
+      {spec.showSpecialAngles && specialAngles.map((deg) => {
+        const p = pt(deg);
+        return (
+          <circle key={deg} cx={p.x} cy={p.y} r="2" fill={ACCENT} opacity="0.75" />
+        );
+      })}
+      {/* Highlight angle */}
+      {typeof highlight === 'number' && (() => {
+        const p = pt(highlight);
+        return (
+          <>
+            <line x1={cx} y1={cy} x2={p.x} y2={p.y} stroke={ACCENT} strokeWidth="2.5" />
+            <circle cx={p.x} cy={p.y} r="3.5" fill={ACCENT} />
+            <Label x={p.x} y={p.y} text={`${highlight}°`} dx={highlight > 90 && highlight < 270 ? -16 : 16} dy={highlight > 0 && highlight < 180 ? -4 : 12} />
+          </>
+        );
+      })()}
+      {/* Quadrant signs */}
+      {showSigns && showSigns !== 'all' && quadrants.map((q, i) => (
+        <text
+          key={q.name}
+          x={q.cx}
+          y={q.cy}
+          fill={ACCENT}
+          fontSize="14"
+          fontWeight="bold"
+          textAnchor="middle"
+          fontFamily="Heebo, sans-serif"
+        >
+          {showSigns}{signs[showSigns][i]}
+        </text>
+      ))}
+      {showSigns === 'all' && quadrants.map((q, i) => (
+        <text
+          key={q.name}
+          x={q.cx}
+          y={q.cy}
+          fill={ACCENT}
+          fontSize="10"
+          fontWeight="bold"
+          textAnchor="middle"
+          fontFamily="Heebo, sans-serif"
+        >
+          <tspan x={q.cx} dy="0">{`sin${signs.sin[i]}`}</tspan>
+          <tspan x={q.cx} dy="11">{`cos${signs.cos[i]}`}</tspan>
+          <tspan x={q.cx} dy="11">{`tan${signs.tan[i]}`}</tspan>
+        </text>
+      ))}
+      {/* Roman numeral labels — only if no signs */}
+      {!showSigns && quadrants.map((q) => (
+        <text
+          key={q.name}
+          x={q.cx}
+          y={q.cy}
+          fill={LABEL_FILL}
+          fontSize="13"
+          fontWeight="bold"
+          textAnchor="middle"
+          opacity="0.7"
+          fontFamily="serif"
+        >
+          {q.name}
+        </text>
+      ))}
     </svg>
   );
 }
