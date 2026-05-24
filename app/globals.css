@@ -50,12 +50,21 @@ html {
 .chat-md {
   line-height: 1.75;
   font-size: 15px;
-  direction: rtl;
-  text-align: right;
-  unicode-bidi: isolate;
+  /* text-align: start lets each <p dir="auto"> child align based on its
+   * OWN direction: Hebrew-first paragraph → right-aligned; math-first
+   * paragraph → left-aligned. Setting explicit "right" would right-align
+   * math-LTR paragraphs incorrectly. */
+  text-align: start;
 }
 .chat-md > * + * { margin-top: 0.65em; }
-.chat-md p { margin: 0; direction: rtl; text-align: right; }
+/* No explicit `direction` here — each <p> in MathText.tsx gets dir="auto"
+ * so the browser picks RTL or LTR based on the FIRST strong character.
+ * - Hebrew-first paragraph ("מה זה?") → RTL, right-aligned.
+ * - Math-first or math-heavy line ("ln(x-3): דורש x>3 → x-3>0") → LTR,
+ *   left-aligned, math reads naturally and Hebrew word "דורש" embeds
+ *   in the LTR flow.
+ * Forcing direction:rtl here would break the math-heavy lines. */
+.chat-md p { margin: 0; }
 .chat-md p + p { margin-top: 0.7em; }
 .chat-md h1, .chat-md h2, .chat-md h3, .chat-md h4 {
   font-weight: 800;
