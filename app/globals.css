@@ -126,17 +126,22 @@ html {
 .chat-md th { background: rgba(167,139,250,0.12); font-weight: 700; }
 
 /* ============================================================
-   KaTeX math — force LTR with strong isolation. Three layers of
+   KaTeX math — force LTR with strong isolation. Four layers of
    isolation so the math NEVER reverses inside RTL Hebrew:
      1. direction: ltr — math characters read left-to-right
      2. unicode-bidi: isolate — the run is opaque to surrounding bidi
      3. display: inline-block — the math is a single inline atom
+     4. !important — any cascading direction from a parent (e.g. an
+        accidentally-set dir="ltr" wrapper) cannot override this
+   The combination of !important here + per-element dir="auto" in
+   MathText.tsx is what gives consistent rendering: Hebrew paragraphs
+   detect RTL automatically; math islands inside them stay LTR.
    ============================================================ */
 :is(.chat-md, .math-content) .katex {
   color: #f8fafc;
   font-size: 1.05em;
-  direction: ltr;
-  unicode-bidi: isolate;
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
   display: inline-block;
 }
 :is(.chat-md, .math-content) .katex-display {
@@ -144,9 +149,9 @@ html {
   padding: 0.4em 0;
   overflow-x: auto;
   overflow-y: hidden;
-  direction: ltr;
+  direction: ltr !important;
   text-align: center;
-  unicode-bidi: isolate;
+  unicode-bidi: isolate !important;
 }
 :is(.chat-md, .math-content) .katex-display > .katex {
   display: inline-block;
