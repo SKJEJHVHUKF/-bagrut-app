@@ -460,13 +460,14 @@ $$x = x_0 + k\\pi$$ (שים לב: $\\pi$ ולא $2\\pi$, כי המחזור של 
   ],
 
   summary: [
-    '**מעגל יחידה** $(\\cos\\theta, \\sin\\theta)$ • סימנים: I:+,+ • II:+,− • III:−,− • IV:−,+',
+    '**מעגל יחידה** $(\\cos\\theta, \\sin\\theta)$ • סימנים לפי מרובע (I:+,+ ; II:+,− ; III:−,− ; IV:−,+)',
     '**ערכים מיוחדים** $\\sin\\left(\\tfrac{\\pi}{6}, \\tfrac{\\pi}{4}, \\tfrac{\\pi}{3}\\right) = \\tfrac{1}{2}, \\tfrac{\\sqrt{2}}{2}, \\tfrac{\\sqrt{3}}{2}$ • $\\cos$ הפוך',
-    '**פיתגורס** $\\sin^2 x + \\cos^2 x = 1$',
-    '**כפל-זווית** $\\sin 2x = 2\\sin x\\cos x$ • $\\cos 2x = 1 - 2\\sin^2 x = 2\\cos^2 x - 1$',
-    '**חצי-זווית** $\\sin^2 x = \\dfrac{1 - \\cos 2x}{2}$ • $\\cos^2 x = \\dfrac{1 + \\cos 2x}{2}$',
+    '**פיתגורס + זהויות** $\\sin^2 + \\cos^2 = 1$ • $\\sin 2x = 2\\sin x\\cos x$ • $\\cos 2x = 1 - 2\\sin^2 x$',
+    '**חצי-זווית** $\\sin^2 x = \\dfrac{1 - \\cos 2x}{2}$ — חיוני באינטגרציה',
     '**נגזרות / אינטגרלים** $(\\sin x)\' = \\cos x$ • $(\\cos x)\' = -\\sin x$ • $\\int \\sin x = -\\cos x + C$',
-    '**$R\\sin$** $a\\sin x + b\\cos x = \\sqrt{a^2+b^2}\\sin(x+\\varphi)$ • מקס׳ $= R$, מינ׳ $= -R$',
+    '**$R\\sin$** $a\\sin x + b\\cos x = \\sqrt{a^2+b^2}\\sin(x+\\varphi)$ • מקס׳ $= R$',
+    '**581 — משפט הסינוסים** $\\dfrac{a}{\\sin A} = \\dfrac{b}{\\sin B} = \\dfrac{c}{\\sin C} = 2R$',
+    '**581 — משפט הקוסינוסים** $a^2 = b^2 + c^2 - 2bc\\cos A$ • **שטח משולש** $S = \\tfrac{1}{2}ab\\sin C$',
   ],
 
   examTips: [

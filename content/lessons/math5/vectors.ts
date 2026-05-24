@@ -199,6 +199,7 @@ $$d = \\frac{|Ax_1 + By_1 + Cz_1 - D|}{\\sqrt{A^2 + B^2 + C^2}}$$
   summary: [
     '**סקלרית** $\\vec{a} \\cdot \\vec{b} = a_1 b_1 + a_2 b_2 + a_3 b_3$ • $= 0 \\Leftrightarrow$ ניצבים',
     '**וקטורית** $\\vec{a} \\times \\vec{b}$ ניצב לשניהם • $|\\vec{a} \\times \\vec{b}| = $ שטח מקבילית',
+    '**קומבינציה ליניארית** $\\vec{c} = \\alpha \\vec{a} + \\beta \\vec{b}$ — שווה ערך לעצמאות לינארית',
     '**ישר פרמטרי** $\\vec{r} = \\vec{r_0} + t\\vec{d}$ — נקודה $+\\,t \\times$ כיוון',
     '**מישור** $Ax + By + Cz = D$ • נורמל $(A,B,C) = \\vec{u} \\times \\vec{v}$',
     '**מרחק נקודה-מישור** $d = \\dfrac{|Ax_1 + By_1 + Cz_1 - D|}{|\\vec{n}|}$',
