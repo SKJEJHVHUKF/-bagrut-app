@@ -27,6 +27,7 @@ function isAllowedOrigin(request: Request): boolean {
 
 const KNOWN_TOPICS = [
   'אלגברה',
+  'גיאומטריה אוקלידית',
   'פונקציות',
   'חשבון דיפרנציאלי',
   'חשבון אינטגרלי',

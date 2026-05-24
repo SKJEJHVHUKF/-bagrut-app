@@ -8,6 +8,7 @@ import { MathText } from './MathText';
 import { FormulaCard } from './FormulaCard';
 import { WorkedExampleCard } from './WorkedExampleCard';
 import { BagrutBadge } from './BagrutBadge';
+import { DiagramRenderer } from './DiagramRenderer';
 import { markLessonViewed } from '@/lib/progress';
 import { poolHas } from '@/lib/pool-availability';
 import { hasBagrutBank } from '@/content/lessons';
@@ -70,6 +71,9 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
               <div className="chat-md text-sm text-slate-200 leading-relaxed">
                 <MathText>{c.body}</MathText>
               </div>
+              {c.diagrams && c.diagrams.length > 0 && (
+                <DiagramRenderer diagrams={c.diagrams} />
+              )}
             </div>
           ))}
         </div>

@@ -13,7 +13,83 @@
 export type ConceptBlock = {
   title: string;
   body: string;
+  /** Optional inline diagrams (SVG-rendered) shown beneath the body.
+   *  Used heavily by geometry lessons; ignored elsewhere. */
+  diagrams?: DiagramSpec[];
 };
+
+// ============================================================
+// DiagramSpec — declarative SVG diagrams for geometry lessons.
+// ============================================================
+//
+// A discriminated union of geometric primitives. The component
+// `<DiagramRenderer>` in components/practice/DiagramRenderer.tsx
+// switches on `type` and produces the SVG. The lesson author writes
+// data; styling and rendering live in the component.
+//
+// All diagrams render as a captioned <figure> with consistent
+// stroke/fill conventions matching the app's dark theme.
+
+export type DiagramSpec =
+  /** A triangle. Vertices labeled (default A, B, C). Optional right-
+   *  angle marker at one vertex; congruent-side tick marks. */
+  | {
+      type: 'triangle';
+      vertices?: [string, string, string];
+      rightAngle?: 'A' | 'B' | 'C';
+      /** Tick counts per side: [AB, BC, CA]. Equal counts = equal sides. */
+      sideTicks?: [number, number, number];
+      /** Mark equal angles by vertex name, e.g. ['A','B'] = ∠A ≅ ∠B. */
+      equalAngles?: string[];
+      caption?: string;
+    }
+  /** Two triangles drawn side-by-side, showing congruence or similarity. */
+  | {
+      type: 'twoTriangles';
+      relation: 'congruent' | 'similar';
+      labels?: { left: [string, string, string]; right: [string, string, string] };
+      caption?: string;
+    }
+  /** Two parallel lines cut by a transversal — for Thales theorem etc. */
+  | {
+      type: 'parallelTransversal';
+      labels?: { lines: [string, string]; transversal: string };
+      /** Points on each line where the transversal crosses, optional. */
+      crossPoints?: [string, string];
+      caption?: string;
+    }
+  /** A circle with optional center, radius, chord, tangent, or
+   *  inscribed angle. */
+  | {
+      type: 'circle';
+      showCenter?: boolean;
+      centerLabel?: string;
+      radiusTo?: string;
+      chord?: { from: string; to: string };
+      tangent?: { at: string };
+      inscribedAngle?: { vertex: string; arc: [string, string] };
+      caption?: string;
+    }
+  /** A regular polygon inscribed in a circle. */
+  | {
+      type: 'polygonInscribed';
+      sides: number;
+      caption?: string;
+    }
+  /** A parallelogram with optional diagonals drawn. */
+  | {
+      type: 'parallelogram';
+      withDiagonals?: boolean;
+      labels?: [string, string, string, string];
+      caption?: string;
+    }
+  /** Escape hatch — pass raw SVG body content directly. */
+  | {
+      type: 'custom';
+      svg: string;
+      viewBox?: string;
+      caption?: string;
+    };
 
 export type FormulaVariable = {
   sym: string;

@@ -131,6 +131,17 @@ const PAPER_581: TopicMapping[] = [
     officialNote: 'בסילבוס הרשמי — תת-נושא של "אלגברה" בשאלון 581.',
   },
   {
+    key: 'גיאומטריה אוקלידית',
+    displayName: 'גיאומטריה אוקלידית',
+    emoji: '△',
+    paper: '581',
+    weight: 'core',
+    appearsIn: 'בכל בגרות',
+    typicalPoints: '15-20',
+    examStyle:
+      'חפיפה, דמיון, תאלס, פרופורציה במעגל, זווית היקפית. בכל בגרות לפחות שאלה אחת.',
+  },
+  {
     key: 'פונקציות',
     displayName: 'פונקציות (יסודות)',
     emoji: '📈',

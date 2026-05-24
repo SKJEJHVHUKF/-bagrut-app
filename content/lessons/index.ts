@@ -12,11 +12,13 @@ import { math5ComplexNumbers } from './math5/complex-numbers';
 import { math5Statistics } from './math5/statistics';
 import { math5ExpFunctions } from './math5/exp-functions';
 import { math5LnFunction } from './math5/ln-function';
+import { math5EuclideanGeometry } from './math5/euclidean-geometry';
 
 // Lessons are keyed by `${subject}:${topic}`. The topic string must match
 // the topic name shown in the /practice picker exactly.
 const LESSONS: Record<string, Lesson> = {
   'math5:אלגברה': math5Algebra,
+  'math5:גיאומטריה אוקלידית': math5EuclideanGeometry,
   'math5:פונקציות': math5Functions,
   'math5:חשבון דיפרנציאלי': math5Derivatives,
   'math5:חשבון אינטגרלי': math5Integrals,
