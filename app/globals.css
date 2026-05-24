@@ -66,6 +66,19 @@ html {
  * Forcing direction:rtl here would break the math-heavy lines. */
 .chat-md p { margin: 0; }
 .chat-md p + p { margin-top: 0.7em; }
+
+/* When a paragraph or list item STARTS with math (KaTeX), force LTR.
+ * Without this, dir="auto" gets fooled: it skips the KaTeX wrapper
+ * (because .katex has unicode-bidi: isolate) and picks up the next
+ * Hebrew word as the first strong character → RTL, which renders the
+ * line backwards. :has() lets us detect "math is the literal first
+ * thing in this paragraph" and force LTR + left-alignment. */
+.chat-md p:has(> .katex:first-child),
+.chat-md li:has(> p > .katex:first-child),
+.chat-md li:has(> .katex:first-child) {
+  direction: ltr;
+  text-align: left;
+}
 .chat-md h1, .chat-md h2, .chat-md h3, .chat-md h4 {
   font-weight: 800;
   margin: 0.9em 0 0.4em;
