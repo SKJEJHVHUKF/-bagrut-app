@@ -15,6 +15,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { MathText } from './MathText';
+import { AITutorActions, type SimilarQuestionResult } from './AITutorActions';
 import { markExerciseDone } from '@/lib/progress';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 
@@ -85,6 +86,25 @@ export function QuickExerciseView({
     load('normal');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Inline replacement when the "Similar Question" tutor button returns
+  // a fresh problem. We map the tutor response shape to the local
+  // Exercise type and reset all reveal state so it feels like a new
+  // exercise, but without re-fetching from /api/practice.
+  function applySimilarQuestion(q: SimilarQuestionResult) {
+    setExercise({
+      problem: q.question,
+      concept: '',
+      hints: q.hint ? [q.hint] : [],
+      solution: { steps: q.solution.steps },
+      final_answer: q.solution.final_answer,
+      remember: '',
+    });
+    setHintsShown(0);
+    setStepsShown(-1);
+    setConceptOpen(false);
+    setDoneMarked(false);
+  }
 
   if (loading) {
     return (
@@ -194,6 +214,17 @@ export function QuickExerciseView({
         </button>
       )}
 
+      {/* AI tutor: "step-by-step help" appears after all hints exhausted
+          but before showing the full solution. Asks Claude to unpack the
+          last hint without revealing the answer. */}
+      {hintsShown === exercise.hints.length && stepsShown < 0 && exercise.hints.length > 0 && (
+        <AITutorActions
+          question={exercise.problem}
+          hints={exercise.hints}
+          show={{ hintHelp: true }}
+        />
+      )}
+
       {/* Solution */}
       {stepsShown >= 0 && (
         <div className="bg-gradient-to-br from-purple-600/10 to-pink-600/10 border border-purple-500/30 rounded-2xl p-5">
@@ -233,14 +264,29 @@ export function QuickExerciseView({
                   <MathText inline>{exercise.final_answer}</MathText>
                 </div>
               </div>
-              <div className="mt-3 bg-amber-500/8 border border-amber-500/30 rounded-xl px-4 py-3">
-                <div className="text-[11px] font-black tracking-widest text-amber-300 mb-1.5 uppercase">
-                  💡 לזכור
+              {exercise.remember && (
+                <div className="mt-3 bg-amber-500/8 border border-amber-500/30 rounded-xl px-4 py-3">
+                  <div className="text-[11px] font-black tracking-widest text-amber-300 mb-1.5 uppercase">
+                    💡 לזכור
+                  </div>
+                  <div className="text-sm text-amber-50/95 chat-md">
+                    <MathText>{exercise.remember}</MathText>
+                  </div>
                 </div>
-                <div className="text-sm text-amber-50/95 chat-md">
-                  <MathText>{exercise.remember}</MathText>
-                </div>
-              </div>
+              )}
+
+              {/* AI tutor: "explain simpler" + "similar question" after
+                  the full solution is on screen. The first asks Claude
+                  for a plain-Hebrew gloss; the second generates a new
+                  exercise that REPLACES the current one inline. */}
+              <AITutorActions
+                question={exercise.problem}
+                solution={exercise.solution.steps.join('\n') + '\n' + exercise.final_answer}
+                topic={topic}
+                difficulty={difficulty === 'easier' ? 'easy' : difficulty === 'harder' ? 'hard' : 'mid'}
+                show={{ explainSimpler: true, similarQuestion: true }}
+                onSimilarQuestion={applySimilarQuestion}
+              />
             </>
           )}
         </div>

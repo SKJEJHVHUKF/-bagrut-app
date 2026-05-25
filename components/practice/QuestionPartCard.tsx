@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { MathText } from './MathText';
 import { AnswerInput } from './AnswerInput';
+import { AITutorActions } from './AITutorActions';
 
 export type QuestionPart = {
   label: string;
@@ -50,6 +51,9 @@ export function QuestionPartCard({
   const [checking, setChecking] = useState(false);
   const [checkResult, setCheckResult] = useState<CheckResult | null>(null);
   const [checkError, setCheckError] = useState<string | null>(null);
+  // Snapshot of the wrong answer so the "Why wrong?" tutor button can
+  // explain THIS specific mistake (not the standard solution).
+  const [lastUserAnswer, setLastUserAnswer] = useState('');
 
   function showFullSolution() {
     setStepsShown(0);
@@ -72,6 +76,10 @@ export function QuestionPartCard({
     setChecking(true);
     setCheckError(null);
     setCheckResult(null);
+    // Capture the answer NOW so the tutor's "why wrong?" panel can
+    // reference what the student actually typed, even if they edit
+    // the input afterwards.
+    setLastUserAnswer(answer);
     try {
       const res = await fetch('/api/check-answer', {
         method: 'POST',
@@ -195,6 +203,19 @@ export function QuestionPartCard({
                 {checkResult && (
                   <CheckResultPanel result={checkResult} />
                 )}
+
+                {/* AI tutor: "why did I get this wrong?" — only when the
+                    verdict says wrong AND we have the snapshotted user
+                    answer to send. Pinpoints the SPECIFIC mistake. */}
+                {checkResult?.verdict === 'wrong' && lastUserAnswer && (
+                  <AITutorActions
+                    question={part.prompt}
+                    correctAnswer={part.solution.final_answer}
+                    userAnswer={lastUserAnswer}
+                    context={context}
+                    show={{ whyWrong: true }}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -231,6 +252,18 @@ export function QuestionPartCard({
                   : `רמז נוסף (${hintsShown + 1}/${part.hints.length})`}
               </span>
             </button>
+          )}
+
+          {/* AI tutor: "step-by-step help" after all hints exhausted but
+              before showing the full solution. The Pro-gated button asks
+              Claude to unpack the LAST hint without revealing the answer. */}
+          {hintsShown === part.hints.length && stepsShown < 0 && part.hints.length > 0 && (
+            <AITutorActions
+              question={part.prompt}
+              hints={part.hints}
+              context={context}
+              show={{ hintHelp: true }}
+            />
           )}
 
           {/* Solution */}
@@ -270,6 +303,18 @@ export function QuestionPartCard({
                     <MathText inline>{part.solution.final_answer}</MathText>
                   </div>
                 </div>
+              )}
+
+              {/* AI tutor: "explain simpler" — once the full solution has
+                  been revealed, the student may still not grok WHY. This
+                  button asks Claude for a 3-sentence plain-Hebrew gloss. */}
+              {onLastStep && (
+                <AITutorActions
+                  question={part.prompt}
+                  solution={part.solution.steps.join('\n') + '\n' + part.solution.final_answer}
+                  context={context}
+                  show={{ explainSimpler: true }}
+                />
               )}
             </div>
           )}
