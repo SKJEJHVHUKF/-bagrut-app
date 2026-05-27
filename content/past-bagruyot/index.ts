@@ -27,9 +27,11 @@
 
 import type { PastBagrutQuestion, BagrutPaper } from './types';
 import { bagrut2020Summer582 } from './2020-summer-582';
+import { bagrut2021Summer582 } from './2021-summer-582';
 
 export const ALL_PAST_BAGRUYOT: PastBagrutQuestion[] = [
   ...bagrut2020Summer582,
+  ...bagrut2021Summer582,
 ];
 
 // ============================================================
