@@ -22,7 +22,6 @@ import {
   CheckCircle2,
   PencilLine,
   ShieldCheck,
-  Home,
 } from 'lucide-react';
 import {
   totalQuestions as bagruyotTotal,
@@ -127,15 +126,6 @@ export default function Landing() {
             >
               <span>💬</span>
               <span className="hidden sm:inline">המורה הפרטי</span>
-            </Link>
-            <Link
-              href="/my-plan"
-              className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all"
-              title="חזרה לדף הבית"
-            >
-              <Home className="w-4 h-4" />
-              <span className="hidden sm:inline">דף הבית</span>
-              <span className="sm:hidden">בית</span>
             </Link>
           </div>
         </div>
