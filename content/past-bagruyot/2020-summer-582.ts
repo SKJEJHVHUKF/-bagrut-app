@@ -251,4 +251,133 @@ export const bagrut2020Summer582: PastBagrutQuestion[] = [
     ],
     solutionSource: 'authored',
   },
+  {
+    id: 'b2020s582-q3',
+    year: 2020,
+    season: 'summer',
+    paper: '582',
+    questionNumber: 3,
+    topic: 'מספרים מרוכבים',
+    totalPoints: 25,
+    context: [
+      '$z_1$ ו-$z_2$ הם שני מספרים מרוכבים שונים.',
+      'נתון: $z_1 = \\cos\\alpha + i\\sin\\alpha$, $\\;z_2 = \\cos\\dfrac{7\\alpha}{3} + i\\sin\\dfrac{7\\alpha}{3}$, $\\;\\dfrac{\\pi}{2} < \\alpha < \\pi$.',
+      '$\\dfrac{z_1}{z_2}$ הוא מספר ממשי.',
+    ].join('\n\n'),
+    parts: [
+      {
+        label: 'א(1)',
+        prompt: 'מצא את $\\alpha$ ואת $\\dfrac{z_1}{z_2}$.',
+        answer_type: 'expression',
+        hints: [
+          'השתמש בכלל חלוקה ב-$\\operatorname{cis}$: $\\dfrac{\\operatorname{cis}\\theta_1}{\\operatorname{cis}\\theta_2} = \\operatorname{cis}(\\theta_1 - \\theta_2)$. הפעל על $\\dfrac{z_1}{z_2}$.',
+          'מספר ב-$\\operatorname{cis}$ הוא ממשי ⟺ החלק המדומה שלו אפס ⟺ הסינוס של הזווית אפס. מתי $\\sin\\theta = 0$?',
+          'תקבל משוואה ב-$\\alpha$ עם פרמטר שלם $k$. השתמש בתחום $\\frac{\\pi}{2} < \\alpha < \\pi$ כדי לבחור את הערך היחיד שמתאים.',
+        ],
+        solution: {
+          steps: [
+            'נחלק ב-$\\operatorname{cis}$: $\\dfrac{z_1}{z_2} = \\dfrac{\\operatorname{cis}\\alpha}{\\operatorname{cis}\\,(7\\alpha/3)} = \\operatorname{cis}\\left(\\alpha - \\dfrac{7\\alpha}{3}\\right) = \\operatorname{cis}\\left(-\\dfrac{4\\alpha}{3}\\right)$.',
+            'במפורש: $\\dfrac{z_1}{z_2} = \\cos\\!\\left(-\\dfrac{4\\alpha}{3}\\right) + i\\sin\\!\\left(-\\dfrac{4\\alpha}{3}\\right)$.',
+            'תנאי "מספר ממשי" ⟺ החלק המדומה אפס: $\\sin\\!\\left(-\\dfrac{4\\alpha}{3}\\right) = 0 \\;\\Longleftrightarrow\\; -\\dfrac{4\\alpha}{3} = \\pi k$, $k \\in \\mathbb{Z}$.',
+            'מכאן $\\alpha = -\\dfrac{3\\pi k}{4}$.',
+            'נבחר $k$ שייתן $\\alpha$ בתחום $\\frac{\\pi}{2} < \\alpha < \\pi$: $\\;k=-1 \\Rightarrow \\alpha = \\dfrac{3\\pi}{4}$ (בודקים: $\\frac{\\pi}{2} = \\frac{2\\pi}{4} < \\frac{3\\pi}{4} < \\pi$ ✓). שאר ה-$k$-ים מחוץ לתחום.',
+            'הצבה: $-\\dfrac{4\\alpha}{3} = -\\dfrac{4}{3}\\cdot\\dfrac{3\\pi}{4} = -\\pi$, ולכן $\\dfrac{z_1}{z_2} = \\cos(-\\pi) + i\\sin(-\\pi) = -1$.',
+          ],
+          final_answer: '$\\alpha = \\dfrac{3\\pi}{4}$, $\\;\\dfrac{z_1}{z_2} = -1$',
+        },
+      },
+      {
+        label: 'א(2)',
+        prompt: 'הראה כי $z_1 \\cdot z_2$ הוא מספר מדומה.',
+        answer_type: 'proof',
+        hints: [
+          'כפל ב-$\\operatorname{cis}$: $\\operatorname{cis}\\theta_1 \\cdot \\operatorname{cis}\\theta_2 = \\operatorname{cis}(\\theta_1 + \\theta_2)$. חבר את הזוויות והצב את ה-$\\alpha$ שמצאת.',
+          'מספר מדומה (טהור) ⟺ החלק הממשי אפס ⟺ קוסינוס הזווית אפס. זה קורה כאשר הזווית היא $\\frac{\\pi}{2}$ ועוד כפולה של $\\pi$.',
+        ],
+        solution: {
+          steps: [
+            'נכפיל ב-$\\operatorname{cis}$: $z_1\\cdot z_2 = \\operatorname{cis}\\alpha \\cdot \\operatorname{cis}\\dfrac{7\\alpha}{3} = \\operatorname{cis}\\!\\left(\\alpha + \\dfrac{7\\alpha}{3}\\right) = \\operatorname{cis}\\dfrac{10\\alpha}{3}$.',
+            'נציב $\\alpha = \\dfrac{3\\pi}{4}$: $\\;\\dfrac{10\\alpha}{3} = \\dfrac{10}{3}\\cdot\\dfrac{3\\pi}{4} = \\dfrac{10\\pi}{4} = \\dfrac{5\\pi}{2}$.',
+            'נוריד מחזור: $\\;\\dfrac{5\\pi}{2} - 2\\pi = \\dfrac{\\pi}{2}$. לכן $z_1 \\cdot z_2 = \\operatorname{cis}\\dfrac{\\pi}{2}$.',
+            '$\\operatorname{cis}\\dfrac{\\pi}{2} = \\cos\\dfrac{\\pi}{2} + i\\sin\\dfrac{\\pi}{2} = 0 + i\\cdot 1 = i$.',
+            'החלק הממשי הוא $0$ — לכן $z_1\\cdot z_2 = i$ הוא מספר מדומה טהור. ⬛',
+          ],
+          final_answer: '$z_1 \\cdot z_2 = i$ (מדומה טהור)',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: [
+          'נתון: $w = \\dfrac{z_1}{z_2} + z_1 \\cdot z_2$.',
+          '',
+          'מצא את כל הפתרונות של המשוואה $z^3 = w^6$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'התחל מחישוב $w$ — את שני האיברים כבר מצאת בסעיף א. חבר אותם וקבל מספר מרוכב פשוט.',
+          'להעלאה בחזקה 6 עבור לצורת $\\operatorname{cis}$: מצא $|w|$ ו-$\\arg(w)$, ואז $w^6 = |w|^6 \\operatorname{cis}(6\\arg w)$.',
+          'משוואת $z^3 = w^6$ פתרון לפי נוסחת שורש: $z_k = \\sqrt[3]{|w^6|}\\cdot\\operatorname{cis}\\dfrac{\\arg(w^6) + 2\\pi k}{3}$ עבור $k = 0, 1, 2$.',
+        ],
+        solution: {
+          steps: [
+            'מסעיפים קודמים: $\\;\\dfrac{z_1}{z_2} = -1$, $\\;z_1 z_2 = i$. לכן $w = -1 + i$.',
+            'נעבור ל-$\\operatorname{cis}$: $|w| = \\sqrt{(-1)^2 + 1^2} = \\sqrt{2}$. הנקודה $(-1, 1)$ ברביע השני, לכן $\\arg(w) = \\dfrac{3\\pi}{4}$.',
+            'אז $w = \\sqrt{2}\\,\\operatorname{cis}\\dfrac{3\\pi}{4}$.',
+            'בחזקה 6: $\\;w^6 = (\\sqrt{2})^6 \\cdot \\operatorname{cis}\\!\\left(6\\cdot\\dfrac{3\\pi}{4}\\right) = 8 \\cdot \\operatorname{cis}\\dfrac{9\\pi}{2}$.',
+            'נוריד מחזורי $2\\pi$ מהזווית: $\\;\\dfrac{9\\pi}{2} - 4\\pi = \\dfrac{\\pi}{2}$. אז $w^6 = 8\\,\\operatorname{cis}\\dfrac{\\pi}{2}$.',
+            'נפתור $z^3 = 8\\,\\operatorname{cis}\\dfrac{\\pi}{2}$ לפי נוסחת השורש: $\\;z_k = \\sqrt[3]{8}\\cdot\\operatorname{cis}\\dfrac{\\pi/2 + 2\\pi k}{3} = 2\\,\\operatorname{cis}\\dfrac{\\pi + 4\\pi k}{6}$ עבור $k = 0,1,2$.',
+            '$k=0$: $\\;z_0 = 2\\,\\operatorname{cis}\\dfrac{\\pi}{6}$.',
+            '$k=1$: $\\;z_1 = 2\\,\\operatorname{cis}\\dfrac{5\\pi}{6}$.',
+            '$k=2$: $\\;z_2 = 2\\,\\operatorname{cis}\\dfrac{9\\pi}{6} = 2\\,\\operatorname{cis}\\dfrac{3\\pi}{2}$.',
+          ],
+          final_answer:
+            'שלושה פתרונות: $\\;z_0 = 2\\,\\operatorname{cis}\\dfrac{\\pi}{6}$, $\\;z_1 = 2\\,\\operatorname{cis}\\dfrac{5\\pi}{6}$, $\\;z_2 = 2\\,\\operatorname{cis}\\dfrac{3\\pi}{2}$.',
+        },
+      },
+      {
+        label: 'ג(1)',
+        prompt:
+          'האם הפתרונות שמצאת בסעיף ב יכולים להתאים לקודקודים של משושה משוכלל במישור גאוס? אם כן, מצא את שיעוריהם של שאר קודקודי המשושה.',
+        answer_type: 'proof',
+        hints: [
+          'במצולע משוכלל בעל $n$ קודקודים על מעגל, הזווית בין קודקודים סמוכים היא $\\dfrac{2\\pi}{n}$. עבור משושה ($n=6$) — מה הזווית?',
+          'הפתרונות שלך כולם על מעגל ברדיוס 2, והזוויות ביניהם קבועות — $\\dfrac{2\\pi}{3}$. בדוק: האם זו כפולה שלמה של זווית המשושה?',
+          'אם כן, הפתרונות הם "קודקודים מדלגים" של משושה (כל קודקוד שני). השלם את ה-3 הנותרים על-ידי הוספת $\\dfrac{\\pi}{3}$ לזוויות של הקיימים.',
+        ],
+        solution: {
+          steps: [
+            'שלושת הפתרונות מסעיף ב נמצאים על מעגל יחיד $\\;|z|=2$, עם הפרשי זווית קבועים: $\\dfrac{5\\pi}{6} - \\dfrac{\\pi}{6} = \\dfrac{2\\pi}{3}$, וכן $\\dfrac{3\\pi}{2} - \\dfrac{5\\pi}{6} = \\dfrac{2\\pi}{3}$.',
+            'במשושה משוכלל הזווית בין קודקודים סמוכים היא $\\dfrac{2\\pi}{6} = \\dfrac{\\pi}{3}$. ההפרש שלנו $\\dfrac{2\\pi}{3}$ הוא בדיוק כפול מזה — כלומר הפתרונות יכולים להיות **קודקודים מדלגים** (כל שני קודקוד) של משושה משוכלל. ✓',
+            'נמצא את שלושת הקודקודים הנוספים על-ידי הוספת $\\dfrac{\\pi}{3}$ לכל זווית של הפתרונות הקיימים:',
+            '$\\dfrac{\\pi}{6} + \\dfrac{\\pi}{3} = \\dfrac{\\pi}{2} \\;\\Longrightarrow\\; 2\\,\\operatorname{cis}\\dfrac{\\pi}{2} = (0,\\,2)$.',
+            '$\\dfrac{5\\pi}{6} + \\dfrac{\\pi}{3} = \\dfrac{7\\pi}{6} \\;\\Longrightarrow\\; 2\\,\\operatorname{cis}\\dfrac{7\\pi}{6} = \\bigl(-\\sqrt{3},\\,-1\\bigr)$.',
+            '$\\dfrac{3\\pi}{2} + \\dfrac{\\pi}{3} = \\dfrac{11\\pi}{6} \\;\\Longrightarrow\\; 2\\,\\operatorname{cis}\\dfrac{11\\pi}{6} = \\bigl(\\sqrt{3},\\,-1\\bigr)$.',
+          ],
+          final_answer:
+            'כן. שלושת הקודקודים הנוספים: $(0,\\,2)$, $\\;\\bigl(-\\sqrt{3},\\,-1\\bigr)$, $\\;\\bigl(\\sqrt{3},\\,-1\\bigr)$.',
+        },
+      },
+      {
+        label: 'ג(2)',
+        prompt:
+          'תן דוגמה למספר טבעי $n > 6$ שבעבורו הפתרונות שמצאת בסעיף ב יהוו קודקודים של מצולע משוכלל בעל $n$ קודקודים.',
+        answer_type: 'expression',
+        hints: [
+          'במצולע משוכלל בעל $n$ קודקודים, הפרש הזוויות בין שני קודקודים כלשהם הוא כפולה שלמה של $\\dfrac{2\\pi}{n}$ (זווית הצעד).',
+          'אצלנו ההפרש הקבוע בין הפתרונות הוא $\\dfrac{2\\pi}{3}$. הדרישה: $\\dfrac{2\\pi}{3}$ כפולה שלמה של $\\dfrac{2\\pi}{n}$ — מה זה אומר על $n$?',
+        ],
+        solution: {
+          steps: [
+            'כדי שהפתרונות יהיו קודקודים של $n$-גון משוכלל מסביב לראשית, ההפרש הזוויתי ביניהם — $\\dfrac{2\\pi}{3}$ — חייב להיות כפולה שלמה של זווית הצעד $\\dfrac{2\\pi}{n}$.',
+            'מהדרישה $\\dfrac{2\\pi}{3} = m \\cdot \\dfrac{2\\pi}{n}$ ($m$ שלם) נובע $n = 3m$, כלומר **$n$ חייב להיות כפולה של 3**.',
+            'הדרישה $n > 6$ פוסלת את $n=3$ ו-$n=6$. הערך הטבעי הקטן הבא: $\\;\\boxed{n = 9}$.',
+            '**אימות עבור $n = 9$:** הקודקודים נמצאים בזוויות $\\dfrac{\\pi}{6} + k\\cdot\\dfrac{2\\pi}{9}$. ההפרש בין הפתרונות שלנו $\\dfrac{2\\pi}{3} = \\dfrac{6\\pi}{9}$ — בדיוק 3 צעדים. ✓',
+            'דוגמאות נוספות תקפות: $n = 12, 15, 18, \\ldots$ (כל כפולה של 3 גדולה מ-6).',
+          ],
+          final_answer: '$n = 9$ (גם $n = 12, 15, 18, \\ldots$ — כל כפולה של 3 הגדולה מ-6).',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
 ];
