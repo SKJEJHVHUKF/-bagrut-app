@@ -30,6 +30,8 @@ export type PastBagrutPart = {
   points?: number;
   /** Type of expected answer — controls future input widgets. */
   answer_type?: 'number' | 'expression' | 'text' | 'proof';
+  /** Progressive hints — from gentle nudge to explicit guidance. 1-3 typical. */
+  hints?: string[];
   solution: {
     /** Step-by-step solution, one idea per step. */
     steps: string[];
