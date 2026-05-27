@@ -26,9 +26,10 @@
  */
 
 import type { PastBagrutQuestion, BagrutPaper } from './types';
+import { bagrut2020Summer582 } from './2020-summer-582';
 
 export const ALL_PAST_BAGRUYOT: PastBagrutQuestion[] = [
-  // Empty until real questions are added (see comment above).
+  ...bagrut2020Summer582,
 ];
 
 // ============================================================
