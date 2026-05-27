@@ -18,7 +18,16 @@ import {
   Infinity as InfinityIcon,
   Gift,
   ArrowLeft,
+  Lightbulb,
+  CheckCircle2,
+  PencilLine,
+  ShieldCheck,
 } from 'lucide-react';
+import {
+  totalQuestions as bagruyotTotal,
+  availableYears as bagruyotYears,
+  availableTopics as bagruyotTopics,
+} from '@/content/past-bagruyot';
 
 // Custom Logo Component
 function BagrutLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
@@ -252,6 +261,81 @@ export default function Landing() {
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
             </div>
           </Link>
+        </div>
+      </section>
+
+      {/* Past Bagruyot Archive — dedicated landing section */}
+      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="text-center mb-10 sm:mb-12">
+          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-3 py-1 mb-4">
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-emerald-300">חדש · ללא AI</span>
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-black mb-4">
+            <span className="bg-gradient-to-l from-white via-emerald-200 to-teal-200 bg-clip-text text-transparent">
+              מאגר בגרויות עם רמזים
+            </span>
+          </h2>
+          <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            שאלות בגרות <strong className="text-emerald-200">אמיתיות</strong> מהשאלון של משרד החינוך.
+            תפתור לבד, תקבל רמזים מדורגים כשנתקעת, ותראה את הפתרון רק כשאתה מוכן.
+          </p>
+        </div>
+
+        <div className="bg-gradient-to-br from-emerald-600/10 via-teal-600/8 to-cyan-600/5 backdrop-blur-md border border-emerald-500/30 rounded-3xl p-6 sm:p-10">
+          {/* Three mini-features */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mb-8">
+            <BagruyotFeature
+              icon={<PencilLine className="w-5 h-5" />}
+              title="כתוב לבד"
+              body="תיבת תשובה חופשית לכל סעיף — ביטוי, מספר או הוכחה."
+            />
+            <BagruyotFeature
+              icon={<Lightbulb className="w-5 h-5" />}
+              title="רמזים מדורגים"
+              body="2-3 רמזים לכל סעיף. אתה בוחר עד כמה עזרה לקבל."
+            />
+            <BagruyotFeature
+              icon={<CheckCircle2 className="w-5 h-5" />}
+              title="פתרון מלא"
+              body="צעד אחר צעד, רק כשתחליט שאתה מוכן לראות."
+            />
+          </div>
+
+          {/* Stats from the actual repository */}
+          {bagruyotTotal() > 0 && (
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-8">
+              <BagruyotStat value={bagruyotTotal()} label={bagruyotTotal() === 1 ? 'שאלה' : 'שאלות'} />
+              <BagruyotStat value={bagruyotYears().length} label={bagruyotYears().length === 1 ? 'שאלון' : 'שאלונים'} />
+              <BagruyotStat value={bagruyotTopics().length} label={bagruyotTopics().length === 1 ? 'נושא' : 'נושאים'} />
+            </div>
+          )}
+
+          {/* CTA */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center">
+            <Link
+              href="/bagruyot"
+              className="group inline-flex items-center gap-2 bg-gradient-to-l from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-white shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 transition-all"
+            >
+              <BookOpen className="w-5 h-5" />
+              <span>כניסה למאגר</span>
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              href="/bagruyot"
+              className="text-sm text-slate-400 hover:text-slate-200 inline-flex items-center gap-1.5"
+            >
+              <span>איך זה עובד?</span>
+              <ChevronDown className="w-4 h-4 -rotate-90" />
+            </Link>
+          </div>
+
+          {/* Trust line */}
+          <div className="mt-6 pt-6 border-t border-white/5 flex gap-2 items-start max-w-2xl mx-auto">
+            <ShieldCheck className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] sm:text-xs text-slate-500 leading-relaxed">
+              השאלות מתועתקות מהשאלונים הרשמיים של משרד החינוך. הפתרונות והרמזים נכתבים בסגנון האפליקציה.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -519,6 +603,39 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+/** Mini feature card inside the bagruyot showcase. */
+function BagruyotFeature({
+  icon,
+  title,
+  body,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 text-center sm:text-right">
+      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300 mb-2 mx-auto sm:mx-0">
+        {icon}
+      </div>
+      <div className="font-bold text-sm text-white mb-1">{title}</div>
+      <div className="text-xs text-slate-400 leading-relaxed">{body}</div>
+    </div>
+  );
+}
+
+/** Stat tile inside the bagruyot showcase. */
+function BagruyotStat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="bg-white/[0.04] border border-white/10 rounded-xl p-3 text-center">
+      <div className="text-2xl sm:text-3xl font-black bg-gradient-to-l from-emerald-300 to-teal-300 bg-clip-text text-transparent">
+        {value}
+      </div>
+      <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5">{label}</div>
     </div>
   );
 }
