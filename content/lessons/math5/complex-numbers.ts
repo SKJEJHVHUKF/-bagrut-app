@@ -615,4 +615,158 @@ $$z_k = \\cos\\frac{2\\pi k}{n} + i\\sin\\frac{2\\pi k}{n}, \\quad k = 0, 1, \\l
       ],
     },
   ],
+
+  // ============================================================
+  // Sub-topics — focused learning modules.
+  // ============================================================
+  subTopics: [
+    {
+      id: 'polar-de-moivre',
+      title: 'הצגה קוטבית ודה-מואבר',
+      emoji: '🌀',
+      tagline:
+        'המרה בין $a + bi$ ל-$r(\\cos\\theta + i\\sin\\theta)$, וחישוב חזקות בעזרת דה-מואבר.',
+      summary: [
+        'כל מספר מרוכב $z = a + bi$ יכול להיכתב גם בהצגה קוטבית: $z = r(\\cos\\theta + i\\sin\\theta)$, כאשר $r$ הוא הגודל (המרחק מהראשית) ו-$\\theta$ הוא הארגומנט (הזווית מציר $x$ החיובי).',
+        '',
+        'הצגה קוטבית מקלה דרסטית על שתי פעולות: **כפל** ו**חזקה**. כאשר כופלים שני מספרים בהצגה קוטבית, הגודלים נכפלים והזוויות מתחברות. ה**חזקה** מתבטאת ב-דה-מואבר: $z^n = r^n(\\cos(n\\theta) + i\\sin(n\\theta))$.',
+        '',
+        'הזהירות העיקרית: כשמחשבים את $\\theta$, חשוב לזהות את הרבע של $z$ במישור גאוס לפני שמכריזים על הזווית — $\\arctan(b/a)$ לבד לא מבדיל בין רבעים נגדיים.',
+      ].join('\n\n'),
+      keyPoints: [
+        '$|z| = \\sqrt{a^2 + b^2}$ — תמיד אי-שלילי.',
+        '$\\theta$ הוא הזווית מציר $x$ החיובי, נמדדת בכיוון חיובי. בדוק את הרבע!',
+        'דה-מואבר: $z^n = r^n(\\cos(n\\theta) + i\\sin(n\\theta))$ — חזקה הופכת לכפל זווית.',
+        'בכפל מרוכבים בהצגה קוטבית: גודלים מוכפלים, זוויות מתחברות. בחילוק: גודלים מתחלקים, זוויות נחסרות.',
+      ],
+      formulas: [
+        {
+          name: 'גודל וארגומנט',
+          latex: '|z| = \\sqrt{a^2 + b^2}, \\quad \\tan\\theta = \\frac{b}{a}',
+          variables: [
+            { sym: 'a', meaning: 'החלק הממשי של $z$' },
+            { sym: 'b', meaning: 'החלק המדומה של $z$' },
+            { sym: '\\theta', meaning: 'הארגומנט — תלוי גם ברבע' },
+          ],
+          note: 'תמיד לזהות באיזה רבע של מישור גאוס נמצא $z$ לפני שמכריזים על $\\theta$.',
+        },
+        {
+          name: 'הצגה קוטבית',
+          latex: 'z = r(\\cos\\theta + i\\sin\\theta)',
+          variables: [
+            { sym: 'r', meaning: 'הגודל $|z|$' },
+            { sym: '\\theta', meaning: 'הארגומנט $\\arg(z)$' },
+          ],
+        },
+        {
+          name: 'משפט דה-מואבר',
+          latex: '[r(\\cos\\theta + i\\sin\\theta)]^n = r^n(\\cos(n\\theta) + i\\sin(n\\theta))',
+          variables: [
+            { sym: 'n', meaning: 'כל מספר שלם (חיובי או שלילי)' },
+          ],
+          note: 'תקף גם לחזקות שליליות (זה הופך את $r$ ל-$1/r$ ו-$\\theta$ ל-$-\\theta$).',
+        },
+      ],
+      questions: [
+        {
+          id: 'cx-sub-polar-001',
+          difficulty: 'easy',
+          kind: 'mcq',
+          question: 'מהו $|z|$ עבור $z = -3 + 4i$?',
+          answers: ['$5$', '$7$', '$\\sqrt{7}$', '$25$'],
+          correct: 0,
+          solution: {
+            steps: ['$|z| = \\sqrt{(-3)^2 + 4^2} = \\sqrt{9 + 16} = \\sqrt{25} = 5$.'],
+            finalAnswer: '$|z| = 5$',
+            explanation: 'הגודל הוא תמיד אי-שלילי — לא משנה אם $a$ שלילי, הוא בריבוע יוצא חיובי.',
+          },
+        },
+        {
+          id: 'cx-sub-polar-002',
+          difficulty: 'easy',
+          kind: 'mcq',
+          question: 'מהו $\\arg(z)$ עבור $z = 1 + i$?',
+          answers: ['$\\dfrac{\\pi}{4}$', '$\\dfrac{\\pi}{2}$', '$\\dfrac{3\\pi}{4}$', '$-\\dfrac{\\pi}{4}$'],
+          correct: 0,
+          hint: 'באיזה רבע נמצא $z = 1 + i$? וכמה $\\arctan(1)$?',
+          solution: {
+            steps: [
+              '$z = 1 + i$ ברבע I (גם $a > 0$ וגם $b > 0$).',
+              '$\\tan\\theta = b/a = 1/1 = 1$, ולכן $\\theta = \\arctan(1) = \\dfrac{\\pi}{4}$.',
+            ],
+            finalAnswer: '$\\arg(z) = \\dfrac{\\pi}{4}$',
+            explanation: 'ברבע I, ה-$\\arctan(b/a)$ נותן את הזווית ישירות בלי תיקון.',
+          },
+        },
+        {
+          id: 'cx-sub-polar-003',
+          difficulty: 'easy',
+          kind: 'mcq',
+          question: 'המספר $z = 2\\left(\\cos\\dfrac{\\pi}{6} + i\\sin\\dfrac{\\pi}{6}\\right)$ בהצגה אלגברית הוא:',
+          answers: ['$\\sqrt{3} + i$', '$1 + i\\sqrt{3}$', '$\\sqrt{3} - i$', '$2\\sqrt{3} + 2i$'],
+          correct: 0,
+          solution: {
+            steps: [
+              '$\\cos(\\pi/6) = \\dfrac{\\sqrt{3}}{2}$, $\\;\\sin(\\pi/6) = \\dfrac{1}{2}$.',
+              '$z = 2 \\cdot \\left(\\dfrac{\\sqrt{3}}{2} + i \\cdot \\dfrac{1}{2}\\right) = \\sqrt{3} + i$.',
+            ],
+            finalAnswer: '$z = \\sqrt{3} + i$',
+            explanation: 'מהצגה קוטבית לאלגברית — מחשבים את $r\\cos\\theta$ ואת $r\\sin\\theta$ ומקבלים את החלקים הממשי והמדומה.',
+          },
+        },
+        {
+          id: 'cx-sub-polar-004',
+          difficulty: 'mid',
+          kind: 'mcq',
+          question: 'חשב $(1 + i)^4$.',
+          answers: ['$-4$', '$4$', '$-4i$', '$4i$'],
+          correct: 0,
+          hint: 'תרגום ל-הצגה קוטבית קודם. $|1+i|=\\sqrt{2}$, $\\arg(1+i)=\\pi/4$.',
+          solution: {
+            steps: [
+              'הצגה קוטבית: $1 + i = \\sqrt{2}\\left(\\cos\\dfrac{\\pi}{4} + i\\sin\\dfrac{\\pi}{4}\\right)$.',
+              'דה-מואבר: $(1+i)^4 = (\\sqrt{2})^4 (\\cos\\pi + i\\sin\\pi) = 4 \\cdot (-1 + 0) = -4$.',
+            ],
+            finalAnswer: '$(1+i)^4 = -4$',
+            explanation: 'חזקה רביעית של $\\sqrt{2}$ היא $4$; הזווית $4 \\cdot \\pi/4 = \\pi$ נותנת $\\cos\\pi = -1$.',
+          },
+        },
+        {
+          id: 'cx-sub-polar-005',
+          difficulty: 'mid',
+          kind: 'open',
+          question: 'נתון $z = 2 + 2i$. חשב את $z^5$ ורשום בהצגה אלגברית.',
+          hint: 'מצא תחילה $|z|$ ו-$\\arg(z)$, ואז הפעל דה-מואבר.',
+          solution: {
+            steps: [
+              '$|z| = \\sqrt{4 + 4} = \\sqrt{8} = 2\\sqrt{2}$.',
+              '$z$ ברבע I, $\\tan\\theta = 2/2 = 1$, אז $\\theta = \\pi/4$.',
+              'דה-מואבר: $z^5 = (2\\sqrt{2})^5 \\left(\\cos\\dfrac{5\\pi}{4} + i\\sin\\dfrac{5\\pi}{4}\\right)$.',
+              '$(2\\sqrt{2})^5 = 2^5 \\cdot (\\sqrt{2})^5 = 32 \\cdot 4\\sqrt{2} = 128\\sqrt{2}$.',
+              '$\\cos(5\\pi/4) = -\\dfrac{\\sqrt{2}}{2}$, $\\sin(5\\pi/4) = -\\dfrac{\\sqrt{2}}{2}$.',
+              '$z^5 = 128\\sqrt{2} \\cdot \\left(-\\dfrac{\\sqrt{2}}{2} - i\\dfrac{\\sqrt{2}}{2}\\right) = 128 \\cdot (-1 - i) = -128 - 128i$.',
+            ],
+            finalAnswer: '$z^5 = -128 - 128i$',
+            explanation: 'דה-מואבר הופך חזקה גבוהה לחישוב פשוט — חזקה של הגודל וכפל של הזווית.',
+          },
+        },
+        {
+          id: 'cx-sub-polar-006',
+          difficulty: 'hard',
+          kind: 'open',
+          question: 'חשב $(\\sqrt{3} - i)^6$.',
+          hint: '$\\sqrt{3} - i$ ברבע IV. גודל $= 2$, ארגומנט שלילי.',
+          solution: {
+            steps: [
+              '$|\\sqrt{3} - i| = \\sqrt{3 + 1} = 2$.',
+              '$\\sqrt{3} - i$ ברבע IV ($a > 0$, $b < 0$). $\\tan\\theta = -1/\\sqrt{3}$ → $\\theta = -\\pi/6$.',
+              'דה-מואבר: $(\\sqrt{3}-i)^6 = 2^6 \\left(\\cos(-\\pi) + i\\sin(-\\pi)\\right) = 64(-1 + 0) = -64$.',
+            ],
+            finalAnswer: '$(\\sqrt{3}-i)^6 = -64$',
+            explanation: 'חזקה זוגית של מספר ממשי שלילי בארגומנט יוצאת מספר ממשי. שים לב שזה היה ייקח עבודה רבה ללא דה-מואבר!',
+          },
+        },
+      ],
+    },
+  ],
 };

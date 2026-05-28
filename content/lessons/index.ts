@@ -1,4 +1,4 @@
-import type { Lesson, PracticeQuestion, StaticBagrutQuestion } from './types';
+import type { Lesson, PracticeQuestion, StaticBagrutQuestion, SubTopic } from './types';
 import { math5Algebra } from './math5/algebra';
 import { math5Functions } from './math5/functions';
 import { math5Derivatives } from './math5/derivatives';
@@ -75,4 +75,28 @@ export function getBagrutQuestions(subject: string, topic: string): StaticBagrut
 /** True iff the topic has at least one static bagrut question. */
 export function hasBagrutBank(subject: string, topic: string): boolean {
   return (getLesson(subject, topic)?.bagrutQuestions?.length ?? 0) > 0;
+}
+
+// ============================================================
+// SubTopic accessors — pedagogical modules inside a lesson.
+// ============================================================
+
+/** All sub-topics for a lesson (may be empty array). */
+export function getSubTopics(subject: string, topic: string): SubTopic[] {
+  return getLesson(subject, topic)?.subTopics ?? [];
+}
+
+/** True iff the topic has at least one defined sub-topic module. */
+export function hasSubTopics(subject: string, topic: string): boolean {
+  return (getLesson(subject, topic)?.subTopics?.length ?? 0) > 0;
+}
+
+/** Look up a specific sub-topic by its slug. */
+export function getSubTopic(
+  subject: string,
+  topic: string,
+  subId: string,
+): SubTopic | null {
+  const list = getLesson(subject, topic)?.subTopics ?? [];
+  return list.find((s) => s.id === subId) ?? null;
 }

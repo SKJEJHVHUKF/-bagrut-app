@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Sparkles, Target, AlertTriangle, Lightbulb, ArrowLeft, CheckCircle, Award } from 'lucide-react';
+import { BookOpen, Sparkles, Target, AlertTriangle, Lightbulb, ArrowLeft, CheckCircle, Award, GraduationCap } from 'lucide-react';
 import type { Lesson } from '@/content/lessons/types';
 import { MathText } from './MathText';
 import { FormulaCard } from './FormulaCard';
@@ -226,13 +226,60 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         </motion.section>
       )}
 
+      {/* Sub-topics — pedagogical learning path before tackling main bagrut. */}
+      {lesson.subTopics && lesson.subTopics.length > 0 && (
+        <motion.section {...inViewProps} variants={staggerContainer} className="pt-2">
+          <motion.div
+            variants={fadeUp}
+            className="text-xs font-black tracking-widest text-emerald-300 mb-3 uppercase flex items-center gap-2"
+          >
+            <GraduationCap className="w-3.5 h-3.5" />
+            <span>מסלול לימוד · תרגול לפי תת-נושאים</span>
+          </motion.div>
+          <motion.p variants={fadeUp} className="text-xs text-slate-400 mb-3">
+            תרגל כל תת-נושא בנפרד — סיכום קצר, נוסחאות, ותרגול ייעודי — לפני שאתה ניגש לבגרות המלאה.
+          </motion.p>
+          <motion.div variants={staggerContainer} className="space-y-2">
+            {lesson.subTopics.map((sub, i) => (
+              <motion.div
+                key={sub.id}
+                variants={fadeUp}
+                whileHover={{ y: -3, x: -2 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Link
+                  href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/sub/${sub.id}`}
+                  className="card-3d block bg-gradient-to-br from-emerald-600/10 to-teal-600/10 border border-emerald-500/30 hover:border-emerald-500/60 rounded-2xl p-4 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center font-black text-emerald-200 shadow-sm">
+                      {sub.emoji ?? i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-sm sm:text-base text-white mb-0.5">
+                        {sub.title}
+                      </div>
+                      <div className="text-xs text-slate-400 leading-snug">{sub.tagline}</div>
+                      <div className="text-[10px] text-emerald-300/80 mt-1.5">
+                        {sub.questions.length} תרגילים ייעודיים
+                      </div>
+                    </div>
+                    <ArrowLeft className="w-4 h-4 text-emerald-300 flex-shrink-0 mt-1.5" />
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.section>
+      )}
+
       {/* CTA — start practice. */}
       <motion.section {...inViewProps} variants={staggerContainer} className="pt-2">
         <motion.div
           variants={fadeUp}
           className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase"
         >
-          מוכן/ה לתרגל?
+          {lesson.subTopics && lesson.subTopics.length > 0 ? 'או — תרגול כללי בנושא' : 'מוכן/ה לתרגל?'}
         </motion.div>
         <motion.div
           variants={staggerContainer}

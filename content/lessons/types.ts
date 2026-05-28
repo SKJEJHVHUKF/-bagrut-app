@@ -215,6 +215,38 @@ export type StaticBagrutQuestion = {
 // remain optional during the migration so older lesson files keep
 // compiling. Once all topics are migrated, we'll flip these to required.
 
+// ============================================================
+// SubTopic — pedagogical module inside a Lesson.
+// ============================================================
+//
+// Splits a topic into focused learning modules. Each sub-topic has:
+//   - A short summary specific to it (not the whole topic)
+//   - The formulas the student needs for that sub-topic only
+//   - 5-8 focused practice questions
+//
+// Rendered at /practice/[subject]/[topic]/sub/[subId] (landing)
+// and /practice/[subject]/[topic]/sub/[subId]/practice (exercise).
+// Listed as navigation cards on the main lesson page.
+
+export type SubTopic = {
+  /** URL-safe slug. e.g. 'polar-de-moivre'. Used in the route. */
+  id: string;
+  /** Display title in Hebrew. */
+  title: string;
+  /** Optional emoji shown on the navigation card. */
+  emoji?: string;
+  /** One sentence under the title — what this module teaches. */
+  tagline: string;
+  /** Markdown + LaTeX. 2-4 short paragraphs that orient the student. */
+  summary: string;
+  /** 3-5 "must remember" bullets specific to this sub-topic. */
+  keyPoints: string[];
+  /** Formulas relevant ONLY to this sub-topic (subset of the lesson's). */
+  formulas: Formula[];
+  /** 5-8 focused practice questions. Same shape as the lesson's quick bank. */
+  questions: PracticeQuestion[];
+};
+
 export type Lesson = {
   subject: string;
   topic: string;
@@ -239,4 +271,9 @@ export type Lesson = {
   /** Multi-part bagrut questions — the "תרגול מהיר" route serves a
    *  random one from this bank instead of calling /api/practice. */
   bagrutQuestions?: StaticBagrutQuestion[];
+
+  /** Pedagogical sub-modules — the student learns each sub-topic in
+   *  isolation (focused summary + formulas + targeted drills) BEFORE
+   *  tackling the comprehensive bagrut question. Optional. */
+  subTopics?: SubTopic[];
 };
