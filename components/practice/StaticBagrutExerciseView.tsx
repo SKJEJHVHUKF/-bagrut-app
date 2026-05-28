@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { MathText } from './MathText';
 import { QuestionPartCard } from './QuestionPartCard';
 import { markExerciseDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
+import { buttonTap } from '@/lib/animations';
 import type { StaticBagrutQuestion } from '@/content/lessons/types';
 
 type Props = {
@@ -52,15 +55,23 @@ export function StaticBagrutExerciseView({
 
   function newQuestion() {
     if (questions.length === 1) {
-      // Only one question — re-render the same one to reset its state.
+      // Only one bagrut question — reset state and notify the student.
       setPartsDone(new Set());
       setContextOpen(true);
+      toast.info('זו השאלה היחידה בנושא הזה', {
+        description: 'אפסנו את התרגיל. עוד שאלות בגרות יתווספו בקרוב — בינתיים נסה את "תרגול מהיר" לעוד תרגילים.',
+        duration: 4000,
+      });
       return;
     }
     // Pick any other index to guarantee variety on click.
     let next = pickedIndex;
     while (next === pickedIndex) next = pickRandom(questions.length);
     setPickedIndex(next);
+    toast.success('שאלה חדשה נטענה!', {
+      description: `נשארו עוד ${questions.length - 1} שאלות שונות בנושא`,
+      duration: 2000,
+    });
   }
 
   function onPartDone(i: number, total: number) {
@@ -136,16 +147,34 @@ export function StaticBagrutExerciseView({
 
       {/* Footer actions */}
       <div className="grid grid-cols-1 gap-2 pt-2">
-        <button
+        <motion.button
+          {...buttonTap}
           onClick={newQuestion}
-          className="inline-flex items-center justify-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-4 py-3 rounded-2xl font-bold text-white shadow-lg shadow-purple-500/30 transition-all text-sm"
+          className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-bold text-white shadow-lg transition-colors text-sm ${
+            questions.length > 1
+              ? 'bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-purple-500/30'
+              : 'bg-white/10 hover:bg-white/15 border border-white/20 shadow-white/5'
+          }`}
         >
-          <Sparkles className="w-4 h-4" />
-          <span>שאלה חדשה</span>
-        </button>
-        {questions.length > 1 && (
+          {questions.length > 1 ? (
+            <>
+              <Sparkles className="w-4 h-4" />
+              <span>שאלה חדשה</span>
+            </>
+          ) : (
+            <>
+              <RefreshCw className="w-4 h-4" />
+              <span>אפס תרגיל</span>
+            </>
+          )}
+        </motion.button>
+        {questions.length > 1 ? (
           <div className="text-[11px] text-slate-500 text-center">
             יש {questions.length} שאלות בגרות זמינות בנושא זה — מתחלפות בכל לחיצה.
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500 text-center">
+            יש כרגע שאלת בגרות אחת בנושא — לחיצה תאפס את ההתקדמות כדי לפתור מחדש. עוד שאלות בדרך.
           </div>
         )}
       </div>
