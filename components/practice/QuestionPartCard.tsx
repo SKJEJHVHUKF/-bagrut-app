@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import {
   Lightbulb,
   KeyRound,
@@ -15,6 +17,8 @@ import {
 import { MathText } from './MathText';
 import { AnswerInput } from './AnswerInput';
 import { AITutorActions } from './AITutorActions';
+import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
+import { buttonTap } from '@/lib/animations';
 
 export type QuestionPart = {
   label: string;
@@ -57,6 +61,10 @@ export function QuestionPartCard({
 
   function showFullSolution() {
     setStepsShown(0);
+    toast.success(`סעיף ${part.label} — פתרון מלא`, {
+      description: 'עבור על הצעדים ובדוק שהבנת',
+      duration: 2000,
+    });
   }
 
   function nextStep() {
@@ -65,8 +73,25 @@ export function QuestionPartCard({
       const next = Math.min(n + 1, total - 1);
       if (next === total - 1 && !revealedFinal) {
         setRevealedFinal(true);
+        celebrateCompletion();
+        toast.success(`סעיף ${part.label} הושלם! 🎯`, {
+          description: 'עברת על כל הצעדים',
+          duration: 2500,
+        });
         onDone?.();
       }
+      return next;
+    });
+  }
+
+  function revealHint() {
+    setHintsShown((n) => {
+      const next = Math.min(n + 1, part.hints.length);
+      sparkle();
+      toast.info(`רמז ${next} מתוך ${part.hints.length}`, {
+        description: 'נסה לפתור עם הרמז לפני שתחשוף את הפתרון',
+        duration: 2500,
+      });
       return next;
     });
   }
@@ -107,7 +132,22 @@ export function QuestionPartCard({
       // gets marked complete even if the student didn't reveal the solution.
       if (data.verdict === 'correct' && !revealedFinal) {
         setRevealedFinal(true);
+        celebrateCorrect();
+        toast.success('תשובה נכונה! 🎯', {
+          description: `סעיף ${part.label} נסגר בכבוד`,
+          duration: 2500,
+        });
         onDone?.();
+      } else if (data.verdict === 'partial') {
+        toast.info('כמעט שם — תשובה חלקית', {
+          description: 'קרא את הפידבק ונסה לתקן',
+          duration: 2500,
+        });
+      } else if (data.verdict === 'wrong') {
+        toast.error('לא נכון', {
+          description: 'אל תוותר — נסה רמז או בקש "למה טעיתי?"',
+          duration: 2500,
+        });
       }
     } catch (e) {
       setCheckError(e instanceof Error ? e.message : String(e));
@@ -220,30 +260,42 @@ export function QuestionPartCard({
             )}
           </div>
 
-          {/* Hints */}
-          {hintsShown > 0 && (
-            <div className="space-y-2">
-              {part.hints.slice(0, hintsShown).map((h, i) => (
-                <div
-                  key={i}
-                  className="bg-amber-500/5 border border-amber-500/30 rounded-xl px-3 py-2.5 chat-md"
-                >
-                  <div className="text-[10px] font-black tracking-widest text-amber-300 mb-1 uppercase flex items-center gap-1.5">
-                    <Lightbulb className="w-3 h-3" />
-                    <span>רמז {i + 1}</span>
-                  </div>
-                  <div className="text-sm text-amber-50/95">
-                    <MathText>{h}</MathText>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Hints — each slides in from top */}
+          <AnimatePresence initial={false}>
+            {hintsShown > 0 && (
+              <motion.div
+                key="hints"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-2"
+              >
+                {part.hints.slice(0, hintsShown).map((h, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className="bg-amber-500/5 border border-amber-500/30 rounded-xl px-3 py-2.5 chat-md"
+                  >
+                    <div className="text-[10px] font-black tracking-widest text-amber-300 mb-1 uppercase flex items-center gap-1.5">
+                      <Lightbulb className="w-3 h-3" />
+                      <span>רמז {i + 1}</span>
+                    </div>
+                    <div className="text-sm text-amber-50/95">
+                      <MathText>{h}</MathText>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {hintsShown < part.hints.length && stepsShown < 0 && (
-            <button
-              onClick={() => setHintsShown((n) => Math.min(n + 1, part.hints.length))}
-              className="w-full inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-100 text-sm transition-all"
+            <motion.button
+              {...buttonTap}
+              onClick={revealHint}
+              className="w-full inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-100 text-sm transition-colors"
             >
               <Lightbulb className="w-4 h-4" />
               <span>
@@ -251,7 +303,7 @@ export function QuestionPartCard({
                   ? 'רמז'
                   : `רמז נוסף (${hintsShown + 1}/${part.hints.length})`}
               </span>
-            </button>
+            </motion.button>
           )}
 
           {/* AI tutor: "step-by-step help" after all hints exhausted but
@@ -266,67 +318,90 @@ export function QuestionPartCard({
             />
           )}
 
-          {/* Solution */}
-          {stepsShown >= 0 && (
-            <div className="bg-gradient-to-br from-purple-600/10 to-pink-600/10 border border-purple-500/30 rounded-xl p-4">
-              <div className="text-[10px] font-black tracking-widest text-purple-300 mb-2 uppercase flex items-center gap-1.5">
-                <KeyRound className="w-3 h-3" />
-                <span>פתרון</span>
-              </div>
-              <ol className="space-y-2.5">
-                {part.solution.steps.slice(0, stepsShown + 1).map((step, i) => (
-                  <li key={i} className="flex gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/30 border border-purple-400/50 flex items-center justify-center text-[11px] font-black text-purple-100">
-                      {i + 1}
-                    </div>
-                    <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
-                      <MathText>{step}</MathText>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-
-              {!onLastStep ? (
-                <button
-                  onClick={nextStep}
-                  className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 px-4 py-2 rounded-lg font-bold text-purple-100 text-sm transition-all"
-                >
-                  הצעד הבא ({stepsShown + 2}/{totalSteps})
-                </button>
-              ) : (
-                <div className="mt-3 bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2.5">
-                  <div className="text-[10px] font-black tracking-widest text-emerald-300 mb-1 uppercase flex items-center gap-1.5">
-                    <CheckCircle className="w-3 h-3" />
-                    <span>תשובה סופית</span>
-                  </div>
-                  <div className="text-sm font-bold text-emerald-50 chat-md">
-                    <MathText inline>{part.solution.final_answer}</MathText>
-                  </div>
+          {/* Solution — cascades in step by step */}
+          <AnimatePresence initial={false}>
+            {stepsShown >= 0 && (
+              <motion.div
+                key="solution"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                style={{ overflow: 'hidden' }}
+                className="bg-gradient-to-br from-purple-600/10 to-pink-600/10 border border-purple-500/30 rounded-xl p-4"
+              >
+                <div className="text-[10px] font-black tracking-widest text-purple-300 mb-2 uppercase flex items-center gap-1.5">
+                  <KeyRound className="w-3 h-3" />
+                  <span>פתרון</span>
                 </div>
-              )}
+                <ol className="space-y-2.5">
+                  {part.solution.steps.slice(0, stepsShown + 1).map((step, i) => (
+                    <motion.li
+                      key={i}
+                      initial={{ opacity: 0, x: 12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className="flex gap-3"
+                    >
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/30 border border-purple-400/50 flex items-center justify-center text-[11px] font-black text-purple-100">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
+                        <MathText>{step}</MathText>
+                      </div>
+                    </motion.li>
+                  ))}
+                </ol>
 
-              {/* AI tutor: "explain simpler" — once the full solution has
-                  been revealed, the student may still not grok WHY. This
-                  button asks Claude for a 3-sentence plain-Hebrew gloss. */}
-              {onLastStep && (
-                <AITutorActions
-                  question={part.prompt}
-                  solution={part.solution.steps.join('\n') + '\n' + part.solution.final_answer}
-                  context={context}
-                  show={{ explainSimpler: true }}
-                />
-              )}
-            </div>
-          )}
+                {!onLastStep ? (
+                  <motion.button
+                    {...buttonTap}
+                    onClick={nextStep}
+                    className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 px-4 py-2 rounded-lg font-bold text-purple-100 text-sm transition-colors"
+                  >
+                    הצעד הבא ({stepsShown + 2}/{totalSteps})
+                  </motion.button>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
+                    className="mt-3 bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2.5"
+                  >
+                    <div className="text-[10px] font-black tracking-widest text-emerald-300 mb-1 uppercase flex items-center gap-1.5">
+                      <CheckCircle className="w-3 h-3" />
+                      <span>תשובה סופית</span>
+                    </div>
+                    <div className="text-sm font-bold text-emerald-50 chat-md">
+                      <MathText inline>{part.solution.final_answer}</MathText>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* AI tutor: "explain simpler" — once the full solution has
+                    been revealed, the student may still not grok WHY. This
+                    button asks Claude for a 3-sentence plain-Hebrew gloss. */}
+                {onLastStep && (
+                  <AITutorActions
+                    question={part.prompt}
+                    solution={part.solution.steps.join('\n') + '\n' + part.solution.final_answer}
+                    context={context}
+                    show={{ explainSimpler: true }}
+                  />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {stepsShown < 0 && (
-            <button
+            <motion.button
+              {...buttonTap}
               onClick={showFullSolution}
-              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-purple-500/30 transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-purple-500/30 transition-colors"
             >
               <KeyRound className="w-4 h-4" />
               <span>הצג פתרון מלא</span>
-            </button>
+            </motion.button>
           )}
         </div>
       )}
