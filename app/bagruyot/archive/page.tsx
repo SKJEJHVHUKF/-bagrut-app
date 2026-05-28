@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { sparkle, celebrateCompletion } from '@/lib/confetti';
 import {
   BookOpen,
   Loader2,
@@ -411,7 +413,15 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
           <motion.button
             whileTap={{ scale: 0.95 }}
             whileHover={{ scale: 1.02 }}
-            onClick={() => setHintsShown((n) => n + 1)}
+            onClick={() => {
+              const next = hintsShown + 1;
+              setHintsShown(next);
+              sparkle();
+              toast.info(`רמז ${next} מתוך ${part.hints?.length}`, {
+                description: 'נסה לפתור עם הרמז לפני שתסתכל בפתרון',
+                duration: 2500,
+              });
+            }}
             className="inline-flex items-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-200 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors"
           >
             <Lightbulb className="w-3.5 h-3.5" />
@@ -422,7 +432,13 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
           <motion.button
             whileTap={{ scale: 0.95 }}
             whileHover={{ scale: 1.02 }}
-            onClick={() => setSolutionShown(true)}
+            onClick={() => {
+              setSolutionShown(true);
+              toast.success(`סעיף ${part.label} — פתרון מלא`, {
+                description: 'עבור על הצעדים ובדוק שהבנת',
+                duration: 2000,
+              });
+            }}
             className="inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-200 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors"
           >
             <Eye className="w-3.5 h-3.5" />

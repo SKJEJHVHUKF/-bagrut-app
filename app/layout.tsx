@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Heebo, Frank_Ruhl_Libre } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 import ServiceWorkerRegistration from "./sw-register";
 
@@ -66,6 +67,19 @@ export default function RootLayout({
       <body className="w-screen overflow-x-hidden m-0 p-0">
         <ServiceWorkerRegistration />
         {children}
+        <Toaster
+          position="top-center"
+          dir="rtl"
+          theme="dark"
+          richColors
+          closeButton
+          toastOptions={{
+            style: {
+              fontFamily: 'var(--font-heebo), sans-serif',
+              fontWeight: 600,
+            },
+          }}
+        />
       </body>
     </html>
   );
