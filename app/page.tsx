@@ -2,7 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { hasPlan } from '@/lib/study-plan';
+import {
+  fadeUp,
+  heroStagger,
+  staggerContainer,
+  scaleIn,
+  inViewProps,
+  cardHover,
+  buttonTap,
+} from '@/lib/animations';
 import {
   Sparkles,
   BookOpen,
@@ -132,57 +142,87 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-20 sm:pb-28 text-center">
-        <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-md border border-purple-500/30 rounded-full px-4 py-1.5 mb-6 sm:mb-8">
+      <motion.section
+        variants={heroStagger}
+        initial="hidden"
+        animate="visible"
+        className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-20 sm:pb-28 text-center"
+      >
+        <motion.div
+          variants={fadeUp}
+          className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-md border border-purple-500/30 rounded-full px-4 py-1.5 mb-6 sm:mb-8"
+        >
           <Sparkles className="w-4 h-4 text-purple-400" />
           <span className="text-xs sm:text-sm font-bold text-purple-200">מבוסס AI של Anthropic · Claude</span>
-        </div>
+        </motion.div>
 
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-black leading-tight mb-6 sm:mb-8">
+        <motion.h1
+          variants={fadeUp}
+          className="text-4xl sm:text-6xl md:text-7xl font-black leading-tight mb-6 sm:mb-8"
+        >
           <span className="block bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
             הבגרות שלך,
           </span>
           <span className="block bg-gradient-to-l from-purple-400 via-pink-400 to-amber-400 bg-clip-text text-transparent">
             בכיס שלך
           </span>
-        </h1>
+        </motion.h1>
 
-        <p className="text-base sm:text-xl text-slate-300 max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed">
+        <motion.p
+          variants={fadeUp}
+          className="text-base sm:text-xl text-slate-300 max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed"
+        >
           תרגול חכם של שאלות בגרות אמיתיות, נוצרות בזמן אמת ע&quot;י בינה מלאכותית.
           <br className="hidden sm:block" />
           הסבר מיידי לכל תשובה. בעברית. בחינם.
-        </p>
+        </motion.p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 sm:mb-16">
+        <motion.div
+          variants={fadeUp}
+          className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 sm:mb-16"
+        >
           <PrimaryCTA />
-          <a
+          <motion.a
+            {...buttonTap}
             href="#how-it-works"
             className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 px-6 py-4 rounded-2xl font-bold text-slate-200 transition-all"
           >
             <span>איך זה עובד?</span>
             <ChevronDown className="w-5 h-5" />
-          </a>
-        </div>
+          </motion.a>
+        </motion.div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 sm:gap-8 max-w-2xl mx-auto">
+        <motion.div
+          variants={staggerContainer}
+          className="grid grid-cols-3 gap-4 sm:gap-8 max-w-2xl mx-auto"
+        >
           {[
             { icon: BookOpen, value: '7', label: 'מקצועות' },
             { icon: InfinityIcon, value: '∞', label: 'שאלות' },
             { icon: Gift, value: '100%', label: 'חינם' },
           ].map((s, i) => (
-            <div key={i} className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 sm:p-6 hover:border-purple-500/40 transition-all">
+            <motion.div
+              key={i}
+              variants={scaleIn}
+              whileHover={{ y: -3 }}
+              className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 sm:p-6 hover:border-purple-500/40 transition-all"
+            >
               <s.icon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400 mx-auto mb-2" />
               <div className="text-2xl sm:text-4xl font-black bg-gradient-to-l from-white to-purple-300 bg-clip-text text-transparent">{s.value}</div>
               <div className="text-xs sm:text-sm text-slate-400 mt-1 font-semibold">{s.label}</div>
-            </div>
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* Three modes — quiz / practice / chat */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <div className="text-center mb-8 sm:mb-12">
+      <motion.section
+        {...inViewProps}
+        variants={staggerContainer}
+        className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16"
+      >
+        <motion.div variants={fadeUp} className="text-center mb-8 sm:mb-12">
           <div className="inline-block text-xs sm:text-sm font-bold text-purple-400 uppercase tracking-widest mb-3">
             3 דרכים ללמוד
           </div>
@@ -194,13 +234,14 @@ export default function Landing() {
           <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
             כל מצב פותר בעיה שונה. אפשר לשלב ביניהם — ולעבור בין מצב לאחר תוך כדי לימוד.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 perspective-1500">
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-4 perspective-1500">
           {/* Quiz */}
+          <motion.div variants={fadeUp} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
           <Link
             href="/quiz"
-            className="card-3d-strong group bg-gradient-to-br from-purple-600/15 to-pink-600/15 backdrop-blur-md border border-purple-500/30 hover:border-purple-500/60 rounded-3xl p-6 block"
+            className="card-3d-strong group bg-gradient-to-br from-purple-600/15 to-pink-600/15 backdrop-blur-md border border-purple-500/30 hover:border-purple-500/60 rounded-3xl p-6 block h-full"
           >
             <div className="icon-3d w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/40">
               <Sparkles className="w-6 h-6 text-white" />
@@ -214,11 +255,13 @@ export default function Landing() {
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
             </div>
           </Link>
+          </motion.div>
 
           {/* Practice — guided */}
+          <motion.div variants={fadeUp} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
           <Link
             href="/practice"
-            className="card-3d-strong group bg-gradient-to-br from-amber-500/15 to-orange-500/15 backdrop-blur-md border border-amber-500/30 hover:border-amber-500/60 rounded-3xl p-6 relative block"
+            className="card-3d-strong group bg-gradient-to-br from-amber-500/15 to-orange-500/15 backdrop-blur-md border border-amber-500/30 hover:border-amber-500/60 rounded-3xl p-6 relative block h-full"
           >
             <div className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-black text-amber-200 uppercase tracking-wider">
               חדש
@@ -235,11 +278,13 @@ export default function Landing() {
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
             </div>
           </Link>
+          </motion.div>
 
           {/* Chat */}
+          <motion.div variants={fadeUp} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
           <Link
             href="/chat"
-            className="card-3d-strong group bg-gradient-to-br from-emerald-500/15 to-teal-500/15 backdrop-blur-md border border-emerald-500/30 hover:border-emerald-500/60 rounded-3xl p-6 block"
+            className="card-3d-strong group bg-gradient-to-br from-emerald-500/15 to-teal-500/15 backdrop-blur-md border border-emerald-500/30 hover:border-emerald-500/60 rounded-3xl p-6 block h-full"
           >
             <div className="icon-3d w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/40">
               <span className="text-2xl">💬</span>
@@ -253,11 +298,16 @@ export default function Landing() {
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
             </div>
           </Link>
-        </div>
-      </section>
+          </motion.div>
+        </motion.div>
+      </motion.section>
 
       {/* Past Bagruyot Archive — dedicated landing section */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+      <motion.section
+        {...inViewProps}
+        variants={staggerContainer}
+        className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      >
         <div className="text-center mb-10 sm:mb-12">
           <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-3 py-1 mb-4">
             <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-emerald-300">חדש · ללא AI</span>
@@ -329,11 +379,15 @@ export default function Landing() {
             </p>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Pain Points */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div className="text-center mb-12 sm:mb-16">
+      <motion.section
+        {...inViewProps}
+        variants={staggerContainer}
+        className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      >
+        <motion.div variants={fadeUp} className="text-center mb-12 sm:mb-16">
           <div className="inline-block text-xs sm:text-sm font-bold text-pink-400 uppercase tracking-widest mb-3">הבעיה</div>
           <h2 className="text-3xl sm:text-5xl font-black mb-4">
             <span className="bg-gradient-to-l from-white to-pink-200 bg-clip-text text-transparent">
@@ -343,13 +397,16 @@ export default function Landing() {
           <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto">
             בגרות זה לחץ. מצאנו דרך להפוך את התרגול לפשוט, מהיר ואפילו מהנה.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {PAIN_POINTS.map((p, i) => (
-            <div
+            <motion.div
               key={i}
-              className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8 hover:border-purple-500/50 hover:bg-white/[0.07] hover:-translate-y-1 transition-all duration-300"
+              variants={fadeUp}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8 hover:border-purple-500/50 hover:bg-white/[0.07] transition-colors"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -360,27 +417,35 @@ export default function Landing() {
                   <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{p.desc}</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* How it works */}
-      <section id="how-it-works" className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div className="text-center mb-12 sm:mb-16">
+      <motion.section
+        id="how-it-works"
+        {...inViewProps}
+        variants={staggerContainer}
+        className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      >
+        <motion.div variants={fadeUp} className="text-center mb-12 sm:mb-16">
           <div className="inline-block text-xs sm:text-sm font-bold text-purple-400 uppercase tracking-widest mb-3">הפתרון</div>
           <h2 className="text-3xl sm:text-5xl font-black mb-4">
             <span className="bg-gradient-to-l from-white to-purple-200 bg-clip-text text-transparent">
               3 שלבים. ככה זה עובד.
             </span>
           </h2>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {STEPS.map((s, i) => (
-            <div
+            <motion.div
               key={i}
-              className="group relative bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8 hover:border-purple-500/50 hover:bg-white/[0.07] hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+              variants={fadeUp}
+              whileHover={{ y: -5 }}
+              transition={{ duration: 0.2 }}
+              className="group relative bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8 hover:border-purple-500/50 hover:bg-white/[0.07] transition-colors overflow-hidden"
             >
               <div className="absolute top-2 left-4 text-7xl sm:text-8xl font-black text-white/[0.04] select-none">
                 {s.num}
@@ -392,14 +457,18 @@ export default function Landing() {
                 <h3 className="text-xl font-bold mb-3">{s.title}</h3>
                 <p className="text-slate-400 leading-relaxed">{s.desc}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* Subjects */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div className="text-center mb-12 sm:mb-16">
+      <motion.section
+        {...inViewProps}
+        variants={staggerContainer}
+        className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      >
+        <motion.div variants={fadeUp} className="text-center mb-12 sm:mb-16">
           <div className="inline-block text-xs sm:text-sm font-bold text-amber-400 uppercase tracking-widest mb-3">מקצועות</div>
           <h2 className="text-3xl sm:text-5xl font-black mb-4">
             <span className="bg-gradient-to-l from-white to-amber-200 bg-clip-text text-transparent">
@@ -409,28 +478,34 @@ export default function Landing() {
           <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto">
             מכל המקצועות העיקריים, ברמת 5 יחידות. בקרוב יתווספו עוד.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 perspective-1500">
+        <motion.div
+          variants={staggerContainer}
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 perspective-1500"
+        >
           {SUBJECTS.map((s, i) => (
-            <Link
-              key={i}
-              href="/quiz"
-              className={`card-3d group relative bg-gradient-to-br ${s.color} backdrop-blur-md border border-white/10 rounded-2xl p-5 sm:p-6 text-center hover:border-white/30 ${s.glow} block`}
-            >
-              <div className="icon-3d text-4xl sm:text-5xl mb-3 inline-block">
-                {s.emoji}
-              </div>
-              <div className="font-bold text-sm sm:text-base mb-1">{s.name}</div>
-              <div className="text-xs text-slate-400">{s.topics} נושאים</div>
-            </Link>
+            <motion.div key={i} variants={scaleIn} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
+              <Link
+                href="/quiz"
+                className={`card-3d group relative bg-gradient-to-br ${s.color} backdrop-blur-md border border-white/10 rounded-2xl p-5 sm:p-6 text-center hover:border-white/30 ${s.glow} block h-full`}
+              >
+                <div className="icon-3d text-4xl sm:text-5xl mb-3 inline-block">{s.emoji}</div>
+                <div className="font-bold text-sm sm:text-base mb-1">{s.name}</div>
+                <div className="text-xs text-slate-400">{s.topics} נושאים</div>
+              </Link>
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* Pricing */}
-      <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div className="text-center mb-12 sm:mb-16">
+      <motion.section
+        {...inViewProps}
+        variants={staggerContainer}
+        className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      >
+        <motion.div variants={fadeUp} className="text-center mb-12 sm:mb-16">
           <div className="inline-block text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest mb-3">מחיר</div>
           <h2 className="text-3xl sm:text-5xl font-black mb-4">
             <span className="bg-gradient-to-l from-white to-emerald-200 bg-clip-text text-transparent">
@@ -440,11 +515,16 @@ export default function Landing() {
           <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto">
             בחר את המסלול שמתאים לך. ה-Free תמיד יישאר חינם.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Free Tier */}
-          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 hover:border-emerald-500/40 transition-all">
+          <motion.div
+            variants={fadeUp}
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+            className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 hover:border-emerald-500/40 transition-colors"
+          >
             <div className="flex items-center gap-2 mb-2">
               <Gift className="w-5 h-5 text-emerald-400" />
               <span className="text-emerald-400 font-bold text-sm uppercase tracking-wider">חינמי</span>
@@ -475,10 +555,15 @@ export default function Landing() {
             >
               התחל עכשיו - חינם
             </Link>
-          </div>
+          </motion.div>
 
           {/* Pro Tier */}
-          <div className="relative bg-gradient-to-br from-purple-600/20 via-pink-600/15 to-amber-500/10 backdrop-blur-md border-2 border-purple-500/40 rounded-3xl p-8 shadow-2xl shadow-purple-500/20">
+          <motion.div
+            variants={fadeUp}
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+            className="relative bg-gradient-to-br from-purple-600/20 via-pink-600/15 to-amber-500/10 backdrop-blur-md border-2 border-purple-500/40 rounded-3xl p-8 shadow-2xl shadow-purple-500/20"
+          >
             <div className="absolute -top-3 right-6 bg-gradient-to-l from-purple-600 to-pink-600 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-lg">
               בקרוב
             </div>
@@ -513,26 +598,31 @@ export default function Landing() {
             >
               בקרוב · רשימת המתנה
             </button>
-          </div>
-        </div>
-      </section>
+          </motion.div>
+        </motion.div>
+      </motion.section>
 
       {/* FAQ */}
-      <section className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div className="text-center mb-12 sm:mb-16">
+      <motion.section
+        {...inViewProps}
+        variants={staggerContainer}
+        className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      >
+        <motion.div variants={fadeUp} className="text-center mb-12 sm:mb-16">
           <div className="inline-block text-xs sm:text-sm font-bold text-blue-400 uppercase tracking-widest mb-3">שאלות נפוצות</div>
           <h2 className="text-3xl sm:text-5xl font-black mb-4">
             <span className="bg-gradient-to-l from-white to-blue-200 bg-clip-text text-transparent">
               שאלות לפני שמתחילים?
             </span>
           </h2>
-        </div>
+        </motion.div>
 
-        <div className="space-y-3">
+        <motion.div variants={staggerContainer} className="space-y-3">
           {FAQ_ITEMS.map((item, i) => (
-            <div
+            <motion.div
               key={i}
-              className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:border-purple-500/40 transition-all"
+              variants={fadeUp}
+              className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:border-purple-500/40 transition-colors"
             >
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -545,43 +635,79 @@ export default function Landing() {
                   }`}
                 />
               </button>
-              {openFaq === i && (
-                <div className="px-6 pb-5 text-slate-300 leading-relaxed border-t border-white/5 pt-4">
-                  {item.a}
-                </div>
-              )}
-            </div>
+              <AnimatePresence initial={false}>
+                {openFaq === i && (
+                  <motion.div
+                    key="content"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <div className="px-6 pb-5 text-slate-300 leading-relaxed border-t border-white/5 pt-4">
+                      {item.a}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* Final CTA */}
-      <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div className="relative bg-gradient-to-br from-purple-600/30 via-pink-600/20 to-amber-500/20 backdrop-blur-md border border-purple-500/30 rounded-3xl p-8 sm:p-16 text-center overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl" />
+      <motion.section
+        {...inViewProps}
+        variants={staggerContainer}
+        className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      >
+        <motion.div
+          variants={scaleIn}
+          className="relative bg-gradient-to-br from-purple-600/30 via-pink-600/20 to-amber-500/20 backdrop-blur-md border border-purple-500/30 rounded-3xl p-8 sm:p-16 text-center overflow-hidden"
+        >
+          <motion.div
+            className="absolute top-0 right-0 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0.9, 0.6] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute bottom-0 left-0 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.6, 0.9, 0.6] }}
+            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+          />
 
           <div className="relative z-10">
-            <Sparkles className="w-12 h-12 text-purple-300 mx-auto mb-6" />
-            <h2 className="text-3xl sm:text-5xl font-black mb-4">
+            <motion.div
+              animate={{ rotate: [0, 8, -8, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              className="inline-block"
+            >
+              <Sparkles className="w-12 h-12 text-purple-300 mx-auto mb-6" />
+            </motion.div>
+            <motion.h2 variants={fadeUp} className="text-3xl sm:text-5xl font-black mb-4">
               <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
                 מוכן להפוך את הבגרות לקלה?
               </span>
-            </h2>
-            <p className="text-slate-300 text-base sm:text-xl max-w-2xl mx-auto mb-8">
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-slate-300 text-base sm:text-xl max-w-2xl mx-auto mb-8">
               לחיצה אחת. בלי רישום. בלי כסף. בלי תירוצים.
-            </p>
-            <Link
-              href="/quiz"
-              className="group inline-flex items-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-bold text-white text-lg shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 hover:-translate-y-1 transition-all"
-            >
-              <Sparkles className="w-6 h-6" />
-              <span>צור שאלות לבגרות</span>
-              <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
-            </Link>
+            </motion.p>
+            <motion.div variants={fadeUp}>
+              <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }} className="inline-block">
+                <Link
+                  href="/quiz"
+                  className="group inline-flex items-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-bold text-white text-lg shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 transition-all"
+                >
+                  <Sparkles className="w-6 h-6" />
+                  <span>צור שאלות לבגרות</span>
+                  <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+                </Link>
+              </motion.div>
+            </motion.div>
           </div>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/10 mt-8">
