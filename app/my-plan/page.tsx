@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   Lock,
@@ -19,6 +20,7 @@ import { createClient } from '@/lib/supabase/client';
 import { getPlan, daysUntilBagrut, clearPlan, type StudyPlan } from '@/lib/study-plan';
 import { topicLockReason, isProUser, isAdmin, type UserLike } from '@/lib/access';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
+import { fadeUp, staggerContainer, scaleIn, inViewProps } from '@/lib/animations';
 
 export default function MyPlanPage() {
   const router = useRouter();
@@ -77,129 +79,158 @@ export default function MyPlanPage() {
 
       <main className="relative z-10 max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Hero — countdown */}
-        <section className="bg-gradient-to-br from-amber-500/15 to-orange-500/15 backdrop-blur-md border border-amber-500/30 rounded-3xl p-6 sm:p-8 text-center">
-          <div className="text-xs font-black tracking-widest text-amber-300 mb-2 uppercase">
+        <motion.section
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+          className="bg-gradient-to-br from-amber-500/15 to-orange-500/15 backdrop-blur-md border border-amber-500/30 rounded-3xl p-6 sm:p-8 text-center"
+        >
+          <motion.div
+            variants={fadeUp}
+            className="text-xs font-black tracking-widest text-amber-300 mb-2 uppercase"
+          >
             הבגרות שלך
-          </div>
-          <div className="text-5xl sm:text-6xl font-black text-amber-100 mb-1">{days}</div>
-          <div className="text-sm text-amber-200/80">
+          </motion.div>
+          <motion.div
+            variants={scaleIn}
+            className="text-5xl sm:text-6xl font-black text-amber-100 mb-1"
+          >
+            {days}
+          </motion.div>
+          <motion.div variants={fadeUp} className="text-sm text-amber-200/80">
             ימים עד {formatHebrewDate(plan.bagrutDate)}
-          </div>
+          </motion.div>
 
-          <div className="mt-6 grid grid-cols-3 gap-3 text-center">
-            <Stat label="הושלמו" value={`${completedCount}/${plan.topics.length}`} accent="emerald" />
-            <Stat label="התקדמות" value={`${overallProgress}%`} accent="purple" />
-            <Stat
-              label="מצב"
-              value={pro ? (admin ? '👑 אדמין' : '✨ Pro') : '🆓 חינם'}
-              accent="amber"
-            />
-          </div>
-        </section>
+          <motion.div variants={staggerContainer} className="mt-6 grid grid-cols-3 gap-3 text-center">
+            <motion.div variants={scaleIn}>
+              <Stat label="הושלמו" value={`${completedCount}/${plan.topics.length}`} accent="emerald" />
+            </motion.div>
+            <motion.div variants={scaleIn}>
+              <Stat label="התקדמות" value={`${overallProgress}%`} accent="purple" />
+            </motion.div>
+            <motion.div variants={scaleIn}>
+              <Stat
+                label="מצב"
+                value={pro ? (admin ? '👑 אדמין' : '✨ Pro') : '🆓 חינם'}
+                accent="amber"
+              />
+            </motion.div>
+          </motion.div>
+        </motion.section>
 
         {/* Topics list */}
-        <section>
-          <div className="flex items-baseline justify-between mb-3">
+        <motion.section {...inViewProps} variants={staggerContainer}>
+          <motion.div variants={fadeUp} className="flex items-baseline justify-between mb-3">
             <h2 className="text-lg font-black text-white">תוכנית הלימוד</h2>
             <span className="text-xs text-slate-400">{plan.topics.length} נושאים</span>
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
+          <motion.div variants={staggerContainer} className="space-y-2">
             {plan.topics.map((t, i) => {
               const reason = topicLockReason(user, plan, i);
               return (
-                <TopicCard
+                <motion.div
                   key={`${t.subject}:${t.topic}`}
-                  index={i}
-                  topic={t}
-                  lockReason={reason}
-                />
+                  variants={fadeUp}
+                  whileHover={{ x: -3 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <TopicCard index={i} topic={t} lockReason={reason} />
+                </motion.div>
               );
             })}
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Photo scanner — Pro feature, but card is shown to everyone (the
             page itself paywalls free users). Visually distinguished from
             "חומרים" because it's interactive, not reference material. */}
-        <section>
-          <h2 className="text-lg font-black text-white mb-3">
+        <motion.section {...inViewProps} variants={staggerContainer}>
+          <motion.h2 variants={fadeUp} className="text-lg font-black text-white mb-3">
             צלם שאלה
             {pro ? null : <span className="text-xs font-normal text-amber-300 mr-2">Pro</span>}
-          </h2>
-          <Link
-            href="/scan"
-            className="card-3d block bg-gradient-to-br from-purple-600/15 to-pink-600/15 border border-purple-500/40 hover:border-purple-500/70 rounded-2xl p-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30 flex-shrink-0">
-                <Camera className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-sm sm:text-base text-white">צלמי שאלה — קבלי פתרון מ-AI</div>
-                <div className="text-xs text-slate-400 mt-0.5">פתרון צעד-אחר-צעד, נשמר בספרייה לפי נושא</div>
-              </div>
-              <ArrowLeft className="w-4 h-4 text-purple-300 flex-shrink-0" />
-            </div>
-          </Link>
-          <Link
-            href="/library"
-            className="card-3d block bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-white/20 rounded-2xl p-4 mt-2"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-5 h-5 text-purple-200" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-sm sm:text-base text-white">הספרייה שלי</div>
-                <div className="text-xs text-slate-400 mt-0.5">השאלות ששמרת, מקובצות לפי נושא</div>
-              </div>
-              <ArrowLeft className="w-4 h-4 text-slate-400 flex-shrink-0" />
-            </div>
-          </Link>
-          <Link
-            href="/bagruyot"
-            className="card-3d block bg-gradient-to-br from-emerald-600/15 to-teal-600/15 border border-emerald-500/40 hover:border-emerald-500/70 rounded-2xl p-4 mt-2"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 flex-shrink-0">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-sm sm:text-base text-white">
-                  מאגר בגרויות {!pro && <span className="text-xs font-normal text-amber-300 mr-2">Pro</span>}
+          </motion.h2>
+          <motion.div variants={fadeUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
+            <Link
+              href="/scan"
+              className="card-3d block bg-gradient-to-br from-purple-600/15 to-pink-600/15 border border-purple-500/40 hover:border-purple-500/70 rounded-2xl p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30 flex-shrink-0">
+                  <Camera className="w-5 h-5 text-white" />
                 </div>
-                <div className="text-xs text-slate-400 mt-0.5">שאלות מבגרויות עבר + פתרונות מלאים, ללא AI</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-sm sm:text-base text-white">צלמי שאלה — קבלי פתרון מ-AI</div>
+                  <div className="text-xs text-slate-400 mt-0.5">פתרון צעד-אחר-צעד, נשמר בספרייה לפי נושא</div>
+                </div>
+                <ArrowLeft className="w-4 h-4 text-purple-300 flex-shrink-0" />
               </div>
-              <ArrowLeft className="w-4 h-4 text-emerald-300 flex-shrink-0" />
-            </div>
-          </Link>
-        </section>
+            </Link>
+          </motion.div>
+          <motion.div variants={fadeUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }} className="mt-2">
+            <Link
+              href="/library"
+              className="card-3d block bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-white/20 rounded-2xl p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="w-5 h-5 text-purple-200" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-sm sm:text-base text-white">הספרייה שלי</div>
+                  <div className="text-xs text-slate-400 mt-0.5">השאלות ששמרת, מקובצות לפי נושא</div>
+                </div>
+                <ArrowLeft className="w-4 h-4 text-slate-400 flex-shrink-0" />
+              </div>
+            </Link>
+          </motion.div>
+          <motion.div variants={fadeUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }} className="mt-2">
+            <Link
+              href="/bagruyot"
+              className="card-3d block bg-gradient-to-br from-emerald-600/15 to-teal-600/15 border border-emerald-500/40 hover:border-emerald-500/70 rounded-2xl p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 flex-shrink-0">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-sm sm:text-base text-white">
+                    מאגר בגרויות {!pro && <span className="text-xs font-normal text-amber-300 mr-2">Pro</span>}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5">שאלות מבגרויות עבר + פתרונות מלאים, ללא AI</div>
+                </div>
+                <ArrowLeft className="w-4 h-4 text-emerald-300 flex-shrink-0" />
+              </div>
+            </Link>
+          </motion.div>
+        </motion.section>
 
         {/* Resources */}
-        <section>
-          <h2 className="text-lg font-black text-white mb-3">חומרים</h2>
-          <Link
-            href="/formulas"
-            className="card-3d block bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 hover:border-amber-500/60 rounded-2xl p-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
-                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
+        <motion.section {...inViewProps} variants={staggerContainer}>
+          <motion.h2 variants={fadeUp} className="text-lg font-black text-white mb-3">חומרים</motion.h2>
+          <motion.div variants={fadeUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
+            <Link
+              href="/formulas"
+              className="card-3d block bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 hover:border-amber-500/60 rounded-2xl p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
+                  <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-sm sm:text-base text-white">דף נוסחאות</div>
+                  <div className="text-xs text-slate-400 mt-0.5">כל הנוסחאות של מתמטיקה 5 — מסודרות לפי נושא</div>
+                </div>
+                <ArrowLeft className="w-4 h-4 text-amber-300 flex-shrink-0" />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-sm sm:text-base text-white">דף נוסחאות</div>
-                <div className="text-xs text-slate-400 mt-0.5">כל הנוסחאות של מתמטיקה 5 — מסודרות לפי נושא</div>
-              </div>
-              <ArrowLeft className="w-4 h-4 text-amber-300 flex-shrink-0" />
-            </div>
-          </Link>
-        </section>
+            </Link>
+          </motion.div>
+        </motion.section>
 
         {/* Footer actions */}
         <section className="pt-4 space-y-2">
