@@ -249,9 +249,8 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error('Chat error:', error);
-    const msg = error instanceof Error ? error.message : 'unknown';
     return Response.json(
-      { error: `שגיאת צ'אט. נסה שוב. [debug: ${msg.slice(0, 200)}]` },
+      { error: "שגיאת צ'אט. נסה שוב." },
       { status: 500 }
     );
   }

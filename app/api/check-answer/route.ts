@@ -164,9 +164,8 @@ ${userAnswer}
     });
   } catch (error) {
     console.error('check-answer error:', error);
-    const msg = error instanceof Error ? error.message : 'unknown';
     return Response.json(
-      { error: `שגיאה בבדיקת התשובה. נסה שוב. [debug: ${msg.slice(0, 200)}]` },
+      { error: 'שגיאה בבדיקת התשובה. נסה שוב.' },
       { status: 500 }
     );
   }

@@ -4,9 +4,11 @@
  * Free students get the FIRST topic in their plan only. Subsequent topics
  * are locked behind a Pro paywall.
  *
- * Admin override: the site owner (איתי, meitalm1020@gmail.com) always
- * has full access — useful for testing and for using the app as a real
- * student without a separate account.
+ * Admin override: the site owner always has full access. Admin emails come
+ * from `ADMIN_EMAIL` (server-side env var, comma-separated for multiple).
+ * Reading from env keeps the address out of the client JS bundle — `isAdmin`
+ * therefore returns false on the client and admin status must be derived
+ * server-side (e.g. in server components / route handlers).
  *
  * Pro status is currently a stub — there's no payment integration yet.
  * When that ships, we'll switch from email-equality to a Supabase column
@@ -16,7 +18,13 @@
 import type { StudyPlan } from './study-plan';
 import { isTopicUnlockedByProgress } from './study-plan';
 
-const ADMIN_EMAILS = new Set(['meitalm1020@gmail.com']);
+const ADMIN_EMAILS = new Set(
+  (process.env.ADMIN_EMAIL ?? '')
+    .toLowerCase()
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
 
 export type UserLike = {
   email?: string | null;

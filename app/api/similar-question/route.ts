@@ -92,9 +92,8 @@ ${original}
     });
   } catch (error) {
     console.error('similar-question error:', error);
-    const msg = error instanceof Error ? error.message : 'unknown';
     return Response.json(
-      { error: `שגיאה ביצירת שאלה דומה. נסה שוב. [debug: ${msg.slice(0, 200)}]` },
+      { error: 'שגיאה ביצירת שאלה דומה. נסה שוב.' },
       { status: 500 }
     );
   }

@@ -67,9 +67,8 @@ ${solution}
     });
   } catch (error) {
     console.error('explain-simpler error:', error);
-    const msg = error instanceof Error ? error.message : 'unknown';
     return Response.json(
-      { error: `שגיאה בהכנת ההסבר. נסה שוב. [debug: ${msg.slice(0, 200)}]` },
+      { error: 'שגיאה בהכנת ההסבר. נסה שוב.' },
       { status: 500 }
     );
   }

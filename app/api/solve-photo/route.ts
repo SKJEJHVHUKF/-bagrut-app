@@ -334,9 +334,8 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('solve-photo error:', error);
-    const msg = error instanceof Error ? error.message : 'unknown';
     return Response.json(
-      { error: `שגיאה בפתרון השאלה. נסי שוב. [debug: ${msg.slice(0, 200)}]` },
+      { error: 'שגיאה בפתרון השאלה. נסי שוב.' },
       { status: 500 }
     );
   }

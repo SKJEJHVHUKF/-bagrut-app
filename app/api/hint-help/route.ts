@@ -82,9 +82,8 @@ ${cleanHints.map((h, i) => `${i + 1}. ${h}`).join('\n')}
     });
   } catch (error) {
     console.error('hint-help error:', error);
-    const msg = error instanceof Error ? error.message : 'unknown';
     return Response.json(
-      { error: `שגיאה בהכנת העזרה. נסה שוב. [debug: ${msg.slice(0, 200)}]` },
+      { error: 'שגיאה בהכנת העזרה. נסה שוב.' },
       { status: 500 }
     );
   }
