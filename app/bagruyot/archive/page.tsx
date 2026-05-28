@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen,
   Loader2,
@@ -374,49 +375,64 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
         <MathText>{part.prompt}</MathText>
       </div>
 
-      {/* Answer textarea */}
-      {!solutionShown && (
-        <div>
-          <label className="block text-[10px] font-black tracking-widest text-slate-400 uppercase mb-1.5">
-            התשובה שלך
-          </label>
-          <textarea
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            placeholder={
-              part.answer_type === 'proof'
-                ? 'כתוב כאן את ההוכחה שלך, צעד אחר צעד...'
-                : 'כתוב כאן את התשובה...'
-            }
-            rows={3}
-            className="w-full bg-slate-950/50 border border-white/10 focus:border-purple-500/60 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
-            dir="auto"
-          />
-        </div>
-      )}
+      {/* Answer textarea — collapses when solution shown */}
+      <AnimatePresence initial={false}>
+        {!solutionShown && (
+          <motion.div
+            key="answer"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            style={{ overflow: 'hidden' }}
+          >
+            <label className="block text-[10px] font-black tracking-widest text-slate-400 uppercase mb-1.5">
+              התשובה שלך
+            </label>
+            <textarea
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              placeholder={
+                part.answer_type === 'proof'
+                  ? 'כתוב כאן את ההוכחה שלך, צעד אחר צעד...'
+                  : 'כתוב כאן את התשובה...'
+              }
+              rows={3}
+              className="w-full bg-slate-950/50 border border-white/10 focus:border-purple-500/60 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
+              dir="auto"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Action buttons */}
+      {/* Action buttons — subtle tap feedback */}
       <div className="flex flex-wrap gap-2">
         {hasHints && moreHintsAvailable && !solutionShown && (
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
             onClick={() => setHintsShown((n) => n + 1)}
             className="inline-flex items-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-200 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors"
           >
             <Lightbulb className="w-3.5 h-3.5" />
             {hintsShown === 0 ? 'רמז' : `רמז נוסף (${hintsShown + 1}/${part.hints?.length})`}
-          </button>
+          </motion.button>
         )}
         {!solutionShown && (
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
             onClick={() => setSolutionShown(true)}
             className="inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-200 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors"
           >
             <Eye className="w-3.5 h-3.5" />
             הצג פתרון
-          </button>
+          </motion.button>
         )}
         {solutionShown && (
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
             onClick={() => {
               setSolutionShown(false);
               setHintsShown(0);
@@ -424,53 +440,96 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
             className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors"
           >
             סגור פתרון ונסה שוב
-          </button>
+          </motion.button>
         )}
       </div>
 
-      {/* Hints display */}
-      {hintsShown > 0 && !solutionShown && (
-        <div className="space-y-2">
-          {part.hints?.slice(0, hintsShown).map((hint, i) => (
-            <div
-              key={i}
-              className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex gap-2 items-start"
-            >
-              <Lightbulb className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
-              <div className="chat-md text-sm text-amber-50 leading-relaxed flex-1">
-                <div className="text-[10px] font-black tracking-widest text-amber-300 uppercase mb-1">
-                  רמז {i + 1}
+      {/* Hints display — each slides in from top */}
+      <AnimatePresence initial={false}>
+        {hintsShown > 0 && !solutionShown && (
+          <motion.div
+            key="hints"
+            className="space-y-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {part.hints?.slice(0, hintsShown).map((hint, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.3, ease: 'easeOut', delay: i === hintsShown - 1 ? 0 : 0 }}
+                className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex gap-2 items-start"
+              >
+                <Lightbulb className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
+                <div className="chat-md text-sm text-amber-50 leading-relaxed flex-1">
+                  <div className="text-[10px] font-black tracking-widest text-amber-300 uppercase mb-1">
+                    רמז {i + 1}
+                  </div>
+                  <MathText inline>{hint}</MathText>
                 </div>
-                <MathText inline>{hint}</MathText>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Solution display */}
-      {solutionShown && (
-        <div className="pl-3 border-r-2 border-emerald-500/30 space-y-1.5">
-          <div className="text-[10px] font-black tracking-widest text-emerald-300 uppercase mb-1 flex items-center gap-1.5">
-            <CheckCircle2 className="w-3 h-3" />
-            פתרון מלא
-          </div>
-          {part.solution.steps.map((step, i) => (
-            <div key={i} className="chat-md text-sm text-slate-200 leading-relaxed">
-              <span className="text-emerald-400 font-bold">{i + 1}.</span>{' '}
-              <span className="inline">
-                <MathText inline>{step}</MathText>
-              </span>
+      {/* Solution display — slides down with cascading steps */}
+      <AnimatePresence initial={false}>
+        {solutionShown && (
+          <motion.div
+            key="solution"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            style={{ overflow: 'hidden' }}
+            className="pl-3 border-r-2 border-emerald-500/30"
+          >
+            <div className="space-y-1.5">
+              <motion.div
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.25, delay: 0.05 }}
+                className="text-[10px] font-black tracking-widest text-emerald-300 uppercase mb-1 flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-3 h-3" />
+                פתרון מלא
+              </motion.div>
+              {part.solution.steps.map((step, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, delay: 0.1 + i * 0.06, ease: 'easeOut' }}
+                  className="chat-md text-sm text-slate-200 leading-relaxed"
+                >
+                  <span className="text-emerald-400 font-bold">{i + 1}.</span>{' '}
+                  <span className="inline">
+                    <MathText inline>{step}</MathText>
+                  </span>
+                </motion.div>
+              ))}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{
+                  duration: 0.35,
+                  delay: 0.1 + part.solution.steps.length * 0.06,
+                  ease: 'easeOut',
+                }}
+                className="mt-2 bg-emerald-500/10 border border-emerald-500/40 rounded-lg p-2"
+              >
+                <div className="text-[10px] font-black tracking-widest text-emerald-300 uppercase">תשובה סופית</div>
+                <div className="chat-md text-sm font-bold text-emerald-50 leading-relaxed mt-0.5">
+                  <MathText inline>{part.solution.final_answer}</MathText>
+                </div>
+              </motion.div>
             </div>
-          ))}
-          <div className="mt-2 bg-emerald-500/10 border border-emerald-500/40 rounded-lg p-2">
-            <div className="text-[10px] font-black tracking-widest text-emerald-300 uppercase">תשובה סופית</div>
-            <div className="chat-md text-sm font-bold text-emerald-50 leading-relaxed mt-0.5">
-              <MathText inline>{part.solution.final_answer}</MathText>
-            </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
