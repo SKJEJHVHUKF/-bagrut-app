@@ -382,6 +382,189 @@ $$d = \\frac{|Ax_1 + By_1 + Cz_1 - D|}{\\sqrt{A^2 + B^2 + C^2}}$$
         explanation: 'שטח משולש = חצי מגודל המכפלה הוקטורית של שני צלעיו.',
       },
     },
+    // ===== Easy MCQ — תוספת מיקוד =====
+    {
+      id: 'vec-011',
+      difficulty: 'easy',
+      kind: 'mcq',
+      question: 'מהו וקטור היחידה בכיוון $\\vec{a} = (1, 2, 2)$?',
+      answers: [
+        '$\\left(\\dfrac{1}{3}, \\dfrac{2}{3}, \\dfrac{2}{3}\\right)$',
+        '$(1, 2, 2)$',
+        '$\\left(\\dfrac{1}{9}, \\dfrac{2}{9}, \\dfrac{2}{9}\\right)$',
+        '$\\left(\\dfrac{1}{\\sqrt{5}}, \\dfrac{2}{\\sqrt{5}}, \\dfrac{2}{\\sqrt{5}}\\right)$',
+      ],
+      correct: 0,
+      solution: {
+        steps: [
+          '$|\\vec{a}| = \\sqrt{1^2 + 2^2 + 2^2} = \\sqrt{9} = 3$.',
+          'וקטור היחידה: $\\hat{a} = \\dfrac{\\vec{a}}{|\\vec{a}|} = \\dfrac{1}{3}(1, 2, 2) = \\left(\\dfrac{1}{3}, \\dfrac{2}{3}, \\dfrac{2}{3}\\right)$.',
+        ],
+        finalAnswer: '$\\left(\\dfrac{1}{3}, \\dfrac{2}{3}, \\dfrac{2}{3}\\right)$',
+        explanation: 'מחלקים כל רכיב בגודל הוקטור — מקבלים וקטור באותו כיוון עם אורך 1.',
+      },
+    },
+    {
+      id: 'vec-012',
+      difficulty: 'easy',
+      kind: 'mcq',
+      question: 'נתון $A(2, -1, 4)$ ו-$B(5, 3, -2)$. מהו הוקטור $\\vec{AB}$?',
+      answers: ['$(3, 4, -6)$', '$(7, 2, 2)$', '$(-3, -4, 6)$', '$(3, 2, 2)$'],
+      correct: 0,
+      solution: {
+        steps: [
+          '$\\vec{AB} = B - A = (5 - 2, \\;3 - (-1), \\;-2 - 4)$.',
+          '$= (3, 4, -6)$.',
+        ],
+        finalAnswer: '$(3, 4, -6)$',
+        explanation: 'הוקטור מנקודה $A$ לנקודה $B$ שווה ל-$B$ פחות $A$ — רכיב-רכיב.',
+      },
+    },
+    {
+      id: 'vec-013',
+      difficulty: 'easy',
+      kind: 'mcq',
+      question: 'עבור איזה ערך של $k$ הוקטורים $\\vec{u} = (2, k, 1)$ ו-$\\vec{v} = (3, -1, -1)$ ניצבים?',
+      answers: ['$k = 5$', '$k = -5$', '$k = 7$', '$k = -1$'],
+      correct: 0,
+      hint: 'ניצבות $\\Leftrightarrow$ מכפלה סקלרית = 0.',
+      solution: {
+        steps: [
+          '$\\vec{u} \\cdot \\vec{v} = 2 \\cdot 3 + k \\cdot (-1) + 1 \\cdot (-1) = 6 - k - 1 = 5 - k$.',
+          'תנאי ניצבות: $5 - k = 0 \\;\\Longrightarrow\\; k = 5$.',
+        ],
+        finalAnswer: '$k = 5$',
+        explanation: 'משתמשים בתנאי $\\vec{u}\\cdot\\vec{v}=0$ ופותרים משוואה בנעלם $k$.',
+      },
+    },
+    {
+      id: 'vec-014',
+      difficulty: 'easy',
+      kind: 'mcq',
+      question: 'עבור איזה ערך של $k$ הוקטורים $\\vec{a} = (2, -4, k)$ ו-$\\vec{b} = (1, -2, 3)$ מקבילים?',
+      answers: ['$k = 6$', '$k = 3$', '$k = -6$', '$k = 1$'],
+      correct: 0,
+      hint: 'מקבילות $\\Leftrightarrow$ קיים סקלר $c$ כך ש-$\\vec{a} = c\\vec{b}$ (יחס שווה בכל הרכיבים).',
+      solution: {
+        steps: [
+          'מקבילות פירושה יחס קבוע: $\\dfrac{2}{1} = \\dfrac{-4}{-2} = \\dfrac{k}{3}$.',
+          'שני היחסים הראשונים שווים ל-$2$, ולכן $\\dfrac{k}{3} = 2$.',
+          'מכאן: $k = 6$.',
+        ],
+        finalAnswer: '$k = 6$',
+        explanation: 'אם הרכיבים פרופורציונליים באותו יחס — הוקטורים על אותו ישר (מקבילים).',
+      },
+    },
+    // ===== Mid =====
+    {
+      id: 'vec-015',
+      difficulty: 'mid',
+      kind: 'open',
+      question: 'מצא את המרחק מהנקודה $P(1, 2, 3)$ למישור $2x - y + 2z - 5 = 0$.',
+      hint: 'נוסחת מרחק נקודה-מישור: $d = \\dfrac{|ax_0 + by_0 + cz_0 + d|}{\\sqrt{a^2+b^2+c^2}}$.',
+      solution: {
+        steps: [
+          'נציב את $P(1, 2, 3)$ במונה: $|2(1) - 1(2) + 2(3) - 5| = |2 - 2 + 6 - 5| = 1$.',
+          'מכנה: $\\sqrt{2^2 + (-1)^2 + 2^2} = \\sqrt{9} = 3$.',
+          '$d = \\dfrac{1}{3}$.',
+        ],
+        finalAnswer: '$d = \\dfrac{1}{3}$',
+        explanation: 'המרחק מנקודה למישור = הצבת הנקודה במשוואה (בערך מוחלט), חלקי גודל וקטור הנורמל.',
+      },
+    },
+    {
+      id: 'vec-016',
+      difficulty: 'mid',
+      kind: 'mcq',
+      question: 'הישר נתון בצורה סימטרית: $\\dfrac{x-1}{2} = \\dfrac{y+3}{4} = \\dfrac{z}{-1}$. מהי הצורה הפרמטרית?',
+      answers: [
+        '$x = 1 + 2t,\\; y = -3 + 4t,\\; z = -t$',
+        '$x = 2 + t,\\; y = 4 - 3t,\\; z = -t$',
+        '$x = 1 + 2t,\\; y = 3 + 4t,\\; z = t$',
+        '$x = -1 + 2t,\\; y = 3 + 4t,\\; z = -t$',
+      ],
+      correct: 0,
+      solution: {
+        steps: [
+          'משווים כל אגף ל-$t$: $\\dfrac{x-1}{2} = t$ → $x = 1 + 2t$.',
+          '$\\dfrac{y+3}{4} = t$ → $y = -3 + 4t$.',
+          '$\\dfrac{z}{-1} = t$ → $z = -t$.',
+        ],
+        finalAnswer: '$x = 1 + 2t,\\; y = -3 + 4t,\\; z = -t$',
+        explanation: 'המכנים בצורה הסימטרית הם רכיבי וקטור הכיוון; המונים נותנים את נקודת הייחוס.',
+      },
+    },
+    {
+      id: 'vec-017',
+      difficulty: 'mid',
+      kind: 'open',
+      question: 'מצא את ההיטל של $\\vec{a} = (3, 4, 0)$ על הוקטור $\\vec{b} = (1, 0, 0)$.',
+      hint: 'נוסחת היטל: $\\text{proj}_{\\vec{b}}\\vec{a} = \\dfrac{\\vec{a}\\cdot\\vec{b}}{|\\vec{b}|^2}\\vec{b}$.',
+      solution: {
+        steps: [
+          '$\\vec{a} \\cdot \\vec{b} = 3 \\cdot 1 + 4 \\cdot 0 + 0 \\cdot 0 = 3$.',
+          '$|\\vec{b}|^2 = 1^2 + 0 + 0 = 1$.',
+          '$\\text{proj}_{\\vec{b}}\\vec{a} = \\dfrac{3}{1} \\cdot (1, 0, 0) = (3, 0, 0)$.',
+        ],
+        finalAnswer: '$(3, 0, 0)$',
+        explanation: 'ההיטל "מטיל" את הוקטור על כיוון אחר — מקבלים וקטור שכיוונו כמו $\\vec{b}$ ואורכו הוא הרכיב של $\\vec{a}$ בכיוון הזה.',
+      },
+    },
+    {
+      id: 'vec-018',
+      difficulty: 'mid',
+      kind: 'mcq',
+      question: 'מצא את המרחק בין שני המישורים המקבילים $2x + 2y - z = 5$ ו-$2x + 2y - z = 11$.',
+      answers: ['$2$', '$3$', '$6$', '$\\dfrac{6}{\\sqrt{9}}$'],
+      correct: 0,
+      hint: 'אחרי שמוודאים שהמישורים מקבילים (אותו נורמל), נוסחה: $d = \\dfrac{|d_2 - d_1|}{|\\vec{n}|}$.',
+      solution: {
+        steps: [
+          'שני המישורים בעלי אותו וקטור נורמלי $\\vec{n} = (2, 2, -1)$ — מקבילים. ✓',
+          '$|\\vec{n}| = \\sqrt{4 + 4 + 1} = \\sqrt{9} = 3$.',
+          '$d = \\dfrac{|11 - 5|}{3} = \\dfrac{6}{3} = 2$.',
+        ],
+        finalAnswer: '$d = 2$',
+        explanation: 'בוחרים נקודה במישור אחד ומחשבים את מרחקה לשני — או ישירות בנוסחה $|d_2-d_1|/|\\vec{n}|$.',
+      },
+    },
+    // ===== Hard =====
+    {
+      id: 'vec-019',
+      difficulty: 'hard',
+      kind: 'open',
+      question: 'מצא את רגל האנך מהנקודה $P(2, 3, 5)$ למישור $x + y + z = 6$.',
+      hint: 'הישר מ-$P$ אל רגל האנך הוא בכיוון הנורמל למישור. כתוב פרמטרית והצב במשוואת המישור.',
+      solution: {
+        steps: [
+          'וקטור נורמלי למישור: $\\vec{n} = (1, 1, 1)$.',
+          'ישר מ-$P$ בכיוון $\\vec{n}$: $\\;(x, y, z) = (2 + t,\\; 3 + t,\\; 5 + t)$.',
+          'נמצא את נקודת החיתוך עם המישור: $(2+t) + (3+t) + (5+t) = 6 \\;\\Longrightarrow\\; 10 + 3t = 6 \\;\\Longrightarrow\\; t = -\\dfrac{4}{3}$.',
+          'נציב: רגל האנך $= \\left(2 - \\dfrac{4}{3},\\; 3 - \\dfrac{4}{3},\\; 5 - \\dfrac{4}{3}\\right) = \\left(\\dfrac{2}{3},\\; \\dfrac{5}{3},\\; \\dfrac{11}{3}\\right)$.',
+          '**בדיקה:** $\\dfrac{2}{3} + \\dfrac{5}{3} + \\dfrac{11}{3} = \\dfrac{18}{3} = 6$ ✓.',
+        ],
+        finalAnswer: '$\\left(\\dfrac{2}{3},\\; \\dfrac{5}{3},\\; \\dfrac{11}{3}\\right)$',
+        explanation: 'רגל האנך = החיתוך של הישר מ-$P$ בכיוון הנורמל למישור.',
+      },
+    },
+    {
+      id: 'vec-020',
+      difficulty: 'hard',
+      kind: 'open',
+      question: 'חשב את נפח המקבילון שצלעיו הם הוקטורים $\\vec{a} = (1, 0, 0)$, $\\vec{b} = (0, 2, 0)$, $\\vec{c} = (1, 1, 3)$.',
+      hint: 'נפח מקבילון $= |\\vec{a} \\cdot (\\vec{b} \\times \\vec{c})|$ (מכפלה משולשת/דטרמיננטה).',
+      solution: {
+        steps: [
+          'נחשב תחילה $\\vec{b} \\times \\vec{c}$:',
+          '$n_1 = 2 \\cdot 3 - 0 \\cdot 1 = 6$; $\\;n_2 = 0 \\cdot 1 - 0 \\cdot 3 = 0$; $\\;n_3 = 0 \\cdot 1 - 2 \\cdot 1 = -2$.',
+          '$\\vec{b} \\times \\vec{c} = (6, 0, -2)$.',
+          '$\\vec{a} \\cdot (\\vec{b} \\times \\vec{c}) = 1 \\cdot 6 + 0 \\cdot 0 + 0 \\cdot (-2) = 6$.',
+          'נפח = $|6| = 6$.',
+        ],
+        finalAnswer: '$V = 6$',
+        explanation: 'המכפלה המשולשת $\\vec{a}\\cdot(\\vec{b}\\times\\vec{c})$ נותנת את הדטרמיננטה — שערכה המוחלט הוא נפח המקבילון הנפרש ע"י שלושה וקטורים.',
+      },
+    },
   ],
 
   bagrutQuestions: [
