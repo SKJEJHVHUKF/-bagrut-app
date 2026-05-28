@@ -10,6 +10,8 @@ type TopicProgress = {
   viewedAt?: number;             // ms epoch when the lesson page first loaded
   exercisesCompleted?: number;   // bumped each time the student reveals the final answer
   lastSeenAt?: number;           // most recent visit to either lesson or exercise
+  /** Sub-topic ids the student has completed (finished the focused practice). */
+  completedSubTopics?: string[];
 };
 
 type ProgressMap = Record<string, TopicProgress>;
@@ -73,4 +75,35 @@ export function markExerciseDone(subject: string, topic: string) {
     lastSeenAt: now,
   };
   writeAll(all);
+}
+
+// ============================================================
+// Sub-topic completion tracking (the course progress feature).
+// ============================================================
+
+/** Mark a sub-topic as completed by the student (finished the focused
+ *  practice). Idempotent — calling twice keeps the same list. */
+export function markSubTopicDone(subject: string, topic: string, subId: string) {
+  const all = readAll();
+  const k = key(subject, topic);
+  const now = Date.now();
+  const prev = all[k]?.completedSubTopics ?? [];
+  const merged = prev.includes(subId) ? prev : [...prev, subId];
+  all[k] = {
+    ...all[k],
+    completedSubTopics: merged,
+    lastSeenAt: now,
+  };
+  writeAll(all);
+}
+
+/** Set of sub-topic ids that the student has completed for this topic. */
+export function getCompletedSubTopics(subject: string, topic: string): Set<string> {
+  const ids = readAll()[key(subject, topic)]?.completedSubTopics ?? [];
+  return new Set(ids);
+}
+
+/** True iff this specific sub-topic has been completed. */
+export function isSubTopicDone(subject: string, topic: string, subId: string): boolean {
+  return getCompletedSubTopics(subject, topic).has(subId);
 }

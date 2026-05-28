@@ -17,7 +17,7 @@ import {
 import { MathText } from './MathText';
 import { buttonTap } from '@/lib/animations';
 import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
-import { markExerciseDone } from '@/lib/progress';
+import { markExerciseDone, markSubTopicDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
 import type { SubTopic } from '@/content/lessons/types';
 
@@ -86,9 +86,11 @@ export function SubTopicPractice({ subject, topic, subTopic }: Props) {
       celebrateCompletion();
       markExerciseDone(subject, topic);
       markStep(subject, topic, 'practice');
-      toast.success(`סיימת את התרגול! 🎉`, {
-        description: `${correctCount}/${total} תשובות נכונות`,
-        duration: 3000,
+      // Course-mode bonus: this sub-topic module is now "complete".
+      markSubTopicDone(subject, topic, subTopic.id);
+      toast.success(`סיימת את המודול! 🎉`, {
+        description: `${correctCount}/${total} תשובות נכונות · התת-נושא סומן כהושלם`,
+        duration: 3500,
       });
       return;
     }
