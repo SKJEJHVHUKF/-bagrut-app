@@ -148,14 +148,6 @@ export default function Landing() {
         animate="visible"
         className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-20 sm:pb-28 text-center"
       >
-        <motion.div
-          variants={fadeUp}
-          className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-md border border-purple-500/30 rounded-full px-4 py-1.5 mb-6 sm:mb-8"
-        >
-          <Sparkles className="w-4 h-4 text-purple-400" />
-          <span className="text-xs sm:text-sm font-bold text-purple-200">מבוסס AI של Anthropic · Claude</span>
-        </motion.div>
-
         <motion.h1
           variants={fadeUp}
           className="text-4xl sm:text-6xl md:text-7xl font-black leading-tight mb-6 sm:mb-8"
@@ -716,6 +708,15 @@ export default function Landing() {
             <BagrutLogo size="sm" />
             <span className="text-sm font-bold text-slate-300">בגרות בכיס</span>
           </div>
+          <nav className="flex items-center gap-3 text-xs text-slate-400">
+            <Link href="/privacy" className="hover:text-slate-200 underline-offset-2 hover:underline transition-colors">
+              מדיניות פרטיות
+            </Link>
+            <span className="text-slate-600">·</span>
+            <Link href="/terms" className="hover:text-slate-200 underline-offset-2 hover:underline transition-colors">
+              תנאי שימוש
+            </Link>
+          </nav>
           <div className="text-xs text-slate-500 text-center sm:text-left">
             © 2026 בגרות בכיס · נוצר עם Claude AI של Anthropic
           </div>
