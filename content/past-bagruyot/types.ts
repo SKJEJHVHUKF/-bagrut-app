@@ -18,11 +18,15 @@
  *   4. The /bagruyot picker auto-shows it.
  */
 
+import type { DiagramSpec } from '../lessons/types';
+
 export type BagrutSeason = 'summer' | 'winter';
 export type BagrutPaper = '581' | '582';
 
 export type PastBagrutPart = {
-  /** Hebrew label — 'א', 'ב', 'ג', 'ד'. */
+  /** Hebrew label of the section. Single sections use 'א', 'ב', 'ג', 'ד';
+   *  split sub-questions get their own answerable section labeled 'א1',
+   *  'א2', 'ב1' … so each piece has its own answer box + solution. */
   label: string;
   /** The sub-question text (markdown + LaTeX). */
   prompt: string;
@@ -32,6 +36,9 @@ export type PastBagrutPart = {
   answer_type?: 'number' | 'expression' | 'text' | 'proof';
   /** Progressive hints — from gentle nudge to explicit guidance. 1-3 typical. */
   hints?: string[];
+  /** Optional diagrams for this section (geometry figures, function graphs).
+   *  Rendered beneath the prompt via <DiagramRenderer>. */
+  diagrams?: DiagramSpec[];
   solution: {
     /** Step-by-step solution, one idea per step. */
     steps: string[];
@@ -57,6 +64,9 @@ export type PastBagrutQuestion = {
   totalPoints: number;
   /** Shared setup / givens for all sub-parts. */
   context: string;
+  /** Optional diagrams shown once for the whole question (beneath the
+   *  context) — e.g. the graph of the function being studied. */
+  diagrams?: DiagramSpec[];
   /** Ordered sub-questions. */
   parts: PastBagrutPart[];
   /** Provenance of the solution:

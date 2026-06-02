@@ -99,6 +99,34 @@ export type DiagramSpec =
       labels?: [string, string, string, string];
       caption?: string;
     }
+  /** A Cartesian function graph — plots one or more curves y=f(x) on
+   *  labeled axes, with optional asymptotes and marked points. Used for
+   *  calculus questions where seeing the curve's shape aids understanding. */
+  | {
+      type: 'functionGraph';
+      /** Visible x-window. Default [-4, 4]. */
+      xRange?: [number, number];
+      /** Visible y-window. Default: auto-fit from sampled values. */
+      yRange?: [number, number];
+      /** One or more curves to draw. */
+      curves: {
+        /** The function to plot. Authored in TS, sampled by the renderer. */
+        fn: (x: number) => number;
+        /** Restrict this curve to a sub-domain [from, to]. */
+        domain?: [number, number];
+        /** Stroke color. Defaults to the accent pink. */
+        color?: string;
+        /** Draw dashed (e.g. for a comparison curve). */
+        dashed?: boolean;
+      }[];
+      /** Horizontal asymptotes drawn as dashed guide lines. */
+      hAsymptotes?: { y: number; label?: string }[];
+      /** Vertical asymptotes drawn as dashed guide lines. */
+      vAsymptotes?: { x: number; label?: string }[];
+      /** Points to mark with a dot + label (extrema, intersections...). */
+      markedPoints?: { x: number; y: number; label?: string }[];
+      caption?: string;
+    }
   /** Escape hatch — pass raw SVG body content directly. */
   | {
       type: 'custom';

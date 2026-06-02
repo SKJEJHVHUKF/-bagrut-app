@@ -18,8 +18,10 @@ import { MathText } from './MathText';
  */
 export function DiagramRenderer({ diagrams }: { diagrams: DiagramSpec[] }) {
   if (!diagrams || diagrams.length === 0) return null;
+  // A lone diagram reads better full-width; multiples sit in a 2-col grid.
+  const gridCols = diagrams.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2';
   return (
-    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className={`mt-3 grid ${gridCols} gap-3`}>
       {diagrams.map((d, i) => (
         <FigureCard key={i} spec={d} />
       ))}
@@ -69,6 +71,8 @@ function DiagramSVG({ spec }: { spec: DiagramSpec }) {
       return <ParallelogramSVG spec={spec} />;
     case 'unitCircle':
       return <UnitCircleSVG spec={spec} />;
+    case 'functionGraph':
+      return <FunctionGraphSVG spec={spec} />;
     case 'custom':
       return (
         <svg
@@ -595,6 +599,154 @@ function ParallelogramSVG({
       <Label x={b.x} y={b.y} text={B} dx={10} dy={6} />
       <Label x={c.x} y={c.y} text={C} dx={10} dy={-6} />
       <Label x={d.x} y={d.y} text={D} dx={-10} dy={-6} />
+    </svg>
+  );
+}
+
+function FunctionGraphSVG({
+  spec,
+}: {
+  spec: Extract<DiagramSpec, { type: 'functionGraph' }>;
+}) {
+  const W = 200;
+  const H = 200;
+  const padL = 22;
+  const padR = 14;
+  const padT = 14;
+  const padB = 20;
+  const [xmin, xmax] = spec.xRange ?? [-4, 4];
+
+  type Pt = { x: number; y: number };
+  // Sample a curve into continuous segments, breaking where the function
+  // is undefined (NaN/∞) so vertical asymptotes don't draw spurious lines.
+  const SAMPLES = 180;
+  const sampleCurve = (fn: (x: number) => number, dom?: [number, number]): Pt[][] => {
+    const lo = Math.max(dom?.[0] ?? xmin, xmin);
+    const hi = Math.min(dom?.[1] ?? xmax, xmax);
+    const segs: Pt[][] = [];
+    let cur: Pt[] = [];
+    for (let i = 0; i <= SAMPLES; i++) {
+      const x = lo + ((hi - lo) * i) / SAMPLES;
+      let y: number;
+      try {
+        y = fn(x);
+      } catch {
+        y = NaN;
+      }
+      if (Number.isFinite(y)) {
+        cur.push({ x, y });
+      } else if (cur.length) {
+        segs.push(cur);
+        cur = [];
+      }
+    }
+    if (cur.length) segs.push(cur);
+    return segs;
+  };
+
+  const curves = spec.curves.map((c) => ({ c, segs: sampleCurve(c.fn, c.domain) }));
+
+  // Determine the y-window: explicit, else auto-fit from samples + features.
+  let ymin: number;
+  let ymax: number;
+  if (spec.yRange) {
+    [ymin, ymax] = spec.yRange;
+  } else {
+    ymin = Infinity;
+    ymax = -Infinity;
+    for (const { segs } of curves)
+      for (const seg of segs)
+        for (const p of seg) {
+          if (p.y < ymin) ymin = p.y;
+          if (p.y > ymax) ymax = p.y;
+        }
+    for (const h of spec.hAsymptotes ?? []) {
+      ymin = Math.min(ymin, h.y);
+      ymax = Math.max(ymax, h.y);
+    }
+    for (const m of spec.markedPoints ?? []) {
+      ymin = Math.min(ymin, m.y);
+      ymax = Math.max(ymax, m.y);
+    }
+    if (!Number.isFinite(ymin) || !Number.isFinite(ymax)) {
+      ymin = -2;
+      ymax = 2;
+    }
+    const span = ymax - ymin || 1;
+    ymin -= span * 0.12;
+    ymax += span * 0.12;
+  }
+
+  const sx = (x: number) => padL + ((x - xmin) / (xmax - xmin)) * (W - padL - padR);
+  const sy = (y: number) => padT + ((ymax - y) / (ymax - ymin)) * (H - padT - padB);
+  // Clamp extreme y values so near-asymptote spikes stay inside the frame.
+  const ySpan = ymax - ymin;
+  const clampY = (y: number) => Math.max(ymin - ySpan, Math.min(ymax + ySpan, y));
+
+  const axisAtX0 = xmin <= 0 && xmax >= 0 ? sx(0) : null;
+  const axisAtY0 = ymin <= 0 && ymax >= 0 ? sy(0) : null;
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* Plot frame */}
+      <rect
+        x={padL}
+        y={padT}
+        width={W - padL - padR}
+        height={H - padT - padB}
+        fill="rgba(255,255,255,0.02)"
+        stroke="rgba(226,232,240,0.15)"
+        strokeWidth="1"
+        rx="4"
+      />
+      {/* Axes (drawn only when 0 is inside the window) */}
+      {axisAtY0 !== null && (
+        <line x1={padL} y1={axisAtY0} x2={W - padR} y2={axisAtY0} stroke={STROKE} strokeWidth="1" opacity="0.6" />
+      )}
+      {axisAtX0 !== null && (
+        <line x1={axisAtX0} y1={padT} x2={axisAtX0} y2={H - padB} stroke={STROKE} strokeWidth="1" opacity="0.6" />
+      )}
+      {axisAtY0 !== null && <Label x={W - padR} y={axisAtY0} text="x" dx={-4} dy={-4} />}
+      {axisAtX0 !== null && <Label x={axisAtX0} y={padT} text="y" dx={8} dy={2} />}
+
+      {/* Horizontal asymptotes */}
+      {(spec.hAsymptotes ?? []).map((h, i) => (
+        <g key={`h${i}`}>
+          <line x1={padL} y1={sy(h.y)} x2={W - padR} y2={sy(h.y)} stroke={TICK} strokeWidth="1.2" strokeDasharray="4,3" opacity="0.85" />
+          {h.label && <Label x={W - padR} y={sy(h.y)} text={h.label} dx={-14} dy={-3} />}
+        </g>
+      ))}
+      {/* Vertical asymptotes */}
+      {(spec.vAsymptotes ?? []).map((v, i) => (
+        <g key={`v${i}`}>
+          <line x1={sx(v.x)} y1={padT} x2={sx(v.x)} y2={H - padB} stroke={TICK} strokeWidth="1.2" strokeDasharray="4,3" opacity="0.85" />
+          {v.label && <Label x={sx(v.x)} y={padT} text={v.label} dx={0} dy={10} />}
+        </g>
+      ))}
+
+      {/* Curves */}
+      {curves.map(({ c, segs }, ci) =>
+        segs.map((seg, si) => (
+          <polyline
+            key={`c${ci}-${si}`}
+            points={seg.map((p) => `${sx(p.x).toFixed(2)},${sy(clampY(p.y)).toFixed(2)}`).join(' ')}
+            fill="none"
+            stroke={c.color ?? ACCENT}
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            strokeDasharray={c.dashed ? '5,4' : undefined}
+          />
+        ))
+      )}
+
+      {/* Marked points */}
+      {(spec.markedPoints ?? []).map((m, i) => (
+        <g key={`m${i}`}>
+          <circle cx={sx(m.x)} cy={sy(m.y)} r="3" fill={LABEL_FILL} stroke={ACCENT} strokeWidth="1.6" />
+          {m.label && <Label x={sx(m.x)} y={sy(m.y)} text={m.label} dx={0} dy={-7} />}
+        </g>
+      ))}
     </svg>
   );
 }

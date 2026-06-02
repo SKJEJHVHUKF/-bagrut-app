@@ -22,6 +22,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
 import { MathText } from '@/components/practice/MathText';
+import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
 import {
   ALL_PAST_BAGRUYOT,
   availableYears,
@@ -333,6 +334,10 @@ function QuestionCard({
             <div className="chat-md text-sm text-slate-100 leading-relaxed">
               <MathText>{question.context}</MathText>
             </div>
+            {/* Question-level diagrams (e.g. the graph of the studied function) */}
+            {question.diagrams && question.diagrams.length > 0 && (
+              <DiagramRenderer diagrams={question.diagrams} />
+            )}
           </div>
 
           {/* Parts — interactive practice */}
@@ -376,6 +381,9 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
       <div className="chat-md text-sm text-slate-100 leading-relaxed">
         <MathText>{part.prompt}</MathText>
       </div>
+
+      {/* Per-part diagrams (geometry figures, function graphs) */}
+      {part.diagrams && part.diagrams.length > 0 && <DiagramRenderer diagrams={part.diagrams} />}
 
       {/* Answer textarea — collapses when solution shown */}
       <AnimatePresence initial={false}>
