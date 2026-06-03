@@ -434,20 +434,6 @@ export const bagrut2022Summer582: PastBagrutQuestion[] = [
     totalPoints: 33,
     context:
       '(קיץ תשפ"ב, מועד א\') נתונה הפונקציה $\\;f(x) = xe^x - 2e^x + 1\\;$ המוגדרת לכל $x$.',
-    diagrams: [
-      {
-        type: 'functionGraph',
-        xRange: [-4, 3],
-        yRange: [-3, 4],
-        curves: [{ fn: (x) => x * Math.exp(x) - 2 * Math.exp(x) + 1 }],
-        hAsymptotes: [{ y: 1, label: 'y=1' }],
-        markedPoints: [
-          { x: 1, y: 1 - Math.E, label: 'מין' },
-          { x: 0, y: -1, label: '(0,-1)' },
-        ],
-        caption: 'גרף $f(x) = (x-2)e^x + 1$: יורד עד $x=1$ ואז עולה; אסימפטוטה $y=1$ ב-$x \\to -\\infty$.',
-      },
-    ],
     parts: [
       {
         label: 'א1',
@@ -498,11 +484,24 @@ export const bagrut2022Summer582: PastBagrutQuestion[] = [
         label: 'א4',
         prompt: 'סרטט סקיצה של גרף $f$.',
         answer_type: 'text',
+        diagrams: [
+          {
+            type: 'functionGraph',
+            xRange: [-4, 3],
+            yRange: [-3, 4],
+            curves: [{ fn: (x) => x * Math.exp(x) - 2 * Math.exp(x) + 1 }],
+            hAsymptotes: [{ y: 1, label: 'y=1' }],
+            markedPoints: [
+              { x: 1, y: 1 - Math.E, label: 'מין' },
+              { x: 0, y: -1, label: '(0,-1)' },
+            ],
+            caption: 'גרף $f(x) = (x-2)e^x + 1$: יורד עד $x=1$ ואז עולה; אסימפטוטה $y=1$ ב-$x \\to -\\infty$.',
+          },
+        ],
         hints: ['השתמש בכל מה שמצאת: אסימפטוטה $y=1$, חיתוך $(0,-1)$, מינימום $(1,\\,1-e)$.'],
         solution: {
           steps: [
-            'ראה את הגרף שלמעלה.',
-            'תיאור: הגרף יורד מ-$y\\to 1$ (משמאל ל-$-\\infty$), עובר דרך $(0,-1)$, ממשיך לרדת למינימום $(1,\\,1-e)$, ואז עולה ל-$+\\infty$.',
+            'תיאור: הגרף יורד מ-$y\\to 1$ (משמאל ל-$-\\infty$), עובר דרך $(0,-1)$, ממשיך לרדת למינימום $(1,\\,1-e)$, ואז עולה ל-$+\\infty$ (ראה תרשים).',
           ],
           final_answer:
             'גרף יורד-עולה עם מינימום $(1,\\,1-e)$, חיתוך עם ציר $y$ ב-$(0,-1)$, אסימפטוטה אופקית $y=1$ משמאל.',

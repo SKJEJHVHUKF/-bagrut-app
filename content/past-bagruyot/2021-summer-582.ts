@@ -432,20 +432,6 @@ export const bagrut2021Summer582: PastBagrutQuestion[] = [
     topic: 'פונקציה מעריכית',
     totalPoints: 25,
     context: 'נתונה הפונקציה $\\;f(x) = \\dfrac{e^x - e^{-x}}{e^x + e^{-x}}$.',
-    diagrams: [
-      {
-        type: 'functionGraph',
-        xRange: [-4, 4],
-        yRange: [-1.5, 1.5],
-        curves: [{ fn: (x) => (Math.exp(x) - Math.exp(-x)) / (Math.exp(x) + Math.exp(-x)) }],
-        hAsymptotes: [
-          { y: 1, label: 'y=1' },
-          { y: -1, label: 'y=-1' },
-        ],
-        caption:
-          '$f(x) = \\dfrac{e^x - e^{-x}}{e^x + e^{-x}}$ — עולה ממש, אי-זוגית, עם אסימפטוטות $y = \\pm 1$.',
-      },
-    ],
     parts: [
       {
         label: 'א1',
@@ -545,6 +531,20 @@ export const bagrut2021Summer582: PastBagrutQuestion[] = [
         label: 'ג',
         prompt: 'הוכח כי $-1 < f(x) < 1$ לכל $x \\in \\mathbb{R}$.',
         answer_type: 'proof',
+        diagrams: [
+          {
+            type: 'functionGraph',
+            xRange: [-4, 4],
+            yRange: [-1.5, 1.5],
+            curves: [{ fn: (x) => (Math.exp(x) - Math.exp(-x)) / (Math.exp(x) + Math.exp(-x)) }],
+            hAsymptotes: [
+              { y: 1, label: 'y=1' },
+              { y: -1, label: 'y=-1' },
+            ],
+            caption:
+              '$f(x) = \\dfrac{e^x - e^{-x}}{e^x + e^{-x}}$ — עולה ממש, אי-זוגית, חסומה בין $-1$ ל-$1$.',
+          },
+        ],
         hints: [
           'דרך אחת: השתמש בכך ש-$f$ עולה ממש (סעיף ב) ובאסימפטוטות $y = \\pm 1$ (סעיף א). השרשור אומר שהטווח כולו בין הגבולות.',
           'דרך שנייה (אלגברית): הראה ש-$1 - f(x) > 0$ ו-$1 + f(x) > 0$ ישירות. נסה לחבר $1 - f(x) = \\dfrac{v - u}{v} = \\dfrac{2e^{-x}}{e^x+e^{-x}} > 0$.',

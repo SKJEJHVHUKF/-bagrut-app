@@ -435,21 +435,6 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
     totalPoints: 33,
     context:
       '(קיץ תשפ"א, מועד ב\') נתונה הפונקציה $\\;f(x) = e^{\\,bx^2 - 2bx} - 1$, כאשר $b < 0$ פרמטר.',
-    diagrams: [
-      {
-        type: 'functionGraph',
-        xRange: [-2, 4],
-        yRange: [-1.4, 1.2],
-        curves: [{ fn: (x) => Math.exp(-0.5 * (x * x - 2 * x)) - 1 }],
-        hAsymptotes: [{ y: -1, label: 'y=-1' }],
-        markedPoints: [
-          { x: 0, y: 0, label: '' },
-          { x: 2, y: 0, label: '' },
-          { x: 1, y: Math.exp(0.5) - 1, label: 'מקס' },
-        ],
-        caption: 'צורת הגרף של $f$ (לדוגמה $b = -\\tfrac{1}{2}$): מקסימום ב-$x=1$, חותך את ציר $x$ ב-$0$ וב-$2$, אסימפטוטה $y=-1$.',
-      },
-    ],
     parts: [
       {
         label: 'א1',
@@ -488,6 +473,21 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
         label: 'א3',
         prompt: 'מצא את נקודת הקיצון של $f$ וקבע את סוגה (בעזרת $b$).',
         answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'functionGraph',
+            xRange: [-2, 4],
+            yRange: [-1.4, 1.2],
+            curves: [{ fn: (x) => Math.exp(-0.5 * (x * x - 2 * x)) - 1 }],
+            hAsymptotes: [{ y: -1, label: 'y=-1' }],
+            markedPoints: [
+              { x: 0, y: 0, label: '' },
+              { x: 2, y: 0, label: '' },
+              { x: 1, y: Math.exp(0.5) - 1, label: 'מקס' },
+            ],
+            caption: 'צורת הגרף של $f$ (לדוגמה $b = -\\tfrac{1}{2}$): מקסימום ב-$x=1$, חותך את ציר $x$ ב-$0$ וב-$2$, אסימפטוטה $y=-1$.',
+          },
+        ],
         hints: [
           'גזור: $f\\,\'(x) = (2bx - 2b)e^{bx^2 - 2bx} = 2b(x-1)e^{(\\cdots)}$. האקספוננט תמיד חיובי.',
           'נקודת קיצון ב-$x = 1$. הצב כדי לקבל את ערך הפונקציה, וזכור $b<0$.',
@@ -499,7 +499,7 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
             'ערך הקיצון: $\\;f(1) = e^{\\,b - 2b} - 1 = e^{-b} - 1$.',
             'מכיוון ש-$b < 0$, מתקיים $-b > 0$ ולכן $e^{-b} > 1$, כלומר ערך הקיצון חיובי. בדיקת סימן $f\\,\'$: שמאלית ל-$1$ חיובית וימינה שלילית $\\Rightarrow$ מקסימום.',
           ],
-          final_answer: 'מקסימום בנקודה $\\bigl(1,\\;e^{-b} - 1\\bigr)$.',
+          final_answer: 'מקסימום בנקודה $\\bigl(1,\\;e^{-b} - 1\\bigr)$ (ראה תרשים).',
         },
       },
       {
