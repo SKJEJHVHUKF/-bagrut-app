@@ -395,9 +395,6 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
         <MathText>{part.prompt}</MathText>
       </div>
 
-      {/* Per-part diagrams (geometry figures, function graphs) */}
-      {part.diagrams && part.diagrams.length > 0 && <DiagramRenderer diagrams={part.diagrams} />}
-
       {/* Answer textarea — collapses when solution shown */}
       <AnimatePresence initial={false}>
         {!solutionShown && (
@@ -534,6 +531,17 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
                 <CheckCircle2 className="w-3 h-3" />
                 פתרון מלא
               </motion.div>
+              {/* Per-part diagrams — appear with the solution */}
+              {part.diagrams && part.diagrams.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.08 }}
+                  className="my-2"
+                >
+                  <DiagramRenderer diagrams={part.diagrams} />
+                </motion.div>
+              )}
               {part.solution.steps.map((step, i) => (
                 <motion.div
                   key={i}
