@@ -30,12 +30,14 @@ import { bagrut2020Summer582 } from './2020-summer-582';
 import { bagrut2021Summer582 } from './2021-summer-582';
 import { bagrut2021Summer582MoedB } from './2021-summer-582-moed-b';
 import { bagrut2022Summer582 } from './2022-summer-582';
+import { bagrut2022Summer582MoedB } from './2022-summer-582-moed-b';
 
 export const ALL_PAST_BAGRUYOT: PastBagrutQuestion[] = [
   ...bagrut2020Summer582,
   ...bagrut2021Summer582,
   ...bagrut2021Summer582MoedB,
   ...bagrut2022Summer582,
+  ...bagrut2022Summer582MoedB,
 ];
 
 // ============================================================
@@ -87,4 +89,4 @@ export function search(query: string): PastBagrutQuestion[] {
   });
 }
 
-export type { PastBagrutQuestion, BagrutPaper, BagrutSeason, PastBagrutPart } from './types';
+export type { PastBagrutQuestion, BagrutPaper, BagrutSeason, BagrutMoed, PastBagrutPart } from './types';

@@ -22,6 +22,8 @@ import type { DiagramSpec } from '../lessons/types';
 
 export type BagrutSeason = 'summer' | 'winter';
 export type BagrutPaper = '581' | '582';
+/** מועד הבחינה — 'a' = מועד א', 'b' = מועד ב', 'special' = מועד מיוחד. */
+export type BagrutMoed = 'a' | 'b' | 'special';
 
 export type PastBagrutPart = {
   /** Hebrew label of the section. Single sections use 'א', 'ב', 'ג', 'ד';
@@ -54,6 +56,9 @@ export type PastBagrutQuestion = {
   year: number;
   /** Summer or winter session. */
   season: BagrutSeason;
+  /** מועד הבחינה (מועד א'/ב'/מיוחד). Optional for legacy entries; when present
+   *  it disambiguates multiple sessions in the same year+season. */
+  moed?: BagrutMoed;
   /** Which paper this question is from. */
   paper: BagrutPaper;
   /** Question number within the paper (1-7 typically). */

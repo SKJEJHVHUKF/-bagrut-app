@@ -179,8 +179,15 @@ export default function BagruyotLandingPage() {
                 {sampleQuestion.topic}
               </span>
               <span className="text-[10px] text-slate-400">
-                {sampleQuestion.season === 'summer' ? 'קיץ' : 'חורף'} {sampleQuestion.year} • סעיף{' '}
-                {samplePart.label}
+                {sampleQuestion.season === 'summer' ? 'קיץ' : 'חורף'} {sampleQuestion.year}
+                {sampleQuestion.moed === 'a'
+                  ? ' מועד א\''
+                  : sampleQuestion.moed === 'b'
+                    ? ' מועד ב\''
+                    : sampleQuestion.moed === 'special'
+                      ? ' מועד מיוחד'
+                      : ''}
+                {' • סעיף '}{samplePart.label}
               </span>
             </div>
             <p className="text-sm text-slate-200 leading-relaxed line-clamp-3">{stripMath(samplePart.prompt)}</p>

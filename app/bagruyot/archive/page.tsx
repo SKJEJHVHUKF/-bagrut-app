@@ -300,6 +300,14 @@ function QuestionCard({
   onToggle: () => void;
 }) {
   const seasonHeb = question.season === 'summer' ? 'קיץ' : 'חורף';
+  const moedHeb =
+    question.moed === 'a'
+      ? 'מועד א\''
+      : question.moed === 'b'
+        ? 'מועד ב\''
+        : question.moed === 'special'
+          ? 'מועד מיוחד'
+          : null;
   return (
     <article className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden">
       <button onClick={onToggle} className="w-full text-right p-4 hover:bg-white/[0.02] transition-colors">
@@ -312,6 +320,11 @@ function QuestionCard({
               <span className="bg-pink-500/15 border border-pink-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-pink-200">
                 {question.topic}
               </span>
+              {moedHeb && (
+                <span className="bg-amber-500/15 border border-amber-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-amber-200">
+                  {moedHeb}
+                </span>
+              )}
               <span className="text-[10px] text-slate-400">
                 {seasonHeb} {question.year} • שאלה {question.questionNumber} • {question.totalPoints} נק׳
               </span>
