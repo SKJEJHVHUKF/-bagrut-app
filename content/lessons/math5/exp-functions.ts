@@ -32,23 +32,6 @@ export const math5ExpFunctions: Lesson = {
 - אסימפטוטה אופקית $y = 0$ כש-$x \\to -\\infty$. אין חיתוך עם ציר $x$.
 
 התוצאה השימושית ביותר: כשרואים משוואה $e^{g(x)} = c$ עם $c \\le 0$, אין פתרון. אפס. סיימת בשנייה. אם $c > 0$, פתרון יחיד $g(x) = \\ln c$.`,
-      diagrams: [
-        {
-          type: 'functionGraph',
-          xRange: [-3, 3],
-          yRange: [-0.5, 6],
-          curves: [
-            { fn: (x) => Math.exp(x) },
-            { fn: (x) => Math.exp(-x), dashed: true },
-          ],
-          hAsymptotes: [{ y: 0, label: 'y = 0' }],
-          markedPoints: [
-            { x: 0, y: 1, label: '(0, 1)' },
-            { x: 1, y: Math.E, label: '(1, e)' },
-          ],
-          caption: 'הגרף של $e^x$ (אדום) ו-$e^{-x}$ (מקווקו) — תמונת ראי סביב ציר $y$.',
-        },
-      ],
     },
     {
       title: 'פונקציה מעריכית כללית $a^x$',
