@@ -11,6 +11,7 @@ import { math5Vectors } from './math5/vectors';
 import { math5ComplexNumbers } from './math5/complex-numbers';
 import { math5Statistics } from './math5/statistics';
 import { math5ExpFunctions } from './math5/exp-functions';
+import { math5GrowthDecay } from './math5/growth-decay';
 import { math5LnFunction } from './math5/ln-function';
 import { math5EuclideanGeometry } from './math5/euclidean-geometry';
 
@@ -24,6 +25,7 @@ const LESSONS: Record<string, Lesson> = {
   'math5:חשבון אינטגרלי': math5Integrals,
   'math5:טריגונומטריה': math5Trigonometry,
   'math5:פונקציה מעריכית': math5ExpFunctions,
+  'math5:גדילה ודעיכה': math5GrowthDecay,
   'math5:פונקציית ln': math5LnFunction,
   'math5:סדרות': math5Sequences,
   'math5:הסתברות': math5Probability,
