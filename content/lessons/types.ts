@@ -273,6 +273,10 @@ export type SubTopic = {
   formulas: Formula[];
   /** 5-8 focused practice questions. Same shape as the lesson's quick bank. */
   questions: PracticeQuestion[];
+  /** Optional inline diagrams (SVG-rendered) shown beneath the summary.
+   *  Same shape as ConceptBlock.diagrams. Used for function graphs,
+   *  geometry sketches, sign-table illustrations, etc. */
+  diagrams?: DiagramSpec[];
 };
 
 export type Lesson = {

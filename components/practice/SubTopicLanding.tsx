@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { BookOpen, ArrowLeft, Target, CheckCircle, Sparkles } from 'lucide-react';
 import { MathText } from './MathText';
 import { FormulaCard } from './FormulaCard';
+import { DiagramRenderer } from './DiagramRenderer';
 import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
 import type { SubTopic } from '@/content/lessons/types';
 
@@ -76,6 +77,11 @@ export function SubTopicLanding({ subject, topic, subTopic }: Props) {
         >
           <MathText>{subTopic.summary}</MathText>
         </motion.div>
+        {subTopic.diagrams && subTopic.diagrams.length > 0 && (
+          <motion.div variants={fadeUp} className="mt-3">
+            <DiagramRenderer diagrams={subTopic.diagrams} />
+          </motion.div>
+        )}
       </motion.section>
 
       {/* Key points */}
