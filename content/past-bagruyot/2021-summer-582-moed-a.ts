@@ -833,16 +833,36 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         label: 'א1',
         prompt: 'מצא את תחום ההגדרה של $f(x)$.',
         answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 300 64',
+            svg: `
+              <line x1="12" y1="34" x2="288" y2="34" stroke="rgba(226,232,240,0.6)" stroke-width="1.2"/>
+              <line x1="85" y1="20" x2="85" y2="48" stroke="rgba(148,163,184,0.55)" stroke-width="1" stroke-dasharray="3 2"/>
+              <line x1="155" y1="20" x2="155" y2="48" stroke="rgba(148,163,184,0.55)" stroke-width="1" stroke-dasharray="3 2"/>
+              <line x1="235" y1="20" x2="235" y2="48" stroke="rgba(148,163,184,0.55)" stroke-width="1" stroke-dasharray="3 2"/>
+              <text x="78" y="61" fill="#94a3b8" font-size="12" font-family="Heebo, sans-serif">-2</text>
+              <text x="148" y="61" fill="#94a3b8" font-size="12" font-family="Heebo, sans-serif">-1</text>
+              <text x="231" y="61" fill="#94a3b8" font-size="12" font-family="Heebo, sans-serif">1</text>
+              <text x="44" y="23" fill="#4ade80" font-size="16" font-weight="bold" font-family="Heebo, sans-serif">+</text>
+              <text x="116" y="23" fill="#f87171" font-size="16" font-weight="bold" font-family="Heebo, sans-serif">&#8722;</text>
+              <text x="191" y="23" fill="#4ade80" font-size="16" font-weight="bold" font-family="Heebo, sans-serif">+</text>
+              <text x="260" y="23" fill="#4ade80" font-size="16" font-weight="bold" font-family="Heebo, sans-serif">+</text>
+            `,
+            caption: 'טבלת הסימן של $\\dfrac{x^2-1}{(x+2)(x-1)}$ — חיובי ב-$x<-2$ וב-$x>-1$ (פרט ל-$x=1$).',
+          },
+        ],
         hints: [
           'פירוק: $x^2 - 1 = (x-1)(x+1)$. הפונקציה הופכת ל-$\\;\\dfrac{(x-1)(x+1)}{(x+2)(x-1)} = \\dfrac{x+1}{x+2}\\;$ (עבור $x \\ne 1$).',
-          'תנאים: $x \\ne 1$ (התאפסות במכנה המקורי), $x \\ne -2$ (התאפסות במכנה אחרי הצמצום), ו-$\\dfrac{x+1}{x+2} > 0$.',
+          'תנאים: $x \\ne 1$ (התאפסות במכנה המקורי), $x \\ne -2$, ו-$\\dfrac{x^2-1}{(x+2)(x-1)} > 0$.',
         ],
         solution: {
           steps: [
-            'נצמצם: $\\;\\dfrac{x^2-1}{(x+2)(x-1)} = \\dfrac{(x-1)(x+1)}{(x+2)(x-1)} = \\dfrac{x+1}{x+2}$ (תקף עבור $x\\ne 1$)',
-            'תנאי $\\ln$: $\\;\\dfrac{x+1}{x+2} > 0 \\;\\Rightarrow\\; x < -2$ או $x > -1$',
-            'מחריגים $x = 1$ (התאפסות במכנה המקורי) ו-$x = -2$',
-            'תחום ההגדרה: $\\;(-\\infty,-2)\\cup(-1,1)\\cup(1,\\infty)$',
+            'תנאי $\\ln$: הביטוי חיובי — $\\;\\dfrac{x^2-1}{(x+2)(x-1)} > 0$',
+            'נקודות קריטיות: $\\;x^2-1=0 \\Rightarrow x=\\pm1$; המכנה מתאפס ב-$x=-2$ וב-$x=1$',
+            'טבלת סימן (ראה תרשים): הביטוי חיובי ב-$x<-2$ וב-$x>-1$',
+            'מחריגים $x=1$ (במקור $0/0$), לכן התחום: $\\;(-\\infty,-2)\\cup(-1,1)\\cup(1,\\infty)$',
           ],
           final_answer:
             'תחום ההגדרה: $\\;(-\\infty,-2)\\cup(-1,1)\\cup(1,\\infty)$.',
@@ -871,18 +891,40 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         label: 'א3',
         prompt: 'מצא את תחומי העלייה והירידה של $f(x)$ (אם יש כאלה).',
         answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 300 66',
+            svg: `
+              <rect x="110" y="22" width="70" height="24" fill="rgba(100,116,139,0.20)"/>
+              <line x1="12" y1="34" x2="288" y2="34" stroke="rgba(226,232,240,0.6)" stroke-width="1.2"/>
+              <line x1="110" y1="20" x2="110" y2="48" stroke="rgba(148,163,184,0.55)" stroke-width="1" stroke-dasharray="3 2"/>
+              <line x1="180" y1="20" x2="180" y2="48" stroke="rgba(148,163,184,0.55)" stroke-width="1" stroke-dasharray="3 2"/>
+              <line x1="245" y1="20" x2="245" y2="48" stroke="rgba(148,163,184,0.55)" stroke-width="1" stroke-dasharray="3 2"/>
+              <text x="103" y="61" fill="#94a3b8" font-size="12" font-family="Heebo, sans-serif">-2</text>
+              <text x="173" y="61" fill="#94a3b8" font-size="12" font-family="Heebo, sans-serif">-1</text>
+              <text x="241" y="61" fill="#94a3b8" font-size="12" font-family="Heebo, sans-serif">1</text>
+              <text x="48" y="23" fill="#4ade80" font-size="13" font-weight="bold" font-family="Heebo, sans-serif">+ &#8599;</text>
+              <text x="126" y="24" fill="#64748b" font-size="10" font-family="Heebo, sans-serif">אין</text>
+              <text x="198" y="23" fill="#4ade80" font-size="13" font-weight="bold" font-family="Heebo, sans-serif">+ &#8599;</text>
+              <text x="262" y="23" fill="#4ade80" font-size="13" font-weight="bold" font-family="Heebo, sans-serif">&#8599;</text>
+            `,
+            caption: "טבלת הסימן של $f'(x)=\\dfrac{1}{(x+1)(x+2)}$: חיובית בכל התחום — $f$ עולה (האזור $-2<x<-1$ אינו בתחום).",
+          },
+        ],
         hints: [
-          'גוזרים $\\ln$ של ביטוי לפי הכלל $(\\ln u)\' = \\dfrac{u\'}{u}$, עם $u = \\dfrac{x+1}{x+2}$.',
-          'את $u\'$ מחשבים בכלל המנה, ואז בודקים את סימן $f\'$ בכל תחום ההגדרה.',
+          "פירוק לוג: $\\;f(x) = \\ln(x+1) - \\ln(x+2)$, וגוזרים כל איבר.",
+          "סימן $f'$: המונה $1 > 0$, אז הסימן נקבע לפי $(x+1)(x+2)$.",
         ],
         solution: {
           steps: [
-            "$u = \\dfrac{x+1}{x+2} \\;\\Rightarrow\\; u' = \\dfrac{(x+2)-(x+1)}{(x+2)^2} = \\dfrac{1}{(x+2)^2}$",
-            "$f'(x) = \\dfrac{u'}{u} = \\dfrac{1}{(x+2)^2}\\cdot\\dfrac{x+2}{x+1} = \\dfrac{1}{(x+1)(x+2)}$",
-            "בתחום ההגדרה $(x+1)(x+2) > 0$ $\\;\\Rightarrow\\; f' > 0$ — $f$ עולה ממש, אין קיצון",
+            "נפרק את הלוג: $\\;f(x) = \\ln(x+1) - \\ln(x+2)$",
+            "$f'(x) = \\dfrac{1}{x+1} - \\dfrac{1}{x+2} = \\dfrac{(x+2)-(x+1)}{(x+1)(x+2)} = \\dfrac{1}{(x+1)(x+2)}$",
+            "טבלת סימן (ראה תרשים): בכל תחום ההגדרה $(x+1)(x+2) > 0$, לכן $f' > 0$",
+            "$f$ עולה ממש בכל תחום ההגדרה, אין ירידה ואין קיצון",
           ],
           final_answer:
-            '$f$ עולה ממש בכל תחום ההגדרה (אין ירידה ואין קיצון), כי $f\'(x)=\\dfrac{1}{(x+1)(x+2)}>0$.',
+            "$f$ עולה ממש בכל תחום ההגדרה (אין ירידה ואין קיצון), כי $f'(x)=\\dfrac{1}{(x+1)(x+2)}>0$.",
         },
       },
       {
@@ -992,10 +1034,9 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
             '$g$ עולה ממש על $(-\\infty,-2)$ (מסעיף ב2).',
             '$x\\to-\\infty:\\;\\; f\\to 0^+ \\;\\Rightarrow\\; g\\to-\\infty$',
             '$x\\to-2^-:\\;\\; f\\to+\\infty \\;\\Rightarrow\\; g\\to+\\infty$ — אסימפטוטה $x=-2$',
-            'חיתוך ציר $x$: $\\;g=0 \\iff f=1 \\iff \\dfrac{x+1}{x+2}=e \\iff x=\\dfrac{1-2e}{e-1}\\approx-2.58$',
           ],
           final_answer:
-            'גרף עולה ממש על $(-\\infty,-2)$, מ-$-\\infty$ ל-$+\\infty$, חוצה את ציר $x$ ב-$x = \\dfrac{1-2e}{e-1}$.',
+            'גרף עולה ממש על $(-\\infty,-2)$, מ-$-\\infty$ ל-$+\\infty$, אסימפטוטה אנכית $x=-2$.',
         },
       },
       {
