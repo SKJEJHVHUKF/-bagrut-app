@@ -404,4 +404,138 @@ export const bagrut2023Summer582: PastBagrutQuestion[] = [
     ],
     solutionSource: 'authored',
   },
+
+  // ===========================================================================
+  // Q3 — מספרים מרוכבים: z³ = 1/z³, משולש במישור גאוס, |w| ו-arg, n מינימלי
+  // ===========================================================================
+  {
+    id: 'b2023s582a-q3',
+    year: 2023,
+    season: 'summer',
+    moed: 'a',
+    paper: '582',
+    questionNumber: 3,
+    topic: 'מספרים מרוכבים',
+    totalPoints: 25,
+    context: 'נתונה המשוואה $\\;z^3 = \\dfrac{1}{z^3}$ ($z$ מספר מרוכב). $\\;z_0$ הוא אחד מפתרונות המשוואה, ומיוצג על ידי נקודה ברביע הרביעי במישור גאוס.',
+    parts: [
+      {
+        label: 'א',
+        prompt: 'מצאו את המספר המרוכב $z_0$.',
+        answer_type: 'expression',
+        hints: [
+          'כפול את שני האגפים ב-$z^3$ כדי לקבל $z^6 = 1$, ואז שורשי יחידה.',
+          'שש פתרונות $z_k = \\text{cis}(60°k)$. בחר את זה שברביע הרביעי ($270° < \\theta < 360°$).',
+        ],
+        solution: {
+          steps: [
+            '$z^3 = \\dfrac{1}{z^3} \\Rightarrow z^6 = 1$',
+            '$z^6 = \\text{cis}(0° + 360°k)$',
+            '$z_k = \\text{cis}\\left(\\dfrac{360°k}{6}\\right) = \\text{cis}(60°k)$, $\\;k=0,1,2,3,4,5$',
+            'רביע רביעי: $\\;270° < 60°k < 360°$',
+            '$4.5 < k < 6 \\Rightarrow k = 5$',
+            '$z_0 = \\text{cis}(300°) = \\tfrac12 - \\tfrac{\\sqrt3}{2}i$',
+          ],
+          final_answer: '$z_0 = \\text{cis}(300°) = \\tfrac12 - \\tfrac{\\sqrt3}{2}i$',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: [
+          'הנקודות $A,\\,B,\\,C$ מיוצגות במישור גאוס על ידי המספרים $d\\cdot z_0$, $\\;d\\cdot i\\,z_0$ ו-$d\\cdot(z_0)^4$ בהתאמה ($d>0$ פרמטר).',
+          'נתון כי שטח המשולש $ABC$ הוא $5d+6$.',
+          '',
+          'מצאו את הערך של $d$.',
+        ].join('\n'),
+        answer_type: 'number',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 220 200',
+            svg: `
+              <line x1="10" y1="100" x2="210" y2="100" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="110" y1="14" x2="110" y2="190" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="203" y="113" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">Re</text>
+              <text x="114" y="22" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">Im</text>
+              <circle cx="110" cy="100" r="75" fill="none" stroke="rgba(148,163,184,0.35)" stroke-width="1.1" stroke-dasharray="3 3"/>
+              <polygon points="148,165 175,63 72,35" fill="rgba(168,85,247,0.10)" stroke="rgba(244,114,182,0.9)" stroke-width="1.6"/>
+              <line x1="148" y1="165" x2="72" y2="35" stroke="rgba(251,191,36,0.7)" stroke-width="1.2"/>
+              <line x1="110" y1="100" x2="175" y2="63" stroke="rgba(56,189,248,0.8)" stroke-width="1.3"/>
+              <circle cx="148" cy="165" r="3" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="175" cy="63" r="3" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="72" cy="35" r="3" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="110" cy="100" r="2.2" fill="rgba(226,232,240,0.9)"/>
+              <text x="152" y="172" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">A (300°)</text>
+              <text x="178" y="60" fill="#38bdf8" font-size="10" font-family="Heebo, sans-serif">B (30°)</text>
+              <text x="48" y="32" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">C (120°)</text>
+              <text x="98" y="113" fill="#cbd5e1" font-size="9" font-family="Heebo, sans-serif">O</text>
+            `,
+            caption: '$A,B,C$ על מעגל ברדיוס $d$: $\\;AC$ קוטר ($A,C$ אנטיפודליות), ו-$OB \\perp AC$ הוא גובה באורך $d$.',
+          },
+        ],
+        hints: [
+          'חשב את הזוויות: $A$ ב-$300°$, $B$ ב-$30°$, $C$ ב-$120°$. שים לב ש-$C = -A$.',
+          'אם $AC$ קוטר ($=2d$) ו-$OB$ גובה ($=d$, מאונך ל-$AC$), אז $S = \\tfrac12\\cdot AC\\cdot OB$.',
+        ],
+        solution: {
+          steps: [
+            '$A = d z_0 = d\\,\\text{cis}(300°)$',
+            '$B = d\\,i\\,z_0 = d\\,\\text{cis}(90°)\\,\\text{cis}(300°) = d\\,\\text{cis}(390°) = d\\,\\text{cis}(30°)$',
+            '$C = d(z_0)^4 = d\\,\\text{cis}(4\\cdot 300°) = d\\,\\text{cis}(1200°) = d\\,\\text{cis}(120°)$',
+            '$\\text{cis}(300°) = -\\text{cis}(120°) \\Rightarrow C = -A$, אז $AC$ קוטר: $\\;AC = 2d$',
+            '$OB \\perp AC$ והוא גובה באורך $OB = d$',
+            '$S_{ABC} = \\tfrac12\\,AC\\cdot OB = \\tfrac12\\cdot 2d\\cdot d = d^2$',
+            '$d^2 = 5d + 6$',
+            '$d^2 - 5d - 6 = 0 \\Rightarrow (d-6)(d+1) = 0$',
+            '$d > 0 \\Rightarrow d = 6$',
+          ],
+          final_answer: '$d = 6$',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: 'נתון: $\\;w = \\left((z_0)^2 - \\dfrac{1}{(z_0)^2}\\right)(1+i)$. מצאו את $|w|$ ואת הארגומנט (הזווית) של $w$.',
+        answer_type: 'expression',
+        hints: [
+          'חשב $(z_0)^2 = \\text{cis}(240°)$. שים לב ש-$\\dfrac{1}{(z_0)^2} = \\overline{(z_0)^2}$.',
+          'ההפרש $z - \\bar z = 2i\\,\\text{Im}(z)$, אז $(z_0)^2 - \\dfrac{1}{(z_0)^2}$ מדומה טהור.',
+          'כתוב $1+i = \\sqrt2\\,\\text{cis}(45°)$ והכפל בצורה קוטבית.',
+        ],
+        solution: {
+          steps: [
+            '$(z_0)^2 = (\\text{cis}300°)^2 = \\text{cis}(600°) = \\text{cis}(240°)$',
+            '$\\dfrac{1}{(z_0)^2} = \\text{cis}(-240°) = \\overline{\\text{cis}(240°)}$',
+            '$(z_0)^2 - \\dfrac{1}{(z_0)^2} = \\text{cis}(240°) - \\overline{\\text{cis}(240°)} = 2i\\,\\text{Im}(\\text{cis}240°)$',
+            '$= 2i\\sin(240°) = 2i\\cdot\\left(-\\tfrac{\\sqrt3}{2}\\right) = -\\sqrt3\\,i$',
+            '$1 + i = \\sqrt2\\,\\text{cis}(45°)$',
+            '$w = (-\\sqrt3\\,i)\\cdot\\sqrt2\\,\\text{cis}(45°) = \\sqrt3\\,\\text{cis}(270°)\\cdot\\sqrt2\\,\\text{cis}(45°)$',
+            '$w = \\sqrt6\\,\\text{cis}(315°) = \\sqrt6\\,\\text{cis}(-45°)$',
+          ],
+          final_answer: '$|w| = \\sqrt6$, $\\;\\arg(w) = -45°$',
+        },
+      },
+      {
+        label: 'ד',
+        prompt: 'נתון כי $w^n$ ($n$ מספר טבעי) הוא מספר מדומה טהור, ונמצא מחוץ למעגל החוסם את המשולש $ABC$. מצאו את הערך המינימלי האפשרי של $n$.',
+        answer_type: 'number',
+        hints: [
+          'המעגל החוסם את $ABC$ הוא ברדיוס $d = 6$ (כי $|A|=|B|=|C|=d$).',
+          '"מחוץ למעגל": $|w^n| > 6$. "מדומה טהור": $\\text{Re}(w^n) = 0$.',
+          'מ-$\\cos(-45n°) = 0$ מקבלים $n = -2 - 4k$; בחר את $n$ הטבעי המינימלי הגדול מ-$2$.',
+        ],
+        solution: {
+          steps: [
+            'המעגל החוסם את $ABC$ ברדיוס $d = 6$ (כי $|A|=|B|=|C|=6$)',
+            '$w^n = (\\sqrt6)^n\\,\\text{cis}(-45n°) = 6^{n/2}\\,\\text{cis}(-45n°)$',
+            'מחוץ למעגל: $\\;|w^n| > 6 \\Rightarrow 6^{n/2} > 6^1 \\Rightarrow n > 2$',
+            'מדומה טהור: $\\;\\text{Re}(w^n) = 0 \\Rightarrow \\cos(-45n°) = 0$',
+            '$-45n° = 90° + 180°k \\Rightarrow n = -2 - 4k$',
+            '$k = -2 \\Rightarrow n = 6$ (מקיים גם $n > 2$)',
+          ],
+          final_answer: '$n_{\\min} = 6$',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
 ];
