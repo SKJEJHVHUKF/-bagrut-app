@@ -67,12 +67,12 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '**נתרגם את שוויון המרחקים למשוואה.** נסמן נקודה כללית $(x,y)$. המרחק שלה מן הנקודה $(a,0)$ שווה למרחק שלה מן הישר האנכי $x=a-1$: $\\;\\sqrt{(x-a)^2 + y^2} = x-(a-1)$.',
-            '**נעלה את שני האגפים בריבוע:** $\\;(x-a)^2 + y^2 = \\bigl(x-(a-1)\\bigr)^2$.',
-            '**נפתח את הסוגריים בשני האגפים:** $\\;x^2 - 2ax + a^2 + y^2 = x^2 - 2x(a-1) + (a-1)^2$, כלומר $\\;x^2 - 2ax + a^2 + y^2 = x^2 - 2ax + 2x + a^2 - 2a + 1$.',
-            '**נצמצם** את $x^2$, $-2ax$ ו-$a^2$ משני האגפים, ונבודד את $y^2$: $\\;y^2 = 2x - 2a + 1$.',
+            'נקודה כללית $(x,y)$, נשווה מרחקים: $\\sqrt{(x-a)^2 + y^2} = x-(a-1)$',
+            'נעלה בריבוע: $(x-a)^2 + y^2 = (x-(a-1))^2$',
+            '$x^2 - 2ax + a^2 + y^2 = x^2 - 2ax + 2x + a^2 - 2a + 1$',
+            '$y^2 = 2x - 2a + 1$',
           ],
-          final_answer: 'המקום הגאומטרי הוא הפרבולה $\\;y^2 = 2x - 2a + 1$ (פותחת ימינה; מוקד $(a,0)$, מדריך $x=a-1$).',
+          final_answer: 'פרבולה: $\\;y^2 = 2x - 2a + 1$ (מוקד $(a,0)$, מדריך $x=a-1$)',
         },
       },
       {
@@ -108,11 +108,12 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '**נשתמש באותה שיטה, בהחלפת תפקידי $x$ ו-$y$.** המרחק של $(x,y)$ מן הנקודה $(0,a)$ שווה למרחק שלה מן הישר האופקי $y=a-1$: $\\;\\sqrt{x^2 + (y-a)^2} = y-(a-1)$.',
-            '**נעלה בריבוע ונפתח:** $\\;x^2 + (y-a)^2 = \\bigl(y-(a-1)\\bigr)^2$, כלומר $\\;x^2 + y^2 - 2ay + a^2 = y^2 - 2ay + 2y + a^2 - 2a + 1$.',
-            '**נצמצם** את $y^2$, $-2ay$ ו-$a^2$, ונבודד את $x^2$: $\\;x^2 = 2y - 2a + 1$.',
+            'אותה שיטה, $x \\leftrightarrow y$: $\\sqrt{x^2 + (y-a)^2} = y-(a-1)$',
+            'נעלה בריבוע: $x^2 + (y-a)^2 = (y-(a-1))^2$',
+            '$x^2 + y^2 - 2ay + a^2 = y^2 - 2ay + 2y + a^2 - 2a + 1$',
+            '$x^2 = 2y - 2a + 1$',
           ],
-          final_answer: 'המקום הגאומטרי הוא הפרבולה $\\;x^2 = 2y - 2a + 1$ (פותחת מעלה; מוקד $(0,a)$, מדריך $y=a-1$).',
+          final_answer: 'פרבולה: $\\;x^2 = 2y - 2a + 1$ (מוקד $(0,a)$, מדריך $y=a-1$)',
         },
       },
       {
@@ -123,11 +124,12 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         hints: ['הצב $(2,2)$ באחת המשוואות (שתיהן יתנו אותה תשובה).'],
         solution: {
           steps: [
-            '**ננצל ש-$(2,2)$ מונחת על שני המקומות.** נציב אותה במשוואה מסעיף א: $\\;2^2 = 2\\cdot 2 - 2a + 1$.',
-            '**נפתור עבור $a$:** $\\;4 = 5 - 2a \\Rightarrow 2a = 1 \\Rightarrow a = \\tfrac{1}{2}$.',
-            '**בדיקה** מול משוואת סעיף ב: $\\;2^2 = 2\\cdot 2 - 2a + 1$ — אותה משוואה בדיוק, אז $(2,2)$ אכן על שתי הפרבולות עבור $a = \\tfrac{1}{2}$ ✓.',
+            'נציב $(2,2)$ במשוואת סעיף א: $2^2 = 2\\cdot 2 - 2a + 1$',
+            '$4 = 5 - 2a$',
+            '$2a = 1$',
+            '$a = \\dfrac{1}{2}$',
           ],
-          final_answer: '$a = \\dfrac{1}{2}$.',
+          final_answer: '$a = \\dfrac{1}{2}$',
         },
       },
       {
@@ -158,12 +160,15 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '**נכתוב את שתי הפרבולות עם $a = \\tfrac{1}{2}$:** $\\;y^2 = 2x$ ו-$\\;x^2 = 2y$.',
-            '**נציב אחת בשנייה.** מהמשוואה השנייה $y = \\tfrac{x^2}{2}$; נציב בראשונה: $\\;\\left(\\tfrac{x^2}{2}\\right)^2 = 2x \\Rightarrow \\tfrac{x^4}{4} = 2x \\Rightarrow x^4 - 8x = 0$.',
-            '**נפרק לגורמים:** $\\;x(x^3 - 8) = 0 \\Rightarrow x = 0$ או $x = 2$.',
-            '**נשלים את שיעורי $y$:** ב-$x = 2$ מתקבל $y = 2$ (הנקודה הנתונה $(2,2)$), וב-$x = 0$ מתקבל $y = 0$ — זו נקודת החיתוך השנייה.',
+            'נציב $a = \\tfrac{1}{2}$: $\\;y^2 = 2x$ ו-$x^2 = 2y$',
+            'מהשנייה $y = \\dfrac{x^2}{2}$, נציב בראשונה: $\\left(\\dfrac{x^2}{2}\\right)^2 = 2x$',
+            '$\\dfrac{x^4}{4} = 2x$',
+            '$x^4 - 8x = 0$',
+            '$x(x^3 - 8) = 0$',
+            '$x = 0$ או $x = 2$',
+            '$x=2 \\Rightarrow y=2$ (הנקודה הנתונה); $\\;x=0 \\Rightarrow y=0$',
           ],
-          final_answer: 'נקודת החיתוך השנייה: $(0,\\,0)$.',
+          final_answer: 'נקודת החיתוך השנייה: $(0,0)$',
         },
       },
       {
@@ -180,12 +185,15 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '**נרשום את ארבעת הקודקודים** (עם $a = \\tfrac{1}{2}$, כך ש-$3a = \\tfrac{3}{2}$): $\\;A(0,0)$, $\\;B(\\tfrac{3}{2},0)$, $\\;C(2,2)$, $\\;D(0,\\tfrac{3}{2})$.',
-            '**נחשב את אורכי ארבע הצלעות:** $\\;|AB| = \\tfrac{3}{2}$, $\\;|BC| = \\sqrt{\\tfrac{1}{4}+4} = \\tfrac{\\sqrt{17}}{2}$, $\\;|CD| = \\tfrac{\\sqrt{17}}{2}$, $\\;|DA| = \\tfrac{3}{2}$.',
-            '**נזהה את התבנית.** יש **שני זוגות של צלעות סמוכות שוות**: $|AB| = |DA| = \\tfrac{3}{2}$ (ליד הקודקוד $A(0,0)$) ו-$|BC| = |CD| = \\tfrac{\\sqrt{17}}{2}$ (ליד הקודקוד $C(2,2)$). זו בדיוק ההגדרה של **דלתון**.',
-            '**נימוק הסימטריה.** הקודקודים $A(0,0)$ ו-$C(2,2)$ מונחים על הישר $y=x$, והקודקודים $B\\left(\\tfrac{3}{2},0\\right)$ ו-$D\\left(0,\\tfrac{3}{2}\\right)$ סימטריים זה לזה ביחס לישר זה. לכן $y=x$ הוא ציר הסימטריה של המרובע — תכונה המאפיינת דלתון. ⬛',
+            'הקודקודים ($3a = \\tfrac{3}{2}$): $A(0,0)$, $B(\\tfrac{3}{2},0)$, $C(2,2)$, $D(0,\\tfrac{3}{2})$',
+            '$|AB| = \\tfrac{3}{2}$',
+            '$|BC| = \\sqrt{(\\tfrac{1}{2})^2 + 2^2} = \\dfrac{\\sqrt{17}}{2}$',
+            '$|CD| = \\sqrt{2^2 + (\\tfrac{1}{2})^2} = \\dfrac{\\sqrt{17}}{2}$',
+            '$|DA| = \\tfrac{3}{2}$',
+            'שני זוגות צלעות סמוכות שוות: $|AB|=|DA|$ ו-$|BC|=|CD|$ — דלתון',
+            '$A(0,0)$ ו-$C(2,2)$ על הישר $y=x$ — ציר הסימטריה של הדלתון',
           ],
-          final_answer: 'המרובע הוא דלתון (שני זוגות צלעות סמוכות שוות; האלכסון $y=x$ הוא ציר סימטריה).',
+          final_answer: 'המרובע הוא דלתון (האלכסון $y=x$ הוא ציר סימטריה)',
         },
       },
       {
@@ -220,11 +228,12 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '**נשתמש בנוסחת שטח הדלתון** — מחצית מכפלת האלכסונים (תקף כי האלכסונים ניצבים): $\\;S = \\tfrac{1}{2}\\,|AC|\\cdot|BD|$.',
-            '**נחשב את אורכי האלכסונים:** $\\;|AC| = \\sqrt{2^2+2^2} = 2\\sqrt 2$ (מ-$(0,0)$ ל-$(2,2)$), ו-$\\;|BD| = \\sqrt{(\\tfrac{3}{2})^2+(\\tfrac{3}{2})^2} = \\tfrac{3\\sqrt 2}{2}$ (מ-$(\\tfrac{3}{2},0)$ ל-$(0,\\tfrac{3}{2})$).',
-            '**נציב ונחשב:** $\\;S = \\tfrac{1}{2}\\cdot 2\\sqrt 2\\cdot \\tfrac{3\\sqrt 2}{2} = \\tfrac{1}{2}\\cdot 6 = 3$.',
+            'שטח דלתון: $S = \\dfrac{d_1 \\cdot d_2}{2}$ (האלכסונים ניצבים)',
+            '$|AC| = \\sqrt{2^2 + 2^2} = 2\\sqrt2$',
+            '$|BD| = \\sqrt{(\\tfrac{3}{2})^2 + (\\tfrac{3}{2})^2} = \\dfrac{3\\sqrt2}{2}$',
+            '$S = \\dfrac{2\\sqrt2 \\cdot \\frac{3\\sqrt2}{2}}{2} = \\dfrac{6}{2} = 3$',
           ],
-          final_answer: 'שטח המרובע: $\\;S = 3$.',
+          final_answer: 'שטח המרובע: $\\;S = 3$',
         },
       },
     ],
@@ -295,13 +304,15 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '**נבטא את האלכסון $\\vec{SC}$ דרך $A$:** $\\;\\vec{SC} = \\vec{SA} + \\vec{AC} = -\\vec w + (\\vec u + \\vec v)$ (במעוין $\\vec{AC} = \\vec{AB} + \\vec{AD} = \\vec u + \\vec v$).',
-            '**נמצא את $\\vec{ES}$.** כי $\\vec{SE} = t\\,\\vec{SC}$, אז $\\;\\vec{ES} = -t\\,\\vec{SC} = -t(-\\vec w + \\vec u + \\vec v) = -t\\vec u - t\\vec v + t\\vec w$.',
-            '**נשרשר את המסלול $E \\to S \\to A \\to B$:** $\\;\\vec{EB} = \\vec{ES} + \\vec{SA} + \\vec{AB} = (-t\\vec u - t\\vec v + t\\vec w) + (-\\vec w) + \\vec u = (1-t)\\vec u - t\\vec v + (t-1)\\vec w$.',
-            '**ובאותו אופן עבור המסלול $E \\to S \\to A \\to D$:** $\\;\\vec{ED} = \\vec{ES} + \\vec{SA} + \\vec{AD} = (-t\\vec u - t\\vec v + t\\vec w) + (-\\vec w) + \\vec v = -t\\vec u + (1-t)\\vec v + (t-1)\\vec w$.',
+            '$\\vec{SC} = \\vec{SA} + \\vec{AC} = -\\vec w + (\\vec u + \\vec v)$',
+            '$\\vec{ES} = -t\\,\\vec{SC} = -t\\vec u - t\\vec v + t\\vec w$',
+            '$\\vec{EB} = \\vec{ES} + \\vec{SA} + \\vec{AB} = (-t\\vec u - t\\vec v + t\\vec w) - \\vec w + \\vec u$',
+            '$\\vec{EB} = (1-t)\\vec u - t\\vec v + (t-1)\\vec w$',
+            '$\\vec{ED} = \\vec{ES} + \\vec{SA} + \\vec{AD} = (-t\\vec u - t\\vec v + t\\vec w) - \\vec w + \\vec v$',
+            '$\\vec{ED} = -t\\vec u + (1-t)\\vec v + (t-1)\\vec w$',
           ],
           final_answer:
-            '$\\vec{EB} = (1-t)\\vec u - t\\vec v + (t-1)\\vec w$, $\\;\\vec{ED} = -t\\vec u + (1-t)\\vec v + (t-1)\\vec w$.',
+            '$\\vec{EB} = (1-t)\\vec u - t\\vec v + (t-1)\\vec w$, $\\;\\vec{ED} = -t\\vec u + (1-t)\\vec v + (t-1)\\vec w$',
         },
       },
       {
@@ -315,13 +326,15 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '**נציב $t = \\tfrac{1}{2}$:** $\\;\\vec{EB} = \\tfrac{1}{2}(\\vec u - \\vec v - \\vec w)$, $\\;\\vec{ED} = \\tfrac{1}{2}(-\\vec u + \\vec v - \\vec w)$.',
-            '**נרשום את נתוני הבסיס.** מהמעוין ומ-$SA = BA$ נובע $|\\vec u| = |\\vec v| = |\\vec w|$; נסמן $q = |\\vec u|^2 = |\\vec v|^2 = |\\vec w|^2$. מהזווית $\\angle BAD = 60°$: $\\;\\vec u\\cdot\\vec v = q\\cos 60° = \\tfrac{q}{2}$, ומכך ש-$SA$ ניצב לבסיס: $\\;\\vec u\\cdot\\vec w = \\vec v\\cdot\\vec w = 0$.',
-            '**נחשב את המכפלה הסקלרית** (הגורם $\\tfrac{1}{4}$ אינו משנה את האפסיות): $\\;\\vec{EB}\\cdot\\vec{ED} = \\tfrac{1}{4}(\\vec u-\\vec v-\\vec w)\\cdot(-\\vec u+\\vec v-\\vec w)$.',
-            '**נפתח איבר־איבר** ונציב את הנתונים: $\\;-|\\vec u|^2 - |\\vec v|^2 + |\\vec w|^2 + 2(\\vec u\\cdot\\vec v) = -q - q + q + 2\\cdot\\tfrac{q}{2} = -q + q = 0$.',
-            '**מסקנה:** $\\;\\vec{EB}\\cdot\\vec{ED} = 0$, ולכן $\\vec{EB}\\perp\\vec{ED}$. ⬛',
+            '$t=\\tfrac12$: $\\;\\vec{EB} = \\tfrac12(\\vec u - \\vec v - \\vec w)$, $\\;\\vec{ED} = \\tfrac12(-\\vec u + \\vec v - \\vec w)$',
+            'נסמן $q = |\\vec u|^2 = |\\vec v|^2 = |\\vec w|^2$ (מעוין, $SA=BA$)',
+            '$\\vec u\\cdot\\vec v = q\\cos 60° = \\tfrac{q}{2}$, $\\;\\;\\vec u\\cdot\\vec w = \\vec v\\cdot\\vec w = 0$ ($SA\\perp$ בסיס)',
+            '$\\vec{EB}\\cdot\\vec{ED} = \\tfrac14(\\vec u - \\vec v - \\vec w)\\cdot(-\\vec u + \\vec v - \\vec w)$',
+            '$= \\tfrac14\\left(-|\\vec u|^2 - |\\vec v|^2 + |\\vec w|^2 + 2\\,\\vec u\\cdot\\vec v\\right)$',
+            '$= \\tfrac14\\left(-q - q + q + 2\\cdot\\tfrac{q}{2}\\right) = 0$',
+            '$\\vec{EB}\\cdot\\vec{ED} = 0 \\Rightarrow \\vec{EB} \\perp \\vec{ED}$',
           ],
-          final_answer: 'הוכח: $\\vec{EB}\\cdot\\vec{ED} = 0$.',
+          final_answer: 'הוכח: $\\vec{EB}\\cdot\\vec{ED} = 0$',
         },
       },
       {
@@ -358,13 +371,14 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '**נתבונן במשולש $SAC$.** מאחר ש-$t = \\tfrac12$, מתקיים $\\vec{SE} = \\tfrac12\\vec{SC}$ — כלומר $E$ הוא **אמצע הצלע $SC$**.',
-            '**נעביר מ-$E$ אנך לבסיס.** האנך מקביל ל-$SA$ (כי $SA$ עצמו ניצב לבסיס). במשולש $SAC$, הישר היוצא מאמצע $SC$ במקביל לצלע $SA$ הוא **קו אמצעים**.',
-            '**קו האמצעים חוצה את הצלע $AC$ באמצע.** לכן רגל האנך על הבסיס היא הנקודה $M$ — אמצע הצלע $AC$.',
-            '**נזהה את $M$ כמפגש האלכסונים.** במעוין האלכסונים $AC$ ו-$BD$ חוצים זה את זה, ולכן אמצע $AC$ הוא בדיוק נקודת מפגש האלכסונים. מכאן שהאנך מ-$E$ לבסיס עובר דרך מפגש האלכסונים. ⬛',
+            '$t = \\tfrac12 \\Rightarrow \\vec{SE} = \\tfrac12\\vec{SC}$, כלומר $E$ אמצע $SC$',
+            'האנך מ-$E$ לבסיס מקביל ל-$SA$ (שניצב לבסיס)',
+            'במשולש $SAC$: הישר מאמצע $SC$ במקביל ל-$SA$ הוא קו אמצעים',
+            'קו האמצעים חוצה את $AC$ באמצע — רגל האנך היא $M$, אמצע $AC$',
+            'במעוין האלכסונים חוצים זה את זה $\\Rightarrow$ אמצע $AC$ = מפגש האלכסונים',
           ],
           final_answer:
-            'הוכח: $E$ אמצע $SC$; האנך ממנו לבסיס הוא קו אמצעים במשולש $SAC$, ולכן פוגע באמצע $AC$ — מפגש אלכסוני המעוין.',
+            'הוכח: האנך מ-$E$ (אמצע $SC$) הוא קו אמצעים במשולש $SAC$, ופוגע באמצע $AC$ — מפגש אלכסוני המעוין',
         },
       },
       {
@@ -380,12 +394,12 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '**נחשב את אורך צלע המעוין:** $\\;|\\vec{AB}| = \\sqrt{(6\\sqrt 3)^2 + 6^2} = \\sqrt{108 + 36} = \\sqrt{144} = 12$.',
-            '**נמקם את $D$.** במעוין $|AD| = |AB| = 12$, ו-$D$ על החלק החיובי של ציר $y$, לכן $\\;D = (0,\\,12,\\,0)$.',
-            '**בדיקת הזווית $\\angle BAD = 60°$:** $\\;\\cos\\theta = \\dfrac{\\vec{AB}\\cdot\\vec{AD}}{|\\vec{AB}|\\,|\\vec{AD}|} = \\dfrac{72}{144} = \\tfrac{1}{2} \\Rightarrow \\theta = 60°$ ✓.',
-            '**נמקם את $S$.** $\\vec{AS}$ מאונך לבסיס (מישור $z=0$) באורך $SA = 12$ ובכיוון $z$ חיובי, לכן $\\;S = (0,\\,0,\\,12)$.',
+            '$|\\vec{AB}| = \\sqrt{(6\\sqrt 3)^2 + 6^2} = \\sqrt{108 + 36} = \\sqrt{144} = 12$',
+            'במעוין $|AD| = 12$, ו-$D$ על ציר $y$ חיובי: $\\;D = (0, 12, 0)$',
+            'בדיקה $\\angle BAD$: $\\;\\cos\\theta = \\dfrac{\\vec{AB}\\cdot\\vec{AD}}{144} = \\dfrac{72}{144} = \\tfrac12 \\Rightarrow \\theta = 60°$ ✓',
+            '$\\vec{AS} \\perp$ בסיס, $|AS| = 12$, $z > 0$: $\\;S = (0, 0, 12)$',
           ],
-          final_answer: '$D = (0,\\,12,\\,0)$, $\\;S = (0,\\,0,\\,12)$.',
+          final_answer: '$D = (0, 12, 0)$, $\\;S = (0, 0, 12)$',
         },
       },
       {
@@ -399,14 +413,14 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '**נבחר שני וקטורים המוכלים במישור $SAB$:** $\\;\\vec{AS} = (0,0,12)$ ו-$\\;\\vec{AB} = (6\\sqrt 3,\\,6,\\,0)$.',
-            '**נחפש נורמל $\\vec n = (a,b,c)$** המאונך לשני הווקטורים, כלומר $\\vec n\\cdot\\vec{AS} = 0$ ו-$\\vec n\\cdot\\vec{AB} = 0$.',
-            '**מהמשוואה הראשונה:** $\\;(a,b,c)\\cdot(0,0,12) = 12c = 0 \\;\\Longrightarrow\\; c = 0$.',
-            '**מהמשוואה השנייה:** $\\;(a,b,c)\\cdot(6\\sqrt 3,6,0) = 6\\sqrt 3\\,a + 6b = 0 \\;\\Longrightarrow\\; b = -\\sqrt 3\\,a$.',
-            '**נבחר $a = 1$** ונקבל $\\vec n = (1,\\,-\\sqrt 3,\\,0)$.',
-            '**נכתוב את משוואת המישור** דרך $A(0,0,0)$: $\\;1\\cdot(x-0) - \\sqrt 3\\,(y-0) + 0\\cdot(z-0) = 0 \\;\\Longrightarrow\\; x - \\sqrt 3\\,y = 0$.',
+            'וקטורים במישור: $\\vec{AS} = (0,0,12)$, $\\;\\vec{AB} = (6\\sqrt 3, 6, 0)$',
+            'נורמל $\\vec n = (a,b,c)$: $\\;\\vec n\\cdot\\vec{AS} = 0$ ו-$\\vec n\\cdot\\vec{AB} = 0$',
+            '$(a,b,c)\\cdot(0,0,12) = 12c = 0 \\Rightarrow c = 0$',
+            '$(a,b,c)\\cdot(6\\sqrt 3, 6, 0) = 6\\sqrt 3\\,a + 6b = 0 \\Rightarrow b = -\\sqrt 3\\,a$',
+            'נבחר $a = 1$: $\\;\\vec n = (1, -\\sqrt 3, 0)$',
+            'מישור דרך $A(0,0,0)$: $\\;x - \\sqrt 3\\,y = 0$',
           ],
-          final_answer: 'משוואת מישור $SAB$: $\\;x - \\sqrt 3\\,y = 0$ (או באופן שקול $x = \\sqrt 3\\,y$).',
+          final_answer: 'משוואת מישור $SAB$: $\\;x - \\sqrt 3\\,y = 0$',
         },
       },
     ],
@@ -613,9 +627,9 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         hints: ['בדוק $\\lim_{x\\to\\pm\\infty} f(x)$. אסימפטוטה אנכית לציר $y$ = אופקית.'],
         solution: {
           steps: [
-            '$x\\to+\\infty$: $e^{-2x}\\to 0 \\Rightarrow f\\to 1$. אסימפטוטה אופקית $\\;y=1$.',
-            '$x\\to-\\infty$: $e^{-2x}\\to\\infty \\Rightarrow f\\to\\infty$. אין אסימפטוטה.',
-            'אנכיות: $f$ מוגדרת לכל $x$ — אין.',
+            '$x\\to+\\infty:\\;\\; f = 1 + ae^{-2x}\\to 1 \\;\\Rightarrow\\; y = 1$',
+            '$x\\to-\\infty:\\;\\; f\\to\\infty$ — אין אסימפטוטה',
+            'אנכית: אין ($f$ מוגדרת לכל $x$)',
           ],
           final_answer: 'אסימפטוטה אופקית יחידה: $\\;y = 1$.',
         },
@@ -627,8 +641,8 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         hints: ['$f\\,\'(x) = -2a\\,e^{-2x}$. הקבוע $-2a$ שלילי ($a>0$), והאקספוננט חיובי.'],
         solution: {
           steps: [
-            '$f\\,\'(x) = -2a\\,e^{-2x} < 0$ לכל $x$ (כי $a>0$ וה-$e>0$).',
-            'אז $f$ יורדת ממש בכל $\\mathbb R$, אין נקודות קיצון.',
+            "$f'(x) = -2a\\,e^{-2x} < 0$ לכל $x$ (כי $a > 0$)",
+            '$f$ יורדת ממש בכל $\\mathbb{R}$ — אין קיצון',
           ],
           final_answer: '$f$ יורדת ממש על כל הישר, אין קיצון.',
         },
@@ -640,8 +654,8 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         hints: ['ציר $y$: $f(0)$. ציר $x$: $f(x)=0 \\Rightarrow 1+ae^{-2x}=0$, האם פתיר?'],
         solution: {
           steps: [
-            'ציר $y$: $f(0) = 1 + a$. נקודה $(0,\\,1+a)$.',
-            'ציר $x$: $1 + ae^{-2x} = 0 \\Rightarrow e^{-2x} = -1/a$. צד שמאל חיובי, צד ימין שלילי — אין פתרון.',
+            'ציר $y$: $\\;f(0) = 1 + a \\;\\Rightarrow\\; (0,\\,1+a)$',
+            'ציר $x$: $\\;1 + ae^{-2x} = 0 \\Rightarrow e^{-2x} = -\\tfrac{1}{a}$ — אין פתרון (אגף שמאל חיובי)',
           ],
           final_answer: 'חיתוך עם ציר $y$ ב-$(0,\\,1+a)$. אין חיתוך עם ציר $x$.',
         },
@@ -653,8 +667,8 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         hints: ['$g$ מוגדרת היכן ש-$f\\ne 0$. הראת בא3 ש-$f$ תמיד חיובית — לכן לעולם לא אפסה.'],
         solution: {
           steps: [
-            '$f(x) = 1 + ae^{-2x} > 1 > 0$ לכל $x$ ($a>0$, $e^{-2x}>0$).',
-            'אז $f$ לעולם אינה אפסה, ו-$g$ מוגדרת היטב לכל $x$.',
+            '$f(x) = 1 + ae^{-2x} > 1 > 0$ לכל $x$',
+            '$f$ לעולם לא מתאפסת $\\;\\Rightarrow\\; g = \\tfrac{1}{f}$ מוגדרת לכל $x$',
           ],
           final_answer: 'תחום ההגדרה של $g$: $\\;\\mathbb R$ (כל הישר).',
         },
@@ -666,9 +680,9 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         hints: ['השתמש בא1: $f\\to 1$ ב-$+\\infty$, $f\\to\\infty$ ב-$-\\infty$. אז $g=1/f$ שואף ל-$1$ או $0$.'],
         solution: {
           steps: [
-            '$x\\to+\\infty$: $f\\to 1 \\Rightarrow g\\to 1$. אסימפטוטה $y=1$.',
-            '$x\\to-\\infty$: $f\\to\\infty \\Rightarrow g\\to 0$. אסימפטוטה $y=0$.',
-            'אנכיות: אין (תחום ההגדרה כל הישר).',
+            '$x\\to+\\infty:\\;\\; f\\to 1 \\;\\Rightarrow\\; g\\to 1$ — אסימפטוטה $y=1$',
+            '$x\\to-\\infty:\\;\\; f\\to\\infty \\;\\Rightarrow\\; g\\to 0$ — אסימפטוטה $y=0$',
+            'אנכית: אין',
           ],
           final_answer: 'שתי אסימפטוטות אופקיות: $\\;y = 0$ ($x\\to-\\infty$) ו-$y=1$ ($x\\to+\\infty$).',
         },
@@ -701,9 +715,10 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'הצבה ב-$f$: $\\;f\\bigl(\\tfrac{\\ln a}{2}\\bigr) = 1 + a\\,e^{-\\ln a} = 1 + 1 = 2$.',
-            'אז $\\;g = 1/2$. נקודת הפיתול: $\\;\\bigl(\\tfrac{\\ln a}{2},\\,\\tfrac{1}{2}\\bigr)$.',
-            'הסקיצה — ראה גרף: עקומה עולה מ-$y=0$ (משמאל) ל-$y=1$ (מימין), חוצה את $y=1/2$ בפיתול.',
+            '$x = \\tfrac{\\ln a}{2}:\\;\\; e^{-2x} = e^{-\\ln a} = \\tfrac{1}{a}$',
+            '$f = 1 + a\\cdot\\tfrac{1}{a} = 2 \\;\\Rightarrow\\; g = \\tfrac{1}{2}$',
+            'נקודת פיתול: $\\;\\bigl(\\tfrac{\\ln a}{2},\\,\\tfrac{1}{2}\\bigr)$',
+            'הגרף: סיגמואיד עולה מ-$0$ ל-$1$, חוצה $y=\\tfrac12$ בפיתול (ראה סקיצה).',
           ],
           final_answer: 'נקודת פיתול: $\\;\\bigl(\\tfrac{\\ln a}{2},\\,\\tfrac{1}{2}\\bigr)$. הגרף — סיגמואיד.',
         },
@@ -718,11 +733,12 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'הנגזרת היא $\\;g\'(x) = -\\dfrac{f\'(x)}{f(x)^2} = \\dfrac{2ae^{-2x}}{(1+ae^{-2x})^2}$.',
-            'נקודת הקיצון של $g\'$ היא במקום שבו הנגזרת של $g\'$ מתאפסת — כלומר נקודת הפיתול של $g$ (סעיף ב3), $x=\\dfrac{\\ln a}{2}$. שם $ae^{-2x}=1$, ולכן $g\'=\\dfrac{2}{(1+1)^2}=\\dfrac{1}{2}$.',
-            'מכיוון ש-$g\'(x)>0$ לכל $x$ ו-$g\'\\to 0$ בקצוות, זהו מקסימום: הנקודה $\\bigl(\\tfrac{\\ln a}{2},\\,\\tfrac{1}{2}\\bigr)$.',
+            "$g'(x) = -\\dfrac{f'(x)}{f(x)^2} = \\dfrac{2a\\,e^{-2x}}{(1+a\\,e^{-2x})^2}$",
+            "הקיצון של $g'$ = הפיתול של $g$: $\\;x = \\tfrac{\\ln a}{2}$ (שם $ae^{-2x} = 1$)",
+            "$g'\\bigl(\\tfrac{\\ln a}{2}\\bigr) = \\dfrac{2}{(1+1)^2} = \\dfrac{1}{2}$",
+            "$g' > 0$ בכל מקום ו-$g'\\to 0$ בקצוות $\\;\\Rightarrow\\;$ מקסימום",
           ],
-          final_answer: 'נקודת קיצון (מקסימום) של $g\'$: $\\;\\left(\\dfrac{\\ln a}{2},\\; \\dfrac{1}{2}\\right)$.',
+          final_answer: "נקודת קיצון (מקסימום) של $g'$: $\\;\\left(\\dfrac{\\ln a}{2},\\; \\dfrac{1}{2}\\right)$.",
         },
       },
       {
@@ -747,9 +763,9 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '$g\'(x)=\\dfrac{2ae^{-2x}}{(1+ae^{-2x})^2}>0$ לכל $x$ (מונה ומכנה חיוביים), ולכן הגרף כולו מעל ציר ה-$x$.',
-            'בקצוות $x\\to\\pm\\infty$ הפונקציה $g$ משתטחת, ולכן $g\'\\to 0$ — הישר $y=0$ הוא אסימפטוטה אופקית בשני הצדדים.',
-            'מסעיף ג1 יש מקסימום ב-$\\bigl(\\tfrac{\\ln a}{2},\\tfrac12\\bigr)$: $g\'$ עולה עד שם ויורד אחריו. מתקבלת עקומת פעמון חיובית עם שיא $\\tfrac12$.',
+            "$g'(x) = \\dfrac{2a\\,e^{-2x}}{(1+a\\,e^{-2x})^2} > 0$ לכל $x$ — הגרף כולו מעל ציר $x$",
+            "בקצוות $x\\to\\pm\\infty:\\;\\; g'\\to 0$ — אסימפטוטה $y=0$",
+            "מקסימום יחיד $\\bigl(\\tfrac{\\ln a}{2},\\tfrac12\\bigr)$ (מסעיף ג1) — עקומת פעמון",
           ],
           final_answer: 'עקומת פעמון חיובית: מקסימום $\\bigl(\\tfrac{\\ln a}{2},\\tfrac12\\bigr)$, אסימפטוטה $y=0$ משני הצדדים.',
         },
