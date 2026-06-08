@@ -839,9 +839,10 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'נצמצם את הביטוי שבתוך ה-$\\ln$: $\\;\\dfrac{x^2-1}{(x+2)(x-1)}=\\dfrac{(x-1)(x+1)}{(x+2)(x-1)}=\\dfrac{x+1}{x+2}$, תקף עבור $x\\ne 1$.',
-            'ה-$\\ln$ מחייב ביטוי חיובי, ובנוסף $x\\ne 1$ ו-$x\\ne -2$. נפתור $\\dfrac{x+1}{x+2}>0$: מנה חיובית כששני הגורמים מאותו סימן — כלומר $x>-1$ או $x<-2$.',
-            'בצירוף $x\\ne 1$ מתקבל התחום: $(-\\infty,-2)\\cup(-1,1)\\cup(1,\\infty)$.',
+            'נצמצם: $\\;\\dfrac{x^2-1}{(x+2)(x-1)} = \\dfrac{(x-1)(x+1)}{(x+2)(x-1)} = \\dfrac{x+1}{x+2}$ (תקף עבור $x\\ne 1$)',
+            'תנאי $\\ln$: $\\;\\dfrac{x+1}{x+2} > 0 \\;\\Rightarrow\\; x < -2$ או $x > -1$',
+            'מחריגים $x = 1$ (התאפסות במכנה המקורי) ו-$x = -2$',
+            'תחום ההגדרה: $\\;(-\\infty,-2)\\cup(-1,1)\\cup(1,\\infty)$',
           ],
           final_answer:
             'תחום ההגדרה: $\\;(-\\infty,-2)\\cup(-1,1)\\cup(1,\\infty)$.',
@@ -857,9 +858,10 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'אסימפטוטות אנכיות בקצוות התחום: ב-$x\\to -2^-$ מתקיים $\\dfrac{x+1}{x+2}\\to+\\infty$, ולכן $f\\to+\\infty$ — אסימפטוטה $x=-2$; ב-$x\\to -1^+$ מתקיים $\\dfrac{x+1}{x+2}\\to 0^+$, ולכן $f\\to-\\infty$ — אסימפטוטה $x=-1$.',
-            'ב-$x=1$ אין אסימפטוטה: שם המנה שואפת לערך הסופי $\\tfrac{2}{3}$ — זהו חור בגרף.',
-            'אסימפטוטה אופקית: ב-$x\\to\\pm\\infty$ מתקיים $\\dfrac{x+1}{x+2}\\to 1$, ולכן $f\\to\\ln 1=0$ — אסימפטוטה $y=0$.',
+            '$x\\to -2^-:\\;\\; \\dfrac{x+1}{x+2}\\to+\\infty \\;\\Rightarrow\\; f\\to+\\infty$ — אסימפטוטה $x=-2$',
+            '$x\\to -1^+:\\;\\; \\dfrac{x+1}{x+2}\\to 0^+ \\;\\Rightarrow\\; f\\to-\\infty$ — אסימפטוטה $x=-1$',
+            '$x\\to\\pm\\infty:\\;\\; \\dfrac{x+1}{x+2}\\to 1 \\;\\Rightarrow\\; f\\to\\ln 1 = 0$ — אסימפטוטה $y=0$',
+            'ב-$x=1$ אין אסימפטוטה — המנה שואפת ל-$\\tfrac{2}{3}$, זהו חור בגרף.',
           ],
           final_answer:
             'אנכיות: $x=-2$ ו-$x=-1$. אופקית: $y=0$.',
@@ -875,9 +877,9 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'נגזור $f(x)=\\ln\\dfrac{x+1}{x+2}$ לפי הכלל $(\\ln u)\'=\\dfrac{u\'}{u}$ עם $u=\\dfrac{x+1}{x+2}$. בכלל המנה: $\\;u\'=\\dfrac{(x+2)-(x+1)}{(x+2)^2}=\\dfrac{1}{(x+2)^2}$.',
-            'לכן $\\;f\'(x)=\\dfrac{u\'}{u}=\\dfrac{1}{(x+2)^2}\\cdot\\dfrac{x+2}{x+1}=\\dfrac{1}{(x+1)(x+2)}$.',
-            'בתחום ההגדרה $(x+1)(x+2)>0$ (בכל הענפים), ולכן $f\'(x)>0$ — $f$ עולה ממש, אין ירידה ואין קיצון.',
+            "$u = \\dfrac{x+1}{x+2} \\;\\Rightarrow\\; u' = \\dfrac{(x+2)-(x+1)}{(x+2)^2} = \\dfrac{1}{(x+2)^2}$",
+            "$f'(x) = \\dfrac{u'}{u} = \\dfrac{1}{(x+2)^2}\\cdot\\dfrac{x+2}{x+1} = \\dfrac{1}{(x+1)(x+2)}$",
+            "בתחום ההגדרה $(x+1)(x+2) > 0$ $\\;\\Rightarrow\\; f' > 0$ — $f$ עולה ממש, אין קיצון",
           ],
           final_answer:
             '$f$ עולה ממש בכל תחום ההגדרה (אין ירידה ואין קיצון), כי $f\'(x)=\\dfrac{1}{(x+1)(x+2)}>0$.',
@@ -907,15 +909,19 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
               { x: -2, label: 'x=-2' },
               { x: -1, label: 'x=-1' },
             ],
-            markedPoints: [{ x: 0, y: -Math.log(2), label: '(0,-ln2)' }],
+            markedPoints: [
+              { x: 0, y: -Math.log(2), label: '(0,-ln2)' },
+              { x: 1, y: Math.log(2 / 3), label: 'חור' },
+            ],
             caption: 'שני ענפים: שמאלי ($x<-2$) עולה מ-$0$ ל-$+\\infty$; ימני ($x>-1$) עולה מ-$-\\infty$ ל-$0$, עובר $(0,-\\ln 2)$, עם חור ב-$x=1$.',
           },
         ],
         hints: ['השתמש במאפיינים מהסעיפים הקודמים: תחום ההגדרה, האסימפטוטות, ו-$f$ עולה ממש בכל ענף (א3).'],
         solution: {
           steps: [
-            'נסכם את המאפיינים: תחום $(-\\infty,-2)\\cup(-1,1)\\cup(1,\\infty)$; אסימפטוטות $x=-2,\\,x=-1,\\,y=0$; עלייה ממש בכל ענף; חור ב-$x=1$ (ערך גבול $\\ln\\tfrac{2}{3}$); וחיתוך עם ציר $y$ ב-$(0,-\\ln 2)$.',
-            'הענף השמאלי ($x<-2$) עולה מ-$0$ ל-$+\\infty$ וכולו חיובי; הענף הימני ($x>-1$) עולה מ-$-\\infty$ ל-$0$, כולו שלילי, עם חור ב-$x=1$.',
+            'מאפיינים: תחום $(-\\infty,-2)\\cup(-1,1)\\cup(1,\\infty)$; אסימפטוטות $x=-2,\\,x=-1,\\,y=0$; עולה בכל ענף.',
+            'ענף שמאלי ($x<-2$): עולה מ-$0$ ל-$+\\infty$, כולו חיובי.',
+            'ענף ימני ($x>-1$): עולה מ-$-\\infty$ ל-$0$, כולו שלילי; חיתוך ציר $y$ ב-$(0,-\\ln 2)$; חור ב-$\\bigl(1,\\,\\ln\\tfrac{2}{3}\\bigr)$.',
           ],
           final_answer:
             'שני ענפים עולים (ראה תרשים): שמאלי חיובי, ימני שלילי עם חור ב-$x=1$.',
@@ -931,8 +937,8 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '$g(x)=\\ln(f(x))$ מוגדרת כאשר $f(x)>0$, כלומר $\\ln\\dfrac{x+1}{x+2}>0$.',
-            '$\\dfrac{x+1}{x+2}>1 \\;\\Longleftrightarrow\\; \\dfrac{x+1}{x+2}-1>0 \\;\\Longleftrightarrow\\; \\dfrac{-1}{x+2}>0 \\;\\Longleftrightarrow\\; x<-2$.',
+            '$g = \\ln(f)$ מוגדרת כאשר $f(x) > 0$, כלומר $\\ln\\dfrac{x+1}{x+2} > 0$',
+            '$\\dfrac{x+1}{x+2} > 1 \\;\\Longleftrightarrow\\; \\dfrac{-1}{x+2} > 0 \\;\\Longleftrightarrow\\; x < -2$',
           ],
           final_answer: 'תחום ההגדרה של $g$: $\\;(-\\infty,\\,-2)$.',
         },
@@ -947,8 +953,9 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'נגזור $g(x)=\\ln(f(x))$ לפי כלל השרשרת: $\\;g\'(x)=\\dfrac{f\'(x)}{f(x)}$.',
-            'בתחום $x<-2$ מתקיים $f(x)>0$ (הגדרת $g$) ו-$f\'(x)=\\dfrac{1}{(x+1)(x+2)}>0$ (מסעיף א3), ולכן $g\'(x)>0$ — $g$ עולה ממש, אין ירידה ואין קיצון.',
+            "$g'(x) = \\dfrac{f'(x)}{f(x)}$ (כלל השרשרת)",
+            "ב-$x<-2$: $\\;f > 0$ (הגדרת $g$) ו-$f' = \\dfrac{1}{(x+1)(x+2)} > 0$ (א3) $\\;\\Rightarrow\\; g' > 0$",
+            "$g$ עולה ממש בכל תחום ההגדרה $(-\\infty,-2)$, אין קיצון",
           ],
           final_answer: '$g$ עולה ממש בכל תחום ההגדרה $(-\\infty,-2)$ (אין ירידה ואין קיצון).',
         },
@@ -982,9 +989,10 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '$g$ מוגדרת ועולה ממש על $(-\\infty,-2)$ (סעיף ב2).',
-            'בקצוות: $x\\to-\\infty \\Rightarrow f\\to 0^+ \\Rightarrow g\\to-\\infty$;$\\;\\;x\\to-2^- \\Rightarrow f\\to+\\infty \\Rightarrow g\\to+\\infty$ — אסימפטוטה אנכית $x=-2$.',
-            'חיתוך עם ציר $x$: $g=0 \\iff f=1 \\iff \\dfrac{x+1}{x+2}=e \\iff x=\\dfrac{1-2e}{e-1}\\approx-2.58$.',
+            '$g$ עולה ממש על $(-\\infty,-2)$ (מסעיף ב2).',
+            '$x\\to-\\infty:\\;\\; f\\to 0^+ \\;\\Rightarrow\\; g\\to-\\infty$',
+            '$x\\to-2^-:\\;\\; f\\to+\\infty \\;\\Rightarrow\\; g\\to+\\infty$ — אסימפטוטה $x=-2$',
+            'חיתוך ציר $x$: $\\;g=0 \\iff f=1 \\iff \\dfrac{x+1}{x+2}=e \\iff x=\\dfrac{1-2e}{e-1}\\approx-2.58$',
           ],
           final_answer:
             'גרף עולה ממש על $(-\\infty,-2)$, מ-$-\\infty$ ל-$+\\infty$, חוצה את ציר $x$ ב-$x = \\dfrac{1-2e}{e-1}$.',
@@ -1001,8 +1009,8 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'נתון $0<f(x)<1$, ולכן $f>0$ ו-$g=\\ln f<0$ (לוגריתם של מספר בין $0$ ל-$1$ הוא שלילי).',
-            'לכן $f\\cdot g=(+)\\cdot(-)<0$ — המכפלה שלילית, ואינה חיובית.',
+            '$0 < f < 1 \\;\\Rightarrow\\; f > 0$ וגם $g = \\ln f < 0$ (לוג של מספר ב-$(0,1)$ שלילי)',
+            '$f\\cdot g = (+)\\cdot(-) < 0$ — המכפלה שלילית, אינה חיובית.',
           ],
           final_answer:
             'המכפלה $f(x)\\cdot g(x)$ **שלילית** (אינה חיובית) לכל $x$ עם $0<f(x)<1$ — כי $f>0$ ו-$g=\\ln f<0$.',
