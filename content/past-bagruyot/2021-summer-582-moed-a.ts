@@ -772,19 +772,42 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
       },
       {
         label: 'ד',
-        prompt: 'מצא את השטח המוגבל על-ידי גרף הפונקציה $g\'(x)$ ועל-ידי הישרים $\\;y = \\dfrac{1}{2}\\;$ ו-$\\;x = 0$.',
+        prompt: "מצא את השטח המוגבל על-ידי גרף הפונקציה $g'(x)$ ועל-ידי הישרים $\\;y = \\dfrac{1}{2}\\;$ ו-$\\;x = 0$.",
         answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 245 195',
+            svg: `
+              <line x1="14" y1="160" x2="236" y2="160" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="50" y1="14" x2="50" y2="184" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="227" y="173" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <text x="38" y="24" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">y</text>
+              <path d="M 50,54 L 140,54 L 120,73 L 102,101 L 79,131 L 50,152 Z" fill="rgba(168,85,247,0.25)" stroke="none"/>
+              <line x1="50" y1="54" x2="232" y2="54" stroke="rgba(96,165,250,0.9)" stroke-width="1.4" stroke-dasharray="5 3"/>
+              <text x="188" y="49" fill="#bfdbfe" font-size="10" font-family="Heebo, sans-serif">y=½</text>
+              <path d="M 20,160 C 90,158 115,60 140,54 C 165,60 190,158 232,160" fill="none" stroke="rgba(244,114,182,0.95)" stroke-width="2"/>
+              <circle cx="140" cy="54" r="3.2" fill="rgba(244,114,182,0.95)"/>
+              <text x="143" y="49" fill="#f1f5f9" font-size="9" font-family="Heebo, sans-serif">(½ln a , ½)</text>
+              <text x="41" y="173" fill="#94a3b8" font-size="9" font-family="Heebo, sans-serif">0</text>
+              <text x="86" y="121" fill="#e9d5ff" font-size="13" font-weight="bold" font-family="Heebo, sans-serif">S</text>
+              <text x="158" y="150" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">g'(x)</text>
+            `,
+            caption: "השטח $S$ (סגול) כלוא בין הישר $y=\\tfrac12$ לעקומה $g'(x)$, מ-$x=0$ עד הפסגה $x=\\tfrac{\\ln a}{2}$.",
+          },
+        ],
         hints: [
-          'הישר $y=\\tfrac12$ הוא בדיוק המקסימום של $g\'$ (מסעיף ג1), המושג ב-$x=\\tfrac{\\ln a}{2}$. בקטע $\\left[0,\\tfrac{\\ln a}{2}\\right]$ מתקיים $g\'\\le\\tfrac12$.',
-          'שטח $=\\displaystyle\\int_0^{(\\ln a)/2}\\left(\\tfrac12 - g\'(x)\\right)dx$. שים לב ש-$\\int g\'(x)\\,dx = g(x)$.',
+          "הישר $y=\\tfrac12$ הוא בדיוק המקסימום של $g'$ (מסעיף ג1), המושג ב-$x=\\tfrac{\\ln a}{2}$. בקטע $\\bigl[0,\\tfrac{\\ln a}{2}\\bigr]$ מתקיים $g'\\le\\tfrac12$.",
+          "שטח $= \\displaystyle\\int_0^{(\\ln a)/2}\\bigl(\\tfrac12 - g'(x)\\bigr)dx$. שים לב ש-$\\int g'(x)\\,dx = g(x)$.",
         ],
         solution: {
           steps: [
-            'בקטע $\\left[0,\\tfrac{\\ln a}{2}\\right]$ הגרף של $g\'$ נמצא מתחת לישר $y=\\tfrac12$ (המקסימום מושג ב-$x=\\tfrac{\\ln a}{2}$), ולכן השטח חסום בין הישר $y=\\tfrac12$ לעקומה $g\'$, החל מ-$x=0$.',
-            'מכיוון ש-$g$ היא פונקציה קדומה של $g\'$: $\\;\\displaystyle\\int_0^{(\\ln a)/2} g\'(x)\\,dx = g\\!\\left(\\tfrac{\\ln a}{2}\\right) - g(0) = \\tfrac12 - \\tfrac{1}{1+a}$.',
-            'לכן $\\;S = \\displaystyle\\int_0^{(\\ln a)/2}\\!\\left(\\tfrac12 - g\'(x)\\right)dx = \\tfrac12\\cdot\\tfrac{\\ln a}{2} - \\left(\\tfrac12 - \\tfrac{1}{1+a}\\right) = \\tfrac{\\ln a}{4} - \\tfrac{a-1}{2(a+1)}$.',
+            "בקטע $\\bigl[0,\\,\\tfrac{\\ln a}{2}\\bigr]$ מתקיים $g' \\le \\tfrac12$ — השטח כלוא בין $y=\\tfrac12$ לעקומה.",
+            "$S = \\displaystyle\\int_0^{\\frac{\\ln a}{2}}\\!\\bigl(\\tfrac12 - g'(x)\\bigr)\\,dx = \\Bigl[\\tfrac{x}{2} - g(x)\\Bigr]_0^{\\frac{\\ln a}{2}}$",
+            "$g\\bigl(\\tfrac{\\ln a}{2}\\bigr) = \\tfrac12, \\quad g(0) = \\tfrac{1}{1+a}$",
+            "$S = \\Bigl(\\tfrac{\\ln a}{4} - \\tfrac12\\Bigr) - \\Bigl(0 - \\tfrac{1}{1+a}\\Bigr) = \\tfrac{\\ln a}{4} + \\tfrac{1}{a+1} - \\tfrac12$",
           ],
-          final_answer: 'השטח: $\\;S = \\dfrac{\\ln a}{4} - \\dfrac{a-1}{2(a+1)}$.',
+          final_answer: "השטח: $\\;S = \\dfrac{\\ln a}{4} + \\dfrac{1}{a+1} - \\dfrac{1}{2}$.",
         },
       },
     ],
