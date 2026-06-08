@@ -730,4 +730,186 @@ export const bagrut2023Summer582: PastBagrutQuestion[] = [
     ],
     solutionSource: 'authored',
   },
+
+  // ===========================================================================
+  // Q5 — חקירת פונקציות: f(x)=ln x + 1/x, g(x)=(x+1)(1-ln x), שטח עם h
+  // ===========================================================================
+  {
+    id: 'b2023s582a-q5',
+    year: 2023,
+    season: 'summer',
+    moed: 'a',
+    paper: '582',
+    questionNumber: 5,
+    topic: 'פונקציית ln',
+    totalPoints: 25,
+    context: 'נתונה הפונקציה $\\;f(x) = \\ln x + \\dfrac{1}{x}$.',
+    parts: [
+      {
+        label: 'א1',
+        prompt: 'מצאו את תחום ההגדרה של הפונקציה $f(x)$.',
+        answer_type: 'expression',
+        hints: ['$\\ln x$ מחייב $x>0$; $\\frac1x$ מחייב $x\\ne 0$. קח את החיתוך.'],
+        solution: {
+          steps: [
+            '$\\ln x$ מוגדר עבור $x > 0$, ו-$\\dfrac{1}{x}$ מוגדר עבור $x \\ne 0$',
+            'החיתוך של התנאים: $\\;x > 0$',
+          ],
+          final_answer: 'תחום ההגדרה: $\\;x > 0$',
+        },
+      },
+      {
+        label: 'א2',
+        prompt: 'מצאו את שיעורי נקודת הקיצון של $f(x)$, וקבעו את סוגה.',
+        answer_type: 'expression',
+        hints: [
+          'גזור: $f\'(x) = \\frac1x - \\frac{1}{x^2}$. אחד למכנה משותף והשווה לאפס.',
+          'בנה טבלת סימן לפי המונה $x-1$ (המכנה $x^2>0$).',
+        ],
+        solution: {
+          steps: [
+            '$f\'(x) = \\dfrac{1}{x} - \\dfrac{1}{x^2} = \\dfrac{x-1}{x^2}$',
+            '$f\'(x) = 0$: $\\;x - 1 = 0 \\Rightarrow x = 1$ (כי $x^2 > 0$)',
+            '$f(1) = \\ln 1 + \\dfrac{1}{1} = 0 + 1 = 1$ — נקודת חשד $(1,1)$',
+            'הסימן של $f\'$ נקבע על ידי המונה $x-1$ (כי $x^2>0$): $\\begin{array}{c|c|c|c} x & 0<x<1 & 1 & 1<x \\\\ \\hline f\'(x) & - & 0 & + \\\\ f(x) & \\searrow & & \\nearrow \\end{array}$',
+            '$f\'$ עובר מ-$(-)$ ל-$(+)$ ב-$x=1$ → מינימום $(1,1)$',
+          ],
+          final_answer: 'מינימום ב-$(1,1)$',
+        },
+      },
+      {
+        label: 'א3',
+        prompt: 'סרטטו סקיצה של גרף הפונקציה $f(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'functionGraph',
+            xRange: [0, 5],
+            yRange: [0, 5.2],
+            curves: [{ fn: (x) => Math.log(x) + 1 / x, domain: [0.25, 5], color: '#f472b6' }],
+            vAsymptotes: [{ x: 0, label: 'x=0' }],
+            markedPoints: [{ x: 1, y: 1, label: 'מינ' }],
+            caption: '$f(x)=\\ln x + \\frac1x$: תחום $x>0$, אסימפטוטה אנכית $x=0$, מינימום $(1,1)$.',
+          },
+        ],
+        hints: ['שלב את האסימפטוטה האנכית $x=0$ ואת המינימום $(1,1)$.'],
+        solution: {
+          steps: [
+            'כש-$x\\to 0^+$: $\\;f \\to +\\infty$ (הגורם $\\frac1x$ שולט) — אסימפטוטה אנכית $x=0$',
+            'הגרף יורד עד המינימום $(1,1)$, ואז עולה',
+          ],
+          final_answer: 'גרף עם אסימפטוטה אנכית $x=0$ ומינימום $(1,1)$ (ראה תרשים)',
+        },
+      },
+      {
+        label: 'ב1',
+        prompt: [
+          'נתונה $g(x) = (x+1)(1 - \\ln x)$, המוגדרת באותו תחום של $f$.',
+          '',
+          'מצאו את שיעורי נקודת החיתוך של גרף $g(x)$ עם ציר ה-$x$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'אפס מכפלה: $(x+1)(1-\\ln x) = 0$.',
+          'זכור שהתחום $x>0$ פוסל פתרונות שליליים.',
+        ],
+        solution: {
+          steps: [
+            '$g(x) = (x+1)(1 - \\ln x) = 0$',
+            '$x + 1 = 0 \\Rightarrow x = -1$ (נפסל — מחוץ לתחום $x>0$)',
+            '$1 - \\ln x = 0 \\Rightarrow \\ln x = 1 \\Rightarrow x = e$',
+          ],
+          final_answer: 'נקודת החיתוך עם ציר $x$: $\\;(e,\\, 0)$',
+        },
+      },
+      {
+        label: 'ב2',
+        prompt: 'מצאו את תחומי העלייה ואת תחומי הירידה של $g(x)$ (אם יש כאלה).',
+        answer_type: 'expression',
+        hints: [
+          'גזור עם כלל המכפלה ופשט — תקבל $g\'(x) = -\\left(\\ln x + \\frac1x\\right) = -f(x)$.',
+          'מסעיף א, $f$ בעלת מינימום $1$, אז $f(x)\\ge 1>0$. מה זה אומר על הסימן של $g\'=-f$?',
+        ],
+        solution: {
+          steps: [
+            '$g\'(x) = (1)(1-\\ln x) + (x+1)\\left(-\\dfrac{1}{x}\\right)$',
+            '$= 1 - \\ln x - \\dfrac{x+1}{x} = 1 - \\ln x - 1 - \\dfrac1x = -\\ln x - \\dfrac1x$',
+            '$g\'(x) = -\\left(\\ln x + \\dfrac1x\\right) = -f(x)$',
+            'מסעיף א: $f(x) \\ge 1 > 0$ (מינימום $1$), ולכן $g\'(x) = -f(x) < 0$ לכל $x$',
+            '$\\begin{array}{c|c} x & x>0 \\\\ \\hline g\'(x) & - \\\\ g(x) & \\searrow \\end{array}$',
+          ],
+          final_answer: 'ירידה בכל התחום $x>0$; אין תחום עלייה ואין נקודת קיצון',
+        },
+      },
+      {
+        label: 'ב3',
+        prompt: 'מצאו את תחום הקעירות כלפי מעלה $\\cup$ ואת תחום הקעירות כלפי מטה $\\cap$ של $g(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'מ-$g\'(x) = -f(x)$ נובע $g\'\'(x) = -f\'(x)$.',
+          'השתמש ב-$f\'(x) = \\frac{x-1}{x^2}$ מסעיף א, ובנה טבלת סימן ל-$g\'\'$.',
+        ],
+        solution: {
+          steps: [
+            '$g\'\'(x) = -f\'(x) = -\\dfrac{x-1}{x^2} = \\dfrac{1-x}{x^2}$',
+            '$g\'\'(x) = 0 \\Rightarrow 1 - x = 0 \\Rightarrow x = 1$',
+            '$\\begin{array}{c|c|c|c} x & 0<x<1 & 1 & 1<x \\\\ \\hline g\'\'(x) & + & 0 & - \\\\ g(x) & \\cup & & \\cap \\end{array}$',
+          ],
+          final_answer: 'קעירות כלפי מעלה $\\cup$: $\\;0<x<1$. קעירות כלפי מטה $\\cap$: $\\;x>1$ (פיתול ב-$x=1$)',
+        },
+      },
+      {
+        label: 'ב4',
+        prompt: 'סרטטו סקיצה של גרף הפונקציה $g(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'functionGraph',
+            xRange: [0, 4.5],
+            yRange: [-4, 5],
+            curves: [{ fn: (x) => (x + 1) * (1 - Math.log(x)), domain: [0.1, 4.5], color: '#60a5fa' }],
+            vAsymptotes: [{ x: 0, label: 'x=0' }],
+            markedPoints: [
+              { x: 1, y: 2, label: 'פיתול' },
+              { x: Math.E, y: 0, label: '(e,0)' },
+            ],
+            caption: '$g(x)=(x+1)(1-\\ln x)$: יורדת תמיד, קעורה כלפי מעלה ב-$(0,1)$ וכלפי מטה ב-$(1,\\infty)$, פיתול ב-$x=1$, חיתוך ב-$(e,0)$.',
+          },
+        ],
+        hints: ['שלב: ירידה תמידית, פיתול ב-$x=1$, וחיתוך עם ציר $x$ ב-$(e,0)$.'],
+        solution: {
+          steps: [
+            'הגרף יורד בכל התחום, קעור כלפי מעלה ב-$(0,1)$ וכלפי מטה ב-$(1,\\infty)$',
+            'נקודת פיתול ב-$x=1$, וחיתוך עם ציר $x$ ב-$(e,0)$',
+          ],
+          final_answer: 'גרף יורד עם פיתול ב-$x=1$ וחיתוך ב-$(e,0)$ (ראה תרשים)',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: [
+          'נתונה $h(x) = \\dfrac{1}{x}\\cdot g\'(x)$, המוגדרת באותו תחום של $g$.',
+          '',
+          'חשבו את השטח המוגבל על ידי גרף $h(x)$, על ידי ציר ה-$x$ ועל ידי הישרים $x=e$ ו-$x=1$.',
+        ].join('\n'),
+        answer_type: 'number',
+        hints: [
+          'הצב $g\'(x) = -f(x)$, אז $h(x) = -\\frac1x\\left(\\ln x + \\frac1x\\right)$ — שלילי בתחום, לכן השטח $= \\int_1^e(0-h(x))dx$.',
+          'האינטגרל מצטמצם ל-$\\int_1^e\\left(\\frac{\\ln x}{x} + \\frac{1}{x^2}\\right)dx$, וקדומת $\\frac{\\ln x}{x}$ היא $\\frac{(\\ln x)^2}{2}$.',
+        ],
+        solution: {
+          steps: [
+            '$h(x) = \\dfrac1x\\,g\'(x) = \\dfrac1x\\cdot\\bigl(-f(x)\\bigr) = -\\dfrac1x\\left(\\ln x + \\dfrac1x\\right)$',
+            'בתחום $[1,e]$: $\\;g\'<0$ ו-$\\frac1x>0$, אז $h(x)<0$ — הגרף מתחת לציר $x$',
+            '$S = \\int_1^e \\bigl(0 - h(x)\\bigr)dx = \\int_1^e \\dfrac1x f(x)\\,dx = \\int_1^e \\left(\\dfrac{\\ln x}{x} + \\dfrac{1}{x^2}\\right)dx$',
+            '$= \\left[\\dfrac{(\\ln x)^2}{2} - \\dfrac1x\\right]_1^e$',
+            '$= \\left(\\dfrac{1}{2} - \\dfrac1e\\right) - \\left(0 - 1\\right)$',
+            '$= \\dfrac{3}{2} - \\dfrac1e$',
+          ],
+          final_answer: '$S = \\dfrac{3}{2} - \\dfrac1e \\approx 1.132$',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
 ];
