@@ -179,4 +179,155 @@ export const bagrut2023Summer582MoedB: PastBagrutQuestion[] = [
     ],
     solutionSource: 'authored',
   },
+
+  // ===========================================================================
+  // Q2 — וקטורים במרחב: פירמידה ABCD, DC⊥ABC, ביטוי EF, נפח, מצב הדדי EF/AB
+  // ===========================================================================
+  {
+    id: 'b2023s582b-q2',
+    year: 2023,
+    season: 'summer',
+    moed: 'b',
+    paper: '582',
+    questionNumber: 2,
+    topic: 'וקטורים במרחב',
+    totalPoints: 25,
+    context: [
+      'בפירמידה $ABCD$, המקצוע $DC$ מאונך למישור $ABC$. הנקודה $E$ היא אמצע המקצוע $AD$.',
+      'הנקודה $F$ מקיימת: $\\;\\vec{DF} = \\dfrac{k}{2}\\,\\vec{DB} + k\\,\\vec{DC}$ ($k$ פרמטר).',
+      'נסמן: $\\;\\vec{AB} = \\vec u$, $\\;\\vec{AC} = \\vec v$, $\\;\\vec{CD} = \\vec w$.',
+    ].join('\n'),
+    diagrams: [
+      {
+        type: 'custom',
+        viewBox: '0 0 210 185',
+        svg: `
+          <line x1="75" y1="120" x2="180" y2="120" stroke="rgba(148,163,184,0.4)" stroke-width="1" stroke-dasharray="3 3"/>
+          <line x1="75" y1="120" x2="75" y2="32" stroke="rgba(148,163,184,0.4)" stroke-width="1" stroke-dasharray="3 3"/>
+          <line x1="75" y1="120" x2="42" y2="150" stroke="rgba(148,163,184,0.4)" stroke-width="1" stroke-dasharray="3 3"/>
+          <text x="182" y="123" fill="#64748b" font-size="9" font-family="Heebo, sans-serif">y</text>
+          <text x="70" y="30" fill="#64748b" font-size="9" font-family="Heebo, sans-serif">z</text>
+          <text x="34" y="158" fill="#64748b" font-size="9" font-family="Heebo, sans-serif">x</text>
+          <polygon points="75,120 119,152 131,120" fill="rgba(56,189,248,0.07)" stroke="none"/>
+          <line x1="75" y1="120" x2="131" y2="120" stroke="rgba(226,232,240,0.85)" stroke-width="1.5"/>
+          <line x1="75" y1="120" x2="119" y2="152" stroke="rgba(226,232,240,0.85)" stroke-width="1.5"/>
+          <line x1="119" y1="152" x2="131" y2="120" stroke="rgba(226,232,240,0.85)" stroke-width="1.5"/>
+          <line x1="75" y1="120" x2="131" y2="44" stroke="rgba(226,232,240,0.85)" stroke-width="1.5"/>
+          <line x1="119" y1="152" x2="131" y2="44" stroke="rgba(226,232,240,0.85)" stroke-width="1.5"/>
+          <line x1="131" y1="120" x2="131" y2="44" stroke="rgba(244,114,182,0.95)" stroke-width="2"/>
+          <path d="M 122 120 L 122 111 L 131 111" fill="none" stroke="rgba(244,114,182,0.8)" stroke-width="1"/>
+          <circle cx="75" cy="120" r="2.6" fill="rgba(226,232,240,0.95)"/>
+          <circle cx="119" cy="152" r="2.6" fill="rgba(226,232,240,0.95)"/>
+          <circle cx="131" cy="120" r="2.6" fill="rgba(226,232,240,0.95)"/>
+          <circle cx="131" cy="44" r="2.6" fill="rgba(244,114,182,0.95)"/>
+          <text x="60" y="124" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">A</text>
+          <text x="118" y="166" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">B</text>
+          <text x="135" y="126" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">C</text>
+          <text x="135" y="44" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">D</text>
+        `,
+        caption: 'הפירמידה $ABCD$ מעל בסיס $ABC$: המקצוע $\\vec{CD}=\\vec w$ ניצב לבסיס. $\\vec u=\\vec{AB}$, $\\vec v=\\vec{AC}$.',
+      },
+    ],
+    parts: [
+      {
+        label: 'א',
+        prompt: 'הביעו באמצעות $\\vec u,\\,\\vec v,\\,\\vec w$ ו-$k$ את $\\vec{EF}$.',
+        answer_type: 'expression',
+        hints: [
+          'לך במסלול $\\vec{EF} = \\vec{ED} + \\vec{DF}$, ו-$E$ אמצע $AD$ נותן $\\vec{ED} = \\frac12\\vec{AD}$.',
+          'בטא כל אלכסון במונחי $\\vec u,\\vec v,\\vec w$: $\\vec{AD}=\\vec v+\\vec w$, $\\vec{DB}=\\vec u-\\vec v-\\vec w$, $\\vec{DC}=-\\vec w$.',
+        ],
+        solution: {
+          steps: [
+            '$\\vec{EF} = \\vec{ED} + \\vec{DF}$, ו-$E$ אמצע $AD$, אז $\\vec{ED} = \\frac12\\vec{AD}$',
+            '$\\vec{EF} = \\frac12\\vec{AD} + \\frac{k}{2}\\vec{DB} + k\\vec{DC}$',
+            'נבטא: $\\;\\vec{AD} = \\vec{AC}+\\vec{CD} = \\vec v + \\vec w$; $\\;\\vec{DB} = \\vec{DC}+\\vec{CB} = -\\vec w + (\\vec u - \\vec v)$; $\\;\\vec{DC} = -\\vec w$',
+            '$\\vec{EF} = \\frac12(\\vec v+\\vec w) + \\frac{k}{2}(\\vec u-\\vec v-\\vec w) + k(-\\vec w)$',
+            'נאסוף לפי $\\vec u,\\vec v,\\vec w$:',
+            '$\\vec{EF} = \\frac{k}{2}\\vec u + \\left(\\frac12 - \\frac{k}{2}\\right)\\vec v + \\left(\\frac12 - \\frac{3k}{2}\\right)\\vec w$',
+          ],
+          final_answer: '$\\vec{EF} = \\frac{k}{2}\\vec u + \\left(\\frac12 - \\frac{k}{2}\\right)\\vec v + \\left(\\frac12 - \\frac{3k}{2}\\right)\\vec w$',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: 'נתון: $\\vec{EF}$ מקביל למישור $ABC$. מצאו את הערך של $k$.',
+        answer_type: 'number',
+        hints: [
+          '$\\vec w = \\vec{CD}$ ניצב למישור $ABC$, בעוד $\\vec u,\\vec v$ מוכלים בו.',
+          'אם $\\vec{EF}\\parallel ABC$, אסור שיהיה לו רכיב בכיוון $\\vec w$ — השווה את מקדם $\\vec w$ לאפס.',
+        ],
+        solution: {
+          steps: [
+            '$\\vec w = \\vec{CD}$ ניצב למישור $ABC$ (כי $DC\\perp ABC$), ו-$\\vec u,\\vec v$ מוכלים במישור',
+            '$\\vec{EF}\\parallel ABC$ פירושו שאין ל-$\\vec{EF}$ רכיב בכיוון $\\vec w$, כלומר מקדם $\\vec w$ מתאפס:',
+            '$\\frac12 - \\frac{3k}{2} = 0$',
+            '$3k = 1 \\Rightarrow k = \\frac13$',
+          ],
+          final_answer: '$k = \\dfrac13$',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: [
+          'נתון: $A(0,0,0)$, $B(p,6,0)$, $C(0,n,0)$ ($p,n$ פרמטרים חיוביים), $\\vec{BD} = (-8,-2,9)$, $\\vec u\\cdot\\vec v = 24$.',
+          '',
+          'מצאו את שיעורי הנקודות $B$, $C$ ו-$D$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          '$\\vec u\\cdot\\vec v = \\vec{AB}\\cdot\\vec{AC}$ נותן משוואה ב-$n$ → מצא את $C$.',
+          'מ-$\\vec{BD}$ מצא את $D$ באמצעות $p$, ואז השתמש ב-$DC\\perp ABC$ (כלומר $\\vec{CD}\\cdot\\vec u=0$) למציאת $p$.',
+        ],
+        solution: {
+          steps: [
+            '$\\vec v = \\vec{AC} = (0,n,0)$, $\\;\\vec u = \\vec{AB} = (p,6,0)$',
+            '$\\vec u\\cdot\\vec v = 6n = 24 \\Rightarrow n = 4$, אז $C(0,4,0)$',
+            '$\\vec{BD} = D - B = (x-p,\\; y-6,\\; z) = (-8,-2,9)$',
+            '$x = p-8,\\;\\; y = 4,\\;\\; z = 9$, אז $D(p-8,\\, 4,\\, 9)$',
+            '$\\vec{CD} = D - C = (p-8,\\, 0,\\, 9)$; כי $DC\\perp ABC$ מתקיים $\\vec{CD}\\cdot\\vec u = 0$:',
+            '$(p-8,0,9)\\cdot(p,6,0) = p^2 - 8p = 0 \\Rightarrow p = 8$ (כי $p>0$)',
+          ],
+          final_answer: '$B(8,6,0)$, $\\;C(0,4,0)$, $\\;D(0,4,9)$',
+        },
+      },
+      {
+        label: 'ד',
+        prompt: 'מצאו את נפח הפירמידה $ABCD$.',
+        answer_type: 'number',
+        hints: [
+          'בסיס $ABC$ במישור $z=0$: $AC$ על ציר $y$, והגובה אליו מ-$B$ הוא שיעור ה-$x$ של $B$.',
+          'גובה הפירמידה הוא $DC=9$ (ניצב לבסיס). $V=\\frac13\\,S_{ABC}\\cdot H$.',
+        ],
+        solution: {
+          steps: [
+            'בסיס $ABC$ במישור $z=0$: $\\;AC = 4$ (על ציר $y$), הגובה אליו מ-$B$ הוא $x_B = 8$',
+            '$S_{ABC} = \\dfrac{AC\\cdot h}{2} = \\dfrac{4\\cdot 8}{2} = 16$',
+            'גובה הפירמידה: $\\;H = DC = 9$ (ניצב לבסיס)',
+            '$V = \\dfrac13\\,S_{ABC}\\cdot H = \\dfrac{16\\cdot 9}{3} = 48$',
+          ],
+          final_answer: '$V_{ABCD} = 48$',
+        },
+      },
+      {
+        label: 'ה',
+        prompt: 'מהו המצב ההדדי בין הישר $EF$ לבין הישר $AB$? נמקו את קביעתכם.',
+        answer_type: 'text',
+        hints: [
+          'הצב $k=\\frac13$ ב-$\\vec{EF}$ — מקדם $\\vec w$ מתאפס.',
+          'בדוק אם $\\vec{EF}$ כפולה של $\\vec{AB}=\\vec u$ (מקבילות), ואם הישרים באותו גובה $z$ (חיתוך).',
+        ],
+        solution: {
+          steps: [
+            'נציב $k=\\frac13$: $\\;\\vec{EF} = \\frac16\\vec u + \\frac13\\vec v$ (מקדם $\\vec w$ מתאפס)',
+            '$\\vec{AB} = \\vec u$; ל-$\\vec{EF}$ יש רכיב $\\vec v$, אז הוא אינו כפולה של $\\vec u$ — הישרים אינם מקבילים',
+            '$\\vec{EF}$ מקביל לבסיס (מסעיף ב), ו-$E$ אמצע $AD$ נמצא בגובה $z=4.5$; הישר $AB$ נמצא בגובה $z=0$',
+            'הישרים בגבהים שונים ($z=4.5$ מול $z=0$) ואינם מקבילים — לכן אינם נחתכים',
+          ],
+          final_answer: 'הישרים $EF$ ו-$AB$ מצטלבים (skew) — אינם מקבילים וגם אינם נחתכים',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
 ];
