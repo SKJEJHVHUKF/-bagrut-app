@@ -330,4 +330,129 @@ export const bagrut2023Summer582MoedB: PastBagrutQuestion[] = [
     ],
     solutionSource: 'authored',
   },
+
+  // ===========================================================================
+  // Q3 — מספרים מרוכבים: סדרה הנדסית מרוכבת, z1=√2cis45°, ממשי/מדומה, סכום=0
+  // ===========================================================================
+  {
+    id: 'b2023s582b-q3',
+    year: 2023,
+    season: 'summer',
+    moed: 'b',
+    paper: '582',
+    questionNumber: 3,
+    topic: 'מספרים מרוכבים',
+    totalPoints: 25,
+    context: [
+      'נתונה סדרה הנדסית $z_1, z_2, z_3, \\ldots$ שאיבריה מספרים מרוכבים ומנתה $q$. הנקודה $z_1$ ברביע הראשון.',
+      'נתון: $\\;(z_1)^3 = z_3$ ו-$\\;-2z_1 = \\overline{z_3}$.',
+    ].join('\n'),
+    parts: [
+      {
+        label: 'א',
+        prompt: 'הוכיחו כי $q = -z_1$ או $q = z_1$.',
+        answer_type: 'proof',
+        hints: [
+          'בסדרה הנדסית $z_3 = z_1 q^2$. הצב בנתון $(z_1)^3 = z_3$.',
+          'חלק ב-$z_1$ (אינו אפס, ברביע ראשון) וקבל $z_1^2 = q^2$.',
+        ],
+        solution: {
+          steps: [
+            'בסדרה הנדסית: $z_3 = z_1 q^2$',
+            '$(z_1)^3 = z_3 = z_1 q^2$',
+            'נחלק ב-$z_1$ (ברביע ראשון, $\\ne 0$): $\\;z_1^2 = q^2$',
+            '$z_1 = q$ או $z_1 = -q$, כלומר $q = z_1$ או $q = -z_1$',
+          ],
+          final_answer: 'הוכח: $q = z_1$ או $q = -z_1$',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: 'מצאו את $z_1$.',
+        answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 200 200',
+            svg: `
+              <line x1="14" y1="100" x2="186" y2="100" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="100" y1="14" x2="100" y2="186" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="178" y="113" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">Re</text>
+              <text x="104" y="22" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">Im</text>
+              <circle cx="100" cy="100" r="60" fill="none" stroke="rgba(148,163,184,0.35)" stroke-width="1.1" stroke-dasharray="3 3"/>
+              <circle cx="142" cy="58" r="3.4" fill="rgba(244,114,182,0.95)"/>
+              <line x1="100" y1="100" x2="142" y2="58" stroke="rgba(244,114,182,0.85)" stroke-width="1.4"/>
+              <circle cx="58" cy="58" r="2.6" fill="rgba(148,163,184,0.7)"/>
+              <circle cx="58" cy="142" r="2.6" fill="rgba(148,163,184,0.7)"/>
+              <circle cx="142" cy="142" r="2.6" fill="rgba(148,163,184,0.7)"/>
+              <text x="146" y="54" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">z₁ (45°)</text>
+              <text x="20" y="54" fill="#64748b" font-size="9" font-family="Heebo, sans-serif">135°</text>
+              <text x="20" y="156" fill="#64748b" font-size="9" font-family="Heebo, sans-serif">225°</text>
+              <text x="146" y="156" fill="#64748b" font-size="9" font-family="Heebo, sans-serif">-45°</text>
+            `,
+            caption: 'ארבעת הפתרונות לזווית ($-45°,45°,135°,225°$) על מעגל $|z|=\\sqrt2$; הדרישה "רביע ראשון" בוחרת את $z_1=\\sqrt2\\,\\text{cis}45°$.',
+          },
+        ],
+        hints: [
+          'הצב $z_3 = (z_1)^3$ בנתון $-2z_1 = \\overline{z_3}$, וכתוב $z_1 = R\\,\\text{cis}\\,\\alpha$.',
+          'השווה מודולים (מוצא $R$) והשווה זוויות (מוצא $\\alpha$); בחר את $\\alpha$ שברביע הראשון.',
+        ],
+        solution: {
+          steps: [
+            '$-2z_1 = \\overline{z_3} = \\overline{(z_1)^3}$',
+            'נסמן $z_1 = R\\,\\text{cis}\\,\\alpha$',
+            '$2R\\,\\text{cis}(\\alpha+180°) = \\overline{R^3\\,\\text{cis}(3\\alpha)} = R^3\\,\\text{cis}(-3\\alpha)$',
+            'מודולים: $\\;2R = R^3 \\Rightarrow R^2 = 2 \\Rightarrow R = \\sqrt2$',
+            'זוויות: $\\;\\alpha + 180° = -3\\alpha + 360°k$',
+            '$4\\alpha = -180° + 360°k \\Rightarrow \\alpha = -45° + 90°k$',
+            '$\\alpha = -45°,\\, 45°,\\, 135°,\\, 225°$; ברביע ראשון $\\alpha = 45°$',
+            '$z_1 = \\sqrt2\\,\\text{cis}(45°)$',
+          ],
+          final_answer: '$z_1 = \\sqrt2\\,\\text{cis}(45°)$',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: [
+          'ענו עבור $q = z_1$. $\\;z_{4n}$ ו-$z_{4n-2}$ הם איברים בסדרה ($n$ מספר טבעי).',
+          '',
+          'קבעו עבור כל אחד מן האיברים אם הוא מדומה או ממשי. נמקו.',
+        ].join('\n'),
+        answer_type: 'text',
+        hints: [
+          'כי $q = z_1$: $\\;z_m = q^m$, ו-$q = \\sqrt2\\,\\text{cis}45°$. חשב $q^4 = 4\\,\\text{cis}180° = -4$.',
+          '$z_{4n} = q^{4n} = (q^4)^n$. עבור $z_{4n-2}$ חלק ב-$q^2 = 2\\,\\text{cis}90° = 2i$.',
+        ],
+        solution: {
+          steps: [
+            'כי $q = z_1$: $\\;z_m = z_1 q^{m-1} = q^m$, עם $q = \\sqrt2\\,\\text{cis}45°$',
+            '$z_{4n} = q^{4n} = \\left((\\sqrt2\\,\\text{cis}45°)^4\\right)^n = (4\\,\\text{cis}180°)^n = (-4)^n$ — ממשי',
+            '$z_{4n-2} = \\dfrac{q^{4n}}{q^2} = \\dfrac{(-4)^n}{(\\sqrt2\\,\\text{cis}45°)^2} = \\dfrac{(-4)^n}{2\\,\\text{cis}90°} = \\dfrac{(-4)^n}{2i}$',
+            '$= \\dfrac{(-4)^n}{2i}\\cdot\\dfrac{-i}{-i} = \\dfrac{-(-4)^n\\,i}{2}$ — מדומה טהור',
+          ],
+          final_answer: '$z_{4n} = (-4)^n$ — ממשי; $\\;z_{4n-2} = \\dfrac{-(-4)^n\\,i}{2}$ — מדומה טהור',
+        },
+      },
+      {
+        label: 'ד',
+        prompt: 'מצאו את ערך הסכום: $\\;\\dfrac{z_1}{\\sqrt2} + \\dfrac{z_2}{(\\sqrt2)^2} + \\dfrac{z_3}{(\\sqrt2)^3} + \\ldots + \\dfrac{z_{64}}{(\\sqrt2)^{64}}$.',
+        answer_type: 'number',
+        hints: [
+          '$z_k = q^k = (\\sqrt2)^k\\,\\text{cis}(45k°)$, אז כל איבר בסכום הוא $\\frac{z_k}{(\\sqrt2)^k} = \\text{cis}(45k°)$.',
+          'זו סדרה הנדסית (איבר ראשון ומנה $\\text{cis}45°$). חשב $(\\text{cis}45°)^{64}$.',
+        ],
+        solution: {
+          steps: [
+            '$z_k = q^k = (\\sqrt2)^k\\,\\text{cis}(45k°)$, אז $\\;\\dfrac{z_k}{(\\sqrt2)^k} = \\text{cis}(45k°)$',
+            'הסכום הוא סדרה הנדסית: איבר ראשון $\\text{cis}45°$, מנה $\\text{cis}45°$, $\\;64$ איברים',
+            '$S = \\dfrac{\\text{cis}45°\\left((\\text{cis}45°)^{64} - 1\\right)}{\\text{cis}45° - 1}$',
+            '$(\\text{cis}45°)^{64} = \\text{cis}(2880°) = \\text{cis}(0°) = 1$',
+            '$S = \\dfrac{\\text{cis}45°\\,(1 - 1)}{\\text{cis}45° - 1} = 0$',
+          ],
+          final_answer: '$S = 0$',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
 ];
