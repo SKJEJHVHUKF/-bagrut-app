@@ -658,4 +658,194 @@ export const bagrut2023Summer582MoedB: PastBagrutQuestion[] = [
     ],
     solutionSource: 'authored',
   },
+
+  // ===========================================================================
+  // Q5 — חקירת פונקציות: f(x)=eˣ/(eˣ-6), g=1/f, שטח, חיתוך, קיצון של אינטגרל
+  // ===========================================================================
+  {
+    id: 'b2023s582b-q5',
+    year: 2023,
+    season: 'summer',
+    moed: 'b',
+    paper: '582',
+    questionNumber: 5,
+    topic: 'פונקציה מעריכית',
+    totalPoints: 25,
+    context: 'נתונה הפונקציה $\\;f(x) = \\dfrac{e^x}{e^x - 6}$.',
+    parts: [
+      {
+        label: 'א1',
+        prompt: 'מצאו את תחום ההגדרה של הפונקציה $f(x)$.',
+        answer_type: 'expression',
+        hints: ['המכנה $e^x-6$ חייב להיות שונה מאפס.'],
+        solution: {
+          steps: [
+            'המכנה $\\ne 0$: $\\;e^x - 6 \\ne 0 \\Rightarrow e^x \\ne 6 \\Rightarrow x \\ne \\ln 6$',
+          ],
+          final_answer: 'תחום ההגדרה: $\\;x \\ne \\ln 6$ (כלומר $x<\\ln6$ או $x>\\ln6$)',
+        },
+      },
+      {
+        label: 'א2',
+        prompt: 'מצאו את משוואות האסימפטוטות המאונכות לצירים של $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'אסימפטוטה אנכית: היכן המכנה מתאפס.',
+          'אסימפטוטות אופקיות: חשב $\\lim_{x\\to\\infty}$ ו-$\\lim_{x\\to-\\infty}$ (חלק ב-$e^x$).',
+        ],
+        solution: {
+          steps: [
+            'אסימפטוטה אנכית: המכנה מתאפס ב-$x=\\ln6$, אז $\\;x = \\ln 6$',
+            '$\\lim_{x\\to\\infty} \\dfrac{e^x}{e^x-6} = \\dfrac{1}{1 - 6/e^x} = \\dfrac{1}{1-0} = 1$, אסימפטוטה $y=1$',
+            '$\\lim_{x\\to-\\infty} \\dfrac{e^x}{e^x-6} = \\dfrac{0}{0-6} = 0$, אסימפטוטה $y=0$',
+          ],
+          final_answer: 'אנכית $x=\\ln6$; אופקיות $y=1$ (ב-$\\infty$) ו-$y=0$ (ב-$-\\infty$)',
+        },
+      },
+      {
+        label: 'א3',
+        prompt: 'מצאו את תחומי העלייה והירידה של $f(x)$ (אם יש כאלה).',
+        answer_type: 'expression',
+        hints: ['גזור עם כלל המנה ובדוק את הסימן של המונה (המכנה ריבוע).'],
+        solution: {
+          steps: [
+            '$f\'(x) = \\dfrac{e^x(e^x-6) - e^x\\cdot e^x}{(e^x-6)^2} = \\dfrac{e^x(e^x-6-e^x)}{(e^x-6)^2} = \\dfrac{-6e^x}{(e^x-6)^2}$',
+            'המונה $-6e^x < 0$ והמכנה $(e^x-6)^2 > 0$, לכן $f\'(x) < 0$ בכל התחום',
+          ],
+          final_answer: 'יורדת בכל תחום הגדרתה ($x<\\ln6$ וגם $x>\\ln6$); אין תחומי עלייה',
+        },
+      },
+      {
+        label: 'א4',
+        prompt: 'סרטטו סקיצה של גרף הפונקציה $f(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'functionGraph',
+            xRange: [-3, 5],
+            yRange: [-7, 8],
+            curves: [
+              { fn: (x) => Math.exp(x) / (Math.exp(x) - 6), domain: [-3, 1.65], color: '#f472b6' },
+              { fn: (x) => Math.exp(x) / (Math.exp(x) - 6), domain: [1.95, 5], color: '#f472b6' },
+            ],
+            vAsymptotes: [{ x: Math.log(6), label: 'x=ln6' }],
+            hAsymptotes: [{ y: 1, label: 'y=1' }, { y: 0, label: 'y=0' }],
+            caption: '$f(x)=\\frac{e^x}{e^x-6}$: אסימפטוטה אנכית $x=\\ln6$; אופקיות $y=1$ ו-$y=0$; יורדת בשני הענפים.',
+          },
+        ],
+        hints: ['שלב את שלוש האסימפטוטות ($x=\\ln6$, $y=1$, $y=0$) ואת הירידה התמידית.'],
+        solution: {
+          steps: [
+            'בתחום $x<\\ln6$: יורד מ-$0$ (אסימפטוטה $y=0$ ב-$-\\infty$) אל $-\\infty$ (כש-$x\\to\\ln6^-$)',
+            'בתחום $x>\\ln6$: יורד מ-$+\\infty$ (כש-$x\\to\\ln6^+$) אל האסימפטוטה $y=1$',
+            'חיתוך עם ציר $y$: $f(0) = \\dfrac{1}{1-6} = -\\dfrac15$',
+          ],
+          final_answer: 'גרף בעל שני ענפים, אסימפטוטות $x=\\ln6$, $y=1$, $y=0$ (ראה תרשים)',
+        },
+      },
+      {
+        label: 'ב1',
+        prompt: [
+          'נתונה $g(x) = \\dfrac{1}{f(x)}$, מוגדרת באותו תחום של $f$.',
+          '',
+          'מצאו את משוואות האסימפטוטות המאונכות לצירים של $g(x)$ (אם יש כאלה).',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'פשט: $g(x) = \\frac{1}{f(x)} = \\frac{e^x-6}{e^x} = 1 - 6e^{-x}$.',
+          'ב-$x=\\ln6$: $f\\to\\pm\\infty$ אז $g\\to0$ (חור, לא אסימפטוטה). בדוק את הגבול ב-$\\infty$.',
+        ],
+        solution: {
+          steps: [
+            '$g(x) = \\dfrac{1}{f(x)} = \\dfrac{e^x-6}{e^x} = 1 - 6e^{-x}$',
+            'ב-$x=\\ln6$: $f\\to\\pm\\infty$, אז $g=\\frac1f\\to0$ — נקודת אי-רציפות (חור), לא אסימפטוטה אנכית',
+            '$\\lim_{x\\to\\infty} g = 1 - 0 = 1$ (אסימפטוטה $y=1$); כש-$x\\to-\\infty$, $g\\to-\\infty$ (אין אסימפטוטה)',
+          ],
+          final_answer: 'אסימפטוטה אופקית יחידה: $\\;y = 1$ (ב-$x=\\ln6$ יש חור, $g\\to0$)',
+        },
+      },
+      {
+        label: 'ב2',
+        prompt: 'סרטטו סקיצה של גרף הפונקציה $g(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'functionGraph',
+            xRange: [-1, 5],
+            yRange: [-4.5, 2],
+            curves: [{ fn: (x) => 1 - 6 * Math.exp(-x), domain: [0.2, 5], color: '#60a5fa' }],
+            hAsymptotes: [{ y: 1, label: 'y=1' }],
+            markedPoints: [{ x: Math.log(6), y: 0, label: 'חור (ln6,0)' }],
+            caption: '$g(x)=1-6e^{-x}$: עולה, אסימפטוטה אופקית $y=1$, ונקודת אי-רציפות (חור) ב-$(\\ln6, 0)$.',
+          },
+        ],
+        hints: ['$g\'=6e^{-x}>0$ → עולה. שלב את האסימפטוטה $y=1$ ואת החור ב-$(\\ln6,0)$.'],
+        solution: {
+          steps: [
+            '$g(x) = 1 - 6e^{-x}$, ו-$g\'(x) = 6e^{-x} > 0$ — $g$ עולה בכל התחום',
+            'אסימפטוטה $y=1$, חור ב-$(\\ln6, 0)$, וכש-$x\\to-\\infty$ מתקיים $g\\to-\\infty$',
+          ],
+          final_answer: 'גרף עולה עם אסימפטוטה $y=1$ וחור ב-$(\\ln6, 0)$ (ראה תרשים)',
+        },
+      },
+      {
+        label: 'ב3',
+        prompt: 'חשבו את השטח המוגבל על ידי גרף $g(x)$, האסימפטוטה האופקית שלה, והישרים $x=\\ln7$ ו-$x=\\ln10$.',
+        answer_type: 'number',
+        hints: [
+          'השטח הוא בין האסימפטוטה $y=1$ לגרף $g$ (ו-$g<1$): $\\;S = \\int_{\\ln7}^{\\ln10}(1-g(x))dx$.',
+          '$1 - g(x) = 6e^{-x}$. זכור $e^{-\\ln a} = \\frac1a$.',
+        ],
+        solution: {
+          steps: [
+            'בין האסימפטוטה $y=1$ לגרף $g$ (שם $g<1$): $\\;S = \\int_{\\ln7}^{\\ln10} (1 - g(x))\\,dx$',
+            '$1 - g(x) = 1 - (1 - 6e^{-x}) = 6e^{-x}$',
+            '$S = \\int_{\\ln7}^{\\ln10} 6e^{-x}dx = \\left[-6e^{-x}\\right]_{\\ln7}^{\\ln10}$',
+            '$= -6\\cdot\\tfrac{1}{10} - \\left(-6\\cdot\\tfrac17\\right) = -\\tfrac35 + \\tfrac67 = \\tfrac{9}{35}$',
+          ],
+          final_answer: '$S = \\dfrac{9}{35}$',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: 'מצאו את שיעורי נקודת החיתוך של גרף $f(x)$ עם גרף $g(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'חיתוך: $f = g$, כלומר $f = \\frac1f$, ומכאן $f^2=1$.',
+          'בדוק את שני המקרים $f=1$ ו-$f=-1$ (אחד מהם נפסל).',
+        ],
+        solution: {
+          steps: [
+            '$f = g$: $\\;\\dfrac{1}{f} = f \\Rightarrow f^2 = 1 \\Rightarrow f = \\pm1$',
+            '$f=1$: $\\;\\dfrac{e^x}{e^x-6}=1 \\Rightarrow e^x = e^x-6 \\Rightarrow 0=-6$ — אין פתרון',
+            '$f=-1$: $\\;\\dfrac{e^x}{e^x-6}=-1 \\Rightarrow 2e^x=6 \\Rightarrow e^x=3 \\Rightarrow x=\\ln3$',
+          ],
+          final_answer: 'נקודת החיתוך: $(\\ln3,\\, -1)$',
+        },
+      },
+      {
+        label: 'ד',
+        prompt: [
+          'נתונה $s(x) = \\displaystyle\\int_x^{\\ln5} \\bigl(f(t) - g(t)\\bigr)dt$, המוגדרת בתחום $x < \\ln5$.',
+          '',
+          'מצאו את שיעור ה-$x$ של נקודת הקיצון של $s(x)$ וקבעו את סוגה.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'לפי המשפט היסודי, ו-$x$ בגבול התחתון: $\\;s\'(x) = -(f(x)-g(x)) = g(x)-f(x)$.',
+          '$s\'=0$ כשהגרפים נחתכים ($x=\\ln3$). בנה טבלת סימן ל-$s\'=g-f$.',
+        ],
+        solution: {
+          steps: [
+            '$x$ בגבול התחתון, אז $\\;s\'(x) = -\\bigl(f(x)-g(x)\\bigr) = g(x)-f(x)$',
+            '$s\'(x) = 0 \\Rightarrow g(x)=f(x) \\Rightarrow x=\\ln3$ (מסעיף ג)',
+            'בדיקה: ב-$x=0$ מתקיים $g-f<0$; ב-$x=\\ln4$ מתקיים $g-f>0$. טבלת סימן: $\\begin{array}{c|c|c|c} x & x<\\ln3 & \\ln3 & \\ln3<x<\\ln5 \\\\ \\hline s\'(x) & - & 0 & + \\\\ s(x) & \\searrow & & \\nearrow \\end{array}$',
+            'מעבר $(-)\\to(+)$ ב-$x=\\ln3$ → מינימום',
+          ],
+          final_answer: 'מינימום ב-$x = \\ln3$',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
 ];
