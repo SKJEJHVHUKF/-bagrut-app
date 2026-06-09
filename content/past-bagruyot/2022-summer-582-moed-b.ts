@@ -29,31 +29,34 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
     topic: 'גאומטריה אנליטית',
     totalPoints: 33,
     context:
-      '(קיץ תשפ"ב, מועד ב\') נתונות הנקודות $\\;A(-5,\\,3)\\;$ ו-$\\;B(0,\\,-2)$.',
+      '(קיץ תשפ"ב, מועד ב\') נתונות הנקודות $\\;A(-5,\\,4)\\;$ ו-$\\;B(0,\\,-1)$.',
     diagrams: [
       {
         type: 'custom',
-        viewBox: '0 0 200 200',
+        viewBox: '0 0 220 200',
         svg: `
-          <line x1="12" y1="132" x2="188" y2="132" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
-          <line x1="100" y1="12" x2="100" y2="188" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
-          <text x="180" y="128" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">x</text>
-          <text x="103" y="22" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">y</text>
-          <ellipse cx="100" cy="132" rx="80" ry="48" fill="rgba(168,85,247,0.08)" stroke="rgba(168,85,247,0.85)" stroke-width="1.4"/>
-          <circle cx="100" cy="84" r="80" fill="none" stroke="rgba(244,114,182,0.85)" stroke-width="1.4"/>
-          <line x1="36" y1="14" x2="36" y2="188" stroke="rgba(251,191,36,0.95)" stroke-width="1.2" stroke-dasharray="4 3"/>
-          <circle cx="164" cy="132" r="2.6" fill="rgba(251,191,36,0.95)"/>
-          <circle cx="36" cy="132" r="2.6" fill="rgba(251,191,36,0.95)"/>
-          <circle cx="36" cy="36" r="2.6" fill="rgba(244,114,182,0.95)"/>
-          <circle cx="36" cy="103.2" r="2.6" fill="rgba(168,85,247,0.95)"/>
-          <circle cx="36" cy="160.8" r="2.6" fill="rgba(168,85,247,0.95)"/>
-          <text x="166" y="128" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">F</text>
-          <text x="22" y="128" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">K</text>
-          <text x="22" y="40" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">L</text>
-          <text x="22" y="100" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">Q</text>
-          <text x="22" y="166" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">T</text>
+          <line x1="12" y1="130" x2="208" y2="130" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+          <line x1="110" y1="12" x2="110" y2="192" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+          <text x="200" y="143" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">x</text>
+          <text x="114" y="20" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">y</text>
+          <ellipse cx="110" cy="130" rx="45" ry="36" fill="rgba(168,85,247,0.08)" stroke="rgba(168,85,247,0.85)" stroke-width="1.4"/>
+          <circle cx="110" cy="94" r="45" fill="none" stroke="rgba(244,114,182,0.85)" stroke-width="1.4"/>
+          <line x1="83" y1="14" x2="83" y2="190" stroke="rgba(251,191,36,0.9)" stroke-width="1.2" stroke-dasharray="4 3"/>
+          <text x="64" y="186" fill="rgba(251,191,36,0.95)" font-size="9" font-family="Heebo, sans-serif">x=-3</text>
+          <circle cx="137" cy="130" r="2.6" fill="rgba(251,191,36,0.95)"/>
+          <circle cx="83" cy="130" r="2.6" fill="rgba(96,165,250,0.95)"/>
+          <circle cx="83" cy="58" r="2.6" fill="rgba(96,165,250,0.95)"/>
+          <circle cx="83" cy="101" r="2.6" fill="rgba(168,85,247,0.95)"/>
+          <circle cx="83" cy="159" r="2.6" fill="rgba(168,85,247,0.95)"/>
+          <circle cx="110" cy="94" r="2.4" fill="rgba(244,114,182,0.95)"/>
+          <text x="140" y="127" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">F</text>
+          <text x="70" y="127" fill="#bfdbfe" font-size="10" font-family="Heebo, sans-serif">K</text>
+          <text x="70" y="56" fill="#bfdbfe" font-size="10" font-family="Heebo, sans-serif">L</text>
+          <text x="88" y="99" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">T</text>
+          <text x="88" y="164" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">Q</text>
+          <text x="113" y="90" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">M</text>
         `,
-        caption: 'המעגל $M$ (ורוד), האליפסה (סגול), והישר $x=-4$ העובר במוקד השמאלי וחותך את שניהם.',
+        caption: 'המעגל $M(0,4)$ (ורוד), האליפסה $\\frac{x^2}{25}+\\frac{y^2}{16}=1$ (סגול), והישר $x=-3$ העובר במוקד השמאלי וחותך את שניהם ($K,L$ על המעגל; $T,Q$ על האליפסה).',
       },
     ],
     parts: [
@@ -68,11 +71,13 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'אמצע $AB$: $\\;\\bigl(\\tfrac{-5+0}{2},\\,\\tfrac{3+(-2)}{2}\\bigr) = \\bigl(-\\tfrac{5}{2},\\,\\tfrac{1}{2}\\bigr)$.',
-            'שיפוע $AB$: $\\;m_{AB} = \\dfrac{-2 - 3}{0 - (-5)} = -1$. שיפוע האנך: $\\;m = 1$.',
-            'אנך אמצעי: $\\;y - \\tfrac{1}{2} = 1\\cdot\\bigl(x + \\tfrac{5}{2}\\bigr) \\Rightarrow y = x + 3$.',
+            'מרכז מעגל ש-$AB$ מיתר בו נמצא במרחק שווה מ-$A$ ומ-$B$ — כלומר על האנך האמצעי ל-$AB$',
+            'אמצע $AB$: $\\;\\left(\\dfrac{-5+0}{2},\\, \\dfrac{4+(-1)}{2}\\right) = (-2.5,\\, 1.5)$',
+            'שיפוע $AB$: $\\;m_{AB} = \\dfrac{4-(-1)}{-5-0} = -1$; שיפוע האנך: $m = 1$',
+            'אנך אמצעי: $\\;y - 1.5 = 1\\cdot(x + 2.5)$',
+            '$y = x + 4$',
           ],
-          final_answer: 'המקום הגאומטרי: הישר $\\;y = x + 3$.',
+          final_answer: 'המקום הגאומטרי: הישר $\\;y = x + 4$',
         },
       },
       {
@@ -83,18 +88,18 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ].join('\n'),
         answer_type: 'expression',
         hints: [
-          'אליפסה קנונית מרכזה בראשית, וכשהמוקדים על ציר $x$ הם סימטריים לראשית — כלומר באבסיסות $\\pm c$.',
-          'אם המעגל חותך את ציר $x$ בשתי נקודות סימטריות לראשית, אז המיתר הזה מאוזן והאמצע שלו על ציר $y$ $\\Rightarrow$ מרכז המעגל על ציר $y$.',
-          'שלב עם המסקנה מסעיף א: מרכז $M$ על $y=x+3$ וגם על ציר $y$ ($x=0$).',
+          'אליפסה קנונית מרכזה בראשית, וכשהמוקדים על ציר $x$ הם סימטריים לראשית — באבסיסות $\\pm c$.',
+          'אם המעגל חותך את ציר $x$ בשתי נקודות סימטריות לראשית, אמצע המיתר על ציר $y$ $\\Rightarrow$ מרכז המעגל על ציר $y$.',
+          'שלב עם סעיף א: מרכז $M$ על $y=x+4$ וגם על ציר $y$ ($x=0$).',
         ],
         solution: {
           steps: [
-            'אליפסה קנונית: $\\dfrac{x^2}{a^2}+\\dfrac{y^2}{b^2}=1$. מוקדים על ציר $x$ סימטריים לראשית: $(\\pm c,\\,0)$.',
-            'אלו גם נקודות חיתוך $M$ עם ציר $x$, ולכן המיתר על ציר $x$ סימטרי לראשית $\\Rightarrow$ המרכז של $M$ על ציר $y$ ($x_M = 0$).',
-            'מסעיף א, המרכז על $y = x + 3$. הצב $x = 0$: $\\;y = 3$. אז מרכז $M$ הוא $(0,\\,3)$.',
-            'רדיוס $= |MA| = \\sqrt{(0-(-5))^2 + (3-3)^2} = 5$. בדיקה: $|MB| = \\sqrt{0 + (3+2)^2} = 5$ ✓.',
+            'אליפסה קנונית: מוקדים על ציר $x$ סימטריים לראשית, $(\\pm c,\\, 0)$',
+            'אלו נקודות החיתוך של $M$ עם ציר $x$, אז המיתר על ציר $x$ סימטרי לראשית $\\Rightarrow$ מרכז $M$ על ציר $y$ ($x_M = 0$)',
+            'מסעיף א, המרכז על $y = x + 4$. הצב $x=0$: $\\;y = 4$, אז $M(0,4)$',
+            'רדיוס $= |MA| = \\sqrt{(-5-0)^2 + (4-4)^2} = 5$ (בדיקה: $|MB| = \\sqrt{0 + (4+1)^2} = 5$ ✓)',
           ],
-          final_answer: 'מרכז $M = (0,\\,3)$, רדיוס $r = 5$. משוואת $M$: $\\;x^2 + (y-3)^2 = 25$.',
+          final_answer: 'מרכז $M(0,4)$, רדיוס $R=5$. משוואת $M$: $\\;x^2 + (y-4)^2 = 25$',
         },
       },
       {
@@ -103,17 +108,17 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
           'נתון כי אורך הציר הראשי של האליפסה שווה לאורך קוטר המעגל $M$. מהי משוואת האליפסה?',
         answer_type: 'expression',
         hints: [
-          'אורך הציר הראשי $= 2a$. קוטר המעגל $M$ $= 2\\cdot 5 = 10$ $\\Rightarrow a = 5$.',
-          'מקבע מוקדים: חתוך $M$ עם ציר $x$ נותן $c$. ואז $b^2 = a^2 - c^2$.',
+          'אורך הציר הראשי $= 2a$, וקוטר $M = 10$, אז $a=5$.',
+          'חיתוך $M$ עם ציר $x$ נותן $c$, ואז $b^2 = a^2 - c^2$.',
         ],
         solution: {
           steps: [
-            'מ-$2a = 10$ מקבלים $a = 5$.',
-            'חיתוך $M$ עם ציר $x$ ($y=0$): $\\;x^2 + 9 = 25 \\Rightarrow x = \\pm 4 \\Rightarrow c = 4$.',
-            '$b^2 = a^2 - c^2 = 25 - 16 = 9 \\Rightarrow b = 3$.',
-            'משוואת האליפסה: $\\;\\dfrac{x^2}{25} + \\dfrac{y^2}{9} = 1$.',
+            'חיתוך $M$ עם ציר $x$ ($y=0$): $\\;x^2 + (0-4)^2 = 25 \\Rightarrow x^2 = 9 \\Rightarrow x = \\pm3$, אז $c = 3$',
+            'אורך הציר הראשי $= 2a =$ קוטר $M = 10$, אז $a = 5$',
+            '$a^2 = b^2 + c^2$: $\\;25 = b^2 + 9 \\Rightarrow b^2 = 16$',
+            '$\\dfrac{x^2}{25} + \\dfrac{y^2}{16} = 1$',
           ],
-          final_answer: '$\\dfrac{x^2}{25} + \\dfrac{y^2}{9} = 1$.',
+          final_answer: 'משוואת האליפסה: $\\;\\dfrac{x^2}{25} + \\dfrac{y^2}{16} = 1$',
         },
       },
       {
@@ -125,20 +130,19 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ].join('\n'),
         answer_type: 'number',
         hints: [
-          'הישר הוא $x = -4$. הצב במשוואת האליפסה כדי למצוא את $Q$ ואת $T$; הצב במשוואת $M$ כדי למצוא את $K$ ואת $L$.',
-          'שני המשולשים חולקים את אותו גובה (המרחק האופקי מ-$F(4,0)$ אל הישר $x=-4$ = $8$). היחס בין השטחים הוא היחס בין אורכי הבסיסים.',
+          'המוקד השמאלי $(-3,0)$, אז הישר הוא $x=-3$. הצב במשוואת האליפסה (מוצא $T,Q$) ובמשוואת $M$ (מוצא $K,L$).',
+          'שני המשולשים חולקים את אותו גובה (המרחק מ-$F(3,0)$ לישר $x=-3$), אז היחס בין השטחים שווה ליחס בין הבסיסים $\\frac{KL}{TQ}$.',
         ],
         solution: {
           steps: [
-            'הישר $x = -4$. ב-AOPC: $F = (4,\\,0)$, המוקד השמאלי $(-4,\\,0)$.',
-            'חיתוך עם האליפסה: $\\;\\dfrac{16}{25} + \\dfrac{y^2}{9} = 1 \\Rightarrow y^2 = 9\\cdot\\tfrac{9}{25} \\Rightarrow y = \\pm\\tfrac{9}{5}$. אז $Q = (-4,\\,\\tfrac{9}{5})$, $T = (-4,\\,-\\tfrac{9}{5})$.',
-            'חיתוך עם המעגל $M$: $\\;16 + (y-3)^2 = 25 \\Rightarrow (y-3)^2 = 9 \\Rightarrow y = 0$ או $y = 6$. אז $K = (-4,\\,0)$, $L = (-4,\\,6)$.',
-            'גובה משותף = מרחק אופקי מ-$F$ אל הישר $x = -4$: $\\;h = 8$.',
-            'בסיס $KL$ (אנכי): $|KL| = 6$. שטח $KLF = \\tfrac{1}{2}\\cdot 6\\cdot 8 = 24$.',
-            'בסיס $TQ$ (אנכי): $|TQ| = \\tfrac{18}{5}$. שטח $TQF = \\tfrac{1}{2}\\cdot \\tfrac{18}{5}\\cdot 8 = \\tfrac{72}{5}$.',
-            'יחס: $\\;\\dfrac{S_{KLF}}{S_{TQF}} = \\dfrac{24}{72/5} = \\dfrac{24\\cdot 5}{72} = \\dfrac{5}{3}$.',
+            'המוקד הימני $F(3,0)$, השמאלי $(-3,0)$, אז הישר המאונך דרכו: $\\;x = -3$',
+            'חיתוך עם האליפסה: $\\;\\dfrac{9}{25} + \\dfrac{y^2}{16} = 1 \\Rightarrow y^2 = \\dfrac{256}{25} \\Rightarrow y = \\pm\\dfrac{16}{5}$, אז $T(-3,\\tfrac{16}{5})$, $Q(-3,-\\tfrac{16}{5})$',
+            'חיתוך עם $M$: $\\;9 + (y-4)^2 = 25 \\Rightarrow (y-4)^2 = 16 \\Rightarrow y=0$ או $y=8$, אז $K(-3,0)$, $L(-3,8)$',
+            'שני המשולשים $KLF$ ו-$TQF$ חולקים את אותו גובה (המרחק מ-$F$ לישר $x=-3$), אז $\\;\\dfrac{S_{KLF}}{S_{TQF}} = \\dfrac{KL}{TQ}$',
+            '$KL = 8 - 0 = 8$, $\\;TQ = \\dfrac{16}{5} + \\dfrac{16}{5} = \\dfrac{32}{5}$',
+            '$\\dfrac{S_{KLF}}{S_{TQF}} = \\dfrac{8}{32/5} = \\dfrac{40}{32} = \\dfrac{5}{4}$',
           ],
-          final_answer: '$\\dfrac{S_{KLF}}{S_{TQF}} = \\dfrac{5}{3}$.',
+          final_answer: '$\\dfrac{S_{KLF}}{S_{TQF}} = \\dfrac{5}{4}$',
         },
       },
     ],
@@ -215,7 +219,7 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           '$P$ על הישר $\\ell$ העובר ב-$O$ בכיוון $(\\vec u+\\vec v+\\vec w)$: $\\;\\vec{OP} = \\lambda(\\vec u+\\vec v+\\vec w)$.',
-          'נפח פירמידה $= \\tfrac{1}{3}\\cdot S_{\\text{בסיס}}\\cdot h$. אותו בסיס $\\Rightarrow$ היחס בנפחים = היחס בגבהים. ה-$M$ במישור בפרמטר $\\lambda=\\tfrac{1}{3}$, ולכן המרחק מ-$P$ למישור הוא $|1-3\\lambda|\\cdot|OM|$.',
+          'נפח פירמידה $= \\tfrac{1}{3} S h$ ($S$ שטח הבסיס). אותו בסיס $\\Rightarrow$ היחס בנפחים = היחס בגבהים. ה-$M$ במישור בפרמטר $\\lambda=\\tfrac{1}{3}$, ולכן המרחק מ-$P$ למישור הוא $|1-3\\lambda|\\cdot|OM|$.',
         ],
         solution: {
           steps: [
