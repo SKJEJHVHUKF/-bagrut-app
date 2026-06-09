@@ -458,7 +458,7 @@ export const bagrut2023Summer582MoedB: PastBagrutQuestion[] = [
 
   // ===========================================================================
   // Q4 — חקירת פונקציות: f(x)=(ln x+ln a)/(ln x-ln a), טענה f=f', g=ln(f), שטח
-  // (כרגע סעיפים א+ב; ג+ד יתווספו כשהמשתמש ישלח)
+  // (סעיפים א–ד מלאים)
   // ===========================================================================
   {
     id: 'b2023s582b-q4',
@@ -582,6 +582,77 @@ export const bagrut2023Summer582MoedB: PastBagrutQuestion[] = [
             'אין אף פתרון למשוואה $f(x)=f\'(x)$ בתחום $x>a$',
           ],
           final_answer: 'הטענה אינה נכונה — אין כלל פתרון בתחום $x>a$ (כי $f(x)>1>0>f\'(x)$)',
+        },
+      },
+      {
+        label: 'ג1',
+        prompt: 'נתונה הפונקציה $g(x) = \\ln(f(x))$. מצאו את תחום ההגדרה של $g(x)$.',
+        answer_type: 'expression',
+        hints: [
+          '$\\ln(f(x))$ מוגדר רק כאשר $f(x) > 0$.',
+          'מהחקירה של $f$: היכן $f(x)>0$? (זכור $f=0$ ב-$\\frac1a$, אסימפטוטה ב-$a$).',
+        ],
+        solution: {
+          steps: [
+            '$g(x) = \\ln(f(x))$ מוגדרת רק כאשר $f(x) > 0$',
+            'מהחקירה: $\\;0 < x < \\frac1a \\Rightarrow 0 < f < 1$; $\\;\\frac1a < x < a \\Rightarrow f < 0$; $\\;x > a \\Rightarrow f > 1$',
+            '$f(x) > 0$ מתקיים רק ב-$\\;0 < x < \\frac1a$ או $x > a$',
+          ],
+          final_answer: 'תחום ההגדרה של $g$: $\\;0 < x < \\frac1a$ או $x > a$',
+        },
+      },
+      {
+        label: 'ג2',
+        prompt: 'סרטטו סקיצה של גרף הפונקציה $g(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'functionGraph',
+            xRange: [0, 6],
+            yRange: [-4, 5],
+            curves: [
+              { fn: (x) => Math.log((Math.log(x) + Math.log(2)) / (Math.log(x) - Math.log(2))), domain: [0.03, 0.46], color: '#60a5fa' },
+              { fn: (x) => Math.log((Math.log(x) + Math.log(2)) / (Math.log(x) - Math.log(2))), domain: [2.1, 6], color: '#60a5fa' },
+            ],
+            vAsymptotes: [{ x: 0.5, label: 'x=1/a' }, { x: 2, label: 'x=a' }],
+            hAsymptotes: [{ y: 0, label: 'y=0' }],
+            caption: '$g(x)=\\ln(f(x))$ (דוגמה $a=2$): מוגדרת ב-$0<x<\\frac1a$ (שם $g<0$) וב-$x>a$ (שם $g>0$); אסימפטוטות $x=\\frac1a$, $x=a$, ו-$y=0$.',
+          },
+        ],
+        hints: [
+          '$g\' = \\frac{f\'}{f}$ — בתחום $f>0$ מתקיים $f\'<0$, אז $g$ יורדת.',
+          'אסימפטוטות: כש-$f\\to0$ אז $g\\to-\\infty$; כש-$f\\to\\infty$ אז $g\\to\\infty$; כש-$f\\to1$ אז $g\\to0$.',
+        ],
+        solution: {
+          steps: [
+            '$g\' = \\dfrac{f\'}{f}$; בתחום $f>0$ מתקיים $f\'<0$, ולכן $g$ יורדת',
+            'אסימפטוטות אנכיות: $x=\\frac1a$ ($f\\to0 \\Rightarrow g\\to-\\infty$) ו-$x=a$ ($f\\to\\infty \\Rightarrow g\\to\\infty$)',
+            'אסימפטוטה אופקית $y=0$ (כש-$x\\to\\infty$, $f\\to1 \\Rightarrow g=\\ln1=0$)',
+            'בתחום $0<x<\\frac1a$: $0<f<1 \\Rightarrow g<0$; בתחום $x>a$: $f>1 \\Rightarrow g>0$',
+          ],
+          final_answer: 'גרף בעל שני ענפים: $0<x<\\frac1a$ (מתחת לציר $x$) ו-$x>a$ (מעל ציר $x$, יורד אל $y=0$). ראה תרשים',
+        },
+      },
+      {
+        label: 'ד',
+        prompt: [
+          'נסמן ב-$S$ את השטח המוגבל על ידי גרף $g(x)$, ציר ה-$x$, והישרים $x=3$ ו-$x=5$. נתון: $1 < a < 3$.',
+          '',
+          'הביעו באמצעות $S$ את ערך האינטגרל $\\;\\int_3^5 \\ln(4\\cdot f(x))\\,dx$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'כי $1<a<3$, הקטע $[3,5]$ כולו בתחום $x>a$ — שם $g(x)=\\ln(f(x))>0$, אז $S = \\int_3^5 \\ln(f(x))dx$.',
+          'פצל: $\\ln(4f(x)) = \\ln 4 + \\ln f(x)$, ואינטגרל של קבוע פשוט.',
+        ],
+        solution: {
+          steps: [
+            'כי $1<a<3$, הקטע $[3,5]$ בתחום $x>a$, שם $g(x)=\\ln(f(x))>0$, אז $\\;S = \\int_3^5 \\ln(f(x))\\,dx$',
+            '$\\int_3^5 \\ln(4f(x))\\,dx = \\int_3^5 \\bigl(\\ln 4 + \\ln f(x)\\bigr)dx$',
+            '$= \\ln 4\\int_3^5 dx + \\int_3^5 \\ln f(x)\\,dx = \\ln 4\\cdot[x]_3^5 + S$',
+            '$= \\ln 4\\cdot(5-3) + S = 2\\ln 4 + S$',
+          ],
+          final_answer: '$\\int_3^5 \\ln(4f(x))\\,dx = 2\\ln 4 + S = \\ln 16 + S \\approx 2.77 + S$',
         },
       },
     ],
