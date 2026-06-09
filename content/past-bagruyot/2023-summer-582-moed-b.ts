@@ -455,4 +455,136 @@ export const bagrut2023Summer582MoedB: PastBagrutQuestion[] = [
     ],
     solutionSource: 'authored',
   },
+
+  // ===========================================================================
+  // Q4 — חקירת פונקציות: f(x)=(ln x+ln a)/(ln x-ln a), טענה f=f', g=ln(f), שטח
+  // (כרגע סעיפים א+ב; ג+ד יתווספו כשהמשתמש ישלח)
+  // ===========================================================================
+  {
+    id: 'b2023s582b-q4',
+    year: 2023,
+    season: 'summer',
+    moed: 'b',
+    paper: '582',
+    questionNumber: 4,
+    topic: 'פונקציית ln',
+    totalPoints: 25,
+    context: 'נתונה הפונקציה $\\;f(x) = \\dfrac{\\ln x + \\ln a}{\\ln x - \\ln a}$, כאשר $a$ פרמטר גדול מ-$1$. (בסעיפים א–ג הביעו את התשובות באמצעות $a$ אם יש צורך.)',
+    parts: [
+      {
+        label: 'א1',
+        prompt: 'מצאו את תחום ההגדרה של הפונקציה $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          '$\\ln x$ מחייב $x>0$.',
+          'המכנה $\\ln x - \\ln a$ חייב להיות שונה מאפס.',
+        ],
+        solution: {
+          steps: [
+            '$\\ln x$ מוגדר עבור $x > 0$',
+            'המכנה $\\ne 0$: $\\;\\ln x - \\ln a \\ne 0 \\Rightarrow \\ln x \\ne \\ln a \\Rightarrow x \\ne a$',
+          ],
+          final_answer: 'תחום ההגדרה: $\\;0 < x < a$ או $x > a$',
+        },
+      },
+      {
+        label: 'א2',
+        prompt: 'מצאו את משוואות האסימפטוטות המאונכות לצירים של $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'אסימפטוטה אנכית: היכן המכנה מתאפס (והמונה אינו).',
+          'אסימפטוטה אופקית: חשב $\\lim_{x\\to\\infty} f(x)$ (חלק מונה ומכנה ב-$\\ln x$).',
+        ],
+        solution: {
+          steps: [
+            'אסימפטוטה אנכית: המכנה מתאפס ב-$x=a$ (והמונה שם $2\\ln a \\ne 0$), אז $\\;x = a$',
+            '$\\lim_{x\\to\\infty} f(x) = \\lim_{x\\to\\infty} \\dfrac{\\ln x\\left(1 + \\frac{\\ln a}{\\ln x}\\right)}{\\ln x\\left(1 - \\frac{\\ln a}{\\ln x}\\right)} = \\dfrac{1+0}{1-0} = 1$',
+            'אסימפטוטה אופקית: $\\;y = 1$ (וגם כש-$x\\to0^+$ מתקיים $f\\to1$)',
+          ],
+          final_answer: 'אסימפטוטה אנכית $x=a$, אסימפטוטה אופקית $y=1$',
+        },
+      },
+      {
+        label: 'א3',
+        prompt: 'מצאו את שיעורי נקודת החיתוך של גרף $f(x)$ עם הצירים (אם יש כאלה).',
+        answer_type: 'expression',
+        hints: [
+          'חיתוך עם ציר $x$: פתור $f(x)=0$ (המונה מתאפס).',
+          'חיתוך עם ציר $y$: בדוק אם $x=0$ שייך לתחום.',
+        ],
+        solution: {
+          steps: [
+            'חיתוך עם ציר $x$: $\\;f(x)=0 \\Rightarrow \\ln x + \\ln a = 0 \\Rightarrow \\ln x = -\\ln a = \\ln(a^{-1})$',
+            '$x = \\dfrac1a$, כלומר הנקודה $\\left(\\dfrac1a,\\, 0\\right)$',
+            'חיתוך עם ציר $y$: $x=0$ אינו בתחום, אז אין חיתוך עם ציר $y$',
+          ],
+          final_answer: 'חיתוך עם ציר $x$ ב-$\\left(\\frac1a,\\, 0\\right)$; אין חיתוך עם ציר $y$',
+        },
+      },
+      {
+        label: 'א4',
+        prompt: 'מצאו את תחומי הירידה של הפונקציה $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'גזור עם כלל המנה, וזכור $(\\ln x)\' = \\frac1x$.',
+          'בדוק את הסימן של $f\'$: השתמש ב-$a>1 \\Rightarrow \\ln a>0$.',
+        ],
+        solution: {
+          steps: [
+            '$f\'(x) = \\dfrac{\\frac1x(\\ln x - \\ln a) - (\\ln x + \\ln a)\\frac1x}{(\\ln x - \\ln a)^2}$',
+            '$= \\dfrac{\\frac1x\\left[(\\ln x - \\ln a) - (\\ln x + \\ln a)\\right]}{(\\ln x - \\ln a)^2} = \\dfrac{-2\\ln a}{x(\\ln x - \\ln a)^2}$',
+            '$a>1 \\Rightarrow \\ln a > 0$; וגם $x>0$ ו-$(\\ln x - \\ln a)^2 > 0$, לכן $f\'(x) < 0$ בכל התחום',
+          ],
+          final_answer: 'הפונקציה יורדת בכל תחום הגדרתה: $\\;0<x<a$ וגם $x>a$',
+        },
+      },
+      {
+        label: 'א5',
+        prompt: 'סרטטו סקיצה של גרף הפונקציה $f(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'functionGraph',
+            xRange: [0, 6],
+            yRange: [-6, 6.5],
+            curves: [
+              { fn: (x) => (Math.log(x) + Math.log(2)) / (Math.log(x) - Math.log(2)), domain: [0.05, 1.9], color: '#f472b6' },
+              { fn: (x) => (Math.log(x) + Math.log(2)) / (Math.log(x) - Math.log(2)), domain: [2.1, 6], color: '#f472b6' },
+            ],
+            vAsymptotes: [{ x: 2, label: 'x=a' }],
+            hAsymptotes: [{ y: 1, label: 'y=1' }],
+            markedPoints: [{ x: 0.5, y: 0, label: '(1/a,0)' }],
+            caption: 'סקיצה (דוגמה $a=2$): אסימפטוטה אנכית $x=a$, אופקית $y=1$, חיתוך $\\left(\\frac1a,0\\right)$, יורדת בשני הענפים.',
+          },
+        ],
+        hints: ['שלב: אסימפטוטות $x=a$ ו-$y=1$, חיתוך $\\left(\\frac1a,0\\right)$, וירידה בכל התחום.'],
+        solution: {
+          steps: [
+            'בתחום $0<x<a$: מתקרב ל-$1$ כש-$x\\to0^+$, יורד דרך $\\left(\\frac1a,0\\right)$ אל $-\\infty$ כש-$x\\to a^-$',
+            'בתחום $x>a$: יורד מ-$+\\infty$ (כש-$x\\to a^+$) אל האסימפטוטה $y=1$',
+          ],
+          final_answer: 'גרף בעל שני ענפים, אסימפטוטות $x=a$ ו-$y=1$, חיתוך $\\left(\\frac1a,0\\right)$ (ראה תרשים)',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: 'לפניכם טענה: למשוואה $f(x) = f\'(x)$ קיים בדיוק פתרון אחד בתחום $x>a$. קבעו אם הטענה נכונה או לא נכונה, ונמקו.',
+        answer_type: 'text',
+        hints: [
+          'בתחום $x>a$ בדוק את הסימן של $f(x)$ (יחסית לאסימפטוטה $y=1$) ואת הסימן של $f\'(x)$.',
+          'אם $f(x)$ ו-$f\'(x)$ בסימנים מנוגדים בכל התחום, כמה פתרונות יש?',
+        ],
+        solution: {
+          steps: [
+            'בתחום $x>a$: הפונקציה יורדת מ-$+\\infty$ אל האסימפטוטה $y=1$, לכן $\\;f(x) > 1$',
+            'כי $f$ יורדת בתחום, $\\;f\'(x) < 0$',
+            'לכל $x>a$ מתקיים $\\;f(x) > 1 > 0 > f\'(x)$, ולכן $f(x) \\ne f\'(x)$',
+            'אין אף פתרון למשוואה $f(x)=f\'(x)$ בתחום $x>a$',
+          ],
+          final_answer: 'הטענה אינה נכונה — אין כלל פתרון בתחום $x>a$ (כי $f(x)>1>0>f\'(x)$)',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
 ];
