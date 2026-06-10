@@ -7,9 +7,11 @@
 
 import type { LearningPath } from './types';
 import { math5ComplexNumbers } from './math5/complex-numbers';
+import { math5ExpFunctions } from './math5/exp-functions';
 
 const PATHS: Record<string, LearningPath> = {
   'math5:מספרים מרוכבים': math5ComplexNumbers,
+  'math5:פונקציה מעריכית': math5ExpFunctions,
 };
 
 /** Look up a learning path by subject + topic. Null if none exists yet. */
