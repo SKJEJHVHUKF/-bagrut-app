@@ -3,10 +3,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { GraduationCap, Clock, ArrowLeft, Target, Sparkles } from 'lucide-react';
+import { GraduationCap, Clock, ArrowLeft, Target, Sparkles, Rocket } from 'lucide-react';
 import type { LearningPath } from '@/content/learning-paths/types';
 import { PATH_SECTIONS } from '@/content/learning-paths/types';
 import { hasLesson } from '@/content/lessons';
+import { hasAdvancedCourse } from '@/content/advanced-courses';
 import {
   getCompletedSections,
   toggleSection,
@@ -276,6 +277,33 @@ export function LearningPathView({ path }: { path: LearningPath }) {
           onComplete={() => onMarkDone('check')}
         />
       </SectionShell>
+
+      {/* ===== Advanced course CTA — the natural next step ===== */}
+      {hasAdvancedCourse(subject, topic) && (
+        <motion.section {...inViewProps} variants={staggerContainer}>
+          <motion.div variants={fadeUp}>
+            <Link
+              href={`/learn/${subject}/${encodeURIComponent(topic)}/advanced`}
+              className="group block rounded-2xl p-4 bg-gradient-to-br from-fuchsia-600/20 to-rose-600/10 border border-fuchsia-500/40 hover:border-fuchsia-400 transition-colors shadow-lg shadow-fuchsia-500/10"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-fuchsia-500/25 border border-fuchsia-400/50 flex items-center justify-center">
+                  <Rocket className="w-6 h-6 text-fuchsia-200" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-black text-sm sm:text-base text-white mb-0.5">
+                    הצעד הבא: קורס מתקדם — רמת בגרות
+                  </div>
+                  <div className="text-xs text-fuchsia-100/80 leading-snug">
+                    זיהוי תבניות, טכניקות, בגרויות מפורקות עם מחוון, וסימולציית סיום עם טיימר.
+                  </div>
+                </div>
+                <ArrowLeft className="w-5 h-5 text-fuchsia-300 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+              </div>
+            </Link>
+          </motion.div>
+        </motion.section>
+      )}
 
       {/* ===== Footer CTA ===== */}
       <motion.section {...inViewProps} variants={staggerContainer} className="pt-2">

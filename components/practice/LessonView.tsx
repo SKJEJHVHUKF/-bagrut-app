@@ -14,6 +14,7 @@ import { markLessonViewed, getCompletedSubTopics } from '@/lib/progress';
 import { poolHas } from '@/lib/pool-availability';
 import { hasBagrutBank } from '@/content/lessons';
 import { hasLearningPath } from '@/content/learning-paths';
+import { CourseTracks } from '@/components/learn/CourseTracks';
 import { markStep } from '@/lib/study-plan';
 import { TopicJourney } from './TopicJourney';
 import { fadeUp, staggerContainer, inViewProps, buttonTap } from '@/lib/animations';
@@ -68,32 +69,10 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         </motion.div>
       </motion.header>
 
-      {/* New: "learn from 0" path banner — only if a path exists for this topic */}
+      {/* Course tracks — base (learn-from-0) + advanced (bagrut level).
+          Two cards with live status chips; renders only when a path exists. */}
       {hasLearningPath(lesson.subject, lesson.topic) && (
-        <motion.div {...inViewProps} variants={fadeUp}>
-          <Link
-            href={`/learn/${lesson.subject}/${encodeURIComponent(lesson.topic)}`}
-            className="group block rounded-2xl p-4 bg-gradient-to-br from-emerald-600/20 to-teal-600/10 border border-emerald-500/40 hover:border-emerald-400 transition-colors shadow-lg shadow-emerald-500/10"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-emerald-500/25 border border-emerald-400/50 flex items-center justify-center">
-                <GraduationCap className="w-6 h-6 text-emerald-200" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="font-black text-sm sm:text-base text-white">מסלול לימוד מ-0</span>
-                  <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 px-1.5 py-0.5 rounded-full">
-                    בטא · חדש
-                  </span>
-                </div>
-                <div className="text-xs text-emerald-100/80 leading-snug">
-                  לא מכיר את הנושא בכלל? התחל כאן — דרישות קדם, אינטואיציה, מושגים, תרגול מדורג ובדיקת הבנה.
-                </div>
-              </div>
-              <ArrowLeft className="w-5 h-5 text-emerald-300 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
-            </div>
-          </Link>
-        </motion.div>
+        <CourseTracks subject={lesson.subject} topic={lesson.topic} />
       )}
 
       {/* Concepts */}
