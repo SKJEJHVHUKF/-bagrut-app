@@ -19,7 +19,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED_PREFIXES = ['/quiz', '/chat', '/history', '/practice'];
+const PROTECTED_PREFIXES = ['/quiz', '/chat', '/history', '/practice', '/learn'];
 
 const PUBLIC_PREFIXES = [
   '/login',
