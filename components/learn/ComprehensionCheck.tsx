@@ -7,6 +7,7 @@ import type { CheckQuestion } from '@/content/learning-paths/types';
 import { MathText } from '@/components/practice/MathText';
 import { buttonTap } from '@/lib/animations';
 import { celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
+import { seededOrder } from '@/lib/shuffle';
 
 const MCQ_LABELS = ['א', 'ב', 'ג', 'ד', 'ה'];
 
@@ -29,11 +30,11 @@ export function ComprehensionCheck({
   const correctCount = questions.filter((q) => picks[q.id] === q.correct).length;
   const allAnswered = answeredCount === questions.length;
 
-  function pick(q: CheckQuestion, i: number) {
+  function pick(q: CheckQuestion, origIdx: number) {
     if (picks[q.id] !== undefined) return;
-    const next = { ...picks, [q.id]: i };
+    const next = { ...picks, [q.id]: origIdx };
     setPicks(next);
-    if (i === q.correct) celebrateCorrect();
+    if (origIdx === q.correct) celebrateCorrect();
 
     // Fire completion when this answer was the last one.
     if (Object.keys(next).length === questions.length) {
@@ -63,14 +64,15 @@ export function ComprehensionCheck({
             </div>
 
             <div className="space-y-2">
-              {q.answers.map((ans, i) => {
-                const isCorrect = i === q.correct;
-                const isPicked = picked === i;
+              {seededOrder(q.answers.length, q.id).map((origIdx, i) => {
+                const ans = q.answers[origIdx];
+                const isCorrect = origIdx === q.correct;
+                const isPicked = picked === origIdx;
                 return (
                   <motion.button
-                    key={i}
+                    key={origIdx}
                     {...buttonTap}
-                    onClick={() => pick(q, i)}
+                    onClick={() => pick(q, origIdx)}
                     disabled={answered}
                     className={`w-full text-right px-4 py-2.5 rounded-xl border transition-colors chat-md text-sm ${
                       answered && isCorrect

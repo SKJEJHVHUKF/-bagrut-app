@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Lightbulb, KeyRound, CheckCircle, ArrowLeft, LifeBuoy } from 'lucide-react';
@@ -9,6 +9,7 @@ import { MathText } from '@/components/practice/MathText';
 import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
 import { buttonTap } from '@/lib/animations';
 import { sparkle, celebrateCorrect } from '@/lib/confetti';
+import { seededOrder } from '@/lib/shuffle';
 
 const MCQ_LABELS = ['א', 'ב', 'ג', 'ד', 'ה'];
 
@@ -21,10 +22,17 @@ const MCQ_LABELS = ['א', 'ב', 'ג', 'ד', 'ה'];
 export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: number }) {
   const [hintsShown, setHintsShown] = useState(0);
   const [solutionShown, setSolutionShown] = useState(false);
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(null); // original index
   const [answer, setAnswer] = useState('');
 
   const struggling = hintsShown > 0 || solutionShown;
+
+  // Deterministic per-question option order (seeded by id) so the correct
+  // answer isn't always first. Stable across renders and SSR-safe.
+  const mcqOrder = useMemo(
+    () => (q.kind === 'mcq' ? seededOrder(q.answers.length, q.id) : []),
+    [q],
+  );
 
   function revealHint() {
     setHintsShown((n) => {
@@ -39,10 +47,10 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
     setSolutionShown(true);
   }
 
-  function pickMCQ(i: number) {
+  function pickMCQ(origIdx: number) {
     if (q.kind !== 'mcq' || selected !== null) return;
-    setSelected(i);
-    if (i === q.correct) {
+    setSelected(origIdx);
+    if (origIdx === q.correct) {
       celebrateCorrect();
       toast.success('תשובה נכונה! 🎯', { duration: 1500 });
     } else {
@@ -68,15 +76,16 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
       {/* MCQ options */}
       {q.kind === 'mcq' && (
         <div className="space-y-2">
-          {q.answers.map((ans, i) => {
+          {mcqOrder.map((origIdx, i) => {
+            const ans = q.answers[origIdx];
             const show = selected !== null;
-            const isCorrect = i === q.correct;
-            const isSelected = selected === i;
+            const isCorrect = origIdx === q.correct;
+            const isSelected = selected === origIdx;
             return (
               <motion.button
-                key={i}
+                key={origIdx}
                 {...buttonTap}
-                onClick={() => pickMCQ(i)}
+                onClick={() => pickMCQ(origIdx)}
                 disabled={selected !== null}
                 className={`w-full text-right px-4 py-2.5 rounded-xl border transition-colors chat-md text-sm ${
                   show && isCorrect
