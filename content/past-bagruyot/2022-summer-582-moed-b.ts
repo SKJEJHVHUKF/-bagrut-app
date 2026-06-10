@@ -167,6 +167,30 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
       'נתון: $\\;|\\vec u| = |\\vec v| = |\\vec w|$, $\\;\\angle AOB = \\angle BOC = \\angle COA = 90°$.',
       'הנקודה $H$ מקיימת $\\;\\vec{OH} = t\\vec u + s\\vec v + k\\vec w\\;$ ($s, t, k$ פרמטרים), ו-$\\vec{OH}$ מאונך לבסיס $ABC$.',
     ].join('\n'),
+    diagrams: [
+      {
+        type: 'custom',
+        viewBox: '0 0 220 200',
+        svg: `
+          <polygon points="48,152 108,182 176,146" fill="rgba(56,189,248,0.06)" stroke="rgba(226,232,240,0.8)" stroke-width="1.4"/>
+          <line x1="110" y1="35" x2="48" y2="152" stroke="rgba(226,232,240,0.8)" stroke-width="1.3"/>
+          <line x1="110" y1="35" x2="108" y2="182" stroke="rgba(226,232,240,0.8)" stroke-width="1.3"/>
+          <line x1="110" y1="35" x2="176" y2="146" stroke="rgba(226,232,240,0.8)" stroke-width="1.3"/>
+          <line x1="110" y1="35" x2="111" y2="160" stroke="rgba(244,114,182,0.9)" stroke-width="1.4" stroke-dasharray="4 3"/>
+          <circle cx="110" cy="35" r="2.8" fill="rgba(244,114,182,0.95)"/>
+          <circle cx="48" cy="152" r="2.6" fill="rgba(226,232,240,0.95)"/>
+          <circle cx="108" cy="182" r="2.6" fill="rgba(226,232,240,0.95)"/>
+          <circle cx="176" cy="146" r="2.6" fill="rgba(226,232,240,0.95)"/>
+          <circle cx="111" cy="160" r="2.4" fill="rgba(56,189,248,0.95)"/>
+          <text x="113" y="32" fill="#f472b6" font-size="12" font-weight="bold" font-family="Heebo, sans-serif">O</text>
+          <text x="36" y="156" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">A</text>
+          <text x="102" y="195" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">B</text>
+          <text x="180" y="148" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">C</text>
+          <text x="115" y="170" fill="#38bdf8" font-size="10" font-weight="bold" font-family="Heebo, sans-serif">M</text>
+        `,
+        caption: 'הפירמידה האורתוגונלית $OABC$: שלוש המקצועות $\\vec u,\\vec v,\\vec w$ ניצבות הדדית מ-$O$, ו-$M$ מרכז הכובד של הבסיס $ABC$ (רגל הגובה $OM$).',
+      },
+    ],
     parts: [
       {
         label: 'א',
@@ -178,14 +202,13 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'נסמן $|\\vec u|^2 = |\\vec v|^2 = |\\vec w|^2 = q$. $\\;\\vec u\\cdot\\vec v = \\vec v\\cdot\\vec w = \\vec u\\cdot\\vec w = 0$ (זוויות $90°$).',
-            '$\\vec{AB} = \\vec v - \\vec u$. $\\;\\vec{OH}\\cdot\\vec{AB} = 0$:',
-            '$\\;(t\\vec u + s\\vec v + k\\vec w)\\cdot(\\vec v - \\vec u) = -t\\,q + s\\,q + 0 = q(s - t) = 0 \\Rightarrow s = t$.',
-            '$\\vec{BC} = \\vec w - \\vec v$. $\\;\\vec{OH}\\cdot\\vec{BC} = 0$:',
-            '$\\;(t\\vec u + s\\vec v + k\\vec w)\\cdot(\\vec w - \\vec v) = -s\\,q + k\\,q = q(k - s) = 0 \\Rightarrow k = s$.',
-            'אז $t = s = k$. ⬛',
+            'תכונות: $\\vec u\\cdot\\vec v = \\vec v\\cdot\\vec w = \\vec u\\cdot\\vec w = 0$ (זוויות $90°$), ו-$|\\vec u|^2 = |\\vec v|^2 = |\\vec w|^2$',
+            '$\\vec{OH}\\perp$ בסיס, אז $\\vec{OH}\\cdot\\vec{AB}=0$ ו-$\\vec{OH}\\cdot\\vec{AC}=0$',
+            '$\\vec{AB} = \\vec v - \\vec u$: $\\;(t\\vec u+s\\vec v+k\\vec w)\\cdot(\\vec v-\\vec u) = -t|\\vec u|^2 + s|\\vec v|^2 = 0 \\Rightarrow t=s$',
+            '$\\vec{AC} = \\vec w - \\vec u$: $\\;(t\\vec u+s\\vec v+k\\vec w)\\cdot(\\vec w-\\vec u) = -t|\\vec u|^2 + k|\\vec w|^2 = 0 \\Rightarrow t=k$',
+            '$t = s = k$',
           ],
-          final_answer: 'הוכח: $\\;t = s = k$.',
+          final_answer: 'הוכח: $\\;t = s = k$',
         },
       },
       {
@@ -201,13 +224,14 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'מרכז כובד: $\\;\\vec{OM} = \\tfrac{1}{3}(\\vec{OA}+\\vec{OB}+\\vec{OC}) = \\tfrac{1}{3}\\vec u + \\tfrac{1}{3}\\vec v + \\tfrac{1}{3}\\vec w$.',
-            'מסעיף א: $\\vec{OH} = t(\\vec u + \\vec v + \\vec w)$ — בכיוון $\\vec u + \\vec v + \\vec w$, ומאונך למישור $ABC$.',
-            '$\\vec{OM} = \\tfrac{1}{3}(\\vec u + \\vec v + \\vec w)$ — באותו כיוון בדיוק.',
-            'אז $\\vec{OM}\\parallel\\vec{OH}$, ולכן $\\vec{OM}$ מאונך למישור $ABC$.',
-            '$M$ נמצא במישור $ABC$, ו-$\\vec{OM}$ מאונך למישור $\\Rightarrow OM$ הוא גובה הפירמידה לבסיס $ABC$. ⬛',
+            '$M$ מרכז כובד: $\\;\\vec{AM} = \\dfrac23\\vec{AD}$ ($D$ אמצע $BC$)',
+            '$\\vec{OM} = \\vec{OA} + \\dfrac23\\vec{AD} = \\vec{OA} + \\dfrac23\\left(\\vec{AB} + \\dfrac12\\vec{BC}\\right)$',
+            '$\\vec{AB} = \\vec v - \\vec u$, $\\;\\vec{BC} = \\vec w - \\vec v$',
+            '$\\vec{OM} = \\vec u + \\dfrac23\\left((\\vec v-\\vec u) + \\dfrac12(\\vec w-\\vec v)\\right) = \\vec u + \\dfrac23\\left(\\dfrac12\\vec v + \\dfrac12\\vec w - \\vec u\\right)$',
+            '$\\vec{OM} = \\dfrac13\\vec u + \\dfrac13\\vec v + \\dfrac13\\vec w$',
+            'זה בכיוון $\\vec u+\\vec v+\\vec w$ — אותו כיוון של $\\vec{OH}$ (מסעיף א) המאונך לבסיס; ו-$M$ בבסיס, לכן $OM$ הוא הגובה',
           ],
-          final_answer: 'הוכח: $\\vec{OM} = \\tfrac{1}{3}(\\vec u+\\vec v+\\vec w)$ ו-$OM$ הוא הגובה לבסיס.',
+          final_answer: 'הוכח: $\\vec{OM} = \\dfrac13(\\vec u+\\vec v+\\vec w)$, ו-$OM\\perp$ בסיס → גובה',
         },
       },
       {
@@ -223,13 +247,13 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'נסמן $\\vec{OP} = \\lambda(\\vec u + \\vec v + \\vec w)$. גובה מ-$O$ לבסיס: $h_O = |\\vec{OM}|$.',
-            'נקודה $M$ ($\\lambda = \\tfrac{1}{3}$) על המישור — גובה $0$. נקודה כללית $P$ במרחק $|1 - 3\\lambda|\\cdot|\\vec{OM}|$ מן המישור.',
-            'תנאי: $\\;|1 - 3\\lambda| = 2 \\Rightarrow 1 - 3\\lambda = \\pm 2 \\Rightarrow \\lambda = 1$ או $\\lambda = -\\tfrac{1}{3}$.',
-            'שתי אפשרויות: $\\;\\vec{OP} = \\vec u + \\vec v + \\vec w\\;$ (מעבר ל-$M$, מרחוק $2|OM|$), או $\\;\\vec{OP} = -\\tfrac{1}{3}(\\vec u + \\vec v + \\vec w)$ (בצד הנגדי של $O$, השתקפות של $M$).',
+            '$P$ על $\\ell$, אז $\\vec{OP} = \\lambda(\\vec u+\\vec v+\\vec w)$. אותו בסיס $ABC$ → יחס הנפחים = יחס הגבהים',
+            'נפח $PABC = 2\\times$ נפח $OABC$ → המרחק מ-$P$ לבסיס פי $2$ מהמרחק של $O$ ($|OM|$)',
+            'אפשרות 1 ($P$ בצד $O$): $\\;\\vec{OP} = -\\vec{OM} = -\\dfrac13(\\vec u+\\vec v+\\vec w)$',
+            'אפשרות 2 ($P$ בצד הנגדי): $\\;\\vec{OP} = 3\\vec{OM} = \\vec u+\\vec v+\\vec w$',
           ],
           final_answer:
-            '$\\vec{OP} = \\vec u + \\vec v + \\vec w\\;$ או $\\;\\vec{OP} = -\\tfrac{1}{3}(\\vec u + \\vec v + \\vec w)$.',
+            '$\\vec{OP} = -\\dfrac13(\\vec u+\\vec v+\\vec w)$ או $\\;\\vec{OP} = \\vec u+\\vec v+\\vec w$',
         },
       },
       {
@@ -245,10 +269,11 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '$\\vec u + \\vec v + \\vec w = (a,\\,a,\\,a) \\parallel (1,\\,1,\\,1)$.',
-            '$\\ell$ עובר ב-$O = (0,0,0)$ בכיוון $(1,1,1)$.',
+            '$A(a,0,0)$, $B(0,a,0)$, $C(0,0,a)$, אז $\\vec u=(a,0,0)$, $\\vec v=(0,a,0)$, $\\vec w=(0,0,a)$',
+            '$\\ell$ דרך $O$ בכיוון $\\vec{OM} = \\dfrac13(\\vec u+\\vec v+\\vec w) = \\left(\\dfrac a3,\\dfrac a3,\\dfrac a3\\right)$',
+            '$X = t\\left(\\dfrac a3,\\dfrac a3,\\dfrac a3\\right)$, או באופן שקול $X = t(1,1,1)$',
           ],
-          final_answer: 'הצגה פרמטרית: $\\;(x,\\,y,\\,z) = s(1,\\,1,\\,1)$, $\\;s \\in \\mathbb{R}$.',
+          final_answer: 'הצגה פרמטרית: $\\;(x,y,z) = t(1,1,1)$',
         },
       },
       {
@@ -260,26 +285,29 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'מישור $ABC$ חותך את שלושת הצירים בנקודות $(a,0,0)$, $(0,a,0)$, $(0,0,a)$.',
-            'צורת חיתוכים: $\\;\\dfrac{x}{a} + \\dfrac{y}{a} + \\dfrac{z}{a} = 1 \\Rightarrow x + y + z = a$.',
+            'הנורמל למישור הוא כיוון $\\vec{OM}$: $\\;(1,1,1)$',
+            'משוואת מישור: $\\;x + y + z + d = 0$',
+            'עובר דרך $A(a,0,0)$: $\\;a + 0 + 0 + d = 0 \\Rightarrow d = -a$',
+            '$x + y + z - a = 0$',
           ],
-          final_answer: 'משוואת המישור: $\\;x + y + z = a$.',
+          final_answer: 'משוואת המישור: $\\;x + y + z - a = 0$',
         },
       },
       {
         label: 'ו',
-        prompt: 'נתון כי נפח הפירמידה $OABC$ הוא $\\;20\\tfrac{5}{6}$. חשב את $a$.',
+        prompt: 'נתון כי נפח הפירמידה $OABC$ הוא $\\;57\\tfrac{1}{6}$. חשב את $a$.',
         answer_type: 'number',
         hints: [
-          'הפירמידה היא טטראדר אורתוגונלי — שלוש מקצועות ניצבות שיוצאות מ-$O$ באורך $a$ כל אחת.',
-          'נפח טטראדר עם שלוש מקצועות ניצבות באורך $a$: $V = \\tfrac{1}{6}a^3$ (אפשר לראות זאת כ-$\\tfrac{1}{3}\\cdot$ "בסיס" משולש ישר-זווית $\\tfrac{a^2}{2}\\cdot$ גובה $a$).',
+          'הפירמידה היא טטראדר אורתוגונלי — שלוש מקצועות ניצבות מ-$O$ באורך $a$ כל אחת.',
+          'נפח טטראדר כזה: $V = \\frac16 a^3$.',
         ],
         solution: {
           steps: [
-            'נפח הטטראדר עם שלוש מקצועות ניצבות באורך $a$ מ-$O$: $\\;V = \\tfrac{1}{6}\\,a^3$.',
-            '$20\\tfrac{5}{6} = \\tfrac{125}{6}$. הצב: $\\;\\tfrac{1}{6}a^3 = \\tfrac{125}{6} \\Rightarrow a^3 = 125 \\Rightarrow a = 5$.',
+            'הפירמידה טטראדר אורתוגונלי — שלוש מקצועות ניצבות מ-$O$ באורך $a$',
+            'נפח: $\\;V = \\dfrac16 a^3$',
+            '$57\\tfrac16 = \\dfrac{343}{6}$, אז $\\;\\dfrac16 a^3 = \\dfrac{343}{6} \\Rightarrow a^3 = 343 \\Rightarrow a = 7$',
           ],
-          final_answer: '$a = 5$.',
+          final_answer: '$a = 7$',
         },
       },
     ],
