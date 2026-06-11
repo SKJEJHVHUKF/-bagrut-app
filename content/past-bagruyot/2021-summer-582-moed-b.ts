@@ -190,8 +190,8 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
     topic: 'וקטורים במרחב',
     totalPoints: 33,
     context: [
-      '(קיץ תשפ"א, מועד ב\') במשולש $ABC$: הנקודה $D$ היא אמצע הצלע $AB$, והנקודה $E$ על הצלע $AC$ כך ש-$AE:EC = 2:1$.',
-      'הקטעים $BE$ ו-$CD$ נחתכים בנקודה $F$. נסמן $\\;\\vec{CA} = \\vec{u}$, $\\;\\vec{CB} = \\vec{v}$.',
+      '(קיץ תשפ"א, מועד ב\') במשולש $ABC$ (ראה סרטוט): הנקודה $D$ היא אמצע הצלע $AB$, והנקודה $E$ מחלקת את הצלע $AC$ ביחס $AE:EC = 2:1$.',
+      'הנקודה $F$ היא מפגש הקטעים $BE$ ו-$CD$. נסמן $\\;\\vec{CA} = \\vec{u}$, $\\;\\vec{CB} = \\vec{v}$, וכן $\\;\\vec{CF} = k\\,\\vec{CD}$, $\\;\\vec{BF} = t\\,\\vec{BE}$.',
     ].join('\n'),
     diagrams: [
       {
@@ -219,78 +219,76 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
     ],
     parts: [
       {
-        label: 'א1',
-        prompt: 'הבע את הווקטורים $\\;\\vec{CD}\\;$ ו-$\\;\\vec{CE}\\;$ באמצעות $\\vec{u}$ ו-$\\vec{v}$.',
+        label: 'א',
+        prompt: 'מצא את $t$ ואת $k$.',
         answer_type: 'expression',
         hints: [
-          '$D$ אמצע $AB$, לכן $\\vec{CD}$ הוא הממוצע של $\\vec{CA}$ ו-$\\vec{CB}$.',
-          '$AE:EC = 2:1$ אומר ש-$E$ מחלק את $AC$ כך ש-$\\vec{CE} = \\tfrac{1}{3}\\vec{CA}$.',
+          'בטא את $\\vec{BF}$ בשתי דרכים: דרך הישר $BE$ ($\\vec{BF} = t\\,\\vec{BE}$), ודרך $\\;\\vec{BF} = \\vec{BC} + \\vec{CF} = \\vec{BC} + k\\,\\vec{CD}$.',
+          'השתמש ב-$\\vec{CE} = \\tfrac{1}{3}\\vec{u}$ (כי $AE:EC=2:1$) וב-$\\vec{CD} = \\tfrac{1}{2}(\\vec{u}+\\vec{v})$ ($D$ אמצע). השווה את מקדמי $\\vec{u}$ ו-$\\vec{v}$ ופתור.',
         ],
         solution: {
           steps: [
-            '$D$ אמצע $AB$: $\\;\\vec{CD} = \\tfrac{1}{2}\\bigl(\\vec{CA} + \\vec{CB}\\bigr) = \\tfrac{1}{2}(\\vec{u} + \\vec{v})$.',
-            '$AE:EC = 2:1$, כלומר $EC = \\tfrac{1}{3}AC$, ולכן $\\;\\vec{CE} = \\tfrac{1}{3}\\vec{CA} = \\tfrac{1}{3}\\vec{u}$.',
+            'נבטא את $\\vec{BF}$ בשתי דרכים ונשווה.',
+            'דרך $BE$: $\\;\\vec{BF} = t\\,\\vec{BE} = t(\\vec{BC} + \\vec{CE}) = t\\bigl(-\\vec{v} + \\tfrac{1}{3}\\vec{u}\\bigr) = \\tfrac{t}{3}\\vec{u} - t\\vec{v}$',
+            'דרך $CD$: $\\;\\vec{BF} = \\vec{BC} + \\vec{CF} = -\\vec{v} + k\\,\\vec{CD} = -\\vec{v} + k\\bigl(\\vec{CA} + \\vec{AD}\\bigr)$',
+            '$= -\\vec{v} + k\\bigl(\\vec{u} + \\tfrac{1}{2}(\\vec{AC} + \\vec{CB})\\bigr) = -\\vec{v} + k\\bigl(\\vec{u} - \\tfrac{1}{2}\\vec{u} + \\tfrac{1}{2}\\vec{v}\\bigr) = \\tfrac{k}{2}\\vec{u} + \\bigl(\\tfrac{k}{2} - 1\\bigr)\\vec{v}$',
+            'נשווה: $\\;\\tfrac{t}{3}\\vec{u} - t\\vec{v} = \\tfrac{k}{2}\\vec{u} + \\bigl(\\tfrac{k}{2} - 1\\bigr)\\vec{v}$',
+            '$\\vec{u}$ ו-$\\vec{v}$ בלתי-תלויים, לכן נשווה מקדמים:',
+            '$\\begin{cases} \\tfrac{t}{3} = \\tfrac{k}{2} \\\\ -t = \\tfrac{k}{2} - 1 \\end{cases} \\;\\Rightarrow\\; \\begin{cases} t = \\tfrac{3k}{2} \\\\ t = 1 - \\tfrac{k}{2} \\end{cases}$',
+            '$\\tfrac{3k}{2} = 1 - \\tfrac{k}{2} \\;\\Rightarrow\\; 2k = 1 \\;\\Rightarrow\\; k = \\tfrac{1}{2}$',
+            '$t = \\tfrac{3}{2}\\cdot\\tfrac{1}{2} = \\tfrac{3}{4}$',
           ],
-          final_answer: '$\\vec{CD} = \\tfrac{1}{2}(\\vec{u} + \\vec{v})$, $\\;\\vec{CE} = \\tfrac{1}{3}\\vec{u}$.',
+          final_answer: '$t = \\tfrac{3}{4}\\,,\\quad k = \\tfrac{1}{2}$.',
         },
       },
       {
-        label: 'א2',
-        prompt:
-          'הבע את $\\;\\vec{CF}\\;$ באמצעות $\\vec{u}$ ו-$\\vec{v}$, ומצא באיזה יחס מחלקת הנקודה $F$ את הקטע $CD$.',
-        answer_type: 'expression',
-        hints: [
-          'כתוב $\\vec{CF}$ בשתי דרכים: פעם על הישר $CD$ ($\\vec{CF} = k\\,\\vec{CD}$) ופעם על הישר $BE$ ($\\vec{CF} = \\vec{CB} + t\\,\\vec{BE}$).',
-          '$\\vec{BE} = \\vec{CE} - \\vec{CB} = \\tfrac{1}{3}\\vec{u} - \\vec{v}$. השווה את מקדמי $\\vec{u}$ ואת מקדמי $\\vec{v}$ בשני הביטויים.',
-        ],
-        solution: {
-          steps: [
-            'על הישר $CD$: $\\;\\vec{CF} = k\\,\\vec{CD} = \\tfrac{k}{2}(\\vec{u} + \\vec{v})$.',
-            'על הישר $BE$: $\\;\\vec{CF} = \\vec{CB} + t\\,\\vec{BE} = \\vec{v} + t\\bigl(\\tfrac{1}{3}\\vec{u} - \\vec{v}\\bigr) = \\tfrac{t}{3}\\vec{u} + (1 - t)\\vec{v}$.',
-            'נשווה מקדמים. מקדם $\\vec{u}$: $\\;\\tfrac{k}{2} = \\tfrac{t}{3}$. מקדם $\\vec{v}$: $\\;\\tfrac{k}{2} = 1 - t$.',
-            'מהשוואת האגפים הימניים: $\\;\\tfrac{t}{3} = 1 - t \\Rightarrow t = 3 - 3t \\Rightarrow 4t = 3 \\Rightarrow t = \\tfrac{3}{4}$.',
-            'אז $\\;\\tfrac{k}{2} = 1 - \\tfrac{3}{4} = \\tfrac{1}{4} \\Rightarrow k = \\tfrac{1}{2}$. לכן $\\;\\vec{CF} = \\tfrac{1}{2}\\vec{CD} = \\tfrac{1}{4}(\\vec{u} + \\vec{v})$.',
-            '$k = \\tfrac{1}{2}$ פירושו $F$ אמצע $CD$, כלומר $CF:FD = 1:1$.',
-          ],
-          final_answer: '$\\vec{CF} = \\tfrac{1}{4}(\\vec{u} + \\vec{v}) = \\tfrac{1}{2}\\vec{CD}$; היחס $CF:FD = 1:1$.',
-        },
-      },
-      {
-        label: 'ב1',
+        label: 'ב',
         prompt: [
-          'כעת נתון מערכת צירים במרחב והמישור $\\;4x + 2y + z - 12 = 0$, החותך את הצירים בנקודות $A$, $B$, $C$.',
-          'הנקודה $A$ על ציר ה-$x$, הנקודה $B$ על ציר ה-$z$, והנקודה $C$ על ציר ה-$y$. מצא את שלוש הנקודות.',
+          'המשולש $ABC$ נמצא במישור $\\;4x + 2y + z - 12 = 0$, החותך את ציר ה-$x$ בנקודה $A$, את ציר ה-$y$ בנקודה $C$, ואת ציר ה-$z$ בנקודה $B$. הנקודה $O$ היא ראשית הצירים.',
+          'מצא את שיעורי הנקודות $E$ ו-$F$.',
         ].join('\n'),
         answer_type: 'expression',
         hints: [
-          'נקודה על ציר $x$: $y = z = 0$. הצב במשוואת המישור.',
-          'באותו אופן עבור הצירים האחרים — בכל פעם שני קואורדינטות שוות לאפס.',
+          'מצא קודם את $A$, $B$, $C$ — חיתוכי המישור עם הצירים (בכל ציר שתי הקואורדינטות האחרות שוות $0$).',
+          '$E = A + \\tfrac{2}{3}(C - A)$ (כי $AE:EC = 2:1$). את $F$ מצא לפי $\\vec{BF} = \\tfrac{3}{4}\\vec{BE}$ (מ-$t$ שמצאת): $\\;F = B + \\tfrac{3}{4}(E - B)$.',
+        ],
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 230 180',
+            svg: `
+              <polygon points="35,150 90,30 195,150" fill="rgba(168,85,247,0.08)" stroke="rgba(226,232,240,0.85)" stroke-width="1.6"/>
+              <line x1="90" y1="30" x2="141.67" y2="150" stroke="rgba(244,114,182,0.95)" stroke-width="1.4"/>
+              <line x1="195" y1="150" x2="62.5" y2="90" stroke="rgba(244,114,182,0.95)" stroke-width="1.4"/>
+              <circle cx="35" cy="150" r="3" fill="rgba(251,191,36,0.95)"/>
+              <circle cx="90" cy="30" r="3" fill="rgba(251,191,36,0.95)"/>
+              <circle cx="195" cy="150" r="3" fill="rgba(251,191,36,0.95)"/>
+              <circle cx="62.5" cy="90" r="2.6" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="141.67" cy="150" r="2.6" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="128.75" cy="120" r="2.6" fill="rgba(244,114,182,0.95)"/>
+              <text x="2" y="163" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">A(3,0,0)</text>
+              <text x="62" y="22" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">B(0,0,12)</text>
+              <text x="166" y="164" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">C(0,6,0)</text>
+              <text x="47" y="88" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">D</text>
+              <text x="146" y="163" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">E</text>
+              <text x="132" y="116" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">F</text>
+            `,
+            caption: 'המשולש עם שיעורי הקודקודים: $A(3,0,0)$, $B(0,0,12)$, $C(0,6,0)$. $D$ אמצע $AB$, $E$ על $AC$, ו-$F$ מפגש $BE$ ו-$CD$.',
+          },
         ],
         solution: {
           steps: [
-            'ציר $x$ ($y=z=0$): $\\;4x - 12 = 0 \\Rightarrow x = 3$, אז $A = (3,\\,0,\\,0)$.',
-            'ציר $z$ ($x=y=0$): $\\;z - 12 = 0 \\Rightarrow z = 12$, אז $B = (0,\\,0,\\,12)$.',
-            'ציר $y$ ($x=z=0$): $\\;2y - 12 = 0 \\Rightarrow y = 6$, אז $C = (0,\\,6,\\,0)$.',
+            'נמצא את חיתוכי המישור עם הצירים.',
+            'ציר $x$ ($y=z=0$): $\\;4x - 12 = 0 \\;\\Rightarrow\\; x = 3$, אז $A = (3,\\,0,\\,0)$.',
+            'ציר $y$ ($x=z=0$): $\\;2y - 12 = 0 \\;\\Rightarrow\\; y = 6$, אז $C = (0,\\,6,\\,0)$.',
+            'ציר $z$ ($x=y=0$): $\\;z - 12 = 0 \\;\\Rightarrow\\; z = 12$, אז $B = (0,\\,0,\\,12)$.',
+            '$E$ על $AC$ עם $AE:EC = 2:1$: $\\;E = A + \\tfrac{2}{3}(C - A) = (3,0,0) + \\tfrac{2}{3}(-3,\\,6,\\,0)$',
+            '$E = (3,0,0) + (-2,\\,4,\\,0) = (1,\\,4,\\,0)$',
+            'את $F$ נמצא לפי $\\;\\vec{BF} = \\tfrac{3}{4}\\vec{BE}$ (כי $t = \\tfrac{3}{4}$): $\\;F = B + \\tfrac{3}{4}(E - B)$',
+            '$F = (0,0,12) + \\tfrac{3}{4}\\bigl((1,4,0) - (0,0,12)\\bigr) = (0,0,12) + \\tfrac{3}{4}(1,\\,4,\\,-12)$',
+            '$F = (0,0,12) + \\bigl(\\tfrac{3}{4},\\,3,\\,-9\\bigr) = \\bigl(\\tfrac{3}{4},\\,3,\\,3\\bigr)$',
           ],
-          final_answer: '$A = (3,0,0)$, $\\;B = (0,0,12)$, $\\;C = (0,6,0)$.',
-        },
-      },
-      {
-        label: 'ב2',
-        prompt:
-          'באותה חלוקה כמו בתחילת השאלה ($D$ אמצע $AB$, $\\;AE:EC = 2:1$, $\\;F$ אמצע $CD$), מצא את הקואורדינטות של $D$, $E$ ו-$F$.',
-        answer_type: 'expression',
-        hints: [
-          '$D$ אמצע $AB$: ממוצע הקואורדינטות. $E = A + \\tfrac{2}{3}(C - A)$ כי $AE:EC = 2:1$.',
-          '$F$ אמצע $CD$ (מסעיף א2): ממוצע $C$ ו-$D$.',
-        ],
-        solution: {
-          steps: [
-            '$D$ אמצע $AB$: $\\;D = \\tfrac{1}{2}\\bigl((3,0,0) + (0,0,12)\\bigr) = \\bigl(\\tfrac{3}{2},\\,0,\\,6\\bigr)$.',
-            '$E$ על $AC$ עם $AE:EC = 2:1$: $\\;E = A + \\tfrac{2}{3}(C - A) = (3,0,0) + \\tfrac{2}{3}(-3,6,0) = (1,\\,4,\\,0)$.',
-            '$F$ אמצע $CD$: $\\;F = \\tfrac{1}{2}\\bigl((0,6,0) + (\\tfrac{3}{2},0,6)\\bigr) = \\bigl(\\tfrac{3}{4},\\,3,\\,3\\bigr)$.',
-          ],
-          final_answer: '$D = (\\tfrac{3}{2},0,6)$, $\\;E = (1,4,0)$, $\\;F = (\\tfrac{3}{4},3,3)$.',
+          final_answer: '$E = (1,\\,4,\\,0)\\,,\\quad F = \\bigl(\\tfrac{3}{4},\\,3,\\,3\\bigr)$.',
         },
       },
       {
@@ -298,33 +296,41 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
         prompt: 'מצא את משוואת המישור העובר דרך הנקודות $A$, $O$ (ראשית הצירים) ו-$E$.',
         answer_type: 'expression',
         hints: [
-          'בדוק את הקואורדינטה השלישית (רכיב $z$) של שלוש הנקודות.',
-          'אם לכל שלוש הנקודות $z = 0$, המישור הוא פשוט מישור ה-$xy$.',
+          'המישור עובר דרך $O$, לכן ניתן לכתוב אותו פרמטרית: $\\;\\vec{X} = r\\,\\vec{OA} + s\\,\\vec{OE}$.',
+          'מצא וקטור נורמל $\\vec{n} = (a,b,c)$ הניצב גם ל-$\\vec{OA}$ וגם ל-$\\vec{OE}$ (שתי מכפלות סקלריות $= 0$).',
         ],
         solution: {
           steps: [
-            '$A = (3,0,0)$, $\\;O = (0,0,0)$, $\\;E = (1,4,0)$ — לכל השלוש רכיב $z = 0$.',
-            'שלוש נקודות עם $z = 0$ קובעות את מישור ה-$xy$.',
+            'הנקודות: $\\;O = (0,0,0)\\,,\\; A = (3,0,0)\\,,\\; E = (1,4,0)$.',
+            'המישור עובר דרך הראשית — נכתוב אותו פרמטרית עם וקטורי הכיוון $\\vec{OA}$ ו-$\\vec{OE}$: $\\;\\vec{X} = r\\,(3,0,0) + s\\,(1,4,0)$.',
+            'נחפש וקטור נורמל $\\vec{n} = (a,b,c)$ הניצב לשני וקטורי הכיוון:',
+            '$\\begin{cases} (a,b,c)\\cdot(3,0,0) = 0 \\\\ (a,b,c)\\cdot(1,4,0) = 0 \\end{cases} \\;\\Rightarrow\\; \\begin{cases} 3a = 0 \\\\ a + 4b = 0 \\end{cases} \\;\\Rightarrow\\; a = 0\\,,\\; b = 0$',
+            'נבחר $c = 1$, אז $\\vec{n} = (0,0,1)$. המישור עובר דרך $O$:',
+            '$0\\cdot x + 0\\cdot y + 1\\cdot z = 0 \\;\\Rightarrow\\; z = 0$',
           ],
-          final_answer: 'משוואת המישור: $\\;z = 0$ (מישור ה-$xy$).',
+          final_answer: 'משוואת המישור $AOE$ היא $\\;z = 0$.',
         },
       },
       {
         label: 'ד',
-        prompt: 'חשב את נפח הפירמידה שקודקודיה $A$, $O$, $E$ ו-$F$.',
+        prompt: 'מצא את נפח הפירמידה $FAOE$.',
         answer_type: 'number',
         hints: [
-          'הבסיס $AOE$ נמצא במישור $z = 0$ — חשב את שטחו כמשולש במישור.',
-          'הגובה הוא המרחק מ-$F$ אל מישור הבסיס $z = 0$, כלומר $|z_F|$. נפח פירמידה $= \\tfrac{1}{3} \\cdot S \\cdot h$, כאשר $S$ שטח הבסיס ו-$h$ הגובה.',
+          'הבסיס $AOE$ נמצא במישור $z = 0$. חשב את שטחו דרך הזווית: $\\;S = \\tfrac{1}{2}\\,|\\vec{OA}|\\,|\\vec{OE}|\\,\\sin(\\angle AOE)$.',
+          'הגובה הוא המרחק מ-$F$ אל מישור הבסיס $z = 0$, כלומר $|z_F|$. נפח $= \\tfrac{1}{3}\\,S\\cdot h$.',
         ],
         solution: {
           steps: [
-            'הבסיס: משולש $AOE$ במישור $z = 0$, עם $O = (0,0)$, $A = (3,0)$, $E = (1,4)$.',
-            'שטח: $\\;S = \\tfrac{1}{2}\\,|x_A\\, y_E - x_E\\, y_A| = \\tfrac{1}{2}\\,|3\\cdot 4 - 1\\cdot 0| = 6$.',
-            'הגובה מ-$F = (\\tfrac{3}{4},3,3)$ אל המישור $z = 0$: $\\;h = |z_F| = 3$.',
-            'נפח: $\\;V = \\tfrac{1}{3}\\cdot S \\cdot h = \\tfrac{1}{3}\\cdot 6 \\cdot 3 = 6$.',
+            'הבסיס הוא המשולש $AOE$ במישור $z = 0$. נחשב את שטחו דרך הזווית $\\angle AOE$.',
+            '$|\\vec{OA}| = 3$',
+            '$|\\vec{OE}| = \\sqrt{1^2 + 4^2} = \\sqrt{17}$',
+            '$\\cos(\\angle AOE) = \\dfrac{\\vec{OA}\\cdot\\vec{OE}}{|\\vec{OA}|\\,|\\vec{OE}|} = \\dfrac{(3,0,0)\\cdot(1,4,0)}{3\\sqrt{17}} = \\dfrac{3}{3\\sqrt{17}} = \\dfrac{1}{\\sqrt{17}}$',
+            '$\\sin(\\angle AOE) = \\sqrt{1 - \\tfrac{1}{17}} = \\dfrac{4}{\\sqrt{17}} \\quad (\\angle AOE \\approx 75.96°)$',
+            '$S_{AOE} = \\tfrac{1}{2}\\,|\\vec{OA}|\\,|\\vec{OE}|\\,\\sin(\\angle AOE) = \\tfrac{1}{2}\\cdot 3\\cdot\\sqrt{17}\\cdot\\dfrac{4}{\\sqrt{17}} = 6$',
+            'הגובה: המרחק מ-$F = \\bigl(\\tfrac{3}{4},3,3\\bigr)$ אל מישור הבסיס $z = 0$ הוא $\\;d = |z_F| = 3$.',
+            '$V_{FAOE} = \\dfrac{S_{AOE}\\cdot d}{3} = \\dfrac{6\\cdot 3}{3} = 6$',
           ],
-          final_answer: 'נפח הפירמידה $V = 6$.',
+          final_answer: 'נפח הפירמידה $\\;V_{FAOE} = 6$.',
         },
       },
     ],
