@@ -395,26 +395,34 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '$\\dfrac{z}{\\bar z} = \\text{cis}(2\\alpha) = -\\tfrac{1}{2}+\\tfrac{\\sqrt 3}{2}i = \\text{cis}(120°)$.',
-            '$2\\alpha = 120° + 360°k \\Rightarrow \\alpha = 60° + 180°k$.',
-            'הערכים: $\\alpha = 60°$ (רביע ראשון) או $\\alpha = 240°$ (רביע שלישי).',
-            'נתון שב-$\\alpha$ ברביע שלישי: $\\;\\alpha = 240°$.',
+            'נכתוב את $z$ ואת הצמוד שלו בצורה קוטבית: $\\;z = R\\,\\text{cis}\\,\\alpha$, $\\;\\bar z = R\\,\\text{cis}(-\\alpha)$.',
+            'חילוק בצורה קוטבית — מחסירים את הזוויות: $\\;\\dfrac{z}{\\bar z} = \\dfrac{R\\,\\text{cis}\\,\\alpha}{R\\,\\text{cis}(-\\alpha)} = \\text{cis}\\bigl(\\alpha-(-\\alpha)\\bigr) = \\text{cis}(2\\alpha)$.',
+            'הצד הימני בצורה קוטבית: $\\;-\\tfrac{1}{2}+\\tfrac{\\sqrt 3}{2}i = \\text{cis}(120°)$.',
+            'משווים: $\\;\\text{cis}(2\\alpha) = \\text{cis}(120°) \\Rightarrow 2\\alpha = 120° + 360°k$.',
+            'מחלקים ב-$2$: $\\;\\alpha = 60° + 180°k$.',
+            'הערכים האפשריים: $\\alpha = 60°$ (רביע ראשון) או $\\alpha = 240°$ (רביע שלישי).',
+            'נתון ש-$z$ ברביע השלישי ($180°<\\alpha<270°$), ולכן $\\;\\alpha = 240°$.',
           ],
           final_answer: '$\\alpha = 240°$.',
         },
       },
       {
         label: 'ב',
-        prompt: 'נתון: $\\;\\bigl|2iz\\bigr| + \\Bigl|\\dfrac{\\bar z}{i}\\Bigr| - \\Bigl|\\dfrac{z}{\\bar z}\\Bigr| = 8$. מצא את $R$.',
+        prompt: 'נתון: $\\;\\bigl|4iz\\bigr| - \\Bigl|\\dfrac{\\bar z}{i}\\Bigr| - \\Bigl|\\dfrac{z}{\\bar z}\\Bigr| = 8$. מצא את $R$.',
         answer_type: 'number',
         hints: [
-          'מודולים של מכפלה/מנה: $|2iz| = 2|i|\\cdot|z| = 2R$. $\\;|\\bar z/i| = R/1 = R$.',
-          '$|z/\\bar z| = R/R = 1$.',
+          'מודולוס של מכפלה/מנה: $\\;|4iz| = 4|i|\\,|z| = 4R$, $\\;\\left|\\dfrac{\\bar z}{i}\\right| = \\dfrac{R}{1} = R$.',
+          '$\\left|\\dfrac{z}{\\bar z}\\right| = \\dfrac{R}{R} = 1$. הצב במשוואה ופתור עבור $R$.',
         ],
         solution: {
           steps: [
-            '$|2iz| = 2\\cdot 1\\cdot R = 2R$. $\\;\\bigl|\\bar z/i\\bigr| = R$. $\\;\\bigl|z/\\bar z\\bigr| = 1$.',
-            'הצב: $\\;2R + R - 1 = 8 \\Rightarrow 3R = 9 \\Rightarrow R = 3$.',
+            'נציב בצורה קוטבית: $\\;z = R\\,\\text{cis}\\,240°$, $\\;\\bar z = R\\,\\text{cis}(-240°)$, $\\;4i = 4\\,\\text{cis}\\,90°$, $\\;i = \\text{cis}\\,90°$.',
+            'נחשב כל גורם בנפרד (מחברים/מחסירים זוויות): $\\;4iz = 4\\,\\text{cis}\\,90°\\cdot R\\,\\text{cis}\\,240° = 4R\\,\\text{cis}\\,330°$.',
+            '$\\dfrac{\\bar z}{i} = \\dfrac{R\\,\\text{cis}(-240°)}{\\text{cis}\\,90°} = R\\,\\text{cis}(-330°)$.',
+            '$\\dfrac{z}{\\bar z} = \\dfrac{R\\,\\text{cis}\\,240°}{R\\,\\text{cis}(-240°)} = \\text{cis}\\,480°$.',
+            'המודולוס של כל מספר הוא הרדיוס החיובי: $\\;|4R\\,\\text{cis}\\,330°| = 4R$, $\\;|R\\,\\text{cis}(-330°)| = R$, $\\;|\\text{cis}\\,480°| = 1$.',
+            'נציב במשוואה הנתונה: $\\;4R - R - 1 = 8$.',
+            '$3R = 9 \\;\\Rightarrow\\; R = 3$.',
           ],
           final_answer: '$R = 3$.',
         },
@@ -430,13 +438,14 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '$z = 3\\,\\text{cis}(240°)$, ולכן $z^3 = 27\\,\\text{cis}(720°) = 27\\,\\text{cis}(0°) = 27$.',
-            'אז $\\;\\dfrac{z^3}{27} = 1$, והמשוואה הופכת ל-$w^9 = 1$.',
-            'מסעיף א: $\\;\\dfrac{z}{\\bar z} = \\text{cis}(120°)$.',
-            '$\\;\\Bigl(\\dfrac{z}{\\bar z}\\Bigr)^9 = \\text{cis}(120°\\cdot 9) = \\text{cis}(1080°) = \\text{cis}(3\\cdot 360°) = \\text{cis}(0°) = 1$.',
-            'אז $z/\\bar z$ מקיים את המשוואה ולכן הוא פתרון. ⬛',
+            'נציב $z = 3\\,\\text{cis}\\,240°$: $\\;z^3 = 3^3\\,\\text{cis}(3\\cdot 240°) = 27\\,\\text{cis}\\,720°$. ומכיוון ש-$720° = 2\\cdot 360°$: $\\;z^3 = 27\\,\\text{cis}\\,0°$.',
+            'אגף ימין: $\\;\\dfrac{z^3}{27} = \\dfrac{27\\,\\text{cis}\\,0°}{27} = \\text{cis}\\,0°$, אז המשוואה היא $\\;w^9 = \\text{cis}\\,0°$.',
+            'נפתור בהוצאת שורש מסדר $9$: $\\;w_k = \\sqrt[9]{1}\\,\\text{cis}\\dfrac{0° + 360°k}{9} = \\text{cis}(40°k)$, $\\;k = 0,1,\\dots,8$.',
+            'תשעת הפתרונות: $\\;\\text{cis}\\,0°,\\ \\text{cis}\\,40°,\\ \\text{cis}\\,80°,\\ \\text{cis}\\,120°,\\ \\text{cis}\\,160°,\\ \\text{cis}\\,200°,\\ \\text{cis}\\,240°,\\ \\text{cis}\\,280°,\\ \\text{cis}\\,320°$.',
+            'מסעיף א: $\\;\\dfrac{z}{\\bar z} = \\text{cis}\\,120°$.',
+            '$\\text{cis}\\,120°$ הוא בדיוק הפתרון $w_3$ (עבור $k=3$), ולכן $\\dfrac{z}{\\bar z}$ הוא אחד מפתרונות המשוואה. ⬛',
           ],
-          final_answer: 'הוכח: $(z/\\bar z)^9 = 1 = z^3/27$.',
+          final_answer: 'הוכח: $\\dfrac{z}{\\bar z} = \\text{cis}\\,120° = w_3$ — אחד מ-$9$ הפתרונות של $w^9 = \\text{cis}\\,0°$.',
         },
       },
       {
@@ -445,19 +454,46 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
           'המשולש $ABC$ הוא משולש שווה-שוקיים. קודקודי הבסיס $B$ ו-$C$ מתאימים למספרים $\\;\\dfrac{\\bar z}{z}\\;$ ו-$\\;\\dfrac{z}{\\bar z}$.',
           'קודקוד הראש $A$ מתאים למספר $z + k$, כאשר $k$ הוא מספר מדומה טהור. מהו הערך של $k$?',
         ].join('\n'),
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 200 200',
+            svg: `
+              <line x1="15" y1="100" x2="185" y2="100" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="100" y1="15" x2="100" y2="185" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="176" y="96" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">Re</text>
+              <text x="104" y="22" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">Im</text>
+              <polygon points="25,100 75,143.3 75,56.7" fill="rgba(168,85,247,0.10)" stroke="rgba(244,114,182,0.95)" stroke-width="1.6"/>
+              <line x1="25" y1="100" x2="75" y2="100" stroke="rgba(251,191,36,0.7)" stroke-width="1" stroke-dasharray="3 3"/>
+              <rect x="69" y="94" width="6" height="6" fill="none" stroke="rgba(251,191,36,0.85)" stroke-width="1"/>
+              <circle cx="25" cy="100" r="3" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="75" cy="143.3" r="3" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="75" cy="56.7" r="3" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="100" cy="100" r="2.4" fill="rgba(148,163,184,0.9)"/>
+              <text x="13" y="96" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">A</text>
+              <text x="62" y="158" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">B</text>
+              <text x="62" y="52" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">C</text>
+              <text x="103" y="113" fill="#94a3b8" font-size="10" font-weight="bold" font-family="Heebo, sans-serif">O</text>
+            `,
+            caption: 'המשולש שווה-השוקיים $ABC$: הבסיס $BC$ אנכי (על הישר $x=-\\tfrac12$, סימטרי לציר הממשי), והראש $A(-\\tfrac32,0)$ על ציר ה-$x$ — האנך האמצעי ל-$BC$. מכאן $\\text{Im}(A)=0$.',
+          },
+        ],
         answer_type: 'expression',
         hints: [
-          '$z/\\bar z = \\text{cis}(120°)$, $\\bar z/z = \\text{cis}(-120°)$. שתי נקודות סימטריות ביחס לציר הממשי, על מעגל יחידה. הקטע $BC$ אנכי דרך $x = -\\tfrac{1}{2}$.',
-          'במשולש שווה-שוקיים: $A$ על האנך האמצעי ל-$BC$. כאן זה ציר $x$ (ציר ממשי). אז $\\text{Im}(A) = 0$.',
-          'הצב $A = z + k = -\\tfrac{3}{2} - \\tfrac{3\\sqrt 3}{2}i + ic$ ($k = ic$) והשווה את החלק המדומה לאפס.',
+          '$\\bar z/z = \\text{cis}(-120°)$, $\\;z/\\bar z = \\text{cis}(120°)$ — שתי נקודות סימטריות ביחס לציר הממשי, על מעגל היחידה. הקטע $BC$ אנכי, דרך $x = -\\tfrac{1}{2}$.',
+          'במשולש שווה-שוקיים $A$ על האנך האמצעי ל-$BC$. כאן זה ציר ה-$x$ (הממשי), ולכן $\\text{Im}(A) = 0$.',
+          'נסמן $k = t\\,i$ והצב $A = z + t\\,i = -\\tfrac{3}{2} - \\tfrac{3\\sqrt 3}{2}i + t\\,i$, ואז השווה את החלק המדומה לאפס.',
         ],
         solution: {
           steps: [
-            '$B = \\bar z/z = \\text{cis}(-120°) = -\\tfrac{1}{2} - \\tfrac{\\sqrt 3}{2}i$. $\\;C = z/\\bar z = -\\tfrac{1}{2} + \\tfrac{\\sqrt 3}{2}i$.',
-            'אמצע $BC$: $\\;\\bigl(-\\tfrac{1}{2},\\,0\\bigr)$. $BC$ אנכי $\\Rightarrow$ אנך אמצעי אופקי = ציר $x$.',
-            'במשולש שווה-שוקיים $A$ על האנך האמצעי לבסיס $\\Rightarrow \\text{Im}(A) = 0$.',
-            '$z = 3\\,\\text{cis}(240°) = -\\tfrac{3}{2} - \\tfrac{3\\sqrt 3}{2}i$. $\\;A = z + ic = -\\tfrac{3}{2} + i\\bigl(c - \\tfrac{3\\sqrt 3}{2}\\bigr)$.',
-            '$\\text{Im}(A) = 0 \\Rightarrow c = \\tfrac{3\\sqrt 3}{2}$. אז $\\;k = \\tfrac{3\\sqrt 3}{2}\\,i$.',
+            'נחשב את $B$ ו-$C$ (עם $z = 3\\,\\text{cis}\\,240°$, $\\bar z = 3\\,\\text{cis}(-240°)$):',
+            '$B = \\dfrac{\\bar z}{z} = \\dfrac{3\\,\\text{cis}(-240°)}{3\\,\\text{cis}\\,240°} = \\text{cis}(-480°) = \\text{cis}(-120°) = -\\tfrac{1}{2} - \\tfrac{\\sqrt 3}{2}i \\;\\Rightarrow\\; B\\bigl(-\\tfrac{1}{2},\\,-\\tfrac{\\sqrt 3}{2}\\bigr)$.',
+            '$C = \\dfrac{z}{\\bar z} = \\dfrac{3\\,\\text{cis}\\,240°}{3\\,\\text{cis}(-240°)} = \\text{cis}\\,480° = \\text{cis}\\,120° = -\\tfrac{1}{2} + \\tfrac{\\sqrt 3}{2}i \\;\\Rightarrow\\; C\\bigl(-\\tfrac{1}{2},\\,\\tfrac{\\sqrt 3}{2}\\bigr)$.',
+            'הבסיס $BC$ אנכי (לשני הקודקודים אותה אבסיסה $-\\tfrac12$) וסימטרי ביחס לציר ה-$x$. האנך האמצעי ל-$BC$ הוא ציר ה-$x$ (הישר $y=0$).',
+            'במשולש שווה-שוקיים הראש $A$ נמצא על האנך האמצעי לבסיס, ולכן $\\text{Im}(A) = 0$.',
+            '$z = 3\\,\\text{cis}\\,240° = -\\tfrac{3}{2} - \\tfrac{3\\sqrt 3}{2}i$. נסמן $k = t\\,i$: $\\;A = z + t\\,i = -\\tfrac{3}{2} + \\Bigl(t - \\tfrac{3\\sqrt 3}{2}\\Bigr)i$.',
+            '$\\text{Im}(A) = 0 \\Rightarrow t - \\tfrac{3\\sqrt 3}{2} = 0 \\Rightarrow t = \\tfrac{3\\sqrt 3}{2}$.',
+            'לכן $\\;k = \\tfrac{3\\sqrt 3}{2}\\,i$.',
           ],
           final_answer: '$k = \\dfrac{3\\sqrt 3}{2}\\,i$.',
         },
@@ -483,20 +519,20 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
               <circle cx="100" cy="100" r="3" fill="rgba(244,114,182,0.95)"/>
               <circle cx="75" cy="143.3" r="3" fill="rgba(244,114,182,0.95)"/>
               <text x="14" y="96" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">A</text>
-              <text x="60" y="52" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">B</text>
+              <text x="60" y="52" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">C</text>
               <text x="104" y="96" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">O</text>
-              <text x="60" y="156" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">C</text>
+              <text x="60" y="156" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">B</text>
             `,
             caption: 'מרובע $ABOC$ — דלתון סימטרי ביחס לציר הממשי. אלכסונים $AO$ (אופקי) ו-$BC$ (אנכי) מאונכים זה לזה.',
           },
         ],
         hints: [
-          'הקואורדינטות: $A=(-\\tfrac{3}{2},\\,0)$, $B=(-\\tfrac{1}{2},\\,\\tfrac{\\sqrt 3}{2})$, $O=(0,0)$, $C=(-\\tfrac{1}{2},\\,-\\tfrac{\\sqrt 3}{2})$.',
+          'הקואורדינטות: $A=(-\\tfrac{3}{2},\\,0)$, $B=(-\\tfrac{1}{2},\\,-\\tfrac{\\sqrt 3}{2})$, $O=(0,0)$, $C=(-\\tfrac{1}{2},\\,\\tfrac{\\sqrt 3}{2})$.',
           'המרובע סימטרי ביחס לציר הממשי (דלתון). האלכסונים $AO$ ו-$BC$ מאונכים. שטח דלתון = $\\tfrac{1}{2}\\cdot d_1\\cdot d_2$.',
         ],
         solution: {
           steps: [
-            'קואורדינטות: $\\;A(-\\tfrac{3}{2},0)$, $B(-\\tfrac{1}{2},\\tfrac{\\sqrt 3}{2})$, $O(0,0)$, $C(-\\tfrac{1}{2},-\\tfrac{\\sqrt 3}{2})$.',
+            'קואורדינטות (מסעיף ד1): $\\;A(-\\tfrac{3}{2},0)$, $B(-\\tfrac{1}{2},-\\tfrac{\\sqrt 3}{2})$, $O(0,0)$, $C(-\\tfrac{1}{2},\\tfrac{\\sqrt 3}{2})$.',
             'אלכסון $AO$ אופקי (שני קודקודיו על ציר $x$), אורך: $|AO| = \\tfrac{3}{2}$.',
             'אלכסון $BC$ אנכי (שניהם בעלי אבסיסה $-\\tfrac{1}{2}$), אורך: $|BC| = \\sqrt 3$.',
             'האלכסונים מאונכים $\\Rightarrow$ המרובע דלתון. שטח: $\\;S = \\tfrac{1}{2}\\cdot|AO|\\cdot|BC| = \\tfrac{1}{2}\\cdot\\tfrac{3}{2}\\cdot\\sqrt 3 = \\tfrac{3\\sqrt 3}{4}$.',
