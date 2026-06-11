@@ -649,21 +649,21 @@ export const bagrut2022Summer582: PastBagrutQuestion[] = [
       {
         label: 'ה',
         prompt:
-          'חשב את השטח המוגבל על-ידי גרף $g$, ציר $x$, והישרים $x = -1$ ו-$x = -4$.',
+          'חשב את השטח המוגבל על-ידי גרף $g$, ציר ה-$x$, והישר $x = -1$.',
         answer_type: 'expression',
         hints: [
-          'בתחום $[-4,-1]$: $e^x < 1$ ו-$e^x - x > 0$, לכן $g(x) > 0$ — הגרף מעל ציר $x$.',
-          'שים לב: $\\;1 - e^x = -\\dfrac{d}{dx}(e^x - x)$. השתמש בהצבה $u = e^x - x$ והאינטגרל הופך ל-$\\int -du/u = -\\ln u$.',
+          'הגרף חותך את ציר $x$ ב-$x=0$ (מסעיף ב2), ובתחום $(-1,0)$ מתקיים $e^x<1$ ו-$e^x-x>0$, לכן $g(x)>0$ — הגרף מעל ציר $x$. השטח הוא $\\int_{-1}^{0} g\\,dx$.',
+          'שים לב: $\\;1 - e^x = -\\dfrac{d}{dx}(e^x - x)$, כלומר המונה הוא (עד כדי סימן) נגזרת המכנה. לכן $\\int\\dfrac{1-e^x}{e^x-x}\\,dx = -\\ln(e^x-x)+C$.',
         ],
         solution: {
           steps: [
-            'נסמן $u = e^x - x$, $\\;du = (e^x - 1)\\,dx = -(1 - e^x)\\,dx$.',
-            'אז $\\int \\dfrac{1 - e^x}{e^x - x}\\,dx = \\int \\dfrac{-du}{u} = -\\ln|u| + C = -\\ln(e^x - x) + C$ (כי $e^x - x > 0$).',
-            'שטח: $\\;\\displaystyle\\int_{-4}^{-1} g(x)\\,dx = \\bigl[-\\ln(e^x - x)\\bigr]_{-4}^{-1}$',
-            '$= -\\ln\\bigl(e^{-1} + 1\\bigr) + \\ln\\bigl(e^{-4} + 4\\bigr) = \\ln\\dfrac{e^{-4} + 4}{e^{-1} + 1}$.',
-            'מספרית: $\\;\\dfrac{e^{-4}+4}{e^{-1}+1} \\approx \\dfrac{4.018}{1.368} \\approx 2.938$, $\\;\\ln 2.938 \\approx 1.078$.',
+            'הגרף חותך את ציר $x$ ב-$x=0$, ובתחום $(-1,0)$ מתקיים $g(x)>0$ (הגרף מעל ציר $x$). לכן השטח הוא $\\;\\displaystyle\\int_{-1}^{0} g(x)\\,dx$.',
+            'המונה הוא, עד כדי סימן, נגזרת המכנה: $\\;1-e^x = -(e^x-1) = -(e^x-x)\\,\'$. לפי $\\int\\dfrac{f\\,\'}{f}\\,dx = \\ln|f|$:',
+            '$\\;\\displaystyle\\int \\dfrac{1 - e^x}{e^x - x}\\,dx = -\\ln(e^x - x) + C$ (אין צורך בערך מוחלט כי $e^x - x > 0$ לכל $x$).',
+            'שטח: $\\;\\displaystyle\\int_{-1}^{0} g(x)\\,dx = \\bigl[-\\ln(e^x - x)\\bigr]_{-1}^{0} = \\bigl(-\\ln(e^0 - 0)\\bigr) - \\bigl(-\\ln(e^{-1} + 1)\\bigr)$.',
+            '$= -\\ln 1 + \\ln\\!\\bigl(e^{-1} + 1\\bigr) = \\ln\\!\\bigl(\\tfrac{1}{e} + 1\\bigr) \\approx \\ln 1.368 \\approx 0.313$.',
           ],
-          final_answer: 'השטח: $\\;\\ln\\dfrac{e^{-4}+4}{e^{-1}+1} \\approx 1.08$.',
+          final_answer: 'השטח: $\\;S = \\ln\\!\\bigl(\\tfrac{1}{e} + 1\\bigr) \\approx 0.313$.',
         },
       },
     ],
