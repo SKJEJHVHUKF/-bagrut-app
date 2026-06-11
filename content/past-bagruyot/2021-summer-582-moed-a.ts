@@ -180,7 +180,7 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         answer_type: 'text',
         hints: [
           'עם $a = \\tfrac{1}{2}$: ארבעת הקודקודים $(0,0)$, $(\\tfrac{3}{2},0)$, $(2,2)$, $(0,\\tfrac{3}{2})$.',
-          'חשב אורכי הצלעות. אם יש שני זוגות של צלעות סמוכות שוות $\\Rightarrow$ דלתון.',
+          'חשב אורכי הצלעות. אם יש שני זוגות של צלעות סמוכות שוות — דלתון.',
           'בדוק אלכסונים: על קוים $y=x$ ו-$x+y=\\tfrac{3}{2}$. ניצבים?',
         ],
         solution: {
@@ -321,14 +321,18 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         answer_type: 'proof',
         hints: [
           'הצב $t=\\tfrac{1}{2}$: $\\vec{EB} = \\tfrac{1}{2}(\\vec u - \\vec v - \\vec w)$, $\\vec{ED} = \\tfrac{1}{2}(-\\vec u + \\vec v - \\vec w)$.',
-          'בנתונים: $|\\vec u|=|\\vec v|=|\\vec w| =: q$ (כי מעוין + $SA=BA$); $\\vec u\\cdot\\vec v = q^2/2$ (כי $\\cos 60° = 1/2$); $\\vec u\\cdot\\vec w = \\vec v\\cdot\\vec w = 0$ (כי $SA$ ניצב לבסיס).',
+          'בנתונים $|\\vec u|=|\\vec v|=|\\vec w| =: q$ (כי מעוין + $SA=BA$).',
+          '$\\vec u\\cdot\\vec v = q^2/2$ (כי $\\cos 60° = 1/2$).',
+          '$\\vec u\\cdot\\vec w = \\vec v\\cdot\\vec w = 0$ (כי $SA$ ניצב לבסיס).',
           'חשב $\\vec{EB}\\cdot\\vec{ED}$ והראה שיוצא $0$.',
         ],
         solution: {
           steps: [
-            '$t=\\tfrac12$: $\\;\\vec{EB} = \\tfrac12(\\vec u - \\vec v - \\vec w)$, $\\;\\vec{ED} = \\tfrac12(-\\vec u + \\vec v - \\vec w)$',
+            'נציב $t=\\tfrac12$: $\\;\\vec{EB} = \\tfrac12(\\vec u - \\vec v - \\vec w)$',
+            '$\\vec{ED} = \\tfrac12(-\\vec u + \\vec v - \\vec w)$',
             'נסמן $q = |\\vec u|^2 = |\\vec v|^2 = |\\vec w|^2$ (מעוין, $SA=BA$)',
-            '$\\vec u\\cdot\\vec v = q\\cos 60° = \\tfrac{q}{2}$, $\\;\\;\\vec u\\cdot\\vec w = \\vec v\\cdot\\vec w = 0$ ($SA\\perp$ בסיס)',
+            '$\\vec u\\cdot\\vec v = q\\cos 60° = \\tfrac{q}{2}$',
+            '$\\vec u\\cdot\\vec w = \\vec v\\cdot\\vec w = 0$ ($SA\\perp$ בסיס)',
             '$\\vec{EB}\\cdot\\vec{ED} = \\tfrac14(\\vec u - \\vec v - \\vec w)\\cdot(-\\vec u + \\vec v - \\vec w)$',
             '$= \\tfrac14\\left(-|\\vec u|^2 - |\\vec v|^2 + |\\vec w|^2 + 2\\,\\vec u\\cdot\\vec v\\right)$',
             '$= \\tfrac14\\left(-q - q + q + 2\\cdot\\tfrac{q}{2}\\right) = 0$',
@@ -375,7 +379,7 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
             'האנך מ-$E$ לבסיס מקביל ל-$SA$ (שניצב לבסיס)',
             'במשולש $SAC$: הישר מאמצע $SC$ במקביל ל-$SA$ הוא קו אמצעים',
             'קו האמצעים חוצה את $AC$ באמצע — רגל האנך היא $M$, אמצע $AC$',
-            'במעוין האלכסונים חוצים זה את זה $\\Rightarrow$ אמצע $AC$ = מפגש האלכסונים',
+            'במעוין האלכסונים חוצים זה את זה, לכן אמצע $AC$ הוא מפגש האלכסונים',
           ],
           final_answer:
             'הוכח: האנך מ-$E$ (אמצע $SC$) הוא קו אמצעים במשולש $SAC$, ופוגע באמצע $AC$ — מפגש אלכסוני המעוין',
@@ -396,7 +400,8 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
           steps: [
             '$|\\vec{AB}| = \\sqrt{(6\\sqrt 3)^2 + 6^2} = \\sqrt{108 + 36} = \\sqrt{144} = 12$',
             'במעוין $|AD| = 12$, ו-$D$ על ציר $y$ חיובי: $\\;D = (0, 12, 0)$',
-            'בדיקה $\\angle BAD$: $\\;\\cos\\theta = \\dfrac{\\vec{AB}\\cdot\\vec{AD}}{144} = \\dfrac{72}{144} = \\tfrac12 \\Rightarrow \\theta = 60°$ ✓',
+            'בדיקה $\\angle BAD$: $\\;\\cos\\theta = \\dfrac{\\vec{AB}\\cdot\\vec{AD}}{144} = \\dfrac{72}{144} = \\tfrac12$',
+            'לכן $\\theta = 60°$ ✓',
             '$\\vec{AS} \\perp$ בסיס, $|AS| = 12$, $z > 0$: $\\;S = (0, 0, 12)$',
           ],
           final_answer: '$D = (0, 12, 0)$, $\\;S = (0, 0, 12)$',
@@ -446,7 +451,8 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         prompt: 'פתור את המשוואה.',
         answer_type: 'expression',
         hints: [
-          'כתוב $-16 = 16\\,\\text{cis}(180°)$. אז $|z|^4 = 16 \\Rightarrow |z| = 2$, וזווית $z$ היא $(180° + 360°k)/4$ ל-$k=0,1,2,3$.',
+          'כתוב $-16 = 16\\,\\text{cis}(180°)$. אז $|z|^4 = 16$, ולכן $|z| = 2$.',
+          'הזווית של $z$ היא $(180° + 360°k)/4$ עבור $k=0,1,2,3$.',
         ],
         solution: {
           steps: [
@@ -491,11 +497,11 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
             caption: 'ארבעת הפתרונות יוצרים ריבוע חסום במעגל $|z|=2$, מסובב ב-$45°$ ביחס לצירים.',
           },
         ],
-        hints: ['ארבעה קודקודים במרחקים שווים על מעגל $|z|=2$, בזוויות $45°,135°,225°,315°$ $\\Rightarrow$ ריבוע.'],
+        hints: ['ארבעה קודקודים במרחקים שווים על מעגל $|z|=2$, בזוויות $45°,135°,225°,315°$ — לכן ריבוע.'],
         solution: {
           steps: [
             'ארבעת הפתרונות על מעגל $|z| = 2$ בזוויות $45°, 135°, 225°, 315°$ — מרווחי $90°$.',
-            'ארבע נקודות במרווחים שווים $\\;\\Rightarrow\\;$ ריבוע משוכלל.',
+            'ארבע נקודות במרווחים שווים, ולכן ריבוע משוכלל.',
             'אורך הצלע: $\\;a = 2\\cdot 2\\sin 45° = 2\\sqrt 2$',
           ],
           final_answer: 'ריבוע משוכלל חסום במעגל $|z|=2$ (מסובב $45°$ ביחס לצירים), צלע $2\\sqrt 2$.',
@@ -560,7 +566,9 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         solution: {
           steps: [
             '8 הנקודות (מ-א ומ-ג) על מעגל $|z| = 2$ בכל הכפולות של $45°$: $\\;z_k = 2\\,\\text{cis}(45°k)$.',
-            '$z_k^{\\,n} = 2^n\\,\\text{cis}(45°kn)$ ממשי לכל $k$ $\\;\\Rightarrow\\; 45°n$ כפולה של $360°$ $\\;\\Rightarrow\\; n$ כפולה של $8$.',
+            '$z_k^{\\,n} = 2^n\\,\\text{cis}(45°kn)$ ממשי לכל $k$',
+            'לכן $45°n$ כפולה של $360°$',
+            'כלומר $n$ כפולה של $8$.',
             'בטווח $11 < n < 17$: $\\quad n = 16$',
             '$c = 2^{16}\\,\\text{cis}\\,0° = 65536$',
           ],
@@ -593,7 +601,7 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '$16$ קודקודים על מעגל $R = 2$ במרווחי $22.5°$ $\\;\\Rightarrow\\;$ $16$ משולשים מרכזיים.',
+            '$16$ קודקודים על מעגל $R = 2$ במרווחי $22.5°$, ולכן $16$ משולשים מרכזיים.',
             'שטח משולש מרכזי: $\\;\\tfrac{1}{2}\\cdot 2\\cdot 2\\cdot \\sin 22.5° = 2\\sin 22.5°$',
             '$S = 16 \\cdot 2\\sin 22.5° = 32\\sin 22.5°$',
             '$\\sin 22.5° = \\dfrac{\\sqrt{2 - \\sqrt 2}}{2} \\;\\Rightarrow\\; S = 16\\sqrt{2 - \\sqrt 2} \\approx 12.25$',
@@ -736,7 +744,7 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
             "$g'(x) = -\\dfrac{f'(x)}{f(x)^2} = \\dfrac{2a\\,e^{-2x}}{(1+a\\,e^{-2x})^2}$",
             "הקיצון של $g'$ = הפיתול של $g$: $\\;x = \\tfrac{\\ln a}{2}$ (שם $ae^{-2x} = 1$)",
             "$g'\\bigl(\\tfrac{\\ln a}{2}\\bigr) = \\dfrac{2}{(1+1)^2} = \\dfrac{1}{2}$",
-            "$g' > 0$ בכל מקום ו-$g'\\to 0$ בקצוות $\\;\\Rightarrow\\;$ מקסימום",
+            "$g' > 0$ בכל מקום ו-$g'\\to 0$ בקצוות, ולכן מקסימום",
           ],
           final_answer: "נקודת קיצון (מקסימום) של $g'$: $\\;\\left(\\dfrac{\\ln a}{2},\\; \\dfrac{1}{2}\\right)$.",
         },
@@ -797,7 +805,8 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
           },
         ],
         hints: [
-          "הישר $y=\\tfrac12$ הוא בדיוק המקסימום של $g'$ (מסעיף ג1), המושג ב-$x=\\tfrac{\\ln a}{2}$. בקטע $\\bigl[0,\\tfrac{\\ln a}{2}\\bigr]$ מתקיים $g'\\le\\tfrac12$.",
+          "הישר $y=\\tfrac12$ הוא בדיוק המקסימום של $g'$ (מסעיף ג1), המושג ב-$x=\\tfrac{\\ln a}{2}$.",
+          "בקטע $\\bigl[0,\\tfrac{\\ln a}{2}\\bigr]$ מתקיים $g'\\le\\tfrac12$.",
           "שטח $= \\displaystyle\\int_0^{(\\ln a)/2}\\bigl(\\tfrac12 - g'(x)\\bigr)dx$. שים לב ש-$\\int g'(x)\\,dx = g(x)$.",
         ],
         solution: {
@@ -854,13 +863,15 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
           },
         ],
         hints: [
-          'פירוק: $x^2 - 1 = (x-1)(x+1)$. הפונקציה הופכת ל-$\\;\\dfrac{(x-1)(x+1)}{(x+2)(x-1)} = \\dfrac{x+1}{x+2}\\;$ (עבור $x \\ne 1$).',
+          'פירוק: $x^2 - 1 = (x-1)(x+1)$.',
+          'הפונקציה הופכת ל-$\\;\\dfrac{(x-1)(x+1)}{(x+2)(x-1)} = \\dfrac{x+1}{x+2}\\;$ (עבור $x \\ne 1$).',
           'תנאים: $x \\ne 1$ (התאפסות במכנה המקורי), $x \\ne -2$, ו-$\\dfrac{x^2-1}{(x+2)(x-1)} > 0$.',
         ],
         solution: {
           steps: [
             'תנאי $\\ln$: הביטוי חיובי — $\\;\\dfrac{x^2-1}{(x+2)(x-1)} > 0$',
-            'נקודות קריטיות: $\\;x^2-1=0 \\Rightarrow x=\\pm1$; המכנה מתאפס ב-$x=-2$ וב-$x=1$',
+            'נקודות קריטיות: $\\;x^2-1=0 \\Rightarrow x=\\pm1$',
+            'המכנה מתאפס ב-$x=-2$ וב-$x=1$',
             'טבלת סימן (ראה תרשים): הביטוי חיובי ב-$x<-2$ וב-$x>-1$',
             'מחריגים $x=1$ (במקור $0/0$), לכן התחום: $\\;x<-2$ או $-1<x<1$ או $x>1$',
           ],
@@ -980,7 +991,9 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         solution: {
           steps: [
             '$g = \\ln(f)$ מוגדרת כאשר $f(x) > 0$, כלומר $\\ln\\dfrac{x+1}{x+2} > 0$',
-            '$\\dfrac{x+1}{x+2} > 1 \\;\\Longleftrightarrow\\; \\dfrac{-1}{x+2} > 0 \\;\\Longleftrightarrow\\; x < -2$',
+            '$\\dfrac{x+1}{x+2} > 1$',
+            'שקול ל-$\\dfrac{-1}{x+2} > 0$',
+            'כלומר $x < -2$',
           ],
           final_answer: 'תחום ההגדרה של $g$: $\\;x<-2$.',
         },

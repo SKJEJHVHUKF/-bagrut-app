@@ -66,7 +66,7 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
           'מצא את משוואת המקום הגאומטרי של מרכזי המעגלים שהקטע $AB$ הוא מיתר שלהם.',
         answer_type: 'expression',
         hints: [
-          'מרכז של מעגל שעובר דרך $A$ ו-$B$ נמצא במרחק שווה משתי הנקודות $\\Rightarrow$ הוא על האנך האמצעי לקטע $AB$.',
+          'מרכז של מעגל שעובר דרך $A$ ו-$B$ נמצא במרחק שווה משתי הנקודות, ולכן הוא על האנך האמצעי לקטע $AB$.',
           'מצא את אמצע $AB$ ואת השיפוע של $AB$. אנך האמצעי עובר באמצע בשיפוע ההפכי-הנגדי.',
         ],
         solution: {
@@ -89,13 +89,13 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           'אליפסה קנונית מרכזה בראשית, וכשהמוקדים על ציר $x$ הם סימטריים לראשית — באבסיסות $\\pm c$.',
-          'אם המעגל חותך את ציר $x$ בשתי נקודות סימטריות לראשית, אמצע המיתר על ציר $y$ $\\Rightarrow$ מרכז המעגל על ציר $y$.',
+          'אם המעגל חותך את ציר $x$ בשתי נקודות סימטריות לראשית, אמצע המיתר על ציר $y$, ולכן מרכז המעגל על ציר $y$.',
           'שלב עם סעיף א: מרכז $M$ על $y=x+4$ וגם על ציר $y$ ($x=0$).',
         ],
         solution: {
           steps: [
             'אליפסה קנונית: מוקדים על ציר $x$ סימטריים לראשית, $(\\pm c,\\, 0)$',
-            'אלו נקודות החיתוך של $M$ עם ציר $x$, אז המיתר על ציר $x$ סימטרי לראשית $\\Rightarrow$ מרכז $M$ על ציר $y$ ($x_M = 0$)',
+            'אלו נקודות החיתוך של $M$ עם ציר $x$, אז המיתר על ציר $x$ סימטרי לראשית, ולכן מרכז $M$ על ציר $y$ ($x_M = 0$)',
             'מסעיף א, המרכז על $y = x + 4$. הצב $x=0$: $\\;y = 4$, אז $M(0,4)$',
             'רדיוס $= |MA| = \\sqrt{(-5-0)^2 + (4-4)^2} = 5$ (בדיקה: $|MB| = \\sqrt{0 + (4+1)^2} = 5$ ✓)',
           ],
@@ -113,7 +113,9 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'חיתוך $M$ עם ציר $x$ ($y=0$): $\\;x^2 + (0-4)^2 = 25 \\Rightarrow x^2 = 9 \\Rightarrow x = \\pm3$, אז $c = 3$',
+            'חיתוך $M$ עם ציר $x$ ($y=0$): $\\;x^2 + (0-4)^2 = 25$',
+            '$x^2 = 9$',
+            '$x = \\pm3$, אז $c = 3$',
             'אורך הציר הראשי $= 2a =$ קוטר $M = 10$, אז $a = 5$',
             '$a^2 = b^2 + c^2$: $\\;25 = b^2 + 9 \\Rightarrow b^2 = 16$',
             '$\\dfrac{x^2}{25} + \\dfrac{y^2}{16} = 1$',
@@ -136,8 +138,12 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         solution: {
           steps: [
             'המוקד הימני $F(3,0)$, השמאלי $(-3,0)$, אז הישר המאונך דרכו: $\\;x = -3$',
-            'חיתוך עם האליפסה: $\\;\\dfrac{9}{25} + \\dfrac{y^2}{16} = 1 \\Rightarrow y^2 = \\dfrac{256}{25} \\Rightarrow y = \\pm\\dfrac{16}{5}$, אז $T(-3,\\tfrac{16}{5})$, $Q(-3,-\\tfrac{16}{5})$',
-            'חיתוך עם $M$: $\\;9 + (y-4)^2 = 25 \\Rightarrow (y-4)^2 = 16 \\Rightarrow y=0$ או $y=8$, אז $K(-3,0)$, $L(-3,8)$',
+            'חיתוך עם האליפסה: $\\;\\dfrac{9}{25} + \\dfrac{y^2}{16} = 1$',
+            '$y^2 = \\dfrac{256}{25}$',
+            '$y = \\pm\\dfrac{16}{5}$, אז $T(-3,\\tfrac{16}{5})$, $Q(-3,-\\tfrac{16}{5})$',
+            'חיתוך עם $M$: $\\;9 + (y-4)^2 = 25$',
+            '$(y-4)^2 = 16$',
+            '$y=0$ או $y=8$, אז $K(-3,0)$, $L(-3,8)$',
             'שני המשולשים $KLF$ ו-$TQF$ חולקים את אותו גובה (המרחק מ-$F$ לישר $x=-3$), אז $\\;\\dfrac{S_{KLF}}{S_{TQF}} = \\dfrac{KL}{TQ}$',
             '$KL = 8 - 0 = 8$, $\\;TQ = \\dfrac{16}{5} + \\dfrac{16}{5} = \\dfrac{32}{5}$',
             '$\\dfrac{S_{KLF}}{S_{TQF}} = \\dfrac{8}{32/5} = \\dfrac{40}{32} = \\dfrac{5}{4}$',
@@ -204,7 +210,7 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
           steps: [
             'הזוויות בין כל זוג מקצועות הן $90°$, ולכן המכפלות הסקלריות מתאפסות: $\\;\\vec u\\cdot\\vec v = \\vec v\\cdot\\vec w = \\vec u\\cdot\\vec w = 0$',
             'מהשוויון $|\\vec u| = |\\vec v| = |\\vec w|$ נובע: $\\;\\vec u\\cdot\\vec u = \\vec v\\cdot\\vec v = \\vec w\\cdot\\vec w$',
-            '$\\vec{OH}$ מאונך לבסיס $\\Rightarrow$ מאונך לכל וקטור בבסיס, ובפרט: $\\;\\vec{OH}\\cdot\\vec{AB} = 0$ וגם $\\vec{OH}\\cdot\\vec{AC} = 0$',
+            '$\\vec{OH}$ מאונך לבסיס, ולכן מאונך לכל וקטור בבסיס, ובפרט: $\\;\\vec{OH}\\cdot\\vec{AB} = 0$ וגם $\\vec{OH}\\cdot\\vec{AC} = 0$',
             '$\\vec{AB} = \\vec{OB} - \\vec{OA} = \\vec v - \\vec u$, $\\;\\vec{AC} = \\vec{OC} - \\vec{OA} = \\vec w - \\vec u$',
             'המשוואה הראשונה: $\\;(t\\vec u + s\\vec v + k\\vec w)\\cdot(\\vec v - \\vec u) = 0$',
             'נפתח את הסוגריים: $\\;t\\,\\vec u\\cdot\\vec v - t\\,\\vec u\\cdot\\vec u + s\\,\\vec v\\cdot\\vec v - s\\,\\vec v\\cdot\\vec u + k\\,\\vec w\\cdot\\vec v - k\\,\\vec w\\cdot\\vec u = 0$',
@@ -228,7 +234,7 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         answer_type: 'proof',
         hints: [
           'מרכז הכובד של משולש: $\\vec{OM} = \\tfrac{1}{3}(\\vec{OA} + \\vec{OB} + \\vec{OC})$ — נוסחה כללית.',
-          '$\\vec{OM}$ נמצא בכיוון $(\\vec u + \\vec v + \\vec w)$, בדיוק כמו $\\vec{OH}$ מסעיף א ($t=s=k$). שניהם בכיוון של אותו וקטור, ו-$M$ על המישור $\\Rightarrow OM$ הוא הגובה.',
+          '$\\vec{OM}$ נמצא בכיוון $(\\vec u + \\vec v + \\vec w)$, בדיוק כמו $\\vec{OH}$ מסעיף א ($t=s=k$). שניהם בכיוון של אותו וקטור, ו-$M$ על המישור, ולכן $OM$ הוא הגובה.',
         ],
         solution: {
           steps: [
@@ -243,9 +249,9 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
             '$\\vec{OM} = \\vec u + \\dfrac23\\left(\\dfrac12\\vec v + \\dfrac12\\vec w - \\vec u\\right) = \\vec u + \\dfrac13\\vec v + \\dfrac13\\vec w - \\dfrac23\\vec u$',
             '$\\vec{OM} = \\dfrac13\\vec u + \\dfrac13\\vec v + \\dfrac13\\vec w$',
             'נימוק שזהו הגובה: ל-$\\vec{OM}$ מקדמים שווים ($t = s = k = \\dfrac13$). באותו חישוב כמו בסעיף א: $\\;\\vec{OM}\\cdot\\vec{AB} = -\\dfrac13\\,\\vec u\\cdot\\vec u + \\dfrac13\\,\\vec v\\cdot\\vec v = 0$, וכן $\\vec{OM}\\cdot\\vec{AC} = 0$',
-            'לכן $\\vec{OM}$ מאונך לשני וקטורים בלתי-תלויים בבסיס $\\Rightarrow$ מאונך לבסיס $ABC$. ומכיוון ש-$M$ נמצאת בתוך הבסיס, $OM$ הוא הגובה מ-$O$ לבסיס',
+            'לכן $\\vec{OM}$ מאונך לשני וקטורים בלתי-תלויים בבסיס, ולכן מאונך לבסיס $ABC$. ומכיוון ש-$M$ נמצאת בתוך הבסיס, $OM$ הוא הגובה מ-$O$ לבסיס',
           ],
-          final_answer: 'הוכח: $\\;\\vec{OM} = \\dfrac13(\\vec u + \\vec v + \\vec w)$. מקדמיו שווים (כמו בסעיף א) $\\Rightarrow$ מאונך לבסיס, ולכן $OM$ הוא הגובה',
+          final_answer: 'הוכח: $\\;\\vec{OM} = \\dfrac13(\\vec u + \\vec v + \\vec w)$. מקדמיו שווים (כמו בסעיף א), ולכן מאונך לבסיס, ו-$OM$ הוא הגובה',
         },
       },
       {
@@ -257,14 +263,14 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           '$P$ על הישר $\\ell$ העובר ב-$O$ בכיוון $(\\vec u+\\vec v+\\vec w)$: $\\;\\vec{OP} = \\lambda(\\vec u+\\vec v+\\vec w)$.',
-          'נפח פירמידה $= \\dfrac13 S h$. אותו בסיס $\\Rightarrow$ יחס הנפחים = יחס הגבהים. $P$ על הישר הניצב דרך $M$, ולכן המרחק מ-$P$ לבסיס הוא $|PM|$; התנאי "נפח כפול" נותן $|PM| = 2|OM|$.',
+          'נפח פירמידה $= \\dfrac13 S h$. אותו בסיס, ולכן יחס הנפחים שווה ליחס הגבהים. $P$ על הישר הניצב דרך $M$, ולכן המרחק מ-$P$ לבסיס הוא $|PM|$; התנאי "נפח כפול" נותן $|PM| = 2|OM|$.',
         ],
         solution: {
           steps: [
             '$P$ נמצאת על הישר $\\ell$ (הישר שעליו הגובה $OM$), והפירמידות $PABC$ ו-$OABC$ חולקות את אותו בסיס $ABC$',
-            'נפח פירמידה $= \\dfrac13\\cdot S_{ABC}\\cdot h$. אותו בסיס $\\Rightarrow$ יחס הנפחים שווה ליחס הגבהים (המרחקים מהקודקוד לבסיס)',
+            'נפח פירמידה $= \\dfrac13\\cdot S_{ABC}\\cdot h$. אותו בסיס, ולכן יחס הנפחים שווה ליחס הגבהים (המרחקים מהקודקוד לבסיס)',
             'מכיוון ש-$P$ על הישר הניצב לבסיס דרך $M$, רגל האנך מ-$P$ לבסיס היא $M$ עצמה, ולכן המרחק מ-$P$ לבסיס הוא $|PM|$ (וכן המרחק מ-$O$ הוא $|OM|$)',
-            'נפח $PABC = 2\\cdot$ נפח $OABC \\;\\Rightarrow\\; |PM| = 2\\,|OM|$',
+            'התנאי נפח $PABC$ כפול מנפח $OABC$ נותן: $\\;|PM| = 2\\,|OM|$',
             'הנקודה $P$ על הישר $OM$, ושתי נקודות עליו מקיימות $|PM| = 2|OM|$:',
             'אפשרות 1 — $P$ בצד הנגדי ל-$M$ ביחס ל-$O$: $\\;\\vec{OP} = -\\vec{OM} = -\\dfrac13(\\vec u + \\vec v + \\vec w)$',
             'אפשרות 2 — $P$ מעבר ל-$M$ (אותו צד): $\\;\\vec{OP} = 3\\,\\vec{OM} = 3\\cdot\\dfrac13(\\vec u + \\vec v + \\vec w) = \\vec u + \\vec v + \\vec w$',
@@ -438,7 +444,8 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'נציב $z = 3\\,\\text{cis}\\,240°$: $\\;z^3 = 3^3\\,\\text{cis}(3\\cdot 240°) = 27\\,\\text{cis}\\,720°$. ומכיוון ש-$720° = 2\\cdot 360°$: $\\;z^3 = 27\\,\\text{cis}\\,0°$.',
+            'נציב $z = 3\\,\\text{cis}\\,240°$: $\\;z^3 = 3^3\\,\\text{cis}(3\\cdot 240°) = 27\\,\\text{cis}\\,720°$.',
+            'ומכיוון ש-$720° = 2\\cdot 360°$: $\\;z^3 = 27\\,\\text{cis}\\,0°$.',
             'אגף ימין: $\\;\\dfrac{z^3}{27} = \\dfrac{27\\,\\text{cis}\\,0°}{27} = \\text{cis}\\,0°$, אז המשוואה היא $\\;w^9 = \\text{cis}\\,0°$.',
             'נפתור בהוצאת שורש מסדר $9$: $\\;w_k = \\sqrt[9]{1}\\,\\text{cis}\\dfrac{0° + 360°k}{9} = \\text{cis}(40°k)$, $\\;k = 0,1,\\dots,8$.',
             'תשעת הפתרונות: $\\;\\text{cis}\\,0°,\\ \\text{cis}\\,40°,\\ \\text{cis}\\,80°,\\ \\text{cis}\\,120°,\\ \\text{cis}\\,160°,\\ \\text{cis}\\,200°,\\ \\text{cis}\\,240°,\\ \\text{cis}\\,280°,\\ \\text{cis}\\,320°$.',
@@ -492,7 +499,9 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
             'הבסיס $BC$ אנכי (לשני הקודקודים אותה אבסיסה $-\\tfrac12$) וסימטרי ביחס לציר ה-$x$. האנך האמצעי ל-$BC$ הוא ציר ה-$x$ (הישר $y=0$).',
             'במשולש שווה-שוקיים הראש $A$ נמצא על האנך האמצעי לבסיס, ולכן $\\text{Im}(A) = 0$.',
             '$z = 3\\,\\text{cis}\\,240° = -\\tfrac{3}{2} - \\tfrac{3\\sqrt 3}{2}i$. נסמן $k = t\\,i$: $\\;A = z + t\\,i = -\\tfrac{3}{2} + \\Bigl(t - \\tfrac{3\\sqrt 3}{2}\\Bigr)i$.',
-            '$\\text{Im}(A) = 0 \\Rightarrow t - \\tfrac{3\\sqrt 3}{2} = 0 \\Rightarrow t = \\tfrac{3\\sqrt 3}{2}$.',
+            '$\\text{Im}(A) = 0$',
+            '$t - \\tfrac{3\\sqrt 3}{2} = 0$',
+            '$t = \\tfrac{3\\sqrt 3}{2}$.',
             'לכן $\\;k = \\tfrac{3\\sqrt 3}{2}\\,i$.',
           ],
           final_answer: '$k = \\dfrac{3\\sqrt 3}{2}\\,i$.',
@@ -535,7 +544,7 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
             'קואורדינטות (מסעיף ד1): $\\;A(-\\tfrac{3}{2},0)$, $B(-\\tfrac{1}{2},-\\tfrac{\\sqrt 3}{2})$, $O(0,0)$, $C(-\\tfrac{1}{2},\\tfrac{\\sqrt 3}{2})$.',
             'אלכסון $AO$ אופקי (שני קודקודיו על ציר $x$), אורך: $|AO| = \\tfrac{3}{2}$.',
             'אלכסון $BC$ אנכי (שניהם בעלי אבסיסה $-\\tfrac{1}{2}$), אורך: $|BC| = \\sqrt 3$.',
-            'האלכסונים מאונכים $\\Rightarrow$ המרובע דלתון. שטח: $\\;S = \\tfrac{1}{2}\\cdot|AO|\\cdot|BC| = \\tfrac{1}{2}\\cdot\\tfrac{3}{2}\\cdot\\sqrt 3 = \\tfrac{3\\sqrt 3}{4}$.',
+            'האלכסונים מאונכים, ולכן המרובע דלתון. שטח: $\\;S = \\tfrac{1}{2}\\cdot|AO|\\cdot|BC| = \\tfrac{1}{2}\\cdot\\tfrac{3}{2}\\cdot\\sqrt 3 = \\tfrac{3\\sqrt 3}{4}$.',
           ],
           final_answer: 'שטח המרובע $ABOC$: $\\;S = \\dfrac{3\\sqrt 3}{4}$.',
         },
@@ -586,10 +595,13 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
             'נגזור עם כלל המכפלה ($u = x^2$, $\\;v = e^{a-x^3}$, $\\;v\\,\' = e^{a-x^3}\\cdot(-3x^2)$): $\\;f\\,\'(x) = 2x\\,e^{a-x^3} + x^2\\,e^{a-x^3}\\cdot(-3x^2)$.',
             'נוציא גורם משותף $x\\,e^{a-x^3}$: $\\;f\\,\'(x) = x\\,e^{a-x^3}\\,(2 - 3x^3)$.',
             'נשווה לאפס: $\\;x\\,e^{a-x^3}\\,(2 - 3x^3) = 0$. מכיוון ש-$e^{a-x^3} \\ne 0$ אף פעם, נקבל $x = 0$ או $2 - 3x^3 = 0$.',
-            '$2 - 3x^3 = 0 \\Rightarrow x^3 = \\dfrac{2}{3} \\Rightarrow x = \\sqrt[3]{\\tfrac{2}{3}} \\approx 0.873$.',
+            '$2 - 3x^3 = 0$',
+            '$x^3 = \\dfrac{2}{3}$',
+            '$x = \\sqrt[3]{\\tfrac{2}{3}} \\approx 0.873$.',
             'טבלת סימנים (האקספוננט תמיד חיובי, אז הסימן נקבע ע"י $x$ ו-$(2-3x^3)$):',
             '$\\begin{array}{c|c|c|c|c|c} x & x<0 & 0 & 0<x<\\sqrt[3]{2/3} & \\sqrt[3]{2/3} & x>\\sqrt[3]{2/3} \\\\ \\hline f\\,\'(x) & - & 0 & + & 0 & - \\\\ f(x) & \\searrow & & \\nearrow & & \\searrow \\end{array}$',
-            'ב-$x = 0$ הנגזרת עוברת מ-$-$ ל-$+$ $\\Rightarrow$ נקודת מינימום. ב-$x = \\sqrt[3]{2/3}$ עוברת מ-$+$ ל-$-$ $\\Rightarrow$ נקודת מקסימום.',
+            'ב-$x = 0$ הנגזרת עוברת מ-$-$ ל-$+$ — נקודת מינימום.',
+            'ב-$x = \\sqrt[3]{2/3}$ הנגזרת עוברת מ-$+$ ל-$-$ — נקודת מקסימום.',
           ],
           final_answer:
             'מינימום ב-$x = 0$ (ערך $f(0)=0$), ומקסימום ב-$x = \\sqrt[3]{\\tfrac{2}{3}}$ (ערך $\\;\\sqrt[3]{\\tfrac{4}{9}}\\cdot e^{a-2/3}$).',
@@ -610,7 +622,9 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
             'לפי המשפט היסודי של החדו"א: $\\;\\displaystyle\\int_0^{\\sqrt[3]{2/3}} f\\,\'(x)\\,dx = \\Bigl[\\,f(x)\\,\\Bigr]_0^{\\sqrt[3]{2/3}} = f\\bigl(\\sqrt[3]{2/3}\\bigr) - f(0)$.',
             'נחשב: $\\;f\\bigl(\\sqrt[3]{2/3}\\bigr) = \\bigl(\\sqrt[3]{2/3}\\bigr)^2 e^{\\,a-\\left(\\sqrt[3]{2/3}\\right)^3} = \\sqrt[3]{\\tfrac{4}{9}}\\cdot e^{a - 2/3}$ (כי $\\bigl(\\sqrt[3]{2/3}\\bigr)^3 = \\tfrac{2}{3}$), ו-$f(0) = 0$.',
             'אז השטח $= \\sqrt[3]{\\tfrac{4}{9}}\\cdot e^{a-2/3}$. נשווה לנתון: $\\;\\sqrt[3]{\\tfrac{4}{9}}\\cdot e^{a-2/3} = \\sqrt[3]{\\tfrac{4e}{9}} = \\sqrt[3]{\\tfrac{4}{9}}\\cdot e^{1/3}$.',
-            'נצמצם ב-$\\sqrt[3]{4/9}$: $\\;e^{a - 2/3} = e^{1/3} \\Rightarrow a - \\tfrac{2}{3} = \\tfrac{1}{3} \\Rightarrow a = 1$.',
+            'נצמצם ב-$\\sqrt[3]{4/9}$: $\\;e^{a - 2/3} = e^{1/3}$',
+            '$a - \\tfrac{2}{3} = \\tfrac{1}{3}$',
+            '$a = 1$.',
           ],
           final_answer: '$a = 1$.',
         },
@@ -750,12 +764,12 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
           },
         ],
         hints: [
-          'אי-זוגית $\\Rightarrow f(-x)=-f(x) \\Rightarrow$ סימטריה ביחס לראשית. אם יש מינימום ב-$(-1,-a)$, אז יש מקסימום ב-$(1,a)$.',
-          '$y=0$ אסימפטוטה אופקית $\\Rightarrow f(x)\\to 0$ ב-$x\\to\\pm\\infty$. מאי-זוגיות, $f(0)=0$.',
+          'אי-זוגית פירושה $f(-x)=-f(x)$, ולכן הגרף סימטרי ביחס לראשית. אם יש מינימום ב-$(-1,-a)$, אז יש מקסימום ב-$(1,a)$.',
+          '$y=0$ אסימפטוטה אופקית, ולכן $f(x)\\to 0$ כאשר $x\\to\\pm\\infty$. מאי-זוגיות, $f(0)=0$.',
         ],
         solution: {
           steps: [
-            'אי-זוגית $\\Rightarrow f(0)=0$, מקסימום ב-$(1,a)$ (סימטרי למינימום ב-$(-1,-a)$).',
+            'מאי-זוגיות נובע $f(0)=0$, ויש מקסימום ב-$(1,a)$ (סימטרי למינימום ב-$(-1,-a)$).',
             'תיאור הצורה: $f\\to 0^-$ ב-$x\\to-\\infty$, יורדת למינימום $(-1,-a)$, עולה דרך $(0,0)$ למקסימום $(1,a)$, ויורדת ל-$0^+$ ב-$x\\to+\\infty$.',
           ],
           final_answer:
@@ -783,8 +797,8 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         prompt: 'מצא את משוואות האסימפטוטות של $h(x)$ המאונכות לצירים (אם יש כאלה).',
         answer_type: 'expression',
         hints: [
-          'אסימפטוטה אנכית: היכן ש-$f \\to 0^+$ $\\Rightarrow h \\to -\\infty$. בקצוות התחום: $x \\to 0^+$ ($f \\to 0^+$) ו-$x \\to +\\infty$ ($f \\to 0^+$).',
-          'אסימפטוטה אופקית: $h$ הולך ל-$-\\infty$ בקצה $+\\infty$ $\\Rightarrow$ אין אופקית.',
+          'אסימפטוטה אנכית: היכן ש-$f \\to 0^+$ מתקיים $h \\to -\\infty$. בקצוות התחום: $x \\to 0^+$ ($f \\to 0^+$) ו-$x \\to +\\infty$ ($f \\to 0^+$).',
+          'אסימפטוטה אופקית: $h$ הולך ל-$-\\infty$ בקצה $+\\infty$, ולכן אין אופקית.',
         ],
         solution: {
           steps: [
@@ -876,7 +890,7 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         solution: {
           steps: [
             '$g(-x) = 3\\ln(1 + (-x)^2) = 3\\ln(1 + x^2) = g(x)$.',
-            'מתקיים לכל $x$ $\\Rightarrow g$ זוגית. (אינטואיציה: $g$ קדומה של פונקציה אי-זוגית $f$, ולכן $g$ זוגית.)',
+            'מתקיים לכל $x$, ולכן $g$ זוגית. (אינטואיציה: $g$ קדומה של פונקציה אי-זוגית $f$, ולכן $g$ זוגית.)',
           ],
           final_answer: '$g$ זוגית (כי $g(-x) = g(x)$).',
         },

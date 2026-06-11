@@ -70,8 +70,12 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
             'מרחק מ-$(x,y)$ אל $\\ell_1$: $\\;\\dfrac{|-3x+4y-20|}{\\sqrt{(-3)^2+4^2}} = \\dfrac{|-3x+4y-20|}{5}$',
             'מרחק מ-$(x,y)$ אל $\\ell_2$ ($x=-4$): $\\;|x+4|$',
             'משווים: $\\;|x+4| = \\dfrac{|-3x+4y-20|}{5}$',
-            'מקרה 1: $\\;5(x+4) = -3x+4y-20 \\;\\Rightarrow\\; 4y = 8x+40 \\;\\Rightarrow\\; y = 2x+10$',
-            'מקרה 2: $\\;-5(x+4) = -3x+4y-20 \\;\\Rightarrow\\; 4y = -2x \\;\\Rightarrow\\; y = -\\tfrac{1}{2}x$',
+            'מקרה 1: $\\;5(x+4) = -3x+4y-20$',
+            '$4y = 8x+40$',
+            '$y = 2x+10$',
+            'מקרה 2: $\\;-5(x+4) = -3x+4y-20$',
+            '$4y = -2x$',
+            '$y = -\\tfrac{1}{2}x$',
           ],
           final_answer: 'שני חוצי הזווית (מאונכים): $\\;y = 2x+10$ ו-$y = -\\tfrac{1}{2}x$.',
         },
@@ -89,10 +93,13 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'נמצא את $A$ (על $\\ell_1$, $x=4$): $\\;4y - 3\\cdot4 - 20 = 0 \\;\\Rightarrow\\; y = 8 \\;\\Rightarrow\\; A(4,8)$',
+            'נמצא את $A$ (על $\\ell_1$, $x=4$): $\\;4y - 3\\cdot4 - 20 = 0$',
+            '$y = 8 \\;\\Rightarrow\\; A(4,8)$',
             '$M$ על חוצה הזווית שברביע הראשון $y=2x+10$, נסמן $M(a,\\,2a+10)$',
             'הרדיוס $MA \\perp \\ell_1$ (שיפוע $\\ell_1$ הוא $\\tfrac34$): $\\;\\dfrac{3}{4}\\cdot\\dfrac{(2a+10)-8}{a-4} = -1$',
-            '$\\dfrac{3(2a+2)}{4(a-4)} = -1 \\;\\Rightarrow\\; 6a+6 = -4a+16 \\;\\Rightarrow\\; 10a = 10 \\;\\Rightarrow\\; a = 1$',
+            '$\\dfrac{3(2a+2)}{4(a-4)} = -1$',
+            '$6a+6 = -4a+16$',
+            '$10a = 10 \\;\\Rightarrow\\; a = 1$',
             '$M(1,\\,12)$',
           ],
           final_answer: 'מרכז המעגל: $\\;M(1,\\,12)$.',
@@ -104,12 +111,12 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
           'הישר $\\ell_2$ הוא מדריך של פרבולה קנונית. האם הישר $\\ell_1$ משיק בנקודה $A$ לפרבולה זו? נמק את תשובתך.',
         answer_type: 'proof',
         hints: [
-          'מדריך $x=-4$ $\\Rightarrow$ פרבולה $y^2=16x$ (מוקד $(4,0)$).',
+          'מדריך $x=-4$ נותן פרבולה $y^2=16x$ (מוקד $(4,0)$).',
           "שיפוע המשיק לפרבולה: גזירה סתומה של $y^2=16x$ נותנת $y'=\\dfrac{8}{y}$. השווה לשיפוע $\\ell_1$ ($\\tfrac34$).",
         ],
         solution: {
           steps: [
-            'מדריך $x=-4$ $\\;\\Rightarrow\\;$ פרבולה קנונית $\\;y^2 = 16x$ (מוקד $(4,0)$, מדריך $x=-4$)',
+            'מדריך $x=-4$, ולכן הפרבולה הקנונית היא $\\;y^2 = 16x$ (מוקד $(4,0)$, מדריך $x=-4$)',
             'בדיקה ש-$A(4,8)$ על הפרבולה: $\\;8^2 = 64 = 16\\cdot4$ ✓',
             "שיפוע המשיק לפרבולה: $\\;2y\\,y' = 16 \\Rightarrow y' = \\dfrac{8}{y}$; ב-$A(4,8)$: $\\;y' = \\dfrac{8}{8} = 1$",
             'שיפוע $\\ell_1$ הוא $\\tfrac{3}{4} \\ne 1$ — השיפועים שונים',
@@ -146,14 +153,15 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
           },
         ],
         hints: [
-          'שתי נקודות ההשקה סימטריות לציר $x$ (הפרבולה סימטרית) $\\Rightarrow$ מרכז המעגל על ציר $x$: $(a,0)$.',
+          'שתי נקודות ההשקה סימטריות לציר $x$ (הפרבולה סימטרית), ולכן מרכז המעגל על ציר $x$: $(a,0)$.',
           'הרדיוס מ-$(a,0)$ ל-$A(4,8)$ מאונך למשיק לפרבולה ב-$A$ (שיפוע $1$).',
         ],
         solution: {
           steps: [
-            'שתי נקודות ההשקה סימטריות לציר $x$ $\\;\\Rightarrow\\;$ מרכז המעגל על ציר $x$: $\\;(a,\\,0)$',
+            'שתי נקודות ההשקה סימטריות לציר $x$, ולכן מרכז המעגל על ציר $x$: $\\;(a,\\,0)$',
             'הרדיוס מ-$(a,0)$ ל-$A(4,8)$ מאונך למשיק לפרבולה ב-$A$ (שיפוע $1$): $\\;\\dfrac{8-0}{4-a}\\cdot 1 = -1$',
-            '$\\dfrac{8}{4-a} = -1 \\;\\Rightarrow\\; 8 = a-4 \\;\\Rightarrow\\; a = 12$ — מרכז $(12,0)$',
+            '$\\dfrac{8}{4-a} = -1$',
+            '$8 = a-4 \\;\\Rightarrow\\; a = 12$ — מרכז $(12,0)$',
             '$r^2 = (4-12)^2 + (8-0)^2 = 64 + 64 = 128$',
           ],
           final_answer: 'משוואת המעגל: $\\;(x-12)^2 + y^2 = 128$.',
@@ -241,7 +249,7 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         answer_type: 'number',
         hints: [
           '$\\vec w = \\vec{AA\'}$ מאונך לבסיס $ABCD$.',
-          'מקבילות לבסיס $\\Leftrightarrow$ אין רכיב $\\vec w$ — השווה את מקדם $\\vec w$ לאפס.',
+          'מקבילות לבסיס פירושה שאין רכיב $\\vec w$ — השווה את מקדם $\\vec w$ לאפס.',
         ],
         solution: {
           steps: [
@@ -270,9 +278,13 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
             '$C(0,0,0)$, $B(x,0,0)$, $D(0,y,0)$, $D\'(0,y,z)$; $\\;\\vec{BD\'} = (-x,y,z)$',
             '$\\vec{BF} = \\frac35(-x,y,z) = \\left(-\\tfrac35 x, \\tfrac35 y, \\tfrac35 z\\right)$',
             '$\\vec{BF} = F-B = (4-x,\\,12,\\,18)$',
-            '$4-x = -\\tfrac35 x \\Rightarrow x=10$; $\\;12 = \\tfrac35 y \\Rightarrow y=20$; $\\;18 = \\tfrac35 z \\Rightarrow z=30$',
+            '$4-x = -\\tfrac35 x \\Rightarrow x=10$',
+            '$12 = \\tfrac35 y \\Rightarrow y=20$',
+            '$18 = \\tfrac35 z \\Rightarrow z=30$',
             '$B(10,0,0)$, $D(0,20,0)$, $D\'(0,20,30)$',
-            '$|\\vec u| = |AB| = |DC| = 20$; $\\;|\\vec v| = |AD| = |BC| = 10$; $\\;|\\vec w| = |DD\'| = 30$',
+            '$|\\vec u| = |AB| = |DC| = 20$',
+            '$|\\vec v| = |AD| = |BC| = 10$',
+            '$|\\vec w| = |DD\'| = 30$',
           ],
           final_answer: '$|\\vec u| = 20$, $\\;|\\vec v| = 10$, $\\;|\\vec w| = 30$',
         },
@@ -293,7 +305,8 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
           steps: [
             '$\\vec{BD} = D-B = (-10,20,0)$, $\\;\\vec{BF} = F-B = (-6,12,18)$',
             'נורמל $(a,b,c)$: $\\;(a,b,c)\\cdot(-10,20,0) = -10a+20b = 0 \\Rightarrow a = 2b$',
-            '$(a,b,c)\\cdot(-6,12,18) = -6a+12b+18c = 0 \\Rightarrow 18c = 0 \\Rightarrow c = 0$',
+            '$(a,b,c)\\cdot(-6,12,18) = -6a+12b+18c = 0$',
+            '$18c = 0 \\Rightarrow c = 0$',
             'נבחר $b=1$: נורמל $(2,1,0)$',
             'הישר דרך $F$: $\\;X = (4,12,18) + Q(2,1,0)$',
             'הפאה $CDD\'C\'$ במישור $x=0$: $\\;4 + 2Q = 0 \\Rightarrow Q = -2$',
@@ -656,10 +669,11 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         solution: {
           steps: [
             "$f'(x) = -2x\\,e^{-x^2/4} = 0$",
-            "$e^{-x^2/4}\\ne 0 \\;\\Rightarrow\\; -2x = 0 \\;\\Rightarrow\\; x = 0$",
-            '$f(0) = 4e^{0} = 4 \\;\\Rightarrow\\;$ נקודת הקיצון היא $(0,\\,4)$',
+            "$e^{-x^2/4}\\ne 0 \\;\\Rightarrow\\; -2x = 0$",
+            '$x = 0$',
+            '$f(0) = 4e^{0} = 4$, ולכן נקודת הקיצון היא $(0,\\,4)$',
             "$\\begin{array}{c|c|c|c} x & x<0 & 0 & x>0 \\\\ \\hline f'(x) & + & 0 & - \\\\ f(x) & \\nearrow & 4 & \\searrow \\end{array}$",
-            'משמאל ל-$0$ הפונקציה עולה ומימין יורדת $\\;\\Rightarrow\\;$ זו נקודת מקסימום',
+            'משמאל ל-$0$ הפונקציה עולה ומימין יורדת, ולכן זו נקודת מקסימום',
           ],
           final_answer: 'נקודת מקסימום: $\\;(0,\\,4)$.',
         },
@@ -688,7 +702,7 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'הפונקציה זוגית $\\Rightarrow$ סימטרית לציר $y$',
+            'הפונקציה זוגית ולכן סימטרית לציר $y$',
             'מקסימום יחיד בנקודה $(0,4)$',
             'אסימפטוטה מאוזנת $y=0$, והפונקציה תמיד חיובית ($f(x)>0$)',
             'מתקבל גרף בצורת פעמון',
@@ -770,7 +784,8 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
             "$m'(x) = h'(x)\\,e^{h(x)} = -\\dfrac{f''(x)}{\\left(f'(x)\\right)^2}\\,e^{1/f'(x)}$",
             "נשווה לאפס: $\\;e^{1/f'(x)}\\ne 0$ ו-$\\left(f'(x)\\right)^2>0$, ולכן $\\;m'(x)=0 \\Leftrightarrow f''(x)=0$",
             "$f''(x) = e^{-x^2/4}\\left(x^2-2\\right) = 0$",
-            "$e^{-x^2/4}\\ne 0 \\;\\Rightarrow\\; x^2-2=0 \\;\\Rightarrow\\; x=\\pm\\sqrt2$",
+            "$e^{-x^2/4}\\ne 0 \\;\\Rightarrow\\; x^2-2=0$",
+            "$x=\\pm\\sqrt2$",
             "לפי גרף $m(x)$ (גרף $IV$): הפונקציה יורדת משמאל ל-$-\\sqrt2$ ומימין ל-$\\sqrt2$",
           ],
           final_answer:
@@ -869,7 +884,7 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
             "$f'(x) = -1\\cdot(\\ln x)^{-2}\\cdot\\dfrac{1}{x} = -\\dfrac{1}{x\\,\\ln^2 x}$",
             "בתחום ההגדרה: $\\;x>0$ ו-$\\ln^2 x>0$, לכן $\\;x\\,\\ln^2 x>0$",
             "$f'(x) = -\\dfrac{1}{x\\,\\ln^2 x} < 0$ לכל $x$ בתחום ההגדרה",
-            "$f'(x)\\ne 0$ לעולם $\\;\\Rightarrow\\;$ אין נקודות קיצון, והפונקציה יורדת בכל ענף",
+            "$f'(x)\\ne 0$ לעולם, ולכן אין נקודות קיצון, והפונקציה יורדת בכל ענף",
           ],
           final_answer: 'הפונקציה יורדת ב-$(0,1)$ וב-$(1,\\infty)$; אין תחומי עלייה.',
         },
@@ -906,7 +921,9 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'חיתוך עם ציר $x$: $\\;f(x)=0 \\Rightarrow 1-\\ln x=0 \\Rightarrow \\ln x=1 \\Rightarrow x=e$, הנקודה $(e,0)$',
+            'חיתוך עם ציר $x$: $\\;f(x)=0 \\Rightarrow 1-\\ln x=0$',
+            '$\\ln x=1 \\Rightarrow x=e$',
+            'מתקבלת הנקודה $(e,0)$',
             'ענף $0<x<1$: $\\;\\ln x<0$, הפונקציה מתחת ל-$y=-1$, יורדת מ-$y\\to-1$ (ב-$x\\to0^+$) עד $-\\infty$ (ב-$x\\to1^-$)',
             'ענף $x>1$: יורדת מ-$+\\infty$ (ב-$x\\to1^+$) דרך $(e,0)$ ומתקרבת ל-$y=-1$ (ב-$x\\to\\infty$)',
           ],
@@ -925,12 +942,13 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'תנאי: $\\;-f(x)>0 \\Rightarrow f(x)<0 \\Rightarrow \\dfrac{1-\\ln x}{\\ln x}<0$',
+            'תנאי: $\\;-f(x)>0 \\Rightarrow f(x)<0$',
+            '$\\dfrac{1-\\ln x}{\\ln x}<0$',
             'המונה $1-\\ln x$: חיובי ל-$x<e$, שלילי ל-$x>e$',
             'המכנה $\\ln x$: שלילי ל-$0<x<1$, חיובי ל-$x>1$',
             'המנה שלילית כאשר למונה ולמכנה סימנים מנוגדים:',
-            'מקרה 1: $\\;0<x<1$ (מונה $+$, מכנה $-$) $\\;\\Rightarrow$ מתאים',
-            'מקרה 2: $\\;x>e$ (מונה $-$, מכנה $+$) $\\;\\Rightarrow$ מתאים',
+            'מקרה 1: $\\;0<x<1$ (מונה $+$, מכנה $-$) — ולכן מתאים',
+            'מקרה 2: $\\;x>e$ (מונה $-$, מכנה $+$) — ולכן מתאים',
           ],
           final_answer:
             'תחום ההגדרה של $g$: $\\;(0,1)\\cup(e,\\infty)$ $\\;$ (כלומר $0<x<1$ או $x>e$).',
@@ -946,9 +964,9 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'כאשר $x\\to1^-$: $\\;f(x)\\to-\\infty$, אז $-f(x)\\to+\\infty$ ו-$g\\to+\\infty$ $\\;\\Rightarrow$ אסימפטוטה אנכית $x=1$',
-            'כאשר $x\\to e^+$: $\\;f(x)\\to0^-$, אז $-f(x)\\to0^+$ ו-$g\\to-\\infty$ $\\;\\Rightarrow$ אסימפטוטה אנכית $x=e$',
-            'כאשר $x\\to\\infty$: $\\;f(x)\\to-1$, אז $-f(x)\\to1$ ו-$g\\to\\ln 1=0$ $\\;\\Rightarrow$ אסימפטוטה אופקית $y=0$',
+            'כאשר $x\\to1^-$: $\\;f(x)\\to-\\infty$, אז $-f(x)\\to+\\infty$ ו-$g\\to+\\infty$, ולכן אסימפטוטה אנכית $x=1$',
+            'כאשר $x\\to e^+$: $\\;f(x)\\to0^-$, אז $-f(x)\\to0^+$ ו-$g\\to-\\infty$, ולכן אסימפטוטה אנכית $x=e$',
+            'כאשר $x\\to\\infty$: $\\;f(x)\\to-1$, אז $-f(x)\\to1$ ו-$g\\to\\ln 1=0$, ולכן אסימפטוטה אופקית $y=0$',
             '(גם כאשר $x\\to0^+$: $\\;f\\to-1$, $\\,-f\\to1$, $\\,g\\to0$ — הגרף מתקרב ל-$y=0$)',
           ],
           final_answer: 'אנכיות: $\\;x=1$ ו-$x=e$; $\\;$ אופקית: $\\;y=0$.',
@@ -964,10 +982,14 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '$g>0 \\;\\Leftrightarrow\\; -f(x)>1 \\;\\Leftrightarrow\\; f(x)<-1$',
-            '$f(x)<-1 \\;\\Leftrightarrow\\; \\dfrac{1}{\\ln x}-1<-1 \\;\\Leftrightarrow\\; \\dfrac{1}{\\ln x}<0 \\;\\Leftrightarrow\\; 0<x<1$',
+            '$g>0 \\;\\Leftrightarrow\\; -f(x)>1$',
+            '$-f(x)>1 \\;\\Leftrightarrow\\; f(x)<-1$',
+            '$f(x)<-1 \\;\\Leftrightarrow\\; \\dfrac{1}{\\ln x}-1<-1$',
+            '$\\dfrac{1}{\\ln x}-1<-1 \\;\\Leftrightarrow\\; \\dfrac{1}{\\ln x}<0$',
+            '$\\dfrac{1}{\\ln x}<0 \\;\\Leftrightarrow\\; 0<x<1$',
             'בענף $(0,1)$: $\\;g(x)>0$',
-            '$g<0 \\;\\Leftrightarrow\\; 0<-f(x)<1 \\;\\Leftrightarrow\\; -1<f(x)<0$, וזה מתקיים בענף $x>e$',
+            '$g<0 \\;\\Leftrightarrow\\; 0<-f(x)<1$',
+            '$0<-f(x)<1 \\;\\Leftrightarrow\\; -1<f(x)<0$, וזה מתקיים בענף $x>e$',
             'בענף $(e,\\infty)$: $\\;g(x)<0$',
           ],
           final_answer: 'חיובית ב-$(0,1)$; $\\;$ שלילית ב-$(e,\\infty)$.',
@@ -1056,10 +1078,13 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            'נקודת החיתוך $a$ היא בתחום $x>e$; מימין לה $\\;g(x)>f(x) \\Rightarrow g(x)-f(x)>0$, אז שני האינטגרלים $\\text{I}$ ו-$\\text{II}$ חיוביים',
+            'נקודת החיתוך $a$ היא בתחום $x>e$; מימין לה $\\;g(x)>f(x)$',
+            'לכן $\\;g(x)-f(x)>0$',
+            'אז שני האינטגרלים $\\text{I}$ ו-$\\text{II}$ חיוביים',
             'אסימפטוטות: $\\;f(x)\\to-1$ ו-$g(x)\\to0$ כאשר $x\\to\\infty$',
             'לכן ההפרש $\\;g(x)-f(x)\\to 0-(-1)=1$ כאשר $x\\to\\infty$, וההפרש עולה ומתקרב ל-$1$ אך תמיד $g(x)-f(x)<1$',
-            'הקטעים $[a+1,a+2]$ ו-$[a+3,a+4]$ ברוחב $1$ כל אחד; הקטע של $\\text{II}$ ימינה יותר, שם ההפרש גדול יותר $\\;\\Rightarrow\\; \\text{II}>\\text{I}$',
+            'הקטעים $[a+1,a+2]$ ו-$[a+3,a+4]$ ברוחב $1$ כל אחד; הקטע של $\\text{II}$ ימינה יותר, שם ההפרש גדול יותר',
+            '$\\text{II}>\\text{I}$',
             'בכל קטע $g-f<1$ והרוחב $1$, ולכן כל אינטגרל קטן מ-$1$: $\\;\\text{I}<1$ וגם $\\text{II}<1$',
             'מכאן הסדר: $\\;\\text{I}<\\text{II}<1=\\text{III}$',
           ],
