@@ -12,6 +12,8 @@
  *   Q3 — מספרים מרוכבים (מקום גאומטרי, z^6=1, מצולע I ו-II, הסיבוב w=cis15°).
  *   Q4 — חקירת פונקציה f=4e^{-x²/4} (פיתול→a=4, זוגיות, אסימפטוטה, מקסימום),
  *        התאמת גרפים I–IV ל-f', h=1/f', m=e^h, ירידה וסימן אינטגרל.
+ *   Q5 — חקירת פונקציית ln: f=(1-lnx)/lnx ו-g=ln(-f); תחומים, אסימפטוטות,
+ *        עלייה/ירידה, סימנים, סקיצות, והשוואת אינטגרלים I/II מול 1.
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -794,6 +796,275 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
           ],
           final_answer:
             'הביטוי $\\;\\int_1^2 h(x)\\cdot m(x)\\,dx\\;$ שלילי.',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+
+  // ===========================================================================
+  // Q5 — חקירת פונקציית ln: f(x)=(1-lnx)/lnx=1/lnx-1 (ת"ה 0<x≠1, אנכית x=1,
+  //      אופקית y=-1, יורדת תמיד, חיתוך (e,0)); g(x)=ln(-f(x)) (ת"ה (0,1)∪(e,∞),
+  //      אנכיות x=1 ו-x=e, אופקית y=0, חיובית/שלילית); השוואת אינטגרלים I,II מול 1
+  //      (g-f→1, עולה → II>I, וכל אחד <1 → הגדול III, הקטן I). פתרון לפי כתב-היד.
+  // ===========================================================================
+  {
+    id: 'b2023s582sp-q5',
+    year: 2023,
+    season: 'summer',
+    moed: 'special',
+    paper: '582',
+    questionNumber: 5,
+    topic: 'פונקציית ln',
+    totalPoints: 25,
+    context: 'נתונה הפונקציה $\\;f(x) = \\dfrac{1 - \\ln x}{\\ln x}$.',
+    parts: [
+      {
+        label: 'א1',
+        prompt: 'מצאו את תחום ההגדרה של הפונקציה $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'שני תנאים: $\\ln x$ מוגדר רק עבור $x>0$, והמכנה $\\ln x$ חייב להיות שונה מ-$0$.',
+        ],
+        solution: {
+          steps: [
+            '$\\ln x$ מוגדר $\\;\\Rightarrow\\; x>0$',
+            'המכנה $\\ln x \\ne 0 \\;\\Rightarrow\\; x \\ne 1$',
+            'שני התנאים יחד: $\\;x>0$ וגם $x\\ne 1$',
+          ],
+          final_answer: 'תחום ההגדרה: $\\;0<x$ ו-$x\\ne 1$ $\\;$ (כלומר $(0,1)\\cup(1,\\infty)$).',
+        },
+      },
+      {
+        label: 'א2',
+        prompt: 'מצאו את משוואות האסימפטוטות המאונכות לצירים של $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'אסימפטוטה אנכית: היכן המכנה $\\ln x$ מתאפס (והמונה אינו $0$).',
+          'אסימפטוטה אופקית: בדקו את גבול $f(x)$ כאשר $x\\to\\infty$ וכאשר $x\\to0^+$. נוח לכתוב $f(x)=\\dfrac{1}{\\ln x}-1$.',
+        ],
+        solution: {
+          steps: [
+            'אנכית: המכנה $\\ln x = 0$ ב-$x=1$, והמונה שם $1-\\ln 1 = 1\\ne 0$',
+            'לכן יש אסימפטוטה אנכית $\\;x=1$',
+            'נכתוב $\\;f(x)=\\dfrac{1-\\ln x}{\\ln x}=\\dfrac{1}{\\ln x}-1$',
+            'כאשר $x\\to\\infty$: $\\;\\ln x\\to\\infty$, אז $\\dfrac{1}{\\ln x}\\to 0$ ו-$f(x)\\to -1$',
+            'כאשר $x\\to0^+$: $\\;\\ln x\\to -\\infty$, אז $\\dfrac{1}{\\ln x}\\to 0$ ו-$f(x)\\to -1$',
+            'לכן יש אסימפטוטה אופקית $\\;y=-1$',
+          ],
+          final_answer: 'אנכית: $\\;x=1$; $\\;$ אופקית: $\\;y=-1$.',
+        },
+      },
+      {
+        label: 'א3',
+        prompt: 'מצאו את תחומי העלייה והירידה של $f(x)$ (אם יש כאלה).',
+        answer_type: 'expression',
+        hints: [
+          "כתבו $f(x)=\\dfrac{1}{\\ln x}-1=(\\ln x)^{-1}-1$ וגזרו (כלל השרשרת).",
+          "בדקו את הסימן של $f'(x)$ בכל תחום ההגדרה. שימו לב ש-$x>0$ ו-$\\ln^2 x>0$.",
+        ],
+        solution: {
+          steps: [
+            "$f(x)=(\\ln x)^{-1}-1$",
+            "$f'(x) = -1\\cdot(\\ln x)^{-2}\\cdot\\dfrac{1}{x} = -\\dfrac{1}{x\\,\\ln^2 x}$",
+            "בתחום ההגדרה: $\\;x>0$ ו-$\\ln^2 x>0$, לכן $\\;x\\,\\ln^2 x>0$",
+            "$f'(x) = -\\dfrac{1}{x\\,\\ln^2 x} < 0$ לכל $x$ בתחום ההגדרה",
+            "$f'(x)\\ne 0$ לעולם $\\;\\Rightarrow\\;$ אין נקודות קיצון, והפונקציה יורדת בכל ענף",
+          ],
+          final_answer: 'הפונקציה יורדת ב-$(0,1)$ וב-$(1,\\infty)$; אין תחומי עלייה.',
+        },
+      },
+      {
+        label: 'א4',
+        prompt: 'שרטטו סקיצה של גרף הפונקציה $f(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 240 200',
+            svg: `
+              <line x1="10" y1="80" x2="232" y2="80" stroke="rgba(226,232,240,0.55)" stroke-width="1"/>
+              <line x1="36" y1="10" x2="36" y2="192" stroke="rgba(226,232,240,0.55)" stroke-width="1"/>
+              <text x="226" y="77" fill="#94a3b8" font-size="9" font-family="Heebo, sans-serif">x</text>
+              <text x="40" y="17" fill="#94a3b8" font-size="9" font-family="Heebo, sans-serif">y</text>
+              <line x1="60" y1="10" x2="60" y2="192" stroke="rgba(251,191,36,0.7)" stroke-width="1.1" stroke-dasharray="4 3"/>
+              <text x="62" y="18" fill="#fbbf24" font-size="8.5" font-family="Heebo, sans-serif">x=1</text>
+              <line x1="10" y1="96" x2="232" y2="96" stroke="rgba(96,165,250,0.55)" stroke-width="1.1" stroke-dasharray="4 3"/>
+              <text x="198" y="93" fill="#60a5fa" font-size="8.5" font-family="Heebo, sans-serif">y=-1</text>
+              <path d="M 65,12 L 69.6,48.4 L 76.8,65.8 L 84,72.9 L 101.2,80 L 120,83.2 L 156,86.1 L 204,87.8 L 232,88.4" fill="none" stroke="#f472b6" stroke-width="1.8"/>
+              <path d="M 36,97 L 39.6,104.4 L 45.6,113.5 L 50.4,127.3 L 55.2,167.7 L 56.5,190" fill="none" stroke="#f472b6" stroke-width="1.8"/>
+              <circle cx="36" cy="96" r="2.6" fill="none" stroke="#f472b6" stroke-width="1.3"/>
+              <circle cx="101.2" cy="80" r="2.8" fill="#4ade80"/>
+              <text x="98" y="74" fill="#4ade80" font-size="9.5" font-weight="bold" font-family="Heebo, sans-serif">e</text>
+            `,
+            caption:
+              'גרף $f(x)=\\dfrac{1}{\\ln x}-1$: אסימפטוטה אנכית $x=1$, אסימפטוטה אופקית $y=-1$, חיתוך עם ציר $x$ ב-$(e,0)$, ויורד בשני הענפים.',
+          },
+        ],
+        hints: [
+          'אספו את הממצאים: תחום $x>0,\\,x\\ne1$; אנכית $x=1$; אופקית $y=-1$; יורדת תמיד; חיתוך ציר $x$ ב-$(e,0)$.',
+        ],
+        solution: {
+          steps: [
+            'חיתוך עם ציר $x$: $\\;f(x)=0 \\Rightarrow 1-\\ln x=0 \\Rightarrow \\ln x=1 \\Rightarrow x=e$, הנקודה $(e,0)$',
+            'ענף $0<x<1$: $\\;\\ln x<0$, הפונקציה מתחת ל-$y=-1$, יורדת מ-$y\\to-1$ (ב-$x\\to0^+$) עד $-\\infty$ (ב-$x\\to1^-$)',
+            'ענף $x>1$: יורדת מ-$+\\infty$ (ב-$x\\to1^+$) דרך $(e,0)$ ומתקרבת ל-$y=-1$ (ב-$x\\to\\infty$)',
+          ],
+          final_answer:
+            'גרף בעל אסימפטוטה אנכית $x=1$ ואופקית $y=-1$, חיתוך $(e,0)$, יורד בשני הענפים (ראו סרטוט).',
+        },
+      },
+      {
+        label: 'ב1',
+        prompt:
+          'נתונה הפונקציה $\\;g(x)=\\ln\\!\\left(-f(x)\\right)$. מצאו את תחום ההגדרה של $g(x)$.',
+        answer_type: 'expression',
+        hints: [
+          '$\\ln$ מוגדר רק עבור ארגומנט חיובי: $\\;-f(x)>0$, כלומר $f(x)<0$.',
+          'פתרו $\\dfrac{1-\\ln x}{\\ln x}<0$ בעזרת סימני המונה והמכנה, בתוך תחום ההגדרה של $f$.',
+        ],
+        solution: {
+          steps: [
+            'תנאי: $\\;-f(x)>0 \\Rightarrow f(x)<0 \\Rightarrow \\dfrac{1-\\ln x}{\\ln x}<0$',
+            'המונה $1-\\ln x$: חיובי ל-$x<e$, שלילי ל-$x>e$',
+            'המכנה $\\ln x$: שלילי ל-$0<x<1$, חיובי ל-$x>1$',
+            'המנה שלילית כאשר למונה ולמכנה סימנים מנוגדים:',
+            'מקרה 1: $\\;0<x<1$ (מונה $+$, מכנה $-$) $\\;\\Rightarrow$ מתאים',
+            'מקרה 2: $\\;x>e$ (מונה $-$, מכנה $+$) $\\;\\Rightarrow$ מתאים',
+          ],
+          final_answer:
+            'תחום ההגדרה של $g$: $\\;(0,1)\\cup(e,\\infty)$ $\\;$ (כלומר $0<x<1$ או $x>e$).',
+        },
+      },
+      {
+        label: 'ב2',
+        prompt: 'מצאו את משוואות האסימפטוטות המאונכות לצירים של $g(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'בדקו את הגבולות בקצות תחום ההגדרה: $\\;x\\to1^-$, $\\;x\\to e^+$, $\\;x\\to\\infty$, $\\;x\\to0^+$.',
+          'זכרו $g=\\ln(-f)$: כאשר $-f\\to\\infty$ אז $g\\to\\infty$, וכאשר $-f\\to0^+$ אז $g\\to-\\infty$.',
+        ],
+        solution: {
+          steps: [
+            'כאשר $x\\to1^-$: $\\;f(x)\\to-\\infty$, אז $-f(x)\\to+\\infty$ ו-$g\\to+\\infty$ $\\;\\Rightarrow$ אסימפטוטה אנכית $x=1$',
+            'כאשר $x\\to e^+$: $\\;f(x)\\to0^-$, אז $-f(x)\\to0^+$ ו-$g\\to-\\infty$ $\\;\\Rightarrow$ אסימפטוטה אנכית $x=e$',
+            'כאשר $x\\to\\infty$: $\\;f(x)\\to-1$, אז $-f(x)\\to1$ ו-$g\\to\\ln 1=0$ $\\;\\Rightarrow$ אסימפטוטה אופקית $y=0$',
+            '(גם כאשר $x\\to0^+$: $\\;f\\to-1$, $\\,-f\\to1$, $\\,g\\to0$ — הגרף מתקרב ל-$y=0$)',
+          ],
+          final_answer: 'אנכיות: $\\;x=1$ ו-$x=e$; $\\;$ אופקית: $\\;y=0$.',
+        },
+      },
+      {
+        label: 'ב3',
+        prompt: 'מצאו את תחומי החיוביות והשליליות של $g(x)$.',
+        answer_type: 'expression',
+        hints: [
+          '$g=\\ln(-f)$. הסימן של $\\ln$ נקבע לפי האם הארגומנט גדול או קטן מ-$1$: $\\;g>0\\Leftrightarrow -f>1$, ו-$g<0\\Leftrightarrow 0<-f<1$.',
+          '$-f>1 \\Leftrightarrow f<-1$, ו-$0<-f<1 \\Leftrightarrow -1<f<0$. בדקו בכל ענף של תחום ההגדרה $(0,1)\\cup(e,\\infty)$.',
+        ],
+        solution: {
+          steps: [
+            '$g>0 \\;\\Leftrightarrow\\; -f(x)>1 \\;\\Leftrightarrow\\; f(x)<-1$',
+            '$f(x)<-1 \\;\\Leftrightarrow\\; \\dfrac{1}{\\ln x}-1<-1 \\;\\Leftrightarrow\\; \\dfrac{1}{\\ln x}<0 \\;\\Leftrightarrow\\; 0<x<1$',
+            'בענף $(0,1)$: $\\;g(x)>0$',
+            '$g<0 \\;\\Leftrightarrow\\; 0<-f(x)<1 \\;\\Leftrightarrow\\; -1<f(x)<0$, וזה מתקיים בענף $x>e$',
+            'בענף $(e,\\infty)$: $\\;g(x)<0$',
+          ],
+          final_answer: 'חיובית ב-$(0,1)$; $\\;$ שלילית ב-$(e,\\infty)$.',
+        },
+      },
+      {
+        label: 'ב4',
+        prompt: 'שרטטו סקיצה של גרף הפונקציה $g(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 250 210',
+            svg: `
+              <line x1="10" y1="95" x2="244" y2="95" stroke="rgba(226,232,240,0.55)" stroke-width="1"/>
+              <line x1="34" y1="15" x2="34" y2="198" stroke="rgba(226,232,240,0.55)" stroke-width="1"/>
+              <text x="238" y="92" fill="#94a3b8" font-size="9" font-family="Heebo, sans-serif">x</text>
+              <text x="38" y="22" fill="#94a3b8" font-size="9" font-family="Heebo, sans-serif">y</text>
+              <line x1="54" y1="15" x2="54" y2="198" stroke="rgba(251,191,36,0.7)" stroke-width="1.1" stroke-dasharray="4 3"/>
+              <text x="46" y="26" fill="#fbbf24" font-size="8.5" font-family="Heebo, sans-serif">x=1</text>
+              <line x1="88" y1="15" x2="88" y2="198" stroke="rgba(251,191,36,0.7)" stroke-width="1.1" stroke-dasharray="4 3"/>
+              <text x="82" y="26" fill="#fbbf24" font-size="8.5" font-family="Heebo, sans-serif">x=e</text>
+              <path d="M 34,95 L 38,85.3 L 42,80.2 L 46,73.3 L 49,65 L 51.6,51.5 L 53,35" fill="none" stroke="#f472b6" stroke-width="1.8"/>
+              <path d="M 90,165 L 94,143.2 L 104,127 L 114,120.5 L 134,114.4 L 174,109.4 L 234,106.4" fill="none" stroke="#f472b6" stroke-width="1.8"/>
+              <circle cx="34" cy="95" r="2.6" fill="none" stroke="#f472b6" stroke-width="1.3"/>
+            `,
+            caption:
+              'גרף $g(x)=\\ln(-f(x))$, מוגדר ב-$(0,1)\\cup(e,\\infty)$: אסימפטוטות אנכיות $x=1$ ו-$x=e$, אסימפטוטה אופקית $y=0$. $g>0$ ב-$(0,1)$ ו-$g<0$ ב-$(e,\\infty)$.',
+          },
+        ],
+        hints: [
+          'השתמשו בתחום $(0,1)\\cup(e,\\infty)$, באסימפטוטות $x=1,\\,x=e,\\,y=0$, ובסימנים: $g>0$ ב-$(0,1)$ ו-$g<0$ ב-$(e,\\infty)$.',
+        ],
+        solution: {
+          steps: [
+            'ענף $(0,1)$: $\\;g>0$, עולה מ-$g\\to0$ (ב-$x\\to0^+$) עד $+\\infty$ (ב-$x\\to1^-$)',
+            'ענף $(e,\\infty)$: $\\;g<0$, עולה מ-$-\\infty$ (ב-$x\\to e^+$) ומתקרב ל-$y=0$ (ב-$x\\to\\infty$)',
+            'בין $x=1$ ל-$x=e$ הפונקציה אינה מוגדרת',
+          ],
+          final_answer:
+            'שני ענפים: ב-$(0,1)$ מעל ציר $x$ (עד האסימפטוטה $x=1$), וב-$(e,\\infty)$ מתחת לציר $x$ (מהאסימפטוטה $x=e$ ומתקרב ל-$y=0$). ראו סרטוט.',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: [
+          'נסמן ב-$a$ את שיעור ה-$x$ של נקודת החיתוך של גרף הפונקציה $f(x)$ וגרף הפונקציה $g(x)$.',
+          'מבין שלושת הביטויים קבעו איזה הוא הגדול ביותר ואיזה הקטן ביותר (אין צורך למצוא את הערך של $a$). נמקו את תשובתכם.',
+          '',
+          'I. $\\;\\displaystyle\\int_{a+1}^{a+2}\\big(g(x)-f(x)\\big)\\,dx$',
+          'II. $\\;\\displaystyle\\int_{a+3}^{a+4}\\big(g(x)-f(x)\\big)\\,dx$',
+          'III. המספר $1$',
+        ].join('\n'),
+        answer_type: 'proof',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 300 200',
+            svg: `
+              <line x1="14" y1="52" x2="294" y2="52" stroke="rgba(226,232,240,0.55)" stroke-width="1"/>
+              <text x="284" y="48" fill="#94a3b8" font-size="9" font-family="Heebo, sans-serif">y=0</text>
+              <line x1="20" y1="116" x2="290" y2="116" stroke="rgba(148,163,184,0.5)" stroke-width="1.1" stroke-dasharray="4 3"/>
+              <text x="248" y="113" fill="#94a3b8" font-size="8.5" font-family="Heebo, sans-serif">y=-1</text>
+              <line x1="34" y1="15" x2="34" y2="185" stroke="rgba(251,191,36,0.55)" stroke-width="1.1" stroke-dasharray="4 3"/>
+              <text x="28" y="68" fill="#fbbf24" font-size="8.5" font-family="Heebo, sans-serif">e</text>
+              <polygon points="193.6,89.3 193.6,86.6 212.9,85 212.9,90.3" fill="rgba(251,191,36,0.28)" stroke="none"/>
+              <polygon points="232.2,91 232.2,83.6 251.4,82.5 251.4,91.7" fill="rgba(74,222,128,0.28)" stroke="none"/>
+              <path d="M 34,52 L 39.3,57.75 L 58.6,69.9 L 77.9,76.3 L 97.1,80.3 L 135.7,85.2 L 174.3,88.3 L 212.9,90.3 L 251.4,91.7 L 290,92.9" fill="none" stroke="#f87171" stroke-width="1.8"/>
+              <path d="M 42.8,180 L 48.9,154.3 L 58.6,133.7 L 77.9,114.1 L 97.1,104.2 L 135.7,94 L 174.3,88.3 L 212.9,85 L 251.4,82.5 L 290,80.6" fill="none" stroke="#60a5fa" stroke-width="1.8"/>
+              <circle cx="174.3" cy="88.3" r="2.8" fill="#e2e8f0"/>
+              <line x1="174.3" y1="49" x2="174.3" y2="55" stroke="#e2e8f0" stroke-width="1.2"/>
+              <text x="171" y="46" fill="#e2e8f0" font-size="9" font-weight="bold" font-family="Heebo, sans-serif">a</text>
+              <text x="200" y="80" fill="#fbbf24" font-size="9" font-weight="bold" font-family="Heebo, sans-serif">I</text>
+              <text x="238" y="76" fill="#4ade80" font-size="9" font-weight="bold" font-family="Heebo, sans-serif">II</text>
+              <text x="264" y="100" fill="#f87171" font-size="9" font-family="Heebo, sans-serif">f(x)</text>
+              <text x="264" y="73" fill="#60a5fa" font-size="9" font-family="Heebo, sans-serif">g(x)</text>
+            `,
+            caption:
+              'הגרפים $f(x)$ (ורוד) ו-$g(x)$ (כחול) נחתכים ב-$x=a$ (בתחום $x>e$). מימין ל-$a$ מתקיים $g>f$, וההפרש $g(x)-f(x)$ עולה ושואף ל-$1$ (כי $f\\to-1$ ו-$g\\to0$). השטח $I$ (קרוב ל-$a$) קטן מהשטח $II$ (רחוק יותר), ושניהם קטנים מ-$1$.',
+          },
+        ],
+        hints: [
+          'נקודת החיתוך $a$ נמצאת בתחום $x>e$ (שם שתי הפונקציות שליליות). מימין ל-$a$ מתקיים $g(x)>f(x)$, כך ש-$g-f>0$.',
+          'לפונקציה $f$ אסימפטוטה $y=-1$ ולפונקציה $g$ אסימפטוטה $y=0$. מה קורה להפרש $g(x)-f(x)$ כאשר $x\\to\\infty$?',
+          'ההפרש $g-f$ עולה ושואף ל-$1$ אך תמיד קטן מ-$1$. רוחב כל קטע אינטגרציה הוא $1$ — השוו את שני האינטגרלים ל-$1$.',
+        ],
+        solution: {
+          steps: [
+            'נקודת החיתוך $a$ היא בתחום $x>e$; מימין לה $\\;g(x)>f(x) \\Rightarrow g(x)-f(x)>0$, אז שני האינטגרלים $\\text{I}$ ו-$\\text{II}$ חיוביים',
+            'אסימפטוטות: $\\;f(x)\\to-1$ ו-$g(x)\\to0$ כאשר $x\\to\\infty$',
+            'לכן ההפרש $\\;g(x)-f(x)\\to 0-(-1)=1$ כאשר $x\\to\\infty$, וההפרש עולה ומתקרב ל-$1$ אך תמיד $g(x)-f(x)<1$',
+            'הקטעים $[a+1,a+2]$ ו-$[a+3,a+4]$ ברוחב $1$ כל אחד; הקטע של $\\text{II}$ ימינה יותר, שם ההפרש גדול יותר $\\;\\Rightarrow\\; \\text{II}>\\text{I}$',
+            'בכל קטע $g-f<1$ והרוחב $1$, ולכן כל אינטגרל קטן מ-$1$: $\\;\\text{I}<1$ וגם $\\text{II}<1$',
+            'מכאן הסדר: $\\;\\text{I}<\\text{II}<1=\\text{III}$',
+          ],
+          final_answer:
+            'הגדול ביותר: $\\;\\text{III}$ (המספר $1$). $\\;$ הקטן ביותר: $\\;\\text{I}$.',
         },
       },
     ],
