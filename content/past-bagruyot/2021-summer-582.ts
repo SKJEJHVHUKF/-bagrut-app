@@ -33,19 +33,56 @@ export const bagrut2021Summer582: PastBagrutQuestion[] = [
           'הראה כי המקום הגאומטרי של כל הנקודות שהמרחק שלהן מן הנקודה $(a, -1)$ שווה למרחק שלהן מן הנקודה $(-a, 1)$ הוא קו ישר. הבע את משוואת הישר באמצעות $a$.',
         answer_type: 'proof',
         hints: [
-          'נקודות במרחק שווה משתי נקודות נתונות — זה האנך האמצעי לקטע שמחבר אותן. אבל אפשר פשוט להציב $(x,y)$ ולהשוות מרחקים אלגברית.',
-          'נסה: $\\sqrt{(x-a)^2 + (y+1)^2} = \\sqrt{(x+a)^2 + (y-1)^2}$. העלה בריבוע ופשט.',
+          'המקום הגאומטרי של נקודות שמרחקן שווה משתי נקודות הוא האנך האמצעי לקטע שמחבר אותן. מצא אותו לפי שיפוע הקטע, השיפוע הניצב, ונקודת האמצע.',
+          'נקודת האמצע של הקטע היא הראשית $(0,0)$ (כי $\\tfrac{a+(-a)}{2}=0$), והאנך האמצעי עובר דרכה.',
+          'לאימות אלגברי: הצב נקודה כללית $(x,y)$ והשווה מרחקים — $\\sqrt{(x-a)^2 + (y+1)^2} = \\sqrt{(x+a)^2 + (y-1)^2}$, העלה בריבוע ופשט.',
+        ],
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 240 200',
+            svg: `
+              <line x1="16" y1="100" x2="224" y2="100" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="120" y1="14" x2="120" y2="188" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="216" y="113" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">x</text>
+              <text x="108" y="22" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">y</text>
+              <line x1="75" y1="70" x2="165" y2="130" stroke="rgba(148,163,184,0.7)" stroke-width="1.4" stroke-dasharray="4 3"/>
+              <line x1="66" y1="181" x2="174" y2="19" stroke="rgba(96,165,250,0.95)" stroke-width="1.9"/>
+              <polyline points="112.5,95 117.5,87.5 125,92.5" fill="none" stroke="rgba(226,232,240,0.75)" stroke-width="1"/>
+              <circle cx="165" cy="130" r="2.8" fill="rgba(251,191,36,0.95)"/>
+              <circle cx="75" cy="70" r="2.8" fill="rgba(251,191,36,0.95)"/>
+              <circle cx="120" cy="100" r="2.6" fill="rgba(226,232,240,0.95)"/>
+              <text x="170" y="143" fill="#fbbf24" font-size="9.5" font-family="Heebo, sans-serif">(a,-1)</text>
+              <text x="40" y="66" fill="#fbbf24" font-size="9.5" font-family="Heebo, sans-serif">(-a,1)</text>
+              <text x="125" y="113" fill="#e2e8f0" font-size="9.5" font-family="Heebo, sans-serif">O</text>
+              <text x="150" y="30" fill="#60a5fa" font-size="9.5" font-family="Heebo, sans-serif">y=ax</text>
+            `,
+            caption:
+              'הנקודות $(a,-1)$ ו-$(-a,1)$, הקטע שמחבר ביניהן (מקווקו), והאנך האמצעי שלו (בכחול) העובר דרך אמצע הקטע $O(0,0)$ — זהו המקום הגאומטרי, קו ישר בשיפוע $a$ דרך הראשית.',
+          },
         ],
         solution: {
           steps: [
-            'נקודה כללית $(x,y)$, נשווה מרחקים: $\\sqrt{(x-a)^2 + (y+1)^2} = \\sqrt{(x+a)^2 + (y-1)^2}$',
-            'נעלה בריבוע: $(x-a)^2 + (y+1)^2 = (x+a)^2 + (y-1)^2$',
+            'המקום הגאומטרי של נקודות שמרחקן שווה משתי נקודות נתונות הוא האנך האמצעי לקטע שמחבר ביניהן.',
+            'נחשב את שיפוע הקטע שמחבר את שתי הנקודות:',
+            '$m_1 = \\dfrac{1-(-1)}{-a-a} = \\dfrac{2}{-2a} = -\\dfrac{1}{a}$',
+            'שיפוע האנך האמצעי הוא ההופכי הנגדי:',
+            '$m_2 = -\\dfrac{1}{m_1} = a$',
+            'נמצא את שיעורי אמצע הקטע:',
+            '$x_M = \\dfrac{a+(-a)}{2} = 0$',
+            '$y_M = \\dfrac{(-1)+1}{2} = 0$',
+            'האנך האמצעי עובר דרך הראשית בשיפוע $a$, ולכן משוואתו:',
+            '$y = ax$',
+            'נאמת אלגברית שהמקום אכן קו ישר — נשווה את המרחקים מנקודה כללית אל שתי הנקודות:',
+            '$\\sqrt{(x-a)^2 + (y+1)^2} = \\sqrt{(x+a)^2 + (y-1)^2}$',
+            'נעלה את שני האגפים בריבוע:',
+            '$(x-a)^2 + (y+1)^2 = (x+a)^2 + (y-1)^2$',
             '$x^2 - 2ax + a^2 + y^2 + 2y + 1 = x^2 + 2ax + a^2 + y^2 - 2y + 1$',
             '$-2ax + 2y = 2ax - 2y$',
             '$4y = 4ax$',
             '$y = ax$',
           ],
-          final_answer: 'משוואת הישר: $\\;y = ax$ (קו ישר דרך הראשית, שיפוע $a$)',
+          final_answer: 'משוואת הישר: $\\;y = ax$ (האנך האמצעי לקטע — קו ישר דרך הראשית, שיפוע $a$)',
         },
       },
       {
@@ -96,23 +133,28 @@ export const bagrut2021Summer582: PastBagrutQuestion[] = [
               <line x1="120" y1="12" x2="120" y2="190" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
               <text x="227" y="113" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">x</text>
               <text x="108" y="20" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">y</text>
-              <line x1="58" y1="162" x2="212" y2="8" stroke="rgba(96,165,250,0.8)" stroke-width="1.4"/>
-              <text x="196" y="20" fill="#60a5fa" font-size="9.5" font-family="Heebo, sans-serif">y=x</text>
-              <line x1="58" y1="38" x2="212" y2="192" stroke="rgba(96,165,250,0.8)" stroke-width="1.4"/>
-              <text x="194" y="188" fill="#60a5fa" font-size="9.5" font-family="Heebo, sans-serif">y=-x</text>
+              <line x1="48" y1="172" x2="192" y2="28" stroke="rgba(96,165,250,0.8)" stroke-width="1.4"/>
+              <text x="178" y="30" fill="#60a5fa" font-size="9.5" font-family="Heebo, sans-serif">y=x</text>
+              <line x1="48" y1="28" x2="192" y2="172" stroke="rgba(96,165,250,0.8)" stroke-width="1.4"/>
+              <text x="172" y="170" fill="#60a5fa" font-size="9.5" font-family="Heebo, sans-serif">y=-x</text>
               <circle cx="172" cy="100" r="37" fill="rgba(244,114,182,0.10)" stroke="rgba(244,114,182,0.95)" stroke-width="1.8"/>
               <circle cx="94" cy="100" r="18" fill="rgba(56,189,248,0.12)" stroke="rgba(56,189,248,0.95)" stroke-width="1.8"/>
-              <line x1="172" y1="100" x2="146" y2="74" stroke="rgba(244,114,182,0.75)" stroke-width="1.3"/>
+              <line x1="172" y1="100" x2="146" y2="74" stroke="rgba(244,114,182,0.8)" stroke-width="1.3"/>
+              <line x1="94" y1="100" x2="107" y2="113" stroke="rgba(56,189,248,0.85)" stroke-width="1.3"/>
+              <polyline points="150.95,78.95 146,83.9 141.05,78.95" fill="none" stroke="rgba(226,232,240,0.7)" stroke-width="0.9"/>
+              <polyline points="102.05,108.05 107,103.1 111.95,108.05" fill="none" stroke="rgba(226,232,240,0.7)" stroke-width="0.9"/>
               <circle cx="146" cy="74" r="2.6" fill="rgba(251,191,36,0.95)"/>
+              <circle cx="107" cy="113" r="2.6" fill="rgba(251,191,36,0.95)"/>
               <circle cx="172" cy="100" r="2.6" fill="rgba(244,114,182,0.95)"/>
               <circle cx="94" cy="100" r="2.6" fill="rgba(56,189,248,0.95)"/>
               <circle cx="120" cy="100" r="2.2" fill="rgba(226,232,240,0.9)"/>
-              <text x="160" y="116" fill="#f472b6" font-size="9.5" font-family="Heebo, sans-serif">M(4,0)</text>
-              <text x="68" y="92" fill="#38bdf8" font-size="9.5" font-family="Heebo, sans-serif">N(-2,0)</text>
+              <text x="158" y="116" fill="#f472b6" font-size="9.5" font-family="Heebo, sans-serif">M(4,0)</text>
+              <text x="66" y="92" fill="#38bdf8" font-size="9.5" font-family="Heebo, sans-serif">N(-2,0)</text>
               <text x="150" y="70" fill="#fbbf24" font-size="9.5" font-family="Heebo, sans-serif">A</text>
-              <text x="122" y="113" fill="#cbd5e1" font-size="9.5" font-family="Heebo, sans-serif">O</text>
+              <text x="95" y="127" fill="#fbbf24" font-size="9.5" font-family="Heebo, sans-serif">B</text>
+              <text x="123" y="113" fill="#cbd5e1" font-size="9.5" font-family="Heebo, sans-serif">O</text>
             `,
-            caption: 'המעגלים $M(4,0)$ (רדיוס $2\\sqrt2$) ו-$N(-2,0)$ (רדיוס $\\sqrt2$) משיקים לישרים $y=x$ ו-$y=-x$. הרדיוס $MA$ ניצב למשיק, והמשולשים $MAO,\\,NBO$ דומים (זוויות $90°$ ו-$45°$).',
+            caption: 'המעגלים $M(4,0)$ (רדיוס $2\\sqrt2$) ו-$N(-2,0)$ (רדיוס $\\sqrt2$) משיקים לישרים $y=x$ ו-$y=-x$. הרדיוסים $MA$ ו-$NB$ ניצבים למשיק, והמשולשים $MAO,\\,NBO$ דומים (זוויות $90°$ ו-$45°$) — ומכאן היחס $MO:NO = 2:1$.',
           },
         ],
         solution: {
@@ -162,30 +204,36 @@ export const bagrut2021Summer582: PastBagrutQuestion[] = [
               <line x1="60" y1="42" x2="206" y2="188" stroke="rgba(148,163,184,0.45)" stroke-width="1" stroke-dasharray="3 3"/>
               <circle cx="172" cy="100" r="37" fill="rgba(244,114,182,0.08)" stroke="rgba(244,114,182,0.9)" stroke-width="1.6"/>
               <circle cx="94" cy="100" r="18" fill="rgba(56,189,248,0.10)" stroke="rgba(56,189,248,0.9)" stroke-width="1.6"/>
+              <line x1="16" y1="100" x2="238" y2="46.5" stroke="rgba(251,191,36,0.95)" stroke-width="1.6"/>
+              <line x1="16" y1="100" x2="238" y2="153.5" stroke="rgba(52,211,153,0.95)" stroke-width="1.8"/>
               <circle cx="172" cy="100" r="2.4" fill="rgba(244,114,182,0.95)"/>
               <circle cx="94" cy="100" r="2.4" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="16" cy="100" r="2.6" fill="rgba(226,232,240,0.9)"/>
               <text x="166" y="118" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">M</text>
               <text x="86" y="90" fill="#38bdf8" font-size="10" font-family="Heebo, sans-serif">N</text>
-              <line x1="40" y1="94" x2="232" y2="48" stroke="rgba(251,191,36,0.95)" stroke-width="1.6"/>
-              <line x1="40" y1="106" x2="232" y2="152" stroke="rgba(52,211,153,0.95)" stroke-width="1.8"/>
+              <text x="6" y="93" fill="#cbd5e1" font-size="8.5" font-family="Heebo, sans-serif">(-8,0)</text>
             `,
-            caption: 'ארבעת המשיקים המשותפים: $y=x$ ו-$y=-x$ (אפור מקווקו), הישר הנתון (כתום), והישר הנוסף $x+\\sqrt{17}\\,y+8=0$ (ירוק) — השתקפות הנתון בציר $x$.',
+            caption:
+              'ארבעת המשיקים המשותפים: $y=x$ ו-$y=-x$ (אפור מקווקו) הנחתכים בראשית, ושני המשיקים החיצוניים — הישר הנתון (כתום) והישר הנוסף $x+\\sqrt{17}\\,y+8=0$ (ירוק) — הנחתכים על ציר ה-$x$ בנקודה $(-8,0)$ שמשמאל. הישר הנוסף הוא השתקפות הנתון בציר ה-$x$, ולכן משיק אף הוא לשני המעגלים.',
           },
         ],
         solution: {
           steps: [
-            'הישר הנתון בצורת שיפוע-חותך: $y = \\dfrac{1}{\\sqrt{17}}\\,x + \\dfrac{8}{\\sqrt{17}}$',
-            'שיפוע $m = \\dfrac{1}{\\sqrt{17}}$, חותך ציר $y$ ב-$\\left(0,\\,\\dfrac{8}{\\sqrt{17}}\\right)$',
-            'לשני מעגלים יש $4$ משיקים; הרביעי = השתקפות הנתון בציר $x$ (סימטריית התרשים)',
-            'בהשתקפות: שיפוע $-\\dfrac{1}{\\sqrt{17}}$, חותך $\\left(0,\\,-\\dfrac{8}{\\sqrt{17}}\\right)$',
+            'נכתוב את הישר הנתון בצורת שיפוע-חותך:',
+            '$y = \\dfrac{1}{\\sqrt{17}}\\,x + \\dfrac{8}{\\sqrt{17}}$',
+            'שיפועו $m = \\dfrac{1}{\\sqrt{17}}$, והוא חותך את ציר $y$ בנקודה $\\left(0,\\,\\dfrac{8}{\\sqrt{17}}\\right)$',
+            'שני מרכזי המעגלים מונחים על ציר ה-$x$, ולכן כל התרשים סימטרי ביחס לציר ה-$x$',
+            'מסקנה: השתקפות כל משיק משותף בציר ה-$x$ היא גם משיק משותף — זהו המשיק הרביעי',
+            'בהשתקפות בציר $x$ השיפוע מחליף סימן והחיתוך עם ציר $y$ מחליף סימן:',
+            'שיפוע $-\\dfrac{1}{\\sqrt{17}}$, חיתוך עם ציר $y$ בנקודה $\\left(0,\\,-\\dfrac{8}{\\sqrt{17}}\\right)$',
             '$y + \\dfrac{8}{\\sqrt{17}} = -\\dfrac{1}{\\sqrt{17}}(x - 0)$',
             '$\\sqrt{17}\\,y + 8 = -x$',
             '$x + \\sqrt{17}\\,y + 8 = 0$',
-            'בדיקה מ-$M(4,0)$: $\\;\\dfrac{|4+8|}{\\sqrt{18}} = \\dfrac{12}{3\\sqrt2} = 2\\sqrt2 = r_M$ ✓',
-            'בדיקה מ-$N(-2,0)$: $\\;\\dfrac{|-2+8|}{\\sqrt{18}} = \\dfrac{6}{3\\sqrt2} = \\sqrt2 = r_N$ ✓',
+            'בדיקה — מרחק מ-$M(4,0)$ לישר: $\\;\\dfrac{|4+8|}{\\sqrt{1+17}} = \\dfrac{12}{3\\sqrt2} = 2\\sqrt2 = r_M$ ✓',
+            'בדיקה — מרחק מ-$N(-2,0)$ לישר: $\\;\\dfrac{|-2+8|}{\\sqrt{1+17}} = \\dfrac{6}{3\\sqrt2} = \\sqrt2 = r_N$ ✓',
           ],
           final_answer:
-            'הישר הנוסף: $\\;x + \\sqrt{17}\\,y + 8 = 0$',
+            'הישר המשיק הרביעי: $\\;x + \\sqrt{17}\\,y + 8 = 0$',
         },
       },
     ],
