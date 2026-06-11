@@ -197,16 +197,24 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         prompt: 'הוכח כי $\\;t = s = k$.',
         answer_type: 'proof',
         hints: [
-          '$\\vec{OH}$ מאונך לכל וקטור במישור הבסיס. בפרט: $\\vec{OH}\\cdot\\vec{AB} = 0$ ו-$\\vec{OH}\\cdot\\vec{BC} = 0$.',
-          '$\\vec{AB} = \\vec v - \\vec u$, $\\;\\vec{BC} = \\vec w - \\vec v$. השתמש בכך ש-$\\vec u\\cdot\\vec v = \\vec v\\cdot\\vec w = \\vec u\\cdot\\vec w = 0$ ו-$|\\vec u|^2 = |\\vec v|^2 = |\\vec w|^2$.',
+          '$\\vec{OH}$ מאונך לכל וקטור במישור הבסיס. בפרט: $\\vec{OH}\\cdot\\vec{AB} = 0$ וגם $\\vec{OH}\\cdot\\vec{AC} = 0$.',
+          '$\\vec{AB} = \\vec v - \\vec u$, $\\;\\vec{AC} = \\vec w - \\vec u$. פתח את המכפלה הסקלרית והשתמש בכך ש-$\\vec u\\cdot\\vec v = \\vec v\\cdot\\vec w = \\vec u\\cdot\\vec w = 0$ ו-$\\vec u\\cdot\\vec u = \\vec v\\cdot\\vec v = \\vec w\\cdot\\vec w$.',
         ],
         solution: {
           steps: [
-            'תכונות: $\\vec u\\cdot\\vec v = \\vec v\\cdot\\vec w = \\vec u\\cdot\\vec w = 0$ (זוויות $90°$), ו-$|\\vec u|^2 = |\\vec v|^2 = |\\vec w|^2$',
-            '$\\vec{OH}\\perp$ בסיס, אז $\\vec{OH}\\cdot\\vec{AB}=0$ ו-$\\vec{OH}\\cdot\\vec{AC}=0$',
-            '$\\vec{AB} = \\vec v - \\vec u$: $\\;(t\\vec u+s\\vec v+k\\vec w)\\cdot(\\vec v-\\vec u) = -t|\\vec u|^2 + s|\\vec v|^2 = 0 \\Rightarrow t=s$',
-            '$\\vec{AC} = \\vec w - \\vec u$: $\\;(t\\vec u+s\\vec v+k\\vec w)\\cdot(\\vec w-\\vec u) = -t|\\vec u|^2 + k|\\vec w|^2 = 0 \\Rightarrow t=k$',
-            '$t = s = k$',
+            'הזוויות בין כל זוג מקצועות הן $90°$, ולכן המכפלות הסקלריות מתאפסות: $\\;\\vec u\\cdot\\vec v = \\vec v\\cdot\\vec w = \\vec u\\cdot\\vec w = 0$',
+            'מהשוויון $|\\vec u| = |\\vec v| = |\\vec w|$ נובע: $\\;\\vec u\\cdot\\vec u = \\vec v\\cdot\\vec v = \\vec w\\cdot\\vec w$',
+            '$\\vec{OH}$ מאונך לבסיס $\\Rightarrow$ מאונך לכל וקטור בבסיס, ובפרט: $\\;\\vec{OH}\\cdot\\vec{AB} = 0$ וגם $\\vec{OH}\\cdot\\vec{AC} = 0$',
+            '$\\vec{AB} = \\vec{OB} - \\vec{OA} = \\vec v - \\vec u$, $\\;\\vec{AC} = \\vec{OC} - \\vec{OA} = \\vec w - \\vec u$',
+            'המשוואה הראשונה: $\\;(t\\vec u + s\\vec v + k\\vec w)\\cdot(\\vec v - \\vec u) = 0$',
+            'נפתח את הסוגריים: $\\;t\\,\\vec u\\cdot\\vec v - t\\,\\vec u\\cdot\\vec u + s\\,\\vec v\\cdot\\vec v - s\\,\\vec v\\cdot\\vec u + k\\,\\vec w\\cdot\\vec v - k\\,\\vec w\\cdot\\vec u = 0$',
+            'נציב את המכפלות המתאפסות ($\\vec u\\cdot\\vec v = \\vec v\\cdot\\vec u = \\vec w\\cdot\\vec v = \\vec w\\cdot\\vec u = 0$): $\\;-t\\,\\vec u\\cdot\\vec u + s\\,\\vec v\\cdot\\vec v = 0$',
+            'ומכיוון ש-$\\vec u\\cdot\\vec u = \\vec v\\cdot\\vec v$: $\\;-t + s = 0 \\;\\Rightarrow\\; t = s$',
+            'המשוואה השנייה: $\\;(t\\vec u + s\\vec v + k\\vec w)\\cdot(\\vec w - \\vec u) = 0$',
+            'נפתח את הסוגריים: $\\;t\\,\\vec u\\cdot\\vec w - t\\,\\vec u\\cdot\\vec u + s\\,\\vec v\\cdot\\vec w - s\\,\\vec v\\cdot\\vec u + k\\,\\vec w\\cdot\\vec w - k\\,\\vec w\\cdot\\vec u = 0$',
+            'נציב את המכפלות המתאפסות: $\\;-t\\,\\vec u\\cdot\\vec u + k\\,\\vec w\\cdot\\vec w = 0$',
+            'ומכיוון ש-$\\vec u\\cdot\\vec u = \\vec w\\cdot\\vec w$: $\\;-t + k = 0 \\;\\Rightarrow\\; t = k$',
+            'משתי התוצאות: $\\;t = s = k$',
           ],
           final_answer: 'הוכח: $\\;t = s = k$',
         },
@@ -224,14 +232,20 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '$M$ מרכז כובד: $\\;\\vec{AM} = \\dfrac23\\vec{AD}$ ($D$ אמצע $BC$)',
-            '$\\vec{OM} = \\vec{OA} + \\dfrac23\\vec{AD} = \\vec{OA} + \\dfrac23\\left(\\vec{AB} + \\dfrac12\\vec{BC}\\right)$',
-            '$\\vec{AB} = \\vec v - \\vec u$, $\\;\\vec{BC} = \\vec w - \\vec v$',
-            '$\\vec{OM} = \\vec u + \\dfrac23\\left((\\vec v-\\vec u) + \\dfrac12(\\vec w-\\vec v)\\right) = \\vec u + \\dfrac23\\left(\\dfrac12\\vec v + \\dfrac12\\vec w - \\vec u\\right)$',
+            '$M$ נקודת מפגש התיכונים (מרכז הכובד), ו-$D$ הוא אמצע הצלע $BC$. במרכז הכובד מתקיים: $\\;\\vec{AM} = \\dfrac23\\vec{AD}$',
+            '$\\vec{OM} = \\vec{OA} + \\vec{AM} = \\vec{OA} + \\dfrac23\\vec{AD} = \\vec{OA} + \\dfrac23\\left(\\vec{AB} + \\vec{BD}\\right)$',
+            '$D$ אמצע $BC$, לכן $\\vec{BD} = \\dfrac12\\vec{BC}$: $\\;\\vec{OM} = \\vec{OA} + \\dfrac23\\left(\\vec{AB} + \\dfrac12\\vec{BC}\\right)$',
+            'נציב $\\vec{BC} = \\vec{AC} - \\vec{AB}$: $\\;\\vec{OM} = \\vec{OA} + \\dfrac23\\left(\\vec{AB} + \\dfrac12(\\vec{AC} - \\vec{AB})\\right)$',
+            'נעבור לווקטורי הבסיס: $\\;\\vec{OA} = \\vec u$, $\\;\\vec{AB} = \\vec v - \\vec u$, $\\;\\vec{AC} = \\vec w - \\vec u$',
+            '$\\vec{OM} = \\vec u + \\dfrac23\\left[(\\vec v - \\vec u) + \\dfrac12\\left((\\vec w - \\vec u) - (\\vec v - \\vec u)\\right)\\right]$',
+            'בתוך הסוגריים הפנימיים: $\\;(\\vec w - \\vec u) - (\\vec v - \\vec u) = \\vec w - \\vec v$',
+            'לכן: $\\;(\\vec v - \\vec u) + \\dfrac12(\\vec w - \\vec v) = \\dfrac12\\vec v + \\dfrac12\\vec w - \\vec u$',
+            '$\\vec{OM} = \\vec u + \\dfrac23\\left(\\dfrac12\\vec v + \\dfrac12\\vec w - \\vec u\\right) = \\vec u + \\dfrac13\\vec v + \\dfrac13\\vec w - \\dfrac23\\vec u$',
             '$\\vec{OM} = \\dfrac13\\vec u + \\dfrac13\\vec v + \\dfrac13\\vec w$',
-            'זה בכיוון $\\vec u+\\vec v+\\vec w$ — אותו כיוון של $\\vec{OH}$ (מסעיף א) המאונך לבסיס; ו-$M$ בבסיס, לכן $OM$ הוא הגובה',
+            'נימוק שזהו הגובה: ל-$\\vec{OM}$ מקדמים שווים ($t = s = k = \\dfrac13$). באותו חישוב כמו בסעיף א: $\\;\\vec{OM}\\cdot\\vec{AB} = -\\dfrac13\\,\\vec u\\cdot\\vec u + \\dfrac13\\,\\vec v\\cdot\\vec v = 0$, וכן $\\vec{OM}\\cdot\\vec{AC} = 0$',
+            'לכן $\\vec{OM}$ מאונך לשני וקטורים בלתי-תלויים בבסיס $\\Rightarrow$ מאונך לבסיס $ABC$. ומכיוון ש-$M$ נמצאת בתוך הבסיס, $OM$ הוא הגובה מ-$O$ לבסיס',
           ],
-          final_answer: 'הוכח: $\\vec{OM} = \\dfrac13(\\vec u+\\vec v+\\vec w)$, ו-$OM\\perp$ בסיס → גובה',
+          final_answer: 'הוכח: $\\;\\vec{OM} = \\dfrac13(\\vec u + \\vec v + \\vec w)$. מקדמיו שווים (כמו בסעיף א) $\\Rightarrow$ מאונך לבסיס, ולכן $OM$ הוא הגובה',
         },
       },
       {
@@ -243,17 +257,20 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           '$P$ על הישר $\\ell$ העובר ב-$O$ בכיוון $(\\vec u+\\vec v+\\vec w)$: $\\;\\vec{OP} = \\lambda(\\vec u+\\vec v+\\vec w)$.',
-          'נפח פירמידה $= \\tfrac{1}{3} S h$ ($S$ שטח הבסיס). אותו בסיס $\\Rightarrow$ היחס בנפחים = היחס בגבהים. ה-$M$ במישור בפרמטר $\\lambda=\\tfrac{1}{3}$, ולכן המרחק מ-$P$ למישור הוא $|1-3\\lambda|\\cdot|OM|$.',
+          'נפח פירמידה $= \\dfrac13 S h$. אותו בסיס $\\Rightarrow$ יחס הנפחים = יחס הגבהים. $P$ על הישר הניצב דרך $M$, ולכן המרחק מ-$P$ לבסיס הוא $|PM|$; התנאי "נפח כפול" נותן $|PM| = 2|OM|$.',
         ],
         solution: {
           steps: [
-            '$P$ על $\\ell$, אז $\\vec{OP} = \\lambda(\\vec u+\\vec v+\\vec w)$. אותו בסיס $ABC$ → יחס הנפחים = יחס הגבהים',
-            'נפח $PABC = 2\\times$ נפח $OABC$ → המרחק מ-$P$ לבסיס פי $2$ מהמרחק של $O$ ($|OM|$)',
-            'אפשרות 1 ($P$ בצד $O$): $\\;\\vec{OP} = -\\vec{OM} = -\\dfrac13(\\vec u+\\vec v+\\vec w)$',
-            'אפשרות 2 ($P$ בצד הנגדי): $\\;\\vec{OP} = 3\\vec{OM} = \\vec u+\\vec v+\\vec w$',
+            '$P$ נמצאת על הישר $\\ell$ (הישר שעליו הגובה $OM$), והפירמידות $PABC$ ו-$OABC$ חולקות את אותו בסיס $ABC$',
+            'נפח פירמידה $= \\dfrac13\\cdot S_{ABC}\\cdot h$. אותו בסיס $\\Rightarrow$ יחס הנפחים שווה ליחס הגבהים (המרחקים מהקודקוד לבסיס)',
+            'מכיוון ש-$P$ על הישר הניצב לבסיס דרך $M$, רגל האנך מ-$P$ לבסיס היא $M$ עצמה, ולכן המרחק מ-$P$ לבסיס הוא $|PM|$ (וכן המרחק מ-$O$ הוא $|OM|$)',
+            'נפח $PABC = 2\\cdot$ נפח $OABC \\;\\Rightarrow\\; |PM| = 2\\,|OM|$',
+            'הנקודה $P$ על הישר $OM$, ושתי נקודות עליו מקיימות $|PM| = 2|OM|$:',
+            'אפשרות 1 — $P$ בצד הנגדי ל-$M$ ביחס ל-$O$: $\\;\\vec{OP} = -\\vec{OM} = -\\dfrac13(\\vec u + \\vec v + \\vec w)$',
+            'אפשרות 2 — $P$ מעבר ל-$M$ (אותו צד): $\\;\\vec{OP} = 3\\,\\vec{OM} = 3\\cdot\\dfrac13(\\vec u + \\vec v + \\vec w) = \\vec u + \\vec v + \\vec w$',
           ],
           final_answer:
-            '$\\vec{OP} = -\\dfrac13(\\vec u+\\vec v+\\vec w)$ או $\\;\\vec{OP} = \\vec u+\\vec v+\\vec w$',
+            '$\\vec{OP} = -\\dfrac13(\\vec u + \\vec v + \\vec w)\\;$ או $\\;\\vec{OP} = \\vec u + \\vec v + \\vec w$',
         },
       },
       {
@@ -262,6 +279,39 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
           'ממקמים את הפירמידה במערכת צירים: $O$ בראשית, $A$ על החלק החיובי של ציר $x$, $B$ על החלק החיובי של ציר $y$, ו-$C$ על החלק החיובי של ציר $z$. נתון $\\;|\\vec u| = a$.',
           'מצא את ההצגה הפרמטרית של הישר $\\ell$ שעליו נמצא הקטע $OP$.',
         ].join('\n'),
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 220 200',
+            svg: `
+              <line x1="95" y1="122" x2="110" y2="22" stroke="rgba(148,163,184,0.5)" stroke-width="1"/>
+              <polygon points="110,22 106,32 113,31" fill="rgba(148,163,184,0.75)"/>
+              <line x1="95" y1="122" x2="208" y2="150" stroke="rgba(148,163,184,0.5)" stroke-width="1"/>
+              <polygon points="208,150 199,146 200,153" fill="rgba(148,163,184,0.75)"/>
+              <line x1="95" y1="122" x2="16" y2="172" stroke="rgba(148,163,184,0.5)" stroke-width="1"/>
+              <polygon points="16,172 25,170 23,177" fill="rgba(148,163,184,0.75)"/>
+              <text x="114" y="24" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">z</text>
+              <text x="210" y="153" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">y</text>
+              <text x="8" y="181" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <polygon points="33,161 183,144 107,44" fill="rgba(56,189,248,0.07)" stroke="rgba(226,232,240,0.8)" stroke-width="1.3"/>
+              <line x1="95" y1="122" x2="33" y2="161" stroke="rgba(226,232,240,0.85)" stroke-width="1.3"/>
+              <line x1="95" y1="122" x2="183" y2="144" stroke="rgba(226,232,240,0.85)" stroke-width="1.3"/>
+              <line x1="95" y1="122" x2="107" y2="44" stroke="rgba(226,232,240,0.85)" stroke-width="1.3"/>
+              <circle cx="95" cy="122" r="2.8" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="33" cy="161" r="2.6" fill="rgba(226,232,240,0.95)"/>
+              <circle cx="183" cy="144" r="2.6" fill="rgba(226,232,240,0.95)"/>
+              <circle cx="107" cy="44" r="2.6" fill="rgba(226,232,240,0.95)"/>
+              <text x="80" y="130" fill="#f472b6" font-size="12" font-weight="bold" font-family="Heebo, sans-serif">O</text>
+              <text x="20" y="170" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">A</text>
+              <text x="188" y="145" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">B</text>
+              <text x="110" y="41" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">C</text>
+              <text x="54" y="145" fill="#fcd34d" font-size="10" font-family="Heebo, sans-serif">a</text>
+              <text x="138" y="128" fill="#fcd34d" font-size="10" font-family="Heebo, sans-serif">a</text>
+              <text x="84" y="86" fill="#fcd34d" font-size="10" font-family="Heebo, sans-serif">a</text>
+            `,
+            caption: 'מערכת הצירים לסעיפים ד–ה: $O$ בראשית, $A(a,0,0)$ על ציר $x$, $B(0,a,0)$ על ציר $y$, $C(0,0,a)$ על ציר $z$. שלוש המקצועות באורך $a$, והישר $\\ell$ בכיוון $(1,1,1)$.',
+          },
+        ],
         answer_type: 'expression',
         hints: [
           'במערכת הצירים: $A = (a,\\,0,\\,0)$, $B = (0,\\,a,\\,0)$, $C = (0,\\,0,\\,a)$, ולכן $\\vec u + \\vec v + \\vec w = (a,\\,a,\\,a)$.',
