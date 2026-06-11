@@ -10,6 +10,8 @@
  *   Q1 — גאומטריה אנליטית (חוצי זווית, מעגל משיק, פרבולה $y^2=16x$).
  *   Q2 — וקטורים במרחב (תיבה ABCDA'B'C'D', מישור EFBD, נקודה P).
  *   Q3 — מספרים מרוכבים (מקום גאומטרי, z^6=1, מצולע I ו-II, הסיבוב w=cis15°).
+ *   Q4 — חקירת פונקציה f=4e^{-x²/4} (פיתול→a=4, זוגיות, אסימפטוטה, מקסימום),
+ *        התאמת גרפים I–IV ל-f', h=1/f', m=e^h, ירידה וסימן אינטגרל.
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -542,6 +544,256 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
             'גם $75°,\\,135°,\\dots$ ממפים את $I$ על $II$, אך התנאי $0<\\alpha<60°$ בוחר $\\;\\alpha = 15°$',
           ],
           final_answer: '$w = \\text{cis}15°$ (כלומר $r=1,\\ \\alpha = 15°$).',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+
+  // ===========================================================================
+  // Q4 — חקירת פונקציה: f'(x)=-2x·e^{-x²/a}, נקודת פיתול ב-x=√2 ⟹ a=4,
+  //      f(x)=4e^{-x²/4} (פעמון), זוגיות/אסימפטוטה/מקסימום/סקיצה,
+  //      התאמת גרפים I–IV ל-f',h=1/f',m=e^h, ותחומי ירידה + סימן אינטגרל.
+  //      (פתרון מלא לפי כתב-היד של המשתמש; ההמשך של סעיף ה יושלם כשיישלח.)
+  // ===========================================================================
+  {
+    id: 'b2023s582sp-q4',
+    year: 2023,
+    season: 'summer',
+    moed: 'special',
+    paper: '582',
+    questionNumber: 4,
+    topic: 'פונקציה מעריכית',
+    totalPoints: 25,
+    context:
+      "נתון: $f'(x) = -2x\\,e^{-x^2/a}$, כאשר $a$ פרמטר. הפונקציה $f(x)$ ונגזרתה $f'(x)$ מוגדרות לכל $x$. לפונקציה $f(x)$ יש נקודת פיתול בנקודה שבה $x=\\sqrt2$.",
+    parts: [
+      {
+        label: 'א',
+        prompt: 'מצאו את $a$.',
+        answer_type: 'number',
+        hints: [
+          "נקודת פיתול $\\Rightarrow f''(x)=0$. גזרו את $f'(x)$ בעזרת כלל המכפלה וכלל השרשרת.",
+          "הציבו $x=\\sqrt2$ ב-$f''(x)=0$. הגורם $e^{-x^2/a}$ לעולם אינו $0$, לכן האיפוס מגיע מהסוגריים.",
+        ],
+        solution: {
+          steps: [
+            "$f'(x) = -2x\\,e^{-x^2/a}$",
+            "נגזור (כלל המכפלה): $\\;f''(x) = -2\\cdot e^{-x^2/a} + (-2x)\\cdot e^{-x^2/a}\\cdot\\left(-\\dfrac{2x}{a}\\right)$",
+            "$f''(x) = e^{-x^2/a}\\left(-2 + \\dfrac{4x^2}{a}\\right)$",
+            "נקודת פיתול ב-$x=\\sqrt2$: $\\;f''(\\sqrt2)=0$",
+            "$e^{-2/a}\\left(-2 + \\dfrac{4\\cdot 2}{a}\\right) = 0$",
+            "$e^{-2/a}\\ne 0 \\;\\Rightarrow\\; -2 + \\dfrac{8}{a} = 0$",
+            "$\\dfrac{8}{a} = 2 \\;\\Rightarrow\\; a = 4$",
+          ],
+          final_answer: '$a = 4$',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: 'נתון: $f(0)=a$. מצאו את הפונקציה $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          "אנטי-נגזרת: $f(x)=\\int f'(x)\\,dx = \\int -2x\\,e^{-x^2/4}\\,dx$.",
+          'שימו לב ש-$\\dfrac{d}{dx}\\,e^{-x^2/4} = -\\dfrac{x}{2}\\,e^{-x^2/4}$, ולכן האינטגרל הוא $4e^{-x^2/4}+C$. מצאו $C$ מ-$f(0)=4$.',
+        ],
+        solution: {
+          steps: [
+            "מסעיף א: $a=4$, אז $\\;f'(x) = -2x\\,e^{-x^2/4}$",
+            '$f(x) = \\displaystyle\\int -2x\\,e^{-x^2/4}\\,dx$',
+            'נשים לב: $\\;\\dfrac{d}{dx}\\,e^{-x^2/4} = e^{-x^2/4}\\cdot\\left(-\\dfrac{x}{2}\\right)$',
+            'לכן $\\;-2x\\,e^{-x^2/4} = 4\\cdot\\left(-\\dfrac{x}{2}\\right)e^{-x^2/4}$',
+            '$f(x) = 4e^{-x^2/4} + C$',
+            'נתון $f(0)=4$: $\\;4 = 4e^{0} + C = 4 + C$',
+            '$C = 0$',
+          ],
+          final_answer: '$f(x) = 4e^{-x^2/4}$',
+        },
+      },
+      {
+        label: 'ג1',
+        prompt: 'האם הפונקציה $f(x)$ היא זוגית או אי-זוגית? נמקו את תשובתכם.',
+        answer_type: 'proof',
+        hints: [
+          'בדקו את $f(-x)$: הציבו $-x$ במקום $x$ ב-$4e^{-x^2/4}$. זכרו ש-$(-x)^2=x^2$.',
+        ],
+        solution: {
+          steps: [
+            '$f(-x) = 4e^{-(-x)^2/4}$',
+            '$(-x)^2 = x^2 \\;\\Rightarrow\\; f(-x) = 4e^{-x^2/4}$',
+            '$f(-x) = f(x)$',
+          ],
+          final_answer: 'הפונקציה $f(x)$ זוגית (הגרף סימטרי לציר $y$).',
+        },
+      },
+      {
+        label: 'ג2',
+        prompt:
+          'מצאו את משוואות האסימפטוטות המאוזנות (המקבילות לצירים) של $f(x)$, אם יש כאלה.',
+        answer_type: 'expression',
+        hints: [
+          'בדקו לאן שואף $f(x)$ כאשר $x\\to\\pm\\infty$. מה קורה ל-$e^{-x^2/4}$ כשהמעריך שואף ל-$-\\infty$?',
+        ],
+        solution: {
+          steps: [
+            'כאשר $x\\to\\pm\\infty$: המעריך $\\;-\\dfrac{x^2}{4}\\to-\\infty$',
+            'לכן $\\;e^{-x^2/4}\\to 0$',
+            '$f(x) = 4e^{-x^2/4}\\to 4\\cdot 0 = 0$',
+          ],
+          final_answer: 'אסימפטוטה מאוזנת אחת: $\\;y=0$ (משני צידי הגרף).',
+        },
+      },
+      {
+        label: 'ג3',
+        prompt: 'מצאו את שיעורי נקודת הקיצון של $f(x)$, וקבעו את סוגה.',
+        answer_type: 'expression',
+        hints: [
+          "נקודת קיצון: $f'(x)=0$. הגורם $e^{-x^2/4}$ לעולם אינו $0$.",
+          "לקביעת הסוג בנו טבלת סימנים ל-$f'(x)=-2x\\,e^{-x^2/4}$ (הסימן נקבע ע\"י $-2x$).",
+        ],
+        solution: {
+          steps: [
+            "$f'(x) = -2x\\,e^{-x^2/4} = 0$",
+            "$e^{-x^2/4}\\ne 0 \\;\\Rightarrow\\; -2x = 0 \\;\\Rightarrow\\; x = 0$",
+            '$f(0) = 4e^{0} = 4 \\;\\Rightarrow\\;$ נקודת הקיצון היא $(0,\\,4)$',
+            "$\\begin{array}{c|c|c|c} x & x<0 & 0 & x>0 \\\\ \\hline f'(x) & + & 0 & - \\\\ f(x) & \\nearrow & 4 & \\searrow \\end{array}$",
+            'משמאל ל-$0$ הפונקציה עולה ומימין יורדת $\\;\\Rightarrow\\;$ זו נקודת מקסימום',
+          ],
+          final_answer: 'נקודת מקסימום: $\\;(0,\\,4)$.',
+        },
+      },
+      {
+        label: 'ג4',
+        prompt: 'שרטטו סקיצה של גרף הפונקציה $f(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 224 172',
+            svg: `
+              <line x1="8" y1="150" x2="216" y2="150" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="112" y1="20" x2="112" y2="164" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="208" y="146" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">x</text>
+              <text x="116" y="28" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">y</text>
+              <path d="M 12,149.7 L 32,148 L 52,138 L 72,109 L 92,63 L 112,38 L 132,63 L 152,109 L 172,138 L 192,148 L 212,149.7" fill="none" stroke="#f472b6" stroke-width="1.9"/>
+              <circle cx="112" cy="38" r="2.8" fill="#4ade80"/>
+              <text x="116" y="46" fill="#4ade80" font-size="9.5" font-weight="bold" font-family="Heebo, sans-serif">(0,4)</text>
+              <text x="158" y="146" fill="#60a5fa" font-size="8.5" font-family="Heebo, sans-serif">y=0</text>
+            `,
+            caption:
+              'גרף $f(x)=4e^{-x^2/4}$: פעמון סימטרי לציר $y$, מקסימום ב-$(0,4)$, ואסימפטוטה מאוזנת $y=0$ (הגרף תמיד מעל ציר $x$).',
+          },
+        ],
+        solution: {
+          steps: [
+            'הפונקציה זוגית $\\Rightarrow$ סימטרית לציר $y$',
+            'מקסימום יחיד בנקודה $(0,4)$',
+            'אסימפטוטה מאוזנת $y=0$, והפונקציה תמיד חיובית ($f(x)>0$)',
+            'מתקבל גרף בצורת פעמון',
+          ],
+          final_answer:
+            'גרף פעמון סימטרי לציר $y$, מקסימום $(0,4)$, ומתקרב ל-$y=0$ בקצוות (ראו סרטוט).',
+        },
+      },
+      {
+        label: 'ד',
+        prompt:
+          "נתונות הפונקציות $m(x)=e^{h(x)}$ ו-$h(x)=\\dfrac{1}{f'(x)}$. שלושה מבין הגרפים $I$–$IV$ שלמטה מתארים את הפונקציות $f'(x),\\,h(x),\\,m(x)$. התאימו לכל פונקציה את הגרף המתאר אותה.",
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 312 300',
+            svg: `
+              <line x1="12" y1="70" x2="140" y2="70" stroke="rgba(148,163,184,0.55)" stroke-width="1"/>
+              <line x1="75" y1="14" x2="75" y2="126" stroke="rgba(148,163,184,0.55)" stroke-width="1"/>
+              <text x="143" y="73" fill="#94a3b8" font-size="8" font-family="Heebo, sans-serif">x</text>
+              <text x="78" y="16" fill="#94a3b8" font-size="8" font-family="Heebo, sans-serif">y</text>
+              <path d="M 15,68 L 45,59 L 61,38 L 69,16 L 75,20 L 85,34 L 95,48 L 115,63 L 135,68" fill="none" stroke="#60a5fa" stroke-width="1.7"/>
+              <text x="68" y="143" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">II</text>
+
+              <line x1="160" y1="70" x2="300" y2="70" stroke="rgba(148,163,184,0.55)" stroke-width="1"/>
+              <line x1="225" y1="14" x2="225" y2="126" stroke="rgba(148,163,184,0.55)" stroke-width="1"/>
+              <text x="303" y="73" fill="#94a3b8" font-size="8" font-family="Heebo, sans-serif">x</text>
+              <text x="228" y="16" fill="#94a3b8" font-size="8" font-family="Heebo, sans-serif">y</text>
+              <path d="M 149,18 L 165,46 L 185,60 L 196.8,61 L 205,60 L 215,54 L 219,44 L 221,32 L 222.6,18" fill="none" stroke="#60a5fa" stroke-width="1.7"/>
+              <path d="M 227.4,122 L 229,108 L 231,96 L 235,86 L 245,80 L 253.2,79 L 265,80 L 285,94 L 295,116 L 299,121" fill="none" stroke="#60a5fa" stroke-width="1.7"/>
+              <text x="220" y="143" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">I</text>
+
+              <line x1="12" y1="220" x2="140" y2="220" stroke="rgba(148,163,184,0.55)" stroke-width="1"/>
+              <line x1="75" y1="164" x2="75" y2="276" stroke="rgba(148,163,184,0.55)" stroke-width="1"/>
+              <text x="143" y="223" fill="#94a3b8" font-size="8" font-family="Heebo, sans-serif">x</text>
+              <text x="78" y="166" fill="#94a3b8" font-size="8" font-family="Heebo, sans-serif">y</text>
+              <path d="M 19,168 L 25,173 L 35,185 L 46.7,188 L 55,186 L 61,168" fill="none" stroke="#60a5fa" stroke-width="1.7"/>
+              <path d="M 80,216 L 88,213 L 95,210 L 103,210 L 115,211 L 125,213 L 135,216" fill="none" stroke="#60a5fa" stroke-width="1.7"/>
+              <circle cx="75" cy="220" r="2.6" fill="none" stroke="#60a5fa" stroke-width="1.4"/>
+              <text x="65" y="290" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">IV</text>
+
+              <line x1="160" y1="220" x2="300" y2="220" stroke="rgba(148,163,184,0.55)" stroke-width="1"/>
+              <line x1="225" y1="164" x2="225" y2="276" stroke="rgba(148,163,184,0.55)" stroke-width="1"/>
+              <text x="303" y="223" fill="#94a3b8" font-size="8" font-family="Heebo, sans-serif">x</text>
+              <text x="228" y="166" fill="#94a3b8" font-size="8" font-family="Heebo, sans-serif">y</text>
+              <path d="M 165,206 L 185,188 L 196.8,182 L 211,193 L 225,220 L 239,247 L 253.2,258 L 265,252 L 285,234" fill="none" stroke="#60a5fa" stroke-width="1.7"/>
+              <text x="218" y="290" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">III</text>
+            `,
+            caption:
+              "ארבעת הגרפים $I$–$IV$ הנתונים בשאלה; שלושה מהם מתארים את $f'(x),\\,h(x),\\,m(x)$.",
+          },
+        ],
+        hints: [
+          "$f'(x)=-2x\\,e^{-x^2/4}$ אי-זוגית, מתאפסת ב-$x=0$ ושואפת ל-$0$ בקצוות (נגזרת של פעמון).",
+          "$h=\\dfrac{1}{f'}$ — אסימפטוטה אנכית ב-$x=0$ (שם $f'=0$); $h>0$ ל-$x<0$ ו-$h<0$ ל-$x>0$.",
+          '$m=e^{h}$ — תמיד חיובית; ל-$x<0$ ($h>0$) ערכיה $>1$ ושואפות ל-$\\infty$, ל-$x>0$ ($h<0$) ערכיה בין $0$ ל-$1$.',
+        ],
+        solution: {
+          steps: [
+            "$f'(x)=-2x\\,e^{-x^2/4}$: אי-זוגית, $f'(0)=0$, חיובית ל-$x<0$ ושלילית ל-$x>0$, שואפת ל-$0$ — מתאים לגרף $III$",
+            "$h(x)=\\dfrac{1}{f'(x)}$: אסימפטוטה אנכית ב-$x=0$, $h>0$ ל-$x<0$ ו-$h<0$ ל-$x>0$ — מתאים לגרף $I$",
+            '$m(x)=e^{h(x)}$: תמיד חיובית; ל-$x<0$ גדולה מ-$1$ ושואפת ל-$\\infty$ ליד $x=0^-$, ל-$x>0$ בין $0$ ל-$1$ — מתאים לגרף $IV$',
+          ],
+          final_answer:
+            "$f'(x)\\leftrightarrow III$, $\\;\\;h(x)\\leftrightarrow I$, $\\;\\;m(x)\\leftrightarrow IV$. (הגרף $II$ אינו בשימוש.)",
+        },
+      },
+      {
+        label: 'ה1',
+        prompt: 'מצאו את תחומי הירידה של הפונקציה $m(x)$.',
+        answer_type: 'expression',
+        hints: [
+          "$m(x)=e^{h(x)} \\Rightarrow m'(x)=h'(x)\\,e^{h(x)}$. הגורם $e^{h(x)}>0$ תמיד, אז סימן $m'$ = סימן $h'$.",
+          "$h=\\dfrac{1}{f'} \\Rightarrow h'=-\\dfrac{f''}{(f')^2}$. הסימן של $h'$ הפוך לסימן של $f''$.",
+        ],
+        solution: {
+          steps: [
+            "$m(x)=e^{h(x)} \\;\\Rightarrow\\; m'(x) = h'(x)\\,e^{h(x)}$",
+            "$e^{h(x)}>0$ תמיד $\\;\\Rightarrow\\;$ הסימן של $m'$ זהה לסימן של $h'$",
+            "$h=\\dfrac{1}{f'} \\;\\Rightarrow\\; h' = -\\dfrac{f''}{(f')^2}$; כיוון ש-$(f')^2>0$, הסימן של $h'$ הפוך לסימן של $f''$",
+            "$f''(x) = e^{-x^2/4}\\,(x^2-2)$, אז $\\;f''>0 \\Leftrightarrow x^2>2 \\Leftrightarrow |x|>\\sqrt2$",
+            "שם $h'<0$ וגם $m'<0$, כלומר $m$ יורדת עבור $|x|>\\sqrt2$",
+          ],
+          final_answer:
+            '$m(x)$ יורדת בתחומים $\\;(-\\infty,\\,-\\sqrt2)\\;$ ו-$\\;(\\sqrt2,\\,\\infty)$.',
+        },
+      },
+      {
+        label: 'ה2',
+        prompt:
+          'קבעו אם הביטוי $\\;\\displaystyle\\int_1^2 h(x)\\cdot m(x)\\,dx\\;$ חיובי או שלילי. נמקו את קביעתכם.',
+        answer_type: 'proof',
+        hints: [
+          'בדקו את סימן המכפלה $h(x)\\cdot m(x)$ בתחום $[1,2]$ (שם $x>0$).',
+          "ל-$x>0$: $f'(x)<0$ ולכן $h=\\dfrac{1}{f'}<0$; ו-$m=e^{h}>0$ תמיד. מהו סימן המכפלה?",
+        ],
+        solution: {
+          steps: [
+            'בתחום $[1,2]$ מתקיים $x>0$',
+            "$f'(x)=-2x\\,e^{-x^2/4}<0$ עבור $x>0 \\;\\Rightarrow\\; h(x)=\\dfrac{1}{f'(x)}<0$",
+            '$m(x)=e^{h(x)}>0$ תמיד',
+            'לכן המכפלה $\\;h(x)\\cdot m(x) < 0\\;$ בכל הקטע $[1,2]$',
+            'אינטגרל מסוים של פונקציה רציפה ושלילית הוא שלילי',
+          ],
+          final_answer:
+            'הביטוי $\\;\\int_1^2 h(x)\\cdot m(x)\\,dx\\;$ שלילי.',
         },
       },
     ],
