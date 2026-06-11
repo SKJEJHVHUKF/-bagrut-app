@@ -8,6 +8,8 @@
  *
  * תוכן השאלון (נבנה בהדרגה):
  *   Q1 — גאומטריה אנליטית (חוצי זווית, מעגל משיק, פרבולה $y^2=16x$).
+ *   Q2 — וקטורים במרחב (תיבה ABCDA'B'C'D', מישור EFBD, נקודה P).
+ *   Q3 — מספרים מרוכבים (מקום גאומטרי, z^6=1, מצולע I ו-II, הסיבוב w=cis15°).
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -294,6 +296,252 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
             '$P = (4,12,18) - 2(2,1,0) = (0,\\,10,\\,18)$',
           ],
           final_answer: '$P(0,\\, 10,\\, 18)$',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+
+  // ===========================================================================
+  // Q3 — מספרים מרוכבים: |z²-3i|=|z²+5i| (מקום גאומטרי y=-1/2x), z⁶=1 (מצולע I),
+  //      חיתוך עם מעגל היחידה ברביע הרביעי (A), מצולע II, ומציאת w (סיבוב 15°).
+  // ===========================================================================
+  {
+    id: 'b2023s582sp-q3',
+    year: 2023,
+    season: 'summer',
+    moed: 'special',
+    paper: '582',
+    questionNumber: 3,
+    topic: 'מספרים מרוכבים',
+    totalPoints: 25,
+    context:
+      '(קיץ תשפ"ג, מועד מיוחד) $\\;z = x + iy$ הוא מספר מרוכב ($x,\\,y$ הם מספרים ממשיים).',
+    parts: [
+      {
+        label: 'א1',
+        prompt:
+          'הראו כי משוואת המקום הגאומטרי של כל הנקודות במישור המקיימות $|z^2 - 3i| = |z^2 + 5i|$ היא $\\;y = -\\dfrac{1}{2x}$.',
+        answer_type: 'proof',
+        hints: [
+          'הציבו $z = x+iy$ וחשבו את $z^2$. זכרו ש-$i^2=-1$.',
+          'ערך מוחלט של מספר מרוכב: $|a+bi| = \\sqrt{a^2+b^2}$. השוו את שני הערכים המוחלטים והעלו בריבוע כדי להיפטר מהשורשים.',
+        ],
+        solution: {
+          steps: [
+            '$z^2 = (x+iy)^2 = x^2 + 2xyi + i^2y^2$',
+            '$i^2 = -1 \\;\\Rightarrow\\; z^2 = (x^2 - y^2) + 2xy\\,i$',
+            '$z^2 - 3i = (x^2-y^2) + (2xy-3)i$',
+            '$z^2 + 5i = (x^2-y^2) + (2xy+5)i$',
+            '$|z^2-3i| = \\sqrt{(x^2-y^2)^2 + (2xy-3)^2}$',
+            '$|z^2+5i| = \\sqrt{(x^2-y^2)^2 + (2xy+5)^2}$',
+            'משווים ומעלים בריבוע: $\\;(x^2-y^2)^2 + (2xy-3)^2 = (x^2-y^2)^2 + (2xy+5)^2$',
+            '$(2xy-3)^2 = (2xy+5)^2$',
+            '$4x^2y^2 - 12xy + 9 = 4x^2y^2 + 20xy + 25$',
+            '$-12xy + 9 = 20xy + 25$',
+            '$-32xy = 16$',
+            '$xy = -\\dfrac{1}{2}$',
+            '$y = -\\dfrac{1}{2x}$',
+          ],
+          final_answer: '$y = -\\dfrac{1}{2x}$ ⬛',
+        },
+      },
+      {
+        label: 'א2',
+        prompt: 'תנו דוגמה למספר מרוכב הנמצא על המקום הגאומטרי הזה.',
+        answer_type: 'expression',
+        hints: [
+          'בחרו ערך כלשהו ל-$x$ (שונה מ-$0$) והציבו ב-$y = -\\dfrac{1}{2x}$.',
+        ],
+        solution: {
+          steps: [
+            'נבחר $x = 1$',
+            '$y = -\\dfrac{1}{2\\cdot 1} = -\\dfrac{1}{2}$',
+            '$z = 1 - \\dfrac{1}{2}i$',
+            'בדיקה: $\\;xy = 1\\cdot\\left(-\\tfrac12\\right) = -\\tfrac12$ ✓',
+          ],
+          final_answer: '$z = 1 - \\dfrac{1}{2}i$ (כל מספר עם $xy = -\\tfrac12$ מתאים).',
+        },
+      },
+      {
+        label: 'ב',
+        prompt:
+          'פתרו את המשוואה $\\;z^6 = 1$. (פתרונות המשוואה מייצגים את קודקודיו של מצולע $I$.)',
+        answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 220 200',
+            svg: `
+              <line x1="10" y1="100" x2="210" y2="100" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="110" y1="14" x2="110" y2="190" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="201" y="113" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">Re</text>
+              <text x="114" y="22" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">Im</text>
+              <circle cx="110" cy="100" r="75" fill="none" stroke="rgba(148,163,184,0.5)" stroke-width="1.1"/>
+              <polygon points="185,100 148,35 72,35 35,100 72,165 148,165" fill="rgba(56,189,248,0.10)" stroke="rgba(56,189,248,0.9)" stroke-width="1.6"/>
+              <circle cx="185" cy="100" r="2.8" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="148" cy="35" r="2.8" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="72" cy="35" r="2.8" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="35" cy="100" r="2.8" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="72" cy="165" r="2.8" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="148" cy="165" r="2.8" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="110" cy="100" r="2" fill="rgba(226,232,240,0.9)"/>
+              <text x="165" y="114" fill="#38bdf8" font-size="9" font-family="Heebo, sans-serif">0°</text>
+              <text x="150" y="30" fill="#38bdf8" font-size="9" font-family="Heebo, sans-serif">60°</text>
+              <text x="44" y="30" fill="#38bdf8" font-size="9" font-family="Heebo, sans-serif">120°</text>
+              <text x="13" y="114" fill="#38bdf8" font-size="9" font-family="Heebo, sans-serif">180°</text>
+              <text x="44" y="180" fill="#38bdf8" font-size="9" font-family="Heebo, sans-serif">240°</text>
+              <text x="150" y="180" fill="#38bdf8" font-size="9" font-family="Heebo, sans-serif">300°</text>
+              <text x="96" y="113" fill="#cbd5e1" font-size="9" font-family="Heebo, sans-serif">O</text>
+            `,
+            caption:
+              'ששת הפתרונות של $z^6=1$ הם קודקודי משושה משוכלל ($I$) במעגל היחידה, בזוויות $0°,\\,60°,\\,120°,\\,180°,\\,240°,\\,300°$.',
+          },
+        ],
+        hints: [
+          'כתבו $1 = \\text{cis}(0° + 360°k)$ והוציאו שורש שישי (נוסחת דה-מואבר).',
+          'הזוויות: $\\dfrac{0°+360°k}{6} = 60°k$ עבור $k=0,1,2,3,4,5$.',
+        ],
+        solution: {
+          steps: [
+            '$1 = \\text{cis}(0° + 360°k)$',
+            '$z = \\sqrt[6]{\\text{cis}(0°+360°k)} = \\text{cis}\\left(\\dfrac{0°+360°k}{6}\\right)$',
+            '$z_k = \\text{cis}(60°k), \\;\\; k = 0,1,2,3,4,5$',
+            '$z_1 = \\text{cis}0°, \\quad z_2 = \\text{cis}60°, \\quad z_3 = \\text{cis}120°$',
+            '$z_4 = \\text{cis}180°, \\quad z_5 = \\text{cis}240°, \\quad z_6 = \\text{cis}300°$',
+          ],
+          final_answer:
+            'ששת קודקודי מצולע $I$: $\\;\\text{cis}0°,\\,\\text{cis}60°,\\,\\text{cis}120°,\\,\\text{cis}180°,\\,\\text{cis}240°,\\,\\text{cis}300°$.',
+        },
+      },
+      {
+        label: 'ג',
+        prompt:
+          'המקום הגאומטרי מסעיף א(1) חותך ברביע הרביעי את המעגל החוסם את מצולע $I$ בנקודה $A$. מצאו את שיעורי הנקודה $A$.',
+        answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 220 200',
+            svg: `
+              <line x1="10" y1="100" x2="210" y2="100" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="110" y1="14" x2="110" y2="190" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="203" y="113" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">x</text>
+              <text x="114" y="22" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">y</text>
+              <polygon points="185,100 148,35 72,35 35,100 72,165 148,165" fill="none" stroke="rgba(244,114,182,0.25)" stroke-width="1.1"/>
+              <circle cx="110" cy="100" r="75" fill="none" stroke="rgba(148,163,184,0.6)" stroke-width="1.3"/>
+              <path d="M 141,189 L 148,175 L 155,162 L 163,153 L 174,144 L 189,136 L 207,129 L 218,126" fill="none" stroke="rgba(251,191,36,0.9)" stroke-width="1.7"/>
+              <path d="M 78,11 L 72,25 L 65,38 L 57,47 L 46,56 L 31,64 L 13,71 L 2,74" fill="none" stroke="rgba(251,191,36,0.9)" stroke-width="1.7"/>
+              <circle cx="57" cy="47" r="3.2" fill="none" stroke="rgba(148,163,184,0.85)" stroke-width="1.4"/>
+              <circle cx="163" cy="153" r="3.6" fill="#4ade80"/>
+              <text x="167" y="163" fill="#4ade80" font-size="11" font-weight="bold" font-family="Heebo, sans-serif">A</text>
+              <text x="170" y="121" fill="#fbbf24" font-size="9" font-family="Heebo, sans-serif">y=-1/2x</text>
+              <text x="96" y="113" fill="#cbd5e1" font-size="9" font-family="Heebo, sans-serif">O</text>
+            `,
+            caption:
+              'מעגל היחידה (החוסם את מצולע $I$) וההיפרבולה $y=-\\dfrac{1}{2x}$ נחתכים בשתי נקודות. ברביע הרביעי מתקבלת $\\;A\\left(\\dfrac{\\sqrt2}{2},\\,-\\dfrac{\\sqrt2}{2}\\right)$; הנקודה השנייה (ברביע השני) נדחית.',
+          },
+        ],
+        hints: [
+          'המעגל החוסם את מצולע $I$ הוא מעגל היחידה $\\;x^2+y^2=1$ (כי $|z_k|=1$).',
+          'פתרו את המערכת $x^2+y^2=1$ ו-$y=-\\dfrac{1}{2x}$: הציבו את $y$ וקבלו משוואה ב-$x$ בלבד.',
+          'ברביע הרביעי $x>0$ ו-$y<0$.',
+        ],
+        solution: {
+          steps: [
+            'המעגל החוסם את מצולע $I$: $\\;x^2 + y^2 = 1$ (רדיוס $1$, כי $|z_k| = 1$)',
+            'נציב $y = -\\dfrac{1}{2x}$: $\\quad x^2 + \\dfrac{1}{4x^2} = 1$',
+            'נכפיל ב-$4x^2$: $\\quad 4x^4 + 1 = 4x^2$',
+            '$4x^4 - 4x^2 + 1 = 0$',
+            '$(2x^2 - 1)^2 = 0$',
+            '$2x^2 - 1 = 0 \\;\\Rightarrow\\; x^2 = \\dfrac{1}{2}$',
+            '$x = \\pm\\dfrac{\\sqrt2}{2}$',
+            'ברביע הרביעי $x>0$, ולכן $\\;x_A = \\dfrac{\\sqrt2}{2}$',
+            '$y_A = -\\dfrac{1}{2\\cdot\\frac{\\sqrt2}{2}} = -\\dfrac{1}{\\sqrt2} = -\\dfrac{\\sqrt2}{2}$',
+          ],
+          final_answer: '$A\\left(\\dfrac{\\sqrt2}{2},\\; -\\dfrac{\\sqrt2}{2}\\right)$',
+        },
+      },
+      {
+        label: 'ד',
+        prompt: [
+          'הנקודה $A$ היא קודקוד של מצולע משוכלל אחר, $II$, החסום באותו מעגל. נתון: מספר הקודקודים של מצולע $II$ שווה למספר הקודקודים של מצולע $I$.',
+          'מצאו את המספרים המרוכבים המייצגים את כל קודקודי מצולע $II$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 220 200',
+            svg: `
+              <line x1="10" y1="100" x2="210" y2="100" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="110" y1="14" x2="110" y2="190" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="201" y="113" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">Re</text>
+              <text x="114" y="22" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">Im</text>
+              <circle cx="110" cy="100" r="75" fill="none" stroke="rgba(148,163,184,0.35)" stroke-width="1" stroke-dasharray="3 3"/>
+              <polygon points="185,100 148,35 72,35 35,100 72,165 148,165" fill="none" stroke="rgba(56,189,248,0.7)" stroke-width="1.3" stroke-dasharray="4 3"/>
+              <polygon points="182,81 129,28 57,47 38,119 91,172 163,153" fill="rgba(168,85,247,0.10)" stroke="rgba(244,114,182,0.9)" stroke-width="1.6"/>
+              <circle cx="182" cy="81" r="2.6" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="129" cy="28" r="2.6" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="57" cy="47" r="2.6" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="38" cy="119" r="2.6" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="91" cy="172" r="2.6" fill="rgba(244,114,182,0.95)"/>
+              <circle cx="163" cy="153" r="3.6" fill="#4ade80"/>
+              <text x="186" y="79" fill="#f472b6" font-size="8.5" font-family="Heebo, sans-serif">15°</text>
+              <text x="117" y="22" fill="#f472b6" font-size="8.5" font-family="Heebo, sans-serif">75°</text>
+              <text x="29" y="44" fill="#f472b6" font-size="8.5" font-family="Heebo, sans-serif">135°</text>
+              <text x="9" y="122" fill="#f472b6" font-size="8.5" font-family="Heebo, sans-serif">195°</text>
+              <text x="75" y="187" fill="#f472b6" font-size="8.5" font-family="Heebo, sans-serif">255°</text>
+              <text x="167" y="162" fill="#4ade80" font-size="10" font-weight="bold" font-family="Heebo, sans-serif">A</text>
+              <path d="M 191,100 A 81 81 0 0 1 187,80" fill="none" stroke="rgba(251,191,36,0.9)" stroke-width="1.4"/>
+              <circle cx="16" cy="178" r="2.6" fill="rgba(56,189,248,0.9)"/>
+              <text x="22" y="181" fill="#38bdf8" font-size="8.5" font-family="Heebo, sans-serif">I</text>
+              <circle cx="16" cy="190" r="2.6" fill="rgba(244,114,182,0.95)"/>
+              <text x="22" y="193" fill="#f472b6" font-size="8.5" font-family="Heebo, sans-serif">II</text>
+              <circle cx="110" cy="100" r="2" fill="rgba(226,232,240,0.9)"/>
+            `,
+            caption:
+              'מצולע $II$ (ורוד) הוא מצולע $I$ (תכלת מקווקו) לאחר סיבוב ב-$15°$. קודקודי $II$ בזוויות $15°,\\,75°,\\,135°,\\,195°,\\,255°,\\,315°$, כאשר $A=\\text{cis}315°=\\text{cis}(-45°)$.',
+          },
+        ],
+        hints: [
+          'כתבו את $A$ בצורה קוטבית $A = r\\,\\text{cis}\\,\\theta$: חשבו $r=|A|$ ואת הזווית (רביע רביעי).',
+          'מצולע $II$ משוכלל בעל $6$ קודקודים במעגל היחידה — הזוויות במרחקים שווים של $\\dfrac{360°}{6}=60°$, החל מן הזווית של $A$.',
+        ],
+        solution: {
+          steps: [
+            '$A = \\dfrac{\\sqrt2}{2} - \\dfrac{\\sqrt2}{2}i$',
+            '$r = |A| = \\sqrt{\\left(\\tfrac{\\sqrt2}{2}\\right)^2 + \\left(\\tfrac{\\sqrt2}{2}\\right)^2} = \\sqrt{\\tfrac12 + \\tfrac12} = 1$',
+            '$\\tan\\theta = \\dfrac{-\\sqrt2/2}{\\sqrt2/2} = -1$, וברביע הרביעי: $\\;\\theta = -45°$',
+            '$A = \\text{cis}(-45°)$',
+            'מצולע $II$ משוכלל בן $6$ קודקודים, החל מ-$A$ ובקפיצות של $\\dfrac{360°}{6}=60°$: $\\;\\text{cis}(-45° + 60°k),\\; k=1,2,3,4,5,6$',
+            '$\\text{cis}15°, \\quad \\text{cis}75°, \\quad \\text{cis}135°$',
+            '$\\text{cis}195°, \\quad \\text{cis}255°, \\quad \\text{cis}315°$',
+          ],
+          final_answer:
+            'קודקודי מצולע $II$: $\\;\\text{cis}15°,\\,\\text{cis}75°,\\,\\text{cis}135°,\\,\\text{cis}195°,\\,\\text{cis}255°,\\,\\text{cis}315°$.',
+        },
+      },
+      {
+        label: 'ה',
+        prompt: [
+          'נסמן $\\;w = r\\,\\text{cis}\\,\\alpha$, כאשר $0 < \\alpha < 60°$. כופלים את כל המספרים המייצגים את קודקודי מצולע $I$ במספר $w$, כך שקודקודי מצולע $I$ מתלכדים עם קודקודי מצולע $II$.',
+          'מצאו את $w$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'כפל ב-$w = r\\,\\text{cis}\\,\\alpha$ פירושו מתיחה פי $r$ וסיבוב בזווית $\\alpha$.',
+          'שני המצולעים חסומים במעגל היחידה $\\Rightarrow r=1$. קודקודי $I$ בזוויות $60°k$, קודקודי $II$ בזוויות $15°+60°k$.',
+        ],
+        solution: {
+          steps: [
+            'כפל קודקוד של מצולע $I$ ב-$w$: $\\;\\text{cis}(60°k)\\cdot r\\,\\text{cis}\\,\\alpha = r\\,\\text{cis}(60°k + \\alpha)$',
+            'שני המצולעים על מעגל היחידה $\\;\\Rightarrow\\; |w| = r = 1$',
+            'קודקודי $I$ בזוויות $60°k$; קודקודי $II$ בזוויות $15° + 60°k$',
+            '$60°k + \\alpha = 15° + 60°k \\;\\Rightarrow\\; \\alpha = 15°$',
+            'גם $75°,\\,135°,\\dots$ ממפים את $I$ על $II$, אך התנאי $0<\\alpha<60°$ בוחר $\\;\\alpha = 15°$',
+          ],
+          final_answer: '$w = \\text{cis}15°$ (כלומר $r=1,\\ \\alpha = 15°$).',
         },
       },
     ],
