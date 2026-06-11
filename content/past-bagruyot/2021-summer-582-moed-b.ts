@@ -505,7 +505,7 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           'חיתוך עם ציר $y$: הצב $x = 0$. חיתוך עם ציר $x$: פתור $f(x) = 0$.',
-          '$f(x) = 0 \\Rightarrow e^{bx^2 - 2bx} = e^0 \\Rightarrow bx^2 - 2bx = 0$. חלק ב-$b$ ($b \\ne 0$).',
+          '$f(x) = 0$ נותן $e^{bx^2 - 2bx} = e^0$, ולכן $bx^2 - 2bx = 0$. חלק ב-$b$ ($b \\ne 0$).',
         ],
         solution: {
           steps: [
@@ -548,7 +548,9 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
             'האקספוננט לעולם אינו מתאפס, לכן $\\;2bx - 2b = 0 \\;\\;|\\,:2b \\;\\Rightarrow\\; x = 1$.',
             'בדיקת סימן (האקספוננט חיובי, נבדוק את $2bx - 2b$): $\\;f^{\\prime}(\\tfrac{1}{2}) = b - 2b = -b > 0$, $\\;f^{\\prime}(2) = 4b - 2b = 2b < 0$.',
             '$\\begin{array}{c|c|c|c} x & x<1 & 1 & x>1 \\\\ \\hline f^{\\prime}(x) & + & 0 & - \\\\ f(x) & \\nearrow & & \\searrow \\end{array}$',
-            'עולה לפני $x=1$ ויורדת אחריו $\\Rightarrow$ מקסימום. ערך הקיצון: $\\;f(1) = e^{b - 2b} - 1 = e^{-b} - 1$ (חיובי כי $b<0 \\Rightarrow e^{-b} > 1$).',
+            'הנגזרת עולה לפני $x=1$ ויורדת אחריו — מקסימום.',
+            'ערך הקיצון: $\\;f(1) = e^{b - 2b} - 1 = e^{-b} - 1$.',
+            'הערך חיובי, כי $b<0$ ולכן $e^{-b} > 1$.',
           ],
           final_answer: 'מקסימום בנקודה $\\;\\bigl(1,\\;e^{-b} - 1\\bigr)$.',
         },
@@ -667,7 +669,8 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
             '$4b^2x^2 = -2b \\;\\Rightarrow\\; x^2 = -\\dfrac{2b}{4b^2} = -\\dfrac{1}{2b}$ (חיובי כי $b<0$).',
             'נסמן $\\;x_0 = \\sqrt{-\\dfrac{1}{2b}}$, אז הקיצון ב-$\\;x = \\pm x_0$.',
             '$\\begin{array}{c|c|c|c|c|c} x & x<-x_0 & -x_0 & (-x_0,\\,x_0) & x_0 & x>x_0 \\\\ \\hline g^{\\prime\\prime}(x) & + & 0 & - & 0 & + \\\\ g^{\\prime}(x) & \\nearrow & & \\searrow & & \\nearrow \\end{array}$',
-            'ב-$x=-x_0$ הנגזרת $g^{\\prime}$ עולה ואז יורדת $\\Rightarrow$ מקסימום; ב-$x=+x_0$ היא יורדת ואז עולה $\\Rightarrow$ מינימום.',
+            'ב-$x=-x_0$: $g^{\\prime}$ עולה ואז יורדת — מקסימום.',
+            'ב-$x=+x_0$: $g^{\\prime}$ יורדת ואז עולה — מינימום.',
           ],
           final_answer: 'נקודות הקיצון של $g^{\\prime}$ ב-$\\;x = \\pm\\sqrt{-\\dfrac{1}{2b}}$: ב-$\\;x=-\\sqrt{-\\tfrac{1}{2b}}$ מקסימום, וב-$\\;x=+\\sqrt{-\\tfrac{1}{2b}}$ מינימום.',
         },
@@ -755,7 +758,8 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
         solution: {
           steps: [
             'נגזרת: $\\;f^{\\prime}(x) = 2ax - 3x^2 = x(2a - 3x) = 0 \\;\\Rightarrow\\; x = 0 \\;,\\;\\; x = \\tfrac{2a}{3}$.',
-            '$f^{\\prime}$ שלילית $\\to$ חיובית $\\to$ שלילית, לכן מינימום ב-$(0,0)$ ומקסימום ב-$\\bigl(\\tfrac{2a}{3},\\,\\tfrac{4a^3}{27}\\bigr)$.',
+            '$f^{\\prime}$ עוברת משלילית לחיובית ואז לשלילית.',
+            'לכן מינימום ב-$(0,0)$ ומקסימום ב-$\\bigl(\\tfrac{2a}{3},\\,\\tfrac{4a^3}{27}\\bigr)$.',
             'הגרף בא מ-$+\\infty$ (כש-$x\\to-\\infty$), יורד למינימום $(0,0)$, עולה למקסימום, ויורד דרך $(a,0)$ אל $-\\infty$.',
           ],
           final_answer: 'ראה סקיצה: שלישית עם מינימום $(0,0)$, מקסימום $\\bigl(\\tfrac{2a}{3},\\tfrac{4a^3}{27}\\bigr)$, וחיתוכי ציר $x$ ב-$0$ וב-$a$.',
@@ -805,9 +809,13 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
         solution: {
           steps: [
             '$g^{\\prime}(x) = \\dfrac{2ax - 3x^2}{ax^2 - x^3}$.',
-            'נאפס את המונה: $\\;2ax - 3x^2 = 0 \\;\\Rightarrow\\; x(2a - 3x) = 0 \\;\\Rightarrow\\; x = 0\\;$ (לא בתחום — נפסל) או $\\;x = \\tfrac{2a}{3}$.',
+            'נאפס את המונה: $\\;2ax - 3x^2 = 0$',
+            '$x(2a - 3x) = 0$',
+            '$x = 0$ או $x = \\tfrac{2a}{3}$',
+            'הפתרון $x = 0$ אינו בתחום ההגדרה — נפסל.',
             '$\\begin{array}{c|c|c|c|c|c|c} x & x<0 & 0 & 0<x<\\frac{2a}{3} & \\frac{2a}{3} & \\frac{2a}{3}<x<a & a \\\\ \\hline g^{\\prime}(x) & - & \\nexists & + & 0 & - & \\nexists \\\\ g(x) & \\searrow & & \\nearrow & & \\searrow & \\end{array}$',
-            'עולה לפני $x=\\tfrac{2a}{3}$ ויורדת אחריו $\\Rightarrow$ מקסימום. הערך: $\\;g\\bigl(\\tfrac{2a}{3}\\bigr) = \\ln\\bigl(\\tfrac{4a^3}{27}\\bigr)$.',
+            'הנגזרת עולה לפני $x=\\tfrac{2a}{3}$ ויורדת אחריו — נקודת מקסימום.',
+            '$g\\bigl(\\tfrac{2a}{3}\\bigr) = \\ln\\bigl(\\tfrac{4a^3}{27}\\bigr)$',
           ],
           final_answer: 'מקסימום בנקודה $\\;\\bigl(\\tfrac{2a}{3},\\,\\ln\\tfrac{4a^3}{27}\\bigr)$.',
         },
@@ -893,13 +901,15 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
         ],
         hints: [
           'תחום ההגדרה: $\\;-x^3 > 0 \\Rightarrow x < 0$. אסימפטוטה אנכית $x=0$.',
-          'חיתוך עם ציר $x$: $\\;g(x) = 0 \\Rightarrow -x^3 = 1 \\Rightarrow x = -1$.',
+          'חיתוך עם ציר $x$: $\\;g(x) = 0$, כלומר $-x^3 = 1$, ולכן $x = -1$.',
         ],
         solution: {
           steps: [
-            'עם $a=0$: $\\;g(x) = \\ln(-x^3)$. תחום ההגדרה: $\\;-x^3 > 0 \\Rightarrow x^3 < 0 \\Rightarrow x < 0$.',
+            'עם $a=0$: $\\;g(x) = \\ln(-x^3)$.',
+            'תחום ההגדרה: $\\;-x^3 > 0 \\;\\Rightarrow\\; x < 0$ (כי $x^3 < 0$).',
             'אסימפטוטה אנכית: כש-$x \\to 0^-$, $\\;-x^3 \\to 0^+$, ולכן $\\;g \\to -\\infty$ — אסימפטוטה $x = 0$.',
-            'חיתוך עם ציר $x$: $\\;g(x) = 0 \\Rightarrow -x^3 = 1 \\Rightarrow x^3 = -1 \\Rightarrow x = -1$, כלומר $(-1,\\,0)$.',
+            'חיתוך עם ציר $x$: $\\;g(x) = 0 \\;\\Rightarrow\\; -x^3 = 1$.',
+            '$x^3 = -1 \\;\\Rightarrow\\; x = -1$, כלומר $(-1,\\,0)$.',
             'כש-$x \\to -\\infty$: $\\;-x^3 \\to +\\infty$ ו-$g \\to +\\infty$. הגרף יורד מ-$+\\infty$ דרך $(-1,0)$ אל $-\\infty$.',
           ],
           final_answer: 'תחום $x<0$; אסימפטוטה אנכית $x=0$; חיתוך עם ציר $x$ ב-$\\;(-1,0)$.',
