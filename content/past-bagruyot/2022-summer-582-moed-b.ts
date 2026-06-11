@@ -10,7 +10,7 @@
  *   Q2 — וקטורים במרחב (פירמידה משולשת אורתוגונלית, גובה למרכז כובד).
  *   Q3 — מספרים מרוכבים (משוואת w⁹, משולש שווה-שוקיים, מרובע ABOC).
  *   Q4 — פונקציות מעריכיות ($f = x^2 e^{a-x^3}$, פונקציה קדומה).
- *   Q5 — חקירת פונקציות מופשטות + מקרה פרטי $f = 4x/(1+x^2)$.
+ *   Q5 — חקירת פונקציות מופשטות + מקרה פרטי $f = 6x/(1+x^2)$.
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -707,7 +707,7 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
   },
 
   // ===========================================================================
-  // Q5 — חקירת פונקציות מופשטות + $f(x) = 4x/(1+x^2)$
+  // Q5 — חקירת פונקציות מופשטות + $f(x) = 6x/(1+x^2)$
   // ===========================================================================
   {
     id: 'b2022s582b-q5',
@@ -730,6 +730,25 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         label: 'א',
         prompt: 'סרטט סקיצה אפשרית של גרף הפונקציה $f(x)$.',
         answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 240 200',
+            svg: `
+              <line x1="20" y1="100" x2="226" y2="100" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="120" y1="18" x2="120" y2="188" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="219" y="96" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">x</text>
+              <text x="124" y="26" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">y</text>
+              <path d="M 30,103 C 55,104 80,145 90,145 C 100,145 108,112 120,100 C 132,88 140,55 150,55 C 160,55 185,96 210,97" fill="none" stroke="rgba(244,114,182,0.95)" stroke-width="1.8"/>
+              <circle cx="90" cy="145" r="2.8" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="150" cy="55" r="2.8" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="120" cy="100" r="2.4" fill="rgba(226,232,240,0.9)"/>
+              <text x="46" y="161" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">(-1,-a)</text>
+              <text x="154" y="50" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">(1, a)</text>
+            `,
+            caption: 'סקיצה אפשרית של $f$: פונקציה אי-זוגית (סימטרית ביחס לראשית), מינימום $(-1,-a)$, מקסימום $(1,a)$, חיתוך ב-$(0,0)$, ואסימפטוטה אופקית $y=0$ בשני הקצוות.',
+          },
+        ],
         hints: [
           'אי-זוגית $\\Rightarrow f(-x)=-f(x) \\Rightarrow$ סימטריה ביחס לראשית. אם יש מינימום ב-$(-1,-a)$, אז יש מקסימום ב-$(1,a)$.',
           '$y=0$ אסימפטוטה אופקית $\\Rightarrow f(x)\\to 0$ ב-$x\\to\\pm\\infty$. מאי-זוגיות, $f(0)=0$.',
@@ -796,6 +815,24 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         label: 'ב4',
         prompt: 'סרטט סקיצה של גרף הפונקציה $h(x)$ אם ידוע שהגרף שלה חותך את ציר ה-$x$ בשתי נקודות.',
         answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 240 200',
+            svg: `
+              <line x1="20" y1="110" x2="226" y2="110" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="40" y1="18" x2="40" y2="192" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="219" y="106" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">x</text>
+              <text x="44" y="26" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">h</text>
+              <path d="M 46,186 C 55,135 66,65 75,65 C 88,65 102,112 112,122 C 140,152 170,179 196,184" fill="none" stroke="rgba(244,114,182,0.95)" stroke-width="1.8"/>
+              <circle cx="75" cy="65" r="2.8" fill="rgba(56,189,248,0.95)"/>
+              <circle cx="60" cy="110" r="2.4" fill="rgba(251,191,36,0.95)"/>
+              <circle cx="104" cy="110" r="2.4" fill="rgba(251,191,36,0.95)"/>
+              <text x="80" y="60" fill="#f1f5f9" font-size="10" font-family="Heebo, sans-serif">(1, ln a)</text>
+            `,
+            caption: 'סקיצה של $h(x)=\\ln(f(x))$ כאשר $a>1$: מוגדרת ב-$(0,\\infty)$, אסימפטוטה אנכית $x=0$, מקסימום $(1,\\ln a)$ מעל ציר $x$, ושתי נקודות חיתוך עם ציר $x$ (הגרף יורד ל-$-\\infty$ בשני הקצוות).',
+          },
+        ],
         hints: [
           'מסעיף ב3: $a>1$. אז יש מקסימום של $h$ ב-$x=1$ בערך $\\ln(a) > 0$. בקצוות התחום $h \\to -\\infty$.',
         ],
@@ -813,21 +850,22 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
       {
         label: 'ג1',
         prompt: [
-          'נתון: $\\;f(x) = \\dfrac{4x}{1 + x^2}$ (פונקציה ספציפית המקיימת את כל התכונות של סעיף א).',
+          'נתון: $\\;f(x) = \\dfrac{6x}{1 + x^2}$ (פונקציה ספציפית המקיימת את כל התכונות של סעיף א).',
           'הפונקציה $g(x)$ היא הפונקציה המקיימת $\\;g\\,\'(x) = f(x)$ וגם $g(0) = 0$. מצא את $g(x)$.',
         ].join('\n'),
         answer_type: 'expression',
         hints: [
-          'חשב $\\displaystyle\\int \\dfrac{4x}{1+x^2}\\,dx$ ע"י הצבה $u = 1+x^2$.',
-          '$g(0) = 0$ קובע את קבוע האינטגרציה.',
+          'זהה שהמונה הוא (עד כדי מקדם) נגזרת המכנה: $\\;\\dfrac{6x}{1+x^2} = 3\\cdot\\dfrac{2x}{1+x^2}$, ו-$(1+x^2)\\,\' = 2x$. (אפשר גם בהצבה $u = 1+x^2$.)',
+          'תנאי $g(0) = 0$ קובע את קבוע האינטגרציה $C$.',
         ],
         solution: {
           steps: [
-            'הצבה $u = 1 + x^2$, $\\;du = 2x\\,dx$, $\\;4x\\,dx = 2\\,du$.',
-            '$\\;\\displaystyle\\int \\dfrac{4x}{1+x^2}\\,dx = \\int\\dfrac{2}{u}\\,du = 2\\ln u + C = 2\\ln(1+x^2) + C$.',
-            'תנאי $g(0) = 2\\ln 1 + C = C = 0$.',
+            'נשים לב שהמונה הוא, עד כדי מקדם, נגזרת המכנה: $\\;\\dfrac{6x}{1+x^2} = 3\\cdot\\dfrac{2x}{1+x^2}$, ו-$(1+x^2)\\,\' = 2x$.',
+            '$\\;g(x) = \\displaystyle\\int \\dfrac{6x}{1+x^2}\\,dx = 3\\int \\dfrac{2x}{1+x^2}\\,dx = 3\\ln(1+x^2) + C$.',
+            '(המכנה $1+x^2 > 0$ לכל $x$, ולכן אין צורך בערך מוחלט בתוך ה-$\\ln$.)',
+            'נציב את התנאי $g(0)=0$: $\\;3\\ln(1+0^2) + C = 3\\ln 1 + C = C = 0$.',
           ],
-          final_answer: '$g(x) = 2\\ln(1 + x^2)$.',
+          final_answer: '$g(x) = 3\\ln(1 + x^2)$.',
         },
       },
       {
@@ -837,7 +875,7 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
         hints: ['הצב $-x$ במקום $x$ ב-$g$.'],
         solution: {
           steps: [
-            '$g(-x) = 2\\ln(1 + (-x)^2) = 2\\ln(1 + x^2) = g(x)$.',
+            '$g(-x) = 3\\ln(1 + (-x)^2) = 3\\ln(1 + x^2) = g(x)$.',
             'מתקיים לכל $x$ $\\Rightarrow g$ זוגית. (אינטואיציה: $g$ קדומה של פונקציה אי-זוגית $f$, ולכן $g$ זוגית.)',
           ],
           final_answer: '$g$ זוגית (כי $g(-x) = g(x)$).',
@@ -849,17 +887,16 @@ export const bagrut2022Summer582MoedB: PastBagrutQuestion[] = [
           'מהו הערך של $t$ ($t > -5$) שבעבורו מתקיים $\\;2\\cdot\\displaystyle\\int_{-5}^{t} g(x)\\,dx = \\int_{-5}^{5} g(x)\\,dx$? נמק.',
         answer_type: 'number',
         hints: [
-          'נסמן $G(x) = \\displaystyle\\int_0^x g(s)\\,ds$. מהזוגיות של $g$ נובע ש-$G$ אי-זוגית ($G(-x) = -G(x)$).',
-          'המשוואה הופכת ל-$2(G(t) - G(-5)) = G(5) - G(-5)$. עם $G(-5) = -G(5)$ — פשט אלגברית.',
+          'מהזוגיות של $g$: $\\;\\displaystyle\\int_{-5}^{0} g\\,dx = \\int_{0}^{5} g\\,dx$, ולכן $\\displaystyle\\int_{-5}^{0} g\\,dx = \\tfrac12\\int_{-5}^{5} g\\,dx$.',
+          'המשוואה הנתונה אומרת $\\displaystyle\\int_{-5}^{t} g = \\tfrac12\\int_{-5}^{5} g$. השווה לאינטגרל מ-$-5$ עד $0$.',
         ],
         solution: {
           steps: [
-            'נסמן $G(x) = \\displaystyle\\int_0^x g(s)\\,ds$. אז $\\displaystyle\\int_a^b g = G(b) - G(a)$.',
-            'מאחר ש-$g$ זוגית, $G$ אי-זוגית: $\\;G(-x) = -G(x)$. בפרט $G(-5) = -G(5)$.',
-            'המשוואה: $\\;2(G(t) - G(-5)) = G(5) - G(-5)$.',
-            'הצבת $G(-5) = -G(5)$: $\\;2G(t) + 2G(5) = G(5) + G(5) = 2G(5) \\Rightarrow G(t) = 0$.',
-            '$G$ עולה ממש (כי $g \\ge 0$ ושוויון רק בנקודה $x=0$), ו-$G(0) = 0$. לכן $G(t) = 0 \\iff t = 0$.',
-            'בדיקה ש-$t = 0 > -5$ ✓.',
+            'מסעיף ג2 הפונקציה $g$ זוגית, ולכן השטח סימטרי ביחס לציר $y$: $\\;\\displaystyle\\int_{-5}^{0} g(x)\\,dx = \\int_{0}^{5} g(x)\\,dx$.',
+            'מכאן $\\;\\displaystyle\\int_{-5}^{5} g(x)\\,dx = \\int_{-5}^{0} g + \\int_{0}^{5} g = 2\\int_{-5}^{0} g(x)\\,dx$, כלומר $\\displaystyle\\int_{-5}^{0} g(x)\\,dx = \\tfrac12\\int_{-5}^{5} g(x)\\,dx$.',
+            'המשוואה הנתונה: $\\;2\\displaystyle\\int_{-5}^{t} g(x)\\,dx = \\int_{-5}^{5} g(x)\\,dx$, כלומר $\\displaystyle\\int_{-5}^{t} g(x)\\,dx = \\tfrac12\\int_{-5}^{5} g(x)\\,dx$.',
+            'משני אלה: $\\;\\displaystyle\\int_{-5}^{t} g(x)\\,dx = \\int_{-5}^{0} g(x)\\,dx \\Rightarrow t = 0$.',
+            'יחידות: $g(x) = 3\\ln(1+x^2) \\ge 0$ (ושוויון רק ב-$x=0$), ולכן $\\displaystyle\\int_{-5}^{t} g\\,dx$ עולה ממש כפונקציה של $t$ — אז $t=0$ הוא הפתרון היחיד. בדיקה: $t = 0 > -5$ ✓.',
           ],
           final_answer: '$t = 0$.',
         },
