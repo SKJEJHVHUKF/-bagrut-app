@@ -25,7 +25,6 @@ import {
   Check,
   ChevronDown,
   Rocket,
-  Infinity as InfinityIcon,
   Gift,
   ArrowLeft,
   Lightbulb,
@@ -89,6 +88,27 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** A single multiple-choice option inside the hero showpiece card. */
+function Option({ children, correct }: { children: React.ReactNode; correct?: boolean }) {
+  return (
+    <div
+      dir="ltr"
+      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm border ${
+        correct
+          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
+          : 'bg-white/[0.02] border-white/[0.07] text-slate-300'
+      }`}
+    >
+      <span className="font-medium">{children}</span>
+      {correct ? (
+        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+      ) : (
+        <span className="w-4 h-4 rounded-full border border-white/15" />
+      )}
+    </div>
+  );
+}
+
 const SUBJECTS = [
   { name: 'מתמטיקה 5 יח׳', emoji: '📐', topics: 12 },
   { name: 'מתמטיקה 4 יח׳', emoji: '🔢', topics: 11 },
@@ -137,6 +157,11 @@ export default function Landing() {
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-12%] left-1/2 -translate-x-1/2 w-[860px] h-[520px] rounded-full bg-indigo-600/[0.08] blur-[160px]" />
       </div>
+      {/* Cinematic vignette — subtle edge darkening for depth & focus */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{ background: 'radial-gradient(115% 78% at 50% -5%, transparent 52%, rgba(0,0,0,0.5) 100%)' }}
+      />
 
       {/* Navbar */}
       <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#0A0E1A]/70 border-b border-white/[0.07]">
@@ -175,6 +200,35 @@ export default function Landing() {
         animate="visible"
         className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-32 pb-24 sm:pb-32 text-center"
       >
+        {/* Signature math motif — graph-paper grid + an elegant function curve */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: -1 }}>
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                'linear-gradient(rgba(129,140,248,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(129,140,248,0.07) 1px, transparent 1px)',
+              backgroundSize: '46px 46px',
+              maskImage: 'radial-gradient(ellipse 78% 62% at 50% 30%, #000 22%, transparent 70%)',
+              WebkitMaskImage: 'radial-gradient(ellipse 78% 62% at 50% 30%, #000 22%, transparent 70%)',
+            }}
+          />
+          <svg
+            className="absolute left-1/2 top-[15%] -translate-x-1/2 w-[720px] max-w-none opacity-20"
+            viewBox="0 0 720 260"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path d="M0 210 C 160 210, 200 50, 360 50 S 560 210, 720 50" stroke="url(#heroCurve)" strokeWidth="1.5" />
+            <defs>
+              <linearGradient id="heroCurve" x1="0" y1="0" x2="720" y2="0" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#818CF8" stopOpacity="0" />
+                <stop offset="0.5" stopColor="#A5B4FC" />
+                <stop offset="1" stopColor="#818CF8" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
         <motion.div variants={fadeUp} className="mb-7">
           <span className="inline-flex items-center gap-2 surface-premium rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium text-slate-300 tracking-wide">
             <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
@@ -214,22 +268,49 @@ export default function Landing() {
           </motion.a>
         </motion.div>
 
-        {/* Stats — one editorial panel with hairline dividers */}
-        <motion.div
-          variants={scaleIn}
-          className="flex items-stretch max-w-lg mx-auto surface-premium rounded-2xl overflow-hidden divide-x divide-x-reverse divide-white/[0.07]"
-        >
-          {[
-            { icon: BookOpen, value: '7', label: 'מקצועות' },
-            { icon: InfinityIcon, value: '∞', label: 'שאלות' },
-            { icon: Gift, value: '100%', label: 'חינם' },
-          ].map((s, i) => (
-            <div key={i} className="flex-1 px-3 py-5 sm:py-6 text-center">
-              <s.icon className="w-5 h-5 text-indigo-400/80 mx-auto mb-2" />
-              <div className="font-display text-3xl sm:text-4xl font-black text-slate-100">{s.value}</div>
-              <div className="text-[11px] sm:text-xs text-slate-500 mt-1 font-medium tracking-wide">{s.label}</div>
+        {/* Product showpiece — a refined preview of a real question */}
+        <motion.div variants={scaleIn} className="relative max-w-md mx-auto mt-16 sm:mt-20">
+          <div
+            className="absolute -inset-5 bg-indigo-500/15 blur-[60px] rounded-[44px]"
+            style={{ zIndex: -1 }}
+          />
+          <div className="surface-premium rounded-3xl p-6 sm:p-7 text-right shadow-2xl shadow-black/50">
+            <div className="flex items-center justify-between mb-5">
+              <span className="text-[11px] font-semibold text-indigo-300/90 tracking-wide">
+                שאלה לדוגמה · מספרים מרוכבים
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-200 bg-indigo-500/15 border border-indigo-500/30 rounded-full px-2 py-0.5">
+                <Sparkles className="w-3 h-3" />
+                AI
+              </span>
             </div>
-          ))}
+            <div dir="ltr" className="font-display italic text-3xl sm:text-4xl text-slate-50 text-center mb-5 tracking-wide">
+              z² − 4z + 13 = 0
+            </div>
+            <div className="space-y-2 mb-4">
+              <Option correct>z = 2 ± 3i</Option>
+              <Option>z = 3 ± 2i</Option>
+              <Option>z = 4 ± i</Option>
+            </div>
+            <div className="pt-3.5 border-t border-white/[0.08]">
+              <div className="text-[11px] font-semibold text-indigo-300/90 mb-1.5">הסבר</div>
+              <div dir="ltr" className="text-xs text-slate-400 text-center tracking-wide">
+                Δ = b² − 4ac = −36 → √Δ = 6i → z = 2 ± 3i
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Slim trust strip */}
+        <motion.div
+          variants={fadeUp}
+          className="flex items-center justify-center gap-3 sm:gap-5 mt-9 text-sm text-slate-500"
+        >
+          <span><strong className="text-slate-300 font-bold">7</strong> מקצועות</span>
+          <span className="w-1 h-1 rounded-full bg-slate-600" />
+          <span><strong className="text-slate-300 font-bold">∞</strong> שאלות</span>
+          <span className="w-1 h-1 rounded-full bg-slate-600" />
+          <span><strong className="text-slate-300 font-bold">100%</strong> חינם</span>
         </motion.div>
       </motion.section>
 
