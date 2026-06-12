@@ -70,8 +70,12 @@ function BagrutLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
 /** Small section eyebrow label — muted indigo, calm. */
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-xs sm:text-sm font-bold text-indigo-400 tracking-wide mb-3">
-      {children}
+    <div className="flex items-center justify-center gap-3 mb-4">
+      <span className="h-px w-7 bg-gradient-to-l from-indigo-400/50 to-transparent" />
+      <span className="text-[11px] sm:text-xs font-semibold text-indigo-300/90 tracking-[0.22em]">
+        {children}
+      </span>
+      <span className="h-px w-7 bg-gradient-to-r from-indigo-400/50 to-transparent" />
     </div>
   );
 }
@@ -120,10 +124,18 @@ export default function Landing() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   return (
-    <div className="min-h-screen bg-[#0A0E1A] text-slate-100 relative overflow-x-hidden" style={{ fontFamily: 'var(--font-heebo), sans-serif' }}>
-      {/* Single calm, static background glow — no pulsing blob soup */}
+    <div
+      className="min-h-screen text-slate-100 relative overflow-x-hidden"
+      style={{
+        fontFamily: 'var(--font-heebo), sans-serif',
+        background: 'radial-gradient(1200px 620px at 50% -8%, #141B30 0%, #0B0F1C 48%, #090C16 100%)',
+      }}
+    >
+      {/* Matte film-grain over the dark canvas — premium texture */}
+      <div className="grain-overlay" />
+      {/* Single calm, static glow — no pulsing blob soup */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[820px] h-[520px] rounded-full bg-indigo-600/10 blur-[150px]" />
+        <div className="absolute top-[-12%] left-1/2 -translate-x-1/2 w-[860px] h-[520px] rounded-full bg-indigo-600/[0.08] blur-[160px]" />
       </div>
 
       {/* Navbar */}
@@ -161,26 +173,26 @@ export default function Landing() {
         variants={heroStagger}
         initial="hidden"
         animate="visible"
-        className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-20 sm:pb-28 text-center"
+        className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-32 pb-24 sm:pb-32 text-center"
       >
-        <motion.div variants={fadeUp} className="mb-6">
-          <span className="inline-flex items-center gap-2 bg-white/[0.04] border border-white/10 rounded-full px-4 py-1.5 text-xs sm:text-sm font-semibold text-indigo-300">
-            <Sparkles className="w-3.5 h-3.5" />
+        <motion.div variants={fadeUp} className="mb-7">
+          <span className="inline-flex items-center gap-2 surface-premium rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium text-slate-300 tracking-wide">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
             תרגול חכם לבגרות · בעברית · בחינם
           </span>
         </motion.div>
 
         <motion.h1
           variants={fadeUp}
-          className="font-display text-5xl sm:text-7xl md:text-8xl font-black leading-[1.1] mb-7 sm:mb-9 text-slate-100"
+          className="font-display text-5xl sm:text-7xl md:text-8xl font-black leading-[1.05] mb-7 sm:mb-9 text-slate-50"
         >
           <span className="block">הבגרות שלך,</span>
-          <span className="block text-indigo-400">בכיס שלך</span>
+          <span className="block text-indigo-300">בכיס שלך</span>
         </motion.h1>
 
         <motion.p
           variants={fadeUp}
-          className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto mb-9 sm:mb-12 leading-relaxed"
+          className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto mb-9 sm:mb-12 leading-relaxed"
         >
           תרגול חכם של שאלות בגרות אמיתיות, נוצרות בזמן אמת ע&quot;י בינה מלאכותית.
           <br className="hidden sm:block" />
@@ -202,26 +214,21 @@ export default function Landing() {
           </motion.a>
         </motion.div>
 
-        {/* Stats */}
+        {/* Stats — one editorial panel with hairline dividers */}
         <motion.div
-          variants={staggerContainer}
-          className="grid grid-cols-3 gap-4 sm:gap-6 max-w-2xl mx-auto"
+          variants={scaleIn}
+          className="flex items-stretch max-w-lg mx-auto surface-premium rounded-2xl overflow-hidden divide-x divide-x-reverse divide-white/[0.07]"
         >
           {[
             { icon: BookOpen, value: '7', label: 'מקצועות' },
             { icon: InfinityIcon, value: '∞', label: 'שאלות' },
             { icon: Gift, value: '100%', label: 'חינם' },
           ].map((s, i) => (
-            <motion.div
-              key={i}
-              variants={scaleIn}
-              whileHover={{ y: -3 }}
-              className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 sm:p-6 hover:border-indigo-500/30 transition-colors"
-            >
-              <s.icon className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-400 mx-auto mb-2.5" />
-              <div className="font-display text-3xl sm:text-5xl font-black text-slate-100">{s.value}</div>
-              <div className="text-xs sm:text-sm text-slate-500 mt-1.5 font-semibold">{s.label}</div>
-            </motion.div>
+            <div key={i} className="flex-1 px-3 py-5 sm:py-6 text-center">
+              <s.icon className="w-5 h-5 text-indigo-400/80 mx-auto mb-2" />
+              <div className="font-display text-3xl sm:text-4xl font-black text-slate-100">{s.value}</div>
+              <div className="text-[11px] sm:text-xs text-slate-500 mt-1 font-medium tracking-wide">{s.label}</div>
+            </div>
           ))}
         </motion.div>
       </motion.section>
@@ -286,7 +293,7 @@ export default function Landing() {
           </p>
         </div>
 
-        <div className="bg-white/[0.025] border border-white/10 rounded-3xl p-6 sm:p-10">
+        <div className="surface-premium rounded-3xl p-6 sm:p-10">
           {/* Three mini-features */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mb-8">
             <BagruyotFeature
@@ -319,7 +326,7 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center">
             <Link
               href="/bagruyot"
-              className="group inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-white shadow-lg shadow-indigo-600/30 hover:-translate-y-0.5 transition-all"
+              className="group inline-flex items-center gap-2 btn-primary px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-white hover:-translate-y-0.5"
             >
               <BookOpen className="w-5 h-5" />
               <span>כניסה למאגר</span>
@@ -365,7 +372,7 @@ export default function Landing() {
               variants={fadeUp}
               whileHover={{ y: -4 }}
               transition={{ duration: 0.2 }}
-              className="group bg-white/[0.03] border border-white/10 rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors"
+              className="group surface-premium rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-indigo-500/12 border border-indigo-500/25 flex items-center justify-center flex-shrink-0">
@@ -400,7 +407,7 @@ export default function Landing() {
               variants={fadeUp}
               whileHover={{ y: -5 }}
               transition={{ duration: 0.2 }}
-              className="group relative bg-white/[0.03] border border-white/10 rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors overflow-hidden"
+              className="group relative surface-premium rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors overflow-hidden"
             >
               <div className="absolute top-2 left-4 font-display text-7xl sm:text-8xl font-black text-white/[0.04] select-none">
                 {s.num}
@@ -439,7 +446,7 @@ export default function Landing() {
             <motion.div key={i} variants={scaleIn} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
               <Link
                 href="/quiz"
-                className="card-3d group relative bg-white/[0.03] border border-white/10 rounded-2xl p-5 sm:p-6 text-center hover:border-indigo-500/40 block h-full"
+                className="card-3d group relative surface-premium rounded-2xl p-5 sm:p-6 text-center hover:border-indigo-500/40 block h-full"
               >
                 <div className="icon-3d text-4xl sm:text-5xl mb-3 inline-block">{s.emoji}</div>
                 <div className="font-bold text-sm sm:text-base mb-1 text-slate-100">{s.name}</div>
@@ -470,7 +477,7 @@ export default function Landing() {
             variants={fadeUp}
             whileHover={{ y: -4 }}
             transition={{ duration: 0.2 }}
-            className="relative bg-white/[0.03] border border-white/10 rounded-3xl p-8 hover:border-indigo-500/30 transition-colors"
+            className="relative surface-premium rounded-3xl p-8 hover:border-indigo-500/30 transition-colors"
           >
             <div className="flex items-center gap-2 mb-2">
               <Gift className="w-5 h-5 text-indigo-400" />
@@ -565,7 +572,7 @@ export default function Landing() {
             <motion.div
               key={i}
               variants={fadeUp}
-              className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-colors"
+              className="surface-premium rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-colors"
             >
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -624,7 +631,7 @@ export default function Landing() {
               <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} className="inline-block">
                 <Link
                   href="/quiz"
-                  className="group inline-flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-bold text-white text-lg shadow-xl shadow-indigo-600/30 transition-all"
+                  className="group inline-flex items-center gap-3 btn-primary px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-bold text-white text-lg"
                 >
                   <Sparkles className="w-6 h-6" />
                   <span>צור שאלות לבגרות</span>
@@ -690,7 +697,7 @@ function ModeCard({
     <motion.div variants={fadeUp} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
       <Link
         href={href}
-        className="card-3d-strong group relative bg-white/[0.03] border border-white/10 hover:border-indigo-500/40 rounded-3xl p-6 block h-full"
+        className="card-3d-strong group relative surface-premium hover:border-indigo-500/40 rounded-3xl p-6 block h-full"
       >
         {badge && (
           <div className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-amber-400/15 border border-amber-400/35 text-[10px] font-black tracking-wide text-amber-300">
@@ -722,7 +729,7 @@ function BagruyotFeature({
   body: string;
 }) {
   return (
-    <div className="bg-white/[0.025] border border-white/10 rounded-2xl p-4 text-center sm:text-right">
+    <div className="surface-premium rounded-2xl p-4 text-center sm:text-right">
       <div className="w-9 h-9 rounded-xl bg-indigo-500/12 border border-indigo-500/25 flex items-center justify-center text-indigo-300 mb-2 mx-auto sm:mx-0">
         {icon}
       </div>
@@ -735,7 +742,7 @@ function BagruyotFeature({
 /** Stat tile inside the bagruyot showcase. */
 function BagruyotStat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3 text-center">
+    <div className="surface-premium rounded-xl p-3 text-center">
       <div className="font-display text-2xl sm:text-3xl font-black text-slate-100">
         {value}
       </div>
@@ -759,7 +766,7 @@ function PrimaryCTA() {
   }, []);
 
   const className =
-    'group relative inline-flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 px-8 py-4 rounded-2xl font-bold text-white shadow-xl shadow-indigo-600/30 hover:-translate-y-1 transition-all';
+    'group relative inline-flex items-center gap-3 btn-primary px-8 py-4 rounded-2xl font-bold text-white hover:-translate-y-1';
 
   // SSR / first paint: render an identical-size placeholder.
   if (planExists === null) {
