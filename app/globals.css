@@ -1,14 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #f8fafc;
+  /* Surfaces — deep indigo-slate, calmer & a touch warmer than pure slate-950 */
+  --background: #0A0E1A;
+  --surface-1: #111727;
+  --surface-2: #161E30;
+  --foreground: #F1F5F9;
+  --muted: #94A3B8;
+  --faint: #64748B;
+  --border: rgba(148, 163, 184, 0.12);
+  --border-strong: rgba(148, 163, 184, 0.22);
+
+  /* Brand — indigo primary + a single, sparingly-used warm accent */
+  --primary: #6366F1;        /* indigo-500 — filled surfaces */
+  --primary-bright: #818CF8; /* indigo-400 — text & icons on dark */
+  --primary-deep: #4F46E5;   /* indigo-600 — primary buttons */
+  --accent: #E0A93D;         /* muted gold — achievements / "new" only */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-heebo);
+  --font-serif: var(--font-frank-ruhl);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -23,9 +37,16 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Gradient text utility */
+/* Serif display face (Frank Ruhl Libre) — the editorial elevation move,
+   used for headings. Body text stays Heebo (sans). */
+.font-display {
+  font-family: var(--font-frank-ruhl), Georgia, "Times New Roman", serif;
+}
+
+/* Gradient text utility — retuned to the indigo brand, reserved for the
+   hero headline only. */
 .gradient-text {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f59e0b 100%);
+  background: linear-gradient(135deg, #c7d2fe 0%, #a5b4fc 45%, #818cf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -234,11 +255,10 @@ html {
   will-change: transform;
 }
 .card-3d:hover {
-  transform: translateY(-6px) translateZ(0) rotateX(2deg) rotateY(-2deg);
+  transform: translateY(-4px);
   box-shadow:
-    0 20px 40px -10px rgba(168, 85, 247, 0.35),
-    0 10px 20px -5px rgba(236, 72, 153, 0.20),
-    0 0 0 1px rgba(255, 255, 255, 0.08);
+    0 18px 38px -14px rgba(79, 70, 229, 0.30),
+    0 0 0 1px rgba(148, 163, 184, 0.14);
 }
 
 /* Stronger variant — for the hero/feature cards on the landing page.
@@ -251,12 +271,10 @@ html {
   will-change: transform;
 }
 .card-3d-strong:hover {
-  transform: translateY(-10px) translateZ(20px) rotateX(4deg) rotateY(-4deg) scale(1.02);
+  transform: translateY(-6px);
   box-shadow:
-    0 30px 60px -15px rgba(168, 85, 247, 0.55),
-    0 15px 30px -8px rgba(236, 72, 153, 0.30),
-    0 0 80px -20px rgba(167, 139, 250, 0.40),
-    0 0 0 1px rgba(167, 139, 250, 0.30);
+    0 26px 52px -18px rgba(79, 70, 229, 0.40),
+    0 0 0 1px rgba(129, 140, 248, 0.22);
 }
 
 /* "Physical button" — depth on press.
@@ -268,22 +286,16 @@ html {
   transition:
     transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow:
-    0 4px 0 0 rgba(0, 0, 0, 0.35),
-    0 6px 16px -4px rgba(168, 85, 247, 0.45);
+  box-shadow: 0 8px 20px -8px rgba(79, 70, 229, 0.50);
   will-change: transform;
 }
 .btn-3d:hover {
   transform: translateY(-2px);
-  box-shadow:
-    0 6px 0 0 rgba(0, 0, 0, 0.35),
-    0 12px 24px -6px rgba(168, 85, 247, 0.55);
+  box-shadow: 0 14px 28px -10px rgba(79, 70, 229, 0.60);
 }
 .btn-3d:active {
-  transform: translateY(2px);
-  box-shadow:
-    0 1px 0 0 rgba(0, 0, 0, 0.35),
-    0 2px 8px -2px rgba(168, 85, 247, 0.35);
+  transform: translateY(0);
+  box-shadow: 0 6px 14px -8px rgba(79, 70, 229, 0.40);
   transition-duration: 0.05s;
 }
 
@@ -299,7 +311,7 @@ html {
 .group:hover .icon-3d,
 .card-3d:hover .icon-3d,
 .card-3d-strong:hover .icon-3d {
-  transform: rotateY(360deg) scale(1.1);
+  transform: scale(1.06);
 }
 
 /* Floating animation — for purely decorative elements (the bagrut logo
