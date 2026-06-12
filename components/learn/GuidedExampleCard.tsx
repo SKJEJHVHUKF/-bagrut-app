@@ -12,7 +12,7 @@ const DIFF_META: Record<GuidedExample['difficulty'], { label: string; dot: strin
   trivial: { label: 'טריוויאלי', dot: '⚪', color: 'text-slate-300' },
   easy: { label: 'קל', dot: '🟢', color: 'text-emerald-300' },
   mid: { label: 'בינוני', dot: '🟡', color: 'text-amber-300' },
-  hard: { label: 'מאתגר', dot: '🔴', color: 'text-rose-300' },
+  hard: { label: 'מאתגר', dot: '🔴', color: 'text-indigo-300' },
 };
 
 /**
@@ -29,12 +29,12 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
   const allShown = stepsShown >= total;
 
   return (
-    <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden">
+    <div className="surface-premium rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full text-right px-4 py-3 flex items-start gap-3 hover:bg-white/5 transition-colors"
       >
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-purple-500/30 border border-purple-400/50 flex items-center justify-center text-xs font-black text-purple-100">
+        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-xs font-black text-indigo-100">
           {index + 1}
         </div>
         <div className="flex-1 min-w-0">
@@ -108,15 +108,15 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
                 transition={{ duration: 0.3, ease: 'easeOut' }}
                 className="flex gap-3"
               >
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/25 border border-purple-400/40 flex items-center justify-center text-[11px] font-black text-purple-100">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
                   {i + 1}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="chat-md text-sm text-slate-100 leading-relaxed">
                     <MathText>{step.action}</MathText>
                   </div>
-                  <div className="chat-md text-xs text-slate-400 leading-relaxed mt-1 border-r-2 border-purple-500/30 pr-2.5">
-                    <span className="font-bold text-purple-200/90">למה: </span>
+                  <div className="chat-md text-xs text-slate-400 leading-relaxed mt-1 border-r-2 border-indigo-500/30 pr-2.5">
+                    <span className="font-bold text-indigo-200/90">למה: </span>
                     <MathText inline>{step.why}</MathText>
                   </div>
                 </div>
@@ -128,7 +128,7 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
             <motion.button
               {...buttonTap}
               onClick={() => setStepsShown((n) => n + 1)}
-              className="w-full inline-flex items-center justify-center gap-2 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 px-4 py-2.5 rounded-xl font-bold text-purple-100 text-sm transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2.5 rounded-xl font-bold text-indigo-100 text-sm transition-all"
             >
               {stepsShown === 0 ? 'הצג צעד ראשון' : `הצעד הבא (${stepsShown + 1}/${total})`}
             </motion.button>

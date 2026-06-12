@@ -46,7 +46,7 @@ export default function BagruyotLandingPage() {
   if (auth.status === 'loading') {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
       </main>
     );
   }
@@ -87,7 +87,7 @@ export default function BagruyotLandingPage() {
           <span>מאגר בגרויות</span>
         </motion.div>
         <motion.h1 variants={fadeUp} className="text-3xl sm:text-4xl font-black leading-tight">
-          <span className="bg-gradient-to-l from-white via-emerald-200 to-teal-200 bg-clip-text text-transparent">
+          <span className="font-display text-slate-100">
             תרגל מבגרויות אמיתיות
           </span>
         </motion.h1>
@@ -169,13 +169,13 @@ export default function BagruyotLandingPage() {
             variants={scaleIn}
             whileHover={{ y: -3 }}
             transition={{ duration: 0.2 }}
-            className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 sm:p-5 space-y-3"
+            className="surface-premium rounded-2xl p-4 sm:p-5 space-y-3"
           >
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="bg-emerald-500/15 border border-emerald-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-emerald-200">
                 שאלון {sampleQuestion.paper}
               </span>
-              <span className="bg-pink-500/15 border border-pink-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-pink-200">
+              <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-indigo-200">
                 {sampleQuestion.topic}
               </span>
               <span className="text-[10px] text-slate-400">
@@ -217,14 +217,14 @@ export default function BagruyotLandingPage() {
           <motion.div variants={scaleIn} whileHover={{ y: -4, scale: 1.01 }} whileTap={{ scale: 0.99 }} transition={{ duration: 0.2 }}>
             <Link
               href={`/login?next=${encodeURIComponent('/bagruyot/archive')}`}
-              className="card-3d block bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/50 hover:border-purple-400 rounded-2xl p-5 transition-colors"
+              className="card-3d block bg-gradient-to-br from-indigo-600/20 to-indigo-600/20 border border-indigo-500/50 hover:border-indigo-400 rounded-2xl p-5 transition-colors"
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-base sm:text-lg font-black text-white">התחבר כדי להיכנס</div>
                   <div className="text-xs text-slate-300 mt-0.5">דרושה התחברות כדי לתרגל מהמאגר</div>
                 </div>
-                <ArrowLeft className="w-5 h-5 text-purple-300 flex-shrink-0" />
+                <ArrowLeft className="w-5 h-5 text-indigo-300 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -297,8 +297,8 @@ export default function BagruyotLandingPage() {
 
 function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3 text-center">
-      <div className="text-2xl sm:text-3xl font-black bg-gradient-to-l from-emerald-300 to-teal-300 bg-clip-text text-transparent">
+    <div className="surface-premium rounded-xl p-3 text-center">
+      <div className="text-2xl sm:text-3xl font-black font-display text-slate-100">
         {value}
       </div>
       <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5">{label}</div>
@@ -318,7 +318,7 @@ function FeatureCard({
   body: string;
 }) {
   const colorClasses = {
-    purple: 'from-purple-600/10 to-pink-600/10 border-purple-500/30 text-purple-300',
+    purple: 'from-indigo-600/10 to-indigo-600/10 border-indigo-500/30 text-indigo-300',
     amber: 'from-amber-600/10 to-orange-600/10 border-amber-500/30 text-amber-300',
     emerald: 'from-emerald-600/10 to-teal-600/10 border-emerald-500/30 text-emerald-300',
   }[color];

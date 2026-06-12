@@ -31,7 +31,7 @@ export function DiagramRenderer({ diagrams }: { diagrams: DiagramSpec[] }) {
 
 function FigureCard({ spec }: { spec: DiagramSpec }) {
   return (
-    <figure className="bg-white/[0.03] border border-white/10 rounded-2xl p-3 flex flex-col items-center">
+    <figure className="surface-premium rounded-2xl p-3 flex flex-col items-center">
       <div className="w-full max-w-[280px] aspect-square">
         <DiagramSVG spec={spec} />
       </div>
@@ -49,8 +49,8 @@ function FigureCard({ spec }: { spec: DiagramSpec }) {
 // ============================================================
 
 const STROKE = 'rgba(226, 232, 240, 0.85)';   // slate-200 with alpha
-const FILL = 'rgba(168, 85, 247, 0.08)';      // purple-500 translucent
-const ACCENT = 'rgba(244, 114, 182, 0.95)';   // pink-400 — for highlights
+const FILL = 'rgba(168, 85, 247, 0.08)';      // indigo-500 translucent
+const ACCENT = 'rgba(244, 114, 182, 0.95)';   // indigo-400 — for highlights
 const LABEL_FILL = '#f1f5f9';                 // slate-100
 const TICK = 'rgba(251, 191, 36, 0.95)';      // amber-400 — congruent ticks
 const DEFAULT_VIEWBOX = '0 0 200 200';

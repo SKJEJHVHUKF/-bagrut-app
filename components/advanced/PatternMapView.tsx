@@ -32,13 +32,13 @@ function PatternCard({ pattern, index }: { pattern: QuestionPattern; index: numb
   return (
     <div
       id={`pattern-${pattern.id}`}
-      className="scroll-mt-24 bg-white/[0.03] border border-fuchsia-500/20 rounded-2xl overflow-hidden"
+      className="scroll-mt-24 bg-white/[0.03] border border-indigo-500/20 rounded-2xl overflow-hidden"
     >
-      <div className="bg-gradient-to-l from-fuchsia-600/15 to-purple-600/10 border-b border-white/10 px-4 py-2.5 flex items-center gap-2.5">
-        <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-fuchsia-500/25 border border-fuchsia-400/40 flex items-center justify-center text-[11px] font-black text-fuchsia-100">
+      <div className="bg-gradient-to-l from-indigo-600/15 to-indigo-600/10 border-b border-white/10 px-4 py-2.5 flex items-center gap-2.5">
+        <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
           {index + 1}
         </span>
-        <div className="font-black text-sm text-fuchsia-100 chat-md flex-1">
+        <div className="font-black text-sm text-indigo-100 chat-md flex-1">
           <MathText inline>{pattern.name}</MathText>
         </div>
       </div>
@@ -83,7 +83,7 @@ function PatternCard({ pattern, index }: { pattern: QuestionPattern; index: numb
         </div>
 
         {/* Where it appears */}
-        <div className="flex items-start gap-2 bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2">
+        <div className="flex items-start gap-2 surface-premium rounded-xl px-3 py-2">
           <MapPin className="w-3.5 h-3.5 text-amber-300 flex-shrink-0 mt-0.5" />
           <div className="text-xs text-amber-50/90 chat-md leading-relaxed flex-1">
             <MathText inline>{pattern.whereItAppears}</MathText>
@@ -97,7 +97,7 @@ function PatternCard({ pattern, index }: { pattern: QuestionPattern; index: numb
               onClick={() => setExampleOpen((o) => !o)}
               className="w-full px-3 py-2 flex items-center gap-2 text-right hover:bg-white/[0.03] transition-colors"
             >
-              <span className="text-[10px] font-black tracking-widest text-purple-300 uppercase flex-1">
+              <span className="text-[10px] font-black tracking-widest text-indigo-300 uppercase flex-1">
                 דוגמה מהירה
               </span>
               {exampleOpen ? (

@@ -60,10 +60,10 @@ function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-purple-500/10"
+      className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-indigo-500/10"
     >
-      <h1 className="text-3xl sm:text-4xl font-black mb-2 text-center">
-        <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+      <h1 className="font-display text-3xl sm:text-4xl font-black mb-2 text-center">
+        <span className="font-display text-slate-100">
           ברוך שובך 👋
         </span>
       </h1>
@@ -81,7 +81,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full bg-white/5 border border-white/10 rounded-xl pr-10 pl-3 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.07] transition-all"
+            className="w-full surface-premium rounded-xl pr-10 pl-3 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.07] transition-all"
             disabled={loading}
             dir="ltr"
           />
@@ -100,7 +100,7 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full bg-white/5 border border-white/10 rounded-xl pr-10 pl-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.07] transition-all"
+            className="w-full surface-premium rounded-xl pr-10 pl-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.07] transition-all"
             disabled={loading}
             dir="ltr"
           />
@@ -124,7 +124,7 @@ function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="group mt-6 w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3.5 rounded-xl font-bold text-white shadow-xl shadow-purple-500/40 hover:shadow-purple-500/60 hover:-translate-y-0.5 transition-all"
+        className="group mt-6 w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3.5 rounded-xl font-bold text-white shadow-xl shadow-indigo-500/40 hover:shadow-indigo-500/60 hover:-translate-y-0.5 transition-all"
       >
         {loading ? (
           <Loader2 className="w-5 h-5 animate-spin" />
@@ -141,7 +141,7 @@ function LoginForm() {
         עדיין אין לך חשבון?{' '}
         <Link
           href={`/signup${next !== '/quiz' ? `?next=${encodeURIComponent(next)}` : ''}`}
-          className="text-purple-300 hover:text-purple-200 font-bold underline-offset-2 hover:underline"
+          className="text-indigo-300 hover:text-indigo-200 font-bold underline-offset-2 hover:underline"
         >
           הירשם עכשיו
         </Link>
@@ -152,22 +152,22 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 relative overflow-x-hidden" style={{ fontFamily: 'var(--font-heebo), sans-serif' }}>
+    <div className="min-h-screen text-slate-50 relative overflow-x-hidden" style={{ fontFamily: 'var(--font-heebo), sans-serif' }}>
       {/* Animated background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-600/30 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-pink-600/25 blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
       </div>
 
       {/* Top bar */}
       <nav className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400 flex items-center justify-center shadow-xl shadow-purple-500/50 ring-1 ring-white/20 group-hover:scale-105 transition-transform">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20 group-hover:scale-105 transition-transform">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
               <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
             </svg>
           </div>
-          <span className="text-xl sm:text-2xl font-black bg-gradient-to-l from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+          <span className="text-xl sm:text-2xl font-black font-display text-slate-100">
             בגרות בכיס
           </span>
         </Link>

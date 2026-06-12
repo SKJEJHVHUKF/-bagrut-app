@@ -18,11 +18,11 @@ import { sparkle } from '@/lib/confetti';
  */
 export function BagrutQuestionBlock({ q, index }: { q: BagrutQuestion; index: number }) {
   return (
-    <div className="bg-white/[0.03] border border-purple-500/20 rounded-2xl overflow-hidden">
+    <div className="bg-white/[0.03] border border-indigo-500/20 rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-l from-purple-600/15 to-pink-600/10 border-b border-white/10 px-4 py-3 flex items-center gap-2.5">
-        <FileText className="w-4 h-4 text-purple-200 flex-shrink-0" />
-        <span className="text-[11px] font-black tracking-widest text-purple-200 uppercase">
+      <div className="bg-gradient-to-l from-indigo-600/15 to-indigo-600/10 border-b border-white/10 px-4 py-3 flex items-center gap-2.5">
+        <FileText className="w-4 h-4 text-indigo-200 flex-shrink-0" />
+        <span className="text-[11px] font-black tracking-widest text-indigo-200 uppercase">
           שאלת בגרות מלאה {index + 1}
         </span>
       </div>
@@ -65,10 +65,10 @@ function BagrutPartCard({ part, context }: { part: BagrutPart; context: string }
   }
 
   return (
-    <div className="bg-white/[0.04] border border-white/10 rounded-xl p-3.5 space-y-3">
+    <div className="surface-premium rounded-xl p-3.5 space-y-3">
       {/* Part header + prompt */}
       <div className="flex items-start gap-2.5">
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-purple-500/30">
+        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-indigo-500/30">
           {part.label}
         </div>
         <div className="flex-1 chat-md text-sm sm:text-base text-white leading-relaxed pt-0.5">
@@ -86,7 +86,7 @@ function BagrutPartCard({ part, context }: { part: BagrutPart; context: string }
           placeholder="התשובה שלך…"
           rows={2}
           dir="auto"
-          className="w-full bg-slate-950/50 border border-white/10 focus:border-purple-500/60 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
+          className="w-full bg-slate-950/50 border border-white/10 focus:border-indigo-500/60 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
         />
       )}
 
@@ -139,7 +139,7 @@ function BagrutPartCard({ part, context }: { part: BagrutPart; context: string }
           <motion.button
             {...buttonTap}
             onClick={() => setSolutionShown(true)}
-            className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-4 py-2 rounded-lg font-bold text-white text-sm shadow-lg shadow-purple-500/30 transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-2 rounded-lg font-bold text-white text-sm shadow-lg shadow-indigo-500/30 transition-colors"
           >
             <KeyRound className="w-4 h-4" />
             <span>הצג פתרון</span>
@@ -157,9 +157,9 @@ function BagrutPartCard({ part, context }: { part: BagrutPart; context: string }
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
             style={{ overflow: 'hidden' }}
-            className="bg-gradient-to-br from-purple-600/10 to-pink-600/10 border border-purple-500/30 rounded-xl p-3.5"
+            className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-xl p-3.5"
           >
-            <div className="text-[10px] font-black tracking-widest text-purple-300 mb-2 uppercase flex items-center gap-1.5">
+            <div className="text-[10px] font-black tracking-widest text-indigo-300 mb-2 uppercase flex items-center gap-1.5">
               <KeyRound className="w-3 h-3" />
               <span>פתרון סעיף {part.label}</span>
             </div>
@@ -172,7 +172,7 @@ function BagrutPartCard({ part, context }: { part: BagrutPart; context: string }
                   transition={{ duration: 0.25, delay: 0.05 + i * 0.06, ease: 'easeOut' }}
                   className="flex gap-3"
                 >
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/30 border border-purple-400/50 flex items-center justify-center text-[11px] font-black text-purple-100">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-[11px] font-black text-indigo-100">
                     {i + 1}
                   </div>
                   <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">

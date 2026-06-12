@@ -88,7 +88,7 @@ export default function OnboardingPage() {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-slate-50 relative overflow-x-hidden"
+      className="min-h-screen text-slate-50 relative overflow-x-hidden"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
       <BackgroundOrbs />
@@ -102,9 +102,9 @@ export default function OnboardingPage() {
               key={n}
               className={
                 n === step
-                  ? 'w-8 h-2 rounded-full bg-gradient-to-l from-purple-500 to-pink-500'
+                  ? 'w-8 h-2 rounded-full bg-gradient-to-l from-indigo-500 to-indigo-500'
                   : n < step
-                  ? 'w-2 h-2 rounded-full bg-purple-500/60'
+                  ? 'w-2 h-2 rounded-full bg-indigo-500/60'
                   : 'w-2 h-2 rounded-full bg-white/10'
               }
             />
@@ -155,12 +155,12 @@ export default function OnboardingPage() {
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <div className="text-center space-y-6">
-      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400 flex items-center justify-center shadow-2xl shadow-purple-500/40">
+      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-2xl shadow-indigo-500/40">
         <GraduationCap className="w-10 h-10 text-white" />
       </div>
       <div>
-        <h1 className="text-3xl sm:text-4xl font-black mb-3">
-          <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+        <h1 className="font-display text-3xl sm:text-4xl font-black mb-3">
+          <span className="font-display text-slate-100">
             ברוך הבא! בוא נכין לך תוכנית
           </span>
         </h1>
@@ -169,21 +169,21 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         </p>
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-right space-y-3">
+      <div className="surface-premium rounded-2xl p-5 text-right space-y-3">
         <div className="flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-purple-300 flex-shrink-0 mt-0.5" />
+          <CheckCircle className="w-5 h-5 text-indigo-300 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-slate-200">
             <strong>סדר לימוד מסודר</strong> — נושא אחר נושא, מהקל לקשה.
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-purple-300 flex-shrink-0 mt-0.5" />
+          <CheckCircle className="w-5 h-5 text-indigo-300 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-slate-200">
             <strong>שלוש שלבים לכל נושא</strong> — קריאה → מבחן הבנה → תרגול בגרות.
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-purple-300 flex-shrink-0 mt-0.5" />
+          <CheckCircle className="w-5 h-5 text-indigo-300 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-slate-200">
             <strong>ספירה לאחור</strong> עד הבגרות — תמיד תדע איפה אתה.
           </div>
@@ -192,7 +192,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 
       <button
         onClick={onNext}
-        className="btn-3d w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-4 rounded-2xl font-bold text-white"
+        className="btn-3d w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-4 rounded-2xl font-bold text-white"
       >
         <Sparkles className="w-5 h-5" />
         <span>בוא נתחיל</span>
@@ -227,8 +227,8 @@ function DateStep({
         <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/40">
           <Calendar className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black">
-          <span className="bg-gradient-to-l from-white to-amber-200 bg-clip-text text-transparent">
+        <h2 className="font-display text-2xl sm:text-3xl font-black">
+          <span className="font-display text-slate-100">
             מתי הבגרות שלך?
           </span>
         </h2>
@@ -237,8 +237,8 @@ function DateStep({
         </p>
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
-        <label className="block text-xs font-black tracking-widest text-purple-300 uppercase">
+      <div className="surface-premium rounded-2xl p-5 space-y-3">
+        <label className="block text-xs font-black tracking-widest text-indigo-300 uppercase">
           תאריך הבגרות
         </label>
         <input
@@ -246,7 +246,7 @@ function DateStep({
           value={value}
           min={today}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-slate-950/60 border border-white/10 focus:border-purple-500/60 rounded-xl px-4 py-3 text-base text-white outline-none transition-colors"
+          className="w-full bg-slate-950/60 border border-white/10 focus:border-indigo-500/60 rounded-xl px-4 py-3 text-base text-white outline-none transition-colors"
         />
         {daysAway > 0 && (
           <div className="text-sm text-slate-300">
@@ -280,8 +280,8 @@ function TopicsStep({
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl sm:text-3xl font-black">
-          <span className="bg-gradient-to-l from-white to-purple-200 bg-clip-text text-transparent">
+        <h2 className="font-display text-2xl sm:text-3xl font-black">
+          <span className="font-display text-slate-100">
             על אילו נושאים תרצה לעבוד?
           </span>
         </h2>
@@ -299,7 +299,7 @@ function TopicsStep({
               key={`${subject}:${topic}`}
               className={
                 isSelected
-                  ? 'bg-purple-500/10 border-purple-500/40 rounded-2xl p-3 border transition-all'
+                  ? 'bg-indigo-500/10 border-indigo-500/40 rounded-2xl p-3 border transition-all'
                   : 'bg-white/[0.03] border-white/10 rounded-2xl p-3 border transition-all'
               }
             >
@@ -310,7 +310,7 @@ function TopicsStep({
                 <div
                   className={
                     isSelected
-                      ? 'w-5 h-5 rounded-md bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0'
+                      ? 'w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center flex-shrink-0'
                       : 'w-5 h-5 rounded-md border-2 border-white/30 flex-shrink-0'
                   }
                 >
@@ -336,7 +336,7 @@ function TopicsStep({
                         onClick={() => setLevel(subject, topic, lvl)}
                         className={
                           sel.level === lvl
-                            ? 'px-2 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-l from-purple-600/40 to-pink-600/40 border border-purple-500/60 text-white'
+                            ? 'px-2 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-l from-indigo-600/40 to-indigo-600/40 border border-indigo-500/60 text-white'
                             : 'px-2 py-1.5 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300'
                         }
                       >
@@ -385,8 +385,8 @@ function SummaryStep({
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl sm:text-3xl font-black">
-          <span className="bg-gradient-to-l from-white to-emerald-200 bg-clip-text text-transparent">
+        <h2 className="font-display text-2xl sm:text-3xl font-black">
+          <span className="font-display text-slate-100">
             התוכנית שלך
           </span>
         </h2>
@@ -407,9 +407,9 @@ function SummaryStep({
         {selected.map((t, i) => (
           <div
             key={`${t.subject}:${t.topic}`}
-            className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center gap-3"
+            className="surface-premium rounded-2xl p-3 flex items-center gap-3"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-black text-white flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white flex-shrink-0">
               {i + 1}
             </div>
             <div className="flex-1 min-w-0">
@@ -447,7 +447,7 @@ function SummaryStep({
         </button>
         <button
           onClick={onFinish}
-          className="btn-3d flex-1 inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-3 rounded-2xl font-bold text-white"
+          className="btn-3d flex-1 inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-3 rounded-2xl font-bold text-white"
         >
           <Sparkles className="w-5 h-5" />
           <span>צור את התוכנית</span>
@@ -483,7 +483,7 @@ function NavButtons({
       <button
         onClick={onNext}
         disabled={nextDisabled}
-        className="btn-3d flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-3 rounded-2xl font-bold text-white text-sm"
+        className="btn-3d flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-3 rounded-2xl font-bold text-white text-sm"
       >
         {nextLabel}
       </button>
@@ -495,11 +495,11 @@ function BackgroundOrbs() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       <div
-        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-600/30 blur-[120px] animate-pulse"
+        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse"
         style={{ animationDuration: '8s' }}
       />
       <div
-        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-pink-600/25 blur-[120px] animate-pulse"
+        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse"
         style={{ animationDuration: '10s', animationDelay: '2s' }}
       />
     </div>
@@ -511,12 +511,12 @@ function TopBar() {
     <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/60 border-b border-white/10">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400 flex items-center justify-center shadow-xl shadow-purple-500/50 ring-1 ring-white/20">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
               <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
             </svg>
           </div>
-          <div className="text-base font-black bg-gradient-to-l from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+          <div className="text-base font-black font-display text-slate-100">
             בגרות בכיס
           </div>
         </Link>

@@ -28,7 +28,7 @@ export function AnswerInput({ value, onChange, type, disabled }: Props) {
         placeholder={PLACEHOLDER.text}
         rows={3}
         dir="auto"
-        className="w-full bg-slate-950/40 border border-white/10 focus:border-purple-500/60 focus:bg-slate-950/60 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
+        className="w-full bg-slate-950/40 border border-white/10 focus:border-indigo-500/60 focus:bg-slate-950/60 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
       />
     );
   }
@@ -42,7 +42,7 @@ export function AnswerInput({ value, onChange, type, disabled }: Props) {
       disabled={disabled}
       placeholder={PLACEHOLDER[type]}
       dir="auto"
-      className="w-full bg-slate-950/40 border border-white/10 focus:border-purple-500/60 focus:bg-slate-950/60 rounded-xl px-4 py-3 text-base text-white placeholder:text-slate-500 outline-none transition-colors"
+      className="w-full bg-slate-950/40 border border-white/10 focus:border-indigo-500/60 focus:bg-slate-950/60 rounded-xl px-4 py-3 text-base text-white placeholder:text-slate-500 outline-none transition-colors"
     />
   );
 }

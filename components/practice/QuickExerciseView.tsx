@@ -113,7 +113,7 @@ export function QuickExerciseView({
   if (loading) {
     return (
       <div className="space-y-3 py-10 text-center">
-        <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-400" />
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-400" />
         <div className="text-sm text-slate-400">מכין תרגיל…</div>
       </div>
     );
@@ -122,7 +122,7 @@ export function QuickExerciseView({
   if (error) {
     return (
       <div className="space-y-3">
-        <div className="text-sm text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-xl px-4 py-3">
+        <div className="text-sm text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-4 py-3">
           {error}
         </div>
         <button
@@ -176,7 +176,7 @@ export function QuickExerciseView({
     <div className="space-y-4">
       {/* Meta */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-200 font-bold">
+        <span className="px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-200 font-bold">
           {subjectLabel}
         </span>
         <span className="text-slate-500">•</span>
@@ -194,7 +194,7 @@ export function QuickExerciseView({
         transition={{ duration: 0.4, ease: 'easeOut' }}
         className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 chat-md"
       >
-        <div className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase flex items-center gap-2">
+        <div className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2">
           <Target className="w-3.5 h-3.5" />
           <span>השאלה</span>
         </div>
@@ -207,10 +207,10 @@ export function QuickExerciseView({
       <details
         open={conceptOpen}
         onToggle={(e) => setConceptOpen((e.target as HTMLDetailsElement).open)}
-        className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden"
+        className="surface-premium rounded-2xl overflow-hidden"
       >
         <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 text-sm text-slate-300 hover:bg-white/5 list-none">
-          <BookMarked className="w-4 h-4 text-purple-300" />
+          <BookMarked className="w-4 h-4 text-indigo-300" />
           <span className="flex-1 font-bold">איזה כלל זה בודק?</span>
           {conceptOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </summary>
@@ -284,9 +284,9 @@ export function QuickExerciseView({
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
             style={{ overflow: 'hidden' }}
-            className="bg-gradient-to-br from-purple-600/10 to-pink-600/10 border border-purple-500/30 rounded-2xl p-5"
+            className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-2xl p-5"
           >
-            <div className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase flex items-center gap-2">
+            <div className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2">
               <KeyRound className="w-3.5 h-3.5" />
               <span>פתרון</span>
             </div>
@@ -299,7 +299,7 @@ export function QuickExerciseView({
                   transition={{ duration: 0.3, ease: 'easeOut' }}
                   className="flex gap-3"
                 >
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-purple-500/30 border border-purple-400/50 flex items-center justify-center text-xs font-black text-purple-100">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-xs font-black text-indigo-100">
                     {i + 1}
                   </div>
                   <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
@@ -313,7 +313,7 @@ export function QuickExerciseView({
               <motion.button
                 {...buttonTap}
                 onClick={() => setStepsShown((n) => n + 1)}
-                className="mt-4 w-full inline-flex items-center justify-center gap-2 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 px-4 py-2.5 rounded-xl font-bold text-purple-100 text-sm transition-colors"
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2.5 rounded-xl font-bold text-indigo-100 text-sm transition-colors"
               >
                 <span>הצעד הבא ({stepsShown + 2}/{exercise.solution.steps.length})</span>
                 <ArrowLeft className="w-4 h-4" />
@@ -367,7 +367,7 @@ export function QuickExerciseView({
         <motion.button
           {...buttonTap}
           onClick={revealSolution}
-          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-purple-500/30 transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/30 transition-colors"
         >
           <KeyRound className="w-5 h-5" />
           <span>🔑 הראה לי את הפתרון</span>
@@ -384,7 +384,7 @@ export function QuickExerciseView({
           <motion.button
             {...buttonTap}
             onClick={() => loadDifficulty(difficulty)}
-            className="inline-flex items-center justify-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-4 py-3 rounded-2xl font-bold text-white shadow-lg shadow-purple-500/30 transition-colors text-sm"
+            className="inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/30 transition-colors text-sm"
           >
             <Sparkles className="w-4 h-4" />
             <span>תרגיל חדש</span>
@@ -399,7 +399,7 @@ export function QuickExerciseView({
           <motion.button
             {...buttonTap}
             onClick={() => loadDifficulty('harder')}
-            className="inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-rose-500/40 px-4 py-3 rounded-2xl font-bold text-rose-200 text-sm transition-colors"
+            className="inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/40 px-4 py-3 rounded-2xl font-bold text-indigo-200 text-sm transition-colors"
           >
             <span>🔴 מאתגר יותר</span>
           </motion.button>

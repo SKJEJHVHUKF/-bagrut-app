@@ -70,13 +70,13 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
       <motion.header initial="hidden" animate="visible" variants={staggerContainer} className="space-y-3">
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-fuchsia-300 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2"
         >
           <Rocket className="w-3.5 h-3.5" />
           <span>קורס מתקדם · רמת בגרות</span>
         </motion.div>
         <motion.h1 variants={fadeUp} className="text-2xl sm:text-3xl font-black leading-tight">
-          <span className="bg-gradient-to-l from-white via-fuchsia-200 to-rose-200 bg-clip-text text-transparent">
+          <span className="font-display text-slate-100">
             {course.title}
           </span>
         </motion.h1>
@@ -84,11 +84,11 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
           <MathText inline>{course.tagline}</MathText>
         </motion.p>
         <motion.div variants={fadeUp} className="flex items-center gap-3 text-xs text-slate-400 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-2.5 py-1">
+          <span className="inline-flex items-center gap-1.5 surface-premium rounded-full px-2.5 py-1">
             <Clock className="w-3.5 h-3.5" />
             {course.estimatedMinutes} דקות
           </span>
-          <span className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-2.5 py-1">
+          <span className="inline-flex items-center gap-1.5 surface-premium rounded-full px-2.5 py-1">
             {totalSections} חלקים
           </span>
           <Link
@@ -105,22 +105,22 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
       <motion.div
         {...inViewProps}
         variants={fadeUp}
-        className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 space-y-3"
+        className="surface-premium rounded-2xl p-4 space-y-3"
       >
         <div className="flex items-baseline justify-between">
-          <div className="text-sm font-bold text-fuchsia-100">
+          <div className="text-sm font-bold text-indigo-100">
             {simPassed
               ? '🎓 הנושא הושלם ברמת בגרות!'
               : `${doneCount}/${totalSections} חלקים הושלמו`}
           </div>
-          <div className="text-xs text-fuchsia-300/80 font-mono">{percent}%</div>
+          <div className="text-xs text-indigo-300/80 font-mono">{percent}%</div>
         </div>
         <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: '0%' }}
             animate={{ width: `${percent}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="h-full bg-gradient-to-l from-fuchsia-500 to-rose-500"
+            className="h-full bg-gradient-to-l from-indigo-500 to-indigo-500"
           />
         </div>
         <div className="flex flex-wrap gap-1.5 pt-1">
@@ -132,7 +132,7 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
                 href={locked ? '#section-gate' : `#section-${s.id}`}
                 className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-lg border transition-colors ${
                   done.has(s.id)
-                    ? 'bg-fuchsia-500/15 border-fuchsia-500/40 text-fuchsia-200'
+                    ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-200'
                     : locked
                       ? 'bg-white/[0.02] border-white/5 text-slate-500'
                       : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
@@ -249,10 +249,10 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
                   <AlertTriangle className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 space-y-1.5">
                     <div className="chat-md text-sm text-amber-50 leading-relaxed">
-                      <span className="font-bold text-rose-300">המלכודת: </span>
+                      <span className="font-bold text-indigo-300">המלכודת: </span>
                       <MathText inline>{t.trap}</MathText>
                     </div>
-                    <div className="chat-md text-xs text-rose-200/90 leading-relaxed">
+                    <div className="chat-md text-xs text-indigo-200/90 leading-relaxed">
                       <span className="font-bold">המחיר: </span>
                       <MathText inline>{t.consequence}</MathText>
                     </div>
@@ -263,7 +263,7 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
                     {t.relatedPatternId && (
                       <a
                         href={`#pattern-${t.relatedPatternId}`}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-fuchsia-300/80 hover:text-fuchsia-200 transition-colors"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-300/80 hover:text-indigo-200 transition-colors"
                       >
                         <span>לתבנית הרלוונטית</span>
                         <ArrowLeft className="w-3 h-3" />
@@ -304,7 +304,7 @@ function LockedGroup({ locked, children }: { locked: boolean; children: ReactNod
     <motion.div
       {...inViewProps}
       variants={fadeUp}
-      className="bg-white/[0.02] border border-white/10 border-dashed rounded-2xl p-8 text-center space-y-3"
+      className="surface-premium border-dashed rounded-2xl p-8 text-center space-y-3"
     >
       <Lock className="w-10 h-10 mx-auto text-slate-500" />
       <div className="text-base font-black text-slate-300">שאר הקורס נעול</div>
@@ -314,7 +314,7 @@ function LockedGroup({ locked, children }: { locked: boolean; children: ReactNod
       </p>
       <a
         href="#section-gate"
-        className="inline-flex items-center gap-2 bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-500/40 px-4 py-2 rounded-xl font-bold text-fuchsia-100 text-sm transition-colors"
+        className="inline-flex items-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-xl font-bold text-indigo-100 text-sm transition-colors"
       >
         <span>לשער הכניסה</span>
         <ArrowLeft className="w-4 h-4" />

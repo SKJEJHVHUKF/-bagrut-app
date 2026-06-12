@@ -81,8 +81,8 @@ export function EntryGate({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-start gap-2.5 bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3">
-        <Lock className="w-4 h-4 text-fuchsia-300 flex-shrink-0 mt-0.5" />
+      <div className="flex items-start gap-2.5 surface-premium rounded-2xl px-4 py-3">
+        <Lock className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-slate-300 leading-relaxed flex-1">
           {questions.length} שאלות מקורס הבסיס. צריך לפחות {gate.passThreshold} נכונות כדי לפתוח את
           הקורס המתקדם — מי שלא עובר מקבל הפניה ממוקדת לחלק שצריך לחזור עליו.
@@ -100,9 +100,9 @@ export function EntryGate({
         const picked = picks[q.id];
         const answered = picked !== undefined;
         return (
-          <div key={`${q.id}-${attempt}`} className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 space-y-2.5">
+          <div key={`${q.id}-${attempt}`} className="surface-premium rounded-2xl p-4 space-y-2.5">
             <div className="flex items-start gap-2.5">
-              <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-fuchsia-500/20 border border-fuchsia-400/40 flex items-center justify-center text-[11px] font-black text-fuchsia-100">
+              <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
                 {qi + 1}
               </div>
               <div className="flex-1 chat-md text-sm sm:text-base text-white leading-relaxed pt-0.5">
@@ -124,7 +124,7 @@ export function EntryGate({
                       answered && isCorrect
                         ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-50'
                         : answered && isPicked
-                          ? 'bg-rose-500/15 border-rose-500/50 text-rose-50'
+                          ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-50'
                           : answered
                             ? 'bg-white/[0.02] border-white/5 text-slate-400'
                             : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
@@ -148,13 +148,13 @@ export function EntryGate({
                   className={`rounded-xl px-3 py-2 text-sm chat-md flex items-start gap-2 ${
                     picked === q.correct
                       ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-50'
-                      : 'bg-rose-500/10 border border-rose-500/30 text-rose-50'
+                      : 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-50'
                   }`}
                 >
                   {picked === q.correct ? (
                     <CheckCircle className="w-4 h-4 text-emerald-300 flex-shrink-0 mt-0.5" />
                   ) : (
-                    <XCircle className="w-4 h-4 text-rose-300 flex-shrink-0 mt-0.5" />
+                    <XCircle className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1">
                     <MathText inline>{q.explanation}</MathText>

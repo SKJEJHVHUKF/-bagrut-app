@@ -162,16 +162,16 @@ export function QuestionPartCard({
   const canCheck = answer.trim().length > 0 && !checking && !answerLocked;
 
   return (
-    <div className="bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden">
+    <div className="surface-premium rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full text-right px-4 py-3 flex items-center gap-3 hover:bg-white/[0.02] transition-colors"
       >
-        <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-black text-white shadow-lg shadow-purple-500/30">
+        <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white shadow-lg shadow-indigo-500/30">
           {part.label}
         </div>
         <div className="flex-1 text-right">
-          <div className="text-[10px] font-black tracking-widest text-purple-300 uppercase">
+          <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase">
             סעיף {part.label}
           </div>
           <div className="text-sm text-slate-200 line-clamp-1 chat-md">
@@ -186,7 +186,7 @@ export function QuestionPartCard({
             <AlertCircle className="w-4 h-4 text-amber-400" />
           )}
           {checkResult?.verdict === 'wrong' && (
-            <XCircle className="w-4 h-4 text-rose-400" />
+            <XCircle className="w-4 h-4 text-indigo-400" />
           )}
           <div className="text-slate-400">
             {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -235,7 +235,7 @@ export function QuestionPartCard({
                 </button>
 
                 {checkError && (
-                  <div className="mt-2 text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">
+                  <div className="mt-2 text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-3 py-2">
                     {checkError}
                   </div>
                 )}
@@ -328,9 +328,9 @@ export function QuestionPartCard({
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
                 style={{ overflow: 'hidden' }}
-                className="bg-gradient-to-br from-purple-600/10 to-pink-600/10 border border-purple-500/30 rounded-xl p-4"
+                className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-xl p-4"
               >
-                <div className="text-[10px] font-black tracking-widest text-purple-300 mb-2 uppercase flex items-center gap-1.5">
+                <div className="text-[10px] font-black tracking-widest text-indigo-300 mb-2 uppercase flex items-center gap-1.5">
                   <KeyRound className="w-3 h-3" />
                   <span>פתרון</span>
                 </div>
@@ -343,7 +343,7 @@ export function QuestionPartCard({
                       transition={{ duration: 0.3, ease: 'easeOut' }}
                       className="flex gap-3"
                     >
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/30 border border-purple-400/50 flex items-center justify-center text-[11px] font-black text-purple-100">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-[11px] font-black text-indigo-100">
                         {i + 1}
                       </div>
                       <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
@@ -357,7 +357,7 @@ export function QuestionPartCard({
                   <motion.button
                     {...buttonTap}
                     onClick={nextStep}
-                    className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 px-4 py-2 rounded-lg font-bold text-purple-100 text-sm transition-colors"
+                    className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-lg font-bold text-indigo-100 text-sm transition-colors"
                   >
                     הצעד הבא ({stepsShown + 2}/{totalSteps})
                   </motion.button>
@@ -397,7 +397,7 @@ export function QuestionPartCard({
             <motion.button
               {...buttonTap}
               onClick={showFullSolution}
-              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-purple-500/30 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-indigo-500/30 transition-colors"
             >
               <KeyRound className="w-4 h-4" />
               <span>הצג פתרון מלא</span>
@@ -429,9 +429,9 @@ function CheckResultPanel({ result }: { result: CheckResult }) {
           label: 'חלקית נכון',
         }
       : {
-          wrap: 'bg-rose-500/10 border-rose-500/40',
-          accent: 'text-rose-300',
-          icon: <XCircle className="w-4 h-4 text-rose-300" />,
+          wrap: 'bg-indigo-500/10 border-indigo-500/40',
+          accent: 'text-indigo-300',
+          icon: <XCircle className="w-4 h-4 text-indigo-300" />,
           label: 'לא נכון',
         };
 

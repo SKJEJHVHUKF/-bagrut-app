@@ -117,7 +117,7 @@ export function SubTopicPractice({ subject, topic, subTopic }: Props) {
       >
         <div className="bg-gradient-to-br from-emerald-600/15 to-teal-600/15 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 text-center space-y-4">
           <Trophy className="w-12 h-12 mx-auto text-amber-300" />
-          <h2 className="text-2xl font-black text-white">סיימת את התרגול!</h2>
+          <h2 className="font-display text-2xl font-black text-white">סיימת את התרגול!</h2>
           <div className="text-5xl font-black text-emerald-200">{correctCount}/{total}</div>
           <div className="text-sm text-slate-300">
             {percent === 100
@@ -219,7 +219,7 @@ export function SubTopicPractice({ subject, topic, subTopic }: Props) {
                   showOutcome && isCorrect
                     ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-50'
                     : showOutcome && isSelected
-                      ? 'bg-rose-500/15 border-rose-500/50 text-rose-50'
+                      ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-50'
                       : showOutcome
                         ? 'bg-white/[0.02] border-white/5 text-slate-400'
                         : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'

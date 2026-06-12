@@ -73,12 +73,12 @@ export function TopicJourney({
     <section className="mb-5 space-y-3">
       {/* Header with progress count */}
       <div className="flex items-baseline justify-between">
-        <div className="text-xs font-black tracking-widest text-purple-300 uppercase flex items-center gap-2">
+        <div className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2">
           <Target className="w-3.5 h-3.5" />
           <span>מסלול הלימוד</span>
         </div>
         <div className="text-xs text-slate-400">
-          <span className="font-black text-purple-300">{completed}/3</span>
+          <span className="font-black text-indigo-300">{completed}/3</span>
           <span> שלבים</span>
         </div>
       </div>
@@ -86,7 +86,7 @@ export function TopicJourney({
       {/* Progress bar */}
       <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-l from-purple-500 to-pink-500 transition-all duration-500"
+          className="h-full bg-gradient-to-l from-indigo-500 to-indigo-500 transition-all duration-500"
           style={{ width: `${(completed / 3) * 100}%` }}
         />
       </div>
@@ -146,13 +146,13 @@ function StepCard({
     ? 'border-emerald-500/40 bg-emerald-500/10'
     : locked
     ? 'border-white/5 bg-white/[0.02] opacity-60'
-    : 'border-purple-500/40 bg-gradient-to-br from-purple-600/15 to-pink-600/15 hover:border-purple-500/60';
+    : 'border-indigo-500/40 bg-gradient-to-br from-indigo-600/15 to-indigo-600/15 hover:border-indigo-500/60';
 
   const iconBg = done
     ? 'bg-emerald-500/30 text-emerald-200'
     : locked
     ? 'bg-white/5 text-slate-500'
-    : 'bg-gradient-to-br from-purple-500 to-pink-500 text-white';
+    : 'bg-gradient-to-br from-indigo-500 to-indigo-500 text-white';
 
   const content = (
     <div className={`rounded-2xl border p-3 transition-all ${accent}`}>
@@ -168,7 +168,7 @@ function StepCard({
           <div className="text-[11px] text-slate-400 mt-0.5">{subtitle}</div>
         </div>
         {!locked && !done && (
-          <PlayCircle className="w-4 h-4 text-purple-300 flex-shrink-0 mt-1" />
+          <PlayCircle className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-1" />
         )}
         {done && (
           <ArrowLeft className="w-4 h-4 text-emerald-300 flex-shrink-0 mt-1" />

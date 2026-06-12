@@ -73,18 +73,18 @@ export default async function ExercisePage({
     <PracticeShell subtitle={subtitle} backHref={backHref} backLabel={backLabel}>
       <div className="space-y-4">
         <header className="space-y-2">
-          <div className="text-xs font-black tracking-widest text-purple-300 uppercase flex items-center gap-2">
+          <div className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2">
             <span>{headerLabel}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black leading-tight">
-            <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+          <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
+            <span className="font-display text-slate-100">
               {topic}
             </span>
           </h1>
           {lessonExists && (
             <Link
               href={`/practice/${subject}/${encodeURIComponent(topic)}`}
-              className="inline-flex items-center gap-1.5 text-xs text-purple-300 hover:text-purple-200 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 transition-colors"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>חזור לסיכום הלימודי</span>

@@ -28,12 +28,12 @@ import { sparkle } from '@/lib/confetti';
  */
 export function ExamQuestionCard({ q, index }: { q: ExamQuestion; index: number }) {
   return (
-    <div className="bg-white/[0.03] border border-fuchsia-500/20 rounded-2xl overflow-hidden">
+    <div className="bg-white/[0.03] border border-indigo-500/20 rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-l from-fuchsia-600/15 to-purple-600/10 border-b border-white/10 px-4 py-3 space-y-1.5">
+      <div className="bg-gradient-to-l from-indigo-600/15 to-indigo-600/10 border-b border-white/10 px-4 py-3 space-y-1.5">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <FileText className="w-4 h-4 text-fuchsia-200 flex-shrink-0" />
-          <span className="text-[11px] font-black tracking-widest text-fuchsia-200 uppercase flex-1">
+          <FileText className="w-4 h-4 text-indigo-200 flex-shrink-0" />
+          <span className="text-[11px] font-black tracking-widest text-indigo-200 uppercase flex-1">
             שאלה {index + 1}
           </span>
           <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/10 border border-white/15 text-slate-100 px-2 py-0.5 rounded-full">
@@ -50,7 +50,7 @@ export function ExamQuestionCard({ q, index }: { q: ExamQuestion; index: number 
             <a
               key={pid}
               href={`#pattern-${pid}`}
-              className="text-[10px] font-bold bg-fuchsia-500/15 border border-fuchsia-500/30 text-fuchsia-200/90 px-2 py-0.5 rounded-full hover:bg-fuchsia-500/25 transition-colors"
+              className="text-[10px] font-bold bg-indigo-500/15 border border-indigo-500/30 text-indigo-200/90 px-2 py-0.5 rounded-full hover:bg-indigo-500/25 transition-colors"
             >
               🗺️ תבנית
             </a>
@@ -94,10 +94,10 @@ function ExamPartCard({ part }: { part: ExamPart }) {
   }
 
   return (
-    <div className="bg-white/[0.04] border border-white/10 rounded-xl p-3.5 space-y-3">
+    <div className="surface-premium rounded-xl p-3.5 space-y-3">
       {/* Label + prompt + points */}
       <div className="flex items-start gap-2.5">
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-500 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-fuchsia-500/30">
+        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-indigo-500/30">
           {part.label}
         </div>
         <div className="flex-1 chat-md text-sm sm:text-base text-white leading-relaxed pt-0.5">
@@ -118,7 +118,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
           placeholder="התשובה שלך…"
           rows={2}
           dir="auto"
-          className="w-full bg-slate-950/50 border border-white/10 focus:border-fuchsia-500/60 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
+          className="w-full bg-slate-950/50 border border-white/10 focus:border-indigo-500/60 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
         />
       )}
 
@@ -163,7 +163,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
           <motion.button
             {...buttonTap}
             onClick={() => setSolutionShown(true)}
-            className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 px-4 py-2 rounded-lg font-bold text-white text-sm shadow-lg shadow-fuchsia-500/30 transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-2 rounded-lg font-bold text-white text-sm shadow-lg shadow-indigo-500/30 transition-colors"
           >
             <KeyRound className="w-4 h-4" />
             <span>הצג פתרון ומחוון</span>
@@ -183,8 +183,8 @@ function ExamPartCard({ part }: { part: ExamPart }) {
             style={{ overflow: 'hidden' }}
             className="space-y-2.5"
           >
-            <div className="bg-gradient-to-br from-fuchsia-600/10 to-purple-600/10 border border-fuchsia-500/30 rounded-xl p-3.5">
-              <div className="text-[10px] font-black tracking-widest text-fuchsia-300 mb-2 uppercase flex items-center gap-1.5">
+            <div className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-xl p-3.5">
+              <div className="text-[10px] font-black tracking-widest text-indigo-300 mb-2 uppercase flex items-center gap-1.5">
                 <KeyRound className="w-3 h-3" />
                 <span>פתרון סעיף {part.label}</span>
               </div>
@@ -197,7 +197,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
                     transition={{ duration: 0.25, delay: 0.05 + i * 0.06, ease: 'easeOut' }}
                     className="flex gap-3"
                   >
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-fuchsia-500/25 border border-fuchsia-400/40 flex items-center justify-center text-[11px] font-black text-fuchsia-100">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
                       {i + 1}
                     </div>
                     <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
@@ -218,15 +218,15 @@ function ExamPartCard({ part }: { part: ExamPart }) {
             </div>
 
             {/* Rubric — on what points are lost */}
-            <div className="bg-rose-500/5 border border-rose-500/25 rounded-xl px-3 py-2.5">
-              <div className="text-[10px] font-black tracking-widest text-rose-300 uppercase flex items-center gap-1.5 mb-1.5">
+            <div className="bg-indigo-500/5 border border-indigo-500/25 rounded-xl px-3 py-2.5">
+              <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase flex items-center gap-1.5 mb-1.5">
                 <MinusCircle className="w-3 h-3" />
                 <span>מחוון — על מה מורידים נקודות ({part.points} נק׳ לסעיף)</span>
               </div>
               <ul className="space-y-1">
                 {part.deductions.map((d, i) => (
-                  <li key={i} className="flex gap-2 text-xs text-rose-50/90 leading-relaxed">
-                    <span className="text-rose-300 flex-shrink-0 mt-0.5">−</span>
+                  <li key={i} className="flex gap-2 text-xs text-indigo-50/90 leading-relaxed">
+                    <span className="text-indigo-300 flex-shrink-0 mt-0.5">−</span>
                     <div className="chat-md flex-1">
                       <MathText inline>{d}</MathText>
                     </div>

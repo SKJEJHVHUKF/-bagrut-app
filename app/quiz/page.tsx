@@ -96,7 +96,7 @@ const SUBJECTS = {
 // holds the actual logic; the default export is the Suspense wrapper.
 export default function QuizPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+    <Suspense fallback={<div className="min-h-screen" />}>
       <Quiz />
     </Suspense>
   );

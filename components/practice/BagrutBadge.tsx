@@ -36,8 +36,8 @@ export function BagrutBadge({
 function InlineBadge({ mapping }: { mapping: TopicMapping }) {
   const paperColor =
     mapping.paper === '581'
-      ? 'bg-purple-500/15 border-purple-500/30 text-purple-200'
-      : 'bg-pink-500/15 border-pink-500/30 text-pink-200';
+      ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-200'
+      : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-200';
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-xs">
@@ -57,8 +57,8 @@ function BannerBadge({ mapping }: { mapping: TopicMapping }) {
   // Stripe color reflects which paper the topic belongs to.
   const paperGradient =
     mapping.paper === '581'
-      ? 'from-purple-600/20 to-purple-700/10 border-purple-500/40'
-      : 'from-pink-600/20 to-pink-700/10 border-pink-500/40';
+      ? 'from-indigo-600/20 to-indigo-700/10 border-indigo-500/40'
+      : 'from-indigo-600/20 to-indigo-700/10 border-indigo-500/40';
 
   const weightLabel =
     mapping.weight === 'core'
@@ -111,9 +111,9 @@ function Stat({
 }) {
   return (
     <div
-      className={`bg-white/[0.05] border border-white/10 rounded-xl px-2 py-2 ${fullClassName ?? ''}`}
+      className={`surface-premium rounded-xl px-2 py-2 ${fullClassName ?? ''}`}
     >
-      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+      <div className="text-[10px] text-slate-400 font-bold tracking-wide">
         {label}
       </div>
       <div className="text-xs sm:text-sm text-white font-black mt-0.5">{value}</div>

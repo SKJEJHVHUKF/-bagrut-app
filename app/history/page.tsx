@@ -52,15 +52,15 @@ function scoreClass(pct: number): {
     };
   }
   return {
-    ringText: 'text-rose-400',
-    ringBg: 'bg-rose-500/10 border-rose-500/40',
+    ringText: 'text-indigo-400',
+    ringBg: 'bg-indigo-500/10 border-indigo-500/40',
     label: 'יש מה לשפר',
   };
 }
 
 function BagrutLogo() {
   return (
-    <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400 flex items-center justify-center shadow-xl shadow-purple-500/50 ring-1 ring-white/20">
+    <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20">
       <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
         <path
           d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
@@ -112,17 +112,17 @@ export default async function HistoryPage() {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-slate-50 relative overflow-x-hidden"
+      className="min-h-screen text-slate-50 relative overflow-x-hidden"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
       {/* Background orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div
-          className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-600/30 blur-[120px] animate-pulse"
+          className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse"
           style={{ animationDuration: '8s' }}
         />
         <div
-          className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-pink-600/25 blur-[120px] animate-pulse"
+          className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse"
           style={{ animationDuration: '10s', animationDelay: '2s' }}
         />
       </div>
@@ -133,7 +133,7 @@ export default async function HistoryPage() {
           <Link href="/" className="flex items-center gap-3 group">
             <BagrutLogo />
             <div>
-              <div className="text-base font-black bg-gradient-to-l from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+              <div className="text-base font-black font-display text-slate-100">
                 בגרות בכיס
               </div>
               <div className="text-[10px] text-slate-400 -mt-0.5">ההיסטוריה שלי</div>
@@ -141,7 +141,7 @@ export default async function HistoryPage() {
           </Link>
           <Link
             href="/quiz"
-            className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
           >
             <span>לתרגול</span>
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
@@ -152,8 +152,8 @@ export default async function HistoryPage() {
       <main className="relative z-10 max-w-3xl mx-auto px-4 py-8">
         {/* Heading */}
         <div className="mb-7">
-          <h1 className="text-3xl sm:text-4xl font-black mb-2">
-            <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+          <h1 className="font-display text-3xl sm:text-4xl font-black mb-2">
+            <span className="font-display text-slate-100">
               ההיסטוריה שלי 📊
             </span>
           </h1>
@@ -163,7 +163,7 @@ export default async function HistoryPage() {
         {/* Summary stats */}
         {totalSessions > 0 && (
           <div className="grid grid-cols-3 gap-3 mb-7">
-            <StatCard icon={Trophy} label="תרגולים" value={String(totalSessions)} accent="from-purple-500/15 to-pink-500/15 border-purple-500/30" />
+            <StatCard icon={Trophy} label="תרגולים" value={String(totalSessions)} accent="from-indigo-500/15 to-indigo-500/15 border-indigo-500/30" />
             <StatCard icon={Target} label="שאלות" value={String(totalQuestions)} accent="from-amber-500/15 to-orange-500/15 border-amber-500/30" />
             <StatCard icon={TrendingUp} label="ממוצע" value={`${overallPct}%`} accent="from-emerald-500/15 to-green-500/15 border-emerald-500/30" />
           </div>
@@ -205,10 +205,10 @@ function StatCard({
       className={`bg-gradient-to-br ${accent} backdrop-blur-md border rounded-2xl p-4 text-center`}
     >
       <Icon className="w-4 h-4 mx-auto mb-1.5 text-white/80" />
-      <div className="text-2xl font-black mb-0.5 bg-gradient-to-l from-white to-slate-300 bg-clip-text text-transparent">
+      <div className="text-2xl font-black mb-0.5 font-display text-slate-100">
         {value}
       </div>
-      <div className="text-[11px] text-slate-300 font-bold uppercase tracking-wider">
+      <div className="text-[11px] text-slate-300 font-bold tracking-wide">
         {label}
       </div>
     </div>
@@ -219,8 +219,8 @@ function SessionRow({ session }: { session: Session }) {
   const pct = Math.round((session.score / session.total) * 100);
   const sc = scoreClass(pct);
   return (
-    <div className="bg-white/5 hover:bg-white/[0.07] backdrop-blur-md border border-white/10 hover:border-purple-500/40 rounded-2xl p-4 flex items-center gap-4 transition-all">
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0 text-2xl">
+    <div className="bg-white/5 hover:bg-white/[0.07] backdrop-blur-md border border-white/10 hover:border-indigo-500/40 rounded-2xl p-4 flex items-center gap-4 transition-all">
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 text-2xl">
         {session.subject_emoji}
       </div>
       <div className="flex-1 min-w-0">
@@ -245,11 +245,11 @@ function SessionRow({ session }: { session: Session }) {
 function EmptyState() {
   return (
     <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-10 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center mb-5 mx-auto">
-        <BookOpen className="w-8 h-8 text-purple-300" />
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mb-5 mx-auto">
+        <BookOpen className="w-8 h-8 text-indigo-300" />
       </div>
-      <h2 className="text-xl sm:text-2xl font-black mb-2">
-        <span className="bg-gradient-to-l from-white to-purple-200 bg-clip-text text-transparent">
+      <h2 className="font-display text-xl sm:text-2xl font-black mb-2">
+        <span className="font-display text-slate-100">
           עוד לא תרגלת
         </span>
       </h2>
@@ -258,7 +258,7 @@ function EmptyState() {
       </p>
       <Link
         href="/quiz"
-        className="group inline-flex items-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-3 rounded-xl font-bold text-white shadow-xl shadow-purple-500/40 transition-all"
+        className="group inline-flex items-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-3 rounded-xl font-bold text-white shadow-xl shadow-indigo-500/40 transition-all"
       >
         <Sparkles className="w-4 h-4" />
         <span>התחל לתרגל</span>

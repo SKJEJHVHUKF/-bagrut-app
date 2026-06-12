@@ -27,10 +27,35 @@
 }
 
 html, body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-heebo), Arial, Helvetica, sans-serif;
   min-height: 100vh;
+}
+
+/* Global premium canvas — a deep top glow, matte film-grain, and a
+   cinematic vignette, applied site-wide behind all page content. Pages
+   use transparent roots so this shows through. */
+body {
+  position: relative;
+  background-image: radial-gradient(1100px 600px at 50% -8%, #151C32 0%, rgba(10, 14, 26, 0) 55%);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(115% 80% at 50% -5%, transparent 50%, rgba(0, 0, 0, 0.5) 100%);
 }
 
 html {

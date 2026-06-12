@@ -84,7 +84,7 @@ export default function BagruyotArchivePage() {
   if (auth.status === 'loading') {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
       </main>
     );
   }
@@ -92,13 +92,13 @@ export default function BagruyotArchivePage() {
   if (auth.status === 'unauthenticated') {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 max-w-md text-center space-y-4">
-          <BookOpen className="w-12 h-12 text-purple-400 mx-auto" />
-          <h1 className="text-2xl font-black">מאגר בגרויות</h1>
+        <div className="surface-premium rounded-2xl p-8 max-w-md text-center space-y-4">
+          <BookOpen className="w-12 h-12 text-indigo-400 mx-auto" />
+          <h1 className="font-display text-2xl font-black">מאגר בגרויות</h1>
           <p className="text-slate-300">יש להתחבר כדי לגשת למאגר.</p>
           <Link
             href={`/login?next=${encodeURIComponent('/bagruyot/archive')}`}
-            className="inline-flex items-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 px-6 py-3 rounded-2xl font-bold"
+            className="inline-flex items-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 px-6 py-3 rounded-2xl font-bold"
           >
             התחברות
           </Link>
@@ -110,9 +110,9 @@ export default function BagruyotArchivePage() {
   if (auth.status === 'free') {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 max-w-md text-center space-y-4">
+        <div className="surface-premium rounded-2xl p-8 max-w-md text-center space-y-4">
           <Crown className="w-12 h-12 text-amber-400 mx-auto" />
-          <h1 className="text-2xl font-black">מאגר בגרויות — פיצ׳ר Pro</h1>
+          <h1 className="font-display text-2xl font-black">מאגר בגרויות — פיצ׳ר Pro</h1>
           <p className="text-slate-300 leading-relaxed">
             תרגול שאלות בגרות אמיתיות עם רמזים מדורגים ופתרונות מלאים. שדרג ל-Pro כדי לגשת.
           </p>
@@ -144,12 +144,12 @@ export default function BagruyotArchivePage() {
           <ArrowRight className="w-3 h-3" />
           חזרה לדף המאגר
         </Link>
-        <div className="text-xs font-black tracking-widest text-purple-300 uppercase flex items-center gap-2">
+        <div className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2">
           <BookOpen className="w-3.5 h-3.5" />
           <span>ארכיון בגרויות</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black leading-tight">
-          <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+        <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
+          <span className="font-display text-slate-100">
             תרגל מהבגרויות
           </span>
         </h1>
@@ -164,7 +164,7 @@ export default function BagruyotArchivePage() {
 
       {/* Empty repository — show big helpful card and skip filters */}
       {totalCount === 0 && (
-        <div className="bg-gradient-to-br from-purple-600/10 to-pink-600/10 border border-purple-500/30 rounded-2xl p-6 sm:p-8 space-y-4">
+        <div className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-2xl p-6 sm:p-8 space-y-4">
           <div className="text-base font-black text-white">המאגר עדיין ריק — וזה במכוון</div>
           <p className="text-sm text-slate-200 leading-relaxed">
             המאגר הזה מיועד לשאלות מבגרויות <strong>אמיתיות</strong> בלבד, עם פתרונות מאומתים — כדי שכל
@@ -182,7 +182,7 @@ export default function BagruyotArchivePage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="חיפוש בנוסח השאלות..."
-            className="w-full bg-white/[0.03] border border-white/10 focus:border-purple-500/60 rounded-xl pr-10 pl-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors"
+            className="w-full surface-premium focus:border-indigo-500/60 rounded-xl pr-10 pl-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors"
           />
         </div>
       )}
@@ -218,7 +218,7 @@ export default function BagruyotArchivePage() {
           {hasActiveFilter && (
             <button
               onClick={clearFilters}
-              className="mb-4 inline-flex items-center gap-1.5 text-xs text-purple-300 hover:text-purple-200"
+              className="mb-4 inline-flex items-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200"
             >
               <X className="w-3 h-3" />
               נקה סינונים
@@ -227,7 +227,7 @@ export default function BagruyotArchivePage() {
 
           {/* Results */}
           {filtered.length === 0 ? (
-            <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 text-center text-slate-400">
+            <div className="surface-premium rounded-2xl p-8 text-center text-slate-400">
               לא נמצאו שאלות לסינון הנוכחי. נסה לשנות פילטרים.
             </div>
           ) : (
@@ -278,7 +278,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-white/[0.03] border border-white/10 focus:border-purple-500/60 rounded-xl px-3 py-2 text-sm text-white outline-none transition-colors"
+        className="w-full surface-premium focus:border-indigo-500/60 rounded-xl px-3 py-2 text-sm text-white outline-none transition-colors"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value} className="bg-slate-900 text-white">
@@ -309,15 +309,15 @@ function QuestionCard({
           ? 'מועד מיוחד'
           : null;
   return (
-    <article className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden">
+    <article className="surface-premium rounded-2xl overflow-hidden">
       <button onClick={onToggle} className="w-full text-right p-4 hover:bg-white/[0.02] transition-colors">
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-              <span className="bg-purple-500/15 border border-purple-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-purple-200">
+              <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-indigo-200">
                 שאלון {question.paper}
               </span>
-              <span className="bg-pink-500/15 border border-pink-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-pink-200">
+              <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-indigo-200">
                 {question.topic}
               </span>
               {moedHeb && (
@@ -343,7 +343,7 @@ function QuestionCard({
         <div className="px-4 pb-4 space-y-4 border-t border-white/10 pt-4">
           {/* Full context */}
           <div>
-            <div className="text-xs font-black tracking-widest text-purple-300 uppercase mb-1.5">נתון</div>
+            <div className="text-xs font-black tracking-widest text-indigo-300 uppercase mb-1.5">נתון</div>
             <div className="chat-md text-sm text-slate-100 leading-relaxed">
               <MathText>{question.context}</MathText>
             </div>
@@ -386,9 +386,9 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
   const moreHintsAvailable = hasHints && hintsShown < (part.hints?.length ?? 0);
 
   return (
-    <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3 space-y-3">
+    <div className="surface-premium rounded-xl p-3 space-y-3">
       <div className="flex items-baseline gap-2">
-        <span className="text-sm font-black text-purple-200">סעיף {part.label}.</span>
+        <span className="text-sm font-black text-indigo-200">סעיף {part.label}.</span>
         {part.points != null && <span className="text-[10px] text-slate-400">{part.points} נק׳</span>}
       </div>
       <div className="chat-md text-sm text-slate-100 leading-relaxed">
@@ -418,7 +418,7 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
                   : 'כתוב כאן את התשובה...'
               }
               rows={3}
-              className="w-full bg-slate-950/50 border border-white/10 focus:border-purple-500/60 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
+              className="w-full bg-slate-950/50 border border-white/10 focus:border-indigo-500/60 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
               dir="auto"
             />
           </motion.div>

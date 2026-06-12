@@ -88,27 +88,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** A single multiple-choice option inside the hero showpiece card. */
-function Option({ children, correct }: { children: React.ReactNode; correct?: boolean }) {
-  return (
-    <div
-      dir="ltr"
-      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm border ${
-        correct
-          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
-          : 'bg-white/[0.02] border-white/[0.07] text-slate-300'
-      }`}
-    >
-      <span className="font-medium">{children}</span>
-      {correct ? (
-        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-      ) : (
-        <span className="w-4 h-4 rounded-full border border-white/15" />
-      )}
-    </div>
-  );
-}
-
 const SUBJECTS = [
   { name: 'מתמטיקה 5 יח׳', emoji: '📐', topics: 12 },
   { name: 'מתמטיקה 4 יח׳', emoji: '🔢', topics: 11 },
@@ -146,22 +125,12 @@ export default function Landing() {
   return (
     <div
       className="min-h-screen text-slate-100 relative overflow-x-hidden"
-      style={{
-        fontFamily: 'var(--font-heebo), sans-serif',
-        background: 'radial-gradient(1200px 620px at 50% -8%, #141B30 0%, #0B0F1C 48%, #090C16 100%)',
-      }}
+      style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
-      {/* Matte film-grain over the dark canvas — premium texture */}
-      <div className="grain-overlay" />
-      {/* Single calm, static glow — no pulsing blob soup */}
+      {/* Hero glow accent — the global grain, vignette & depth come from body */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-12%] left-1/2 -translate-x-1/2 w-[860px] h-[520px] rounded-full bg-indigo-600/[0.08] blur-[160px]" />
       </div>
-      {/* Cinematic vignette — subtle edge darkening for depth & focus */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0"
-        style={{ background: 'radial-gradient(115% 78% at 50% -5%, transparent 52%, rgba(0,0,0,0.5) 100%)' }}
-      />
 
       {/* Navbar */}
       <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#0A0E1A]/70 border-b border-white/[0.07]">
@@ -268,43 +237,10 @@ export default function Landing() {
           </motion.a>
         </motion.div>
 
-        {/* Product showpiece — a refined preview of a real question */}
-        <motion.div variants={scaleIn} className="relative max-w-md mx-auto mt-16 sm:mt-20">
-          <div
-            className="absolute -inset-5 bg-indigo-500/15 blur-[60px] rounded-[44px]"
-            style={{ zIndex: -1 }}
-          />
-          <div className="surface-premium rounded-3xl p-6 sm:p-7 text-right shadow-2xl shadow-black/50">
-            <div className="flex items-center justify-between mb-5">
-              <span className="text-[11px] font-semibold text-indigo-300/90 tracking-wide">
-                שאלה לדוגמה · מספרים מרוכבים
-              </span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-200 bg-indigo-500/15 border border-indigo-500/30 rounded-full px-2 py-0.5">
-                <Sparkles className="w-3 h-3" />
-                AI
-              </span>
-            </div>
-            <div dir="ltr" className="font-display italic text-3xl sm:text-4xl text-slate-50 text-center mb-5 tracking-wide">
-              z² − 4z + 13 = 0
-            </div>
-            <div className="space-y-2 mb-4">
-              <Option correct>z = 2 ± 3i</Option>
-              <Option>z = 3 ± 2i</Option>
-              <Option>z = 4 ± i</Option>
-            </div>
-            <div className="pt-3.5 border-t border-white/[0.08]">
-              <div className="text-[11px] font-semibold text-indigo-300/90 mb-1.5">הסבר</div>
-              <div dir="ltr" className="text-xs text-slate-400 text-center tracking-wide">
-                Δ = b² − 4ac = −36 → √Δ = 6i → z = 2 ± 3i
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
         {/* Slim trust strip */}
         <motion.div
           variants={fadeUp}
-          className="flex items-center justify-center gap-3 sm:gap-5 mt-9 text-sm text-slate-500"
+          className="flex items-center justify-center gap-3 sm:gap-5 mt-12 sm:mt-14 text-sm text-slate-500"
         >
           <span><strong className="text-slate-300 font-bold">7</strong> מקצועות</span>
           <span className="w-1 h-1 rounded-full bg-slate-600" />

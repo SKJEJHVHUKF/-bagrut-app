@@ -46,13 +46,13 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       >
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-purple-300 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2"
         >
           <BookOpen className="w-3.5 h-3.5" />
           <span>סיכום לימודי</span>
         </motion.div>
         <motion.h1 variants={fadeUp} className="text-2xl sm:text-3xl font-black leading-tight">
-          <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+          <span className="font-display text-slate-100">
             {lesson.title}
           </span>
         </motion.h1>
@@ -79,7 +79,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       <motion.section {...inViewProps} variants={staggerContainer}>
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2"
         >
           <Target className="w-3.5 h-3.5" />
           <span>מושגים מרכזיים</span>
@@ -91,9 +91,9 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
               variants={fadeUp}
               whileHover={{ x: -2 }}
               transition={{ duration: 0.2 }}
-              className="bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3"
+              className="surface-premium rounded-2xl px-4 py-3"
             >
-              <div className="text-sm font-black text-purple-200 mb-1.5 chat-md">
+              <div className="text-sm font-black text-indigo-200 mb-1.5 chat-md">
                 <MathText inline>{c.title}</MathText>
               </div>
               <div className="chat-md text-sm text-slate-200 leading-relaxed">
@@ -112,7 +112,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <motion.section {...inViewProps} variants={staggerContainer}>
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase"
+            className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase"
           >
             נוסחאות
           </motion.div>
@@ -130,7 +130,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       <motion.section {...inViewProps} variants={staggerContainer}>
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>דוגמאות פתורות</span>
@@ -211,22 +211,22 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <motion.section {...inViewProps} variants={staggerContainer}>
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase flex items-center gap-2"
+            className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2"
           >
             <Award className="w-3.5 h-3.5" />
             <span>טיפים לבחינה</span>
           </motion.div>
           <motion.ul
             variants={staggerContainer}
-            className="bg-purple-500/5 border border-purple-500/30 rounded-2xl px-4 py-3 space-y-2"
+            className="bg-indigo-500/5 border border-indigo-500/30 rounded-2xl px-4 py-3 space-y-2"
           >
             {lesson.examTips.map((t, i) => (
               <motion.li
                 key={i}
                 variants={fadeUp}
-                className="flex gap-2 text-sm text-purple-50/95 leading-relaxed"
+                className="flex gap-2 text-sm text-indigo-50/95 leading-relaxed"
               >
-                <span className="text-purple-300 flex-shrink-0 mt-0.5">★</span>
+                <span className="text-indigo-300 flex-shrink-0 mt-0.5">★</span>
                 <div className="chat-md flex-1">
                   <MathText>{t}</MathText>
                 </div>
@@ -259,7 +259,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
             {/* Progress strip */}
             <motion.div
               variants={fadeUp}
-              className="bg-white/[0.03] border border-white/10 rounded-2xl p-3 mb-3"
+              className="surface-premium rounded-2xl p-3 mb-3"
             >
               <div className="flex items-baseline justify-between mb-2">
                 <div className="text-sm font-bold text-emerald-100">
@@ -333,12 +333,12 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                               {sub.title}
                             </span>
                             {isNext && (
-                              <span className="text-[10px] font-black uppercase tracking-widest bg-amber-500/25 border border-amber-400/50 text-amber-200 px-1.5 py-0.5 rounded-full">
+                              <span className="text-[10px] font-black tracking-wide bg-amber-500/25 border border-amber-400/50 text-amber-200 px-1.5 py-0.5 rounded-full">
                                 ▶ הבא בתור
                               </span>
                             )}
                             {isDone && (
-                              <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 px-1.5 py-0.5 rounded-full">
+                              <span className="text-[10px] font-black tracking-wide bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 px-1.5 py-0.5 rounded-full">
                                 ✓ הושלם
                               </span>
                             )}
@@ -371,7 +371,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       <motion.section {...inViewProps} variants={staggerContainer} className="pt-2">
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase"
+          className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase"
         >
           {lesson.subTopics && lesson.subTopics.length > 0 ? 'או — תרגול כללי בנושא' : 'מוכן/ה לתרגל?'}
         </motion.div>
@@ -383,7 +383,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
             <motion.div variants={fadeUp} whileHover={{ y: -3, scale: 1.01 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
               <Link
                 href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/exercise?mode=bagrut`}
-                className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-purple-500/40 transition-colors w-full"
+                className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-indigo-500/40 transition-colors w-full"
               >
                 <Target className="w-5 h-5" />
                 <div className="text-right">
@@ -397,7 +397,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
           <motion.div variants={fadeUp} whileHover={{ y: -3, scale: 1.01 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
             <Link
               href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/exercise?mode=quick`}
-              className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-purple-500/40 transition-colors w-full"
+              className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-indigo-500/40 transition-colors w-full"
             >
               <Sparkles className="w-5 h-5" />
               <div className="text-right">

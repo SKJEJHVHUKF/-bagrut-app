@@ -53,7 +53,7 @@ export function SubTopicLanding({ subject, topic, subTopic }: Props) {
           className="text-2xl sm:text-3xl font-black leading-tight flex items-baseline gap-2"
         >
           {subTopic.emoji && <span className="text-3xl sm:text-4xl">{subTopic.emoji}</span>}
-          <span className="bg-gradient-to-l from-white via-emerald-200 to-teal-200 bg-clip-text text-transparent">
+          <span className="font-display text-slate-100">
             {subTopic.title}
           </span>
         </motion.h1>
@@ -73,7 +73,7 @@ export function SubTopicLanding({ subject, topic, subTopic }: Props) {
         </motion.div>
         <motion.div
           variants={fadeUp}
-          className="bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3 chat-md text-sm sm:text-base text-slate-200 leading-relaxed"
+          className="surface-premium rounded-2xl px-4 py-3 chat-md text-sm sm:text-base text-slate-200 leading-relaxed"
         >
           <MathText>{subTopic.summary}</MathText>
         </motion.div>
@@ -119,7 +119,7 @@ export function SubTopicLanding({ subject, topic, subTopic }: Props) {
         <motion.section {...inViewProps} variants={staggerContainer}>
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-purple-300 mb-3 uppercase"
+            className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase"
           >
             נוסחאות לתת-נושא הזה
           </motion.div>

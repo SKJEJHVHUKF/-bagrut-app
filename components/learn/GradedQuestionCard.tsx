@@ -60,10 +60,10 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
   }
 
   return (
-    <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 space-y-3">
+    <div className="surface-premium rounded-2xl p-4 space-y-3">
       {/* Question */}
       <div className="flex items-start gap-2.5">
-        <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-black text-white text-xs shadow-lg shadow-purple-500/30">
+        <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white text-xs shadow-lg shadow-indigo-500/30">
           {index + 1}
         </div>
         <div className="flex-1 chat-md text-sm sm:text-base text-white leading-relaxed pt-0.5">
@@ -91,7 +91,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
                   show && isCorrect
                     ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-50'
                     : show && isSelected
-                      ? 'bg-rose-500/15 border-rose-500/50 text-rose-50'
+                      ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-50'
                       : show
                         ? 'bg-white/[0.02] border-white/5 text-slate-400'
                         : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
@@ -113,7 +113,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
           placeholder="כתוב כאן את התשובה שלך (נסה לבד לפני שאתה חושף את הפתרון)…"
           rows={2}
           dir="auto"
-          className="w-full bg-slate-950/50 border border-white/10 focus:border-purple-500/60 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
+          className="w-full bg-slate-950/50 border border-white/10 focus:border-indigo-500/60 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
         />
       )}
 
@@ -164,7 +164,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
           <motion.button
             {...buttonTap}
             onClick={showSolution}
-            className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-purple-500/30 transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-indigo-500/30 transition-colors"
           >
             <KeyRound className="w-4 h-4" />
             <span>{q.kind === 'open' ? 'הצג פתרון להשוואה' : 'הצג פתרון מלא'}</span>
@@ -182,9 +182,9 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
             style={{ overflow: 'hidden' }}
-            className="bg-gradient-to-br from-purple-600/10 to-pink-600/10 border border-purple-500/30 rounded-xl p-4"
+            className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-xl p-4"
           >
-            <div className="text-[10px] font-black tracking-widest text-purple-300 mb-2 uppercase flex items-center gap-1.5">
+            <div className="text-[10px] font-black tracking-widest text-indigo-300 mb-2 uppercase flex items-center gap-1.5">
               <KeyRound className="w-3 h-3" />
               <span>פתרון</span>
             </div>
@@ -197,7 +197,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
                   transition={{ duration: 0.25, delay: 0.05 + i * 0.06, ease: 'easeOut' }}
                   className="flex gap-3"
                 >
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/30 border border-purple-400/50 flex items-center justify-center text-[11px] font-black text-purple-100">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-[11px] font-black text-indigo-100">
                     {i + 1}
                   </div>
                   <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">

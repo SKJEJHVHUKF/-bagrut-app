@@ -113,7 +113,7 @@ export default function ScanPage() {
   if (auth.status === 'loading') {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
       </main>
     );
   }
@@ -121,13 +121,13 @@ export default function ScanPage() {
   if (auth.status === 'unauthenticated') {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 max-w-md text-center space-y-4">
-          <Camera className="w-12 h-12 text-purple-400 mx-auto" />
-          <h1 className="text-2xl font-black">צלמי שאלה וקבלי פתרון</h1>
+        <div className="surface-premium rounded-2xl p-8 max-w-md text-center space-y-4">
+          <Camera className="w-12 h-12 text-indigo-400 mx-auto" />
+          <h1 className="font-display text-2xl font-black">צלמי שאלה וקבלי פתרון</h1>
           <p className="text-slate-300">יש להתחבר כדי להשתמש בפיצ׳ר.</p>
           <Link
             href={`/login?next=${encodeURIComponent('/scan')}`}
-            className="inline-flex items-center gap-2 bg-gradient-to-l from-purple-600 to-pink-600 px-6 py-3 rounded-2xl font-bold"
+            className="inline-flex items-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 px-6 py-3 rounded-2xl font-bold"
           >
             התחברות
           </Link>
@@ -139,9 +139,9 @@ export default function ScanPage() {
   if (auth.status === 'free') {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 max-w-md text-center space-y-4">
+        <div className="surface-premium rounded-2xl p-8 max-w-md text-center space-y-4">
           <Sparkles className="w-12 h-12 text-amber-400 mx-auto" />
-          <h1 className="text-2xl font-black">פיצ׳ר Pro</h1>
+          <h1 className="font-display text-2xl font-black">פיצ׳ר Pro</h1>
           <p className="text-slate-300 leading-relaxed">
             צילום שאלה והסבר מ-AI הוא חלק מ-Pro. שדרגי כדי לקבל גישה.
           </p>
@@ -161,12 +161,12 @@ export default function ScanPage() {
   return (
     <main className="min-h-screen px-4 sm:px-6 py-8 max-w-3xl mx-auto">
       <header className="space-y-2 mb-6">
-        <div className="text-xs font-black tracking-widest text-purple-300 uppercase flex items-center gap-2">
+        <div className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2">
           <Camera className="w-3.5 h-3.5" />
           <span>צילום וניתוח</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black leading-tight">
-          <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+        <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
+          <span className="font-display text-slate-100">
             צלמי שאלה. קבלי הסבר מלא.
           </span>
         </h1>
@@ -195,9 +195,9 @@ export default function ScanPage() {
           />
           <button
             onClick={() => cameraInputRef.current?.click()}
-            className="group flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-purple-600/20 to-pink-600/20 border-2 border-dashed border-purple-400/40 hover:border-purple-400/80 rounded-2xl py-10 px-6 transition-all"
+            className="group flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-indigo-600/20 to-indigo-600/20 border-2 border-dashed border-indigo-400/40 hover:border-indigo-400/80 rounded-2xl py-10 px-6 transition-all"
           >
-            <Camera className="w-10 h-10 text-purple-300 group-hover:scale-110 transition-transform" />
+            <Camera className="w-10 h-10 text-indigo-300 group-hover:scale-110 transition-transform" />
             <div className="text-center">
               <div className="font-black text-base">צלמי עכשיו</div>
               <div className="text-xs text-slate-400 mt-1">פתיחת המצלמה</div>
@@ -219,7 +219,7 @@ export default function ScanPage() {
       {/* Preview + solve button */}
       {preview && !result && (
         <div className="space-y-4 mb-6">
-          <div className="relative bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden">
+          <div className="relative surface-premium rounded-2xl overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={preview} alt="שאלה שצולמה" className="w-full max-h-[400px] object-contain" />
             <button
@@ -233,7 +233,7 @@ export default function ScanPage() {
           <button
             onClick={handleSolve}
             disabled={solving}
-            className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-bold shadow-xl shadow-purple-500/40 transition-all"
+            className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-500/40 transition-all"
           >
             {solving ? (
               <>
@@ -263,17 +263,17 @@ export default function ScanPage() {
         <div className="space-y-5">
           {/* Topic + subject chips */}
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="bg-purple-500/15 border border-purple-500/30 rounded-full px-3 py-1 text-xs font-bold text-purple-200">
+            <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-3 py-1 text-xs font-bold text-indigo-200">
               📐 {result.subject === 'math5' ? 'מתמטיקה 5 יח׳' : result.subject}
             </span>
-            <span className="bg-pink-500/15 border border-pink-500/30 rounded-full px-3 py-1 text-xs font-bold text-pink-200">
+            <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-3 py-1 text-xs font-bold text-indigo-200">
               {result.topic}
             </span>
           </div>
 
           {/* Transcribed question */}
-          <section className="bg-white/[0.03] border border-white/10 rounded-2xl p-5">
-            <div className="text-xs font-black tracking-widest text-purple-300 uppercase mb-2 flex items-center gap-2">
+          <section className="surface-premium rounded-2xl p-5">
+            <div className="text-xs font-black tracking-widest text-indigo-300 uppercase mb-2 flex items-center gap-2">
               <BookOpen className="w-3.5 h-3.5" />
               <span>השאלה</span>
             </div>
@@ -292,7 +292,7 @@ export default function ScanPage() {
               {result.steps.map((step, i) => (
                 <li
                   key={i}
-                  className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 flex gap-3"
+                  className="surface-premium rounded-2xl p-4 flex gap-3"
                 >
                   <div className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-xs font-black text-emerald-200">
                     {i + 1}
@@ -355,7 +355,7 @@ export default function ScanPage() {
       {/* Bottom nav helpers when no result yet */}
       {!result && !solving && (
         <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap gap-3 text-sm">
-          <Link href="/library" className="text-purple-300 hover:text-purple-200 inline-flex items-center gap-1">
+          <Link href="/library" className="text-indigo-300 hover:text-indigo-200 inline-flex items-center gap-1">
             <BookOpen className="w-4 h-4" />
             הספרייה שלי
           </Link>

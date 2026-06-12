@@ -104,7 +104,7 @@ export function PrerequisitesView({ items }: { items: Prerequisite[] }) {
       {items.map((p, i) => (
         <div
           key={i}
-          className="bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3"
+          className="surface-premium rounded-2xl px-4 py-3"
         >
           <div className="flex items-center gap-2 mb-1.5">
             <BookMarked className="w-4 h-4 text-sky-300 flex-shrink-0" />
@@ -183,13 +183,13 @@ export function ConceptsView({ atoms }: { atoms: ConceptAtom[] }) {
         <div
           key={atom.id}
           id={`concept-${atom.id}`}
-          className="scroll-mt-24 bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden"
+          className="scroll-mt-24 surface-premium rounded-2xl overflow-hidden"
         >
           <div className="bg-white/[0.03] border-b border-white/10 px-4 py-2.5 flex items-center gap-2.5">
-            <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-purple-500/25 border border-purple-400/40 flex items-center justify-center text-[11px] font-black text-purple-100">
+            <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
               {i + 1}
             </span>
-            <div className="font-black text-sm text-purple-100 chat-md">
+            <div className="font-black text-sm text-indigo-100 chat-md">
               <MathText inline>{atom.title}</MathText>
             </div>
           </div>
@@ -224,8 +224,8 @@ export function ConceptsView({ atoms }: { atoms: ConceptAtom[] }) {
 
             {/* Why it works */}
             {atom.whyItWorks && (
-              <div className="text-xs text-slate-400 chat-md leading-relaxed border-r-2 border-purple-500/40 pr-3">
-                <span className="font-bold text-purple-200">למה זה עובד: </span>
+              <div className="text-xs text-slate-400 chat-md leading-relaxed border-r-2 border-indigo-500/40 pr-3">
+                <span className="font-bold text-indigo-200">למה זה עובד: </span>
                 <MathText inline>{atom.whyItWorks}</MathText>
               </div>
             )}
@@ -241,7 +241,7 @@ export function ConceptsView({ atoms }: { atoms: ConceptAtom[] }) {
 function StepTag({ children, color }: { children: ReactNode; color: 'sky' | 'purple' | 'emerald' }) {
   const map = {
     sky: 'text-sky-300',
-    purple: 'text-purple-300',
+    purple: 'text-indigo-300',
     emerald: 'text-emerald-300',
   };
   return (
@@ -265,7 +265,7 @@ export function PitfallsView({ items }: { items: Pitfall[] }) {
             <AlertTriangle className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
             <div className="flex-1 space-y-1.5">
               <div className="chat-md text-sm text-amber-50 leading-relaxed">
-                <span className="font-bold text-rose-300">✗ </span>
+                <span className="font-bold text-indigo-300">✗ </span>
                 <MathText inline>{p.mistake}</MathText>
               </div>
               <div className="chat-md text-sm text-emerald-50/90 leading-relaxed">
@@ -275,7 +275,7 @@ export function PitfallsView({ items }: { items: Pitfall[] }) {
               {p.relatedConceptId && (
                 <a
                   href={`#concept-${p.relatedConceptId}`}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-300/80 hover:text-purple-200 transition-colors"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-300/80 hover:text-indigo-200 transition-colors"
                 >
                   <span>חזור למושג הרלוונטי</span>
                   <ArrowLeft className="w-3 h-3" />

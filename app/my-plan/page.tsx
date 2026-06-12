@@ -49,8 +49,8 @@ export default function MyPlanPage() {
 
   if (loading || !plan) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen text-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -71,7 +71,7 @@ export default function MyPlanPage() {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-slate-50 relative overflow-x-hidden"
+      className="min-h-screen text-slate-50 relative overflow-x-hidden"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
       <BackgroundOrbs />
@@ -121,7 +121,7 @@ export default function MyPlanPage() {
         {/* Topics list */}
         <motion.section {...inViewProps} variants={staggerContainer}>
           <motion.div variants={fadeUp} className="flex items-baseline justify-between mb-3">
-            <h2 className="text-lg font-black text-white">תוכנית הלימוד</h2>
+            <h2 className="font-display text-lg font-black text-white">תוכנית הלימוד</h2>
             <span className="text-xs text-slate-400">{plan.topics.length} נושאים</span>
           </motion.div>
 
@@ -153,17 +153,17 @@ export default function MyPlanPage() {
           <motion.div variants={fadeUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
             <Link
               href="/scan"
-              className="card-3d block bg-gradient-to-br from-purple-600/15 to-pink-600/15 border border-purple-500/40 hover:border-purple-500/70 rounded-2xl p-4"
+              className="card-3d block bg-gradient-to-br from-indigo-600/15 to-indigo-600/15 border border-indigo-500/40 hover:border-indigo-500/70 rounded-2xl p-4"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30 flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
                   <Camera className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-sm sm:text-base text-white">צלמי שאלה — קבלי פתרון מ-AI</div>
                   <div className="text-xs text-slate-400 mt-0.5">פתרון צעד-אחר-צעד, נשמר בספרייה לפי נושא</div>
                 </div>
-                <ArrowLeft className="w-4 h-4 text-purple-300 flex-shrink-0" />
+                <ArrowLeft className="w-4 h-4 text-indigo-300 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -174,7 +174,7 @@ export default function MyPlanPage() {
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                  <BookOpen className="w-5 h-5 text-purple-200" />
+                  <BookOpen className="w-5 h-5 text-indigo-200" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-sm sm:text-base text-white">הספרייה שלי</div>
@@ -235,7 +235,7 @@ export default function MyPlanPage() {
         {/* Footer actions */}
         <section className="pt-4 space-y-2">
           {!pro && (
-            <div className="bg-gradient-to-br from-purple-600/15 to-pink-600/15 border border-purple-500/40 rounded-2xl p-5 text-center space-y-3">
+            <div className="bg-gradient-to-br from-indigo-600/15 to-indigo-600/15 border border-indigo-500/40 rounded-2xl p-5 text-center space-y-3">
               <Crown className="w-8 h-8 mx-auto text-amber-300" />
               <div>
                 <div className="text-base font-black text-white mb-1">שדרג ל-Pro</div>
@@ -285,7 +285,7 @@ function TopicCard({
     <div
       className={
         accessible
-          ? 'card-3d bg-white/5 hover:bg-white/[0.07] border-white/10 hover:border-purple-500/40 rounded-2xl p-4 border transition-all block'
+          ? 'card-3d bg-white/5 hover:bg-white/[0.07] border-white/10 hover:border-indigo-500/40 rounded-2xl p-4 border transition-all block'
           : 'bg-white/[0.02] border-white/5 rounded-2xl p-4 border opacity-70'
       }
     >
@@ -293,7 +293,7 @@ function TopicCard({
         <div
           className={
             accessible
-              ? 'w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-black text-white flex-shrink-0'
+              ? 'w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white flex-shrink-0'
               : 'w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-black text-slate-500 flex-shrink-0'
           }
         >
@@ -308,7 +308,7 @@ function TopicCard({
           <div className="flex items-center gap-3 mt-1.5">
             <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden max-w-[120px]">
               <div
-                className="h-full bg-gradient-to-l from-purple-500 to-pink-500 transition-all"
+                className="h-full bg-gradient-to-l from-indigo-500 to-indigo-500 transition-all"
                 style={{ width: `${topic.completion}%` }}
               />
             </div>
@@ -327,7 +327,7 @@ function TopicCard({
             <Lock className="w-4 h-4 text-slate-500" />
           )}
           {accessible && (
-            <ArrowLeft className="w-4 h-4 text-purple-300" />
+            <ArrowLeft className="w-4 h-4 text-indigo-300" />
           )}
         </div>
       </div>
@@ -355,13 +355,13 @@ function Stat({
 }) {
   const colors = {
     emerald: 'text-emerald-300',
-    purple: 'text-purple-300',
+    purple: 'text-indigo-300',
     amber: 'text-amber-300',
   };
   return (
     <div>
       <div className={`text-base sm:text-lg font-black ${colors[accent]}`}>{value}</div>
-      <div className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">{label}</div>
+      <div className="text-[10px] text-slate-400 tracking-wide mt-0.5">{label}</div>
     </div>
   );
 }
@@ -379,11 +379,11 @@ function BackgroundOrbs() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       <div
-        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-600/30 blur-[120px] animate-pulse"
+        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse"
         style={{ animationDuration: '8s' }}
       />
       <div
-        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-pink-600/25 blur-[120px] animate-pulse"
+        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse"
         style={{ animationDuration: '10s', animationDelay: '2s' }}
       />
     </div>
@@ -395,13 +395,13 @@ function TopBar() {
     <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/60 border-b border-white/10">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400 flex items-center justify-center shadow-xl shadow-purple-500/50 ring-1 ring-white/20">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
               <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
             </svg>
           </div>
           <div>
-            <div className="text-base font-black bg-gradient-to-l from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+            <div className="text-base font-black font-display text-slate-100">
               בגרות בכיס
             </div>
             <div className="text-[10px] text-slate-400 -mt-0.5">התוכנית שלי</div>
@@ -409,7 +409,7 @@ function TopBar() {
         </Link>
         <Link
           href="/"
-          className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+          className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
           title="חזרה לדף הבית"
         >
           <Home className="w-3.5 h-3.5" />

@@ -123,14 +123,14 @@ export function AITutorActions(props: AITutorActionsProps) {
       show: props.show.explainSimpler,
       label: 'הסבר פשוט יותר',
       icon: <Sparkles className="w-4 h-4" />,
-      tone: 'bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/40 text-purple-100',
+      tone: 'bg-indigo-500/15 hover:bg-indigo-500/25 border-indigo-500/40 text-indigo-100',
     },
     {
       key: 'whyWrong',
       show: props.show.whyWrong,
       label: 'למה טעיתי?',
       icon: <AlertCircle className="w-4 h-4" />,
-      tone: 'bg-rose-500/15 hover:bg-rose-500/25 border-rose-500/40 text-rose-100',
+      tone: 'bg-indigo-500/15 hover:bg-indigo-500/25 border-indigo-500/40 text-indigo-100',
     },
     {
       key: 'hintHelp',
@@ -190,12 +190,12 @@ export function AITutorActions(props: AITutorActionsProps) {
             key={`${b.key}-panel`}
             className={`bg-white/[0.04] border border-white/15 rounded-xl px-3 py-2.5 chat-md text-sm text-slate-100`}
           >
-            <div className="text-[10px] font-black tracking-widest text-purple-300 uppercase mb-1.5 flex items-center gap-1.5">
+            <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase mb-1.5 flex items-center gap-1.5">
               {b.icon}
               <span>{b.label}</span>
             </div>
             {s.error ? (
-              <div className="text-rose-200">{s.error}</div>
+              <div className="text-indigo-200">{s.error}</div>
             ) : s.response ? (
               <div className="leading-relaxed">
                 <MathText>{s.response}</MathText>

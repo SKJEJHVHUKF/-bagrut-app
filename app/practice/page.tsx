@@ -116,7 +116,7 @@ type SubjectKey = keyof typeof SUBJECTS;
 
 function BagrutLogo() {
   return (
-    <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400 flex items-center justify-center shadow-xl shadow-purple-500/50 ring-1 ring-white/20">
+    <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20">
       <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
         <path
           d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
@@ -131,11 +131,11 @@ function BackgroundOrbs() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       <div
-        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-600/30 blur-[120px] animate-pulse"
+        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse"
         style={{ animationDuration: '8s' }}
       />
       <div
-        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-pink-600/25 blur-[120px] animate-pulse"
+        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse"
         style={{ animationDuration: '10s', animationDelay: '2s' }}
       />
     </div>
@@ -149,7 +149,7 @@ function TopBar() {
         <Link href="/" className="flex items-center gap-3 group">
           <BagrutLogo />
           <div>
-            <div className="text-base font-black bg-gradient-to-l from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+            <div className="text-base font-black font-display text-slate-100">
               בגרות בכיס
             </div>
             <div className="text-[10px] text-slate-400 -mt-0.5">תרגול מודרך</div>
@@ -157,7 +157,7 @@ function TopBar() {
         </Link>
         <Link
           href="/quiz"
-          className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+          className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
         >
           <span>למבחן</span>
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
@@ -204,7 +204,7 @@ export default function PracticePage() {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-slate-50 relative overflow-x-hidden"
+      className="min-h-screen text-slate-50 relative overflow-x-hidden"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
       <BackgroundOrbs />
@@ -212,8 +212,8 @@ export default function PracticePage() {
 
       <main className="relative z-10 max-w-2xl mx-auto px-4 py-8">
         <div className="mb-7">
-          <h1 className="text-3xl sm:text-4xl font-black mb-2">
-            <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+          <h1 className="font-display text-3xl sm:text-4xl font-black mb-2">
+            <span className="font-display text-slate-100">
               תרגול מודרך 🎯
             </span>
           </h1>
@@ -224,7 +224,7 @@ export default function PracticePage() {
 
         {/* Subject tabs */}
         <div className="mb-5">
-          <div className="text-xs font-black tracking-widest text-purple-300 mb-2 uppercase">
+          <div className="text-xs font-black tracking-widest text-indigo-300 mb-2 uppercase">
             מקצוע
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -237,7 +237,7 @@ export default function PracticePage() {
                 }}
                 className={
                   subject === key
-                    ? 'flex-shrink-0 px-4 py-2 rounded-xl bg-gradient-to-l from-purple-600/40 to-pink-600/40 border border-purple-500/60 text-white font-bold text-sm transition-all'
+                    ? 'flex-shrink-0 px-4 py-2 rounded-xl bg-gradient-to-l from-indigo-600/40 to-indigo-600/40 border border-indigo-500/60 text-white font-bold text-sm transition-all'
                     : 'flex-shrink-0 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-bold text-sm transition-all'
                 }
               >
@@ -259,7 +259,7 @@ export default function PracticePage() {
           />
         ) : (
           <div className="mb-6">
-            <div className="text-xs font-black tracking-widest text-purple-300 mb-2 uppercase">
+            <div className="text-xs font-black tracking-widest text-indigo-300 mb-2 uppercase">
               נושא
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 perspective-1500">
@@ -273,8 +273,8 @@ export default function PracticePage() {
                     onClick={() => setTopic(t.name)}
                     className={
                       topic === t.name
-                        ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-purple-600/30 to-pink-600/30 border border-purple-500/60'
-                        : 'card-3d text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40'
+                        ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-indigo-600/30 to-indigo-600/30 border border-indigo-500/60'
+                        : 'card-3d text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-indigo-500/40'
                     }
                   >
                     <div className="flex items-start gap-2">
@@ -284,7 +284,7 @@ export default function PracticePage() {
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         {hasL && (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/40 text-purple-200">
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-200">
                             <BookOpen className="w-2.5 h-2.5" />
                             סיכום
                           </span>
@@ -307,7 +307,7 @@ export default function PracticePage() {
         <button
           onClick={start}
           disabled={!topic || navigating}
-          className="btn-3d group w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-40 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-bold text-white"
+          className="btn-3d group w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-bold text-white"
         >
           {navigating ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -352,7 +352,7 @@ function Math5TopicsByPaper({
       {papers.map((paper) => (
         <div key={paper}>
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-black tracking-widest text-purple-300 uppercase">
+            <div className="text-xs font-black tracking-widest text-indigo-300 uppercase">
               {paperLabel(paper)}
             </div>
             <div className="text-[10px] text-slate-500">
@@ -371,8 +371,8 @@ function Math5TopicsByPaper({
                   onClick={() => onSelect(t.key)}
                   className={
                     isSelected
-                      ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-purple-600/30 to-pink-600/30 border border-purple-500/60'
-                      : 'card-3d text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40'
+                      ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-indigo-600/30 to-indigo-600/30 border border-indigo-500/60'
+                      : 'card-3d text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-indigo-500/40'
                   }
                 >
                   <div className="flex items-start gap-2 mb-1.5">
@@ -385,7 +385,7 @@ function Math5TopicsByPaper({
                     </div>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       {hasL && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/40 text-purple-200">
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-200">
                           <BookOpen className="w-2.5 h-2.5" />
                           סיכום
                         </span>

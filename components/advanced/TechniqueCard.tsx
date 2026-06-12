@@ -22,17 +22,17 @@ export function TechniqueCard({ technique, index }: { technique: AdvancedTechniq
   return (
     <div
       id={`technique-${technique.id}`}
-      className="scroll-mt-24 bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden"
+      className="scroll-mt-24 surface-premium rounded-2xl overflow-hidden"
     >
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full text-right px-4 py-3 flex items-start gap-3 hover:bg-white/5 transition-colors"
       >
-        <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-violet-500/25 border border-violet-400/40 flex items-center justify-center">
-          <Wrench className="w-3.5 h-3.5 text-violet-200" />
+        <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center">
+          <Wrench className="w-3.5 h-3.5 text-indigo-200" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-black text-violet-100 chat-md">
+          <div className="text-sm font-black text-indigo-100 chat-md">
             <MathText inline>{technique.title}</MathText>
           </div>
           <div className="text-xs text-slate-400 leading-snug mt-0.5 chat-md">
@@ -56,7 +56,7 @@ export function TechniqueCard({ technique, index }: { technique: AdvancedTechniq
 
           {/* Worked example */}
           <div className="bg-slate-950/40 border border-white/10 rounded-xl px-4 py-3 space-y-2.5">
-            <div className="text-[10px] font-black tracking-widest text-purple-300 uppercase">
+            <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase">
               דוגמה פתורה
             </div>
             <div className="chat-md text-sm text-white leading-relaxed">
@@ -72,7 +72,7 @@ export function TechniqueCard({ technique, index }: { technique: AdvancedTechniq
                   transition={{ duration: 0.25, ease: 'easeOut' }}
                   className="flex gap-2.5"
                 >
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-500/25 border border-violet-400/40 flex items-center justify-center text-[10px] font-black text-violet-100 mt-0.5">
+                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[10px] font-black text-indigo-100 mt-0.5">
                     {i + 1}
                   </div>
                   <div className="flex-1 chat-md text-sm text-slate-100">
@@ -86,7 +86,7 @@ export function TechniqueCard({ technique, index }: { technique: AdvancedTechniq
               <motion.button
                 {...buttonTap}
                 onClick={() => setStepsShown((n) => n + 1)}
-                className="w-full inline-flex items-center justify-center gap-2 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/40 px-4 py-2 rounded-lg font-bold text-violet-100 text-sm transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-lg font-bold text-indigo-100 text-sm transition-colors"
               >
                 {stepsShown === 0 ? 'הצג צעד ראשון' : `הצעד הבא (${stepsShown + 1}/${total})`}
               </motion.button>

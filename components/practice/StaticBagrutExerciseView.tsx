@@ -45,7 +45,7 @@ export function StaticBagrutExerciseView({
 
   if (questions.length === 0) {
     return (
-      <div className="text-sm text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-xl px-4 py-3">
+      <div className="text-sm text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-4 py-3">
         אין כרגע שאלות בגרות מוכנות לנושא זה.
       </div>
     );
@@ -95,7 +95,7 @@ export function StaticBagrutExerciseView({
     <div className="space-y-4">
       {/* Meta strip */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-200 font-bold">
+        <span className="px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-200 font-bold">
           {subjectLabel}
         </span>
         <span className="text-slate-500">•</span>
@@ -117,7 +117,7 @@ export function StaticBagrutExerciseView({
             onClick={() => setContextOpen((o) => !o)}
             className="w-full text-right px-5 py-3 flex items-center gap-3 hover:bg-white/[0.02] transition-colors"
           >
-            <div className="text-[10px] font-black tracking-widest text-purple-300 uppercase flex-1 text-right">
+            <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase flex-1 text-right">
               נתוני השאלה
             </div>
             <div className="flex-shrink-0 text-slate-400">
@@ -152,7 +152,7 @@ export function StaticBagrutExerciseView({
           onClick={newQuestion}
           className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-bold text-white shadow-lg transition-colors text-sm ${
             questions.length > 1
-              ? 'bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-purple-500/30'
+              ? 'bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 shadow-indigo-500/30'
               : 'bg-white/10 hover:bg-white/15 border border-white/20 shadow-white/5'
           }`}
         >

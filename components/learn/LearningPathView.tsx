@@ -67,7 +67,7 @@ export function LearningPathView({ path }: { path: LearningPath }) {
           <span>מסלול לימוד מ-0</span>
         </motion.div>
         <motion.h1 variants={fadeUp} className="text-2xl sm:text-3xl font-black leading-tight">
-          <span className="bg-gradient-to-l from-white via-emerald-200 to-teal-200 bg-clip-text text-transparent">
+          <span className="font-display text-slate-100">
             {path.title}
           </span>
         </motion.h1>
@@ -75,11 +75,11 @@ export function LearningPathView({ path }: { path: LearningPath }) {
           {path.tagline}
         </motion.p>
         <motion.div variants={fadeUp} className="flex items-center gap-3 text-xs text-slate-400">
-          <span className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-2.5 py-1">
+          <span className="inline-flex items-center gap-1.5 surface-premium rounded-full px-2.5 py-1">
             <Clock className="w-3.5 h-3.5" />
             {path.estimatedMinutes} דקות
           </span>
-          <span className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-2.5 py-1">
+          <span className="inline-flex items-center gap-1.5 surface-premium rounded-full px-2.5 py-1">
             {totalSections} חלקים
           </span>
         </motion.div>
@@ -89,7 +89,7 @@ export function LearningPathView({ path }: { path: LearningPath }) {
       <motion.div
         {...inViewProps}
         variants={fadeUp}
-        className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 space-y-3"
+        className="surface-premium rounded-2xl p-4 space-y-3"
       >
         <div className="flex items-baseline justify-between">
           <div className="text-sm font-bold text-emerald-100">
@@ -284,21 +284,21 @@ export function LearningPathView({ path }: { path: LearningPath }) {
           <motion.div variants={fadeUp}>
             <Link
               href={`/learn/${subject}/${encodeURIComponent(topic)}/advanced`}
-              className="group block rounded-2xl p-4 bg-gradient-to-br from-fuchsia-600/20 to-rose-600/10 border border-fuchsia-500/40 hover:border-fuchsia-400 transition-colors shadow-lg shadow-fuchsia-500/10"
+              className="group block rounded-2xl p-4 bg-gradient-to-br from-indigo-600/20 to-indigo-600/10 border border-indigo-500/40 hover:border-indigo-400 transition-colors shadow-lg shadow-indigo-500/10"
             >
               <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-fuchsia-500/25 border border-fuchsia-400/50 flex items-center justify-center">
-                  <Rocket className="w-6 h-6 text-fuchsia-200" />
+                <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-indigo-500/25 border border-indigo-400/50 flex items-center justify-center">
+                  <Rocket className="w-6 h-6 text-indigo-200" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-sm sm:text-base text-white mb-0.5">
                     הצעד הבא: קורס מתקדם — רמת בגרות
                   </div>
-                  <div className="text-xs text-fuchsia-100/80 leading-snug">
+                  <div className="text-xs text-indigo-100/80 leading-snug">
                     זיהוי תבניות, טכניקות, בגרויות מפורקות עם מחוון, וסימולציית סיום עם טיימר.
                   </div>
                 </div>
-                <ArrowLeft className="w-5 h-5 text-fuchsia-300 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+                <ArrowLeft className="w-5 h-5 text-indigo-300 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -353,7 +353,7 @@ function PracticeLevel({
   const toneMap = {
     emerald: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200',
     amber: 'bg-amber-500/15 border-amber-500/40 text-amber-200',
-    rose: 'bg-rose-500/15 border-rose-500/40 text-rose-200',
+    rose: 'bg-indigo-500/15 border-indigo-500/40 text-indigo-200',
   };
   return (
     <div className="space-y-2.5">

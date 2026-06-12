@@ -42,12 +42,12 @@ export default function LibraryPage() {
     <main className="min-h-screen px-4 sm:px-6 py-8 max-w-3xl mx-auto">
       {/* Header */}
       <header className="space-y-2 mb-6">
-        <div className="text-xs font-black tracking-widest text-purple-300 uppercase flex items-center gap-2">
+        <div className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2">
           <BookOpen className="w-3.5 h-3.5" />
           <span>הספרייה שלי</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black leading-tight">
-          <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+        <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
+          <span className="font-display text-slate-100">
             השאלות שצילמת
           </span>
         </h1>
@@ -62,7 +62,7 @@ export default function LibraryPage() {
       <div className="mb-6">
         <Link
           href="/scan"
-          className="inline-flex items-center gap-3 bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-3 rounded-2xl font-bold shadow-xl shadow-purple-500/40 transition-all"
+          className="inline-flex items-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-500/40 transition-all"
         >
           <Camera className="w-5 h-5" />
           <span>צלמי שאלה חדשה</span>
@@ -71,8 +71,8 @@ export default function LibraryPage() {
 
       {/* Empty state */}
       {totalCount === 0 && (
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 text-center space-y-3">
-          <Sparkles className="w-10 h-10 text-purple-400 mx-auto" />
+        <div className="surface-premium rounded-2xl p-8 text-center space-y-3">
+          <Sparkles className="w-10 h-10 text-indigo-400 mx-auto" />
           <div className="text-base font-bold">איך זה עובד?</div>
           <ol className="text-sm text-slate-300 space-y-1 inline-block text-right">
             <li>1. צלמי שאלת בגרות מספר תרגול / מבחן</li>
@@ -87,7 +87,7 @@ export default function LibraryPage() {
       <div className="space-y-6">
         {groups.map((group) => (
           <section key={group.topic}>
-            <h2 className="text-sm font-black text-pink-300 mb-3 flex items-center gap-2">
+            <h2 className="font-display text-sm font-black text-indigo-300 mb-3 flex items-center gap-2">
               <span>{group.topic}</span>
               <span className="text-xs font-normal text-slate-400">({group.scans.length})</span>
             </h2>
@@ -97,7 +97,7 @@ export default function LibraryPage() {
                 return (
                   <article
                     key={scan.id}
-                    className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden"
+                    className="surface-premium rounded-2xl overflow-hidden"
                   >
                     {/* Collapsed header */}
                     <button
@@ -134,7 +134,7 @@ export default function LibraryPage() {
                       <div className="px-4 pb-4 space-y-4 border-t border-white/10 pt-4">
                         {/* Full question */}
                         <div>
-                          <div className="text-xs font-black tracking-widest text-purple-300 uppercase mb-1.5">
+                          <div className="text-xs font-black tracking-widest text-indigo-300 uppercase mb-1.5">
                             השאלה
                           </div>
                           <div className="chat-md text-sm text-slate-100 leading-relaxed">

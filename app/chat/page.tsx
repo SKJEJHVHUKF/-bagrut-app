@@ -44,7 +44,7 @@ function BagrutLogo({ size = 'md' as 'sm' | 'md' }) {
   const dim = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
   return (
     <div
-      className={`relative ${dim} rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400 flex items-center justify-center shadow-xl shadow-purple-500/50 ring-1 ring-white/20`}
+      className={`relative ${dim} rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20`}
     >
       <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
         <path
@@ -195,17 +195,17 @@ export default function ChatPage() {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-slate-50 relative overflow-x-hidden flex flex-col"
+      className="min-h-screen text-slate-50 relative overflow-x-hidden flex flex-col"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
       {/* Animated background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div
-          className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-600/30 blur-[120px] animate-pulse"
+          className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse"
           style={{ animationDuration: '8s' }}
         />
         <div
-          className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-pink-600/25 blur-[120px] animate-pulse"
+          className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse"
           style={{ animationDuration: '10s', animationDelay: '2s' }}
         />
       </div>
@@ -216,7 +216,7 @@ export default function ChatPage() {
           <div className="flex items-center gap-3">
             <BagrutLogo size="md" />
             <div>
-              <div className="text-base font-black bg-gradient-to-l from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+              <div className="text-base font-black font-display text-slate-100">
                 בגרות בכיס
               </div>
               <div className="text-[10px] text-slate-400 -mt-0.5">המורה הפרטי שלך</div>
@@ -224,7 +224,7 @@ export default function ChatPage() {
           </div>
           <Link
             href="/quiz"
-            className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
           >
             <span>לתרגול</span>
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
@@ -236,7 +236,7 @@ export default function ChatPage() {
       <main className="relative z-10 flex-1 max-w-3xl w-full mx-auto px-3 sm:px-4 pt-4 pb-40">
         {loadingHistory ? (
           <div className="flex justify-center py-16">
-            <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+            <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
           </div>
         ) : isEmpty ? (
           <EmptyState onPick={(t) => send(t)} />
@@ -255,7 +255,7 @@ export default function ChatPage() {
       <div className="fixed bottom-0 inset-x-0 z-20 bg-slate-950/85 backdrop-blur-xl border-t border-white/10">
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3">
           {error && (
-            <div className="mb-2 text-sm text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2">
+            <div className="mb-2 text-sm text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-3 py-2">
               {error}
             </div>
           )}
@@ -269,13 +269,13 @@ export default function ChatPage() {
               rows={1}
               maxLength={MAX_MESSAGE_LEN}
               disabled={sending || remaining <= 0}
-              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.07] transition-all resize-none max-h-32"
+              className="flex-1 surface-premium rounded-2xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.07] transition-all resize-none max-h-32"
               style={{ unicodeBidi: 'plaintext', textAlign: 'start' }}
             />
             <button
               type="submit"
               disabled={!input.trim() || sending || remaining <= 0}
-              className="bg-gradient-to-l from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-40 disabled:cursor-not-allowed text-white p-3 rounded-2xl shadow-lg shadow-purple-500/30 transition-all"
+              className="bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white p-3 rounded-2xl shadow-lg shadow-indigo-500/30 transition-all"
               aria-label="שלח"
             >
               {sending ? (
@@ -306,7 +306,7 @@ function MessageBubble({ role, content }: { role: 'user' | 'assistant'; content:
     return (
       <div className="flex justify-start">
         <div
-          className="max-w-[85%] bg-gradient-to-l from-purple-600 to-pink-600 text-white px-4 py-3 rounded-2xl rounded-tl-md shadow-lg shadow-purple-500/20"
+          className="max-w-[85%] bg-gradient-to-l from-indigo-600 to-indigo-600 text-white px-4 py-3 rounded-2xl rounded-tl-md shadow-lg shadow-indigo-500/20"
           style={{
             unicodeBidi: 'plaintext',
             textAlign: 'start',
@@ -346,7 +346,7 @@ function TypingBubble() {
   return (
     <div className="flex justify-end">
       <div className="max-w-[85%] bg-white/5 backdrop-blur-md border border-white/10 text-slate-300 px-4 py-3 rounded-2xl rounded-tr-md inline-flex items-center gap-2">
-        <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+        <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
         <span className="text-sm">המורה כותב…</span>
       </div>
     </div>
@@ -356,11 +356,11 @@ function TypingBubble() {
 function EmptyState({ onPick }: { onPick: (text: string) => void }) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-4">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center mb-5">
-        <MessageCircle className="w-8 h-8 text-purple-300" />
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mb-5">
+        <MessageCircle className="w-8 h-8 text-indigo-300" />
       </div>
-      <h2 className="text-2xl font-black mb-2">
-        <span className="bg-gradient-to-l from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+      <h2 className="font-display text-2xl font-black mb-2">
+        <span className="font-display text-slate-100">
           המורה הפרטי שלך
         </span>
       </h2>
@@ -372,11 +372,11 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
           <button
             key={i}
             onClick={() => onPick(s)}
-            className="group bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-purple-500/40 rounded-xl px-4 py-3 text-right text-sm text-slate-200 transition-all flex items-center gap-2.5"
+            className="group bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-indigo-500/40 rounded-xl px-4 py-3 text-right text-sm text-slate-200 transition-all flex items-center gap-2.5"
           >
             <Lightbulb className="w-4 h-4 text-amber-300 group-hover:scale-110 transition-transform flex-shrink-0" />
             <span className="flex-1">{s}</span>
-            <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:text-purple-300 group-hover:-translate-x-1 transition-all" />
+            <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-300 group-hover:-translate-x-1 transition-all" />
           </button>
         ))}
       </div>
