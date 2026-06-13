@@ -10,6 +10,8 @@
 // calling Claude. This is the static-first migration: zero AI cost
 // for educational content, instant page loads, deterministic quality.
 
+import type { AnswerSpec } from '../../lib/answer-check';
+
 export type ConceptBlock = {
   title: string;
   body: string;
@@ -213,6 +215,8 @@ export type BagrutQuestionPart = {
     steps: string[];
     final_answer: string;
   };
+  /** Machine-checkable answer spec for free deterministic grading. */
+  expected?: AnswerSpec;
 };
 
 // ============================================================

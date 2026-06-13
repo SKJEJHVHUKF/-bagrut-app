@@ -23,7 +23,7 @@
 //   6. traps         — exam-level traps that fail GOOD students
 //   7. simulation    — one timed, hint-less question; pass = topic done
 
-import type { DiagramSpec, NonEmpty } from '../learning-paths/types';
+import type { DiagramSpec, NonEmpty, AnswerSpec } from '../learning-paths/types';
 
 export type { DiagramSpec, NonEmpty };
 
@@ -173,6 +173,10 @@ export type ExamPart = {
   points: number;
   /** What loses points here — the rubric's deduction lines. */
   deductions: NonEmpty<string>;
+  /** Machine-checkable answer spec for free deterministic ($0) grading of
+   *  the typed answer. value/set where checkable; kind:'manual' for proof,
+   *  geometric description, "find all n", or compound multi-answer parts. */
+  expected?: AnswerSpec;
   /** "נתקעת כאן? חזור לתבנית/טכניקה X." */
   reviewRef?: AdvancedRef;
   diagrams?: DiagramSpec[];
