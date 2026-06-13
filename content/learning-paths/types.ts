@@ -30,8 +30,9 @@
 // vocabulary for formulas and diagrams across the whole app.
 
 import type { Formula, DiagramSpec } from '../lessons/types';
+import type { AnswerSpec } from '../../lib/answer-check';
 
-export type { Formula, DiagramSpec };
+export type { Formula, DiagramSpec, AnswerSpec };
 
 // ------------------------------------------------------------
 // NonEmpty<T> — a list that the compiler guarantees has ≥1 item.
@@ -197,6 +198,10 @@ type GradedQuestionBase = {
   /** Hints from gentle nudge to almost-the-answer. Revealed one-by-one. */
   hints: NonEmpty<string>;
   solution: Solution;
+  /** Machine-checkable answer spec for deterministic (free, $0) grading of
+   *  a typed answer. Omit for MCQ (checked by index); use kind:'manual'
+   *  where the answer isn't auto-gradable (geometric locus, proof, "all n"). */
+  expected?: AnswerSpec;
   /** "If you got stuck here — revisit this atom." */
   reviewIfStuck?: ReviewRef;
   diagrams?: DiagramSpec[];
@@ -220,6 +225,8 @@ export type BagrutPart = {
   /** Gradual hints, revealed one at a time. */
   hints: NonEmpty<string>;
   solution: { steps: NonEmpty<string>; finalAnswer: string };
+  /** Machine-checkable answer spec for deterministic (free, $0) grading. */
+  expected?: AnswerSpec;
   reviewIfStuck?: ReviewRef;
   diagrams?: DiagramSpec[];
 };
