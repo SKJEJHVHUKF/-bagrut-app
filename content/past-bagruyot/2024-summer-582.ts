@@ -413,4 +413,177 @@ export const bagrut2024Summer582: PastBagrutQuestion[] = [
     ],
     solutionSource: 'authored',
   },
+  {
+    id: 'b2024s582a-q3',
+    year: 2024,
+    season: 'summer',
+    moed: 'a',
+    paper: '582',
+    questionNumber: 3,
+    topic: 'מספרים מרוכבים',
+    totalPoints: 25,
+    context: [
+      'במעוין $ABCD$ הקודקוד $A$ נמצא ברביע הראשון, והקודקוד $B$ נמצא ברביע השני במישור גאוס.',
+      'אלכסוני המעוין נפגשים בראשית הצירים.',
+      'המספר המרוכב $z$ מייצג את הקודקוד $A$, ונתון $BD = 2AC$.',
+    ].join('\n'),
+    diagrams: [
+      {
+        type: 'custom',
+        viewBox: '0 0 260 240',
+        svg: `
+          <line x1="12" y1="120" x2="250" y2="120" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+          <line x1="130" y1="14" x2="130" y2="228" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+          <text x="243" y="116" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">x</text>
+          <text x="118" y="22" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">y</text>
+          <polygon points="161,102 94,58 99,138 166,182" fill="rgba(168,85,247,0.08)" stroke="rgba(168,85,247,0.9)" stroke-width="1.6"/>
+          <line x1="161" y1="102" x2="99" y2="138" stroke="rgba(251,191,36,0.8)" stroke-width="1.1" stroke-dasharray="4,3"/>
+          <line x1="94" y1="58" x2="166" y2="182" stroke="rgba(56,189,248,0.8)" stroke-width="1.1" stroke-dasharray="4,3"/>
+          <polyline points="122.2,124.5 126.7,132.3 134.5,127.8" fill="none" stroke="rgba(226,232,240,0.85)" stroke-width="1"/>
+          <circle cx="130" cy="120" r="2.2" fill="rgba(226,232,240,0.9)"/>
+          <text x="134" y="133" fill="#94a3b8" font-size="9" font-family="Heebo, sans-serif">O</text>
+          <circle cx="161" cy="102" r="3" fill="rgba(244,114,182,0.95)"/>
+          <text x="166" y="100" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">A</text>
+          <circle cx="94" cy="58" r="3" fill="rgba(96,165,250,0.95)"/>
+          <text x="82" y="54" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">B</text>
+          <circle cx="99" cy="138" r="3" fill="rgba(244,114,182,0.95)"/>
+          <text x="86" y="149" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">C</text>
+          <circle cx="166" cy="182" r="3" fill="rgba(96,165,250,0.95)"/>
+          <text x="170" y="190" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">D</text>
+        `,
+        caption:
+          'המעוין $ABCD$ במישור גאוס. האלכסונים $AC$ ו-$BD$ נפגשים בראשית בזווית ישרה; $A$ ברביע הראשון, $B$ ברביע השני, ונתון $BD = 2AC$.',
+      },
+    ],
+    parts: [
+      {
+        label: 'א',
+        prompt: 'הביעו באמצעות $z$ את המספרים שמייצגים את הקודקודים $B$, $C$ ו-$D$.',
+        answer_type: 'expression',
+        hints: [
+          'במעוין האלכסונים חוצים זה את זה — וכאן בראשית. מה הקשר בין $A$ ל-$C$?',
+          'האלכסונים מאונכים, אז $B$ בכיוון מאונך ל-$A$ (כפל ב-$i$). השתמשו ב-$BD = 2AC$ לגודל.',
+        ],
+        solution: {
+          steps: [
+            'האלכסונים נפגשים בראשית, ולכן הראשית היא אמצע כל אלכסון.',
+            'הקודקוד $C$ נגדי ל-$A$ ביחס לראשית: $\\;C = -A = -z$.',
+            'אורך האלכסון $AC$: $\\;AC = |A - C| = |z - (-z)| = |2z| = 2r$.',
+            'מהנתון $BD = 2AC = 4r$, ולכן חצי-אלכסון $\\;OB = 2r$.',
+            'במעוין האלכסונים מאונכים, אז $B$ בכיוון $A$ מסובב ב-$90°$ (כפל ב-$i$) ובגודל $2r$: $\\;B = 2iz$.',
+            'הקודקוד $D$ נגדי ל-$B$: $\\;D = -B = -2iz$.',
+          ],
+          final_answer: '$B = 2iz$, $\\;C = -z$, $\\;D = -2iz$.',
+        },
+      },
+      {
+        label: 'ב1',
+        prompt: [
+          'נסמן $z = r(\\cos\\theta + i\\sin\\theta)$.',
+          '',
+          'כתבו הצגה קוטבית של ארבעת המספרים ההופכיים ($\\frac{1}{z}, \\ldots$) למספרים המייצגים את קודקודי המעוין. הביעו באמצעות $r$ ו-$\\theta$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'ההופכי בקוטבית: $\\dfrac{1}{R\\,\\text{cis}\\,\\varphi} = \\dfrac{1}{R}\\,\\text{cis}(-\\varphi)$.',
+          'כתבו קודם כל קודקוד בקוטבית: $A = r\\,\\text{cis}\\,\\theta$, $B = 2r\\,\\text{cis}(\\theta+90°)$, וכן הלאה.',
+        ],
+        solution: {
+          steps: [
+            'משתמשים בכלל $\\dfrac{1}{R\\,\\text{cis}\\,\\varphi} = \\dfrac{1}{R}\\,\\text{cis}(-\\varphi)$, וכותבים כל קודקוד בקוטבית.',
+            '$A = r\\,\\text{cis}\\,\\theta$, ולכן $\\;\\dfrac{1}{A} = \\dfrac{1}{r}\\,\\text{cis}(-\\theta)$.',
+            '$B = 2iz = 2r\\,\\text{cis}(\\theta + 90°)$, ולכן $\\;\\dfrac{1}{B} = \\dfrac{1}{2r}\\,\\text{cis}(-\\theta - 90°)$.',
+            '$C = -z = r\\,\\text{cis}(\\theta + 180°)$, ולכן $\\;\\dfrac{1}{C} = \\dfrac{1}{r}\\,\\text{cis}(-\\theta - 180°)$.',
+            '$D = -2iz = 2r\\,\\text{cis}(\\theta + 270°)$, ולכן $\\;\\dfrac{1}{D} = \\dfrac{1}{2r}\\,\\text{cis}(-\\theta - 270°)$.',
+          ],
+          final_answer:
+            '$\\dfrac{1}{A} = \\dfrac{1}{r}\\,\\text{cis}(-\\theta)$, $\\;\\dfrac{1}{B} = \\dfrac{1}{2r}\\,\\text{cis}(-\\theta-90°)$, $\\;\\dfrac{1}{C} = \\dfrac{1}{r}\\,\\text{cis}(-\\theta-180°)$, $\\;\\dfrac{1}{D} = \\dfrac{1}{2r}\\,\\text{cis}(-\\theta-270°)$.',
+        },
+      },
+      {
+        label: 'ב2',
+        prompt:
+          'ארבעת המספרים שמצאתם בתת-סעיף ב(1) מייצגים קודקודים של מרובע. מצאו את שטח המרובע שנוצר על-ידי קודקודים אלה.',
+        answer_type: 'expression',
+        hints: [
+          'ארבע הנקודות יוצרות מעוין. מצאו את אורכי שני האלכסונים.',
+          'שטח מעוין $= \\dfrac{d_1 \\cdot d_2}{2}$.',
+        ],
+        solution: {
+          steps: [
+            '$\\frac{1}{A}$ ו-$\\frac{1}{C}$ באותו גודל $\\frac{1}{r}$ ובכיוונים נגדיים (הפרש זווית $180°$) — קצוות אלכסון אחד.',
+            '$\\frac{1}{B}$ ו-$\\frac{1}{D}$ באותו גודל $\\frac{1}{2r}$ ובכיוונים נגדיים — קצוות האלכסון השני.',
+            'האלכסונים מאונכים (הזוויות $-\\theta$ ו-$-\\theta-90°$ נבדלות ב-$90°$) וחוצים זה את זה בראשית — ולכן זהו מעוין.',
+            'אורך אלכסון ראשון: $\\;d_1 = 2 \\cdot \\dfrac{1}{r} = \\dfrac{2}{r}$.',
+            'אורך אלכסון שני: $\\;d_2 = 2 \\cdot \\dfrac{1}{2r} = \\dfrac{1}{r}$.',
+            'שטח מעוין לפי אלכסונים: $\\;S = \\dfrac{d_1 \\cdot d_2}{2} = \\dfrac{\\frac{2}{r} \\cdot \\frac{1}{r}}{2} = \\dfrac{1}{r^2}$.',
+          ],
+          final_answer: '$S = \\dfrac{1}{r^2}$',
+        },
+      },
+      {
+        label: 'ג',
+        prompt:
+          'נתונה המשוואה $\\bar{w} = w^{11}$, כאשר $w$ מספר מרוכב השונה מ-$0$. מצאו את סכום $12$ הפתרונות של המשוואה.',
+        answer_type: 'expression',
+        hints: [
+          'כתבו $w = R\\,\\text{cis}\\,\\varphi$ והשוו גדלים וזוויות בשני אגפי המשוואה.',
+          'מהגדלים מקבלים $R = 1$; מהזוויות $12\\varphi = 360°k$. מה הסכום של נקודות פרושות סימטרית סביב הראשית?',
+        ],
+        solution: {
+          steps: [
+            'נסמן $w = R\\,\\text{cis}\\,\\varphi$ (עם $R > 0$). אז $\\;\\bar{w} = R\\,\\text{cis}(-\\varphi)$ ו-$w^{11} = R^{11}\\,\\text{cis}(11\\varphi)$.',
+            'המשוואה $\\bar{w} = w^{11}$: $\\;R\\,\\text{cis}(-\\varphi) = R^{11}\\,\\text{cis}(11\\varphi)$.',
+            'משוואת הגדלים: $\\;R = R^{11} \\Rightarrow R(R^{10} - 1) = 0$.',
+            'מכיוון ש-$w \\ne 0$ נפסל $R = 0$, ונשאר $\\;R^{10} = 1 \\Rightarrow R = 1$.',
+            'משוואת הזוויות: $\\;11\\varphi = -\\varphi + 360°k \\Rightarrow 12\\varphi = 360°k \\Rightarrow \\varphi = 30°k$.',
+            'עבור $k = 0, 1, \\ldots, 11$ מתקבלים $12$ פתרונות שונים: $\\;w_k = \\text{cis}(30°k)$ — $12$ נקודות במרווחי $30°$ על מעגל היחידה.',
+            'הסכום: $12$ וקטורים שווי-גודל הפרושים סימטרית סביב הראשית מתבטלים זה את זה.',
+          ],
+          final_answer: 'סכום $12$ הפתרונות $= 0$.',
+        },
+      },
+      {
+        label: 'ד',
+        prompt:
+          'פתרונות המשוואה שבסעיף ג מייצגים קודקודים של מצולע ששטחו שווה לשטח המרובע שמצאתם בתת-סעיף ב(2). מצאו את הערך של $r$.',
+        answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 200 200',
+            svg: `
+              <line x1="12" y1="100" x2="188" y2="100" stroke="rgba(226,232,240,0.4)" stroke-width="1"/>
+              <line x1="100" y1="12" x2="100" y2="188" stroke="rgba(226,232,240,0.4)" stroke-width="1"/>
+              <circle cx="100" cy="100" r="70" fill="none" stroke="rgba(226,232,240,0.4)" stroke-width="1" stroke-dasharray="3,3"/>
+              <polygon points="170,100 160.62,65 135,39.38 100,30 65,39.38 39.38,65 30,100 39.38,135 65,160.62 100,170 135,160.62 160.62,135" fill="rgba(168,85,247,0.10)" stroke="rgba(168,85,247,0.9)" stroke-width="1.5"/>
+              <polygon points="100,100 170,100 160.62,65" fill="rgba(251,191,36,0.20)" stroke="rgba(251,191,36,0.8)" stroke-width="1"/>
+              <circle cx="100" cy="100" r="2.2" fill="rgba(226,232,240,0.9)"/>
+              <text x="146" y="92" fill="#fbbf24" font-size="9" font-family="Heebo, sans-serif">30°</text>
+              <text x="150" y="113" fill="#c4b5fd" font-size="9" font-family="Heebo, sans-serif">R=1</text>
+            `,
+            caption:
+              'שנים-עשר הפתרונות של $\\bar{w} = w^{11}$ — קודקודי מצולע משוכלל בן $12$ צלעות על מעגל היחידה ($R = 1$). שטחו, כפירוק ל-$12$ משולשים מרכזיים, הוא $3$.',
+          },
+        ],
+        hints: [
+          '$12$ הפתרונות הם מצולע משוכלל על מעגל $R = 1$ — חשבו את שטחו ($12$ משולשים מרכזיים).',
+          'השוו את שטח המצולע ל-$\\frac{1}{r^2}$ מסעיף ב(2) ופתרו עבור $r$.',
+        ],
+        solution: {
+          steps: [
+            'הפתרונות מסעיף ג הם קודקודי מצולע משוכלל בן $12$ צלעות, חסום במעגל ברדיוס $R = 1$.',
+            'מפרקים ל-$12$ משולשים מרכזיים, כל אחד עם שתי צלעות $R = 1$ וזווית $\\frac{360°}{12} = 30°$ ביניהן.',
+            'שטח משולש מרכזי אחד: $\\;\\dfrac{1 \\cdot 1 \\cdot \\sin 30°}{2} = \\dfrac{\\frac{1}{2}}{2} = \\dfrac{1}{4}$.',
+            'שטח המצולע כולו: $\\;S_{12} = 12 \\cdot \\dfrac{1}{4} = 3$.',
+            'נתון שהשטח שווה לשטח המרובע מסעיף ב(2): $\\;\\dfrac{1}{r^2} = 3$.',
+            'מבודדים: $\\;r^2 = \\dfrac{1}{3}$.',
+            'ומכיוון ש-$r > 0$: $\\;r = \\dfrac{1}{\\sqrt{3}} = \\dfrac{\\sqrt{3}}{3}$.',
+          ],
+          final_answer: '$r = \\dfrac{1}{\\sqrt{3}} = \\dfrac{\\sqrt{3}}{3}$',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
 ];
