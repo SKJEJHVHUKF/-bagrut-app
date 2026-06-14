@@ -1,4 +1,5 @@
 import { requireProUser, callTutor, sanitize } from '@/lib/ai-tutor';
+import { buildPilotGrounding } from '@/lib/tutor-grounding';
 
 // "Why did I get this wrong?" — appears only when the verdict from
 // /api/check-answer is 'wrong'. We have the student's actual answer
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
     const correctAnswer = sanitize(body?.correctAnswer);
     const userAnswer = sanitize(body?.userAnswer, 800);
     const context = typeof body?.context === 'string' ? sanitize(body.context) : null;
+    const topic = typeof body?.topic === 'string' ? body.topic.trim() : '';
 
     if (!question || !correctAnswer || !userAnswer) {
       return Response.json(
@@ -67,11 +69,16 @@ ${userAnswer}
 
 זהה את הטעות הספציפית והסבר במשפט מה היה צריך לעשות באותה נקודה.`;
 
+    // Ground the feedback in the verified content (incl. the common-mistake
+    // bank) for the pilot topic, so the diagnosis names a real misconception.
+    const grounding = buildPilotGrounding(topic);
+    const system = grounding ? `${SYSTEM_PROMPT}\n\n---\n\n${grounding}` : SYSTEM_PROMPT;
+
     const { data } = await callTutor<WhyWrongResponse>({
       apiKey,
       model: 'claude-haiku-4-5',
       maxTokens: 500,
-      system: SYSTEM_PROMPT,
+      system,
       user: userPrompt,
       schema: RESPONSE_SCHEMA,
     });

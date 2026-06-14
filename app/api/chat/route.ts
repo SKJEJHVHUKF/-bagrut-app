@@ -1,15 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
+import { isPilotTopic, buildTutorSystemPrompt } from '@/lib/tutor-grounding';
 
 // Hobby plan needs an explicit ceiling. Haiku 4.5 with a tight 6-message
 // context + max_tokens=800 typically finishes in 5-15s, well under 60s.
 export const maxDuration = 60;
 
-// ===== TUTOR SYSTEM PROMPT =====
+// ===== TUTOR SYSTEM PROMPT (LEGACY / non-pilot topics) =====
 // The chat UI renders markdown + LaTeX math via react-markdown + KaTeX —
 // so writing math in LaTeX is the correct move; it'll display as proper
 // fractions, integrals, etc. Hebrew prose around it stays RTL.
+//
+// PILOT NOTE: when the request carries topic = "מספרים מרוכבים", we replace
+// this generic prompt with the grounded "private tutor" prompt from
+// lib/tutor-grounding (see the API call below). All other topics keep this.
 const SYSTEM_PROMPT = `אתה מורה פרטי לבגרות בישראל. עזור לתלמיד עם הבנת חומר, פתרון תרגילים, והכוונה לקראת הבחינה.
 
 פורמט תשובה — האפליקציה מרנדרת Markdown וגם LaTeX מתמטי:
@@ -113,7 +118,7 @@ export async function POST(request: Request) {
     }
 
     // ===== 6. PARSE & VALIDATE BODY =====
-    let body: { message?: unknown };
+    let body: { message?: unknown; topic?: unknown; context?: unknown };
     try {
       body = await request.json();
     } catch {
@@ -121,6 +126,12 @@ export async function POST(request: Request) {
     }
 
     const message = typeof body.message === 'string' ? body.message.trim() : '';
+    // Optional pilot context: `topic` enables the grounded "private tutor"
+    // behaviour (complex numbers only), and `context` is a snapshot of the
+    // question/attempt the student is on — lets the tutor diagnose first.
+    const topic = typeof body.topic === 'string' ? body.topic.trim().slice(0, 80) : '';
+    const attemptContext =
+      typeof body.context === 'string' ? body.context.trim().slice(0, 2000) : '';
     if (message.length < MIN_MESSAGE_LEN) {
       return Response.json({ error: 'הודעה ריקה' }, { status: 400 });
     }
@@ -197,22 +208,36 @@ export async function POST(request: Request) {
     }
     const client = new Anthropic({ apiKey });
 
+    // ===== PILOT: grounded "private tutor" for complex numbers =====
+    // For the pilot topic we swap in the tutor-bar system prompt grounded in
+    // the verified content, and step up to Sonnet — diagnosis and rephrasing
+    // need more depth than Haiku. Every other topic keeps the cheap Haiku
+    // path untouched. (Model is a one-line flip if cost requires it.)
+    const pilot = isPilotTopic(topic);
+    const systemPrompt = (pilot && buildTutorSystemPrompt(topic)) || SYSTEM_PROMPT;
+    const model = pilot ? 'claude-sonnet-4-6' : 'claude-haiku-4-5';
+
+    // Inject the question/attempt snapshot (if any) into THIS turn only, so
+    // the tutor can diagnose what the student is actually working on. We
+    // store the raw message in history; the context note is call-only.
+    const lastUserContent =
+      attemptContext && !BLACKLIST.test(attemptContext)
+        ? `[הקשר — התלמיד עובד על:]\n${attemptContext}\n\n${message}`
+        : message;
+
     const claudeMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [
       ...context.map((m) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content as string,
       })),
-      { role: 'user', content: message },
+      { role: 'user', content: lastUserContent },
     ];
 
     const completion = await client.messages.create({
-      // Haiku 4.5 — cheapest model. Per-message cost cap ≈ $0.0035 with
-      // these limits. Chat doesn't benefit from a smarter model the way
-      // quiz generation does.
-      model: 'claude-haiku-4-5',
+      model,
       // 800 caps the assistant reply at roughly 3-5 short paragraphs.
       max_tokens: 800,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: claudeMessages,
     });
 

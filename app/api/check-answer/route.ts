@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
+import { buildPilotGrounding } from '@/lib/tutor-grounding';
 
 // Answer-checking is short input/short output. Haiku 4.5 with max_tokens=400
 // runs in 2-5s and costs roughly $0.003 per check.
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
       return Response.json({ error: 'יש להתחבר' }, { status: 401 });
     }
 
-    let body: { question?: unknown; correctAnswer?: unknown; userAnswer?: unknown; context?: unknown };
+    let body: { question?: unknown; correctAnswer?: unknown; userAnswer?: unknown; context?: unknown; topic?: unknown };
     try {
       body = await request.json();
     } catch {
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
     const correctAnswer = typeof body.correctAnswer === 'string' ? body.correctAnswer.trim() : '';
     const userAnswer = typeof body.userAnswer === 'string' ? body.userAnswer.trim() : '';
     const ctxText = typeof body.context === 'string' ? body.context.trim() : '';
+    const topic = typeof body.topic === 'string' ? body.topic.trim() : '';
 
     if (!question || !correctAnswer || !userAnswer) {
       return Response.json({ error: 'Missing question, correctAnswer or userAnswer' }, { status: 400 });
@@ -138,13 +140,20 @@ ${userAnswer}
 
 עכשיו: החזר verdict, feedback קצר, וטיפ קצר.`;
 
+    // This LLM judge runs only as the FALLBACK (proofs, geometric loci,
+    // unparseable input) — numeric/complex answers are decided by the
+    // deterministic checker client-side. Ground the judgement in the
+    // verified content for the pilot topic so it stays in the curriculum.
+    const grounding = buildPilotGrounding(topic);
+    const system = grounding ? `${SYSTEM_PROMPT}\n\n---\n\n${grounding}` : SYSTEM_PROMPT;
+
     const client = new Anthropic({ apiKey });
     const message = await client.messages.create({
       // Haiku 4.5 — answer checking is short input/short output, no math
       // generation. ~$0.003 per check is the cheap end of the menu.
       model: 'claude-haiku-4-5',
       max_tokens: 400,
-      system: SYSTEM_PROMPT,
+      system,
       messages: [{ role: 'user', content: userPrompt }],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...({ output_config: { format: { type: 'json_schema', schema: RESPONSE_SCHEMA } } } as any),

@@ -1,4 +1,5 @@
 import { requireProUser, callTutor, sanitize } from '@/lib/ai-tutor';
+import { buildPilotGrounding } from '@/lib/tutor-grounding';
 
 // "Explain this solution to me in simpler words" — when the student
 // has revealed the full step-by-step but still doesn't grok it.
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
 
     const body = await request.json().catch(() => ({}));
     const question = sanitize(body?.question);
+    const topic = typeof body?.topic === 'string' ? body.topic.trim() : '';
     const solution = sanitize(body?.solution, 3000);
     if (!question || !solution) {
       return Response.json({ error: 'Missing question or solution' }, { status: 400 });
@@ -53,11 +55,16 @@ ${solution}
 
 עכשיו תסביר במילים פשוטות בשלושה משפטים.`;
 
+    // Ground the plain-language gloss in the verified content for the pilot
+    // topic so the simpler explanation can't drift from the curriculum.
+    const grounding = buildPilotGrounding(topic);
+    const system = grounding ? `${SYSTEM_PROMPT}\n\n---\n\n${grounding}` : SYSTEM_PROMPT;
+
     const { data } = await callTutor<ExplainResponse>({
       apiKey,
       model: 'claude-haiku-4-5',
       maxTokens: 500,
-      system: SYSTEM_PROMPT,
+      system,
       user: userPrompt,
       schema: RESPONSE_SCHEMA,
     });

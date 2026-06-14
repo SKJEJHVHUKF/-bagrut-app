@@ -18,6 +18,10 @@ import {
 
 const MAX_DAILY_MESSAGES = 20;
 const MAX_MESSAGE_LEN = 500;
+// The grounded "private tutor" pilot topic. When the chat is opened with
+// ?topic=this, the backend swaps in the verified-content tutor; we show a
+// badge so the student can SEE they're in the grounded mode.
+const PILOT_TOPIC = 'מספרים מרוכבים';
 
 type ChatMessage = {
   id: string;
@@ -63,6 +67,10 @@ export default function ChatPage() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [remaining, setRemaining] = useState<number>(MAX_DAILY_MESSAGES);
   const [error, setError] = useState<string | null>(null);
+  // Optional topic context from the URL (?topic=...). When it's the grounded
+  // pilot ("מספרים מרוכבים") the chat tutor teaches from the verified content
+  // and follows the private-tutor bar; otherwise it's the normal chat.
+  const [topic, setTopic] = useState('');
 
   const listEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -109,6 +117,13 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  // Read the optional ?topic= once on mount (client-only — avoids the
+  // useSearchParams Suspense-boundary requirement).
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('topic');
+    if (t) setTopic(t);
+  }, []);
+
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
@@ -139,7 +154,7 @@ export default function ChatPage() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({ message: trimmed, topic }),
       });
 
       if (!res.ok) {
@@ -191,6 +206,7 @@ export default function ChatPage() {
     }
   }
 
+  const grounded = topic === PILOT_TOPIC;
   const isEmpty = !loadingHistory && messages.length === 0;
 
   return (
@@ -231,6 +247,17 @@ export default function ChatPage() {
           </Link>
         </div>
       </nav>
+
+      {/* Grounded-mode badge — only when opened with the pilot topic. Lets the
+          student see the tutor is teaching from the verified content. */}
+      {grounded && (
+        <div className="relative z-10 max-w-3xl w-full mx-auto px-4 pt-3">
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-200 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-3 py-1.5">
+            <Sparkles className="w-3 h-3 flex-shrink-0" />
+            <span>מצב מורה מעוגן · {topic} — מלמד מהחומר המאומת, מכוון ולא נותן תשובות מוכנות</span>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <main className="relative z-10 flex-1 max-w-3xl w-full mx-auto px-3 sm:px-4 pt-4 pb-40">

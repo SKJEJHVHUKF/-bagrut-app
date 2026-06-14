@@ -220,7 +220,7 @@ function buildRequest(
     case 'explainSimpler':
       return {
         url: '/api/explain-simpler',
-        body: { question: p.question, solution: p.solution ?? '' },
+        body: { question: p.question, solution: p.solution ?? '', topic: p.topic ?? '' },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         parse: (d: any) => d?.explanation ?? '',
       };
@@ -232,6 +232,7 @@ function buildRequest(
           correctAnswer: p.correctAnswer ?? '',
           userAnswer: p.userAnswer ?? '',
           context: p.context,
+          topic: p.topic ?? '',
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         parse: (d: any) =>
@@ -242,7 +243,7 @@ function buildRequest(
     case 'hintHelp':
       return {
         url: '/api/hint-help',
-        body: { question: p.question, hints: p.hints ?? [] },
+        body: { question: p.question, hints: p.hints ?? [], topic: p.topic ?? '' },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         parse: (d: any) => d?.response ?? '',
       };

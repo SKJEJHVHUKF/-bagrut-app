@@ -504,6 +504,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$|z| = 2$, $\\;\\arg(z) = 60°$, $\\;z = 2(\\cos 60° + i\\sin 60°)$.',
           },
+          expected: { kind: 'manual', reason: 'תשובה מורכבת: מודול, ארגומנט והצגה קוטבית יחד' },
         },
         {
           label: 'ב',
@@ -523,6 +524,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z^3 = -8$.',
           },
+          expected: { kind: 'value', value: '-8' },
         },
         {
           label: 'ג',
@@ -542,6 +544,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$n$ הוא כפולה של $3$: $\\;n = 3, 6, 9, \\ldots$',
           },
+          expected: { kind: 'manual', reason: 'משפחת "מצא את כל n" — לא נבדק אוטומטית' },
         },
       ],
     },
@@ -570,6 +573,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z_0 = 2(\\cos 60° + i\\sin 60°)$, $\\;z_1 = 2(\\cos 180° + i\\sin 180°)$, $\\;z_2 = 2(\\cos 300° + i\\sin 300°)$.',
           },
+          expected: { kind: 'set', values: ['2*cis(60)', '2*cis(180)', '2*cis(300)'] },
         },
         {
           label: 'ב',
@@ -589,6 +593,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z_0 = 1 + i\\sqrt{3}$, $\\;z_1 = -2$, $\\;z_2 = 1 - i\\sqrt{3}$.',
           },
+          expected: { kind: 'set', values: ['1+sqrt(3)*i', '-2', '1-sqrt(3)*i'] },
         },
         {
           label: 'ג',
@@ -608,6 +613,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: 'הוכח: $\\;z_0 + z_1 + z_2 = 0$ (חישוב ישיר, ומאומת על-ידי משפט וייטה).',
           },
+          expected: { kind: 'manual', reason: 'הוכחה' },
         },
       ],
     },
@@ -635,6 +641,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z_1 = 2 + 3i$, $\\;z_2 = 2 - 3i$',
           },
+          expected: { kind: 'set', values: ['2+3i', '2-3i'] },
         },
         {
           label: 'ב',
@@ -652,6 +659,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$|z_1| = \\sqrt{13}$, $\\;\\arg(z_1) = \\arctan\\dfrac{3}{2}$',
           },
+          expected: { kind: 'manual', reason: 'תשובה מורכבת: מודול וארגומנט (arctan אינו ערך עגול)' },
         },
         {
           label: 'ג',
@@ -671,6 +679,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: 'הוכח: $z_1 z_2 = |z_1|^2 = 13$ (מהזהות $z\\bar{z} = |z|^2$).',
           },
+          expected: { kind: 'manual', reason: 'הוכחה' },
         },
       ],
     },
@@ -697,6 +706,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: 'מעגל: $(x-3)^2 + y^2 = 9$ — מרכז ב-$(3, 0)$, רדיוס $3$.',
           },
+          expected: { kind: 'manual', reason: 'מקום גאומטרי (מעגל)' },
         },
         {
           label: 'ב',
@@ -715,6 +725,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: 'קרן: $y = x$ עם $x > 0$ (לא כולל הראשית).',
           },
+          expected: { kind: 'manual', reason: 'מקום גאומטרי (קרן)' },
         },
         {
           label: 'ג',
@@ -735,6 +746,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: 'נקודת חיתוך יחידה: $z = 3 + 3i$.',
           },
+          expected: { kind: 'value', value: '3+3i' },
         },
       ],
     },
@@ -764,6 +776,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z_1 = 1 + \\sqrt{3}\\,i$, $\\;z_2 = 1 - \\sqrt{3}\\,i$.',
           },
+          expected: { kind: 'set', values: ['1+sqrt(3)*i', '1-sqrt(3)*i'] },
         },
         {
           label: 'ב',
@@ -782,6 +795,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z_1 = 2(\\cos 60° + i\\sin 60°)$.',
           },
+          expected: { kind: 'value', value: '2*cis(60)' },
         },
         {
           label: 'ג',
@@ -800,6 +814,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z_1^6 = 64$ (מספר ממשי).',
           },
+          expected: { kind: 'value', value: '64' },
         },
         {
           label: 'ד',
@@ -819,6 +834,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$|OA| = |OB| = 2$, $\\;|AB| = 2\\sqrt{3}$.',
           },
+          expected: { kind: 'manual', reason: 'תשובה מורכבת: שני אורכים שונים' },
         },
         {
           label: 'ה',
@@ -838,6 +854,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: 'שטח המשולש $OAB$ הוא $\\sqrt{3}$.',
           },
+          expected: { kind: 'value', value: 'sqrt(3)' },
         },
       ],
     },
@@ -869,6 +886,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z_1 = 2(\\cos 60° + i\\sin 60°)$, $\\;z_2 = 2\\sqrt{2}(\\cos 135° + i\\sin 135°)$',
           },
+          expected: { kind: 'set', values: ['2*cis(60)', '2*sqrt(2)*cis(135)'] },
         },
         {
           label: 'ב',
@@ -889,6 +907,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z_1 z_2 = 4\\sqrt{2}(\\cos 195° + i\\sin 195°)$',
           },
+          expected: { kind: 'value', value: '4*sqrt(2)*cis(195)' },
         },
       ],
     },
@@ -919,6 +938,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$w^6 = 1$',
           },
+          expected: { kind: 'value', value: '1' },
         },
       ],
     },
@@ -952,6 +972,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z = -1 + 4i$',
           },
+          expected: { kind: 'value', value: '-1+4i' },
         },
       ],
     },
@@ -981,6 +1002,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$z_0 = 2i$, $\\;z_1 = -\\sqrt{3} - i$, $\\;z_2 = \\sqrt{3} - i$',
           },
+          expected: { kind: 'set', values: ['2*i', '-sqrt(3)-i', 'sqrt(3)-i'] },
         },
         {
           label: 'ב',
@@ -1000,6 +1022,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: 'שטח המשולש $= 3\\sqrt{3}$',
           },
+          expected: { kind: 'value', value: '3*sqrt(3)' },
         },
       ],
     },
@@ -1031,6 +1054,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: 'המקום הגאומטרי הוא הישר $\\;8x - 6y - 7 = 0$',
           },
+          expected: { kind: 'manual', reason: 'מקום גאומטרי (ישר)' },
         },
       ],
     },
@@ -1060,6 +1084,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$a_5 = -1 - i$',
           },
+          expected: { kind: 'value', value: '-1-i' },
         },
         {
           label: 'ב',
@@ -1079,6 +1104,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             ],
             final_answer: '$S_8 = 0$',
           },
+          expected: { kind: 'value', value: '0' },
         },
       ],
     },

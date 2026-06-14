@@ -1,4 +1,5 @@
 import { requireProUser, callTutor, sanitize } from '@/lib/ai-tutor';
+import { buildPilotGrounding } from '@/lib/tutor-grounding';
 
 // "I've seen all hints but still stuck" — student exhausted the 3
 // gradual hints and isn't ready to give up to the full solution.
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
 
     const body = await request.json().catch(() => ({}));
     const question = sanitize(body?.question);
+    const topic = typeof body?.topic === 'string' ? body.topic.trim() : '';
     const hints: unknown = body?.hints;
     if (!question || !Array.isArray(hints) || hints.length === 0) {
       return Response.json({ error: 'Missing question or hints' }, { status: 400 });
@@ -68,11 +70,16 @@ ${cleanHints.map((h, i) => `${i + 1}. ${h}`).join('\n')}
 
 תפרק לו את הרמז הזה לרעיון מעשי — מה הוא צריך לעשות בפועל. אבל אל תפתור את כל השאלה.`;
 
+    // Ground in the verified content so the unpacked hint stays inside the
+    // curriculum (and within 582 conventions) for the pilot topic.
+    const grounding = buildPilotGrounding(topic);
+    const system = grounding ? `${SYSTEM_PROMPT}\n\n---\n\n${grounding}` : SYSTEM_PROMPT;
+
     const { data } = await callTutor<HintHelpResponse>({
       apiKey,
       model: 'claude-haiku-4-5',
       maxTokens: 600,
-      system: SYSTEM_PROMPT,
+      system,
       user: userPrompt,
       schema: RESPONSE_SCHEMA,
     });

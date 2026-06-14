@@ -140,6 +140,7 @@ export function StaticBagrutExerciseView({
             key={`${current.id}-${i}`}
             part={p}
             context={current.context}
+            topic={topic}
             onDone={() => onPartDone(i, current.parts.length)}
           />
         ))}

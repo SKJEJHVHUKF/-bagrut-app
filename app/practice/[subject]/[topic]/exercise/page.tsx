@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, MessageCircle } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { BagrutQuestionView } from '@/components/practice/BagrutQuestionView';
 import { QuickExerciseView } from '@/components/practice/QuickExerciseView';
@@ -90,6 +90,15 @@ export default async function ExercisePage({
               <span>חזור לסיכום הלימודי</span>
             </Link>
           )}
+          <div>
+            <Link
+              href={`/chat?topic=${encodeURIComponent(topic)}`}
+              className="inline-flex items-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 transition-colors"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>שאל את המורה על הנושא</span>
+            </Link>
+          </div>
         </header>
 
         {effectiveMode === 'static-bagrut' ? (

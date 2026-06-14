@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Sparkles, Target, AlertTriangle, Lightbulb, ArrowLeft, CheckCircle, Award, GraduationCap, PlayCircle, Lock as LockIcon } from 'lucide-react';
+import { BookOpen, Sparkles, Target, AlertTriangle, Lightbulb, ArrowLeft, CheckCircle, Award, GraduationCap, PlayCircle, Lock as LockIcon, MessageCircle } from 'lucide-react';
 import type { Lesson } from '@/content/lessons/types';
 import { MathText } from './MathText';
 import { FormulaCard } from './FormulaCard';
@@ -68,6 +68,25 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
           <MathText>{lesson.intro}</MathText>
         </motion.div>
       </motion.header>
+
+      {/* Grounded private-tutor entry — opens the chat focused on THIS topic.
+          For complex numbers the tutor teaches from the verified content and
+          follows the private-tutor bar (diagnoses, hints, never just answers). */}
+      <Link
+        href={`/chat?topic=${encodeURIComponent(lesson.topic)}`}
+        className="group flex items-center gap-3 surface-premium rounded-2xl px-4 py-3 hover:border-indigo-500/50 transition-colors"
+      >
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center">
+          <MessageCircle className="w-5 h-5 text-indigo-200" />
+        </div>
+        <div className="flex-1 text-right">
+          <div className="text-sm font-bold text-white">שאל את המורה הפרטי על הנושא</div>
+          <div className="text-[11px] text-slate-400">
+            מורה מעוגן בחומר — מסביר, מכוון, ולא נותן תשובות מוכנות
+          </div>
+        </div>
+        <ArrowLeft className="w-4 h-4 text-indigo-300 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+      </Link>
 
       {/* Course tracks — base (learn-from-0) + advanced (bagrut level).
           Two cards with live status chips; renders only when a path exists. */}

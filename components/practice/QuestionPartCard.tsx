@@ -17,6 +17,7 @@ import {
 import { MathText } from './MathText';
 import { AnswerInput } from './AnswerInput';
 import { AITutorActions } from './AITutorActions';
+import { checkAnswer as runDeterministicCheck, type AnswerSpec } from '@/lib/answer-check';
 import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
 import { buttonTap } from '@/lib/animations';
 
@@ -29,6 +30,10 @@ export type QuestionPart = {
     steps: string[];
     final_answer: string;
   };
+  /** Machine-checkable answer spec → deterministic ($0) grading. When
+   *  present (value/set), the verdict comes from numeric equivalence, NOT
+   *  from a model's judgement. Absent or `manual` falls back to the LLM. */
+  expected?: AnswerSpec;
 };
 
 type Verdict = 'correct' | 'partial' | 'wrong';
@@ -37,12 +42,16 @@ type CheckResult = { verdict: Verdict; feedback: string; tip: string };
 export function QuestionPartCard({
   part,
   context,
+  topic,
   onDone,
 }: {
   part: QuestionPart;
   /** Optional surrounding context (question.context) — helps the checker
    *  understand the broader problem when judging a sub-part answer. */
   context?: string;
+  /** Topic key — when it's the grounded pilot ("מספרים מרוכבים") the tutor
+   *  endpoints (why-wrong etc.) teach from the verified content. */
+  topic?: string;
   onDone?: () => void;
 }) {
   const [open, setOpen] = useState(true);
@@ -96,6 +105,33 @@ export function QuestionPartCard({
     });
   }
 
+  // Apply a verdict to the UI — toasts, completion, confetti. Shared by the
+  // deterministic path and the LLM fallback so they behave identically.
+  function applyResult(data: CheckResult) {
+    setCheckResult(data);
+    // A correct answer counts as "done" — bump the parent so the question
+    // gets marked complete even if the student didn't reveal the solution.
+    if (data.verdict === 'correct' && !revealedFinal) {
+      setRevealedFinal(true);
+      celebrateCorrect();
+      toast.success('תשובה נכונה! 🎯', {
+        description: `סעיף ${part.label} נסגר בכבוד`,
+        duration: 2500,
+      });
+      onDone?.();
+    } else if (data.verdict === 'partial') {
+      toast.info('כמעט שם — תשובה חלקית', {
+        description: 'קרא את הפידבק ונסה לתקן',
+        duration: 2500,
+      });
+    } else if (data.verdict === 'wrong') {
+      toast.error('לא נכון', {
+        description: 'אל תוותר — נסה רמז או בקש "למה טעיתי?"',
+        duration: 2500,
+      });
+    }
+  }
+
   async function checkAnswer() {
     if (!answer.trim() || checking) return;
     setChecking(true);
@@ -105,6 +141,43 @@ export function QuestionPartCard({
     // reference what the student actually typed, even if they edit
     // the input afterwards.
     setLastUserAnswer(answer);
+
+    // ===== 1) DETERMINISTIC CHECK FIRST (free, instant, authoritative) =====
+    // For parts with a machine-checkable spec (value / set), the verdict is
+    // decided by NUMERIC EQUIVALENCE — never a model's guess. Equivalent
+    // forms (e.g. $2\,\text{cis}\,60° = 1+\sqrt{3}\,i$) are accepted; a
+    // partial set (one root out of three) is correctly marked wrong. The
+    // model is only ever asked to *explain* a mistake, never to *judge*.
+    const spec = part.expected;
+    if (spec && spec.kind !== 'manual') {
+      const det = runDeterministicCheck(answer, spec);
+      if (det.verdict === 'correct') {
+        applyResult({
+          verdict: 'correct',
+          feedback: 'התשובה שלך שקולה מתמטית לתשובה הנכונה. מצוין! ✓',
+          tip: '',
+        });
+        setChecking(false);
+        return;
+      }
+      if (det.verdict === 'wrong') {
+        applyResult({
+          verdict: 'wrong',
+          feedback: det.readAs
+            ? `קראתי את התשובה שלך כ-$${det.readAs}$ — היא אינה שקולה לתשובה הנכונה. בדוק אם פספסת חלק מהפתרון או טעית בסימן.`
+            : 'התשובה אינה שקולה לתשובה הנכונה. בדוק אם פספסת חלק מהפתרון או טעית בסימן.',
+          tip: '',
+        });
+        setChecking(false);
+        return;
+      }
+      // 'unparseable' (couldn't read input) or 'manual' (bad spec) → fall
+      // through to the LLM, which is more forgiving of messy free text.
+    }
+
+    // ===== 2) LLM FALLBACK (proofs, geometric loci, unparseable input) =====
+    // The model judges here — grounded in the verified content for the pilot
+    // topic. This is the EXCEPTION, not the default path.
     try {
       const res = await fetch('/api/check-answer', {
         method: 'POST',
@@ -114,6 +187,7 @@ export function QuestionPartCard({
           correctAnswer: part.solution.final_answer,
           userAnswer: answer,
           context: context ?? '',
+          topic: topic ?? '',
         }),
       });
       if (!res.ok) {
@@ -127,28 +201,7 @@ export function QuestionPartCard({
         throw new Error(msg || `HTTP ${res.status}`);
       }
       const data = (await res.json()) as CheckResult;
-      setCheckResult(data);
-      // A correct answer counts as "done" — bump the parent so the question
-      // gets marked complete even if the student didn't reveal the solution.
-      if (data.verdict === 'correct' && !revealedFinal) {
-        setRevealedFinal(true);
-        celebrateCorrect();
-        toast.success('תשובה נכונה! 🎯', {
-          description: `סעיף ${part.label} נסגר בכבוד`,
-          duration: 2500,
-        });
-        onDone?.();
-      } else if (data.verdict === 'partial') {
-        toast.info('כמעט שם — תשובה חלקית', {
-          description: 'קרא את הפידבק ונסה לתקן',
-          duration: 2500,
-        });
-      } else if (data.verdict === 'wrong') {
-        toast.error('לא נכון', {
-          description: 'אל תוותר — נסה רמז או בקש "למה טעיתי?"',
-          duration: 2500,
-        });
-      }
+      applyResult(data);
     } catch (e) {
       setCheckError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -253,6 +306,7 @@ export function QuestionPartCard({
                     correctAnswer={part.solution.final_answer}
                     userAnswer={lastUserAnswer}
                     context={context}
+                    topic={topic}
                     show={{ whyWrong: true }}
                   />
                 )}
@@ -314,6 +368,7 @@ export function QuestionPartCard({
               question={part.prompt}
               hints={part.hints}
               context={context}
+              topic={topic}
               show={{ hintHelp: true }}
             />
           )}
@@ -386,6 +441,7 @@ export function QuestionPartCard({
                     question={part.prompt}
                     solution={part.solution.steps.join('\n') + '\n' + part.solution.final_answer}
                     context={context}
+                    topic={topic}
                     show={{ explainSimpler: true }}
                   />
                 )}
