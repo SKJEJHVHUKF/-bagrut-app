@@ -15,11 +15,12 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { MathText } from './MathText';
+import { BagrutQuestionBlock } from './BagrutQuestionBlock';
 import { buttonTap } from '@/lib/animations';
 import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
 import { markExerciseDone, markSubTopicDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
-import type { SubTopic } from '@/content/lessons/types';
+import type { SubTopic, StaticBagrutQuestion } from '@/content/lessons/types';
 
 type Props = {
   subject: string;
@@ -27,6 +28,10 @@ type Props = {
   subTopic: SubTopic;
   /** The sub-topic that follows this one — offered on the completion screen. */
   nextSubTopic?: { id: string; title: string } | null;
+  /** Bagrut-level question(s) for THIS sub-topic — shown after the drills as
+   *  the top of the escalation. Rendered with the deterministic checker +
+   *  grounded tutor via QuestionPartCard. */
+  bagrutQuestions?: StaticBagrutQuestion[];
 };
 
 /**
@@ -35,7 +40,13 @@ type Props = {
  * Hint button reveals the single hint (if any). "Show solution" reveals
  * step-by-step. "Next" advances. A final summary card celebrates completion.
  */
-export function SubTopicPractice({ subject, topic, subTopic, nextSubTopic = null }: Props) {
+export function SubTopicPractice({
+  subject,
+  topic,
+  subTopic,
+  nextSubTopic = null,
+  bagrutQuestions = [],
+}: Props) {
   const questions = subTopic.questions;
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -119,7 +130,9 @@ export function SubTopicPractice({ subject, topic, subTopic, nextSubTopic = null
       >
         <div className="bg-gradient-to-br from-emerald-600/15 to-teal-600/15 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 text-center space-y-4">
           <Trophy className="w-12 h-12 mx-auto text-amber-300" />
-          <h2 className="font-display text-2xl font-black text-white">סיימת את התרגול!</h2>
+          <h2 className="font-display text-2xl font-black text-white">
+            {bagrutQuestions.length > 0 ? 'יפה! עברת את הדרילים 🎯' : 'סיימת את התרגול!'}
+          </h2>
           <div className="text-5xl font-black text-emerald-200">{correctCount}/{total}</div>
           <div className="text-sm text-slate-300">
             {percent === 100
@@ -131,6 +144,21 @@ export function SubTopicPractice({ subject, topic, subTopic, nextSubTopic = null
                   : '💪 נסה שוב — זה תת-נושא חדש, וזה בסדר ללמוד תוך כדי.'}
           </div>
         </div>
+
+        {bagrutQuestions.length > 0 && (
+          <section className="space-y-3 pt-1">
+            <div className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2">
+              <Target className="w-3.5 h-3.5" />
+              <span>שאלת בגרות על הנושא — רמת בגרות אמיתית</span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              פתור כמו בבחינה. אפשר לבדוק כל סעיף, לקבל רמז מדורג, או לשאול &quot;למה טעיתי?&quot; — המורה מעוגן בחומר הנושא.
+            </p>
+            {bagrutQuestions.map((bq) => (
+              <BagrutQuestionBlock key={bq.id} question={bq} topic={topic} />
+            ))}
+          </section>
+        )}
 
         {nextSubTopic && (
           <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>

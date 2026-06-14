@@ -485,6 +485,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-001',
       difficulty: 'mid',
       topic_tag: 'פעולות ודה-מואבר',
+      subTopicId: 'polar-de-moivre',
       context: 'נתון המספר המרוכב $\\;z = 1 + i\\sqrt{3}$.',
       parts: [
         {
@@ -552,6 +553,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-002',
       difficulty: 'mid',
       topic_tag: 'שורשים מרוכבים',
+      subTopicId: 'complex-roots',
       context: 'נתונה המשוואה $\\;z^3 = -8$ במישור המרוכב.',
       parts: [
         {
@@ -621,6 +623,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-003',
       difficulty: 'mid',
       topic_tag: 'משוואה ריבועית וצמוד',
+      subTopicId: 'complex-equations',
       context: 'נתונה המשוואה $z^2 - 4z + 13 = 0$.',
       parts: [
         {
@@ -687,6 +690,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-004',
       difficulty: 'hard',
       topic_tag: 'מקומות גאומטריים במישור גאוס',
+      subTopicId: 'gauss-loci',
       context: 'במישור גאוס נתון $z = x + iy$.',
       parts: [
         {
@@ -754,6 +758,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-005',
       difficulty: 'hard',
       topic_tag: 'שאלה משולבת (כמו בבגרות)',
+      subTopicId: 'capstone',
       context:
         'נתונה המשוואה $\\;z^2 - 2z + 4 = 0$ במישור המרוכב. בכל הסעיפים $O$ מסמן את ראשית הצירים.',
       parts: [
@@ -862,6 +867,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-006',
       difficulty: 'easy',
       topic_tag: 'כפל בהצגה קוטבית',
+      subTopicId: 'polar-de-moivre',
       context: 'נתונים שני מספרים מרוכבים: $z_1 = 1 + \\sqrt{3}\\,i$ ו-$z_2 = -2 + 2i$.',
       parts: [
         {
@@ -915,6 +921,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-007',
       difficulty: 'easy',
       topic_tag: 'דה-מואבר — חזקה',
+      subTopicId: 'polar-de-moivre',
       context: 'נתון המספר המרוכב $\\;w = -\\dfrac{1}{2} + \\dfrac{\\sqrt{3}}{2}i$.',
       parts: [
         {
@@ -946,6 +953,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-008',
       difficulty: 'mid',
       topic_tag: 'משוואה עם צמוד',
+      subTopicId: 'finding-z',
       context: 'נתונה המשוואה $\\;z\\bar{z} + 2z = 15 + 8i$.',
       parts: [
         {
@@ -980,6 +988,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-009',
       difficulty: 'mid',
       topic_tag: 'שורשים ושטח משולש',
+      subTopicId: 'complex-roots',
       context: 'נתונה המשוואה $\\;z^3 = -8i$ במישור גאוס.',
       parts: [
         {
@@ -1030,6 +1039,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-010',
       difficulty: 'hard',
       topic_tag: 'מקום גאומטרי',
+      subTopicId: 'gauss-loci',
       context: 'במישור גאוס נתון $z = x + iy$.',
       parts: [
         {
@@ -1062,6 +1072,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
       id: 'cx-bag-011',
       difficulty: 'hard',
       topic_tag: 'סדרה הנדסית מרוכבת',
+      subTopicId: 'polar-de-moivre',
       context: 'נתונה סדרה הנדסית של מספרים מרוכבים שבה $\\;a_1 = 1 + i$ והמנה $q = \\cos 45° + i\\sin 45°$.',
       parts: [
         {

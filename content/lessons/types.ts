@@ -235,6 +235,11 @@ export type StaticBagrutQuestion = {
   context: string;
   /** Short sub-topic tag (e.g. "פונקציה ריבועית" or "אינטגרל מסוים"). */
   topic_tag?: string;
+  /** Which sub-topic this bagrut question belongs to (a SubTopic.id), so the
+   *  sub-topic module can serve it as its own bagrut-level practice.
+   *  'capstone' marks a mixed, multi-sub-topic question shown at the end of
+   *  the whole topic rather than inside a single module. */
+  subTopicId?: string;
   /** 3-4 progressive sub-parts. Each is independently answerable. */
   parts: BagrutQuestionPart[];
 };

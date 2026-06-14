@@ -116,3 +116,27 @@ export function getNextSubTopic(
   const next = list[idx + 1];
   return { id: next.id, title: next.title };
 }
+
+/** Bagrut questions tagged for a specific sub-topic — its bagrut-level
+ *  practice (the top of the escalation inside the sub-topic module).
+ *  Excludes capstone/mixed questions. */
+export function getBagrutQuestionsForSubTopic(
+  subject: string,
+  topic: string,
+  subId: string,
+): StaticBagrutQuestion[] {
+  return (getLesson(subject, topic)?.bagrutQuestions ?? []).filter(
+    (q) => q.subTopicId === subId,
+  );
+}
+
+/** Mixed, multi-sub-topic bagrut questions — the topic's end-of-unit
+ *  capstone, shown after the per-sub-topic modules. */
+export function getCapstoneBagrutQuestions(
+  subject: string,
+  topic: string,
+): StaticBagrutQuestion[] {
+  return (getLesson(subject, topic)?.bagrutQuestions ?? []).filter(
+    (q) => q.subTopicId === 'capstone',
+  );
+}

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getSubTopic, getNextSubTopic } from '@/content/lessons';
+import { getSubTopic, getNextSubTopic, getBagrutQuestionsForSubTopic } from '@/content/lessons';
 import { SubTopicPractice } from '@/components/practice/SubTopicPractice';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 
@@ -17,6 +17,7 @@ export default async function SubTopicPracticePage({
   }
 
   const nextSubTopic = getNextSubTopic(subject, topic, subId);
+  const bagrutQuestions = getBagrutQuestionsForSubTopic(subject, topic, subId);
 
   return (
     <PracticeShell
@@ -29,6 +30,7 @@ export default async function SubTopicPracticePage({
         topic={topic}
         subTopic={subTopic}
         nextSubTopic={nextSubTopic}
+        bagrutQuestions={bagrutQuestions}
       />
     </PracticeShell>
   );

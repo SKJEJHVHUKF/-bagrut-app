@@ -32,7 +32,10 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
   }, [lesson.subject, lesson.topic]);
 
   return (
-    <article className="space-y-6">
+    // flex + `order-*` lets us put the sub-topic MODULES first (the primary
+    // learn+practice path) and the reference material below, without moving
+    // the big JSX blocks. The full-topic bagrut sits last as a capstone.
+    <article className="flex flex-col gap-6">
       {/* 3-step journey header — only renders if the student has a plan */}
       <TopicJourney subject={lesson.subject} topic={lesson.topic} />
 
@@ -95,7 +98,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       )}
 
       {/* Concepts */}
-      <motion.section {...inViewProps} variants={staggerContainer}>
+      <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
         <motion.div
           variants={fadeUp}
           className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2"
@@ -128,7 +131,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
 
       {/* Formulas */}
       {lesson.formulas.length > 0 && (
-        <motion.section {...inViewProps} variants={staggerContainer}>
+        <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
             className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase"
@@ -146,7 +149,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       )}
 
       {/* Worked examples */}
-      <motion.section {...inViewProps} variants={staggerContainer}>
+      <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
         <motion.div
           variants={fadeUp}
           className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2"
@@ -168,7 +171,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
 
       {/* Pitfalls */}
       {lesson.pitfalls.length > 0 && (
-        <motion.section {...inViewProps} variants={staggerContainer}>
+        <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
             className="text-xs font-black tracking-widest text-amber-300 mb-3 uppercase flex items-center gap-2"
@@ -197,7 +200,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
 
       {/* Summary — quick "must remember" cheatsheet right before the CTA. */}
       {lesson.summary && lesson.summary.length > 0 && (
-        <motion.section {...inViewProps} variants={staggerContainer}>
+        <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
             className="text-xs font-black tracking-widest text-emerald-300 mb-3 uppercase flex items-center gap-2"
@@ -227,7 +230,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
 
       {/* Exam tips — strategy hints. */}
       {lesson.examTips && lesson.examTips.length > 0 && (
-        <motion.section {...inViewProps} variants={staggerContainer}>
+        <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
             className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2"
@@ -266,13 +269,13 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         const allDone = doneCount === subs.length;
 
         return (
-          <motion.section {...inViewProps} variants={staggerContainer} className="pt-2">
+          <motion.section {...inViewProps} variants={staggerContainer} className="order-1 pt-2">
             <motion.div
               variants={fadeUp}
               className="text-xs font-black tracking-widest text-emerald-300 mb-2 uppercase flex items-center gap-2"
             >
               <GraduationCap className="w-3.5 h-3.5" />
-              <span>מסלול לימוד · {subs.length} מודולים</span>
+              <span>התחל כאן · לימוד ותרגול מודול-אחרי-מודול · {subs.length} מודולים</span>
             </motion.div>
 
             {/* Progress strip */}
@@ -386,13 +389,13 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         );
       })()}
 
-      {/* CTA — start practice. */}
-      <motion.section {...inViewProps} variants={staggerContainer} className="pt-2">
+      {/* Capstone — full mixed bagrut, positioned LAST (after the modules). */}
+      <motion.section {...inViewProps} variants={staggerContainer} className="order-3 pt-2">
         <motion.div
           variants={fadeUp}
           className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase"
         >
-          {lesson.subTopics && lesson.subTopics.length > 0 ? 'או — תרגול כללי בנושא' : 'מוכן/ה לתרגל?'}
+          {lesson.subTopics && lesson.subTopics.length > 0 ? '🏁 מבחן סיום — בגרות מלאה ומשולבת' : 'מוכן/ה לתרגל?'}
         </motion.div>
         <motion.div
           variants={staggerContainer}
@@ -407,7 +410,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                 <Target className="w-5 h-5" />
                 <div className="text-right">
                   <div className="text-sm">בגרות מלאה</div>
-                  <div className="text-[10px] font-normal opacity-80">שאלה עם סעיפים, רמזים ופתרון</div>
+                  <div className="text-[10px] font-normal opacity-80">שאלה משולבת על כל הנושא — קפסטון אחרי המודולים</div>
                 </div>
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               </Link>
