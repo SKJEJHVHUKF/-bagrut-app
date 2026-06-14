@@ -25,6 +25,8 @@ type Props = {
   subject: string;
   topic: string;
   subTopic: SubTopic;
+  /** The sub-topic that follows this one — offered on the completion screen. */
+  nextSubTopic?: { id: string; title: string } | null;
 };
 
 /**
@@ -33,7 +35,7 @@ type Props = {
  * Hint button reveals the single hint (if any). "Show solution" reveals
  * step-by-step. "Next" advances. A final summary card celebrates completion.
  */
-export function SubTopicPractice({ subject, topic, subTopic }: Props) {
+export function SubTopicPractice({ subject, topic, subTopic, nextSubTopic = null }: Props) {
   const questions = subTopic.questions;
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -129,6 +131,18 @@ export function SubTopicPractice({ subject, topic, subTopic }: Props) {
                   : '💪 נסה שוב — זה תת-נושא חדש, וזה בסדר ללמוד תוך כדי.'}
           </div>
         </div>
+
+        {nextSubTopic && (
+          <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
+            <Link
+              href={`/practice/${subject}/${encodeURIComponent(topic)}/sub/${nextSubTopic.id}`}
+              className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-emerald-500/30 transition-colors w-full"
+            >
+              <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
+              <span>המשך לתת-הנושא הבא: {nextSubTopic.title}</span>
+            </Link>
+          </motion.div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <motion.button

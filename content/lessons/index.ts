@@ -102,3 +102,17 @@ export function getSubTopic(
   const list = getLesson(subject, topic)?.subTopics ?? [];
   return list.find((s) => s.id === subId) ?? null;
 }
+
+/** The sub-topic that follows `subId` in order, or null if it's the last
+ *  (or unknown). Used to offer "continue to the next sub-topic". */
+export function getNextSubTopic(
+  subject: string,
+  topic: string,
+  subId: string,
+): { id: string; title: string } | null {
+  const list = getLesson(subject, topic)?.subTopics ?? [];
+  const idx = list.findIndex((s) => s.id === subId);
+  if (idx === -1 || idx + 1 >= list.length) return null;
+  const next = list[idx + 1];
+  return { id: next.id, title: next.title };
+}

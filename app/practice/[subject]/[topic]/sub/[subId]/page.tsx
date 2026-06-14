@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getSubTopic } from '@/content/lessons';
+import { getSubTopic, getNextSubTopic } from '@/content/lessons';
 import { SubTopicLanding } from '@/components/practice/SubTopicLanding';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 
@@ -16,13 +16,20 @@ export default async function SubTopicLandingPage({
     notFound();
   }
 
+  const nextSubTopic = getNextSubTopic(subject, topic, subId);
+
   return (
     <PracticeShell
       subtitle={`תת-נושא · ${topic}`}
       backHref={`/practice/${subject}/${encodeURIComponent(topic)}`}
       backLabel="חזרה לנושא"
     >
-      <SubTopicLanding subject={subject} topic={topic} subTopic={subTopic} />
+      <SubTopicLanding
+        subject={subject}
+        topic={topic}
+        subTopic={subTopic}
+        nextSubTopic={nextSubTopic}
+      />
     </PracticeShell>
   );
 }

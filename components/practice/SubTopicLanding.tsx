@@ -7,20 +7,36 @@ import { MathText } from './MathText';
 import { FormulaCard } from './FormulaCard';
 import { DiagramRenderer } from './DiagramRenderer';
 import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
+import { SubTopicLesson, type NextSubTopicRef } from './SubTopicLesson';
 import type { SubTopic } from '@/content/lessons/types';
 
 type Props = {
   subject: string;
   topic: string;
   subTopic: SubTopic;
+  nextSubTopic?: NextSubTopicRef;
 };
 
 /**
  * SubTopicLanding — the focused mini-lesson page for a sub-topic.
- * Shows a tight summary, the formulas relevant to THIS sub-topic only,
- * key points, and a CTA to start the focused practice.
+ *
+ * If a guided step-by-step lesson is authored (`subTopic.lesson`), it renders
+ * that paced "teach → example → practice → next" flow. Otherwise it falls
+ * back to the legacy layout: a tight summary, sub-topic formulas, key points,
+ * and a CTA to the focused practice.
  */
-export function SubTopicLanding({ subject, topic, subTopic }: Props) {
+export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null }: Props) {
+  if (subTopic.lesson && subTopic.lesson.length > 0) {
+    return (
+      <SubTopicLesson
+        subject={subject}
+        topic={topic}
+        subTopic={subTopic}
+        nextSubTopic={nextSubTopic}
+      />
+    );
+  }
+
   const practiceHref = `/practice/${subject}/${encodeURIComponent(topic)}/sub/${subTopic.id}/practice`;
   const backHref = `/practice/${subject}/${encodeURIComponent(topic)}`;
 

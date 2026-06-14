@@ -260,6 +260,27 @@ export type StaticBagrutQuestion = {
 // and /practice/[subject]/[topic]/sub/[subId]/practice (exercise).
 // Listed as navigation cards on the main lesson page.
 
+// ============================================================
+// SubTopicLessonStep — one step of a sub-topic's guided lesson.
+// ============================================================
+//
+// The guided lesson teaches ONE small idea at a time, optionally anchored by
+// a formula and a fully-worked example, revealed step-by-step. This replaces
+// the "wall of summary then a separate quiz" with a paced, build-up
+// walkthrough: teach → example → next step → … → practice.
+export type SubTopicLessonStep = {
+  /** Short step title (may contain inline math). */
+  title: string;
+  /** The teaching for this step — markdown + LaTeX, ONE idea, no jumps. */
+  teach: string;
+  /** Optional formula highlighted at this step (rendered as a FormulaCard). */
+  formula?: Formula;
+  /** Optional fully-worked example (rendered via WorkedExampleCard). */
+  example?: WorkedExample;
+  /** Optional inline diagram(s) for this step. */
+  diagrams?: DiagramSpec[];
+};
+
 export type SubTopic = {
   /** URL-safe slug. e.g. 'polar-de-moivre'. Used in the route. */
   id: string;
@@ -275,6 +296,10 @@ export type SubTopic = {
   keyPoints: string[];
   /** Formulas relevant ONLY to this sub-topic (subset of the lesson's). */
   formulas: Formula[];
+  /** Optional guided, step-by-step lesson. When present, the sub-topic
+   *  landing renders THIS (one step at a time, each with a worked example)
+   *  instead of the `summary` block — the "teach → example → next" flow. */
+  lesson?: SubTopicLessonStep[];
   /** 5-8 focused practice questions. Same shape as the lesson's quick bank. */
   questions: PracticeQuestion[];
   /** Optional inline diagrams (SVG-rendered) shown beneath the summary.
