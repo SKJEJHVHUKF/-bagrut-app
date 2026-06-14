@@ -69,9 +69,17 @@ export function QuestionPartCard({
   const [lastUserAnswer, setLastUserAnswer] = useState('');
 
   function showFullSolution() {
-    setStepsShown(0);
+    // Reveal the WHOLE solution at once (like the bagrut archive) — not
+    // step-by-step. Showing the last index renders every step + the final
+    // answer immediately, and marks the part done.
+    setStepsShown(part.solution.steps.length - 1);
+    if (!revealedFinal) {
+      setRevealedFinal(true);
+      celebrateCompletion();
+      onDone?.();
+    }
     toast.success(`סעיף ${part.label} — פתרון מלא`, {
-      description: 'עבור על הצעדים ובדוק שהבנת',
+      description: 'עבור על הפתרון ובדוק שהבנת',
       duration: 2000,
     });
   }

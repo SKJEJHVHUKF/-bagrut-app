@@ -13,7 +13,6 @@ const DIFFICULTY_META: Record<WorkedExample['difficulty'], { label: string; dot:
 
 export function WorkedExampleCard({ example, index }: { example: WorkedExample; index: number }) {
   const [open, setOpen] = useState(false);
-  const [stepsShown, setStepsShown] = useState(0);
   const meta = DIFFICULTY_META[example.difficulty];
 
   return (
@@ -49,8 +48,9 @@ export function WorkedExampleCard({ example, index }: { example: WorkedExample; 
             <MathText>{example.problem}</MathText>
           </div>
 
+          {/* Full solution at once — like the bagrut archive, not gated. */}
           <ol className="space-y-2">
-            {example.steps.slice(0, stepsShown).map((step, i) => (
+            {example.steps.map((step, i) => (
               <li key={i} className="flex gap-3">
                 <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
                   {i + 1}
@@ -62,26 +62,15 @@ export function WorkedExampleCard({ example, index }: { example: WorkedExample; 
             ))}
           </ol>
 
-          {stepsShown < example.steps.length ? (
-            <button
-              onClick={() => setStepsShown((n) => n + 1)}
-              className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2.5 rounded-xl font-bold text-indigo-100 text-sm transition-all"
-            >
-              {stepsShown === 0
-                ? 'הצג צעד ראשון'
-                : `הצעד הבא (${stepsShown + 1}/${example.steps.length})`}
-            </button>
-          ) : (
-            <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-xl px-4 py-3">
-              <div className="text-[11px] font-black tracking-widest text-emerald-300 mb-1.5 uppercase flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>תשובה</span>
-              </div>
-              <div className="text-sm sm:text-base font-bold text-emerald-50 chat-md">
-                <MathText inline>{example.answer}</MathText>
-              </div>
+          <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-xl px-4 py-3">
+            <div className="text-[11px] font-black tracking-widest text-emerald-300 mb-1.5 uppercase flex items-center gap-1.5">
+              <CheckCircle className="w-3.5 h-3.5" />
+              <span>תשובה</span>
             </div>
-          )}
+            <div className="text-sm sm:text-base font-bold text-emerald-50 chat-md">
+              <MathText inline>{example.answer}</MathText>
+            </div>
+          </div>
         </div>
       )}
     </div>

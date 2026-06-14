@@ -162,8 +162,9 @@ export function QuickExerciseView({
   }
 
   function revealSolution() {
-    setStepsShown(0);
-    toast.success('פתרון נחשף — צעד-אחר-צעד', { duration: 2000 });
+    // Full solution at once (like the bagrut archive), not step-by-step.
+    setStepsShown(exercise!.solution.steps.length - 1);
+    toast.success('הפתרון המלא נחשף', { duration: 2000 });
   }
 
   function loadDifficulty(d: Difficulty) {
