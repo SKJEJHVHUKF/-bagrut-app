@@ -123,12 +123,18 @@ function normalizeExpr(raw: string): string {
   s = s.replace(/[°]/g, ' '); // any stray degree marks
   s = s.replace(/\\pi/g, 'pi');
 
+  // Natural log: LaTeX "\ln" and bare "ln" → mathjs `log` (whose one-arg form
+  // IS the natural log). Lets exp/ln/growth answers grade whether the student
+  // (or the spec) writes ln or log.
+  s = s.replace(/\\ln\b/g, 'log');
+  s = s.replace(/\bln\b/g, 'log');
+
   // Implicit multiplication the mathjs parser doesn't always infer:
   //   2sqrt(3) → 2*sqrt(3) · 3√.. handled above · )(  → )*( · 2cis → 2*cis
-  s = s.replace(/(\d)\s*(sqrt|nthRoot|cis|pi)\b/g, '$1*$2');
+  s = s.replace(/(\d)\s*(sqrt|nthRoot|cis|pi|log|e)\b/g, '$1*$2');
   s = s.replace(/(\d)\s*\(/g, '$1*(');
   s = s.replace(/\)\s*\(/g, ')*(');
-  s = s.replace(/\)\s*(sqrt|nthRoot|cis)\b/g, ')*$1');
+  s = s.replace(/\)\s*(sqrt|nthRoot|cis|log)\b/g, ')*$1');
 
   return s.trim();
 }
