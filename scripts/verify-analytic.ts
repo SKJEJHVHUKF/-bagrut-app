@@ -72,6 +72,36 @@ num('radius OP slope =0', slope([2, 1], [5, 1]), 0);
 num('|OQ| Q(6,5) =√32', dist([2, 1], [6, 5]), Math.sqrt(32));
 num('√32 = 4√2', Math.sqrt(32), 4 * Math.sqrt(2));
 
+console.log('— ag-parabola (y²=2px convention) —');
+num('(2,4) on y²=8x', 4 ** 2, 8 * 2);
+num('y²=12x: focus x=p/2', 12 / 4, 3); // 2p=12 → p=6 → p/2=3
+num('y²=12x: directrix -p/2', -12 / 4, -3);
+num('x²=-12y: directrix +p/2', 12 / 4, 3);
+num('y² thru (2,4): coeff 2p=8', 4 ** 2 / 2, 8); // 16 = 2p·2
+num('y²=4x: |PF|=5 → x_P=4', 5 - 4 / 4, 4);
+num('y²=4x: y_P²=16', 4 * 4, 16);
+num('(3,6) on y²=12x', 6 ** 2, 12 * 3);
+num('tangent y=x+3 double root', (-6) ** 2 - 4 * 1 * 9, 0); // (x+3)²=12x → x²-6x+9=0
+
+console.log('— ag-ellipse —');
+num('(5,0) on x²/25+y²/9', 5 ** 2 / 25 + 0 / 9, 1);
+num('c²=a²-b² =16', 25 - 9, 16);
+num('foci x=c=4', Math.sqrt(16), 4);
+num('(2,3) on x²/8+y²/18', 2 ** 2 / 8 + 3 ** 2 / 18, 1);
+num('sum dist =6√2', 2 * Math.sqrt(18), 6 * Math.sqrt(2));
+num('e=c/a =1/2', Math.sqrt(16 - 12) / 4, 0.5);
+num('build a²=8: (2,1) on x²/8+y²/2', 2 ** 2 / 8 + 1 ** 2 / 2, 1);
+num('build e=√3/2', Math.sqrt(8 - 2) / Math.sqrt(8), Math.sqrt(3) / 2);
+
+console.log('— ag-loci —');
+num('dist 5 from O → 25', 5 ** 2, 25);
+num('perp-bisector midpoint (3,3) on 2x+y=9', 2 * 3 + 3, 9);
+num('perp-bisector |PA|=|PB| @(3,3)', dist([3, 3], [1, 2]), dist([3, 3], [5, 4]));
+num('apollonius pt(-1/3,0): |PA|=2|PB|', dist([-1 / 3, 0], [1, 0]), 2 * dist([-1 / 3, 0], [-1, 0]));
+num('apollonius pt(-3,0): |PA|=2|PB|', dist([-3, 0], [1, 0]), 2 * dist([-3, 0], [-1, 0]));
+num('apollonius pt(-1/3,0) on circle', (-1 / 3 + 5 / 3) ** 2 + 0, (4 / 3) ** 2);
+num('apollonius pt(-3,0) on circle', (-3 + 5 / 3) ** 2 + 0, (4 / 3) ** 2);
+
 console.log(`\n${pass} passed, ${fail} failed.`);
 if (fail > 0) process.exit(1);
 
