@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
+import { ChevronDown, CheckCircle } from 'lucide-react';
 import type { WorkedExample } from '@/content/lessons/types';
 import { MathText } from './MathText';
 
@@ -19,16 +19,14 @@ export function WorkedExampleCard({ example, index }: { example: WorkedExample; 
     <div className="surface-premium rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full text-right px-4 py-3 flex items-start gap-3 hover:bg-white/5 transition-colors"
+        className="w-full text-right px-4 py-3.5 flex items-start gap-3 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors"
       >
         <div className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-xs font-black text-indigo-100">
           {index + 1}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
-              דוגמה
-            </span>
+            <span className="text-[10px] font-bold tracking-wide text-slate-400">דוגמה פתורה</span>
             <span className={`text-xs font-bold ${meta.color}`}>
               {meta.dot} {meta.label}
             </span>
@@ -37,8 +35,13 @@ export function WorkedExampleCard({ example, index }: { example: WorkedExample; 
             <MathText inline>{example.problem}</MathText>
           </div>
         </div>
-        <div className="flex-shrink-0 text-slate-400 pt-1">
-          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        <div className="flex-shrink-0 flex items-center gap-1 text-indigo-300 pt-0.5">
+          <span className="text-[11px] font-semibold whitespace-nowrap">
+            {open ? 'הסתר' : 'הצג פתרון'}
+          </span>
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          />
         </div>
       </button>
 
@@ -62,12 +65,12 @@ export function WorkedExampleCard({ example, index }: { example: WorkedExample; 
             ))}
           </ol>
 
-          <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-xl px-4 py-3">
-            <div className="text-[11px] font-black tracking-widest text-emerald-300 mb-1.5 uppercase flex items-center gap-1.5">
+          <div className="result-box rounded-xl px-4 py-3.5">
+            <div className="text-[11px] font-bold tracking-wide text-emerald-300 mb-1.5 flex items-center gap-1.5">
               <CheckCircle className="w-3.5 h-3.5" />
               <span>תשובה</span>
             </div>
-            <div className="text-sm sm:text-base font-bold text-emerald-50 chat-md">
+            <div className="text-base sm:text-lg font-bold text-emerald-50 chat-md">
               <MathText inline>{example.answer}</MathText>
             </div>
           </div>

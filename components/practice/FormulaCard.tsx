@@ -5,12 +5,15 @@ import { MathText } from './MathText';
 
 export function FormulaCard({ formula }: { formula: Formula }) {
   return (
-    <div className="bg-gradient-to-br from-indigo-500/10 to-indigo-500/10 border border-indigo-500/30 rounded-2xl p-4 sm:p-5">
-      <div className="text-[11px] font-black tracking-widest text-indigo-300 mb-2 uppercase chat-md">
-        <MathText inline>{formula.name}</MathText>
+    <div className="formula-surface rounded-2xl p-4 sm:p-5">
+      <div className="flex items-center gap-2 mb-2.5">
+        <span className="inline-block w-1 h-3.5 rounded-full bg-indigo-400/80" />
+        <div className="text-xs font-bold tracking-wide text-indigo-200/90 chat-md">
+          <MathText inline>{formula.name}</MathText>
+        </div>
       </div>
 
-      <div className="bg-slate-950/40 border border-white/10 rounded-xl px-4 py-3 mb-3 chat-md text-center text-lg">
+      <div className="bg-slate-950/55 border border-white/10 rounded-xl px-4 py-3.5 mb-3.5 chat-md text-center text-lg shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)]">
         <MathText>{`$$${formula.latex}$$`}</MathText>
       </div>
 

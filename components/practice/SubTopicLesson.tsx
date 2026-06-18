@@ -73,25 +73,29 @@ export function SubTopicLesson({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="surface-premium rounded-2xl p-5 sm:p-6 space-y-3"
+            className="surface-premium rounded-2xl p-5 sm:p-6 space-y-4"
           >
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-emerald-500/25 border border-emerald-400/50 flex items-center justify-center text-sm font-black text-emerald-100">
                 {i + 1}
               </div>
-              <h2 className="font-display text-base sm:text-lg font-bold text-white chat-md">
+              <h2 className="font-display text-lg sm:text-xl font-bold text-white chat-md">
                 <MathText inline>{step.title}</MathText>
               </h2>
             </div>
 
-            <div className="chat-md text-sm sm:text-base text-slate-200 leading-relaxed">
+            <div className="chat-md text-sm sm:text-base text-slate-200">
               <MathText>{step.teach}</MathText>
             </div>
 
-            {step.formula && <FormulaCard formula={step.formula} />}
-            {step.example && <WorkedExampleCard example={step.example} index={i} />}
-            {step.diagrams && step.diagrams.length > 0 && (
-              <DiagramRenderer diagrams={step.diagrams} />
+            {(step.formula || step.example || (step.diagrams && step.diagrams.length > 0)) && (
+              <div className="space-y-3 pt-1">
+                {step.formula && <FormulaCard formula={step.formula} />}
+                {step.example && <WorkedExampleCard example={step.example} index={i} />}
+                {step.diagrams && step.diagrams.length > 0 && (
+                  <DiagramRenderer diagrams={step.diagrams} />
+                )}
+              </div>
             )}
           </motion.section>
         ))}

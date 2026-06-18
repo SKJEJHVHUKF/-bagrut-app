@@ -50,7 +50,9 @@ export function SubTopicPractice({
   const questions = subTopic.questions;
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  const [wrongTries, setWrongTries] = useState<number[]>([]);
   const [openAnswer, setOpenAnswer] = useState('');
+  const [openReport, setOpenReport] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
   const [solutionShown, setSolutionShown] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
@@ -62,28 +64,45 @@ export function SubTopicPractice({
 
   function resetCardState() {
     setSelected(null);
+    setWrongTries([]);
     setOpenAnswer('');
+    setOpenReport(null);
     setHintShown(false);
     setSolutionShown(false);
   }
 
   function handleMCQSelect(i: number) {
-    if (selected !== null) return; // already answered
-    setSelected(i);
+    // Locked once the question is solved or the solution is shown.
+    if (solutionShown || selected === current.correct) return;
+    if (wrongTries.includes(i)) return;
     if (i === current.correct) {
-      setCorrectCount((c) => c + 1);
+      setSelected(i);
+      // Counts toward the score only if solved on the FIRST try.
+      if (wrongTries.length === 0) setCorrectCount((c) => c + 1);
       celebrateCorrect();
       toast.success('תשובה נכונה! 🎯', { duration: 1500 });
+      setSolutionShown(true);
     } else {
-      toast.error('לא נכון — בדוק את הפתרון', { duration: 2000 });
+      // Wrong — mark it and let the student try again (no forced solution).
+      setWrongTries((w) => [...w, i]);
+      toast.error('לא נכון — נסה שוב 🤔', { duration: 1800 });
     }
-    setSolutionShown(true);
   }
 
   function handleOpenCheck() {
-    // For open questions we don't auto-grade — just reveal the solution.
+    // Open answers aren't auto-graded yet — reveal the solution, then the
+    // student self-reports below (honest scoring).
     setSolutionShown(true);
     toast.info('השווה את התשובה שלך לפתרון', { duration: 2000 });
+  }
+
+  function reportOpen(correct: boolean) {
+    if (openReport !== null) return;
+    setOpenReport(correct ? 'correct' : 'wrong');
+    if (correct) {
+      setCorrectCount((c) => c + 1);
+      celebrateCorrect();
+    }
   }
 
   function revealHint() {
@@ -230,7 +249,7 @@ export function SubTopicPractice({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 chat-md"
+        className="surface-premium rounded-2xl p-5 chat-md"
       >
         <div className="text-xs font-black tracking-widest text-emerald-300 mb-3 uppercase flex items-center gap-2">
           <Target className="w-3.5 h-3.5" />
@@ -243,35 +262,45 @@ export function SubTopicPractice({
         </div>
       </motion.div>
 
-      {/* MCQ options */}
+      {/* MCQ options — wrong picks are marked, but you can keep trying */}
       {current.kind === 'mcq' && current.answers && (
         <div className="space-y-2">
           {current.answers.map((ans, i) => {
-            const isCorrect = i === current.correct;
-            const isSelected = selected === i;
-            const showOutcome = selected !== null;
+            const isTheCorrect = i === current.correct;
+            const triedWrong = wrongTries.includes(i);
+            const locked = solutionShown;
+
+            let cls = 'bg-white/5 hover:bg-white/10 border-white/10 text-white';
+            if (locked && isTheCorrect) cls = 'bg-emerald-500/15 border-emerald-500/50 text-emerald-50';
+            else if (locked && triedWrong) cls = 'bg-rose-500/15 border-rose-500/50 text-rose-100';
+            else if (locked) cls = 'bg-white/[0.02] border-white/5 text-slate-400';
+            else if (triedWrong) cls = 'bg-rose-500/10 border-rose-500/40 text-rose-200/70 line-through';
 
             return (
               <motion.button
                 key={i}
                 {...buttonTap}
                 onClick={() => handleMCQSelect(i)}
-                disabled={selected !== null}
-                className={`w-full text-right px-4 py-3 rounded-xl border transition-colors chat-md text-sm ${
-                  showOutcome && isCorrect
-                    ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-50'
-                    : showOutcome && isSelected
-                      ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-50'
-                      : showOutcome
-                        ? 'bg-white/[0.02] border-white/5 text-slate-400'
-                        : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
-                }`}
+                disabled={locked || triedWrong}
+                className={`w-full text-right px-4 py-3 rounded-xl border transition-colors chat-md text-sm ${cls}`}
               >
                 <span className="font-bold opacity-60 ml-2">{['א', 'ב', 'ג', 'ד'][i]}.</span>
                 <MathText inline>{ans}</MathText>
               </motion.button>
             );
           })}
+
+          {/* After a wrong try — offer the solution voluntarily (not forced) */}
+          {wrongTries.length > 0 && !solutionShown && (
+            <motion.button
+              {...buttonTap}
+              onClick={() => setSolutionShown(true)}
+              className="w-full inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2.5 rounded-xl font-bold text-slate-200 text-sm transition-colors"
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>הצג פתרון</span>
+            </motion.button>
+          )}
         </div>
       )}
 
@@ -390,6 +419,35 @@ export function SubTopicPractice({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Open self-assessment — honest scoring without an auto-grader (B1) */}
+      {current.kind === 'open' && solutionShown && (
+        openReport === null ? (
+          <div className="flex gap-2">
+            <motion.button
+              {...buttonTap}
+              onClick={() => reportOpen(true)}
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-100 text-sm transition-colors"
+            >
+              <CheckCircle className="w-4 h-4" />
+              <span>פתרתי נכון</span>
+            </motion.button>
+            <motion.button
+              {...buttonTap}
+              onClick={() => reportOpen(false)}
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2.5 rounded-xl font-bold text-slate-300 text-sm transition-colors"
+            >
+              <span>עוד לא הצלחתי</span>
+            </motion.button>
+          </div>
+        ) : (
+          <div className="text-center text-xs text-slate-400 py-1">
+            {openReport === 'correct'
+              ? '✓ נספר כנכון — כל הכבוד!'
+              : 'בסדר גמור — ככה לומדים. אפשר לחזור על השאלה בסוף.'}
+          </div>
+        )
+      )}
 
       {/* Next */}
       {solutionShown && (
