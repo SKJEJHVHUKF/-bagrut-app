@@ -114,6 +114,39 @@ vec('AB×AC', cross(sub([0, 3, 0], [2, 0, 0]), sub([0, 0, 6], [2, 0, 0])), [18, 
 num('d(O,plane)=6/√14', Math.abs(-6) / norm([3, 2, 1]), 6 / Math.sqrt(14));
 num('area=3√14', 0.5 * norm([18, 12, 6]), 3 * Math.sqrt(14));
 
+console.log('— vec-bag-002 basics —');
+vec('AB', sub([6, 4, 12], [2, 1, 0]), [4, 3, 12]);
+num('|AB|=13', norm([4, 3, 12]), 13);
+vec('midpoint', scale(0.5, add([2, 1, 0], [6, 4, 12])), [4, 2.5, 6]);
+vec('C=2B-A', sub(scale(2, [6, 4, 12]), [2, 1, 0]), [10, 7, 24]);
+vec('B is midpoint of AC', scale(0.5, add([2, 1, 0], [10, 7, 24])), [6, 4, 12]);
+
+console.log('— vec-bag-003 dot —');
+num('u·v=1', dot([1, 0, 1], [1, 1, 0]), 1);
+num('cos=1/2', dot([1, 0, 1], [1, 1, 0]) / (norm([1, 0, 1]) * norm([1, 1, 0])), 0.5);
+num('t=2 ⟂ u', dot([2, 1, -2], [1, 0, 1]), 0); // w=(t,1,-2), t=2
+
+console.log('— vec-bag-004 cross —');
+vec('AB×AC', cross(sub([0, 2, 0], [1, 0, 0]), sub([0, 0, 2], [1, 0, 0])), [4, 2, 2]);
+num('|AB×AC|=2√6', norm([4, 2, 2]), 2 * Math.sqrt(6));
+num('area=√6', 0.5 * norm([4, 2, 2]), Math.sqrt(6));
+
+console.log('— vec-bag-005 line-plane (system) —');
+num('n·AB=0', dot([1, -1, 1], sub([2, 1, 0], [1, 0, 0])), 0);
+num('n·AC=0', dot([1, -1, 1], sub([1, 1, 1], [1, 0, 0])), 0);
+num('plane x-y+z=1 @A', 1 - 0 + 0, 1);
+num('plane x-y+z=1 @B', 2 - 1 + 0, 1);
+num('plane x-y+z=1 @C', 1 - 1 + 1, 1);
+{
+  const t = 1 / 3;
+  num('line∩plane: 3t=1', t - -t + t, 1);
+}
+
+console.log('— vec-bag-006 distances —');
+num('d(P,π)=2/3', Math.abs(2 * 3 - 2 * 1 + 4 - 6) / norm([2, -2, 1]), 2 / 3);
+num('line⟂plane sinθ=1', Math.abs(dot([2, -2, 1], [2, -2, 1])) / (norm([2, -2, 1]) * norm([2, -2, 1])), 1);
+num('d(O,π)=2', Math.abs(-6) / norm([2, -2, 1]), 2);
+
 console.log(`\n${pass} passed, ${fail} failed.`);
 if (fail > 0) process.exit(1);
 

@@ -722,6 +722,324 @@ $$\\sin\\phi = \\dfrac{|\\vec{d} \\cdot \\vec{n}|}{|\\vec{d}|\\,|\\vec{n}|}$$
         },
       ],
     },
+    {
+      id: 'vec-bag-002',
+      difficulty: 'mid',
+      topic_tag: 'יסודות',
+      subTopicId: 'vec-basics',
+      context: 'נתונות הנקודות $A(2, 1, 0)$ ו-$B(6, 4, 12)$.',
+      parts: [
+        {
+          label: 'א',
+          prompt: 'מצא את אורך הקטע $AB$.',
+          answer_type: 'number',
+          hints: [
+            'קודם חשב את הוקטור $\\vec{AB} = B - A$.',
+            '$\\vec{AB} = (4, 3, 12)$.',
+            'אורך: $\\sqrt{4^2 + 3^2 + 12^2}$.',
+          ],
+          solution: {
+            steps: [
+              '$\\vec{AB} = B - A = (4, 3, 12)$.',
+              '$|\\vec{AB}| = \\sqrt{16 + 9 + 144} = \\sqrt{169} = 13$.',
+            ],
+            final_answer: '$|\\vec{AB}| = 13$',
+          },
+          expected: { kind: 'value', value: '13' },
+        },
+        {
+          label: 'ב',
+          prompt: 'מצא את אמצע הקטע $AB$.',
+          answer_type: 'expression',
+          hints: [
+            'אמצע = ממוצע הקצוות, רכיב-רכיב.',
+            '$M = \\left(\\tfrac{x_A+x_B}{2}, \\tfrac{y_A+y_B}{2}, \\tfrac{z_A+z_B}{2}\\right)$.',
+            'הצב את שיעורי $A$ ו-$B$.',
+          ],
+          solution: {
+            steps: [
+              '$M = \\left(\\tfrac{2+6}{2}, \\tfrac{1+4}{2}, \\tfrac{0+12}{2}\\right)$.',
+              '$M = (4,\\; 2.5,\\; 6)$.',
+            ],
+            final_answer: '$M = (4,\\; 2.5,\\; 6)$',
+          },
+          expected: { kind: 'manual', reason: 'נקודה' },
+        },
+        {
+          label: 'ג',
+          prompt: 'מצא נקודה $C$ כך ש-$B$ הוא אמצע הקטע $AC$.',
+          answer_type: 'expression',
+          hints: [
+            'אם $B$ אמצע $AC$ אז $B = \\tfrac{A+C}{2}$.',
+            'בודד: $C = 2B - A$.',
+            'הצב $B(6,4,12)$ ו-$A(2,1,0)$.',
+          ],
+          solution: {
+            steps: [
+              '$B$ אמצע $AC$, לכן $C = 2B - A$.',
+              '$C = (12-2,\\; 8-1,\\; 24-0) = (10, 7, 24)$.',
+            ],
+            final_answer: '$C = (10, 7, 24)$',
+          },
+          expected: { kind: 'manual', reason: 'נקודה' },
+        },
+      ],
+    },
+    {
+      id: 'vec-bag-003',
+      difficulty: 'mid',
+      topic_tag: 'מכפלה סקלרית',
+      subTopicId: 'vec-dot-product',
+      context: 'נתונים הוקטורים $\\vec{u} = (1, 0, 1)$ ו-$\\vec{v} = (1, 1, 0)$.',
+      parts: [
+        {
+          label: 'א',
+          prompt: 'חשב את המכפלה הסקלרית $\\vec{u} \\cdot \\vec{v}$.',
+          answer_type: 'number',
+          hints: [
+            'כפל רכיבים מתאימים וחבר.',
+            '$(1)(1) + (0)(1) + (1)(0)$.',
+            'חבר את שלוש המכפלות.',
+          ],
+          solution: {
+            steps: ['$\\vec{u} \\cdot \\vec{v} = (1)(1) + (0)(1) + (1)(0) = 1$.'],
+            final_answer: '$\\vec{u} \\cdot \\vec{v} = 1$',
+          },
+          expected: { kind: 'value', value: '1' },
+        },
+        {
+          label: 'ב',
+          prompt: 'מצא את הזווית בין $\\vec{u}$ ל-$\\vec{v}$.',
+          answer_type: 'number',
+          hints: [
+            '$\\cos\\theta = \\dfrac{\\vec{u}\\cdot\\vec{v}}{|\\vec{u}|\\,|\\vec{v}|}$.',
+            '$|\\vec{u}| = |\\vec{v}| = \\sqrt{2}$.',
+            '$\\cos\\theta = \\tfrac{1}{2}$ — איזו זווית?',
+          ],
+          solution: {
+            steps: [
+              '$|\\vec{u}| = \\sqrt{2}$, $|\\vec{v}| = \\sqrt{2}$.',
+              '$\\cos\\theta = \\dfrac{1}{\\sqrt{2}\\cdot\\sqrt{2}} = \\dfrac{1}{2}$.',
+              '$\\theta = 60°$.',
+            ],
+            final_answer: '$\\theta = 60°$',
+          },
+          expected: { kind: 'value', value: '60' },
+        },
+        {
+          label: 'ג',
+          prompt: 'מצא את הערך של $t$ עבורו הוקטור $\\vec{w} = (t, 1, -2)$ ניצב ל-$\\vec{u}$.',
+          answer_type: 'number',
+          hints: [
+            'ניצבות ⟺ מכפלה סקלרית $= 0$.',
+            '$\\vec{w} \\cdot \\vec{u} = t\\cdot 1 + 1\\cdot 0 + (-2)\\cdot 1$.',
+            'פתור $t - 2 = 0$.',
+          ],
+          solution: {
+            steps: [
+              '$\\vec{w} \\cdot \\vec{u} = t - 2$.',
+              'ניצבות: $t - 2 = 0 \\Rightarrow t = 2$.',
+            ],
+            final_answer: '$t = 2$',
+          },
+          expected: { kind: 'value', value: '2' },
+        },
+      ],
+    },
+    {
+      id: 'vec-bag-004',
+      difficulty: 'hard',
+      topic_tag: 'מכפלה וקטורית ושטח',
+      subTopicId: 'vec-cross-product',
+      context: 'נתונות הנקודות $A(1, 0, 0)$, $B(0, 2, 0)$ ו-$C(0, 0, 2)$.',
+      parts: [
+        {
+          label: 'א',
+          prompt: 'חשב את המכפלה הוקטורית $\\vec{AB} \\times \\vec{AC}$.',
+          answer_type: 'expression',
+          hints: [
+            '$\\vec{AB} = (-1, 2, 0)$, $\\vec{AC} = (-1, 0, 2)$.',
+            'נוסחה: $(a_2 b_3 - a_3 b_2,\\; a_3 b_1 - a_1 b_3,\\; a_1 b_2 - a_2 b_1)$.',
+            'חשב רכיב-רכיב בזהירות עם הסימנים.',
+          ],
+          solution: {
+            steps: [
+              '$\\vec{AB} = (-1, 2, 0)$, $\\vec{AC} = (-1, 0, 2)$.',
+              '$\\vec{AB} \\times \\vec{AC} = (2\\cdot 2 - 0\\cdot 0,\\; 0\\cdot(-1) - (-1)\\cdot 2,\\; (-1)\\cdot 0 - 2\\cdot(-1))$.',
+              '$= (4, 2, 2)$.',
+            ],
+            final_answer: '$\\vec{AB} \\times \\vec{AC} = (4, 2, 2)$',
+          },
+          expected: { kind: 'manual', reason: 'וקטור' },
+        },
+        {
+          label: 'ב',
+          prompt: 'חשב את שטח המשולש $ABC$.',
+          answer_type: 'expression',
+          hints: [
+            'שטח משולש $= \\tfrac{1}{2}|\\vec{AB} \\times \\vec{AC}|$.',
+            '$|(4,2,2)| = \\sqrt{16 + 4 + 4}$.',
+            '$\\sqrt{24} = 2\\sqrt{6}$ — קח חצי.',
+          ],
+          solution: {
+            steps: [
+              '$|\\vec{AB} \\times \\vec{AC}| = \\sqrt{16 + 4 + 4} = \\sqrt{24} = 2\\sqrt{6}$.',
+              '$S = \\tfrac{1}{2}\\cdot 2\\sqrt{6} = \\sqrt{6}$.',
+            ],
+            final_answer: '$S = \\sqrt{6}$',
+          },
+          expected: { kind: 'value', value: 'sqrt(6)' },
+        },
+        {
+          label: 'ג',
+          prompt: 'מצא וקטור נורמל למישור $ABC$ שאורכו $1$ (וקטור יחידה).',
+          answer_type: 'expression',
+          hints: [
+            'המכפלה הוקטורית $(4,2,2)$ כבר ניצבת למישור.',
+            'חלק אותה באורכה $2\\sqrt{6}$.',
+            'אפשר לצמצם $(4,2,2)$ ל-$(2,1,1)$ ואז לחלק ב-$\\sqrt{6}$.',
+          ],
+          solution: {
+            steps: [
+              'נורמל: $(4,2,2)$, אורכו $2\\sqrt{6}$.',
+              'וקטור יחידה: $\\dfrac{(4,2,2)}{2\\sqrt{6}} = \\dfrac{(2,1,1)}{\\sqrt{6}}$.',
+            ],
+            final_answer: '$\\dfrac{1}{\\sqrt{6}}(2, 1, 1)$',
+          },
+          expected: { kind: 'manual', reason: 'וקטור יחידה' },
+        },
+      ],
+    },
+    {
+      id: 'vec-bag-005',
+      difficulty: 'hard',
+      topic_tag: 'ישר ומישור',
+      subTopicId: 'vec-line-plane',
+      context: 'נתונות הנקודות $A(1, 0, 0)$, $B(2, 1, 0)$ ו-$C(1, 1, 1)$.',
+      parts: [
+        {
+          label: 'א',
+          prompt: 'מצא וקטור נורמל למישור $ABC$ בשיטת המערכת.',
+          answer_type: 'expression',
+          hints: [
+            'חשב $\\vec{AB}$ ו-$\\vec{AC}$ — הם נמצאים במישור.',
+            'נורמל $\\vec{n}=(a,b,c)$ מקיים $\\vec{n}\\cdot\\vec{AB}=0$ ו-$\\vec{n}\\cdot\\vec{AC}=0$.',
+            'פתור את המערכת ובחר ערך נוח לאחד הרכיבים.',
+          ],
+          solution: {
+            steps: [
+              '$\\vec{AB} = (1, 1, 0)$, $\\vec{AC} = (0, 1, 1)$.',
+              'מערכת: $a + b = 0$ וגם $b + c = 0$.',
+              'מהראשונה $a = -b$, מהשנייה $c = -b$. נבחר $b = -1$: $\\;\\vec{n} = (1, -1, 1)$.',
+            ],
+            final_answer: '$\\vec{n} = (1, -1, 1)$',
+          },
+          expected: { kind: 'manual', reason: 'וקטור נורמל' },
+        },
+        {
+          label: 'ב',
+          prompt: 'כתוב את משוואת המישור $ABC$.',
+          answer_type: 'expression',
+          hints: [
+            'משוואה: $a(x-x_0)+b(y-y_0)+c(z-z_0)=0$ עם הנורמל ונקודה.',
+            'השתמש בנורמל $(1,-1,1)$ ובנקודה $A(1,0,0)$.',
+            'פתח ופשט לצורה $x - y + z = d$.',
+          ],
+          solution: {
+            steps: [
+              'דרך $A(1,0,0)$ עם $\\vec{n}=(1,-1,1)$: $\\;1(x-1) - 1\\cdot y + 1\\cdot z = 0$.',
+              'משוואה: $x - y + z = 1$.',
+            ],
+            final_answer: '$x - y + z = 1$',
+          },
+          expected: { kind: 'manual', reason: 'משוואת מישור' },
+        },
+        {
+          label: 'ג',
+          prompt: 'הישר $X = (0,0,0) + t(1,-1,1)$ חותך את המישור. מצא את הפרמטר $t$ בנקודת החיתוך.',
+          answer_type: 'number',
+          hints: [
+            'רכיבי הישר: $x=t,\\; y=-t,\\; z=t$.',
+            'הצב במשוואת המישור $x - y + z = 1$.',
+            'פתור $t - (-t) + t = 1$.',
+          ],
+          solution: {
+            steps: [
+              'הצבה: $t - (-t) + t = 1$.',
+              '$3t = 1 \\Rightarrow t = \\tfrac{1}{3}$.',
+            ],
+            final_answer: '$t = \\tfrac{1}{3}$',
+          },
+          expected: { kind: 'value', value: '1/3' },
+        },
+      ],
+    },
+    {
+      id: 'vec-bag-006',
+      difficulty: 'hard',
+      topic_tag: 'מרחקים וזוויות',
+      subTopicId: 'vec-distances-angles',
+      context:
+        'נתון המישור $\\pi:\\; 2x - 2y + z = 6$, הנקודה $P(3, 1, 4)$, והישר $\\ell$ בכיוון $\\vec{d} = (2, -2, 1)$.',
+      parts: [
+        {
+          label: 'א',
+          prompt: 'מצא את המרחק מהנקודה $P$ למישור $\\pi$.',
+          answer_type: 'number',
+          hints: [
+            '$d = \\dfrac{|ax_0+by_0+cz_0 - d_0|}{\\sqrt{a^2+b^2+c^2}}$.',
+            'הנורמל $(2,-2,1)$, אורכו $3$.',
+            'הצב $P(3,1,4)$ במונה.',
+          ],
+          solution: {
+            steps: [
+              'אורך הנורמל: $\\sqrt{4+4+1} = 3$.',
+              'מונה: $|2\\cdot 3 - 2\\cdot 1 + 4 - 6| = |2| = 2$.',
+              '$d = \\dfrac{2}{3}$.',
+            ],
+            final_answer: '$d = \\dfrac{2}{3}$',
+          },
+          expected: { kind: 'value', value: '2/3' },
+        },
+        {
+          label: 'ב',
+          prompt: 'מצא את הזווית בין הישר $\\ell$ למישור $\\pi$.',
+          answer_type: 'number',
+          hints: [
+            '$\\sin\\theta = \\dfrac{|\\vec{d}\\cdot\\vec{n}|}{|\\vec{d}|\\,|\\vec{n}|}$.',
+            'שים לב: כיוון הישר $\\vec{d}$ זהה לנורמל המישור.',
+            'אם הכיוון הוא הנורמל — הישר מאונך למישור.',
+          ],
+          solution: {
+            steps: [
+              'כיוון הישר $\\vec{d} = (2,-2,1)$ זהה לנורמל $\\vec{n}$.',
+              '$\\sin\\theta = \\dfrac{|\\vec{d}\\cdot\\vec{n}|}{|\\vec{d}|\\,|\\vec{n}|} = \\dfrac{9}{3\\cdot 3} = 1$.',
+              '$\\theta = 90°$ — הישר מאונך למישור.',
+            ],
+            final_answer: '$\\theta = 90°$',
+          },
+          expected: { kind: 'value', value: '90' },
+        },
+        {
+          label: 'ג',
+          prompt: 'מצא את המרחק מראשית הצירים $O$ למישור $\\pi$.',
+          answer_type: 'number',
+          hints: [
+            'הצב $O(0,0,0)$ בנוסחת המרחק.',
+            'מונה: $|0 - 0 + 0 - 6| = 6$.',
+            'חלק באורך הנורמל $3$.',
+          ],
+          solution: {
+            steps: [
+              'מונה: $|2\\cdot 0 - 2\\cdot 0 + 0 - 6| = 6$.',
+              '$d = \\dfrac{6}{3} = 2$.',
+            ],
+            final_answer: '$d = 2$',
+          },
+          expected: { kind: 'value', value: '2' },
+        },
+      ],
+    },
   ],
 
   // ===========================================================================
