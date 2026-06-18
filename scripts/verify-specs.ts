@@ -15,6 +15,14 @@ import { math5AnalyticGeometry } from '../content/lessons/math5/analytic-geometr
 import { math5ExpFunctions } from '../content/lessons/math5/exp-functions';
 import { math5LnFunction } from '../content/lessons/math5/ln-function';
 import { math5GrowthDecay } from '../content/lessons/math5/growth-decay';
+import { math5Derivatives } from '../content/lessons/math5/derivatives';
+import { math5Integrals } from '../content/lessons/math5/integrals';
+import { math5Trigonometry } from '../content/lessons/math5/trigonometry';
+import { math5Algebra } from '../content/lessons/math5/algebra';
+import { math5Functions } from '../content/lessons/math5/functions';
+import { math5Sequences } from '../content/lessons/math5/sequences';
+import { math5Probability } from '../content/lessons/math5/probability';
+import { math5EuclideanGeometry } from '../content/lessons/math5/euclidean-geometry';
 
 const LESSONS: Array<[string, Lesson]> = [
   ['complex', math5ComplexNumbers],
@@ -23,6 +31,14 @@ const LESSONS: Array<[string, Lesson]> = [
   ['exp', math5ExpFunctions],
   ['ln', math5LnFunction],
   ['growth', math5GrowthDecay],
+  ['derivatives', math5Derivatives],
+  ['integrals', math5Integrals],
+  ['trigonometry', math5Trigonometry],
+  ['algebra', math5Algebra],
+  ['functions', math5Functions],
+  ['sequences', math5Sequences],
+  ['probability', math5Probability],
+  ['euclidean', math5EuclideanGeometry],
 ];
 
 let pass = 0;
