@@ -102,6 +102,26 @@ num('apollonius pt(-3,0): |PA|=2|PB|', dist([-3, 0], [1, 0]), 2 * dist([-3, 0], 
 num('apollonius pt(-1/3,0) on circle', (-1 / 3 + 5 / 3) ** 2 + 0, (4 / 3) ** 2);
 num('apollonius pt(-3,0) on circle', (-3 + 5 / 3) ** 2 + 0, (4 / 3) ** 2);
 
+console.log('— ag-bag-003 parabola (y²=2px) —');
+num('A(2,4) on y²=8x', 4 ** 2, 8 * 2);
+num('2p from A = 8', 4 ** 2 / 2, 8);
+num('focus x = p/2 = 2', 8 / 4, 2);
+num('|AF| = x_A + p/2 = 4', 2 + 8 / 4, 4);
+num('|AF| direct', dist([2, 4], [2, 0]), 4);
+
+console.log('— ag-bag-004 ellipse —');
+num('b = √(25-9) = 4', Math.sqrt(25 - 9), 4);
+num('sum = 2a = 10', 2 * 5, 10);
+num('e = c/a = 3/5', 3 / 5, 0.6);
+
+console.log('— ag-bag-005 loci |PB|=2|PA| —');
+num('P(2,0): |PB|=2|PA|', dist([2, 0], [4, 0]), 2 * dist([2, 0], [1, 0]));
+num('P(2,0) on x²+y²=4', 2 ** 2 + 0 ** 2, 4);
+num('P(0,2): |PB|=2|PA|', dist([0, 2], [4, 0]), 2 * dist([0, 2], [1, 0]));
+num('P(0,2) on x²+y²=4', 0 ** 2 + 2 ** 2, 4);
+num('radius = 2', Math.sqrt(4), 2);
+num('A(1,0) dist from O = 1 (<2 → inside)', dist([1, 0], [0, 0]), 1);
+
 console.log(`\n${pass} passed, ${fail} failed.`);
 if (fail > 0) process.exit(1);
 
