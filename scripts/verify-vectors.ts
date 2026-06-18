@@ -116,3 +116,5 @@ num('area=3√14', 0.5 * norm([18, 12, 6]), 3 * Math.sqrt(14));
 
 console.log(`\n${pass} passed, ${fail} failed.`);
 if (fail > 0) process.exit(1);
+
+export {};
