@@ -8,6 +8,8 @@
  * תוכן השאלון:
  *   Q1 — גאומטריה אנליטית (מעגל עם פרמטר, משיק, מקום גאומטרי שהוא אליפסה,
  *        מוקדים, היקף ושטח משולש המוקדים).
+ *   Q2 — וקטורים במרחב (פירמידה SABCD עם בסיס מקבילית, וקטורים u/v/w,
+ *        מציאת קודקודים, מישור חתך, ומקבילות/אנכיות).
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -257,6 +259,247 @@ export const bagrut2025Summer582: PastBagrutQuestion[] = [
           ],
           final_answer:
             'לא. השטח המרבי של המשולש $CKF$ הוא $4$ (כאשר $C$ בקודקוד $(0,\\, \\pm 2)$), והוא קטן מ-$5$, ולכן לא קיימת נקודה $C$ ששטח המשולש בעבורה הוא $5$.',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+  {
+    id: 'b2025s582a-q2',
+    year: 2025,
+    season: 'summer',
+    moed: 'a',
+    paper: '582',
+    questionNumber: 2,
+    topic: 'וקטורים במרחב',
+    totalPoints: 25,
+    context: [
+      'נתונה פירמידה $SABCD$ שבסיסה $ABCD$ הוא מקבילית.',
+      '$SA$ הוא גובה הפירמידה (המקצוע $SA$ מאונך לבסיס).',
+      'הנקודה $M$ היא אמצע האלכסון $BD$.',
+      'נסמן: $\\;\\vec{AS} = \\vec{w}$, $\\;\\vec{AD} = \\vec{v}$, $\\;\\vec{AB} = \\vec{u}$.',
+    ].join('\n'),
+    diagrams: [
+      {
+        type: 'custom',
+        viewBox: '0 0 210 175',
+        svg: `
+          <line x1="48" y1="115" x2="118" y2="115" stroke="rgba(226,232,240,0.85)" stroke-width="1.5"/>
+          <line x1="118" y1="115" x2="153" y2="139" stroke="rgba(226,232,240,0.85)" stroke-width="1.5"/>
+          <line x1="153" y1="139" x2="83" y2="139" stroke="rgba(148,163,184,0.6)" stroke-width="1.2" stroke-dasharray="4,3"/>
+          <line x1="83" y1="139" x2="48" y2="115" stroke="rgba(148,163,184,0.6)" stroke-width="1.2" stroke-dasharray="4,3"/>
+          <line x1="48" y1="31" x2="118" y2="115" stroke="rgba(226,232,240,0.85)" stroke-width="1.4"/>
+          <line x1="48" y1="31" x2="153" y2="139" stroke="rgba(226,232,240,0.85)" stroke-width="1.4"/>
+          <line x1="48" y1="31" x2="83" y2="139" stroke="rgba(226,232,240,0.85)" stroke-width="1.4"/>
+          <line x1="48" y1="31" x2="48" y2="115" stroke="rgba(251,191,36,0.95)" stroke-width="1.8"/>
+          <line x1="48" y1="115" x2="153" y2="139" stroke="rgba(56,189,248,0.5)" stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="118" y1="115" x2="83" y2="139" stroke="rgba(56,189,248,0.5)" stroke-width="1" stroke-dasharray="3,2"/>
+          <polyline points="48,104 59,104 59,115" fill="none" stroke="rgba(226,232,240,0.7)" stroke-width="1"/>
+          <circle cx="100.5" cy="127" r="2.6" fill="rgba(244,114,182,0.95)"/>
+          <text x="103" y="131" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">M</text>
+          <circle cx="48" cy="31" r="3" fill="rgba(251,191,36,0.95)"/>
+          <text x="40" y="27" fill="#fbbf24" font-size="11" font-family="Heebo, sans-serif">S</text>
+          <circle cx="48" cy="115" r="3" fill="rgba(226,232,240,0.95)"/>
+          <text x="35" y="119" fill="#e2e8f0" font-size="11" font-family="Heebo, sans-serif">A</text>
+          <circle cx="118" cy="115" r="3" fill="rgba(226,232,240,0.95)"/>
+          <text x="122" y="113" fill="#e2e8f0" font-size="11" font-family="Heebo, sans-serif">B</text>
+          <circle cx="153" cy="139" r="3" fill="rgba(226,232,240,0.95)"/>
+          <text x="157" y="143" fill="#e2e8f0" font-size="11" font-family="Heebo, sans-serif">C</text>
+          <circle cx="83" cy="139" r="3" fill="rgba(226,232,240,0.95)"/>
+          <text x="73" y="151" fill="#e2e8f0" font-size="11" font-family="Heebo, sans-serif">D</text>
+          <text x="80" y="110" fill="#60a5fa" font-size="11" font-family="Heebo, sans-serif">u</text>
+          <text x="57" y="135" fill="#c4b5fd" font-size="11" font-family="Heebo, sans-serif">v</text>
+          <text x="34" y="78" fill="#fbbf24" font-size="11" font-family="Heebo, sans-serif">w</text>
+        `,
+        caption:
+          'הפירמידה $SABCD$: הבסיס $ABCD$ הוא מקבילית, והקודקוד $S$ נמצא מעל $A$ (המקצוע $SA$ הוא גובה הפירמידה, מאונך לבסיס). הסימונים: $\\vec{u} = \\vec{AB}$, $\\vec{v} = \\vec{AD}$, $\\vec{w} = \\vec{AS}$, והנקודה $M$ היא מפגש האלכסונים (אמצע $BD$ ואמצע $AC$).',
+      },
+    ],
+    parts: [
+      {
+        label: 'א',
+        prompt: 'הביעו באמצעות $\\vec{u}$, $\\vec{v}$ ו-$\\vec{w}$ את הווקטור $\\vec{SM}$.',
+        answer_type: 'expression',
+        hints: [
+          'פרקו את המסלול: $\\;\\vec{SM} = \\vec{SA} + \\vec{AM}$.',
+          'במקבילית $M$ הוא גם אמצע $AC$, ולכן $\\;\\vec{AM} = \\tfrac{1}{2}\\vec{AC} = \\tfrac{1}{2}(\\vec{u} + \\vec{v})$.',
+          'זכרו ש-$\\vec{SA} = -\\vec{AS} = -\\vec{w}$.',
+        ],
+        solution: {
+          steps: [
+            'מפרקים את $\\vec{SM}$ דרך הנקודה $A$: $\\;\\vec{SM} = \\vec{SA} + \\vec{AM}$.',
+            '$\\vec{SA}$ הוא הנגדי של $\\vec{AS} = \\vec{w}$, ולכן $\\;\\vec{SA} = -\\vec{w}$.',
+            'במקבילית האלכסונים חוצים זה את זה, ולכן $M$ (אמצע $BD$) הוא גם אמצע $AC$. מכאן $\\;\\vec{AM} = \\tfrac{1}{2}\\vec{AC}$.',
+            'מבטאים את האלכסון: $\\;\\vec{AC} = \\vec{AB} + \\vec{BC}$. במקבילית $\\vec{BC} = \\vec{AD} = \\vec{v}$, ולכן $\\;\\vec{AC} = \\vec{u} + \\vec{v}$.',
+            'מציבים: $\\;\\vec{AM} = \\tfrac{1}{2}(\\vec{u} + \\vec{v})$.',
+            'מחברים: $\\;\\vec{SM} = \\vec{SA} + \\vec{AM} = -\\vec{w} + \\tfrac{1}{2}(\\vec{u} + \\vec{v})$.',
+            'מסדרים: $\\;\\vec{SM} = \\tfrac{1}{2}\\vec{u} + \\tfrac{1}{2}\\vec{v} - \\vec{w}$.',
+          ],
+          final_answer: '$\\vec{SM} = \\tfrac{1}{2}\\vec{u} + \\tfrac{1}{2}\\vec{v} - \\vec{w}$',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: [
+          'נתון כי $\\vec{SM}$ מאונך ל-$\\vec{DB}$.',
+          '',
+          'הוכיחו כי $|\\vec{u}| = |\\vec{v}|$.',
+        ].join('\n'),
+        answer_type: 'proof',
+        hints: [
+          'אם $\\vec{SM} \\perp \\vec{DB}$ אז המכפלה הסקלרית מתאפסת: $\\;\\vec{SM} \\cdot \\vec{DB} = 0$.',
+          'הציבו את $\\vec{SM}$ מסעיף א ואת $\\vec{DB} = \\vec{u} - \\vec{v}$, ופתחו את המכפלה.',
+          '$SA$ גובה ⟹ $\\vec{w} \\cdot \\vec{u} = \\vec{w} \\cdot \\vec{v} = 0$ — זה מאפס את כל האיברים שבהם מופיע $\\vec{w}$.',
+        ],
+        solution: {
+          steps: [
+            'נתון ש-$\\vec{SM} \\perp \\vec{DB}$, ולכן המכפלה הסקלרית ביניהם מתאפסת: $\\;\\vec{SM} \\cdot \\vec{DB} = 0$.',
+            'מסעיף א: $\\;\\vec{SM} = \\tfrac{1}{2}\\vec{u} + \\tfrac{1}{2}\\vec{v} - \\vec{w}$.',
+            'מבטאים את $\\vec{DB}$: $\\;\\vec{DB} = \\vec{DA} + \\vec{AB} = -\\vec{v} + \\vec{u} = \\vec{u} - \\vec{v}$.',
+            'מכיוון ש-$SA$ הוא גובה הפירמידה, $\\vec{w} = \\vec{AS}$ מאונך לבסיס, ולכן $\\;\\vec{w} \\cdot \\vec{u} = 0$ וגם $\\vec{w} \\cdot \\vec{v} = 0$.',
+            'מציבים: $\\;\\left(\\tfrac{1}{2}\\vec{u} + \\tfrac{1}{2}\\vec{v} - \\vec{w}\\right) \\cdot (\\vec{u} - \\vec{v}) = 0$.',
+            'פותחים סוגריים: $\\;\\tfrac{1}{2}\\vec{u}\\cdot\\vec{u} - \\tfrac{1}{2}\\vec{u}\\cdot\\vec{v} + \\tfrac{1}{2}\\vec{v}\\cdot\\vec{u} - \\tfrac{1}{2}\\vec{v}\\cdot\\vec{v} - \\vec{w}\\cdot\\vec{u} + \\vec{w}\\cdot\\vec{v} = 0$.',
+            'האיברים $-\\tfrac{1}{2}\\vec{u}\\cdot\\vec{v}$ ו-$+\\tfrac{1}{2}\\vec{v}\\cdot\\vec{u}$ מצטמצמים (כי $\\vec{u}\\cdot\\vec{v} = \\vec{v}\\cdot\\vec{u}$), והאיברים $\\vec{w}\\cdot\\vec{u}$ ו-$\\vec{w}\\cdot\\vec{v}$ מתאפסים.',
+            'נשאר: $\\;\\tfrac{1}{2}\\vec{u}\\cdot\\vec{u} - \\tfrac{1}{2}\\vec{v}\\cdot\\vec{v} = 0$, כלומר $\\;\\tfrac{1}{2}|\\vec{u}|^2 = \\tfrac{1}{2}|\\vec{v}|^2$.',
+            'מכאן $\\;|\\vec{u}|^2 = |\\vec{v}|^2$, ומכיוון שאורך אינו שלילי: $\\;|\\vec{u}| = |\\vec{v}|$.',
+          ],
+          final_answer: 'הוכחנו: $\\;|\\vec{u}| = |\\vec{v}|$ (כלומר הבסיס $ABCD$ הוא מעוין).',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: [
+          'נתון: $\\;S(0, 0, 12)$, $\\;B(0, 10, 0)$, $\\;A(0, 0, 0)$, וכן $\\;p > 0$, $\\;D(6, p, 0)$.',
+          '',
+          'מצאו את שיעורי הנקודות $D$ ו-$C$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'חשבו את $\\vec{u} = \\vec{AB}$ ואת $\\vec{v} = \\vec{AD}$ מהשיעורים הנתונים.',
+          'מסעיף ב $|\\vec{u}| = |\\vec{v}|$ — השוו את הגדלים ופתרו עבור $p$ (זכרו $p > 0$).',
+          'במקבילית $\\vec{BC} = \\vec{AD}$, ולכן $\\;C = B + \\vec{AD}$.',
+        ],
+        solution: {
+          steps: [
+            'מחשבים את הווקטורים מהנקודה $A(0,0,0)$: $\\;\\vec{u} = \\vec{AB} = B - A = (0, 10, 0)$.',
+            '$\\;\\vec{v} = \\vec{AD} = D - A = (6, p, 0)$.',
+            'מסעיף ב ידוע ש-$|\\vec{u}| = |\\vec{v}|$, ולכן $\\;|(0, 10, 0)| = |(6, p, 0)|$.',
+            'מחשבים את הגדלים: $\\;\\sqrt{0^2 + 10^2 + 0^2} = \\sqrt{6^2 + p^2 + 0^2}$, כלומר $\\;\\sqrt{100} = \\sqrt{36 + p^2}$.',
+            'מעלים בריבוע: $\\;100 = 36 + p^2$.',
+            'מבודדים: $\\;p^2 = 64 \\Rightarrow p = \\pm 8$. מכיוון ש-$p > 0$: $\\;p = 8$, ולכן $\\;D(6, 8, 0)$.',
+            'מוצאים את $C$: במקבילית $ABCD$ מתקיים $\\;\\vec{BC} = \\vec{AD} = (6, 8, 0)$.',
+            'לכן $\\;C = B + \\vec{BC} = (0, 10, 0) + (6, 8, 0) = (6, 18, 0)$.',
+          ],
+          final_answer: '$D(6,\\, 8,\\, 0)$ ו-$C(6,\\, 18,\\, 0)$.',
+        },
+      },
+      {
+        label: 'ד',
+        prompt: [
+          'דרך האלכסון $AC$ מעבירים מישור המקביל למקצוע $SD$. המישור חותך את המקצוע $SB$ בנקודה $K$.',
+          '',
+          'מצאו את משוואת המישור.',
+        ].join('\n'),
+        answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 210 175',
+            svg: `
+              <line x1="48" y1="115" x2="118" y2="115" stroke="rgba(148,163,184,0.4)" stroke-width="1"/>
+              <line x1="118" y1="115" x2="153" y2="139" stroke="rgba(148,163,184,0.4)" stroke-width="1"/>
+              <line x1="153" y1="139" x2="83" y2="139" stroke="rgba(148,163,184,0.3)" stroke-width="1" stroke-dasharray="4,3"/>
+              <line x1="83" y1="139" x2="48" y2="115" stroke="rgba(148,163,184,0.3)" stroke-width="1" stroke-dasharray="4,3"/>
+              <line x1="48" y1="31" x2="118" y2="115" stroke="rgba(148,163,184,0.45)" stroke-width="1"/>
+              <line x1="48" y1="31" x2="153" y2="139" stroke="rgba(148,163,184,0.4)" stroke-width="1"/>
+              <line x1="48" y1="31" x2="48" y2="115" stroke="rgba(148,163,184,0.45)" stroke-width="1"/>
+              <polygon points="48,115 153,139 83,73" fill="rgba(168,85,247,0.13)" stroke="rgba(168,85,247,0.9)" stroke-width="1.5"/>
+              <line x1="48" y1="31" x2="83" y2="139" stroke="rgba(52,211,153,0.95)" stroke-width="1.9"/>
+              <line x1="83" y1="73" x2="100.5" y2="127" stroke="rgba(52,211,153,0.95)" stroke-width="1.9"/>
+              <polyline points="67,80 66,86 62,82" fill="none" stroke="rgba(52,211,153,0.95)" stroke-width="1.2"/>
+              <polyline points="93,94 92,100 88,96" fill="none" stroke="rgba(52,211,153,0.95)" stroke-width="1.2"/>
+              <circle cx="48" cy="31" r="3" fill="rgba(226,232,240,0.95)"/>
+              <text x="40" y="27" fill="#e2e8f0" font-size="11" font-family="Heebo, sans-serif">S</text>
+              <circle cx="48" cy="115" r="3" fill="rgba(226,232,240,0.95)"/>
+              <text x="35" y="119" fill="#e2e8f0" font-size="11" font-family="Heebo, sans-serif">A</text>
+              <circle cx="118" cy="115" r="3" fill="rgba(226,232,240,0.95)"/>
+              <text x="122" y="113" fill="#e2e8f0" font-size="11" font-family="Heebo, sans-serif">B</text>
+              <circle cx="153" cy="139" r="3" fill="rgba(226,232,240,0.95)"/>
+              <text x="157" y="143" fill="#e2e8f0" font-size="11" font-family="Heebo, sans-serif">C</text>
+              <circle cx="83" cy="139" r="3" fill="rgba(226,232,240,0.95)"/>
+              <text x="73" y="151" fill="#e2e8f0" font-size="11" font-family="Heebo, sans-serif">D</text>
+              <circle cx="83" cy="73" r="3.2" fill="rgba(251,191,36,0.95)"/>
+              <text x="71" y="71" fill="#fbbf24" font-size="11" font-family="Heebo, sans-serif">K</text>
+              <circle cx="100.5" cy="127" r="3" fill="rgba(244,114,182,0.95)"/>
+              <text x="104" y="131" fill="#f472b6" font-size="11" font-family="Heebo, sans-serif">M</text>
+              <text x="38" y="92" fill="#34d399" font-size="9.5" font-family="Heebo, sans-serif">SD</text>
+              <text x="104" y="106" fill="#34d399" font-size="9.5" font-family="Heebo, sans-serif">KM</text>
+            `,
+            caption:
+              'המישור $ACK$ עובר דרך האלכסון $AC$ ומקביל למקצוע $SD$, וחותך את $SB$ באמצעו בנקודה $K(0, 5, 6)$. הקטע $KM$ אל מרכז הבסיס $M(3, 9, 0)$ מקביל למקצוע $SD$ (מסומן בחצים).',
+          },
+        ],
+        hints: [
+          'הנורמל למישור מאונך לשני וקטורי הכיוון שבמישור: $\\vec{AC}$ ו-$\\vec{SD}$.',
+          'צמצמו: $\\vec{AC} \\parallel (1, 3, 0)$ ו-$\\vec{SD} \\parallel (3, 4, -6)$. פתרו $\\vec{n} \\cdot \\vec{AC} = 0$ ו-$\\vec{n} \\cdot \\vec{SD} = 0$.',
+          'הציבו את $A(0, 0, 0)$ כדי למצוא את האיבר החופשי.',
+        ],
+        solution: {
+          steps: [
+            'המישור מכיל את האלכסון $AC$ ומקביל למקצוע $SD$. הנורמל $\\vec{n}$ של המישור מאונך לשני הכיוונים האלה.',
+            'וקטור הכיוון של $AC$: $\\;\\vec{AC} = C - A = (6, 18, 0)$, ובצמצום $\\;(1, 3, 0)$.',
+            'וקטור הכיוון של $SD$: $\\;\\vec{SD} = D - S = (6, 8, 0) - (0, 0, 12) = (6, 8, -12)$, ובצמצום $\\;(3, 4, -6)$.',
+            'נסמן $\\vec{n} = (a, b, c)$. תנאי $\\vec{n} \\perp \\vec{AC}$: $\\;a + 3b = 0 \\Rightarrow a = -3b$.',
+            'תנאי $\\vec{n} \\perp \\vec{SD}$: $\\;3a + 4b - 6c = 0$.',
+            'מציבים $a = -3b$: $\\;3(-3b) + 4b - 6c = 0 \\Rightarrow -5b = 6c \\Rightarrow b = -\\tfrac{6}{5}c$.',
+            'בוחרים $c = 5$: $\\;b = -6$, $\\;a = -3b = 18$, ולכן $\\;\\vec{n} = (18, -6, 5)$.',
+            'משוואת המישור: $\\;18x - 6y + 5z + d = 0$. מציבים את $A(0, 0, 0)$ ומקבלים $\\;d = 0$.',
+          ],
+          final_answer: 'משוואת המישור: $\\;18x - 6y + 5z = 0$.',
+        },
+      },
+      {
+        label: 'ה1',
+        prompt: 'קבעו אם הטענה הבאה נכונה או אינה נכונה, ונמקו: הישר $KM$ מקביל לישר $SD$.',
+        answer_type: 'proof',
+        hints: [
+          'מצאו תחילה את $K$ — הציבו הצגה פרמטרית של $SB$ במשוואת המישור מסעיף ד.',
+          '$M$ הוא אמצע $AC$ (וגם אמצע $BD$). חשבו את $\\vec{KM}$ והשוו לכיוון $\\vec{SD}$.',
+          'אם $\\vec{KM}$ ו-$\\vec{SD}$ הם כפולה זה של זה — הישרים מקבילים.',
+        ],
+        solution: {
+          steps: [
+            'נמצא את $K$ — חיתוך המישור עם המקצוע $SB$. הצגה פרמטרית של $SB$ דרך $B$: $\\;\\underline{x} = B + t(B - S) = (0, 10, 0) + t(0, 10, -12) = (0,\\ 10 + 10t,\\ -12t)$.',
+            'מציבים במשוואת המישור $18x - 6y + 5z = 0$: $\\;18 \\cdot 0 - 6(10 + 10t) + 5(-12t) = 0$.',
+            'מפשטים: $\\;-60 - 60t - 60t = 0 \\Rightarrow -120t = 60 \\Rightarrow t = -\\tfrac{1}{2}$.',
+            'מציבים $t = -\\tfrac{1}{2}$: $\\;K = (0,\\ 10 - 5,\\ 6) = (0, 5, 6)$.',
+            'הנקודה $M$ היא אמצע $BD$ (וגם אמצע $AC$): $\\;M = \\left(\\tfrac{0 + 6}{2},\\ \\tfrac{0 + 18}{2},\\ 0\\right) = (3, 9, 0)$.',
+            'וקטור הכיוון של $KM$: $\\;\\vec{KM} = M - K = (3, 9, 0) - (0, 5, 6) = (3, 4, -6)$.',
+            'וקטור הכיוון של $SD$: $\\;\\vec{SD} = (6, 8, -12) = 2 \\cdot (3, 4, -6) = 2\\,\\vec{KM}$.',
+            'הווקטורים $\\vec{KM}$ ו-$\\vec{SD}$ מקבילים (כפולה זה של זה), ו-$K$ אינה מונחת על $SD$, ולכן הישרים מקבילים.',
+          ],
+          final_answer: 'הטענה נכונה — $\\;\\vec{KM} = \\tfrac{1}{2}\\vec{SD}$, ולכן $KM \\parallel SD$.',
+        },
+      },
+      {
+        label: 'ה2',
+        prompt:
+          'קבעו אם הטענה הבאה נכונה או אינה נכונה, ונמקו: כל ישר שמאונך למישור $ACK$ מאונך גם לישר $SD$.',
+        answer_type: 'proof',
+        hints: [
+          'המישור $ACK$ הוא בדיוק המישור מסעיף ד (שלוש הנקודות $A, C, K$ נמצאות עליו).',
+          'המישור נבנה מקביל ל-$SD$, ולכן הנורמל שלו מאונך ל-$SD$. בדקו את $\\vec{n} \\cdot \\vec{SD}$.',
+          'ישר המאונך למישור מקביל לנורמל — מה זה אומר על הזווית שלו עם $SD$?',
+        ],
+        solution: {
+          steps: [
+            'המישור $ACK$ הוא המישור שמצאנו בסעיף ד: הנקודות $A$ ו-$C$ עליו לפי הבנייה, וגם $K(0,5,6)$ עליו, שכן $\\;18 \\cdot 0 - 6 \\cdot 5 + 5 \\cdot 6 = -30 + 30 = 0$.',
+            'מישור זה נבנה כך שהוא מקביל ל-$SD$, ולכן הנורמל שלו $\\vec{n} = (18, -6, 5)$ מאונך ל-$SD$.',
+            'בדיקה: $\\;\\vec{n} \\cdot \\vec{SD} = (18)(6) + (-6)(8) + (5)(-12) = 108 - 48 - 60 = 0$ — אכן מאונכים.',
+            'כל ישר המאונך למישור $ACK$ מקביל לנורמל $\\vec{n}$.',
+            'מכיוון ש-$\\vec{n} \\perp \\vec{SD}$, גם כל ישר המקביל ל-$\\vec{n}$ מאונך ל-$SD$.',
+          ],
+          final_answer: 'הטענה נכונה — הנורמל למישור $ACK$ מאונך ל-$SD$, ולכן כל ישר המאונך למישור (ומקביל לנורמל) מאונך ל-$SD$.',
         },
       },
     ],
