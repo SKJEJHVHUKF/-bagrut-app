@@ -7,6 +7,8 @@
  *
  * תוכן השאלון:
  *   Q1 — גאומטריה אנליטית (אליפסה עם פרמטר, מוקד, מעגל, משיק, ריבוע חסום).
+ *   Q2 — וקטורים במרחב (מנסרה ישרה, וקטורי בסיס, קולינאריות, מישור, נפח פירמידה).
+ *   Q3 — מספרים מרוכבים (חילוק, שורשי משוואה, קולינאריות, מצולע במישור גאוס, שטח).
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -218,6 +220,428 @@ export const bagrut2025Summer582MoedB: PastBagrutQuestion[] = [
             'מבודדים: $\\;k = \\dfrac{22.5}{15} = \\dfrac{3}{2}$.',
           ],
           final_answer: '$k = \\dfrac{3}{2}$',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+  {
+    id: 'b2025s582b-q2',
+    year: 2025,
+    season: 'summer',
+    moed: 'b',
+    paper: '582',
+    questionNumber: 2,
+    topic: 'וקטורים במרחב',
+    totalPoints: 25,
+    context: [
+      "בסרטוט שלפניכם מנסרה ישרה $AOBA'O'B'$ שבסיסה $AOB$ הוא משולש ישר-זווית, $\\angle AOB = 90°$.",
+      "הנקודה $K$ היא אמצע המקצוע $AB$.",
+      "הנקודה $E$ נמצאת על הקטע $O'B$ כך ש-$\\overrightarrow{O'E} = \\frac{1}{3}\\,\\overrightarrow{O'B}$.",
+      "הנקודה $N$ נמצאת על הקטע $AE$ כך ש-$\\overrightarrow{AN} = \\frac{3}{4}\\,\\overrightarrow{AE}$.",
+      "נסמן: $\\;\\overrightarrow{OO'} = \\underline{w}$, $\\;\\overrightarrow{OB} = \\underline{v}$, $\\;\\overrightarrow{OA} = \\underline{u}$.",
+    ].join("\n"),
+    diagrams: [
+      {
+        type: 'custom',
+        viewBox: '62 132 138 162',
+        svg: `
+          <polygon points="86,271 164,235 110,235" fill="rgba(96,165,250,0.05)" stroke="none"/>
+          <line x1="86" y1="271" x2="164" y2="235" stroke="rgba(226,232,240,0.85)" stroke-width="1.4"/>
+          <line x1="86" y1="271" x2="86" y2="179.2" stroke="rgba(226,232,240,0.85)" stroke-width="1.4"/>
+          <line x1="164" y1="235" x2="164" y2="143.2" stroke="rgba(226,232,240,0.85)" stroke-width="1.4"/>
+          <line x1="86" y1="179.2" x2="164" y2="143.2" stroke="rgba(226,232,240,0.85)" stroke-width="1.4"/>
+          <line x1="110" y1="143.2" x2="86" y2="179.2" stroke="rgba(226,232,240,0.85)" stroke-width="1.4"/>
+          <line x1="110" y1="143.2" x2="164" y2="143.2" stroke="rgba(226,232,240,0.85)" stroke-width="1.4"/>
+          <line x1="110" y1="235" x2="86" y2="271" stroke="rgba(96,165,250,0.9)" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="110" y1="235" x2="164" y2="235" stroke="rgba(96,165,250,0.9)" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="110" y1="235" x2="110" y2="143.2" stroke="rgba(96,165,250,0.9)" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <polyline points="118,235 113.56,241.66 105.56,241.66" fill="none" stroke="rgba(148,163,184,0.8)" stroke-width="1"/>
+          <line x1="110" y1="143.2" x2="164" y2="235" stroke="rgba(56,189,248,0.75)" stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="86" y1="271" x2="128" y2="173.8" stroke="rgba(56,189,248,0.75)" stroke-width="1"/>
+          <line x1="110" y1="143.2" x2="125" y2="253" stroke="rgba(251,191,36,0.95)" stroke-width="1.5"/>
+          <circle cx="110" cy="235" r="2.4" fill="rgba(226,232,240,0.9)"/>
+          <text x="99" y="231" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">O</text>
+          <circle cx="86" cy="271" r="3" fill="rgba(226,232,240,0.95)"/>
+          <text x="74" y="280" fill="#e2e8f0" font-size="10" font-family="Heebo, sans-serif">A</text>
+          <circle cx="164" cy="235" r="3" fill="rgba(226,232,240,0.95)"/>
+          <text x="169" y="240" fill="#e2e8f0" font-size="10" font-family="Heebo, sans-serif">B</text>
+          <circle cx="110" cy="143.2" r="3" fill="rgba(226,232,240,0.95)"/>
+          <text x="97" y="139" fill="#e2e8f0" font-size="10" font-family="Heebo, sans-serif">O'</text>
+          <circle cx="86" cy="179.2" r="3" fill="rgba(226,232,240,0.95)"/>
+          <text x="72" y="181" fill="#e2e8f0" font-size="10" font-family="Heebo, sans-serif">A'</text>
+          <circle cx="164" cy="143.2" r="3" fill="rgba(226,232,240,0.95)"/>
+          <text x="169" y="143" fill="#e2e8f0" font-size="10" font-family="Heebo, sans-serif">B'</text>
+          <circle cx="125" cy="253" r="2.8" fill="rgba(244,114,182,0.95)"/>
+          <text x="129" y="262" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">K</text>
+          <circle cx="128" cy="173.8" r="2.8" fill="rgba(56,189,248,0.95)"/>
+          <text x="133" y="171" fill="#38bdf8" font-size="10" font-family="Heebo, sans-serif">E</text>
+          <circle cx="117.5" cy="198.1" r="2.8" fill="rgba(251,191,36,0.95)"/>
+          <text x="104" y="201" fill="#fbbf24" font-size="10" font-family="Heebo, sans-serif">N</text>
+          <text x="89" y="257" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">u</text>
+          <text x="139" y="231" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">v</text>
+          <text x="98" y="193" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">w</text>
+        `,
+        caption:
+          "המנסרה הישרה $AOBA'O'B'$ (הבסיס $AOB$ ישר-זווית ב-$O$). הקטעים המקווקווים הם וקטורי הבסיס $\\underline{u}=\\overrightarrow{OA}$, $\\underline{v}=\\overrightarrow{OB}$, $\\underline{w}=\\overrightarrow{OO'}$. הנקודה $E$ על האלכסון $O'B$, $N$ על $AE$, ו-$K$ אמצע $AB$; שלוש הנקודות $O'$, $N$, $K$ על ישר אחד (בזהב).",
+      },
+    ],
+    parts: [
+      {
+        label: 'א1',
+        prompt: "הביעו באמצעות $\\underline{u}$, $\\underline{v}$ ו-$\\underline{w}$ את $\\overrightarrow{O'N}$.",
+        answer_type: 'expression',
+        hints: [
+          "פרקו את $\\overrightarrow{O'N}$ לאורך מסלול: $\\overrightarrow{O'O} + \\overrightarrow{OA} + \\overrightarrow{AN}$.",
+          "הביעו את $\\overrightarrow{AE}$ דרך $\\overrightarrow{AO} + \\overrightarrow{OO'} + \\overrightarrow{O'E}$, וזכרו $\\overrightarrow{O'B} = -\\underline{w} + \\underline{v}$.",
+          "הציבו $\\overrightarrow{AN} = \\frac{3}{4}\\overrightarrow{AE}$ ואספו מקדמים לכל וקטור.",
+        ],
+        solution: {
+          steps: [
+            "נפרק את $\\overrightarrow{O'N}$ לאורך מסלול: $\\;\\overrightarrow{O'N} = \\overrightarrow{O'O} + \\overrightarrow{OA} + \\overrightarrow{AN}$.",
+            "לפי הסימון: $\\;\\overrightarrow{O'O} = -\\underline{w}$ ו-$\\overrightarrow{OA} = \\underline{u}$.",
+            "נחשב את $\\overrightarrow{AE}$: $\\;\\overrightarrow{AE} = \\overrightarrow{AO} + \\overrightarrow{OO'} + \\overrightarrow{O'E}$.",
+            "מציבים $\\overrightarrow{AO} = -\\underline{u}$, $\\overrightarrow{OO'} = \\underline{w}$ ו-$\\overrightarrow{O'E} = \\frac{1}{3}\\overrightarrow{O'B}$: $\\;\\overrightarrow{AE} = -\\underline{u} + \\underline{w} + \\frac{1}{3}\\overrightarrow{O'B}$.",
+            "וקטור האלכסון: $\\;\\overrightarrow{O'B} = \\overrightarrow{O'O} + \\overrightarrow{OB} = -\\underline{w} + \\underline{v}$.",
+            "מציבים: $\\;\\overrightarrow{AE} = -\\underline{u} + \\underline{w} + \\frac{1}{3}(-\\underline{w} + \\underline{v})$.",
+            "מסדרים: $\\;\\overrightarrow{AE} = -\\underline{u} + \\frac{1}{3}\\underline{v} + \\frac{2}{3}\\underline{w}$.",
+            "מציבים ב-$\\overrightarrow{AN} = \\frac{3}{4}\\overrightarrow{AE}$: $\\;\\overrightarrow{AN} = -\\frac{3}{4}\\underline{u} + \\frac{1}{4}\\underline{v} + \\frac{1}{2}\\underline{w}$.",
+            "חוזרים ל-$\\overrightarrow{O'N} = -\\underline{w} + \\underline{u} + \\overrightarrow{AN}$: $\\;\\overrightarrow{O'N} = -\\underline{w} + \\underline{u} - \\frac{3}{4}\\underline{u} + \\frac{1}{4}\\underline{v} + \\frac{1}{2}\\underline{w}$.",
+            "אוספים מקדמים: $\\;\\overrightarrow{O'N} = \\frac{1}{4}\\underline{u} + \\frac{1}{4}\\underline{v} - \\frac{1}{2}\\underline{w}$.",
+          ],
+          final_answer: "$\\overrightarrow{O'N} = \\dfrac{1}{4}\\underline{u} + \\dfrac{1}{4}\\underline{v} - \\dfrac{1}{2}\\underline{w}$",
+        },
+      },
+      {
+        label: 'א2',
+        prompt: "הוכיחו כי הנקודות $O'$, $N$, $K$ נמצאות על ישר אחד, ומצאו את היחס בין $O'K$ ובין $O'N$.",
+        answer_type: 'proof',
+        hints: [
+          "חשבו את $\\overrightarrow{O'K}$ באותו אופן, עם $\\overrightarrow{AK} = \\frac{1}{2}\\overrightarrow{AB}$ (כי $K$ אמצע $AB$).",
+          "בדקו אם $\\overrightarrow{O'N}$ ו-$\\overrightarrow{O'K}$ מקבילים (כפולה סקלרית זה של זה).",
+          "וקטורים מקבילים היוצאים מנקודה משותפת $O'$ מעידים על שלוש נקודות על ישר אחד; היחס נקבע מהמקדם.",
+        ],
+        solution: {
+          steps: [
+            "נחשב את $\\overrightarrow{O'K}$: $\\;\\overrightarrow{O'K} = \\overrightarrow{O'O} + \\overrightarrow{OA} + \\overrightarrow{AK}$.",
+            "$K$ אמצע $AB$, לכן $\\;\\overrightarrow{AK} = \\frac{1}{2}\\overrightarrow{AB} = \\frac{1}{2}(-\\underline{u} + \\underline{v})$.",
+            "מציבים: $\\;\\overrightarrow{O'K} = -\\underline{w} + \\underline{u} + \\frac{1}{2}(-\\underline{u} + \\underline{v})$.",
+            "מסדרים: $\\;\\overrightarrow{O'K} = \\frac{1}{2}\\underline{u} + \\frac{1}{2}\\underline{v} - \\underline{w}$.",
+            "משווים ל-$\\overrightarrow{O'N} = \\frac{1}{4}\\underline{u} + \\frac{1}{4}\\underline{v} - \\frac{1}{2}\\underline{w}$: כל מקדם ב-$\\overrightarrow{O'N}$ הוא חצי מהמקדם המתאים ב-$\\overrightarrow{O'K}$.",
+            "לכן $\\;\\overrightarrow{O'N} = \\frac{1}{2}\\overrightarrow{O'K}$.",
+            "הוקטורים $\\overrightarrow{O'N}$ ו-$\\overrightarrow{O'K}$ מקבילים ויוצאים מאותה נקודה $O'$, ולכן $O'$, $N$, $K$ נמצאות על ישר אחד ($N$ אף אמצע $O'K$).",
+            "מהקשר $\\overrightarrow{O'K} = 2\\,\\overrightarrow{O'N}$ נובע היחס: $\\;\\dfrac{O'K}{O'N} = 2$.",
+          ],
+          final_answer: "הנקודות על ישר אחד (כי $\\overrightarrow{O'N} = \\frac{1}{2}\\overrightarrow{O'K}$), והיחס $\\dfrac{O'K}{O'N} = 2$.",
+        },
+      },
+      {
+        label: 'ב',
+        prompt: [
+          "נתון: $\\;E(0, 3, 18)$, $\\;A(12, 0, 0)$, $\\;O(0, 0, 0)$. הקודקוד $B$ נמצא על החלק החיובי של ציר ה-$y$, והקודקוד $O'$ נמצא על החלק החיובי של ציר ה-$z$.",
+          "",
+          "מצאו את שיעורי הנקודות $N$ ו-$B$.",
+        ].join("\n"),
+        answer_type: 'expression',
+        hints: [
+          "ל-$N$: השתמשו ב-$\\overrightarrow{AN} = \\frac{3}{4}\\overrightarrow{AE} = \\frac{3}{4}(E - A)$, ואז $N = A + \\overrightarrow{AN}$.",
+          "ל-$B$ ו-$O'$: כתבו $B(0, y, 0)$ ו-$O'(0, 0, z)$, והשתמשו ב-$\\overrightarrow{O'E} = \\frac{1}{3}\\overrightarrow{O'B}$ רכיב-רכיב.",
+        ],
+        solution: {
+          steps: [
+            "מציאת $N$: $\\;\\overrightarrow{AN} = \\frac{3}{4}\\overrightarrow{AE} = \\frac{3}{4}(E - A)$.",
+            "מחשבים את $E - A = (0 - 12,\\ 3 - 0,\\ 18 - 0) = (-12,\\ 3,\\ 18)$.",
+            "לכן $\\;\\overrightarrow{AN} = \\frac{3}{4}(-12,\\ 3,\\ 18) = \\left(-9,\\ \\tfrac{9}{4},\\ \\tfrac{27}{2}\\right)$.",
+            "הנקודה $\\;N = A + \\overrightarrow{AN} = (12,\\ 0,\\ 0) + \\left(-9,\\ \\tfrac{9}{4},\\ \\tfrac{27}{2}\\right)$.",
+            "מסכמים: $\\;N = \\left(3,\\ \\tfrac{9}{4},\\ \\tfrac{27}{2}\\right)$, כלומר $N(3,\\ 2.25,\\ 13.5)$.",
+            "מציאת $B$: נסמן $B(0,\\ y,\\ 0)$ (על ציר $y$ חיובי) ו-$O'(0,\\ 0,\\ z)$ (על ציר $z$ חיובי).",
+            "הנתון $\\overrightarrow{O'E} = \\frac{1}{3}\\overrightarrow{O'B}$ נותן $\\;E - O' = \\frac{1}{3}(B - O')$.",
+            "מציבים: $\\;(0,\\ 3,\\ 18) - (0,\\ 0,\\ z) = \\frac{1}{3}\\big((0,\\ y,\\ 0) - (0,\\ 0,\\ z)\\big)$.",
+            "כלומר $\\;(0,\\ 3,\\ 18 - z) = \\left(0,\\ \\tfrac{1}{3}y,\\ -\\tfrac{1}{3}z\\right)$.",
+            "רכיב $y$: $\\;3 = \\tfrac{1}{3}y \\Rightarrow y = 9$.",
+            "רכיב $z$: $\\;18 - z = -\\tfrac{1}{3}z \\Rightarrow 18 = \\tfrac{2}{3}z \\Rightarrow z = 27$.",
+            "לכן $\\;B(0,\\ 9,\\ 0)$ (וגם $O'(0,\\ 0,\\ 27)$).",
+          ],
+          final_answer: "$N\\left(3,\\ \\tfrac{9}{4},\\ \\tfrac{27}{2}\\right) = (3,\\ 2.25,\\ 13.5)$ ו-$B(0,\\ 9,\\ 0)$.",
+        },
+      },
+      {
+        label: 'ג',
+        prompt: "מצאו את משוואת המישור $A'KB'$.",
+        answer_type: 'expression',
+        hints: [
+          "מצאו תחילה את הקודקודים: $A' = A + \\overrightarrow{OO'}$, $B' = B + \\overrightarrow{OO'}$ (מנסרה ישרה), ו-$K$ אמצע $AB$.",
+          "הנורמל $\\vec{n} = (a,b,c)$ מאונך לשני וקטורי כיוון במישור, למשל $\\overrightarrow{KA'}$ ו-$\\overrightarrow{KB'}$.",
+          "פתרו את המערכת לנורמל, והציבו אחת הנקודות למציאת האיבר החופשי.",
+        ],
+        solution: {
+          steps: [
+            "במנסרה ישרה הפאה העליונה מוזזת ב-$\\overrightarrow{OO'} = (0, 0, 27)$: $\\;A' = (12,\\ 0,\\ 27)$ ו-$B' = (0,\\ 9,\\ 27)$.",
+            "הנקודה $K$ אמצע $AB$: $\\;K = \\frac{A + B}{2} = \\frac{(12, 0, 0) + (0, 9, 0)}{2} = (6,\\ 4.5,\\ 0)$.",
+            "וקטור כיוון ראשון במישור: $\\;\\overrightarrow{KA'} = A' - K = (6,\\ -4.5,\\ 27)$.",
+            "וקטור כיוון שני: $\\;\\overrightarrow{KB'} = B' - K = (-6,\\ 4.5,\\ 27)$.",
+            "הנורמל $\\vec{n} = (a, b, c)$ מאונך לשניהם: $\\;6a - 4.5b + 27c = 0$ וגם $-6a + 4.5b + 27c = 0$.",
+            "מחברים את שתי המשוואות: $\\;54c = 0 \\Rightarrow c = 0$.",
+            "מחסרים: $\\;12a - 9b = 0 \\Rightarrow b = \\frac{4}{3}a$. בוחרים $a = 3$, ואז $b = 4$, $\\;\\vec{n} = (3,\\ 4,\\ 0)$.",
+            "משוואת המישור: $\\;3x + 4y + d = 0$. מציבים $A'(12, 0, 27)$: $\\;3 \\cdot 12 + 4 \\cdot 0 + d = 0 \\Rightarrow d = -36$.",
+            "משוואת המישור: $\\;3x + 4y - 36 = 0$.",
+          ],
+          final_answer: "$3x + 4y - 36 = 0$",
+        },
+      },
+      {
+        label: 'ד1',
+        prompt: "מצאו את המרחק בין הנקודה $N$ ובין המישור $A'KB'$.",
+        answer_type: 'number',
+        hints: [
+          "השתמשו בנוסחת המרחק מנקודה למישור: $d = \\dfrac{|a x_0 + b y_0 + c z_0 + d|}{\\sqrt{a^2 + b^2 + c^2}}$.",
+          "הציבו את $N(3,\\ 2.25,\\ 13.5)$ ואת מקדמי המישור $3x + 4y - 36 = 0$.",
+        ],
+        solution: {
+          steps: [
+            "נוסחת המרחק מנקודה $N(x_0, y_0, z_0)$ למישור $3x + 4y - 36 = 0$: $\\;d = \\dfrac{|3x_0 + 4y_0 - 36|}{\\sqrt{3^2 + 4^2}}$.",
+            "מציבים $N(3,\\ 2.25,\\ 13.5)$: $\\;d = \\dfrac{|3 \\cdot 3 + 4 \\cdot 2.25 - 36|}{\\sqrt{9 + 16}}$.",
+            "המונה: $\\;|9 + 9 - 36| = |-18| = 18$.",
+            "המכנה: $\\;\\sqrt{25} = 5$.",
+            "לכן $\\;d = \\dfrac{18}{5} = 3.6$.",
+          ],
+          final_answer: "$d = \\dfrac{18}{5} = 3.6$",
+        },
+      },
+      {
+        label: 'ד2',
+        prompt: "מצאו את נפח הפירמידה $NA'KB'$.",
+        answer_type: 'number',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '70 135 120 135',
+            svg: `
+              <polygon points="86,179.2 125,253 164,143.2" fill="rgba(168,85,247,0.08)" stroke="rgba(168,85,247,0.9)" stroke-width="1.5"/>
+              <line x1="117.5" y1="198.1" x2="86" y2="179.2" stroke="rgba(226,232,240,0.8)" stroke-width="1.2"/>
+              <line x1="117.5" y1="198.1" x2="125" y2="253" stroke="rgba(226,232,240,0.8)" stroke-width="1.2"/>
+              <line x1="117.5" y1="198.1" x2="164" y2="143.2" stroke="rgba(226,232,240,0.8)" stroke-width="1.2"/>
+              <line x1="117.5" y1="198.1" x2="130.5" y2="204.6" stroke="rgba(96,165,250,0.95)" stroke-width="1.3" stroke-dasharray="4,2"/>
+              <circle cx="130.5" cy="204.6" r="1.8" fill="rgba(96,165,250,0.9)"/>
+              <circle cx="117.5" cy="198.1" r="3" fill="rgba(251,191,36,0.95)"/>
+              <text x="103" y="196" fill="#fbbf24" font-size="10" font-family="Heebo, sans-serif">N</text>
+              <circle cx="86" cy="179.2" r="2.8" fill="rgba(226,232,240,0.95)"/>
+              <text x="72" y="181" fill="#e2e8f0" font-size="10" font-family="Heebo, sans-serif">A'</text>
+              <circle cx="125" cy="253" r="2.8" fill="rgba(244,114,182,0.95)"/>
+              <text x="128" y="262" fill="#f472b6" font-size="10" font-family="Heebo, sans-serif">K</text>
+              <circle cx="164" cy="143.2" r="2.8" fill="rgba(226,232,240,0.95)"/>
+              <text x="169" y="143" fill="#e2e8f0" font-size="10" font-family="Heebo, sans-serif">B'</text>
+              <text x="132" y="211" fill="#60a5fa" font-size="9.5" font-family="Heebo, sans-serif">3.6</text>
+            `,
+            caption:
+              "הפירמידה $NA'KB'$: הבסיס הוא המשולש $A'KB'$ (שטח $202.5$), והגובה הוא המרחק מהקודקוד $N$ אל מישור הבסיס, $d = 3.6$. הנפח $\\frac{1}{3} \\cdot 202.5 \\cdot 3.6 = 243$.",
+          },
+        ],
+        hints: [
+          "נפח פירמידה: $V = \\frac{1}{3} \\cdot S_{A'KB'} \\cdot d$ — הבסיס הוא המשולש $A'KB'$ והגובה הוא המרחק $d$ מ-$N$ למישור.",
+          "שטח $A'KB'$: בסיס $A'B'$ וגובה ממנו. שימו לב ש-$A'B' \\parallel AB$ ו-$K$ נמצאת ישירות מתחת לאמצע $A'B'$.",
+          "הציבו את השטח ואת $d = 3.6$ מהסעיף הקודם.",
+        ],
+        solution: {
+          steps: [
+            "נפח הפירמידה (בסיס $A'KB'$, גובה = המרחק מ-$N$ למישור): $\\;V = \\frac{1}{3} \\cdot S_{A'KB'} \\cdot d$.",
+            "אורך $A'B'$: $\\;A'B' = |B' - A'| = |(-12,\\ 9,\\ 0)| = \\sqrt{144 + 81} = \\sqrt{225} = 15$.",
+            "אמצע $A'B'$ הוא $M'(6,\\ 4.5,\\ 27)$, והוא נמצא ישירות מעל $K(6,\\ 4.5,\\ 0)$.",
+            "לכן הגובה מ-$K$ אל $A'B'$ הוא הקטע האנכי $KM'$ שאורכו $27$.",
+            "שטח המשולש: $\\;S_{A'KB'} = \\frac{A'B' \\cdot KM'}{2} = \\frac{15 \\cdot 27}{2} = 202.5$.",
+            "מציבים $S_{A'KB'} = 202.5$ ו-$d = 3.6$: $\\;V = \\frac{1}{3} \\cdot 202.5 \\cdot 3.6$.",
+            "מחשבים: $\\;V = \\frac{202.5 \\cdot 3.6}{3} = \\frac{729}{3} = 243$.",
+          ],
+          final_answer: "$V = 243$",
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+  {
+    id: 'b2025s582b-q3',
+    year: 2025,
+    season: 'summer',
+    moed: 'b',
+    paper: '582',
+    questionNumber: 3,
+    topic: 'מספרים מרוכבים',
+    totalPoints: 25,
+    context: [
+      "נתונים שני מספרים מרוכבים $z_1$ ו-$z_2$ שמכפלתם היא $z_1 z_2 = -51 + 12i$.",
+      "נתון $z_1 = 6 + 3i$.",
+    ].join("\n"),
+    parts: [
+      {
+        label: 'א',
+        prompt: "מצאו את המספר $z_2$.",
+        answer_type: 'expression',
+        hints: [
+          "חילוק מספרים מרוכבים: בודדו $z_2 = \\dfrac{z_1 z_2}{z_1}$ והכפילו מונה ומכנה בצמוד המכנה.",
+          "הצמוד של $6 + 3i$ הוא $6 - 3i$, והמכנה הופך לממשי.",
+        ],
+        solution: {
+          steps: [
+            "מהנתון $z_1 z_2 = -51 + 12i$ ו-$z_1 = 6 + 3i$: $\\;z_2 = \\dfrac{-51 + 12i}{6 + 3i}$.",
+            "מכפילים מונה ומכנה בצמוד המכנה $6 - 3i$: $\\;z_2 = \\dfrac{(-51 + 12i)(6 - 3i)}{(6 + 3i)(6 - 3i)}$.",
+            "המכנה (הפרש ריבועים): $\\;(6 + 3i)(6 - 3i) = 36 - 9i^2 = 36 + 9 = 45$.",
+            "פותחים את המונה: $\\;(-51 + 12i)(6 - 3i) = -306 + 153i + 72i - 36i^2$.",
+            "מציבים $i^2 = -1$: $\\;-306 + 153i + 72i + 36 = -270 + 225i$.",
+            "מחלקים ב-$45$: $\\;z_2 = \\dfrac{-270 + 225i}{45} = -6 + 5i$.",
+          ],
+          final_answer: "$z_2 = -6 + 5i$",
+        },
+      },
+      {
+        label: 'ב',
+        prompt: [
+          "נתונה המשוואה $w^3 = z_1 + z_2$, כאשר $w$ הוא משתנה מרוכב.",
+          "",
+          "מצאו את פתרונות המשוואה.",
+        ].join("\n"),
+        answer_type: 'expression',
+        hints: [
+          "חשבו תחילה את $z_1 + z_2$.",
+          "כתבו את התוצאה בצורה קוטבית $R\\,\\text{cis}\\,\\varphi$.",
+          "נוסחת שורש שלישי: $\\sqrt[3]{R}\\,\\text{cis}\\dfrac{\\varphi + 360°k}{3}$ עבור $k = 0, 1, 2$.",
+        ],
+        solution: {
+          steps: [
+            "מחשבים את אגף ימין: $\\;z_1 + z_2 = (6 + 3i) + (-6 + 5i) = 8i$.",
+            "המשוואה: $\\;w^3 = 8i$.",
+            "כותבים את $8i$ בצורה קוטבית: $\\;8i = 8\\,\\text{cis}\\,90°$.",
+            "נוסחת השורש השלישי: $\\;w_k = \\sqrt[3]{8}\\,\\text{cis}\\!\\left(\\dfrac{90° + 360°k}{3}\\right) = 2\\,\\text{cis}(30° + 120°k)$.",
+            "$k = 0$: $\\;w_0 = 2\\,\\text{cis}\\,30°$.",
+            "$k = 1$: $\\;w_1 = 2\\,\\text{cis}\\,150°$.",
+            "$k = 2$: $\\;w_2 = 2\\,\\text{cis}\\,270°$.",
+          ],
+          final_answer: "$w_0 = 2\\,\\text{cis}\\,30°$, $\\;w_1 = 2\\,\\text{cis}\\,150°$, $\\;w_2 = 2\\,\\text{cis}\\,270°$.",
+        },
+      },
+      {
+        label: 'ג',
+        prompt: [
+          "נתון מספר מרוכב $z = 2(\\cos\\theta + i\\sin\\theta)$, כאשר $0° \\le \\theta < 360°$.",
+          "נתון כי המספרים $z$ ו-$z^3$ נמצאים על ישר אחד העובר בראשית הצירים.",
+          "",
+          "מצאו את ארבע האפשרויות של המספר $z$.",
+        ].join("\n"),
+        answer_type: 'expression',
+        hints: [
+          "כתבו את $z^3$ בצורה קוטבית: $z^3 = 8\\,\\text{cis}\\,3\\theta$.",
+          "שני מספרים נמצאים על ישר אחד דרך הראשית כאשר הפרש הארגומנטים שלהם הוא כפולה של $180°$.",
+          "פתרו את המשוואה $2\\theta = 180°k$ בתחום הנתון.",
+        ],
+        solution: {
+          steps: [
+            "נתון $z = 2\\,\\text{cis}\\,\\theta$, ולכן $\\;z^3 = 2^3\\,\\text{cis}\\,3\\theta = 8\\,\\text{cis}\\,3\\theta$.",
+            "שני מספרים נמצאים על ישר אחד דרך הראשית כאשר הפרש הארגומנטים שלהם הוא כפולה של $180°$.",
+            "התנאי: $\\;3\\theta - \\theta = 180°k$.",
+            "מפשטים: $\\;2\\theta = 180°k \\Rightarrow \\theta = 90°k$.",
+            "בתחום $0° \\le \\theta < 360°$ מתקבלים: $\\;\\theta = 0°,\\ 90°,\\ 180°,\\ 270°$.",
+          ],
+          final_answer: "$z = 2\\,\\text{cis}\\,0°,\\ 2\\,\\text{cis}\\,90°,\\ 2\\,\\text{cis}\\,180°,\\ 2\\,\\text{cis}\\,270°$ (כלומר $2,\\ 2i,\\ -2,\\ -2i$).",
+        },
+      },
+      {
+        label: 'ד1',
+        prompt: [
+          "פתרונות המשוואה מסעיף ב וארבעת המספרים מסעיף ג מייצגים את כל הקודקודים של מצולע קמור במישור גאוס.",
+          "",
+          "שרטטו את המצולע במערכת צירים.",
+        ].join("\n"),
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 220 235',
+            svg: `
+              <line x1="20" y1="110" x2="202" y2="110" stroke="rgba(226,232,240,0.4)" stroke-width="1"/>
+              <line x1="110" y1="18" x2="110" y2="202" stroke="rgba(226,232,240,0.4)" stroke-width="1"/>
+              <text x="194" y="106" fill="#94a3b8" font-size="9" font-family="Heebo, sans-serif">Re</text>
+              <text x="96" y="26" fill="#94a3b8" font-size="9" font-family="Heebo, sans-serif">Im</text>
+              <circle cx="110" cy="110" r="70" fill="none" stroke="rgba(226,232,240,0.35)" stroke-width="1" stroke-dasharray="3,3"/>
+              <line x1="110" y1="110" x2="180" y2="110" stroke="rgba(148,163,184,0.45)" stroke-width="0.8"/>
+              <line x1="110" y1="110" x2="170.62" y2="75" stroke="rgba(148,163,184,0.45)" stroke-width="0.8"/>
+              <line x1="110" y1="110" x2="110" y2="40" stroke="rgba(148,163,184,0.45)" stroke-width="0.8"/>
+              <line x1="110" y1="110" x2="49.38" y2="75" stroke="rgba(148,163,184,0.45)" stroke-width="0.8"/>
+              <line x1="110" y1="110" x2="40" y2="110" stroke="rgba(148,163,184,0.45)" stroke-width="0.8"/>
+              <line x1="110" y1="110" x2="110" y2="180" stroke="rgba(148,163,184,0.45)" stroke-width="0.8"/>
+              <polygon points="180,110 170.62,75 110,40 49.38,75 40,110 110,180" fill="rgba(168,85,247,0.10)" stroke="rgba(168,85,247,0.9)" stroke-width="1.5"/>
+              <circle cx="110" cy="110" r="2" fill="rgba(226,232,240,0.9)"/>
+              <text x="98" y="122" fill="#94a3b8" font-size="9" font-family="Heebo, sans-serif">O</text>
+              <circle cx="180" cy="110" r="3" fill="rgba(56,189,248,0.95)"/>
+              <text x="183" y="106" fill="#38bdf8" font-size="9" font-family="Heebo, sans-serif">0°</text>
+              <circle cx="170.62" cy="75" r="3" fill="rgba(251,191,36,0.95)"/>
+              <text x="174" y="70" fill="#fbbf24" font-size="9" font-family="Heebo, sans-serif">30°</text>
+              <circle cx="110" cy="40" r="3" fill="rgba(56,189,248,0.95)"/>
+              <text x="114" y="36" fill="#38bdf8" font-size="9" font-family="Heebo, sans-serif">90°</text>
+              <circle cx="49.38" cy="75" r="3" fill="rgba(251,191,36,0.95)"/>
+              <text x="28" y="70" fill="#fbbf24" font-size="9" font-family="Heebo, sans-serif">150°</text>
+              <circle cx="40" cy="110" r="3" fill="rgba(56,189,248,0.95)"/>
+              <text x="20" y="106" fill="#38bdf8" font-size="9" font-family="Heebo, sans-serif">180°</text>
+              <circle cx="110" cy="180" r="3.4" fill="rgba(52,211,153,0.95)"/>
+              <text x="114" y="192" fill="#34d399" font-size="9" font-family="Heebo, sans-serif">270°</text>
+            `,
+            caption:
+              "המצולע הקמור במישור גאוס: $6$ קודקודים על מעגל ברדיוס $2$. שלושת קודקודי סעיף ב ($w$) בזוויות $30°, 150°, 270°$ (זהב), וארבעת קודקודי סעיף ג ($z$) בזוויות $0°, 90°, 180°, 270°$ (כחול). הקודקוד ב-$270°$ משותף לשתי הקבוצות (ירוק), ולכן יש $6$ קודקודים שונים. השטח = סכום $6$ המשולשים המרכזיים.",
+          },
+        ],
+        hints: [
+          "כל המספרים נמצאים על מעגל ברדיוס $2$; סמנו כל אחד לפי הזווית שלו.",
+          "שימו לב שהזווית $270°$ מופיעה גם בסעיף ב וגם בסעיף ג — זהו קודקוד אחד משותף.",
+        ],
+        solution: {
+          steps: [
+            "כל שבעת המספרים מסעיפים ב ו-ג נמצאים על מעגל ברדיוס $2$ סביב הראשית.",
+            "מסעיף ב — זוויות $30°,\\ 150°,\\ 270°$; מסעיף ג — זוויות $0°,\\ 90°,\\ 180°,\\ 270°$.",
+            "הזווית $270°$ חוזרת בשתי הקבוצות, ולכן יש $6$ קודקודים שונים: $\\;0°,\\ 30°,\\ 90°,\\ 150°,\\ 180°,\\ 270°$.",
+            "מסדרים את הקודקודים לפי הזווית ומחברים ביניהם — מתקבל מצולע קמור בן $6$ צלעות (ראו שרטוט).",
+          ],
+          final_answer: "מצולע קמור בן $6$ קודקודים על מעגל ברדיוס $2$, בזוויות $0°,\\ 30°,\\ 90°,\\ 150°,\\ 180°,\\ 270°$.",
+        },
+      },
+      {
+        label: 'ד2',
+        prompt: "חשבו את השטח של המצולע.",
+        answer_type: 'expression',
+        hints: [
+          "חלקו את המצולע ל-$6$ משולשים מרכזיים שקודקודם המשותף בראשית.",
+          "שטח משולש עם שתי צלעות $R$ וזווית $\\gamma$ ביניהן: $\\frac{1}{2}R^2\\sin\\gamma$. סכמו על הזוויות המרכזיות.",
+        ],
+        solution: {
+          steps: [
+            "מחלקים את המצולע ל-$6$ משולשים מרכזיים (קודקוד משותף בראשית, שתי צלעות $R = 2$).",
+            "שטח משולש מרכזי עם זווית מרכזית $\\gamma$: $\\;\\dfrac{R^2 \\sin\\gamma}{2} = \\dfrac{4\\sin\\gamma}{2} = 2\\sin\\gamma$.",
+            "הזוויות המרכזיות (ההפרשים בין קודקודים סמוכים): $\\;30°,\\ 60°,\\ 60°,\\ 30°,\\ 90°,\\ 90°$.",
+            "סוכמים: $\\;S = 2(\\sin30° + \\sin60° + \\sin60° + \\sin30° + \\sin90° + \\sin90°)$.",
+            "מציבים $\\sin30° = \\tfrac{1}{2}$, $\\sin60° = \\tfrac{\\sqrt3}{2}$, $\\sin90° = 1$: $\\;S = 2\\!\\left(2 \\cdot \\tfrac{1}{2} + 2 \\cdot \\tfrac{\\sqrt3}{2} + 2 \\cdot 1\\right)$.",
+            "מפשטים: $\\;S = 2(1 + \\sqrt3 + 2) = 2(3 + \\sqrt3) = 6 + 2\\sqrt3$.",
+          ],
+          final_answer: "$S = 6 + 2\\sqrt3 \\approx 9.46$",
+        },
+      },
+      {
+        label: 'ה',
+        prompt: [
+          "נתון מספר מרוכב $4(\\cos\\alpha + i\\sin\\alpha)$, כאשר $0° \\le \\alpha < 360°$.",
+          "מכפילים כל אחד מן המספרים המייצגים את קודקודי המצולע במספר מרוכב זה, כך שנוצר מצולע חדש.",
+          "",
+          "מצאו פי כמה גדול שטח המצולע החדש משטח המצולע שמצאתם בסעיף ד.",
+        ].join("\n"),
+        answer_type: 'number',
+        hints: [
+          "כפל ב-$4\\,\\text{cis}\\,\\alpha$ = סיבוב בזווית $\\alpha$ יחד עם הגדלה (הומותטיה) פי $4$.",
+          "סיבוב אינו משנה שטח; שטח גדל ביחס של ריבוע מקדם ההגדלה.",
+        ],
+        solution: {
+          steps: [
+            "כפל ב-$4(\\cos\\alpha + i\\sin\\alpha) = 4\\,\\text{cis}\\,\\alpha$ מסובב כל נקודה בזווית $\\alpha$ ומכפיל את גודלה (מרחקה מהראשית) פי $4$.",
+            "הסיבוב אינו משנה שטח; הגדלת כל המרחקים פי $4$ (הומותטיה) מגדילה את השטח פי $4^2$.",
+            "לכן $\\;\\dfrac{S'}{S} = 4^2 = 16$, כאשר $S'$ הוא שטח המצולע החדש.",
+            "אפשר גם לוודא ישירות: המצולע החדש חסום במעגל ברדיוס $2 \\cdot 4 = 8$, והיחס $\\left(\\frac{8}{2}\\right)^2 = 16$.",
+          ],
+          final_answer: "שטח המצולע החדש גדול פי $16$.",
         },
       },
     ],
