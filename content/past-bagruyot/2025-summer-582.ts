@@ -12,6 +12,8 @@
  *        מציאת קודקודים, מישור חתך, ומקבילות/אנכיות).
  *   Q3 — מספרים מרוכבים (מקום גאומטרי, פתרון משוואה ריבועית מרוכבת,
  *        ריבוע מסובב במישור גאוס ופתרונות z^n = b).
+ *   Q4 — חקירת פונקציה מעריכית עם פרמטר (תחום, אסימפטוטות, עלייה/ירידה לפי
+ *        סימן a, התאמת גרף, פונקציה מורכבת g=1/(f+2), שרטוט והשוואת אינטגרלים).
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -736,6 +738,291 @@ export const bagrut2025Summer582: PastBagrutQuestion[] = [
             'הרדיוס הוא $2$, והנקודה $z = 2$ (זווית $0°$) פתרון, ולכן $\\;b = 2^{24}$ (ממשי חיובי).',
           ],
           final_answer: '$n = 24$ (הערך המינימלי) ו-$b = 2^{24}$.',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+  {
+    id: 'b2025s582a-q4',
+    year: 2025,
+    season: 'summer',
+    moed: 'a',
+    paper: '582',
+    questionNumber: 4,
+    topic: 'פונקציה מעריכית',
+    totalPoints: 25,
+    context:
+      'נתונה הפונקציה $\\;f(x) = \\dfrac{e^x}{a - e^x}\\;$, כאשר $a$ הוא פרמטר שונה מ-$0$.\n\nבסעיף א ענו על תת-הסעיפים (1)–(3) עבור $a > 0$ ועבור $a < 0$, והביעו את תשובותיכם באמצעות $a$ אם יש צורך.',
+    parts: [
+      {
+        label: 'א1',
+        prompt: 'מצאו את תחום ההגדרה של הפונקציה $f(x)$ (עבור $a > 0$ ועבור $a < 0$).',
+        answer_type: 'expression',
+        hints: [
+          'התנאי היחיד הוא שהמכנה אינו מתאפס: $a - e^x \\ne 0$.',
+          'בדקו מתי למשוואה $e^x = a$ יש פתרון — וזכרו ש-$e^x > 0$ תמיד.',
+        ],
+        solution: {
+          steps: [
+            'התנאי היחיד הוא שהמכנה אינו מתאפס: $\\;a - e^x \\ne 0$, כלומר $\\;e^x \\ne a$.',
+            'מקרה $a > 0$: למשוואה $e^x = a$ יש פתרון $\\;x = \\ln a$, ולכן יש לפסול אותו.',
+            'תחום ההגדרה כאשר $a > 0$: כל $x \\ne \\ln a$.',
+            'מקרה $a < 0$: מכיוון ש-$e^x > 0$ לכל $x$, המשוואה $e^x = a$ (עם $a < 0$) חסרת פתרון — אין מה לפסול.',
+            'תחום ההגדרה כאשר $a < 0$: כל $x$ ממשי.',
+          ],
+          final_answer: 'עבור $a > 0$: כל $x \\ne \\ln a$. עבור $a < 0$: כל $x$ ממשי.',
+        },
+      },
+      {
+        label: 'א2',
+        prompt: 'מצאו את משוואות האסימפטוטות האופקיות (המאונכות לציר ה-$y$) של הפונקציה $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'ב-$+\\infty$ חלקו מונה ומכנה ב-$e^x$ ונצלו ש-$\\frac{a}{e^x} \\to 0$.',
+          'ב-$-\\infty$ זכרו ש-$e^x \\to 0$.',
+        ],
+        solution: {
+          steps: [
+            'נחשב את הגבול ב-$+\\infty$. נחלק מונה ומכנה ב-$e^x$:',
+            '$\\dfrac{e^x}{a - e^x} = \\dfrac{1}{\\frac{a}{e^x} - 1}$',
+            'כאשר $x \\to \\infty$ מתקיים $\\dfrac{a}{e^x} \\to 0$, ולכן $\\;\\lim\\limits_{x \\to \\infty} f(x) = \\dfrac{1}{0 - 1} = -1$.',
+            'נחשב את הגבול ב-$-\\infty$. כאן $e^x \\to 0$:',
+            '$\\lim\\limits_{x \\to -\\infty} f(x) = \\dfrac{0}{a - 0} = 0$.',
+            'שני הגבולות אינם תלויים בערך $a$, ולכן הם תקפים גם עבור $a > 0$ וגם עבור $a < 0$.',
+          ],
+          final_answer: '$y = -1$ (כאשר $x \\to \\infty$) ו-$y = 0$ (כאשר $x \\to -\\infty$) — בשני המקרים.',
+        },
+      },
+      {
+        label: 'א3',
+        prompt: 'מצאו את תחומי העלייה והירידה של הפונקציה $f(x)$ (אם יש כאלה), עבור $a > 0$ ועבור $a < 0$.',
+        answer_type: 'text',
+        hints: [
+          'גזרו לפי כלל המנה — אחרי פישוט מתקבל מונה פשוט מאוד.',
+          'הנגזרת יוצאת $f\'(x) = \\dfrac{a e^x}{(a - e^x)^2}$. מה קובע את סימנה?',
+          'המכנה בריבוע ו-$e^x$ תמיד חיוביים — לכן הסימן הוא סימן $a$.',
+        ],
+        solution: {
+          steps: [
+            'נגזור לפי כלל המנה את $f = \\dfrac{e^x}{a - e^x}$.',
+            '$f\'(x) = \\dfrac{e^x (a - e^x) - e^x \\cdot (-e^x)}{(a - e^x)^2}$',
+            'נפתח את המונה: $\\;e^x(a - e^x) + e^x \\cdot e^x = e^x(a - e^x + e^x) = a e^x$.',
+            'לכן $\\;f\'(x) = \\dfrac{a e^x}{(a - e^x)^2}$.',
+            'המכנה $(a - e^x)^2 > 0$ ו-$e^x > 0$ תמיד, ולכן סימן הנגזרת זהה לסימן של $a$.',
+            'מקרה $a > 0$: $\\;f\'(x) > 0$ — הפונקציה עולה בכל תחום הגדרתה ($x < \\ln a$ וגם $x > \\ln a$), ואין תחומי ירידה.',
+            'מקרה $a < 0$: $\\;f\'(x) < 0$ — הפונקציה יורדת בכל הממשיים, ואין תחומי עלייה.',
+          ],
+          final_answer: 'עבור $a > 0$: עולה ב-$x < \\ln a$ וב-$x > \\ln a$, אין ירידה. עבור $a < 0$: יורדת לכל $x$, אין עלייה.',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: 'קבעו איזה מן הגרפים I–IV (המצורפים) מתאר את הפונקציה $f(x)$ עבור $a = 5$, ואיזה מתאר את $f(x)$ עבור $a = -5$. נמקו את קביעתכם.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 400 410',
+            svg: `
+              <line x1="200" y1="12" x2="200" y2="400" stroke="rgba(148,163,184,0.25)" stroke-width="1"/>
+              <line x1="12" y1="200" x2="392" y2="200" stroke="rgba(148,163,184,0.25)" stroke-width="1"/>
+              <!-- II (top-left) -->
+              <line x1="25" y1="110" x2="190" y2="110" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="60" y1="25" x2="60" y2="185" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="120" y1="25" x2="120" y2="185" stroke="rgba(96,165,250,0.6)" stroke-width="1" stroke-dasharray="4,3"/>
+              <line x1="124" y1="131" x2="190" y2="131" stroke="rgba(148,163,184,0.4)" stroke-width="0.8" stroke-dasharray="3,3"/>
+              <polyline points="25,108 50,104 78,94 100,70 116,30" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="1.8"/>
+              <polyline points="124,180 138,152 158,138 190,131" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="1.8"/>
+              <text x="105" y="195" fill="#e2e8f0" font-size="13" font-family="Heebo, sans-serif" text-anchor="middle">II</text>
+              <!-- I (top-right) -->
+              <line x1="210" y1="110" x2="385" y2="110" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="255" y1="25" x2="255" y2="185" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="305" y1="25" x2="305" y2="185" stroke="rgba(96,165,250,0.6)" stroke-width="1" stroke-dasharray="4,3"/>
+              <polyline points="210,112 240,118 268,132 292,158 300,182" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="1.8"/>
+              <polyline points="312,30 328,58 352,80 385,88" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="1.8"/>
+              <text x="300" y="195" fill="#e2e8f0" font-size="13" font-family="Heebo, sans-serif" text-anchor="middle">I</text>
+              <!-- IV (bottom-left) -->
+              <line x1="25" y1="305" x2="190" y2="305" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="60" y1="215" x2="60" y2="390" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="120" y1="215" x2="120" y2="390" stroke="rgba(96,165,250,0.6)" stroke-width="1" stroke-dasharray="4,3"/>
+              <polyline points="25,300 52,293 80,280 102,248 116,218" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="1.8"/>
+              <polyline points="124,388 140,352 162,325 190,308" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="1.8"/>
+              <text x="105" y="402" fill="#e2e8f0" font-size="13" font-family="Heebo, sans-serif" text-anchor="middle">IV</text>
+              <!-- III (bottom-right) -->
+              <line x1="210" y1="305" x2="385" y2="305" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="255" y1="215" x2="255" y2="390" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="210" y1="338" x2="385" y2="338" stroke="rgba(148,163,184,0.4)" stroke-width="0.8" stroke-dasharray="3,3"/>
+              <polyline points="210,300 238,303 262,310 288,322 315,332 385,338" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="1.8"/>
+              <text x="300" y="402" fill="#e2e8f0" font-size="13" font-family="Heebo, sans-serif" text-anchor="middle">III</text>
+            `,
+            caption:
+              'ארבעת הגרפים I–IV להתאמה. גרף II: אסימפטוטה אנכית מימין לראשית, ענף שמאלי עולה מ-$0$ אל $+\\infty$ וענף ימני עולה מ-$-\\infty$ אל $y=-1$ (מתאים ל-$a=5$). גרף III: ללא אסימפטוטה אנכית, יורד בכל הממשיים מ-$0$ אל $-1$ (מתאים ל-$a=-5$). גרפים I ו-IV הם ההיסחים.',
+          },
+        ],
+        hints: [
+          'עבור $a = 5 > 0$ יש אסימפטוטה אנכית ב-$x = \\ln 5$ והפונקציה עולה — חפשו גרף כזה.',
+          'עבור $a = -5 < 0$ אין אסימפטוטה אנכית והפונקציה יורדת — חפשו גרף חלק ויורד.',
+        ],
+        solution: {
+          steps: [
+            'מקרה $a = 5 > 0$: יש אסימפטוטה אנכית ב-$x = \\ln 5$ (כי $a > 0$), והפונקציה עולה (מסעיף א3).',
+            'סימן: עבור $x < \\ln 5$ מתקיים $5 - e^x > 0$ ולכן $f > 0$; עבור $x > \\ln 5$ מתקיים $f < 0$.',
+            'לכן הענף השמאלי עולה מ-$0$ (ב-$-\\infty$) אל $+\\infty$, והענף הימני עולה מ-$-\\infty$ אל $y = -1$ — זהו גרף II.',
+            'מקרה $a = -5 < 0$: אין אסימפטוטה אנכית (כי $e^x \\ne -5$ לעולם), והפונקציה יורדת בכל הממשיים.',
+            'הערכים: $a - e^x = -5 - e^x < 0$ תמיד, ולכן $f < 0$ בכל הממשיים — יורדת מ-$0$ (ב-$-\\infty$) אל $-1$ (ב-$+\\infty$) — זהו גרף III.',
+          ],
+          final_answer: 'עבור $a = 5$ — גרף II; עבור $a = -5$ — גרף III.',
+        },
+      },
+      {
+        label: 'ג1',
+        prompt: [
+          'מציבים מעתה $a = 5$, כלומר $f(x) = \\dfrac{e^x}{5 - e^x}$, ומגדירים $\\;g(x) = \\dfrac{1}{f(x) + 2}$.',
+          '',
+          'מצאו את תחום ההגדרה של הפונקציה $g(x)$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'שני תנאים: ש-$f(x)$ מוגדרת, ושהמכנה $f(x) + 2$ אינו מתאפס.',
+          'פתרו $\\frac{e^x}{5 - e^x} = -2$ כדי למצוא איזה $x$ לפסול.',
+        ],
+        solution: {
+          steps: [
+            'נדרשים שני תנאים: ש-$f(x)$ מוגדרת, ושהמכנה $f(x) + 2$ אינו מתאפס.',
+            'תנאי $f$: $\\;x \\ne \\ln 5$ (כי $a = 5 > 0$).',
+            'תנאי המכנה: $\\;f(x) + 2 \\ne 0$, כלומר אסור ש-$\\dfrac{e^x}{5 - e^x} = -2$.',
+            'נפתור מתי כן מתקיים: $\\;e^x = -2(5 - e^x) = -10 + 2e^x$.',
+            'מכאן $\\;-e^x = -10$, כלומר $e^x = 10$, ולכן $x = \\ln 10$ — ערך שיש לפסול.',
+            'מאחדים: כל $x$ פרט ל-$x = \\ln 5$ ו-$x = \\ln 10$.',
+          ],
+          final_answer: 'כל $x$ פרט ל-$x = \\ln 5$ ו-$x = \\ln 10$.',
+        },
+      },
+      {
+        label: 'ג2',
+        prompt: 'מצאו את משוואות האסימפטוטות המאונכות לצירים של הפונקציה $g(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'פשטו תחילה: $g(x) = \\dfrac{1}{f(x)+2} = \\dfrac{5 - e^x}{10 - e^x}$.',
+          'לאסימפטוטות האופקיות השתמשו בגבולות של $f$ מסעיף א2 ($f \\to -1$ וב-$f \\to 0$).',
+          'לאסימפטוטה האנכית בדקו היכן $10 - e^x = 0$.',
+        ],
+        solution: {
+          steps: [
+            'נפשט: $\\;g(x) = \\dfrac{1}{f(x) + 2} = \\dfrac{1}{\\frac{e^x}{5 - e^x} + 2} = \\dfrac{5 - e^x}{10 - e^x}$.',
+            'אסימפטוטות אופקיות — נשתמש בגבולות של $f$ מסעיף א2:',
+            '$\\lim\\limits_{x \\to \\infty} g(x) = \\dfrac{1}{f + 2} = \\dfrac{1}{-1 + 2} = 1$.',
+            '$\\lim\\limits_{x \\to -\\infty} g(x) = \\dfrac{1}{0 + 2} = \\dfrac{1}{2}$.',
+            'לכן יש שתי אסימפטוטות אופקיות: $\\;y = 1$ ו-$y = \\dfrac{1}{2}$.',
+            'אסימפטוטה אנכית — היכן שהמכנה $10 - e^x$ מתאפס: $\\;x = \\ln 10$, ושם המונה $5 - 10 = -5 \\ne 0$.',
+            'אימות: $\\;\\lim\\limits_{x \\to \\ln 10^-} g(x) = -\\infty$ ו-$\\lim\\limits_{x \\to \\ln 10^+} g(x) = +\\infty$.',
+            'הערה: ב-$x = \\ln 5$ מתקיים $g \\to 0$ — זו אינה אסימפטוטה אלא נקודה חסרה (חור) בגרף, כי $f \\to \\pm\\infty$ שם.',
+          ],
+          final_answer: 'אנכית: $x = \\ln 10$; אופקיות: $y = 1$ ו-$y = \\dfrac{1}{2}$.',
+        },
+      },
+      {
+        label: 'ד',
+        prompt: 'שרטטו סקיצה של גרף הפונקציה $g(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 360 320',
+            svg: `
+              <line x1="10" y1="160" x2="310" y2="160" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="120" y1="20" x2="120" y2="305" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="303" y="156" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <text x="108" y="28" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">y</text>
+              <line x1="170.7" y1="20" x2="170.7" y2="305" stroke="rgba(96,165,250,0.7)" stroke-width="1.2" stroke-dasharray="5,4"/>
+              <line x1="120" y1="120" x2="305" y2="120" stroke="rgba(52,211,153,0.6)" stroke-width="1" stroke-dasharray="5,4"/>
+              <line x1="10" y1="140" x2="170" y2="140" stroke="rgba(52,211,153,0.6)" stroke-width="1" stroke-dasharray="5,4"/>
+              <text x="176" y="32" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">x = ln10</text>
+              <text x="270" y="116" fill="#34d399" font-size="10" font-family="Heebo, sans-serif">y = 1</text>
+              <text x="22" y="136" fill="#34d399" font-size="10" font-family="Heebo, sans-serif">y = 1/2</text>
+              <polyline points="10,140 76,139.7 120,142.2 142,147.5 153,156.2 155.4,160" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <polyline points="155.4,160 157.4,164.2 161.8,180.4 166.2,229 169.5,300" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <polyline points="172.8,20 177.2,62.2 186,100.2 208,115.5 252,119.5 296,119.9" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <circle cx="155.4" cy="160" r="3" fill="none" stroke="#f472b6" stroke-width="1.3"/>
+              <text x="146" y="173" fill="#f472b6" font-size="9.5" font-family="Heebo, sans-serif">ln5</text>
+            `,
+            caption:
+              'גרף $g(x) = \\dfrac{5 - e^x}{10 - e^x}$ (עבור $a = 5$): אסימפטוטה אנכית $x = \\ln 10$, ואסימפטוטות אופקיות $y = 1$ (מימין) ו-$y = \\frac{1}{2}$ (משמאל). יש חור בנקודה $\\left(\\ln 5, 0\\right)$. הפונקציה יורדת בכל חלקי תחומה.',
+          },
+        ],
+        hints: [
+          'נצלו את האסימפטוטות מסעיף ג2 ואת החור ב-$\\left(\\ln 5, 0\\right)$.',
+          'הנגזרת $g\'(x) = \\dfrac{-5 e^x}{(10 - e^x)^2} < 0$ — הפונקציה יורדת בכל קטע.',
+        ],
+        solution: {
+          steps: [
+            'תחום: $x \\ne \\ln 5$, $x \\ne \\ln 10$; אסימפטוטות $x = \\ln 10$, $y = 1$, $y = \\frac{1}{2}$.',
+            'נגזרת: $\\;g\'(x) = \\dfrac{-5 e^x}{(10 - e^x)^2} < 0$ — הפונקציה יורדת בכל חלקי תחומה.',
+            'ב-$x = \\ln 5$ יש חור בגרף בנקודה $\\left(\\ln 5,\\ 0\\right)$ (שם $g = 0$ אך הפונקציה אינה מוגדרת).',
+            'בקטע $x < \\ln 5$: יורדת מ-$y = \\frac{1}{2}$ (ב-$-\\infty$) אל $0$ ב-$\\ln 5$; הערכים בין $0$ ל-$\\frac{1}{2}$.',
+            'בקטע $\\ln 5 < x < \\ln 10$: יורדת מ-$0$ אל $-\\infty$ (ליד $x = \\ln 10$).',
+            'בקטע $x > \\ln 10$: יורדת מ-$+\\infty$ (ליד $x = \\ln 10$) אל $y = 1$.',
+          ],
+          final_answer: 'ראו הסקיצה: אסימפטוטות $x = \\ln 10$, $y = 1$, $y = \\frac{1}{2}$; חור ב-$\\left(\\ln 5, 0\\right)$; יורדת בכל הקטעים.',
+        },
+      },
+      {
+        label: 'ה',
+        prompt: [
+          'לפניכם טענה:',
+          '$$\\int_{-6}^{-4} g(x)\\,dx > \\int_{4}^{5} g(x)\\,dx$$',
+          'האם הטענה נכונה? נמקו את תשובתכם.',
+        ].join('\n'),
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 380 300',
+            svg: `
+              <line x1="60" y1="150" x2="330" y2="150" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="200" y1="30" x2="200" y2="285" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="323" y="146" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <line x1="250.7" y1="30" x2="250.7" y2="285" stroke="rgba(96,165,250,0.7)" stroke-width="1.1" stroke-dasharray="5,4"/>
+              <line x1="120" y1="120" x2="330" y2="120" stroke="rgba(52,211,153,0.55)" stroke-width="0.9" stroke-dasharray="5,4"/>
+              <line x1="60" y1="135" x2="250" y2="135" stroke="rgba(52,211,153,0.55)" stroke-width="0.9" stroke-dasharray="5,4"/>
+              <polygon points="68,150 68,135 112,135 112,150" fill="rgba(251,191,36,0.2)" stroke="none"/>
+              <polygon points="288,150 288,117 310,119 310,150" fill="rgba(251,191,36,0.2)" stroke="none"/>
+              <polyline points="68,135 112,135 160,137 200,137 235.4,150 244,162 250,185" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <polyline points="253,40 257,77 266,105 288,117 310,119" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <circle cx="235.4" cy="150" r="3" fill="none" stroke="#f472b6" stroke-width="1.2"/>
+              <line x1="68" y1="160" x2="112" y2="160" stroke="#f87171" stroke-width="1"/>
+              <text x="84" y="172" fill="#f87171" font-size="10" font-family="Heebo, sans-serif">2</text>
+              <line x1="288" y1="160" x2="310" y2="160" stroke="#f87171" stroke-width="1"/>
+              <text x="296" y="172" fill="#f87171" font-size="10" font-family="Heebo, sans-serif">1</text>
+              <text x="44" y="139" fill="#34d399" font-size="9.5" font-family="Heebo, sans-serif">1/2</text>
+              <text x="314" y="116" fill="#34d399" font-size="9.5" font-family="Heebo, sans-serif">1</text>
+              <text x="252" y="40" fill="#60a5fa" font-size="9.5" font-family="Heebo, sans-serif">x = ln10</text>
+            `,
+            caption:
+              'שני השטחים להשוואה. בקטע $[-6,-4]$ (משמאל) הגרף קרוב לאסימפטוטה $y=\\frac12$ אך מתחתיה, ולכן השטח קטן ממלבן $2 \\times \\frac12 = 1$. בקטע $[4,5]$ (מימין) הגרף מעל האסימפטוטה $y=1$, ולכן השטח גדול ממלבן $1 \\times 1 = 1$. מכאן השטח השמאלי קטן מהימני.',
+          },
+        ],
+        hints: [
+          'אל תחשבו את האינטגרלים — חסמו כל אחד בעזרת מלבן.',
+          'בקטע $[-6,-4]$ הראו ש-$g < \\frac{1}{2}$, ובקטע $[4,5]$ הראו ש-$g > 1$.',
+          'השוו: השמאלי קטן מ-$\\frac12 \\cdot 2 = 1$, והימני גדול מ-$1 \\cdot 1 = 1$.',
+        ],
+        solution: {
+          steps: [
+            'לא נחשב את האינטגרלים, אלא נחסום כל אחד בעזרת מלבן פשוט.',
+            'בקטע $[-6, -4]$ הערכים רחוקים משמאל, ליד האסימפטוטה $y = \\frac{1}{2}$. נראה ש-$g < \\frac{1}{2}$:',
+            '$g(x) - \\dfrac{1}{2} = \\dfrac{5 - e^x}{10 - e^x} - \\dfrac{1}{2} = \\dfrac{2(5 - e^x) - (10 - e^x)}{2(10 - e^x)} = \\dfrac{-e^x}{2(10 - e^x)}$.',
+            'בקטע זה $10 - e^x > 0$, לכן הביטוי שלילי: $\\;0 < g(x) < \\frac{1}{2}$.',
+            'מכאן $\\;\\displaystyle\\int_{-6}^{-4} g(x)\\,dx < \\frac{1}{2} \\cdot \\big(-4 - (-6)\\big) = \\frac{1}{2} \\cdot 2 = 1$.',
+            'בקטע $[4, 5]$ מתקיים $x > \\ln 10$, ושם נראה ש-$g > 1$:',
+            '$g(x) - 1 = \\dfrac{5 - e^x}{10 - e^x} - 1 = \\dfrac{-5}{10 - e^x}$.',
+            'בקטע זה $10 - e^x < 0$, לכן הביטוי חיובי: $\\;g(x) > 1$.',
+            'מכאן $\\;\\displaystyle\\int_{4}^{5} g(x)\\,dx > 1 \\cdot (5 - 4) = 1$.',
+            'קיבלנו $\\;\\displaystyle\\int_{-6}^{-4} g(x)\\,dx < 1 < \\int_{4}^{5} g(x)\\,dx$.',
+            'כלומר האינטגרל השמאלי קטן מהימני — בדיוק ההפך מהטענה.',
+          ],
+          final_answer: 'הטענה אינה נכונה: $\\int_{-6}^{-4} g\\,dx < 1 < \\int_{4}^{5} g\\,dx$, ולכן $\\int_{-6}^{-4} g\\,dx < \\int_{4}^{5} g\\,dx$.',
         },
       },
     ],
