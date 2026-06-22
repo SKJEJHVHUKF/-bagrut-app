@@ -10,6 +10,7 @@
  *   Q2 — וקטורים במרחב (מנסרה ישרה, וקטורי בסיס, קולינאריות, מישור, נפח פירמידה).
  *   Q3 — מספרים מרוכבים (חילוק, שורשי משוואה, קולינאריות, מצולע במישור גאוס, שטח).
  *   Q4 — חקירת פונקציה מעריכית (אסימפטוטות, נקודת קיצון, פרמטר, גרף הנגזרת, אינטגרל/שטח).
+ *   Q5 — חקירת פונקציות ln (תחום, אסימפטוטות אנכיות/אופקיות, עלייה/ירידה, גרפים, אינטגרל/שטח).
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -951,6 +952,305 @@ export const bagrut2025Summer582MoedB: PastBagrutQuestion[] = [
             'מכאן שהטענה נכונה.',
           ],
           final_answer: 'הטענה נכונה. שטח המשולש שווה $\\dfrac{1}{e - 1}$, והגרף הקעור-כלפי-מטה נמצא מעליו, ולכן האינטגרל גדול ממנו.',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+  {
+    id: 'b2025s582b-q5',
+    year: 2025,
+    season: 'summer',
+    moed: 'b',
+    paper: '582',
+    questionNumber: 5,
+    topic: 'פונקציית ln',
+    totalPoints: 25,
+    context: [
+      'נתונה הפונקציה $\\;f(x) = \\dfrac{x \\cdot \\ln x}{1 + \\ln x}$.',
+      '',
+      '(בסעיף ד תינתן פונקציה נוספת $\\;g(x) = \\dfrac{1 + \\ln x}{x \\cdot \\ln x}$.)',
+    ].join('\n'),
+    parts: [
+      {
+        label: 'א1',
+        prompt: 'מצאו את תחום ההגדרה של הפונקציה $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'הביטוי $\\ln x$ מחייב $x > 0$.',
+          'בנוסף, המכנה $1 + \\ln x$ אסור שיתאפס — מתי זה קורה?',
+        ],
+        solution: {
+          steps: [
+            'נדרשים שני תנאים: תנאי הלוגריתם, ותנאי שהמכנה אינו מתאפס.',
+            'תנאי הלוגריתם: $\\;x > 0$.',
+            'תנאי המכנה: $\\;1 + \\ln x \\ne 0$.',
+            'מכאן $\\;\\ln x \\ne -1$, כלומר $\\;x \\ne e^{-1} = \\dfrac{1}{e}$.',
+            'מאחדים: כל $x > 0$ פרט ל-$x = \\dfrac{1}{e}$.',
+          ],
+          final_answer: '$0 < x < \\dfrac{1}{e}\\;$ או $\\;x > \\dfrac{1}{e}$.',
+        },
+      },
+      {
+        label: 'א2',
+        prompt: 'מצאו את משוואת האסימפטוטה המאונכת לציר ה-$x$ של הפונקציה $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'אסימפטוטה אנכית מתקבלת היכן שהמכנה מתאפס אך המונה אינו מתאפס.',
+          'המכנה מתאפס ב-$x = \\frac{1}{e}$ — בדקו שהמונה שם שונה מאפס.',
+        ],
+        solution: {
+          steps: [
+            'אסימפטוטה אנכית מתקבלת היכן שהמכנה מתאפס והמונה אינו מתאפס.',
+            'המכנה $1 + \\ln x$ מתאפס ב-$x = \\dfrac{1}{e}$ (מסעיף א1).',
+            'נבדוק את המונה שם: $\\;\\dfrac{1}{e} \\cdot \\ln\\dfrac{1}{e} = \\dfrac{1}{e} \\cdot (-1) = -\\dfrac{1}{e} \\ne 0$.',
+            'מכיוון שהמונה שונה מאפס, הישר $\\;x = \\dfrac{1}{e}$ הוא אסימפטוטה אנכית.',
+            'אימות בגבולות חד-צדדיים: $\\;\\lim\\limits_{x \\to \\frac{1}{e}^-} f(x) = +\\infty$ (מונה שלילי חלקי מכנה שלילי השואף ל-$0$).',
+            '$\\lim\\limits_{x \\to \\frac{1}{e}^+} f(x) = -\\infty$ (מונה שלילי חלקי מכנה חיובי השואף ל-$0$).',
+            'להשלמה: $\\;\\lim\\limits_{x \\to 0^+} f(x) = 0$.',
+          ],
+          final_answer: '$x = \\dfrac{1}{e}$',
+        },
+      },
+      {
+        label: 'א3',
+        prompt: 'מצאו את שיעורי נקודת החיתוך של גרף הפונקציה $f(x)$ עם ציר ה-$x$.',
+        answer_type: 'expression',
+        hints: [
+          'חיתוך עם ציר ה-$x$: $f(x) = 0$, כלומר המונה מתאפס.',
+          'פתרו $x \\cdot \\ln x = 0$ ובדקו אילו פתרונות בתחום ההגדרה.',
+        ],
+        solution: {
+          steps: [
+            'חיתוך עם ציר ה-$x$ מתקבל כאשר $\\;f(x) = 0$, כלומר כאשר המונה מתאפס.',
+            '$x \\cdot \\ln x = 0$',
+            '$x = 0$ נפסל — אינו בתחום ההגדרה.',
+            '$\\ln x = 0 \\;\\Rightarrow\\; x = e^0 = 1$.',
+            'נוודא שהמכנה שם אינו מתאפס: $\\;1 + \\ln 1 = 1 \\ne 0$.',
+          ],
+          final_answer: '$(1,\\ 0)$',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: 'מצאו את תחומי העלייה והירידה של הפונקציה $f(x)$ (אם יש כאלה).',
+        answer_type: 'text',
+        hints: [
+          'גזרו לפי כלל המנה. שימו לב ש-$(x \\ln x)\' = \\ln x + 1$.',
+          'אחרי פישוט מתקבל מונה $\\ln^2 x + \\ln x + 1$. הציבו $t = \\ln x$ ובדקו את סימן הביטוי $t^2 + t + 1$.',
+          'בדקו את הדיסקרימיננטה של $t^2 + t + 1$ — מה היא אומרת על הסימן?',
+        ],
+        solution: {
+          steps: [
+            'נגזור לפי כלל המנה. מונה $\\;u = x \\ln x$, מכנה $\\;v = 1 + \\ln x$.',
+            'נגזרות: $\\;u\' = \\ln x + x \\cdot \\dfrac{1}{x} = \\ln x + 1$, ו-$v\' = \\dfrac{1}{x}$.',
+            '$f\'(x) = \\dfrac{(\\ln x + 1)(1 + \\ln x) - x \\ln x \\cdot \\frac{1}{x}}{(1 + \\ln x)^2}$',
+            'המונה: $\\;(\\ln x + 1)^2 - \\ln x$.',
+            'נפתח: $\\;\\ln^2 x + 2\\ln x + 1 - \\ln x = \\ln^2 x + \\ln x + 1$.',
+            'לכן $\\;f\'(x) = \\dfrac{\\ln^2 x + \\ln x + 1}{(1 + \\ln x)^2}$.',
+            'המכנה $(1 + \\ln x)^2 > 0$ בכל תחום ההגדרה.',
+            'נבדוק את סימן המונה. נציב $t = \\ln x$ ונקבל את הביטוי $t^2 + t + 1$.',
+            'הדיסקרימיננטה: $\\;1 - 4 = -3 < 0$, והמקדם המוביל חיובי.',
+            'לכן $t^2 + t + 1 > 0$ לכל $t$ — המונה חיובי תמיד.',
+            'מכאן $f\'(x) > 0$ בכל תחום ההגדרה: הפונקציה עולה בכל מקום שבו היא מוגדרת, ואין תחומי ירידה.',
+          ],
+          final_answer: 'הפונקציה עולה ב-$0 < x < \\frac{1}{e}$ וב-$x > \\frac{1}{e}$; אין תחומי ירידה.',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: 'שרטטו סקיצה של גרף הפונקציה $f(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 360 300',
+            svg: `
+              <line x1="22" y1="180" x2="352" y2="180" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="40" y1="52" x2="40" y2="288" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="345" y="176" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <text x="27" y="60" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">y</text>
+              <line x1="63" y1="52" x2="63" y2="288" stroke="rgba(96,165,250,0.7)" stroke-width="1.2" stroke-dasharray="5,4"/>
+              <text x="66" y="64" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">x = 1/e</text>
+              <polyline points="43,178 46,176 52,167 59,138 60.5,99 61.7,60" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <polyline points="64,276 71,207 83,189 102,180 133,170 164,160 226,142 288,124 350,106" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <circle cx="40" cy="180" r="3" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+              <circle cx="102" cy="180" r="3" fill="#60a5fa"/>
+              <text x="104" y="194" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">(1, 0)</text>
+            `,
+            caption:
+              'גרף $f(x)$: אסימפטוטה אנכית $x = \\frac{1}{e}$. בקטע $0 < x < \\frac{1}{e}$ הפונקציה חיובית ועולה מ-$0$ אל $+\\infty$; בקטע $x > \\frac{1}{e}$ היא עולה מ-$-\\infty$, חוצה את ציר ה-$x$ ב-$(1, 0)$, וממשיכה אל $+\\infty$.',
+          },
+        ],
+        hints: [
+          'סמנו את האסימפטוטה האנכית $x = \\frac{1}{e}$ ואת החיתוך $(1, 0)$, והשתמשו בכך שהפונקציה עולה בשני חלקי התחום.',
+          'בדקו את הסימן בכל קטע: ב-$0 < x < \\frac{1}{e}$ הפונקציה חיובית, וב-$\\frac{1}{e} < x < 1$ היא שלילית.',
+        ],
+        solution: {
+          steps: [
+            'תחום ההגדרה: $x > 0$, $x \\ne \\frac{1}{e}$; אסימפטוטה אנכית $x = \\frac{1}{e}$.',
+            'הפונקציה עולה בכל התחום, וחותכת את ציר ה-$x$ ב-$(1, 0)$.',
+            'בקטע $0 < x < \\frac{1}{e}$ הפונקציה חיובית: עולה מ-$0$ (כש-$x \\to 0^+$) אל $+\\infty$ (כש-$x \\to \\frac{1}{e}^-$).',
+            'בקטע $x > \\frac{1}{e}$: עולה מ-$-\\infty$ (כש-$x \\to \\frac{1}{e}^+$), חוצה את ציר ה-$x$ ב-$(1, 0)$, וממשיכה לעלות אל $+\\infty$.',
+          ],
+          final_answer: 'ראו הסקיצה: אסימפטוטה אנכית $x = \\frac{1}{e}$, חיתוך ציר $x$ ב-$(1, 0)$, ועלייה בשני חלקי התחום.',
+        },
+      },
+      {
+        label: 'ד1',
+        prompt: 'נתונה הפונקציה $g(x) = \\dfrac{1 + \\ln x}{x \\cdot \\ln x}$. מצאו את תחום ההגדרה שלה.',
+        answer_type: 'expression',
+        hints: [
+          'תנאי הלוגריתם נותן $x > 0$.',
+          'המכנה $x \\cdot \\ln x$ אסור שיתאפס — מתי $\\ln x = 0$?',
+        ],
+        solution: {
+          steps: [
+            'תנאי הלוגריתם: $\\;x > 0$.',
+            'המכנה $x \\cdot \\ln x$ אסור שיתאפס: $\\;x \\ne 0$ (כבר מובטח) וגם $\\ln x \\ne 0$.',
+            '$\\ln x \\ne 0 \\;\\Rightarrow\\; x \\ne e^0 = 1$.',
+            'מאחדים: כל $x > 0$ פרט ל-$x = 1$.',
+          ],
+          final_answer: '$0 < x < 1\\;$ או $\\;x > 1$.',
+        },
+      },
+      {
+        label: 'ד2',
+        prompt: 'מצאו את משוואות האסימפטוטות המאונכות לצירים של הפונקציה $g(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'אסימפטוטה אנכית (מאונכת לציר ה-$x$): היכן שהמכנה מתאפס והמונה אינו מתאפס — בדקו $x = 1$.',
+          'בדקו גם את הקצה $x \\to 0^+$ בעזרת הקירוב $1 + \\ln x \\approx \\ln x$.',
+          'אסימפטוטה אופקית (מאונכת לציר ה-$y$): חשבו $\\lim\\limits_{x \\to \\infty} g(x)$.',
+        ],
+        solution: {
+          steps: [
+            'נתחיל באסימפטוטות אנכיות (מאונכות לציר ה-$x$): היכן שהמכנה מתאפס והמונה אינו מתאפס.',
+            'המכנה $x \\ln x$ מתאפס ב-$x = 1$ (בתחום $x > 0$). המונה שם: $\\;1 + \\ln 1 = 1 \\ne 0$ — לכן $x = 1$ אסימפטוטה אנכית.',
+            'גבולות: $\\;\\lim\\limits_{x \\to 1^-} g(x) = -\\infty$ ו-$\\lim\\limits_{x \\to 1^+} g(x) = +\\infty$.',
+            'נבדוק את הקצה $x \\to 0^+$: $\\;\\lim\\limits_{x \\to 0^+} \\dfrac{1 + \\ln x}{x \\ln x}$.',
+            'כאשר $x \\to 0^+$ מתקיים $\\ln x \\to -\\infty$, ולכן $1 + \\ln x \\approx \\ln x$.',
+            'מציבים: $\\;\\dfrac{\\ln x}{x \\ln x} = \\dfrac{1}{x} \\to +\\infty$.',
+            'לכן $x = 0$ (ציר ה-$y$) הוא אסימפטוטה אנכית נוספת.',
+            'כעת אסימפטוטה אופקית (מאונכת לציר ה-$y$): נחשב את הגבול ב-$\\infty$.',
+            '$\\lim\\limits_{x \\to \\infty} \\dfrac{1 + \\ln x}{x \\ln x} = \\lim\\limits_{x \\to \\infty} \\dfrac{\\ln x}{x \\ln x} = \\lim\\limits_{x \\to \\infty} \\dfrac{1}{x} = 0$.',
+            'לכן $y = 0$ אסימפטוטה אופקית.',
+          ],
+          final_answer: 'אנכיות: $x = 0$ ו-$x = 1$; אופקית: $y = 0$.',
+        },
+      },
+      {
+        label: 'ד3',
+        prompt: 'שרטטו סקיצה של גרף הפונקציה $g(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 360 300',
+            svg: `
+              <line x1="22" y1="150" x2="352" y2="150" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="40" y1="36" x2="40" y2="272" stroke="rgba(96,165,250,0.7)" stroke-width="1.2" stroke-dasharray="5,4"/>
+              <text x="345" y="146" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <text x="27" y="44" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">y</text>
+              <line x1="84" y1="36" x2="84" y2="272" stroke="rgba(96,165,250,0.7)" stroke-width="1.2" stroke-dasharray="5,4"/>
+              <text x="86" y="48" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">x = 1</text>
+              <text x="20" y="60" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">x = 0</text>
+              <text x="300" y="144" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">y = 0</text>
+              <polyline points="44,40 47,81 49,108 53,138 56,150" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <polyline points="56,150 62,170 71,207 76,246 79,260" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <polyline points="88,40 97,69 106,99 128,123 172,136 216,141 260,143 348,145" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <circle cx="56" cy="150" r="3" fill="#60a5fa"/>
+              <text x="46" y="164" fill="#60a5fa" font-size="10" font-family="Heebo, sans-serif">1/e</text>
+              <text x="80" y="164" fill="#94a3b8" font-size="10" font-family="Heebo, sans-serif">1</text>
+            `,
+            caption:
+              'גרף $g(x)$: אסימפטוטות אנכיות $x = 0$ ו-$x = 1$, ואסימפטוטה אופקית $y = 0$. חיתוך ציר ה-$x$ ב-$\\left(\\frac{1}{e}, 0\\right)$. בקטע $0 < x < \\frac{1}{e}$ הפונקציה יורדת מ-$+\\infty$ אל $0$; בקטע $\\frac{1}{e} < x < 1$ יורדת מ-$0$ אל $-\\infty$; בקטע $x > 1$ יורדת מ-$+\\infty$ אל $0$.',
+          },
+        ],
+        hints: [
+          'נצלו את האסימפטוטות מסעיף ד2 ואת אפס הפונקציה: $1 + \\ln x = 0 \\Rightarrow x = \\frac{1}{e}$.',
+          'בדקו את הסימן בכל אחד משלושת הקטעים $(0, \\frac{1}{e})$, $(\\frac{1}{e}, 1)$, $(1, \\infty)$.',
+        ],
+        solution: {
+          steps: [
+            'תחום: $x > 0$, $x \\ne 1$; אסימפטוטות $x = 0$, $x = 1$ ו-$y = 0$.',
+            'אפס הפונקציה: $\\;1 + \\ln x = 0 \\Rightarrow x = \\frac{1}{e}$, כלומר חיתוך ציר ה-$x$ ב-$\\left(\\frac{1}{e}, 0\\right)$.',
+            'בקטע $0 < x < \\frac{1}{e}$: $\\;g > 0$, יורדת מ-$+\\infty$ (ליד $x = 0$) אל $0$ ב-$x = \\frac{1}{e}$.',
+            'בקטע $\\frac{1}{e} < x < 1$: $\\;g < 0$, יורדת מ-$0$ אל $-\\infty$ (ליד $x = 1$).',
+            'בקטע $x > 1$: $\\;g > 0$, יורדת מ-$+\\infty$ (ליד $x = 1$) אל $0$ (אסימפטוטה $y = 0$).',
+          ],
+          final_answer: 'ראו הסקיצה: אסימפטוטות $x = 0$, $x = 1$, $y = 0$; חיתוך ציר $x$ ב-$\\left(\\frac{1}{e}, 0\\right)$.',
+        },
+      },
+      {
+        label: 'ה1',
+        prompt: [
+          'נתון הביטוי $\\;\\displaystyle\\int_{e^k}^{e^{2k}} \\left(\\dfrac{1}{x \\cdot \\ln x} + \\dfrac{1}{x}\\right) dx\\;$, כאשר $k$ הוא פרמטר גדול מ-$1$.',
+          '',
+          'קבעו איזה מן הביטויים I–II שווה לערך הביטוי הנתון, ונמקו את קביעתכם.',
+          '',
+          'I. $\\;k + \\ln k\\qquad$ II. $\\;k + \\ln 2$',
+        ].join('\n'),
+        answer_type: 'text',
+        hints: [
+          'מצאו פונקציה קדומה לכל מחובר: שימו לב ש-$\\big(\\ln(\\ln x)\\big)\' = \\dfrac{1}{x \\ln x}$.',
+          'הציבו את הגבולות $e^{2k}$ ו-$e^k$ ונצלו ש-$\\ln(e^{mk}) = mk$.',
+          'בהפרש יופיע $\\ln(2k) - \\ln k = \\ln 2$ — שימו לב מה נשאר ובמה זה תלוי.',
+        ],
+        solution: {
+          steps: [
+            'נמצא פונקציה קדומה לכל מחובר בנפרד.',
+            '$\\displaystyle\\int \\dfrac{1}{x \\ln x}\\,dx = \\ln|\\ln x| + C\\;$ (כי הנגזרת של $\\ln(\\ln x)$ היא $\\frac{1}{x \\ln x}$).',
+            '$\\displaystyle\\int \\dfrac{1}{x}\\,dx = \\ln|x| + C$.',
+            'בתחום $[e^k, e^{2k}]$ מתקיים $x > 1$ ו-$\\ln x > 0$, לכן הפונקציה הקדומה היא $\\;F(x) = \\ln(\\ln x) + \\ln x$.',
+            'נציב את הגבול העליון $x = e^{2k}$: $\\;\\ln x = 2k$, ולכן $\\;F(e^{2k}) = \\ln(2k) + 2k$.',
+            'נציב את הגבול התחתון $x = e^{k}$: $\\;\\ln x = k$, ולכן $\\;F(e^{k}) = \\ln k + k$.',
+            'נחשב את ההפרש: $\\;\\big[\\ln(2k) + 2k\\big] - \\big[\\ln k + k\\big]$.',
+            'מסדרים: $\\;\\ln(2k) - \\ln k + 2k - k = \\ln\\dfrac{2k}{k} + k = \\ln 2 + k$.',
+            'התוצאה $k + \\ln 2$ אינה תלויה ב-$\\ln k$, ולכן הביטוי המתאים הוא II (ולא I).',
+          ],
+          final_answer: 'הביטוי שווה $k + \\ln 2$ — כלומר ביטוי II.',
+        },
+      },
+      {
+        label: 'ה2',
+        prompt: 'חשבו את השטח המוגבל על-ידי גרף הפונקציה $g(x)$, ציר ה-$x$, והישרים $x = e^2$ ו-$x = e^4$.',
+        answer_type: 'number',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 320 200',
+            svg: `
+              <line x1="25" y1="160" x2="305" y2="160" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="45" y1="25" x2="45" y2="175" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <text x="298" y="156" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <text x="33" y="33" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">y</text>
+              <polygon points="150,160 150,116.7 160,122 215,142 235,144.8 235,160" fill="rgba(251,191,36,0.18)" stroke="none"/>
+              <polyline points="55,48 80,72 115,98 160,122 215,142 295,153" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2.2"/>
+              <line x1="150" y1="160" x2="150" y2="116.7" stroke="rgba(96,165,250,0.7)" stroke-width="1.1" stroke-dasharray="4,3"/>
+              <line x1="235" y1="160" x2="235" y2="144.8" stroke="rgba(96,165,250,0.7)" stroke-width="1.1" stroke-dasharray="4,3"/>
+              <text x="138" y="174" fill="#60a5fa" font-size="10.5" font-family="Heebo, sans-serif">x = e²</text>
+              <text x="224" y="174" fill="#60a5fa" font-size="10.5" font-family="Heebo, sans-serif">x = e⁴</text>
+              <text x="88" y="70" fill="#fbbf24" font-size="11" font-family="Heebo, sans-serif">g(x)</text>
+            `,
+            caption:
+              'השטח המבוקש (בצהוב) כלוא בין גרף $g(x)$, ציר ה-$x$, והישרים $x = e^2$ ו-$x = e^4$. בקטע זה $x > 1$, לכן $g(x) > 0$ והשטח שווה לאינטגרל $\\int_{e^2}^{e^4} g(x)\\,dx$ (השרטוט סכמטי).',
+          },
+        ],
+        hints: [
+          'פצלו את $g$: $\\;g(x) = \\dfrac{1 + \\ln x}{x \\ln x} = \\dfrac{1}{x \\ln x} + \\dfrac{1}{x}$ — זה בדיוק האינטגרנד מסעיף ה1.',
+          'בקטע $[e^2, e^4]$ מתקיים $g(x) > 0$, לכן השטח שווה לאינטגרל; זהו המקרה $k = 2$.',
+        ],
+        solution: {
+          steps: [
+            'נפצל את $g$: $\\;g(x) = \\dfrac{1 + \\ln x}{x \\ln x} = \\dfrac{1}{x \\ln x} + \\dfrac{\\ln x}{x \\ln x} = \\dfrac{1}{x \\ln x} + \\dfrac{1}{x}$.',
+            'זהו בדיוק האינטגרנד מסעיף ה1.',
+            'בקטע $[e^2, e^4]$ מתקיים $x > 1$, לכן $g(x) > 0$ — הגרף מעל ציר ה-$x$ והשטח שווה לאינטגרל.',
+            '$S = \\displaystyle\\int_{e^2}^{e^4} \\left(\\dfrac{1}{x \\ln x} + \\dfrac{1}{x}\\right) dx$.',
+            'זהו המקרה $k = 2$ בסעיף ה1 (כי $e^k = e^2$ ו-$e^{2k} = e^4$).',
+            'לפי התוצאה $k + \\ln 2$: $\\;S = 2 + \\ln 2$.',
+          ],
+          final_answer: '$S = 2 + \\ln 2\\;$ (יחידות שטח).',
         },
       },
     ],
