@@ -14,6 +14,8 @@
  *        ריבוע מסובב במישור גאוס ופתרונות z^n = b).
  *   Q4 — חקירת פונקציה מעריכית עם פרמטר (תחום, אסימפטוטות, עלייה/ירידה לפי
  *        סימן a, התאמת גרף, פונקציה מורכבת g=1/(f+2), שרטוט והשוואת אינטגרלים).
+ *   Q5 — חקירת f(x)=ln(x^n) עם n זוגי (תחום, זוגיות/התאמת גרף, g=(f)^2-4:
+ *        חיתוכים, מינימומים, סקיצה, ונגזרת לוגריתמית k=g'/g עם שטח/אינטגרל).
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -1023,6 +1025,252 @@ export const bagrut2025Summer582: PastBagrutQuestion[] = [
             'כלומר האינטגרל השמאלי קטן מהימני — בדיוק ההפך מהטענה.',
           ],
           final_answer: 'הטענה אינה נכונה: $\\int_{-6}^{-4} g\\,dx < 1 < \\int_{4}^{5} g\\,dx$, ולכן $\\int_{-6}^{-4} g\\,dx < \\int_{4}^{5} g\\,dx$.',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+  {
+    id: 'b2025s582a-q5',
+    year: 2025,
+    season: 'summer',
+    moed: 'a',
+    paper: '582',
+    questionNumber: 5,
+    topic: 'פונקציית ln',
+    totalPoints: 25,
+    context: 'נתונה הפונקציה $\\;f(x) = \\ln(x^n)\\;$, כאשר $n$ הוא מספר טבעי זוגי.',
+    parts: [
+      {
+        label: 'א1',
+        prompt: 'מצאו את תחום ההגדרה של הפונקציה $f(x)$.',
+        answer_type: 'expression',
+        hints: [
+          'תנאי הלוגריתם: הארגומנט חיובי, כלומר $x^n > 0$.',
+          'מכיוון ש-$n$ זוגי, מתי בדיוק $x^n$ אינו חיובי?',
+        ],
+        solution: {
+          steps: [
+            'תנאי הלוגריתם: הארגומנט חיובי, כלומר $\\;x^n > 0$.',
+            'מכיוון ש-$n$ זוגי, מתקיים $x^n > 0$ לכל $x \\ne 0$ (ו-$x^n = 0$ רק כאשר $x = 0$).',
+            'לכן יש לפסול רק את $x = 0$.',
+          ],
+          final_answer: 'כל $x \\ne 0$.',
+        },
+      },
+      {
+        label: 'א2',
+        prompt: 'לפניכם ארבעה גרפים, I–IV. קבעו איזה מהם מייצג את הפונקציה $f(x)$. נמקו את קביעתכם.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 760 220',
+            svg: `
+              <line x1="15" y1="120" x2="180" y2="120" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="95" y1="25" x2="95" y2="180" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <polyline points="20,170 45,150 70,135 95,120 130,90 170,45" fill="none" stroke="rgba(251,191,36,0.9)" stroke-width="1.7"/>
+              <text x="95" y="205" fill="#e2e8f0" font-size="13" font-family="Heebo, sans-serif" text-anchor="middle">IV</text>
+              <line x1="205" y1="120" x2="370" y2="120" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="285" y1="25" x2="285" y2="180" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <polyline points="210,178 235,150 260,110 280,45" fill="none" stroke="rgba(251,191,36,0.9)" stroke-width="1.7"/>
+              <polyline points="290,45 310,110 335,150 360,178" fill="none" stroke="rgba(251,191,36,0.9)" stroke-width="1.7"/>
+              <text x="285" y="205" fill="#e2e8f0" font-size="13" font-family="Heebo, sans-serif" text-anchor="middle">III</text>
+              <line x1="395" y1="120" x2="560" y2="120" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="475" y1="25" x2="475" y2="180" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <polyline points="400,45 425,72 452,112 469,178" fill="none" stroke="rgba(251,191,36,0.9)" stroke-width="1.7"/>
+              <polyline points="481,178 498,112 525,72 550,45" fill="none" stroke="rgba(251,191,36,0.9)" stroke-width="1.7"/>
+              <text x="475" y="205" fill="#e2e8f0" font-size="13" font-family="Heebo, sans-serif" text-anchor="middle">II</text>
+              <line x1="585" y1="120" x2="750" y2="120" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="600" y1="25" x2="600" y2="180" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <polyline points="605,178 625,130 660,100 700,70 748,45" fill="none" stroke="rgba(251,191,36,0.9)" stroke-width="1.7"/>
+              <text x="667" y="205" fill="#e2e8f0" font-size="13" font-family="Heebo, sans-serif" text-anchor="middle">I</text>
+            `,
+            caption:
+              'ארבעת הגרפים להתאמה. הפונקציה $f(x) = \\ln(x^n)$ עם $n$ זוגי היא זוגית (סימטרית ביחס לציר ה-$y$), שואפת ל-$-\\infty$ ליד $x = 0$ ול-$+\\infty$ בקצוות, וחותכת את ציר ה-$x$ ב-$x = \\pm 1$. הגרף המתאים הוא II.',
+          },
+        ],
+        hints: [
+          'בדקו את הזוגיות: חשבו את $f(-x)$ ונצלו ש-$n$ זוגי.',
+          'פונקציה זוגית סימטרית ביחס לציר ה-$y$ — חפשו גרף סימטרי.',
+        ],
+        solution: {
+          steps: [
+            'נבדוק זוגיות: $\\;f(-x) = \\ln\\big((-x)^n\\big)$.',
+            'מכיוון ש-$n$ זוגי, $(-x)^n = x^n$, ולכן $\\;f(-x) = \\ln(x^n) = f(x)$.',
+            'כלומר הפונקציה זוגית — הגרף סימטרי ביחס לציר ה-$y$.',
+            'בנוסף: כאשר $x \\to 0$ מתקיים $x^n \\to 0^+$ ולכן $f \\to -\\infty$ (אסימפטוטה אנכית $x = 0$); וכאשר $|x| \\to \\infty$ מתקיים $f \\to +\\infty$.',
+            'הגרף היחיד שהוא סימטרי ביחס לציר ה-$y$ ומתאים לתיאור הוא גרף II.',
+          ],
+          final_answer: 'גרף II — הפונקציה זוגית (סימטרית ביחס לציר ה-$y$).',
+        },
+      },
+      {
+        label: 'ב1',
+        prompt: [
+          'מציבים מעתה $n = 2$, כלומר $f(x) = \\ln(x^2)$, ונתונה הפונקציה $\\;g(x) = \\big(f(x)\\big)^2 - 4\\;$, המוגדרת לכל $x \\ne 0$.',
+          '',
+          'מצאו את שיעורי נקודות החיתוך של גרף הפונקציה $g(x)$ עם ציר ה-$x$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'חיתוך עם ציר ה-$x$: $g(x) = 0$, כלומר $\\big(f(x)\\big)^2 = 4$.',
+          'פתרו בנפרד $f(x) = 2$ ו-$f(x) = -2$, כל אחד נותן $x^2 = e^{\\pm 2}$.',
+        ],
+        solution: {
+          steps: [
+            'חיתוך עם ציר ה-$x$: $\\;g(x) = 0$, כלומר $\\big(f(x)\\big)^2 - 4 = 0$.',
+            'מכאן $\\;\\big(f(x)\\big)^2 = 4$, ולכן $\\;f(x) = 2$ או $f(x) = -2$.',
+            'מקרה $f(x) = 2$: $\\;\\ln(x^2) = 2 \\Rightarrow x^2 = e^2 \\Rightarrow x = \\pm e$.',
+            'מקרה $f(x) = -2$: $\\;\\ln(x^2) = -2 \\Rightarrow x^2 = e^{-2} \\Rightarrow x = \\pm \\dfrac{1}{e}$.',
+          ],
+          final_answer: '$\\left(e, 0\\right),\\ \\left(-e, 0\\right),\\ \\left(\\dfrac{1}{e}, 0\\right),\\ \\left(-\\dfrac{1}{e}, 0\\right)$.',
+        },
+      },
+      {
+        label: 'ב2',
+        prompt: 'מצאו את שיעורי נקודות הקיצון של הפונקציה $g(x)$, וקבעו את סוגן.',
+        answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 420 132',
+            svg: `
+              <rect x="12" y="16" width="396" height="100" fill="none" stroke="rgba(148,163,184,0.45)" stroke-width="1"/>
+              <line x1="78" y1="16" x2="78" y2="116" stroke="rgba(148,163,184,0.45)" stroke-width="1"/>
+              <line x1="12" y1="49" x2="408" y2="49" stroke="rgba(148,163,184,0.45)" stroke-width="1"/>
+              <line x1="12" y1="82" x2="408" y2="82" stroke="rgba(148,163,184,0.45)" stroke-width="1"/>
+              <line x1="240" y1="16" x2="240" y2="116" stroke="rgba(96,165,250,0.6)" stroke-width="1" stroke-dasharray="4,3"/>
+              <text x="45" y="38" fill="#cbd5e1" font-size="12" font-family="Heebo, sans-serif" text-anchor="middle">x</text>
+              <text x="45" y="71" fill="#cbd5e1" font-size="12" font-family="Heebo, sans-serif" text-anchor="middle">g '(x)</text>
+              <text x="45" y="104" fill="#cbd5e1" font-size="12" font-family="Heebo, sans-serif" text-anchor="middle">g(x)</text>
+              <text x="148" y="38" fill="#e2e8f0" font-size="12" font-family="Heebo, sans-serif" text-anchor="middle">-1</text>
+              <text x="240" y="38" fill="#e2e8f0" font-size="12" font-family="Heebo, sans-serif" text-anchor="middle">0</text>
+              <text x="332" y="38" fill="#e2e8f0" font-size="12" font-family="Heebo, sans-serif" text-anchor="middle">1</text>
+              <text x="112" y="72" fill="#f87171" font-size="15" font-family="Heebo, sans-serif" text-anchor="middle">&#8722;</text>
+              <text x="148" y="72" fill="#e2e8f0" font-size="12" font-family="Heebo, sans-serif" text-anchor="middle">0</text>
+              <text x="194" y="71" fill="#34d399" font-size="14" font-family="Heebo, sans-serif" text-anchor="middle">+</text>
+              <text x="286" y="72" fill="#f87171" font-size="15" font-family="Heebo, sans-serif" text-anchor="middle">&#8722;</text>
+              <text x="332" y="72" fill="#e2e8f0" font-size="12" font-family="Heebo, sans-serif" text-anchor="middle">0</text>
+              <text x="372" y="71" fill="#34d399" font-size="14" font-family="Heebo, sans-serif" text-anchor="middle">+</text>
+              <line x1="98" y1="90" x2="128" y2="110" stroke="#f87171" stroke-width="1.4"/>
+              <line x1="170" y1="110" x2="200" y2="90" stroke="#34d399" stroke-width="1.4"/>
+              <line x1="282" y1="90" x2="312" y2="110" stroke="#f87171" stroke-width="1.4"/>
+              <line x1="354" y1="110" x2="384" y2="90" stroke="#34d399" stroke-width="1.4"/>
+              <circle cx="148" cy="100" r="2.4" fill="#fbbf24"/>
+              <circle cx="332" cy="100" r="2.4" fill="#fbbf24"/>
+              <text x="148" y="113" fill="#fbbf24" font-size="8.5" font-family="Heebo, sans-serif" text-anchor="middle">min</text>
+              <text x="332" y="113" fill="#fbbf24" font-size="8.5" font-family="Heebo, sans-serif" text-anchor="middle">min</text>
+            `,
+            caption:
+              'טבלת סימני הנגזרת $g\'(x) = \\dfrac{4\\ln(x^2)}{x}$. הקו המקווקו ב-$x = 0$ הוא מחוץ לתחום (אסימפטוטה אנכית). סביב $x = -1$ ו-$x = 1$ הנגזרת עוברת מ-$-$ ל-$+$, ולכן בשתי הנקודות יש מינימום.',
+          },
+        ],
+        hints: [
+          'גזרו פונקציה מורכבת: $g\'(x) = 2 f(x) \\cdot f\'(x)$, עם $f\'(x) = \\frac{2}{x}$.',
+          'אפסו: או $f(x) = 0$ (כלומר $\\ln(x^2) = 0$) או $f\'(x) = 0$ (אין פתרון).',
+          'קבעו סוג לפי סימן $g\'(x) = \\frac{4\\ln(x^2)}{x}$ סביב כל נקודה.',
+        ],
+        solution: {
+          steps: [
+            'נגזור פונקציה מורכבת: $\\;g\'(x) = 2 f(x) \\cdot f\'(x)$.',
+            'נחשב $\\;f\'(x) = \\big(\\ln(x^2)\\big)\' = \\dfrac{2x}{x^2} = \\dfrac{2}{x}$.',
+            'לכן $\\;g\'(x) = 2 \\ln(x^2) \\cdot \\dfrac{2}{x} = \\dfrac{4 \\ln(x^2)}{x}$.',
+            'נשווה ל-$0$: או $f(x) = 0$, או $f\'(x) = 0$.',
+            '$f(x) = 0$: $\\;\\ln(x^2) = 0 \\Rightarrow x^2 = 1 \\Rightarrow x = \\pm 1$.',
+            '$f\'(x) = 0$: $\\;\\dfrac{2}{x} = 0$ — אין פתרון.',
+            'ערך הפונקציה בנקודות: $\\;g(\\pm 1) = \\big(\\ln 1\\big)^2 - 4 = 0 - 4 = -4$.',
+            'סימן $g\'(x) = \\dfrac{4\\ln(x^2)}{x}$: המונה חיובי כש-$|x| > 1$ ושלילי כש-$|x| < 1$ (ראו טבלה).',
+            'סביב $x = -1$ הנגזרת עוברת מ-$-$ ל-$+$ — מינימום; סביב $x = 1$ הנגזרת עוברת מ-$-$ ל-$+$ — מינימום.',
+          ],
+          final_answer: 'שתי נקודות מינימום: $\\left(1, -4\\right)$ ו-$\\left(-1, -4\\right)$.',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: 'שרטטו סקיצה של גרף הפונקציה $g(x)$.',
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 400 300',
+            svg: `
+              <line x1="18" y1="210" x2="388" y2="210" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
+              <line x1="200" y1="20" x2="200" y2="275" stroke="rgba(96,165,250,0.7)" stroke-width="1.2" stroke-dasharray="5,4"/>
+              <text x="381" y="206" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <text x="188" y="30" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">y</text>
+              <text x="204" y="32" fill="#60a5fa" font-size="9.5" font-family="Heebo, sans-serif">x = 0</text>
+              <polyline points="202.6,25 205.2,140 209.6,210 213,232.9 226,254 252,232.9 270.7,210 304,169.4 330,140 382,87.3" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <polyline points="18,87.3 70,140 96,169.4 129.3,210 148,232.9 174,254 187,232.9 190.4,210 194.8,140 197.4,25" fill="none" stroke="rgba(251,191,36,0.95)" stroke-width="2"/>
+              <circle cx="226" cy="254" r="3" fill="#fbbf24"/>
+              <circle cx="174" cy="254" r="3" fill="#fbbf24"/>
+              <text x="237" y="266" fill="#fbbf24" font-size="9.5" font-family="Heebo, sans-serif">(1, -4)</text>
+              <text x="138" y="266" fill="#fbbf24" font-size="9.5" font-family="Heebo, sans-serif">(-1, -4)</text>
+              <circle cx="209.6" cy="210" r="2.2" fill="#60a5fa"/>
+              <circle cx="270.7" cy="210" r="2.2" fill="#60a5fa"/>
+              <circle cx="190.4" cy="210" r="2.2" fill="#60a5fa"/>
+              <circle cx="129.3" cy="210" r="2.2" fill="#60a5fa"/>
+              <text x="276" y="204" fill="#60a5fa" font-size="9" font-family="Heebo, sans-serif">e</text>
+              <text x="118" y="204" fill="#60a5fa" font-size="9" font-family="Heebo, sans-serif">-e</text>
+            `,
+            caption:
+              'גרף $g(x) = \\big(\\ln(x^2)\\big)^2 - 4$: זוגי (סימטרי ביחס לציר ה-$y$), עם אסימפטוטה אנכית $x = 0$ (שם $g \\to +\\infty$). שתי נקודות מינימום ב-$(\\pm 1, -4)$, וחיתוכי ציר ה-$x$ ב-$\\pm\\frac{1}{e}$ וב-$\\pm e$.',
+          },
+        ],
+        hints: [
+          'נצלו את הזוגיות, את האסימפטוטה $x = 0$, את המינימומים $(\\pm 1, -4)$ ואת ארבעת החיתוכים.',
+          'בכל ענף: יורד מ-$+\\infty$ ליד $0$, חוצה את הציר, מגיע למינימום, חוצה שוב, ועולה אל $+\\infty$.',
+        ],
+        solution: {
+          steps: [
+            'הפונקציה זוגית (כי $f$ זוגית), סימטרית ביחס לציר ה-$y$.',
+            'אסימפטוטה אנכית $x = 0$: כאשר $x \\to 0$ מתקיים $\\ln(x^2) \\to -\\infty$, ולכן $g = \\big(\\ln(x^2)\\big)^2 - 4 \\to +\\infty$.',
+            'כאשר $|x| \\to \\infty$ גם $g \\to +\\infty$.',
+            'חיתוכי ציר $x$: $\\;\\pm\\dfrac{1}{e}$ ו-$\\pm e$; שתי נקודות מינימום $\\left(\\pm 1, -4\\right)$.',
+            'לכל ענף (למשל $x > 0$): יורד מ-$+\\infty$ (ליד $0$), חוצה ב-$\\frac{1}{e}$, מגיע למינימום $(1, -4)$, חוצה ב-$e$, ועולה אל $+\\infty$.',
+          ],
+          final_answer: 'ראו הסקיצה: אסימפטוטה אנכית $x = 0$, סימטריה ביחס לציר $y$, מינימומים ב-$(\\pm 1, -4)$, וחיתוכי ציר $x$ ב-$\\pm\\frac{1}{e}$ וב-$\\pm e$.',
+        },
+      },
+      {
+        label: 'ד1',
+        prompt: [
+          'נתונה הפונקציה $\\;k(x) = \\dfrac{g\'(x)}{g(x)}\\;$, בתחום $x > 0$.',
+          '',
+          'מצאו את תחום ההגדרה של הפונקציה $k(x)$.',
+        ].join('\n'),
+        answer_type: 'expression',
+        hints: [
+          'נתון $x > 0$; בנוסף דרשו שהמכנה $g(x) \\ne 0$.',
+          'אילו אפסים של $g$ נמצאים בתחום $x > 0$?',
+        ],
+        solution: {
+          steps: [
+            'נתון $x > 0$. בנוסף נדרוש שהמכנה אינו מתאפס: $\\;g(x) \\ne 0$.',
+            'מסעיף ב1, בתחום $x > 0$ מתקיים $g(x) = 0$ ב-$x = \\dfrac{1}{e}$ וב-$x = e$.',
+            'לכן יש לפסול אותם.',
+          ],
+          final_answer: 'כל $x > 0$ פרט ל-$x = \\dfrac{1}{e}$ ו-$x = e$.',
+        },
+      },
+      {
+        label: 'ד2',
+        prompt: 'חשבו את השטח המוגבל על-ידי גרף הפונקציה $k(x)$, ציר ה-$x$, והישרים $x = e^2$ ו-$x = e^3$.',
+        answer_type: 'expression',
+        hints: [
+          'שימו לב ש-$k(x) = \\dfrac{g\'(x)}{g(x)}$ היא נגזרת לוגריתמית — מהי הפונקציה הקדומה?',
+          'בקטע $[e^2, e^3]$ מתקיים $g(x) > 0$, לכן השטח שווה לאינטגרל. חשבו $g(e^3)$ ו-$g(e^2)$.',
+        ],
+        solution: {
+          steps: [
+            'נשים לב ש-$k(x) = \\dfrac{g\'(x)}{g(x)}$ היא נגזרת לוגריתמית: $\\;\\displaystyle\\int \\dfrac{g\'(x)}{g(x)}\\,dx = \\ln|g(x)| + C$.',
+            'בקטע $[e^2, e^3]$ מתקיים $x > e$, ולכן $g(x) > 0$ ו-$g\'(x) > 0$ — כלומר $k(x) > 0$, והשטח שווה לאינטגרל.',
+            '$S = \\displaystyle\\int_{e^2}^{e^3} \\dfrac{g\'(x)}{g(x)}\\,dx = \\Big[\\ln|g(x)|\\Big]_{e^2}^{e^3} = \\ln g(e^3) - \\ln g(e^2)$.',
+            'נחשב $\\;g(e^3) = \\big(\\ln(e^6)\\big)^2 - 4 = 6^2 - 4 = 32$.',
+            'נחשב $\\;g(e^2) = \\big(\\ln(e^4)\\big)^2 - 4 = 4^2 - 4 = 12$.',
+            'מציבים: $\\;S = \\ln 32 - \\ln 12 = \\ln\\dfrac{32}{12} = \\ln\\dfrac{8}{3}$.',
+          ],
+          final_answer: '$S = \\ln\\dfrac{8}{3}\\;$ (יחידות שטח).',
         },
       },
     ],
