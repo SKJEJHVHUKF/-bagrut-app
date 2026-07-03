@@ -176,3 +176,89 @@ export function weakestTopics(
     .filter((s) => s.attempts >= minAttempts && s.accuracy <= maxAccuracy)
     .slice(0, limit);
 }
+
+// ============================================================
+// Daily activity, streak & goal — the habit layer.
+// ============================================================
+
+/** Local-date key (NOT UTC — a study day is the student's calendar day). */
+function dateKey(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export type DayActivity = { date: string; attempts: number; correct: number };
+
+/** Per-day activity, oldest first. Optionally scoped to one subject. */
+export function dailyActivity(subject?: string): DayActivity[] {
+  const map = new Map<string, DayActivity>();
+  for (const e of getResults(subject)) {
+    const k = dateKey(e.ts);
+    const cur = map.get(k) ?? { date: k, attempts: 0, correct: 0 };
+    cur.attempts += 1;
+    if (e.correct) cur.correct += 1;
+    map.set(k, cur);
+  }
+  return [...map.values()].sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+/** Attempts answered today (local time). */
+export function todayCount(subject?: string): number {
+  const k = dateKey(Date.now());
+  return dailyActivity(subject).find((d) => d.date === k)?.attempts ?? 0;
+}
+
+/**
+ * Consecutive study days ending today or yesterday (a streak survives until
+ * a full calendar day is missed). 0 when there's no recent activity.
+ */
+export function currentStreak(subject?: string): number {
+  const days = new Set(dailyActivity(subject).map((d) => d.date));
+  if (days.size === 0) return 0;
+  const DAY = 24 * 60 * 60 * 1000;
+  let cursor = Date.now();
+  // The streak may start today or (if nothing yet today) yesterday.
+  if (!days.has(dateKey(cursor))) {
+    cursor -= DAY;
+    if (!days.has(dateKey(cursor))) return 0;
+  }
+  let streak = 0;
+  while (days.has(dateKey(cursor))) {
+    streak += 1;
+    cursor -= DAY;
+  }
+  return streak;
+}
+
+/** The last N days as a fixed-length series (missing days = 0 attempts). */
+export function lastNDays(n: number, subject?: string): DayActivity[] {
+  const byDate = new Map(dailyActivity(subject).map((d) => [d.date, d]));
+  const DAY = 24 * 60 * 60 * 1000;
+  const out: DayActivity[] = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const k = dateKey(Date.now() - i * DAY);
+    out.push(byDate.get(k) ?? { date: k, attempts: 0, correct: 0 });
+  }
+  return out;
+}
+
+// ---- Daily goal (questions per day) ----
+
+const GOAL_KEY = 'bagrut-goal-v1';
+export const DEFAULT_DAILY_GOAL = 10;
+
+export function getDailyGoal(): number {
+  if (!isBrowser()) return DEFAULT_DAILY_GOAL;
+  const raw = window.localStorage.getItem(GOAL_KEY);
+  const n = raw ? parseInt(raw, 10) : NaN;
+  return Number.isFinite(n) && n >= 1 && n <= 200 ? n : DEFAULT_DAILY_GOAL;
+}
+
+export function setDailyGoal(n: number) {
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.setItem(GOAL_KEY, String(Math.max(1, Math.min(200, Math.round(n)))));
+  } catch {
+    // storage disabled — ignore
+  }
+}

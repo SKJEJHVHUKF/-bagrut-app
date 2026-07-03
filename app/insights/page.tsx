@@ -27,8 +27,14 @@ import {
   topicStats,
   weakestSubTopics,
   subjectsWithResults,
+  currentStreak,
+  todayCount,
+  lastNDays,
+  getDailyGoal,
+  setDailyGoal,
   type TopicStat,
   type SubTopicStat,
+  type DayActivity,
 } from '@/lib/results';
 
 const SUBJECT_NAMES: Record<string, string> = {
@@ -64,8 +70,25 @@ function barColor(p: number): string {
   return 'bg-gradient-to-l from-rose-500 to-red-500';
 }
 
+type Habit = {
+  streak: number;
+  today: number;
+  goal: number;
+  days: DayActivity[];
+};
+
 export default function InsightsPage() {
   const [data, setData] = useState<SubjectData[] | null>(null);
+  const [habit, setHabit] = useState<Habit | null>(null);
+
+  function refreshHabit() {
+    setHabit({
+      streak: currentStreak(),
+      today: todayCount(),
+      goal: getDailyGoal(),
+      days: lastNDays(14),
+    });
+  }
 
   useEffect(() => {
     const subjects = subjectsWithResults();
@@ -79,7 +102,13 @@ export default function InsightsPage() {
         weakSubs: weakestSubTopics(subject, { minAttempts: 3, limit: 4 }),
       }))
     );
+    refreshHabit();
   }, []);
+
+  function bumpGoal(delta: number) {
+    setDailyGoal(getDailyGoal() + delta);
+    refreshHabit();
+  }
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-slate-800 px-4 py-8">
@@ -128,6 +157,81 @@ export default function InsightsPage() {
             >
               <span>🎯 התחל מבחן מעורב</span>
             </Link>
+          </motion.div>
+        )}
+
+        {/* Habit strip — streak, daily goal, last-14-days activity */}
+        {habit && data !== null && data.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 sm:grid-cols-3 gap-2"
+          >
+            {/* Streak — this is exactly what the gold accent is reserved for */}
+            <div className="surface-premium rounded-2xl p-4 flex items-center gap-3">
+              <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-[var(--accent)]/10 border border-[var(--accent)]/30 flex items-center justify-center">
+                <Flame className="w-6 h-6 text-[var(--accent)]" />
+              </div>
+              <div>
+                <div className="text-2xl font-black text-slate-900 leading-none">
+                  {habit.streak}
+                  <span className="text-xs font-bold text-slate-500 mr-1">ימים</span>
+                </div>
+                <div className="text-[11px] text-slate-600 font-bold mt-1">
+                  {habit.streak >= 2 ? 'רצף למידה — שמור עליו! 🔥' : 'רצף למידה — יום ביום'}
+                </div>
+              </div>
+            </div>
+
+            {/* Daily goal ring */}
+            <div className="surface-premium rounded-2xl p-4 flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-12 h-12">
+                <svg viewBox="0 0 48 48" className="w-12 h-12 -rotate-90">
+                  <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(15,23,42,0.08)" strokeWidth="5" />
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="20"
+                    fill="none"
+                    stroke="#4F46E5"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    strokeDasharray={`${Math.min(1, habit.today / habit.goal) * 125.7} 125.7`}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-indigo-800">
+                  {Math.min(100, Math.round((habit.today / habit.goal) * 100))}%
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-black text-slate-900">
+                  {habit.today}/{habit.goal} היום
+                </div>
+                <div className="text-[11px] text-slate-600 font-bold mt-0.5 flex items-center gap-1.5">
+                  <span>יעד יומי</span>
+                  <button onClick={() => bumpGoal(-5)} className="w-4 h-4 rounded bg-slate-900/5 hover:bg-slate-900/10 text-slate-700 text-[10px] font-black leading-none">−</button>
+                  <button onClick={() => bumpGoal(5)} className="w-4 h-4 rounded bg-slate-900/5 hover:bg-slate-900/10 text-slate-700 text-[10px] font-black leading-none">+</button>
+                </div>
+              </div>
+            </div>
+
+            {/* 14-day mini-chart */}
+            <div className="surface-premium rounded-2xl p-4">
+              <div className="text-[11px] text-slate-600 font-bold mb-2">14 הימים האחרונים</div>
+              <div className="flex items-end gap-1 h-9" dir="ltr">
+                {(() => {
+                  const max = Math.max(1, ...habit.days.map((d) => d.attempts));
+                  return habit.days.map((d) => (
+                    <div
+                      key={d.date}
+                      title={`${d.date}: ${d.attempts} שאלות`}
+                      className={`flex-1 rounded-sm ${d.attempts > 0 ? 'bg-indigo-500/70' : 'bg-slate-900/[0.06]'}`}
+                      style={{ height: `${Math.max(8, (d.attempts / max) * 100)}%` }}
+                    />
+                  ));
+                })()}
+              </div>
+            </div>
           </motion.div>
         )}
 
