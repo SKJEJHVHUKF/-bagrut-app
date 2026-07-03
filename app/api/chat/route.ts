@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
-import { isPilotTopic, buildTutorSystemPrompt } from '@/lib/tutor-grounding';
+import { isGroundedTopic, buildTutorSystemPrompt } from '@/lib/tutor-grounding';
 
 // Hobby plan needs an explicit ceiling. Haiku 4.5 with a tight 6-message
 // context + max_tokens=800 typically finishes in 5-15s, well under 60s.
@@ -208,14 +208,22 @@ export async function POST(request: Request) {
     }
     const client = new Anthropic({ apiKey });
 
-    // ===== PILOT: grounded "private tutor" for complex numbers =====
-    // For the pilot topic we swap in the tutor-bar system prompt grounded in
-    // the verified content, and step up to Sonnet — diagnosis and rephrasing
-    // need more depth than Haiku. Every other topic keeps the cheap Haiku
-    // path untouched. (Model is a one-line flip if cost requires it.)
-    const pilot = isPilotTopic(topic);
-    const systemPrompt = (pilot && buildTutorSystemPrompt(topic)) || SYSTEM_PROMPT;
-    const model = pilot ? 'claude-sonnet-4-6' : 'claude-haiku-4-5';
+    // ===== Grounded "private tutor" — every topic with an authored lesson =====
+    // Grounded topics get the tutor-bar system prompt anchored in the verified
+    // content, and step up to Sonnet — diagnosis and rephrasing need more
+    // depth than Haiku. Ungrounded topics keep the cheap Haiku path.
+    //
+    // Cost valve: set TUTOR_SONNET_TOPICS (comma-separated topic names) to
+    // restrict Sonnet to an allowlist; grounded topics outside it still get
+    // the grounded prompt, just on Haiku.
+    const grounded = isGroundedTopic(topic);
+    const systemPrompt = (grounded && buildTutorSystemPrompt(topic)) || SYSTEM_PROMPT;
+    const sonnetAllowlist = (process.env.TUTOR_SONNET_TOPICS ?? '').trim();
+    const useSonnet =
+      grounded &&
+      (sonnetAllowlist === '' ||
+        sonnetAllowlist.split(',').map((s) => s.trim()).includes(topic));
+    const model = useSonnet ? 'claude-sonnet-4-6' : 'claude-haiku-4-5';
 
     // Inject the question/attempt snapshot (if any) into THIS turn only, so
     // the tutor can diagnose what the student is actually working on. We
@@ -237,7 +245,16 @@ export async function POST(request: Request) {
       model,
       // 800 caps the assistant reply at roughly 3-5 short paragraphs.
       max_tokens: 800,
-      system: systemPrompt,
+      // Prompt caching: the system block (persona + grounding) is static per
+      // topic and re-sent every turn of a multi-turn tutoring chat — caching
+      // it cuts the dominant input cost by ~90% within the 5-minute TTL.
+      system: [
+        {
+          type: 'text' as const,
+          text: systemPrompt,
+          cache_control: { type: 'ephemeral' as const },
+        },
+      ],
       messages: claudeMessages,
     });
 

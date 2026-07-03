@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { hasLesson } from '@/content/lessons';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -18,10 +19,6 @@ import {
 
 const MAX_DAILY_MESSAGES = 20;
 const MAX_MESSAGE_LEN = 500;
-// The grounded "private tutor" pilot topic. When the chat is opened with
-// ?topic=this, the backend swaps in the verified-content tutor; we show a
-// badge so the student can SEE they're in the grounded mode.
-const PILOT_TOPIC = 'מספרים מרוכבים';
 
 type ChatMessage = {
   id: string;
@@ -206,7 +203,10 @@ export default function ChatPage() {
     }
   }
 
-  const grounded = topic === PILOT_TOPIC;
+  // Grounded 'private tutor' mode — every topic with an authored lesson.
+  // The backend applies the verified-content prompt; the badge lets the
+  // student SEE they're in the grounded mode.
+  const grounded = !!topic && hasLesson('math5', topic);
   const isEmpty = !loadingHistory && messages.length === 0;
 
   return (
