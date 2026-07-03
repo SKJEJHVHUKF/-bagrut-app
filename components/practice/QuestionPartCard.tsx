@@ -344,7 +344,7 @@ export function QuestionPartCard({
                       <Lightbulb className="w-3 h-3" />
                       <span>רמז {i + 1}</span>
                     </div>
-                    <div className="text-sm text-amber-50/95">
+                    <div className="text-sm text-amber-900">
                       <MathText>{h}</MathText>
                     </div>
                   </motion.div>

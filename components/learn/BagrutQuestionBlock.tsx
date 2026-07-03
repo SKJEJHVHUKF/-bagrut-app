@@ -112,7 +112,7 @@ function BagrutPartCard({ part, context }: { part: BagrutPart; context: string }
                   <Lightbulb className="w-3 h-3" />
                   <span>רמז {i + 1}</span>
                 </div>
-                <div className="text-sm text-amber-50/95">
+                <div className="text-sm text-amber-900">
                   <MathText>{h}</MathText>
                 </div>
               </motion.div>
@@ -197,7 +197,7 @@ function BagrutPartCard({ part, context }: { part: BagrutPart; context: string }
       {struggling && part.reviewIfStuck && (
         <a
           href={`#concept-${part.reviewIfStuck.conceptId}`}
-          className="inline-flex items-center gap-1.5 text-[11px] font-bold text-sky-300/90 hover:text-sky-200 transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] font-bold text-sky-800 hover:text-sky-200 transition-colors"
         >
           <LifeBuoy className="w-3.5 h-3.5" />
           <span>נתקעת? חזור ל: {part.reviewIfStuck.label}</span>

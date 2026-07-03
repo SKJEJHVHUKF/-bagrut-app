@@ -304,7 +304,7 @@ export function SubTopicPractice({
             if (locked && isTheCorrect) cls = 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900';
             else if (locked && triedWrong) cls = 'bg-rose-500/15 border-rose-500/50 text-rose-800';
             else if (locked) cls = 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-600';
-            else if (triedWrong) cls = 'bg-rose-500/10 border-rose-500/40 text-rose-200/70 line-through';
+            else if (triedWrong) cls = 'bg-rose-500/10 border-rose-500/40 text-rose-700 line-through';
 
             return (
               <motion.button

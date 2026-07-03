@@ -50,7 +50,7 @@ export function ExamQuestionCard({ q, index }: { q: ExamQuestion; index: number 
             <a
               key={pid}
               href={`#pattern-${pid}`}
-              className="text-[10px] font-bold bg-indigo-500/15 border border-indigo-500/30 text-indigo-200/90 px-2 py-0.5 rounded-full hover:bg-indigo-500/25 transition-colors"
+              className="text-[10px] font-bold bg-indigo-500/15 border border-indigo-500/30 text-indigo-800 px-2 py-0.5 rounded-full hover:bg-indigo-500/25 transition-colors"
             >
               🗺️ תבנית
             </a>
@@ -138,7 +138,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
                   <Lightbulb className="w-3 h-3" />
                   <span>רמז {i + 1}</span>
                 </div>
-                <div className="text-sm text-amber-50/95">
+                <div className="text-sm text-amber-900">
                   <MathText>{h}</MathText>
                 </div>
               </motion.div>
@@ -225,7 +225,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
               </div>
               <ul className="space-y-1">
                 {part.deductions.map((d, i) => (
-                  <li key={i} className="flex gap-2 text-xs text-indigo-50/90 leading-relaxed">
+                  <li key={i} className="flex gap-2 text-xs text-indigo-900 leading-relaxed">
                     <span className="text-indigo-700 flex-shrink-0 mt-0.5">−</span>
                     <div className="chat-md flex-1">
                       <MathText inline>{d}</MathText>
@@ -246,7 +246,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
               ? `#pattern-${part.reviewRef.patternId}`
               : `#technique-${part.reviewRef.techniqueId}`
           }
-          className="inline-flex items-center gap-1.5 text-[11px] font-bold text-sky-300/90 hover:text-sky-200 transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] font-bold text-sky-800 hover:text-sky-200 transition-colors"
         >
           <LifeBuoy className="w-3.5 h-3.5" />
           <span>נתקעת? חזור ל: {part.reviewRef.label}</span>

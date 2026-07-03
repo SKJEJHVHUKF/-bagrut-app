@@ -211,7 +211,7 @@ export default function ChatPage() {
 
   return (
     <div
-      className="min-h-screen text-slate-50 relative overflow-x-hidden flex flex-col"
+      className="min-h-screen text-slate-900 relative overflow-x-hidden flex flex-col"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
       {/* Animated background */}

@@ -256,7 +256,7 @@ export function ExamSimulation({
                     </div>
                     <ul className="space-y-1">
                       {part.deductions.map((d, i) => (
-                        <li key={i} className="flex gap-2 text-xs text-indigo-50/90 leading-relaxed">
+                        <li key={i} className="flex gap-2 text-xs text-indigo-900 leading-relaxed">
                           <span className="text-indigo-700 flex-shrink-0 mt-0.5">−</span>
                           <div className="chat-md flex-1">
                             <MathText inline>{d}</MathText>

@@ -116,7 +116,7 @@ export function PrerequisitesView({ items }: { items: Prerequisite[] }) {
             <MathText>{p.refresher}</MathText>
           </div>
           {p.selfCheck && (
-            <div className="mt-2 text-xs text-amber-200/90 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 chat-md">
+            <div className="mt-2 text-xs text-amber-800 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 chat-md">
               <span className="font-bold">בדיקה עצמית: </span>
               <MathText inline>{p.selfCheck}</MathText>
             </div>
@@ -160,7 +160,7 @@ export function IntuitionView({ data }: { data: IntuitionData }) {
 
       <div className="bg-emerald-500/5 border border-emerald-500/30 rounded-2xl px-4 py-3 flex items-start gap-2.5">
         <span className="text-emerald-700 mt-0.5">🎯</span>
-        <div className="text-sm text-emerald-50/95 leading-relaxed chat-md">
+        <div className="text-sm text-emerald-900 leading-relaxed chat-md">
           <span className="font-bold text-emerald-800">בסוף המסלול תדע: </span>
           <MathText inline>{data.payoff}</MathText>
         </div>
@@ -217,7 +217,7 @@ export function ConceptsView({ atoms }: { atoms: ConceptAtom[] }) {
               <div className="chat-md text-sm text-slate-900 leading-relaxed mt-1">
                 <MathText>{atom.simplestExample.problem}</MathText>
               </div>
-              <div className="chat-md text-sm text-emerald-50/90 leading-relaxed mt-1.5 border-t border-slate-900/[0.06] pt-1.5">
+              <div className="chat-md text-sm text-emerald-900 leading-relaxed mt-1.5 border-t border-slate-900/[0.06] pt-1.5">
                 <MathText>{atom.simplestExample.solution}</MathText>
               </div>
             </div>
@@ -268,14 +268,14 @@ export function PitfallsView({ items }: { items: Pitfall[] }) {
                 <span className="font-bold text-indigo-700">✗ </span>
                 <MathText inline>{p.mistake}</MathText>
               </div>
-              <div className="chat-md text-sm text-emerald-50/90 leading-relaxed">
+              <div className="chat-md text-sm text-emerald-900 leading-relaxed">
                 <span className="font-bold text-emerald-700">✓ </span>
                 <MathText inline>{p.correction}</MathText>
               </div>
               {p.relatedConceptId && (
                 <a
                   href={`#concept-${p.relatedConceptId}`}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-300/80 hover:text-indigo-800 transition-colors"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-800 hover:text-indigo-800 transition-colors"
                 >
                   <span>חזור למושג הרלוונטי</span>
                   <ArrowLeft className="w-3 h-3" />
@@ -302,7 +302,7 @@ export function FormulaSheetView({ data }: { data: FormulaSheet }) {
         </div>
         <ul className="space-y-2">
           {data.quickReview.map((s, i) => (
-            <li key={i} className="flex gap-2 text-sm text-emerald-50/95 leading-relaxed">
+            <li key={i} className="flex gap-2 text-sm text-emerald-900 leading-relaxed">
               <span className="text-emerald-700 flex-shrink-0 mt-0.5">✓</span>
               <div className="chat-md flex-1">
                 <MathText>{s}</MathText>

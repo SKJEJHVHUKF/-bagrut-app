@@ -67,7 +67,7 @@ function WorkedPartCard({ part }: { part: WorkedExamPart }) {
           <Brain className="w-3 h-3" />
           <span>מה הסעיף באמת שואל</span>
         </div>
-        <div className="chat-md text-sm text-sky-50/95 leading-relaxed">
+        <div className="chat-md text-sm text-sky-900 leading-relaxed">
           <MathText>{part.whatItReallyAsks}</MathText>
         </div>
       </div>
@@ -139,7 +139,7 @@ function WorkedPartCard({ part }: { part: WorkedExamPart }) {
               <Award className="w-3 h-3" />
               <span>מה הבודק מחפש</span>
             </div>
-            <div className="chat-md text-sm text-amber-50/95 leading-relaxed">
+            <div className="chat-md text-sm text-amber-900 leading-relaxed">
               <MathText>{part.graderNotes}</MathText>
             </div>
           </div>

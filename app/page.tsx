@@ -71,7 +71,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-center gap-3 mb-4">
       <span className="h-px w-7 bg-gradient-to-l from-indigo-400/50 to-transparent" />
-      <span className="text-[11px] sm:text-xs font-semibold text-indigo-300/90 tracking-[0.22em]">
+      <span className="text-[11px] sm:text-xs font-semibold text-indigo-800 tracking-[0.22em]">
         {children}
       </span>
       <span className="h-px w-7 bg-gradient-to-r from-indigo-400/50 to-transparent" />
@@ -207,7 +207,7 @@ export default function Landing() {
 
         <motion.h1
           variants={fadeUp}
-          className="font-display text-5xl sm:text-7xl md:text-8xl font-black leading-[1.05] mb-7 sm:mb-9 text-slate-50"
+          className="font-display text-5xl sm:text-7xl md:text-8xl font-black leading-[1.05] mb-7 sm:mb-9 text-slate-900"
         >
           <span className="block">הבגרות שלך,</span>
           <span className="block text-indigo-700">בכיס שלך</span>

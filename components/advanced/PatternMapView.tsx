@@ -85,7 +85,7 @@ function PatternCard({ pattern, index }: { pattern: QuestionPattern; index: numb
         {/* Where it appears */}
         <div className="flex items-start gap-2 surface-premium rounded-xl px-3 py-2">
           <MapPin className="w-3.5 h-3.5 text-amber-700 flex-shrink-0 mt-0.5" />
-          <div className="text-xs text-amber-50/90 chat-md leading-relaxed flex-1">
+          <div className="text-xs text-amber-900 chat-md leading-relaxed flex-1">
             <MathText inline>{pattern.whereItAppears}</MathText>
           </div>
         </div>
@@ -119,7 +119,7 @@ function PatternCard({ pattern, index }: { pattern: QuestionPattern; index: numb
                     <div className="chat-md text-sm text-slate-900 leading-relaxed">
                       <MathText>{pattern.example.problem}</MathText>
                     </div>
-                    <div className="chat-md text-sm text-emerald-50/90 leading-relaxed border-t border-slate-900/[0.06] pt-2">
+                    <div className="chat-md text-sm text-emerald-900 leading-relaxed border-t border-slate-900/[0.06] pt-2">
                       <MathText>{pattern.example.solution}</MathText>
                     </div>
                   </div>

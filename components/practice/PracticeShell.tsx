@@ -45,7 +45,7 @@ export function PracticeShell({
 }) {
   return (
     <div
-      className="min-h-screen text-slate-50 relative overflow-x-hidden"
+      className="min-h-screen text-slate-900 relative overflow-x-hidden"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
       <BackgroundOrbs />

@@ -110,7 +110,7 @@ export function SubTopicLesson({
           </div>
           <ul className="bg-emerald-500/5 border border-emerald-500/30 rounded-2xl px-4 py-3 space-y-2">
             {subTopic.keyPoints.map((k, i) => (
-              <li key={i} className="flex gap-2 text-sm text-emerald-50/95 leading-relaxed">
+              <li key={i} className="flex gap-2 text-sm text-emerald-900 leading-relaxed">
                 <span className="text-emerald-700 flex-shrink-0 mt-0.5">✓</span>
                 <div className="chat-md flex-1">
                   <MathText>{k}</MathText>

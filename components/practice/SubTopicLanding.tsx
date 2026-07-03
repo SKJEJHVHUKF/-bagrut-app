@@ -118,7 +118,7 @@ export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null 
               <motion.li
                 key={i}
                 variants={fadeUp}
-                className="flex gap-2 text-sm text-emerald-50/95 leading-relaxed"
+                className="flex gap-2 text-sm text-emerald-900 leading-relaxed"
               >
                 <span className="text-emerald-700 flex-shrink-0 mt-0.5">✓</span>
                 <div className="chat-md flex-1">

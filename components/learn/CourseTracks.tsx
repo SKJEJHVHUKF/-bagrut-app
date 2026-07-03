@@ -81,7 +81,7 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
                   </span>
                 )}
               </div>
-              <div className="text-xs text-emerald-100/80 leading-snug">
+              <div className="text-xs text-emerald-800 leading-snug">
                 לא מכיר את הנושא? מכאן: אינטואיציה, מושגים, דוגמאות ותרגול מדורג.
               </div>
             </div>
@@ -112,7 +112,7 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-indigo-100/80 leading-snug">
+                <div className="text-xs text-indigo-800 leading-snug">
                   סיימת את הבסיס? תבניות, מחוון, בגרויות מפורקות וסימולציה עם טיימר.
                 </div>
               </div>

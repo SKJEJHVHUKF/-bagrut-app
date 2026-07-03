@@ -113,7 +113,7 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
               ? '🎓 הנושא הושלם ברמת בגרות!'
               : `${doneCount}/${totalSections} חלקים הושלמו`}
           </div>
-          <div className="text-xs text-indigo-300/80 font-mono">{percent}%</div>
+          <div className="text-xs text-indigo-800 font-mono">{percent}%</div>
         </div>
         <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
           <motion.div
@@ -252,18 +252,18 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
                       <span className="font-bold text-indigo-700">המלכודת: </span>
                       <MathText inline>{t.trap}</MathText>
                     </div>
-                    <div className="chat-md text-xs text-indigo-200/90 leading-relaxed">
+                    <div className="chat-md text-xs text-indigo-800 leading-relaxed">
                       <span className="font-bold">המחיר: </span>
                       <MathText inline>{t.consequence}</MathText>
                     </div>
-                    <div className="chat-md text-sm text-emerald-50/90 leading-relaxed">
+                    <div className="chat-md text-sm text-emerald-900 leading-relaxed">
                       <span className="font-bold text-emerald-700">ההרגל שמציל: </span>
                       <MathText inline>{t.avoid}</MathText>
                     </div>
                     {t.relatedPatternId && (
                       <a
                         href={`#pattern-${t.relatedPatternId}`}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-300/80 hover:text-indigo-800 transition-colors"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-800 hover:text-indigo-800 transition-colors"
                       >
                         <span>לתבנית הרלוונטית</span>
                         <ArrowLeft className="w-3 h-3" />

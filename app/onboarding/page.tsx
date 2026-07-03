@@ -88,7 +88,7 @@ export default function OnboardingPage() {
 
   return (
     <div
-      className="min-h-screen text-slate-50 relative overflow-x-hidden"
+      className="min-h-screen text-slate-900 relative overflow-x-hidden"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
       <BackgroundOrbs />
@@ -400,7 +400,7 @@ function SummaryStep({
           ספירה לאחור
         </div>
         <div className="text-3xl sm:text-4xl font-black text-amber-800">{daysAway} ימים</div>
-        <div className="text-xs text-amber-200/70 mt-1">עד הבגרות ב-{bagrutDate}</div>
+        <div className="text-xs text-amber-800 mt-1">עד הבגרות ב-{bagrutDate}</div>
       </div>
 
       <div className="space-y-2">

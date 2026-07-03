@@ -49,7 +49,7 @@ export default function MyPlanPage() {
 
   if (loading || !plan) {
     return (
-      <div className="min-h-screen text-slate-50 flex items-center justify-center">
+      <div className="min-h-screen text-slate-900 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -71,7 +71,7 @@ export default function MyPlanPage() {
 
   return (
     <div
-      className="min-h-screen text-slate-50 relative overflow-x-hidden"
+      className="min-h-screen text-slate-900 relative overflow-x-hidden"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
       <BackgroundOrbs />
@@ -97,7 +97,7 @@ export default function MyPlanPage() {
           >
             {days}
           </motion.div>
-          <motion.div variants={fadeUp} className="text-sm text-amber-200/80">
+          <motion.div variants={fadeUp} className="text-sm text-amber-800">
             ימים עד {formatHebrewDate(plan.bagrutDate)}
           </motion.div>
 

@@ -77,9 +77,9 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
                 איך יודעים באיזו שיטה לבחור?
               </span>
               {methodShown ? (
-                <ChevronUp className="w-4 h-4 text-sky-300/70" />
+                <ChevronUp className="w-4 h-4 text-sky-800" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-sky-300/70" />
+                <ChevronDown className="w-4 h-4 text-sky-800" />
               )}
             </button>
             <AnimatePresence initial={false}>
@@ -90,7 +90,7 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.25 }}
                   style={{ overflow: 'hidden' }}
-                  className="chat-md text-sm text-sky-50/95 leading-relaxed mt-2"
+                  className="chat-md text-sm text-sky-900 leading-relaxed mt-2"
                 >
                   <MathText>{example.methodChoice}</MathText>
                 </motion.div>
@@ -116,7 +116,7 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
                     <MathText>{step.action}</MathText>
                   </div>
                   <div className="chat-md text-xs text-slate-600 leading-relaxed mt-1 border-r-2 border-indigo-500/30 pr-2.5">
-                    <span className="font-bold text-indigo-200/90">למה: </span>
+                    <span className="font-bold text-indigo-800">למה: </span>
                     <MathText inline>{step.why}</MathText>
                   </div>
                 </div>

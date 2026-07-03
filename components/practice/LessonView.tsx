@@ -189,7 +189,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                 className="bg-amber-500/5 border border-amber-500/30 rounded-2xl px-4 py-3 flex gap-3"
               >
                 <Lightbulb className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
-                <div className="chat-md text-sm text-amber-50/95 leading-relaxed">
+                <div className="chat-md text-sm text-amber-900 leading-relaxed">
                   <MathText>{p}</MathText>
                 </div>
               </motion.div>
@@ -216,7 +216,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
               <motion.li
                 key={i}
                 variants={fadeUp}
-                className="flex gap-2 text-sm text-emerald-50/95 leading-relaxed"
+                className="flex gap-2 text-sm text-emerald-900 leading-relaxed"
               >
                 <span className="text-emerald-700 flex-shrink-0 mt-0.5">✓</span>
                 <div className="chat-md flex-1">
@@ -246,7 +246,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
               <motion.li
                 key={i}
                 variants={fadeUp}
-                className="flex gap-2 text-sm text-indigo-50/95 leading-relaxed"
+                className="flex gap-2 text-sm text-indigo-900 leading-relaxed"
               >
                 <span className="text-indigo-700 flex-shrink-0 mt-0.5">★</span>
                 <div className="chat-md flex-1">
@@ -287,7 +287,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                 <div className="text-sm font-bold text-emerald-800">
                   {allDone ? '🎓 סיימת את כל המודולים!' : `${doneCount}/${subs.length} מודולים הושלמו`}
                 </div>
-                <div className="text-xs text-emerald-300/80 font-mono">{percent}%</div>
+                <div className="text-xs text-emerald-800 font-mono">{percent}%</div>
               </div>
               <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
                 <motion.div
@@ -366,7 +366,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                             )}
                           </div>
                           <div className="text-xs text-slate-600 leading-snug">{sub.tagline}</div>
-                          <div className="text-[10px] text-emerald-300/80 mt-1.5 flex items-center gap-3">
+                          <div className="text-[10px] text-emerald-800 mt-1.5 flex items-center gap-3">
                             <span>{sub.questions.length} תרגילים</span>
                             <span>·</span>
                             <span>{sub.formulas.length} נוסחאות</span>
@@ -374,7 +374,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                         </div>
                         <div className="flex-shrink-0 mt-1.5">
                           {isDone ? (
-                            <PlayCircle className="w-4 h-4 text-emerald-300/60" />
+                            <PlayCircle className="w-4 h-4 text-emerald-800" />
                           ) : (
                             <ArrowLeft className="w-4 h-4 text-emerald-700" />
                           )}

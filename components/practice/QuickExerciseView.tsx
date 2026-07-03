@@ -242,7 +242,7 @@ export function QuickExerciseView({
                   <Lightbulb className="w-3.5 h-3.5" />
                   <span>רמז {i + 1}</span>
                 </div>
-                <div className="text-sm text-amber-50/95">
+                <div className="text-sm text-amber-900">
                   <MathText>{h}</MathText>
                 </div>
               </motion.div>
@@ -340,7 +340,7 @@ export function QuickExerciseView({
                   <div className="text-[11px] font-black tracking-widest text-amber-700 mb-1.5 uppercase">
                     💡 לזכור
                   </div>
-                  <div className="text-sm text-amber-50/95 chat-md">
+                  <div className="text-sm text-amber-900 chat-md">
                     <MathText>{exercise.remember}</MathText>
                   </div>
                 </div>

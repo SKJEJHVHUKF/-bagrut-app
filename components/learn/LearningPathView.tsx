@@ -95,7 +95,7 @@ export function LearningPathView({ path }: { path: LearningPath }) {
           <div className="text-sm font-bold text-emerald-800">
             {allDone ? '🎓 סיימת את כל המסלול!' : `${doneCount}/${totalSections} חלקים הושלמו`}
           </div>
-          <div className="text-xs text-emerald-300/80 font-mono">{percent}%</div>
+          <div className="text-xs text-emerald-800 font-mono">{percent}%</div>
         </div>
         <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
           <motion.div
@@ -294,7 +294,7 @@ export function LearningPathView({ path }: { path: LearningPath }) {
                   <div className="font-black text-sm sm:text-base text-slate-900 mb-0.5">
                     הצעד הבא: קורס מתקדם — רמת בגרות
                   </div>
-                  <div className="text-xs text-indigo-100/80 leading-snug">
+                  <div className="text-xs text-indigo-800 leading-snug">
                     זיהוי תבניות, טכניקות, בגרויות מפורקות עם מחוון, וסימולציית סיום עם טיימר.
                   </div>
                 </div>

@@ -8,7 +8,7 @@ export function FormulaCard({ formula }: { formula: Formula }) {
     <div className="formula-surface rounded-2xl p-4 sm:p-5">
       <div className="flex items-center gap-2 mb-2.5">
         <span className="inline-block w-1 h-3.5 rounded-full bg-indigo-400/80" />
-        <div className="text-xs font-bold tracking-wide text-indigo-200/90 chat-md">
+        <div className="text-xs font-bold tracking-wide text-indigo-800 chat-md">
           <MathText inline>{formula.name}</MathText>
         </div>
       </div>
