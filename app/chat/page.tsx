@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
 import { hasLesson } from '@/content/lessons';
 import ReactMarkdown from 'react-markdown';
@@ -15,6 +16,10 @@ import {
   Loader2,
   MessageCircle,
   Lightbulb,
+  Plus,
+  History,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 const MAX_DAILY_MESSAGES = 20;
@@ -25,6 +30,12 @@ type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
   created_at: string;
+};
+
+type Conversation = {
+  id: string;
+  title: string;
+  updated_at: string;
 };
 
 // Suggested prompts shown on the empty state for fresh chats.
@@ -61,9 +72,14 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [remaining, setRemaining] = useState<number>(MAX_DAILY_MESSAGES);
   const [error, setError] = useState<string | null>(null);
+  // Saved-conversations sidebar. `conversationId` is null on a fresh chat
+  // until the first message creates a conversation server-side.
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   // Optional topic context from the URL (?topic=...). When it's the grounded
   // pilot ("מספרים מרוכבים") the chat tutor teaches from the verified content
   // and follows the private-tutor bar; otherwise it's the normal chat.
@@ -76,18 +92,28 @@ export default function ChatPage() {
     listEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, []);
 
-  // Load history + today's usage on mount.
+  // Load the saved-conversations list (for the sidebar). Degrades to an
+  // empty list if the `conversations` table doesn't exist yet.
+  const loadConversations = useCallback(async () => {
+    const supabase = createClient();
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('id, title, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(50);
+      if (!error && data) setConversations(data as Conversation[]);
+    } catch {
+      // table missing — sidebar just stays empty
+    }
+  }, []);
+
+  // On mount: open a FRESH clean chat (no old thread loaded), and load the
+  // sidebar list + today's quota.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const supabase = createClient();
-
-      // Last 30 messages, newest first; reverse for display.
-      const { data: history } = await supabase
-        .from('chat_messages')
-        .select('id, role, content, created_at')
-        .order('created_at', { ascending: false })
-        .limit(30);
 
       // Today's user-sent count to compute remaining.
       const { count } = await supabase
@@ -97,17 +123,58 @@ export default function ChatPage() {
         .gte('created_at', utcDayStartIso());
 
       if (cancelled) return;
-
-      setMessages((history ?? []).reverse() as ChatMessage[]);
       setRemaining(Math.max(0, MAX_DAILY_MESSAGES - (count ?? 0)));
-      setLoadingHistory(false);
-      // Defer scroll until after render of loaded messages
-      setTimeout(scrollToBottom, 50);
+      loadConversations();
     })();
     return () => {
       cancelled = true;
     };
-  }, [scrollToBottom]);
+  }, [loadConversations]);
+
+  // Start a brand-new empty conversation.
+  const newChat = useCallback(() => {
+    setMessages([]);
+    setConversationId(null);
+    setError(null);
+    setSidebarOpen(false);
+    textareaRef.current?.focus();
+  }, []);
+
+  // Open a saved conversation — load its messages and continue it.
+  const openConversation = useCallback(
+    async (id: string) => {
+      setSidebarOpen(false);
+      if (id === conversationId) return;
+      setLoadingHistory(true);
+      setConversationId(id);
+      setMessages([]);
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('chat_messages')
+        .select('id, role, content, created_at')
+        .eq('conversation_id', id)
+        .order('created_at', { ascending: true })
+        .limit(200);
+      setMessages((data ?? []) as ChatMessage[]);
+      setLoadingHistory(false);
+      setTimeout(scrollToBottom, 50);
+    },
+    [conversationId, scrollToBottom]
+  );
+
+  // Delete a saved conversation.
+  const deleteConversation = useCallback(
+    async (id: string) => {
+      const supabase = createClient();
+      await supabase.from('conversations').delete().eq('id', id);
+      setConversations((cs) => cs.filter((c) => c.id !== id));
+      if (id === conversationId) {
+        setMessages([]);
+        setConversationId(null);
+      }
+    },
+    [conversationId]
+  );
 
   // Auto-scroll on new message
   useEffect(() => {
@@ -151,7 +218,7 @@ export default function ChatPage() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed, topic }),
+        body: JSON.stringify({ message: trimmed, topic, conversationId }),
       });
 
       if (!res.ok) {
@@ -178,6 +245,13 @@ export default function ChatPage() {
       };
       setMessages((m) => [...m, assistantMsg]);
       if (typeof data.remaining === 'number') setRemaining(data.remaining);
+      // First message of a fresh chat → server created a conversation.
+      // Adopt its id and refresh the sidebar so it appears at the top.
+      if (data.conversationId) {
+        const isNew = data.conversationId !== conversationId;
+        setConversationId(data.conversationId);
+        if (isNew) loadConversations();
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
@@ -228,7 +302,9 @@ export default function ChatPage() {
 
       {/* Top bar */}
       <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/10">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+        {/* pl-16 on mobile reserves room for the global profile avatar (fixed
+            top-left); restored to px-4 from sm up where there's space. */}
+        <div className="max-w-3xl mx-auto px-4 pl-16 sm:pl-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BagrutLogo size="md" />
             <div>
@@ -238,15 +314,43 @@ export default function ChatPage() {
               <div className="text-[10px] text-slate-600 -mt-0.5">המורה הפרטי שלך</div>
             </div>
           </div>
-          <Link
-            href="/quiz"
-            className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-          >
-            <span>לתרגול</span>
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={newChat}
+              className="group flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">שיחה חדשה</span>
+            </button>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              aria-label="היסטוריית שיחות"
+              className="flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            >
+              <History className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">היסטוריה</span>
+            </button>
+            <Link
+              href="/quiz"
+              className="group hidden sm:flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            >
+              <span>לתרגול</span>
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+            </Link>
+          </div>
         </div>
       </nav>
+
+      {/* Conversations sidebar (drawer) */}
+      <ChatSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        conversations={conversations}
+        activeId={conversationId}
+        onNew={newChat}
+        onOpen={openConversation}
+        onDelete={deleteConversation}
+      />
 
       {/* Grounded-mode badge — only when opened with the pilot topic. Lets the
           student see the tutor is teaching from the verified content. */}
@@ -412,5 +516,119 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
         מבוסס Claude AI · מקסימום 20 שאלות ביום
       </p>
     </div>
+  );
+}
+
+function relativeDate(iso: string): string {
+  const then = new Date(iso).getTime();
+  const diff = Date.now() - then;
+  const day = 86400000;
+  if (diff < day && new Date(iso).getDate() === new Date().getDate()) return 'היום';
+  if (diff < 2 * day) return 'אתמול';
+  const days = Math.floor(diff / day);
+  if (days < 7) return `לפני ${days} ימים`;
+  return new Date(iso).toLocaleDateString('he-IL', { day: 'numeric', month: 'short' });
+}
+
+function ChatSidebar({
+  open,
+  onClose,
+  conversations,
+  activeId,
+  onNew,
+  onOpen,
+  onDelete,
+}: {
+  open: boolean;
+  onClose: () => void;
+  conversations: Conversation[];
+  activeId: string | null;
+  onNew: () => void;
+  onOpen: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            className="fixed inset-0 z-[70] bg-slate-900/30 backdrop-blur-[2px]"
+          />
+          <motion.aside
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
+            dir="rtl"
+            className="fixed top-0 bottom-0 right-0 z-[71] w-[300px] max-w-[85vw] bg-[#FDFDFB] border-r border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
+          >
+            <div className="p-4 border-b border-slate-900/[0.08] flex items-center justify-between">
+              <div className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <History className="w-4 h-4 text-indigo-600" />
+                שיחות קודמות
+              </div>
+              <button
+                onClick={onClose}
+                aria-label="סגור"
+                className="w-8 h-8 rounded-lg hover:bg-slate-900/5 flex items-center justify-center text-slate-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3">
+              <button
+                onClick={onNew}
+                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2.5 rounded-xl text-sm font-bold transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                שיחה חדשה
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1">
+              {conversations.length === 0 ? (
+                <div className="text-center text-xs text-slate-500 py-10 leading-relaxed px-4">
+                  אין עדיין שיחות שמורות.
+                  <br />
+                  כל שיחה חדשה עם המורה תישמר כאן אוטומטית.
+                </div>
+              ) : (
+                conversations.map((c) => (
+                  <div
+                    key={c.id}
+                    className={`group flex items-center gap-1 rounded-xl transition-colors ${
+                      c.id === activeId
+                        ? 'bg-indigo-500/10 border border-indigo-500/30'
+                        : 'hover:bg-slate-900/[0.04] border border-transparent'
+                    }`}
+                  >
+                    <button
+                      onClick={() => onOpen(c.id)}
+                      className="flex-1 min-w-0 text-right px-3 py-2.5"
+                    >
+                      <div className="text-sm font-bold text-slate-800 truncate">{c.title}</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">{relativeDate(c.updated_at)}</div>
+                    </button>
+                    <button
+                      onClick={() => onDelete(c.id)}
+                      aria-label="מחק שיחה"
+                      className="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg hover:bg-red-500/10 flex items-center justify-center text-slate-400 hover:text-red-600 transition-all flex-shrink-0 ml-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

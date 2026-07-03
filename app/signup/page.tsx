@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import {
   Mail,
   Lock,
+  User,
   ArrowLeft,
   Sparkles,
   Loader2,
@@ -21,6 +22,7 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get('next') || '/quiz';
 
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -56,6 +58,8 @@ function SignupForm() {
       email: email.trim(),
       password,
       options: {
+        // Store the name in user_metadata so the profile panel can show it.
+        data: { name: name.trim() },
         emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
@@ -127,6 +131,25 @@ function SignupForm() {
         </span>
       </h1>
       <p className="text-slate-600 text-center mb-7">חינם. בלי כרטיס אשראי.</p>
+
+      {/* Full name */}
+      <label className="block mb-4">
+        <span className="block text-sm font-bold text-slate-700 mb-2">שם מלא</span>
+        <div className="relative">
+          <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <input
+            type="text"
+            required
+            autoComplete="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="איך קוראים לך?"
+            maxLength={40}
+            className="w-full surface-premium rounded-xl pr-10 pl-3 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/[0.04] transition-all"
+            disabled={loading}
+          />
+        </div>
+      </label>
 
       {/* Email */}
       <label className="block mb-4">

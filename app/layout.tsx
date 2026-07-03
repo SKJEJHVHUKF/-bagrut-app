@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Heebo, Frank_Ruhl_Libre } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import ServiceWorkerRegistration from "./sw-register";
+import AppChrome from "@/components/AppChrome";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,6 +67,7 @@ export default function RootLayout({
     >
       <body className="w-screen overflow-x-hidden m-0 p-0">
         <ServiceWorkerRegistration />
+        <AppChrome />
         {children}
         <Toaster
           position="top-center"

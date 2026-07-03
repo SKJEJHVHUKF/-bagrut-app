@@ -118,7 +118,7 @@ export async function POST(request: Request) {
     }
 
     // ===== 6. PARSE & VALIDATE BODY =====
-    let body: { message?: unknown; topic?: unknown; context?: unknown };
+    let body: { message?: unknown; topic?: unknown; context?: unknown; conversationId?: unknown };
     try {
       body = await request.json();
     } catch {
@@ -126,6 +126,12 @@ export async function POST(request: Request) {
     }
 
     const message = typeof body.message === 'string' ? body.message.trim() : '';
+    // Optional conversation id — scopes this turn to one saved conversation.
+    // Absent on a fresh chat's first message (we create the conversation).
+    const bodyConversationId =
+      typeof body.conversationId === 'string' && body.conversationId.length > 0
+        ? body.conversationId
+        : null;
     // Optional pilot context: `topic` enables the grounded "private tutor"
     // behaviour (complex numbers only), and `context` is a snapshot of the
     // question/attempt the student is on — lets the tutor diagnose first.
@@ -171,14 +177,39 @@ export async function POST(request: Request) {
       );
     }
 
+    // ===== 7.5 RESOLVE CONVERSATION =====
+    // Each chat is a named conversation. On a fresh chat (no id) we create
+    // one, titled from the topic or the first message. If the conversations
+    // table doesn't exist yet (SQL not run), we degrade to the legacy flat
+    // stream: convEnabled=false → messages carry no conversation_id and the
+    // context load is unscoped, exactly as before.
+    let convId: string | null = bodyConversationId;
+    let convEnabled = true;
+    if (!convId) {
+      const title = (topic || message).slice(0, 40).trim() || 'שיחה חדשה';
+      try {
+        const { data: conv, error: convErr } = await supabase
+          .from('conversations')
+          .insert({ title, topic: topic || null })
+          .select('id')
+          .single();
+        if (convErr || !conv) convEnabled = false;
+        else convId = conv.id as string;
+      } catch {
+        convEnabled = false;
+      }
+    }
+
     // ===== 8. LOAD CONTEXT =====
-    // Last N messages, newest first; reverse to chronological for Claude.
-    const { data: recentMessages, error: loadError } = await supabase
+    // Last N messages of THIS conversation, newest first; reverse for Claude.
+    let ctxQuery = supabase
       .from('chat_messages')
       .select('role, content')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(CONTEXT_MESSAGE_COUNT);
+    if (convEnabled && convId) ctxQuery = ctxQuery.eq('conversation_id', convId);
+    const { data: recentMessages, error: loadError } = await ctxQuery;
 
     if (loadError) {
       console.error('load context error:', loadError);
@@ -192,9 +223,11 @@ export async function POST(request: Request) {
     // doesn't leave history with an assistant reply that has no preceding
     // user prompt. If Claude fails after this, the user's message is
     // still in their history and the UI can show "(no reply)".
+    const userRow: Record<string, unknown> = { role: 'user', content: message };
+    if (convEnabled && convId) userRow.conversation_id = convId;
     const { error: insertUserError } = await supabase
       .from('chat_messages')
-      .insert({ role: 'user', content: message });
+      .insert(userRow);
 
     if (insertUserError) {
       console.error('insert user msg error:', insertUserError);
@@ -264,14 +297,16 @@ export async function POST(request: Request) {
     }
 
     // ===== 11. INSERT ASSISTANT REPLY =====
+    const assistantRow: Record<string, unknown> = {
+      role: 'assistant',
+      content: reply.text,
+      tokens_in: completion.usage.input_tokens,
+      tokens_out: completion.usage.output_tokens,
+    };
+    if (convEnabled && convId) assistantRow.conversation_id = convId;
     const { error: insertAssistantError } = await supabase
       .from('chat_messages')
-      .insert({
-        role: 'assistant',
-        content: reply.text,
-        tokens_in: completion.usage.input_tokens,
-        tokens_out: completion.usage.output_tokens,
-      });
+      .insert(assistantRow);
 
     if (insertAssistantError) {
       // Not fatal — user got their reply, we just couldn't persist.
@@ -280,9 +315,22 @@ export async function POST(request: Request) {
       console.error('insert assistant msg error:', insertAssistantError);
     }
 
+    // Touch the conversation so it sorts to the top of the sidebar.
+    // Best-effort — never block the reply on it.
+    if (convEnabled && convId) {
+      void supabase
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', convId)
+        .then(({ error }) => {
+          if (error) console.error('conversation touch error:', error.message);
+        });
+    }
+
     return Response.json(
       {
         reply: reply.text,
+        conversationId: convEnabled ? convId : null,
         remaining: Math.max(0, MAX_DAILY_MESSAGES - (used + 1)),
       },
       {
