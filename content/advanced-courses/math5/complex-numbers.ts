@@ -20,52 +20,52 @@ import type { AdvancedCourse } from '../types';
 
 // Four 4th-roots on a circle at 45°/135°/225°/315° — vertices of a square.
 const SQUARE_ROOTS_SVG = `
-  <line x1="18" y1="100" x2="182" y2="100" stroke="rgba(226,232,240,0.35)" stroke-width="1.1"/>
-  <line x1="100" y1="182" x2="100" y2="18" stroke="rgba(226,232,240,0.35)" stroke-width="1.1"/>
-  <circle cx="100" cy="100" r="66" fill="rgba(168,85,247,0.06)" stroke="rgba(226,232,240,0.45)" stroke-width="1.3"/>
-  <polygon points="146.7,53.3 53.3,53.3 53.3,146.7 146.7,146.7" fill="rgba(168,85,247,0.12)" stroke="rgba(244,114,182,0.9)" stroke-width="1.8"/>
-  <line x1="146.7" y1="53.3" x2="53.3" y2="146.7" stroke="rgba(251,191,36,0.7)" stroke-width="1.2" stroke-dasharray="4,3"/>
-  <line x1="53.3" y1="53.3" x2="146.7" y2="146.7" stroke="rgba(251,191,36,0.7)" stroke-width="1.2" stroke-dasharray="4,3"/>
-  <circle cx="146.7" cy="53.3" r="3.4" fill="#f472b6"/>
-  <circle cx="53.3" cy="53.3" r="3.4" fill="#f472b6"/>
-  <circle cx="53.3" cy="146.7" r="3.4" fill="#f472b6"/>
-  <circle cx="146.7" cy="146.7" r="3.4" fill="#f472b6"/>
-  <text x="154" y="48" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">z₀</text>
-  <text x="34" y="48" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">z₁</text>
-  <text x="34" y="160" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">z₂</text>
-  <text x="154" y="160" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">z₃</text>
+  <line x1="18" y1="100" x2="182" y2="100" stroke="rgba(51,65,85,0.35)" stroke-width="1.1"/>
+  <line x1="100" y1="182" x2="100" y2="18" stroke="rgba(51,65,85,0.35)" stroke-width="1.1"/>
+  <circle cx="100" cy="100" r="66" fill="rgba(124,58,237,0.06)" stroke="rgba(51,65,85,0.45)" stroke-width="1.3"/>
+  <polygon points="146.7,53.3 53.3,53.3 53.3,146.7 146.7,146.7" fill="rgba(124,58,237,0.12)" stroke="rgba(219,39,119,0.9)" stroke-width="1.8"/>
+  <line x1="146.7" y1="53.3" x2="53.3" y2="146.7" stroke="rgba(180,83,9,0.7)" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <line x1="53.3" y1="53.3" x2="146.7" y2="146.7" stroke="rgba(180,83,9,0.7)" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <circle cx="146.7" cy="53.3" r="3.4" fill="#DB2777"/>
+  <circle cx="53.3" cy="53.3" r="3.4" fill="#DB2777"/>
+  <circle cx="53.3" cy="146.7" r="3.4" fill="#DB2777"/>
+  <circle cx="146.7" cy="146.7" r="3.4" fill="#DB2777"/>
+  <text x="154" y="48" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">z₀</text>
+  <text x="34" y="48" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">z₁</text>
+  <text x="34" y="160" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">z₂</text>
+  <text x="154" y="160" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">z₃</text>
 `;
 
 // Three cube-roots on a circle at 0°/120°/240° — equilateral triangle.
 const TRIANGLE_ROOTS_SVG = `
-  <line x1="18" y1="100" x2="182" y2="100" stroke="rgba(226,232,240,0.35)" stroke-width="1.1"/>
-  <line x1="100" y1="182" x2="100" y2="18" stroke="rgba(226,232,240,0.35)" stroke-width="1.1"/>
-  <circle cx="100" cy="100" r="66" fill="rgba(168,85,247,0.06)" stroke="rgba(226,232,240,0.45)" stroke-width="1.3"/>
-  <polygon points="166,100 67,42.8 67,157.2" fill="rgba(168,85,247,0.12)" stroke="rgba(244,114,182,0.9)" stroke-width="1.8"/>
-  <circle cx="166" cy="100" r="3.4" fill="#f472b6"/>
-  <circle cx="67" cy="42.8" r="3.4" fill="#f472b6"/>
-  <circle cx="67" cy="157.2" r="3.4" fill="#f472b6"/>
-  <text x="171" y="96" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">w₀</text>
-  <text x="49" y="40" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">w₁</text>
-  <text x="49" y="170" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">w₂</text>
+  <line x1="18" y1="100" x2="182" y2="100" stroke="rgba(51,65,85,0.35)" stroke-width="1.1"/>
+  <line x1="100" y1="182" x2="100" y2="18" stroke="rgba(51,65,85,0.35)" stroke-width="1.1"/>
+  <circle cx="100" cy="100" r="66" fill="rgba(124,58,237,0.06)" stroke="rgba(51,65,85,0.45)" stroke-width="1.3"/>
+  <polygon points="166,100 67,42.8 67,157.2" fill="rgba(124,58,237,0.12)" stroke="rgba(219,39,119,0.9)" stroke-width="1.8"/>
+  <circle cx="166" cy="100" r="3.4" fill="#DB2777"/>
+  <circle cx="67" cy="42.8" r="3.4" fill="#DB2777"/>
+  <circle cx="67" cy="157.2" r="3.4" fill="#DB2777"/>
+  <text x="171" y="96" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">w₀</text>
+  <text x="49" y="40" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">w₁</text>
+  <text x="49" y="170" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">w₂</text>
 `;
 
 // Four roots at 60°/120°/240°/300° on a circle — vertices of a rectangle.
 const RECTANGLE_ROOTS_SVG = `
-  <line x1="18" y1="100" x2="182" y2="100" stroke="rgba(226,232,240,0.35)" stroke-width="1.1"/>
-  <line x1="100" y1="182" x2="100" y2="18" stroke="rgba(226,232,240,0.35)" stroke-width="1.1"/>
-  <circle cx="100" cy="100" r="66" fill="rgba(168,85,247,0.06)" stroke="rgba(226,232,240,0.45)" stroke-width="1.3"/>
-  <polygon points="133,42.8 67,42.8 67,157.2 133,157.2" fill="rgba(168,85,247,0.12)" stroke="rgba(244,114,182,0.9)" stroke-width="1.8"/>
-  <line x1="133" y1="42.8" x2="67" y2="157.2" stroke="rgba(251,191,36,0.7)" stroke-width="1.2" stroke-dasharray="4,3"/>
-  <line x1="67" y1="42.8" x2="133" y2="157.2" stroke="rgba(251,191,36,0.7)" stroke-width="1.2" stroke-dasharray="4,3"/>
-  <circle cx="133" cy="42.8" r="3.4" fill="#f472b6"/>
-  <circle cx="67" cy="42.8" r="3.4" fill="#f472b6"/>
-  <circle cx="67" cy="157.2" r="3.4" fill="#f472b6"/>
-  <circle cx="133" cy="157.2" r="3.4" fill="#f472b6"/>
-  <text x="138" y="40" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">60°</text>
-  <text x="44" y="40" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">120°</text>
-  <text x="42" y="171" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">240°</text>
-  <text x="138" y="171" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">300°</text>
+  <line x1="18" y1="100" x2="182" y2="100" stroke="rgba(51,65,85,0.35)" stroke-width="1.1"/>
+  <line x1="100" y1="182" x2="100" y2="18" stroke="rgba(51,65,85,0.35)" stroke-width="1.1"/>
+  <circle cx="100" cy="100" r="66" fill="rgba(124,58,237,0.06)" stroke="rgba(51,65,85,0.45)" stroke-width="1.3"/>
+  <polygon points="133,42.8 67,42.8 67,157.2 133,157.2" fill="rgba(124,58,237,0.12)" stroke="rgba(219,39,119,0.9)" stroke-width="1.8"/>
+  <line x1="133" y1="42.8" x2="67" y2="157.2" stroke="rgba(180,83,9,0.7)" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <line x1="67" y1="42.8" x2="133" y2="157.2" stroke="rgba(180,83,9,0.7)" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <circle cx="133" cy="42.8" r="3.4" fill="#DB2777"/>
+  <circle cx="67" cy="42.8" r="3.4" fill="#DB2777"/>
+  <circle cx="67" cy="157.2" r="3.4" fill="#DB2777"/>
+  <circle cx="133" cy="157.2" r="3.4" fill="#DB2777"/>
+  <text x="138" y="40" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">60°</text>
+  <text x="44" y="40" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">120°</text>
+  <text x="42" y="171" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">240°</text>
+  <text x="138" y="171" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">300°</text>
 `;
 
 export const math5ComplexNumbersAdvanced: AdvancedCourse = {

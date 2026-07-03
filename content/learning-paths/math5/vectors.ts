@@ -23,51 +23,51 @@ import type { LearningPath } from '../types';
 // --- Reusable 3D SVGs (inner content; default viewBox 0 0 200 200) ---
 
 const AXES_VECTOR_SVG = `
-  <line x1="40" y1="150" x2="190" y2="150" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="190,150 183,146 183,154" fill="rgba(226,232,240,0.55)"/>
-  <text x="184" y="165" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">x</text>
-  <line x1="40" y1="150" x2="40" y2="14" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="40,14 36,21 44,21" fill="rgba(226,232,240,0.55)"/>
-  <text x="46" y="20" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">z</text>
-  <line x1="40" y1="150" x2="120" y2="186" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="120,186 110,183 116,177" fill="rgba(226,232,240,0.55)"/>
-  <text x="122" y="190" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">y</text>
-  <line x1="40" y1="150" x2="150" y2="60" stroke="rgba(244,114,182,0.95)" stroke-width="2"/>
-  <polygon points="150,60 142,62 147,69" fill="rgba(244,114,182,0.95)"/>
-  <circle cx="150" cy="60" r="3.2" fill="rgba(244,114,182,0.95)"/>
-  <text x="150" y="52" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">(a, b, c)</text>
-  <line x1="150" y1="60" x2="150" y2="138" stroke="rgba(251,191,36,0.6)" stroke-width="1" stroke-dasharray="3,3"/>
-  <line x1="40" y1="150" x2="150" y2="138" stroke="rgba(251,191,36,0.6)" stroke-width="1" stroke-dasharray="3,3"/>
-  <text x="86" y="103" fill="#f9a8d4" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">v</text>
-  <circle cx="40" cy="150" r="2.2" fill="#cbd5e1"/>
-  <text x="28" y="162" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">O</text>
+  <line x1="40" y1="150" x2="190" y2="150" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="190,150 183,146 183,154" fill="rgba(51,65,85,0.55)"/>
+  <text x="184" y="165" fill="#334155" font-size="10" font-family="Heebo,sans-serif">x</text>
+  <line x1="40" y1="150" x2="40" y2="14" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="40,14 36,21 44,21" fill="rgba(51,65,85,0.55)"/>
+  <text x="46" y="20" fill="#334155" font-size="10" font-family="Heebo,sans-serif">z</text>
+  <line x1="40" y1="150" x2="120" y2="186" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="120,186 110,183 116,177" fill="rgba(51,65,85,0.55)"/>
+  <text x="122" y="190" fill="#334155" font-size="10" font-family="Heebo,sans-serif">y</text>
+  <line x1="40" y1="150" x2="150" y2="60" stroke="rgba(219,39,119,0.95)" stroke-width="2"/>
+  <polygon points="150,60 142,62 147,69" fill="rgba(219,39,119,0.95)"/>
+  <circle cx="150" cy="60" r="3.2" fill="rgba(219,39,119,0.95)"/>
+  <text x="150" y="52" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">(a, b, c)</text>
+  <line x1="150" y1="60" x2="150" y2="138" stroke="rgba(180,83,9,0.6)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="40" y1="150" x2="150" y2="138" stroke="rgba(180,83,9,0.6)" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="86" y="103" fill="#EC4899" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">v</text>
+  <circle cx="40" cy="150" r="2.2" fill="#334155"/>
+  <text x="28" y="162" fill="#334155" font-size="10" font-family="Heebo,sans-serif">O</text>
 `;
 
 const PLANE_NORMAL_SVG = `
-  <polygon points="40,118 150,86 178,128 68,160" fill="rgba(96,165,250,0.14)" stroke="rgba(96,165,250,0.85)" stroke-width="1.6"/>
-  <circle cx="108" cy="123" r="3.2" fill="#60a5fa"/>
-  <text x="92" y="140" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">P₀</text>
-  <line x1="108" y1="123" x2="148" y2="46" stroke="rgba(244,114,182,0.95)" stroke-width="2"/>
-  <polygon points="148,46 142,53 150,55" fill="rgba(244,114,182,0.95)"/>
-  <text x="150" y="44" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">n</text>
-  <path d="M 108 109 L 122 105 L 126 119" fill="none" stroke="rgba(251,191,36,0.85)" stroke-width="1.3"/>
-  <text x="56" y="156" fill="#93c5fd" font-size="10" font-family="Heebo,sans-serif">π</text>
+  <polygon points="40,118 150,86 178,128 68,160" fill="rgba(37,99,235,0.14)" stroke="rgba(37,99,235,0.85)" stroke-width="1.6"/>
+  <circle cx="108" cy="123" r="3.2" fill="#2563EB"/>
+  <text x="92" y="140" fill="#334155" font-size="10" font-family="Heebo,sans-serif">P₀</text>
+  <line x1="108" y1="123" x2="148" y2="46" stroke="rgba(219,39,119,0.95)" stroke-width="2"/>
+  <polygon points="148,46 142,53 150,55" fill="rgba(219,39,119,0.95)"/>
+  <text x="150" y="44" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">n</text>
+  <path d="M 108 109 L 122 105 L 126 119" fill="none" stroke="rgba(180,83,9,0.85)" stroke-width="1.3"/>
+  <text x="56" y="156" fill="#3B82F6" font-size="10" font-family="Heebo,sans-serif">π</text>
 `;
 
 const TRIPLE_PERP_SVG = `
-  <polygon points="22,150 150,150 178,120 50,120" fill="rgba(96,165,250,0.12)" stroke="rgba(96,165,250,0.75)" stroke-width="1.4"/>
-  <line x1="50" y1="135" x2="150" y2="135" stroke="rgba(226,232,240,0.7)" stroke-width="1.6"/>
-  <text x="153" y="138" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">L</text>
-  <line x1="90" y1="40" x2="90" y2="135" stroke="rgba(244,114,182,0.95)" stroke-width="2"/>
-  <circle cx="90" cy="40" r="3.2" fill="#f472b6"/>
-  <text x="80" y="34" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">P</text>
-  <circle cx="90" cy="135" r="2.6" fill="#fcd34d"/>
-  <text x="78" y="148" fill="#fcd34d" font-size="10" font-family="Heebo,sans-serif">B</text>
-  <line x1="90" y1="100" x2="124" y2="100" stroke="rgba(167,139,250,0.9)" stroke-width="1.6"/>
-  <circle cx="124" cy="100" r="2.6" fill="#a78bfa"/>
-  <text x="128" y="98" fill="#c4b5fd" font-size="10" font-family="Heebo,sans-serif">A</text>
-  <line x1="124" y1="100" x2="90" y2="135" stroke="rgba(167,139,250,0.55)" stroke-width="1.2" stroke-dasharray="3,3"/>
-  <path d="M 84 129 L 84 135 L 90 135" fill="none" stroke="rgba(251,191,36,0.9)" stroke-width="1.2"/>
+  <polygon points="22,150 150,150 178,120 50,120" fill="rgba(37,99,235,0.12)" stroke="rgba(37,99,235,0.75)" stroke-width="1.4"/>
+  <line x1="50" y1="135" x2="150" y2="135" stroke="rgba(51,65,85,0.7)" stroke-width="1.6"/>
+  <text x="153" y="138" fill="#334155" font-size="10" font-family="Heebo,sans-serif">L</text>
+  <line x1="90" y1="40" x2="90" y2="135" stroke="rgba(219,39,119,0.95)" stroke-width="2"/>
+  <circle cx="90" cy="40" r="3.2" fill="#DB2777"/>
+  <text x="80" y="34" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">P</text>
+  <circle cx="90" cy="135" r="2.6" fill="#B45309"/>
+  <text x="78" y="148" fill="#B45309" font-size="10" font-family="Heebo,sans-serif">B</text>
+  <line x1="90" y1="100" x2="124" y2="100" stroke="rgba(109,40,217,0.9)" stroke-width="1.6"/>
+  <circle cx="124" cy="100" r="2.6" fill="#6D28D9"/>
+  <text x="128" y="98" fill="#7C3AED" font-size="10" font-family="Heebo,sans-serif">A</text>
+  <line x1="124" y1="100" x2="90" y2="135" stroke="rgba(109,40,217,0.55)" stroke-width="1.2" stroke-dasharray="3,3"/>
+  <path d="M 84 129 L 84 135 L 90 135" fill="none" stroke="rgba(180,83,9,0.9)" stroke-width="1.2"/>
 `;
 
 export const math5Vectors: LearningPath = {

@@ -23,39 +23,39 @@ import type { LearningPath } from '../types';
 // the line y = x (dotted gray). Same scale on both axes so the reflection
 // is a true 45° flip. Window: x,y ∈ [-2.5, 6]; px(x)=66+20x, py(y)=136-20y.
 const LN_GRAPH_SVG = `
-  <line x1="14" y1="136" x2="192" y2="136" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="192,136 185,132 185,140" fill="rgba(226,232,240,0.55)"/>
-  <line x1="66" y1="188" x2="66" y2="14" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="66,14 62,21 70,21" fill="rgba(226,232,240,0.55)"/>
-  <text x="186" y="150" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">x</text>
-  <text x="72" y="20" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">y</text>
-  <line x1="16" y1="186" x2="186" y2="16" stroke="rgba(148,163,184,0.7)" stroke-width="1.1" stroke-dasharray="2,3"/>
-  <text x="168" y="26" fill="#94a3b8" font-size="9" font-family="Heebo,sans-serif">y=x</text>
-  <polyline points="16,134 26,133 46,129 56,124 66,116 76,103 86,82 96,46 102,16" fill="none" stroke="rgba(96,165,250,0.9)" stroke-width="1.9" stroke-dasharray="5,4" stroke-linejoin="round" stroke-linecap="round"/>
-  <polyline points="68,186 69,176 70,168 73,156 78,146 86,136 99,126 120,116 156,106 186,100" fill="none" stroke="rgba(244,114,182,0.95)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-  <circle cx="86" cy="136" r="3.3" fill="#f1f5f9" stroke="rgba(244,114,182,0.95)" stroke-width="1.6"/>
-  <text x="90" y="150" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(1,0)</text>
-  <text x="158" y="96" fill="#f9a8d4" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">ln x</text>
-  <text x="90" y="40" fill="#93c5fd" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">eˣ</text>
+  <line x1="14" y1="136" x2="192" y2="136" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="192,136 185,132 185,140" fill="rgba(51,65,85,0.55)"/>
+  <line x1="66" y1="188" x2="66" y2="14" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="66,14 62,21 70,21" fill="rgba(51,65,85,0.55)"/>
+  <text x="186" y="150" fill="#334155" font-size="10" font-family="Heebo,sans-serif">x</text>
+  <text x="72" y="20" fill="#334155" font-size="10" font-family="Heebo,sans-serif">y</text>
+  <line x1="16" y1="186" x2="186" y2="16" stroke="rgba(100,116,139,0.7)" stroke-width="1.1" stroke-dasharray="2,3"/>
+  <text x="168" y="26" fill="#475569" font-size="9" font-family="Heebo,sans-serif">y=x</text>
+  <polyline points="16,134 26,133 46,129 56,124 66,116 76,103 86,82 96,46 102,16" fill="none" stroke="rgba(37,99,235,0.9)" stroke-width="1.9" stroke-dasharray="5,4" stroke-linejoin="round" stroke-linecap="round"/>
+  <polyline points="68,186 69,176 70,168 73,156 78,146 86,136 99,126 120,116 156,106 186,100" fill="none" stroke="rgba(219,39,119,0.95)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="86" cy="136" r="3.3" fill="#0F172A" stroke="rgba(219,39,119,0.95)" stroke-width="1.6"/>
+  <text x="90" y="150" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(1,0)</text>
+  <text x="158" y="96" fill="#EC4899" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">ln x</text>
+  <text x="90" y="40" fill="#3B82F6" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">eˣ</text>
 `;
 
 // y = ln(x)/x : dives to -∞ near x=0 (vertical asymptote x=0), crosses the
 // x-axis at (1,0), peaks at the maximum (e, 1/e), then decays toward y=0.
 // Window: x ∈ [0, 8], y ∈ [-1.3, 0.7]; px(x)=24+20.75x, py(y)=76.8-84y.
 const LNX_OVER_X_SVG = `
-  <line x1="14" y1="77" x2="192" y2="77" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="192,77 185,73 185,81" fill="rgba(226,232,240,0.55)"/>
-  <line x1="24" y1="190" x2="24" y2="14" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="24,14 20,21 28,21" fill="rgba(226,232,240,0.55)"/>
-  <text x="186" y="91" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">x</text>
-  <text x="30" y="20" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">y</text>
-  <line x1="100" y1="77" x2="190" y2="77" stroke="rgba(251,191,36,0.8)" stroke-width="1.2" stroke-dasharray="4,3"/>
-  <text x="168" y="71" fill="#fcd34d" font-size="9" font-family="Heebo,sans-serif">y=0</text>
-  <polyline points="35,168 39,120 45,77 55,54 66,48 80,46 97,47 117,49 149,52 190,55" fill="none" stroke="rgba(244,114,182,0.95)" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
-  <circle cx="80" cy="46" r="3.5" fill="#f1f5f9" stroke="rgba(244,114,182,0.95)" stroke-width="1.6"/>
-  <text x="84" y="40" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(e, 1/e)</text>
-  <circle cx="45" cy="77" r="3" fill="#cbd5e1"/>
-  <text x="40" y="92" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(1,0)</text>
+  <line x1="14" y1="77" x2="192" y2="77" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="192,77 185,73 185,81" fill="rgba(51,65,85,0.55)"/>
+  <line x1="24" y1="190" x2="24" y2="14" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="24,14 20,21 28,21" fill="rgba(51,65,85,0.55)"/>
+  <text x="186" y="91" fill="#334155" font-size="10" font-family="Heebo,sans-serif">x</text>
+  <text x="30" y="20" fill="#334155" font-size="10" font-family="Heebo,sans-serif">y</text>
+  <line x1="100" y1="77" x2="190" y2="77" stroke="rgba(180,83,9,0.8)" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <text x="168" y="71" fill="#B45309" font-size="9" font-family="Heebo,sans-serif">y=0</text>
+  <polyline points="35,168 39,120 45,77 55,54 66,48 80,46 97,47 117,49 149,52 190,55" fill="none" stroke="rgba(219,39,119,0.95)" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="80" cy="46" r="3.5" fill="#0F172A" stroke="rgba(219,39,119,0.95)" stroke-width="1.6"/>
+  <text x="84" y="40" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(e, 1/e)</text>
+  <circle cx="45" cy="77" r="3" fill="#334155"/>
+  <text x="40" y="92" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(1,0)</text>
 `;
 
 export const math5LnFunction: LearningPath = {

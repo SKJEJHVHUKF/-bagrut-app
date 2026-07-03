@@ -48,11 +48,11 @@ function FigureCard({ spec }: { spec: DiagramSpec }) {
 // Common SVG conventions
 // ============================================================
 
-const STROKE = 'rgba(226, 232, 240, 0.85)';   // slate-200 with alpha
-const FILL = 'rgba(168, 85, 247, 0.08)';      // indigo-500 translucent
-const ACCENT = 'rgba(244, 114, 182, 0.95)';   // indigo-400 — for highlights
-const LABEL_FILL = '#f1f5f9';                 // slate-100
-const TICK = 'rgba(251, 191, 36, 0.95)';      // amber-400 — congruent ticks
+const STROKE = 'rgba(51, 65, 85, 0.85)';      // slate-700 ink on light
+const FILL = 'rgba(79, 70, 229, 0.06)';       // indigo-600 translucent
+const ACCENT = 'rgba(219, 39, 119, 0.95)';    // pink-600 — for highlights
+const LABEL_FILL = '#0F172A';                 // slate-900 ink
+const TICK = 'rgba(180, 83, 9, 0.95)';        // amber-700 — congruent ticks
 const DEFAULT_VIEWBOX = '0 0 200 200';
 
 function DiagramSVG({ spec }: { spec: DiagramSpec }) {
@@ -99,7 +99,7 @@ function Label({ x, y, text, dx = 0, dy = 0 }: { x: number; y: number; text: str
       fontFamily="Heebo, sans-serif"
       fontWeight="bold"
       textAnchor="middle"
-      stroke="rgba(15, 23, 42, 0.6)"
+      stroke="rgba(255, 255, 255, 0.9)"
       strokeWidth="0.4"
       paintOrder="stroke"
     >
@@ -694,8 +694,8 @@ function FunctionGraphSVG({
         y={padT}
         width={W - padL - padR}
         height={H - padT - padB}
-        fill="rgba(255,255,255,0.02)"
-        stroke="rgba(226,232,240,0.15)"
+        fill="rgba(15,23,42,0.02)"
+        stroke="rgba(15,23,42,0.12)"
         strokeWidth="1"
         rx="4"
       />

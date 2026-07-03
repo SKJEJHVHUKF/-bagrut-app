@@ -129,26 +129,26 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
             type: 'custom',
             viewBox: '0 0 218 192',
             svg: `
-              <line x1="10" y1="130" x2="212" y2="130" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
-              <line x1="70" y1="14" x2="70" y2="184" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
-              <text x="205" y="124" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">x</text>
-              <text x="74" y="22" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">y</text>
-              <line x1="22" y1="14" x2="22" y2="184" stroke="rgba(125,211,252,0.75)" stroke-width="1.3" stroke-dasharray="4 3"/>
-              <text x="4" y="178" fill="#7dd3fc" font-size="10.5" font-family="Heebo, sans-serif">x = -4</text>
-              <circle cx="130" cy="130" r="36" fill="rgba(168,85,247,0.07)" stroke="rgba(226,232,240,0.85)" stroke-width="1.6"/>
-              <line x1="22" y1="55" x2="106" y2="55" stroke="rgba(125,211,252,0.6)" stroke-width="1.2" stroke-dasharray="3 3"/>
-              <line x1="130" y1="130" x2="155.5" y2="104.5" stroke="rgba(251,191,36,0.9)" stroke-width="1.3"/>
-              <line x1="106" y1="55" x2="155.5" y2="104.5" stroke="rgba(244,114,182,0.95)" stroke-width="1.5"/>
-              <path d="M 149.8 98.8 L 144.2 104.5 L 149.8 110.2" fill="none" stroke="rgba(226,232,240,0.9)" stroke-width="1.1"/>
-              <circle cx="130" cy="130" r="2.6" fill="rgba(251,191,36,0.95)"/>
-              <circle cx="106" cy="55" r="2.9" fill="rgba(244,114,182,0.95)"/>
-              <circle cx="155.5" cy="104.5" r="2.4" fill="rgba(244,114,182,0.95)"/>
-              <circle cx="22" cy="55" r="2.2" fill="rgba(125,211,252,0.9)"/>
-              <text x="126" y="146" fill="#f1f5f9" font-size="10.5" font-family="Heebo, sans-serif">(5,0)</text>
-              <text x="80" y="50" fill="#f1f5f9" font-size="10.5" font-family="Heebo, sans-serif">(x,y)</text>
-              <text x="133" y="78" fill="#f9a8d4" font-size="11" font-family="Heebo, sans-serif">d</text>
-              <text x="147" y="121" fill="#fcd34d" font-size="11" font-family="Heebo, sans-serif">3</text>
-              <text x="52" y="49" fill="#7dd3fc" font-size="10" font-family="Heebo, sans-serif">x+4</text>
+              <line x1="10" y1="130" x2="212" y2="130" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <line x1="70" y1="14" x2="70" y2="184" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <text x="205" y="124" fill="#475569" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <text x="74" y="22" fill="#475569" font-size="11" font-family="Heebo, sans-serif">y</text>
+              <line x1="22" y1="14" x2="22" y2="184" stroke="rgba(3,105,161,0.75)" stroke-width="1.3" stroke-dasharray="4 3"/>
+              <text x="4" y="178" fill="#0284C7" font-size="10.5" font-family="Heebo, sans-serif">x = -4</text>
+              <circle cx="130" cy="130" r="36" fill="rgba(124,58,237,0.07)" stroke="rgba(51,65,85,0.85)" stroke-width="1.6"/>
+              <line x1="22" y1="55" x2="106" y2="55" stroke="rgba(3,105,161,0.6)" stroke-width="1.2" stroke-dasharray="3 3"/>
+              <line x1="130" y1="130" x2="155.5" y2="104.5" stroke="rgba(180,83,9,0.9)" stroke-width="1.3"/>
+              <line x1="106" y1="55" x2="155.5" y2="104.5" stroke="rgba(219,39,119,0.95)" stroke-width="1.5"/>
+              <path d="M 149.8 98.8 L 144.2 104.5 L 149.8 110.2" fill="none" stroke="rgba(51,65,85,0.9)" stroke-width="1.1"/>
+              <circle cx="130" cy="130" r="2.6" fill="rgba(180,83,9,0.95)"/>
+              <circle cx="106" cy="55" r="2.9" fill="rgba(219,39,119,0.95)"/>
+              <circle cx="155.5" cy="104.5" r="2.4" fill="rgba(219,39,119,0.95)"/>
+              <circle cx="22" cy="55" r="2.2" fill="rgba(3,105,161,0.9)"/>
+              <text x="126" y="146" fill="#0F172A" font-size="10.5" font-family="Heebo, sans-serif">(5,0)</text>
+              <text x="80" y="50" fill="#0F172A" font-size="10.5" font-family="Heebo, sans-serif">(x,y)</text>
+              <text x="133" y="78" fill="#EC4899" font-size="11" font-family="Heebo, sans-serif">d</text>
+              <text x="147" y="121" fill="#B45309" font-size="11" font-family="Heebo, sans-serif">3</text>
+              <text x="52" y="49" fill="#0284C7" font-size="10" font-family="Heebo, sans-serif">x+4</text>
             `,
             caption:
               'המעגל החדש: מרכז $(5,0)$, רדיוס $3$. אורך המשיק $d$ מנקודה $(x,y)$ מאונך לרדיוס בנקודת ההשקה, ושווה למרחק $x+4$ מן הישר $x=-4$.',
@@ -198,21 +198,21 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
         type: 'custom',
         viewBox: '0 0 200 200',
         svg: `
-          <polygon points="25,160 80,35 185,160" fill="rgba(168,85,247,0.08)" stroke="rgba(226,232,240,0.85)" stroke-width="1.6"/>
-          <line x1="80" y1="35" x2="131.67" y2="160" stroke="rgba(244,114,182,0.95)" stroke-width="1.4"/>
-          <line x1="185" y1="160" x2="52.5" y2="97.5" stroke="rgba(244,114,182,0.95)" stroke-width="1.4"/>
-          <circle cx="25" cy="160" r="3" fill="rgba(251,191,36,0.95)"/>
-          <circle cx="80" cy="35" r="3" fill="rgba(251,191,36,0.95)"/>
-          <circle cx="185" cy="160" r="3" fill="rgba(251,191,36,0.95)"/>
-          <circle cx="52.5" cy="97.5" r="2.6" fill="rgba(244,114,182,0.95)"/>
-          <circle cx="131.67" cy="160" r="2.6" fill="rgba(244,114,182,0.95)"/>
-          <circle cx="118.75" cy="128.75" r="2.6" fill="rgba(244,114,182,0.95)"/>
-          <text x="12" y="168" fill="#f1f5f9" font-size="12" font-weight="bold" font-family="Heebo, sans-serif">A</text>
-          <text x="76" y="28" fill="#f1f5f9" font-size="12" font-weight="bold" font-family="Heebo, sans-serif">B</text>
-          <text x="189" y="166" fill="#f1f5f9" font-size="12" font-weight="bold" font-family="Heebo, sans-serif">C</text>
-          <text x="34" y="98" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">D</text>
-          <text x="134" y="172" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">E</text>
-          <text x="123" y="124" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">F</text>
+          <polygon points="25,160 80,35 185,160" fill="rgba(124,58,237,0.08)" stroke="rgba(51,65,85,0.85)" stroke-width="1.6"/>
+          <line x1="80" y1="35" x2="131.67" y2="160" stroke="rgba(219,39,119,0.95)" stroke-width="1.4"/>
+          <line x1="185" y1="160" x2="52.5" y2="97.5" stroke="rgba(219,39,119,0.95)" stroke-width="1.4"/>
+          <circle cx="25" cy="160" r="3" fill="rgba(180,83,9,0.95)"/>
+          <circle cx="80" cy="35" r="3" fill="rgba(180,83,9,0.95)"/>
+          <circle cx="185" cy="160" r="3" fill="rgba(180,83,9,0.95)"/>
+          <circle cx="52.5" cy="97.5" r="2.6" fill="rgba(219,39,119,0.95)"/>
+          <circle cx="131.67" cy="160" r="2.6" fill="rgba(219,39,119,0.95)"/>
+          <circle cx="118.75" cy="128.75" r="2.6" fill="rgba(219,39,119,0.95)"/>
+          <text x="12" y="168" fill="#0F172A" font-size="12" font-weight="bold" font-family="Heebo, sans-serif">A</text>
+          <text x="76" y="28" fill="#0F172A" font-size="12" font-weight="bold" font-family="Heebo, sans-serif">B</text>
+          <text x="189" y="166" fill="#0F172A" font-size="12" font-weight="bold" font-family="Heebo, sans-serif">C</text>
+          <text x="34" y="98" fill="#0F172A" font-size="11" font-family="Heebo, sans-serif">D</text>
+          <text x="134" y="172" fill="#0F172A" font-size="11" font-family="Heebo, sans-serif">E</text>
+          <text x="123" y="124" fill="#0F172A" font-size="11" font-family="Heebo, sans-serif">F</text>
         `,
         caption: 'המשולש $ABC$ עם $D$ אמצע $AB$, $E$ על $AC$ ($AE:EC=2:1$), ו-$F$ נקודת חיתוך של $BE$ ו-$CD$.',
       },
@@ -257,21 +257,21 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
             type: 'custom',
             viewBox: '0 0 230 180',
             svg: `
-              <polygon points="35,150 90,30 195,150" fill="rgba(168,85,247,0.08)" stroke="rgba(226,232,240,0.85)" stroke-width="1.6"/>
-              <line x1="90" y1="30" x2="141.67" y2="150" stroke="rgba(244,114,182,0.95)" stroke-width="1.4"/>
-              <line x1="195" y1="150" x2="62.5" y2="90" stroke="rgba(244,114,182,0.95)" stroke-width="1.4"/>
-              <circle cx="35" cy="150" r="3" fill="rgba(251,191,36,0.95)"/>
-              <circle cx="90" cy="30" r="3" fill="rgba(251,191,36,0.95)"/>
-              <circle cx="195" cy="150" r="3" fill="rgba(251,191,36,0.95)"/>
-              <circle cx="62.5" cy="90" r="2.6" fill="rgba(244,114,182,0.95)"/>
-              <circle cx="141.67" cy="150" r="2.6" fill="rgba(244,114,182,0.95)"/>
-              <circle cx="128.75" cy="120" r="2.6" fill="rgba(244,114,182,0.95)"/>
-              <text x="2" y="163" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">A(3,0,0)</text>
-              <text x="62" y="22" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">B(0,0,12)</text>
-              <text x="166" y="164" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">C(0,6,0)</text>
-              <text x="47" y="88" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">D</text>
-              <text x="146" y="163" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">E</text>
-              <text x="132" y="116" fill="#f1f5f9" font-size="11" font-family="Heebo, sans-serif">F</text>
+              <polygon points="35,150 90,30 195,150" fill="rgba(124,58,237,0.08)" stroke="rgba(51,65,85,0.85)" stroke-width="1.6"/>
+              <line x1="90" y1="30" x2="141.67" y2="150" stroke="rgba(219,39,119,0.95)" stroke-width="1.4"/>
+              <line x1="195" y1="150" x2="62.5" y2="90" stroke="rgba(219,39,119,0.95)" stroke-width="1.4"/>
+              <circle cx="35" cy="150" r="3" fill="rgba(180,83,9,0.95)"/>
+              <circle cx="90" cy="30" r="3" fill="rgba(180,83,9,0.95)"/>
+              <circle cx="195" cy="150" r="3" fill="rgba(180,83,9,0.95)"/>
+              <circle cx="62.5" cy="90" r="2.6" fill="rgba(219,39,119,0.95)"/>
+              <circle cx="141.67" cy="150" r="2.6" fill="rgba(219,39,119,0.95)"/>
+              <circle cx="128.75" cy="120" r="2.6" fill="rgba(219,39,119,0.95)"/>
+              <text x="2" y="163" fill="#0F172A" font-size="11" font-family="Heebo, sans-serif">A(3,0,0)</text>
+              <text x="62" y="22" fill="#0F172A" font-size="11" font-family="Heebo, sans-serif">B(0,0,12)</text>
+              <text x="166" y="164" fill="#0F172A" font-size="11" font-family="Heebo, sans-serif">C(0,6,0)</text>
+              <text x="47" y="88" fill="#0F172A" font-size="11" font-family="Heebo, sans-serif">D</text>
+              <text x="146" y="163" fill="#0F172A" font-size="11" font-family="Heebo, sans-serif">E</text>
+              <text x="132" y="116" fill="#0F172A" font-size="11" font-family="Heebo, sans-serif">F</text>
             `,
             caption: 'המשולש עם שיעורי הקודקודים: $A(3,0,0)$, $B(0,0,12)$, $C(0,6,0)$. $D$ אמצע $AB$, $E$ על $AC$, ו-$F$ מפגש $BE$ ו-$CD$.',
           },
@@ -391,19 +391,19 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
             type: 'custom',
             viewBox: '0 0 230 185',
             svg: `
-              <line x1="12" y1="92" x2="222" y2="92" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
-              <line x1="115" y1="10" x2="115" y2="178" stroke="rgba(226,232,240,0.5)" stroke-width="1"/>
-              <text x="214" y="88" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">Re</text>
-              <text x="119" y="18" fill="#94a3b8" font-size="11" font-family="Heebo, sans-serif">Im</text>
-              <polygon points="161.5,64 68.5,64 68.5,120 161.5,120" fill="rgba(168,85,247,0.10)" stroke="rgba(244,114,182,0.95)" stroke-width="1.8"/>
-              <circle cx="161.5" cy="64" r="3" fill="rgba(244,114,182,0.95)"/>
-              <circle cx="68.5" cy="64" r="3" fill="rgba(244,114,182,0.95)"/>
-              <circle cx="68.5" cy="120" r="3" fill="rgba(244,114,182,0.95)"/>
-              <circle cx="161.5" cy="120" r="3" fill="rgba(244,114,182,0.95)"/>
-              <text x="150" y="56" fill="#f1f5f9" font-size="8.5" font-family="Heebo, sans-serif">(√(3/2), √2/2)</text>
-              <text x="6" y="56" fill="#f1f5f9" font-size="8.5" font-family="Heebo, sans-serif">(-√(3/2), √2/2)</text>
-              <text x="6" y="136" fill="#f1f5f9" font-size="8.5" font-family="Heebo, sans-serif">(-√(3/2), -√2/2)</text>
-              <text x="150" y="136" fill="#f1f5f9" font-size="8.5" font-family="Heebo, sans-serif">(√(3/2), -√2/2)</text>
+              <line x1="12" y1="92" x2="222" y2="92" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <line x1="115" y1="10" x2="115" y2="178" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <text x="214" y="88" fill="#475569" font-size="11" font-family="Heebo, sans-serif">Re</text>
+              <text x="119" y="18" fill="#475569" font-size="11" font-family="Heebo, sans-serif">Im</text>
+              <polygon points="161.5,64 68.5,64 68.5,120 161.5,120" fill="rgba(124,58,237,0.10)" stroke="rgba(219,39,119,0.95)" stroke-width="1.8"/>
+              <circle cx="161.5" cy="64" r="3" fill="rgba(219,39,119,0.95)"/>
+              <circle cx="68.5" cy="64" r="3" fill="rgba(219,39,119,0.95)"/>
+              <circle cx="68.5" cy="120" r="3" fill="rgba(219,39,119,0.95)"/>
+              <circle cx="161.5" cy="120" r="3" fill="rgba(219,39,119,0.95)"/>
+              <text x="150" y="56" fill="#0F172A" font-size="8.5" font-family="Heebo, sans-serif">(√(3/2), √2/2)</text>
+              <text x="6" y="56" fill="#0F172A" font-size="8.5" font-family="Heebo, sans-serif">(-√(3/2), √2/2)</text>
+              <text x="6" y="136" fill="#0F172A" font-size="8.5" font-family="Heebo, sans-serif">(-√(3/2), -√2/2)</text>
+              <text x="150" y="136" fill="#0F172A" font-size="8.5" font-family="Heebo, sans-serif">(√(3/2), -√2/2)</text>
             `,
             caption: 'ארבעת השורשים $\\bigl(\\pm\\sqrt{\\tfrac{3}{2}},\\,\\pm\\tfrac{\\sqrt{2}}{2}\\bigr)$ במישור גאוס — מלבן ברוחב $\\sqrt{6} = 2\\sqrt{\\tfrac{3}{2}}$ וגובה $\\sqrt{2}$.',
           },

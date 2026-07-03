@@ -31,39 +31,39 @@ import type { LearningPath } from '../types';
 // Starts low-left near the axis, sweeps up steeply to the right.
 // Window: t ∈ [0, 5], horizontal axis = t, vertical = N. Marks N0 on the y-axis.
 const GROWTH_CURVE_SVG = `
-  <line x1="30" y1="170" x2="192" y2="170" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="192,170 185,166 185,174" fill="rgba(226,232,240,0.55)"/>
-  <line x1="30" y1="186" x2="30" y2="12" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="30,12 26,19 34,19" fill="rgba(226,232,240,0.55)"/>
-  <text x="184" y="184" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">t</text>
-  <text x="14" y="20" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">N</text>
-  <polyline points="30,150 54,144 78,135 102,121 126,99 150,66 168,32 176,16" fill="none" stroke="rgba(244,114,182,0.95)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-  <line x1="30" y1="150" x2="36" y2="150" stroke="#fcd34d" stroke-width="1.4"/>
-  <circle cx="30" cy="150" r="3.2" fill="#fcd34d"/>
-  <text x="6" y="153" fill="#fcd34d" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">N₀</text>
-  <text x="150" y="40" fill="#f9a8d4" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">k&gt;0</text>
+  <line x1="30" y1="170" x2="192" y2="170" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="192,170 185,166 185,174" fill="rgba(51,65,85,0.55)"/>
+  <line x1="30" y1="186" x2="30" y2="12" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="30,12 26,19 34,19" fill="rgba(51,65,85,0.55)"/>
+  <text x="184" y="184" fill="#334155" font-size="10" font-family="Heebo,sans-serif">t</text>
+  <text x="14" y="20" fill="#334155" font-size="10" font-family="Heebo,sans-serif">N</text>
+  <polyline points="30,150 54,144 78,135 102,121 126,99 150,66 168,32 176,16" fill="none" stroke="rgba(219,39,119,0.95)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="30" y1="150" x2="36" y2="150" stroke="#B45309" stroke-width="1.4"/>
+  <circle cx="30" cy="150" r="3.2" fill="#B45309"/>
+  <text x="6" y="153" fill="#B45309" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">N₀</text>
+  <text x="150" y="40" fill="#EC4899" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">k&gt;0</text>
 `;
 
 // Falling exponential decay curve N = N0 e^{kt}, k<0, with a half-life guide.
 // Starts high-left at N0, decays toward the asymptote y (the t-axis).
 // A dashed line marks N0/2 and the half-life time T on the axis.
 const DECAY_CURVE_SVG = `
-  <line x1="30" y1="160" x2="192" y2="160" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="192,160 185,156 185,164" fill="rgba(226,232,240,0.55)"/>
-  <line x1="30" y1="186" x2="30" y2="12" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="30,12 26,19 34,19" fill="rgba(226,232,240,0.55)"/>
-  <text x="184" y="174" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">t</text>
-  <text x="14" y="20" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">N</text>
-  <polyline points="30,30 48,52 66,72 84,90 102,105 120,118 138,128 156,136 174,142 190,147" fill="none" stroke="rgba(96,165,250,0.95)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-  <line x1="30" y1="30" x2="36" y2="30" stroke="#fcd34d" stroke-width="1.4"/>
-  <circle cx="30" cy="30" r="3.2" fill="#fcd34d"/>
-  <text x="6" y="33" fill="#fcd34d" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">N₀</text>
-  <line x1="30" y1="90" x2="84" y2="90" stroke="rgba(244,114,182,0.8)" stroke-width="1.2" stroke-dasharray="4,3"/>
-  <line x1="84" y1="90" x2="84" y2="160" stroke="rgba(244,114,182,0.8)" stroke-width="1.2" stroke-dasharray="4,3"/>
-  <circle cx="84" cy="90" r="3.2" fill="#f472b6"/>
-  <text x="2" y="93" fill="#f9a8d4" font-size="9" font-weight="bold" font-family="Heebo,sans-serif">N₀/2</text>
-  <text x="80" y="174" fill="#f9a8d4" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">T</text>
-  <text x="150" y="130" fill="#93c5fd" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">k&lt;0</text>
+  <line x1="30" y1="160" x2="192" y2="160" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="192,160 185,156 185,164" fill="rgba(51,65,85,0.55)"/>
+  <line x1="30" y1="186" x2="30" y2="12" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="30,12 26,19 34,19" fill="rgba(51,65,85,0.55)"/>
+  <text x="184" y="174" fill="#334155" font-size="10" font-family="Heebo,sans-serif">t</text>
+  <text x="14" y="20" fill="#334155" font-size="10" font-family="Heebo,sans-serif">N</text>
+  <polyline points="30,30 48,52 66,72 84,90 102,105 120,118 138,128 156,136 174,142 190,147" fill="none" stroke="rgba(37,99,235,0.95)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="30" y1="30" x2="36" y2="30" stroke="#B45309" stroke-width="1.4"/>
+  <circle cx="30" cy="30" r="3.2" fill="#B45309"/>
+  <text x="6" y="33" fill="#B45309" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">N₀</text>
+  <line x1="30" y1="90" x2="84" y2="90" stroke="rgba(219,39,119,0.8)" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <line x1="84" y1="90" x2="84" y2="160" stroke="rgba(219,39,119,0.8)" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <circle cx="84" cy="90" r="3.2" fill="#DB2777"/>
+  <text x="2" y="93" fill="#EC4899" font-size="9" font-weight="bold" font-family="Heebo,sans-serif">N₀/2</text>
+  <text x="80" y="174" fill="#EC4899" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">T</text>
+  <text x="150" y="130" fill="#3B82F6" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">k&lt;0</text>
 `;
 
 export const math5GrowthDecay: LearningPath = {

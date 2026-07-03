@@ -18,122 +18,122 @@ import type { LearningPath } from '../types';
 
 // Coordinate plane with a line and a circle — "shapes become equations".
 const INTUITION_SVG = `
-  <line x1="12" y1="140" x2="192" y2="140" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="192,140 185,136 185,144" fill="rgba(226,232,240,0.55)"/>
-  <line x1="55" y1="188" x2="55" y2="12" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="55,12 51,19 59,19" fill="rgba(226,232,240,0.55)"/>
-  <text x="186" y="155" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">x</text>
-  <text x="61" y="18" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">y</text>
-  <line x1="15" y1="170" x2="185" y2="55" stroke="rgba(244,114,182,0.95)" stroke-width="2.2"/>
-  <circle cx="125" cy="85" r="38" fill="rgba(168,85,247,0.08)" stroke="rgba(96,165,250,0.95)" stroke-width="2"/>
-  <circle cx="105" cy="109" r="3.5" fill="#f1f5f9" stroke="rgba(244,114,182,0.95)" stroke-width="1.6"/>
-  <text x="152" y="48" fill="#f9a8d4" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">ישר</text>
-  <text x="125" y="38" fill="#93c5fd" font-size="11" font-weight="bold" font-family="Heebo,sans-serif" text-anchor="middle">מעגל</text>
+  <line x1="12" y1="140" x2="192" y2="140" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="192,140 185,136 185,144" fill="rgba(51,65,85,0.55)"/>
+  <line x1="55" y1="188" x2="55" y2="12" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="55,12 51,19 59,19" fill="rgba(51,65,85,0.55)"/>
+  <text x="186" y="155" fill="#334155" font-size="10" font-family="Heebo,sans-serif">x</text>
+  <text x="61" y="18" fill="#334155" font-size="10" font-family="Heebo,sans-serif">y</text>
+  <line x1="15" y1="170" x2="185" y2="55" stroke="rgba(219,39,119,0.95)" stroke-width="2.2"/>
+  <circle cx="125" cy="85" r="38" fill="rgba(124,58,237,0.08)" stroke="rgba(37,99,235,0.95)" stroke-width="2"/>
+  <circle cx="105" cy="109" r="3.5" fill="#0F172A" stroke="rgba(219,39,119,0.95)" stroke-width="1.6"/>
+  <text x="152" y="48" fill="#EC4899" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">ישר</text>
+  <text x="125" y="38" fill="#3B82F6" font-size="11" font-weight="bold" font-family="Heebo,sans-serif" text-anchor="middle">מעגל</text>
 `;
 
 // Distance between two points = hypotenuse of a right triangle (Pythagoras).
 const DIST_SVG = `
-  <line x1="50" y1="150" x2="150" y2="150" stroke="rgba(251,191,36,0.85)" stroke-width="1.6" stroke-dasharray="4,3"/>
-  <line x1="150" y1="150" x2="150" y2="70" stroke="rgba(251,191,36,0.85)" stroke-width="1.6" stroke-dasharray="4,3"/>
-  <line x1="50" y1="150" x2="150" y2="70" stroke="rgba(244,114,182,0.95)" stroke-width="2.4"/>
-  <polyline points="140,150 140,140 150,140" fill="none" stroke="rgba(226,232,240,0.7)" stroke-width="1.3"/>
-  <circle cx="50" cy="150" r="3.5" fill="#f1f5f9"/>
-  <circle cx="150" cy="70" r="3.5" fill="#f1f5f9"/>
-  <text x="38" y="165" fill="#f1f5f9" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">A</text>
-  <text x="158" y="66" fill="#f1f5f9" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">B</text>
-  <text x="95" y="166" fill="#fcd34d" font-size="11" font-family="Heebo,sans-serif" text-anchor="middle">Δx</text>
-  <text x="166" y="114" fill="#fcd34d" font-size="11" font-family="Heebo,sans-serif">Δy</text>
-  <text x="88" y="100" fill="#f9a8d4" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">d</text>
+  <line x1="50" y1="150" x2="150" y2="150" stroke="rgba(180,83,9,0.85)" stroke-width="1.6" stroke-dasharray="4,3"/>
+  <line x1="150" y1="150" x2="150" y2="70" stroke="rgba(180,83,9,0.85)" stroke-width="1.6" stroke-dasharray="4,3"/>
+  <line x1="50" y1="150" x2="150" y2="70" stroke="rgba(219,39,119,0.95)" stroke-width="2.4"/>
+  <polyline points="140,150 140,140 150,140" fill="none" stroke="rgba(51,65,85,0.7)" stroke-width="1.3"/>
+  <circle cx="50" cy="150" r="3.5" fill="#0F172A"/>
+  <circle cx="150" cy="70" r="3.5" fill="#0F172A"/>
+  <text x="38" y="165" fill="#0F172A" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">A</text>
+  <text x="158" y="66" fill="#0F172A" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">B</text>
+  <text x="95" y="166" fill="#B45309" font-size="11" font-family="Heebo,sans-serif" text-anchor="middle">Δx</text>
+  <text x="166" y="114" fill="#B45309" font-size="11" font-family="Heebo,sans-serif">Δy</text>
+  <text x="88" y="100" fill="#EC4899" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">d</text>
 `;
 
 // A circle: center (a,b), radius R.
 const CIRCLE_SVG = `
-  <circle cx="100" cy="100" r="60" fill="rgba(168,85,247,0.08)" stroke="rgba(226,232,240,0.85)" stroke-width="2"/>
-  <circle cx="100" cy="100" r="3" fill="#f1f5f9"/>
-  <line x1="100" y1="100" x2="160" y2="100" stroke="rgba(244,114,182,0.95)" stroke-width="2"/>
-  <text x="100" y="118" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif" text-anchor="middle">(a, b)</text>
-  <text x="128" y="93" fill="#f9a8d4" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">R</text>
+  <circle cx="100" cy="100" r="60" fill="rgba(124,58,237,0.08)" stroke="rgba(51,65,85,0.85)" stroke-width="2"/>
+  <circle cx="100" cy="100" r="3" fill="#0F172A"/>
+  <line x1="100" y1="100" x2="160" y2="100" stroke="rgba(219,39,119,0.95)" stroke-width="2"/>
+  <text x="100" y="118" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif" text-anchor="middle">(a, b)</text>
+  <text x="128" y="93" fill="#EC4899" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">R</text>
 `;
 
 // Tangent to a circle: perpendicular to the radius at the tangency point.
 const TANGENT_SVG = `
-  <circle cx="85" cy="105" r="50" fill="rgba(168,85,247,0.08)" stroke="rgba(226,232,240,0.85)" stroke-width="2"/>
-  <circle cx="85" cy="105" r="2.8" fill="#f1f5f9"/>
-  <line x1="85" y1="105" x2="120" y2="70" stroke="rgba(96,165,250,0.95)" stroke-width="2"/>
-  <line x1="75" y1="25" x2="165" y2="115" stroke="rgba(244,114,182,0.95)" stroke-width="2.2"/>
-  <polyline points="113,77 120,84 127,77" fill="none" stroke="rgba(226,232,240,0.8)" stroke-width="1.4"/>
-  <circle cx="120" cy="70" r="3.5" fill="#f1f5f9"/>
-  <text x="73" y="122" fill="#f1f5f9" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">O</text>
-  <text x="128" y="62" fill="#f1f5f9" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">P</text>
-  <text x="150" y="135" fill="#f9a8d4" font-size="10" font-family="Heebo,sans-serif">משיק</text>
+  <circle cx="85" cy="105" r="50" fill="rgba(124,58,237,0.08)" stroke="rgba(51,65,85,0.85)" stroke-width="2"/>
+  <circle cx="85" cy="105" r="2.8" fill="#0F172A"/>
+  <line x1="85" y1="105" x2="120" y2="70" stroke="rgba(37,99,235,0.95)" stroke-width="2"/>
+  <line x1="75" y1="25" x2="165" y2="115" stroke="rgba(219,39,119,0.95)" stroke-width="2.2"/>
+  <polyline points="113,77 120,84 127,77" fill="none" stroke="rgba(51,65,85,0.8)" stroke-width="1.4"/>
+  <circle cx="120" cy="70" r="3.5" fill="#0F172A"/>
+  <text x="73" y="122" fill="#0F172A" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">O</text>
+  <text x="128" y="62" fill="#0F172A" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">P</text>
+  <text x="150" y="135" fill="#EC4899" font-size="10" font-family="Heebo,sans-serif">משיק</text>
 `;
 
 // Parabola y² = 2px: vertex at origin, focus F(p/2,0), directrix x=−p/2,
 // and a point P with equal distances to F and to the directrix.
 const PARABOLA_SVG = `
-  <line x1="14" y1="100" x2="190" y2="100" stroke="rgba(226,232,240,0.5)" stroke-width="1.3"/>
-  <polygon points="190,100 183,96 183,104" fill="rgba(226,232,240,0.5)"/>
-  <line x1="60" y1="186" x2="60" y2="14" stroke="rgba(226,232,240,0.5)" stroke-width="1.3"/>
-  <polyline points="131,21 110,34 82,56 66,78 60,100 66,122 82,144 110,166 131,179" fill="none" stroke="rgba(244,114,182,0.95)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-  <line x1="38" y1="20" x2="38" y2="180" stroke="rgba(251,191,36,0.85)" stroke-width="1.4" stroke-dasharray="4,3"/>
-  <text x="24" y="32" fill="#fcd34d" font-size="9" font-family="Heebo,sans-serif">מדריך</text>
-  <circle cx="82" cy="100" r="3.5" fill="#93c5fd"/>
-  <text x="86" y="114" fill="#93c5fd" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">F</text>
-  <circle cx="97" cy="43" r="3.2" fill="#f1f5f9"/>
-  <text x="104" y="38" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">P</text>
-  <line x1="97" y1="43" x2="82" y2="100" stroke="rgba(96,165,250,0.8)" stroke-width="1.4" stroke-dasharray="3,3"/>
-  <line x1="97" y1="43" x2="38" y2="43" stroke="rgba(96,165,250,0.8)" stroke-width="1.4" stroke-dasharray="3,3"/>
+  <line x1="14" y1="100" x2="190" y2="100" stroke="rgba(51,65,85,0.5)" stroke-width="1.3"/>
+  <polygon points="190,100 183,96 183,104" fill="rgba(51,65,85,0.5)"/>
+  <line x1="60" y1="186" x2="60" y2="14" stroke="rgba(51,65,85,0.5)" stroke-width="1.3"/>
+  <polyline points="131,21 110,34 82,56 66,78 60,100 66,122 82,144 110,166 131,179" fill="none" stroke="rgba(219,39,119,0.95)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="38" y1="20" x2="38" y2="180" stroke="rgba(180,83,9,0.85)" stroke-width="1.4" stroke-dasharray="4,3"/>
+  <text x="24" y="32" fill="#B45309" font-size="9" font-family="Heebo,sans-serif">מדריך</text>
+  <circle cx="82" cy="100" r="3.5" fill="#3B82F6"/>
+  <text x="86" y="114" fill="#3B82F6" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">F</text>
+  <circle cx="97" cy="43" r="3.2" fill="#0F172A"/>
+  <text x="104" y="38" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">P</text>
+  <line x1="97" y1="43" x2="82" y2="100" stroke="rgba(37,99,235,0.8)" stroke-width="1.4" stroke-dasharray="3,3"/>
+  <line x1="97" y1="43" x2="38" y2="43" stroke="rgba(37,99,235,0.8)" stroke-width="1.4" stroke-dasharray="3,3"/>
 `;
 
 // Ellipse with two foci and a point P — sum of the two dashed distances is 2a.
 const ELLIPSE_SVG = `
-  <line x1="12" y1="100" x2="192" y2="100" stroke="rgba(226,232,240,0.4)" stroke-width="1.2"/>
-  <line x1="100" y1="156" x2="100" y2="44" stroke="rgba(226,232,240,0.4)" stroke-width="1.2"/>
-  <ellipse cx="100" cy="100" rx="75" ry="45" fill="rgba(168,85,247,0.08)" stroke="rgba(226,232,240,0.85)" stroke-width="2"/>
-  <circle cx="40" cy="100" r="3.2" fill="#93c5fd"/>
-  <circle cx="160" cy="100" r="3.2" fill="#93c5fd"/>
-  <text x="30" y="116" fill="#93c5fd" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">F₁</text>
-  <text x="156" y="116" fill="#93c5fd" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">F₂</text>
-  <circle cx="137" cy="61" r="3.2" fill="#f1f5f9"/>
-  <text x="143" y="55" fill="#f1f5f9" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">P</text>
-  <line x1="137" y1="61" x2="40" y2="100" stroke="rgba(244,114,182,0.85)" stroke-width="1.5" stroke-dasharray="3,3"/>
-  <line x1="137" y1="61" x2="160" y2="100" stroke="rgba(244,114,182,0.85)" stroke-width="1.5" stroke-dasharray="3,3"/>
+  <line x1="12" y1="100" x2="192" y2="100" stroke="rgba(51,65,85,0.4)" stroke-width="1.2"/>
+  <line x1="100" y1="156" x2="100" y2="44" stroke="rgba(51,65,85,0.4)" stroke-width="1.2"/>
+  <ellipse cx="100" cy="100" rx="75" ry="45" fill="rgba(124,58,237,0.08)" stroke="rgba(51,65,85,0.85)" stroke-width="2"/>
+  <circle cx="40" cy="100" r="3.2" fill="#3B82F6"/>
+  <circle cx="160" cy="100" r="3.2" fill="#3B82F6"/>
+  <text x="30" y="116" fill="#3B82F6" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">F₁</text>
+  <text x="156" y="116" fill="#3B82F6" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">F₂</text>
+  <circle cx="137" cy="61" r="3.2" fill="#0F172A"/>
+  <text x="143" y="55" fill="#0F172A" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">P</text>
+  <line x1="137" y1="61" x2="40" y2="100" stroke="rgba(219,39,119,0.85)" stroke-width="1.5" stroke-dasharray="3,3"/>
+  <line x1="137" y1="61" x2="160" y2="100" stroke="rgba(219,39,119,0.85)" stroke-width="1.5" stroke-dasharray="3,3"/>
 `;
 
 // Level-3 Q1 setup: A(1,2), B(7,4), midpoint M, circle with diameter AB,
 // and D(5,6) on the circle with the right angle ∠ADB (Thales).
 const Q1_FIGURE_SVG = `
-  <circle cx="103" cy="119" r="70" fill="rgba(168,85,247,0.06)" stroke="rgba(226,232,240,0.6)" stroke-width="1.6"/>
-  <line x1="37" y1="141" x2="169" y2="97" stroke="rgba(244,114,182,0.95)" stroke-width="2"/>
-  <line x1="37" y1="141" x2="125" y2="53" stroke="rgba(96,165,250,0.9)" stroke-width="1.8"/>
-  <line x1="169" y1="97" x2="125" y2="53" stroke="rgba(96,165,250,0.9)" stroke-width="1.8"/>
-  <polyline points="118,60 125,67 132,60" fill="none" stroke="rgba(226,232,240,0.85)" stroke-width="1.4"/>
-  <circle cx="37" cy="141" r="3.5" fill="#f1f5f9"/>
-  <circle cx="169" cy="97" r="3.5" fill="#f1f5f9"/>
-  <circle cx="103" cy="119" r="3" fill="#fcd34d"/>
-  <circle cx="125" cy="53" r="3.5" fill="#f1f5f9"/>
-  <text x="24" y="153" fill="#f1f5f9" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">A</text>
-  <text x="177" y="93" fill="#f1f5f9" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">B</text>
-  <text x="100" y="136" fill="#fcd34d" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">M</text>
-  <text x="120" y="42" fill="#f1f5f9" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">D</text>
+  <circle cx="103" cy="119" r="70" fill="rgba(124,58,237,0.06)" stroke="rgba(51,65,85,0.6)" stroke-width="1.6"/>
+  <line x1="37" y1="141" x2="169" y2="97" stroke="rgba(219,39,119,0.95)" stroke-width="2"/>
+  <line x1="37" y1="141" x2="125" y2="53" stroke="rgba(37,99,235,0.9)" stroke-width="1.8"/>
+  <line x1="169" y1="97" x2="125" y2="53" stroke="rgba(37,99,235,0.9)" stroke-width="1.8"/>
+  <polyline points="118,60 125,67 132,60" fill="none" stroke="rgba(51,65,85,0.85)" stroke-width="1.4"/>
+  <circle cx="37" cy="141" r="3.5" fill="#0F172A"/>
+  <circle cx="169" cy="97" r="3.5" fill="#0F172A"/>
+  <circle cx="103" cy="119" r="3" fill="#B45309"/>
+  <circle cx="125" cy="53" r="3.5" fill="#0F172A"/>
+  <text x="24" y="153" fill="#0F172A" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">A</text>
+  <text x="177" y="93" fill="#0F172A" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">B</text>
+  <text x="100" y="136" fill="#B45309" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">M</text>
+  <text x="120" y="42" fill="#0F172A" font-size="12" font-weight="bold" font-family="Heebo,sans-serif">D</text>
 `;
 
 // Level-3 Q2 setup: parabola y²=8x, focus F(2,0), directrix x=−2, and the
 // circle centered at F with R=4 — meeting the parabola at (2,±4).
 const Q2_FIGURE_SVG = `
-  <line x1="14" y1="100" x2="190" y2="100" stroke="rgba(226,232,240,0.5)" stroke-width="1.3"/>
-  <polygon points="190,100 183,96 183,104" fill="rgba(226,232,240,0.5)"/>
-  <line x1="71" y1="186" x2="71" y2="14" stroke="rgba(226,232,240,0.5)" stroke-width="1.3"/>
-  <polyline points="116,22 105,32 90,49 80,66 73,83 71,100 73,117 80,134 90,151 105,168 116,178" fill="none" stroke="rgba(244,114,182,0.95)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-  <line x1="37" y1="18" x2="37" y2="182" stroke="rgba(251,191,36,0.85)" stroke-width="1.4" stroke-dasharray="4,3"/>
-  <text x="22" y="30" fill="#fcd34d" font-size="9" font-family="Heebo,sans-serif">x=−2</text>
-  <circle cx="105" cy="100" r="68" fill="none" stroke="rgba(96,165,250,0.9)" stroke-width="1.8"/>
-  <circle cx="105" cy="100" r="3.4" fill="#93c5fd"/>
-  <text x="110" y="114" fill="#93c5fd" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">F</text>
-  <circle cx="105" cy="32" r="3.5" fill="#f1f5f9"/>
-  <circle cx="105" cy="168" r="3.5" fill="#f1f5f9"/>
-  <text x="113" y="28" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(2,4)</text>
-  <text x="113" y="180" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(2,−4)</text>
+  <line x1="14" y1="100" x2="190" y2="100" stroke="rgba(51,65,85,0.5)" stroke-width="1.3"/>
+  <polygon points="190,100 183,96 183,104" fill="rgba(51,65,85,0.5)"/>
+  <line x1="71" y1="186" x2="71" y2="14" stroke="rgba(51,65,85,0.5)" stroke-width="1.3"/>
+  <polyline points="116,22 105,32 90,49 80,66 73,83 71,100 73,117 80,134 90,151 105,168 116,178" fill="none" stroke="rgba(219,39,119,0.95)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="37" y1="18" x2="37" y2="182" stroke="rgba(180,83,9,0.85)" stroke-width="1.4" stroke-dasharray="4,3"/>
+  <text x="22" y="30" fill="#B45309" font-size="9" font-family="Heebo,sans-serif">x=−2</text>
+  <circle cx="105" cy="100" r="68" fill="none" stroke="rgba(37,99,235,0.9)" stroke-width="1.8"/>
+  <circle cx="105" cy="100" r="3.4" fill="#3B82F6"/>
+  <text x="110" y="114" fill="#3B82F6" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">F</text>
+  <circle cx="105" cy="32" r="3.5" fill="#0F172A"/>
+  <circle cx="105" cy="168" r="3.5" fill="#0F172A"/>
+  <text x="113" y="28" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(2,4)</text>
+  <text x="113" y="180" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(2,−4)</text>
 `;
 
 export const math5AnalyticGeometry: LearningPath = {

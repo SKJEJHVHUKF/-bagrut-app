@@ -20,35 +20,35 @@ import type { LearningPath } from '../types';
 // y = e^x (solid pink) and y = e^(-x) (dashed blue), meeting at (0,1).
 // Window: x ∈ [-2, 2], y ∈ [-0.5, 6.5]. Axis y=0 doubles as the asymptote.
 const EXP_GRAPH_SVG = `
-  <line x1="14" y1="169" x2="192" y2="169" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="192,169 185,165 185,173" fill="rgba(226,232,240,0.55)"/>
-  <line x1="105" y1="186" x2="105" y2="14" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="105,14 101,21 109,21" fill="rgba(226,232,240,0.55)"/>
-  <text x="186" y="184" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">x</text>
-  <text x="111" y="20" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">y</text>
-  <polyline points="20,165 41,163 62,160 84,155 105,146 126,131 148,106 169,66 176,47" fill="none" stroke="rgba(244,114,182,0.95)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-  <polyline points="190,165 169,163 148,160 126,155 105,146 84,131 62,106 41,66 34,47" fill="none" stroke="rgba(96,165,250,0.95)" stroke-width="2" stroke-dasharray="5,4" stroke-linejoin="round" stroke-linecap="round"/>
-  <circle cx="105" cy="146" r="3.5" fill="#f1f5f9" stroke="rgba(244,114,182,0.95)" stroke-width="1.6"/>
-  <text x="118" y="143" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(0,1)</text>
-  <text x="160" y="58" fill="#f9a8d4" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">eˣ</text>
-  <text x="36" y="60" fill="#93c5fd" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">e⁻ˣ</text>
+  <line x1="14" y1="169" x2="192" y2="169" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="192,169 185,165 185,173" fill="rgba(51,65,85,0.55)"/>
+  <line x1="105" y1="186" x2="105" y2="14" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="105,14 101,21 109,21" fill="rgba(51,65,85,0.55)"/>
+  <text x="186" y="184" fill="#334155" font-size="10" font-family="Heebo,sans-serif">x</text>
+  <text x="111" y="20" fill="#334155" font-size="10" font-family="Heebo,sans-serif">y</text>
+  <polyline points="20,165 41,163 62,160 84,155 105,146 126,131 148,106 169,66 176,47" fill="none" stroke="rgba(219,39,119,0.95)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <polyline points="190,165 169,163 148,160 126,155 105,146 84,131 62,106 41,66 34,47" fill="none" stroke="rgba(37,99,235,0.95)" stroke-width="2" stroke-dasharray="5,4" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="105" cy="146" r="3.5" fill="#0F172A" stroke="rgba(219,39,119,0.95)" stroke-width="1.6"/>
+  <text x="118" y="143" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif">(0,1)</text>
+  <text x="160" y="58" fill="#EC4899" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">eˣ</text>
+  <text x="36" y="60" fill="#3B82F6" font-size="11" font-weight="bold" font-family="Heebo,sans-serif">e⁻ˣ</text>
 `;
 
 // y = x·e^(-x): rises to a max at (1, 1/e), then hugs y=0 from above;
 // dives to -∞ on the left. Window: x ∈ [-1, 4.5], y ∈ [-1.5, 1].
 const XEXP_GRAPH_SVG = `
-  <line x1="14" y1="84" x2="192" y2="84" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="192,84 185,80 185,88" fill="rgba(226,232,240,0.55)"/>
-  <line x1="51" y1="186" x2="51" y2="14" stroke="rgba(226,232,240,0.55)" stroke-width="1.4"/>
-  <polygon points="51,14 47,21 55,21" fill="rgba(226,232,240,0.55)"/>
-  <text x="186" y="99" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">x</text>
-  <text x="57" y="20" fill="#cbd5e1" font-size="10" font-family="Heebo,sans-serif">y</text>
-  <line x1="115" y1="84" x2="190" y2="84" stroke="rgba(251,191,36,0.8)" stroke-width="1.2" stroke-dasharray="4,3"/>
-  <text x="170" y="97" fill="#fcd34d" font-size="9" font-family="Heebo,sans-serif">y=0</text>
-  <polyline points="29,174 36,137 43,105 51,84 66,65 82,60 97,63 113,67 128,71 144,74 159,77 175,79 187,81" fill="none" stroke="rgba(244,114,182,0.95)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-  <circle cx="82" cy="60" r="3.5" fill="#f1f5f9" stroke="rgba(244,114,182,0.95)" stroke-width="1.6"/>
-  <text x="82" y="48" fill="#f1f5f9" font-size="10" font-weight="bold" font-family="Heebo,sans-serif" text-anchor="middle">(1, 1/e)</text>
-  <circle cx="51" cy="84" r="2.5" fill="#cbd5e1"/>
+  <line x1="14" y1="84" x2="192" y2="84" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="192,84 185,80 185,88" fill="rgba(51,65,85,0.55)"/>
+  <line x1="51" y1="186" x2="51" y2="14" stroke="rgba(51,65,85,0.55)" stroke-width="1.4"/>
+  <polygon points="51,14 47,21 55,21" fill="rgba(51,65,85,0.55)"/>
+  <text x="186" y="99" fill="#334155" font-size="10" font-family="Heebo,sans-serif">x</text>
+  <text x="57" y="20" fill="#334155" font-size="10" font-family="Heebo,sans-serif">y</text>
+  <line x1="115" y1="84" x2="190" y2="84" stroke="rgba(180,83,9,0.8)" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <text x="170" y="97" fill="#B45309" font-size="9" font-family="Heebo,sans-serif">y=0</text>
+  <polyline points="29,174 36,137 43,105 51,84 66,65 82,60 97,63 113,67 128,71 144,74 159,77 175,79 187,81" fill="none" stroke="rgba(219,39,119,0.95)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="82" cy="60" r="3.5" fill="#0F172A" stroke="rgba(219,39,119,0.95)" stroke-width="1.6"/>
+  <text x="82" y="48" fill="#0F172A" font-size="10" font-weight="bold" font-family="Heebo,sans-serif" text-anchor="middle">(1, 1/e)</text>
+  <circle cx="51" cy="84" r="2.5" fill="#334155"/>
 `;
 
 export const math5ExpFunctions: LearningPath = {
