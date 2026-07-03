@@ -30,9 +30,11 @@ import { isProUser } from '@/lib/access';
 import { currentStreak } from '@/lib/results';
 
 // Public / auth routes where the floating avatar must NOT appear.
+// Hide only on the auth/onboarding flows. On the landing ("/") the avatar
+// shows for LOGGED-IN users (the component renders null when there's no
+// user, so logged-out marketing visitors never see it).
 const HIDDEN_PREFIXES = ['/login', '/signup', '/auth', '/onboarding'];
 function isHiddenPath(path: string): boolean {
-  if (path === '/') return true; // marketing landing
   return HIDDEN_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
 }
 
