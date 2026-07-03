@@ -79,9 +79,14 @@ export function SubTopicLesson({
               <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-emerald-500/25 border border-emerald-400/50 flex items-center justify-center text-sm font-black text-emerald-800">
                 {i + 1}
               </div>
-              <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900 chat-md">
-                <MathText inline>{step.title}</MathText>
-              </h2>
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-black tracking-widest text-emerald-700 uppercase">
+                  שלב {i + 1} מתוך {steps.length}
+                </div>
+                <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900 chat-md">
+                  <MathText inline>{step.title}</MathText>
+                </h2>
+              </div>
             </div>
 
             <div className="chat-md text-sm sm:text-base text-slate-800">

@@ -52,7 +52,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
           className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2"
         >
           <BookOpen className="w-3.5 h-3.5" />
-          <span>סיכום לימודי</span>
+          <span>מסלול הלמידה בנושא</span>
         </motion.div>
         <motion.h1 variants={fadeUp} className="text-2xl sm:text-3xl font-black leading-tight">
           <span className="font-display text-slate-800">
@@ -70,6 +70,33 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         >
           <MathText>{lesson.intro}</MathText>
         </motion.div>
+
+        {/* "How this page works" — a fixed map so the student always knows
+            where they are and what each block is. */}
+        {lesson.subTopics && lesson.subTopics.length > 0 && (
+          <motion.div
+            variants={fadeUp}
+            className="surface-premium rounded-2xl px-4 py-3"
+          >
+            <div className="text-[11px] font-black tracking-widest text-slate-500 uppercase mb-2">
+              איך לומדים בעמוד הזה
+            </div>
+            <ol className="space-y-1.5 text-sm text-slate-700">
+              <li className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-800 text-[11px] font-black flex items-center justify-center">1</span>
+                <span><b>המסלול המודרך</b> — לומדים שלב אחר שלב: כל שלב מלמד תת-נושא אחד, עם תרגול ושאלת בגרות בסופו.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-md bg-indigo-500/15 border border-indigo-500/40 text-indigo-800 text-[11px] font-black flex items-center justify-center">2</span>
+                <span><b>חומר עזר</b> — סיכום, נוסחאות ודוגמאות פתורות. לחזרה מהירה, לא חובה לפני התרגול.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-800 text-[11px] font-black flex items-center justify-center">3</span>
+                <span><b>מבחן סיום</b> — שאלת בגרות מלאה ומשולבת, אחרי שסיימת את כל השלבים.</span>
+              </li>
+            </ol>
+          </motion.div>
+        )}
       </motion.header>
 
       {/* Grounded private-tutor entry — opens the chat focused on THIS topic.
@@ -91,11 +118,19 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <ArrowLeft className="w-4 h-4 text-indigo-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
       </Link>
 
-      {/* Course tracks — base (learn-from-0) + advanced (bagrut level).
-          Two cards with live status chips; renders only when a path exists. */}
-      {hasLearningPath(lesson.subject, lesson.topic) && (
-        <CourseTracks subject={lesson.subject} topic={lesson.topic} />
-      )}
+      {/* Reference-zone divider — everything below (until the capstone) is
+          review material, clearly labeled so it never competes with the
+          guided step-by-step path above it. */}
+      <motion.div {...inViewProps} variants={staggerContainer} className="order-2 pt-4">
+        <motion.div variants={fadeUp} className="flex items-center gap-3">
+          <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/15 border border-indigo-500/40 text-indigo-800 text-xs font-black flex items-center justify-center">2</span>
+          <div>
+            <div className="text-sm font-black text-slate-900">חומר עזר — סיכום מרוכז לחזרה</div>
+            <div className="text-[11px] text-slate-600">מושגים, נוסחאות, דוגמאות וטעויות נפוצות. חוזרים לכאן בכל שלב שצריך.</div>
+          </div>
+          <div className="flex-1 h-px bg-slate-900/10" />
+        </motion.div>
+      </motion.div>
 
       {/* Concepts */}
       <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
@@ -228,6 +263,23 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         </motion.section>
       )}
 
+      {/* Course tracks — base (learn-from-0) + advanced (bagrut level).
+          Extension courses, placed at the end of the reference zone with an
+          explicit label so they don't compete with the guided path. */}
+      {hasLearningPath(lesson.subject, lesson.topic) && (
+        <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
+          <motion.div
+            variants={fadeUp}
+            className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase"
+          >
+            🚀 קורסים ייעודיים לנושא — למי שרוצה להעמיק
+          </motion.div>
+          <motion.div variants={fadeUp}>
+            <CourseTracks subject={lesson.subject} topic={lesson.topic} />
+          </motion.div>
+        </motion.section>
+      )}
+
       {/* Exam tips — strategy hints. */}
       {lesson.examTips && lesson.examTips.length > 0 && (
         <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
@@ -270,12 +322,18 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
 
         return (
           <motion.section {...inViewProps} variants={staggerContainer} className="order-1 pt-2">
-            <motion.div
-              variants={fadeUp}
-              className="text-xs font-black tracking-widest text-emerald-700 mb-2 uppercase flex items-center gap-2"
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>התחל כאן · לימוד ותרגול מודול-אחרי-מודול · {subs.length} מודולים</span>
+            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-2">
+              <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-800 text-xs font-black flex items-center justify-center">1</span>
+              <div>
+                <div className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                  <GraduationCap className="w-4 h-4 text-emerald-700" />
+                  <span>המסלול המודרך — התחל כאן</span>
+                </div>
+                <div className="text-[11px] text-slate-600">
+                  {subs.length} שלבים בסדר הנכון · כל שלב: שיעור קצר ← תרגול ← שאלת בגרות
+                </div>
+              </div>
+              <div className="flex-1 h-px bg-slate-900/10" />
             </motion.div>
 
             {/* Progress strip */}
@@ -344,7 +402,11 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                           {isDone ? (
                             <CheckCircle className="w-5 h-5" />
                           ) : (
-                            <span className="text-sm">{i + 1}</span>
+                            <span className="text-[10px] leading-tight text-center">
+                              שלב
+                              <br />
+                              <span className="text-sm">{i + 1}</span>
+                            </span>
                           )}
                         </div>
 
@@ -366,10 +428,12 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                             )}
                           </div>
                           <div className="text-xs text-slate-600 leading-snug">{sub.tagline}</div>
-                          <div className="text-[10px] text-emerald-800 mt-1.5 flex items-center gap-3">
-                            <span>{sub.questions.length} תרגילים</span>
-                            <span>·</span>
-                            <span>{sub.formulas.length} נוסחאות</span>
+                          <div className="text-[10px] text-emerald-800 mt-1.5 flex items-center gap-1.5 flex-wrap">
+                            <span>{sub.lesson && sub.lesson.length > 0 ? '📖 שיעור מודרך' : '📖 סיכום'}</span>
+                            <span>←</span>
+                            <span>✏️ {sub.questions.length} תרגילים</span>
+                            <span>←</span>
+                            <span>🎯 שאלת בגרות</span>
                           </div>
                         </div>
                         <div className="flex-shrink-0 mt-1.5">
@@ -391,12 +455,23 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
 
       {/* Capstone — full mixed bagrut, positioned LAST (after the modules). */}
       <motion.section {...inViewProps} variants={staggerContainer} className="order-3 pt-2">
-        <motion.div
-          variants={fadeUp}
-          className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase"
-        >
-          {lesson.subTopics && lesson.subTopics.length > 0 ? '🏁 מבחן סיום — בגרות מלאה ומשולבת' : 'מוכן/ה לתרגל?'}
-        </motion.div>
+        {lesson.subTopics && lesson.subTopics.length > 0 ? (
+          <motion.div variants={fadeUp} className="flex items-center gap-3 mb-3">
+            <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-800 text-xs font-black flex items-center justify-center">3</span>
+            <div>
+              <div className="text-sm font-black text-slate-900">🏁 מבחן סיום — בגרות מלאה ומשולבת</div>
+              <div className="text-[11px] text-slate-600">אחרי שסיימת את כל השלבים — שאלה ברמת בחינה אמיתית שמשלבת את כל הנושא.</div>
+            </div>
+            <div className="flex-1 h-px bg-slate-900/10" />
+          </motion.div>
+        ) : (
+          <motion.div
+            variants={fadeUp}
+            className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase"
+          >
+            מוכן לתרגל?
+          </motion.div>
+        )}
         <motion.div
           variants={staggerContainer}
           className={`grid grid-cols-1 ${(hasBagrutBank(lesson.subject, lesson.topic) || poolHas(lesson.subject, lesson.topic, 'bagrut')) ? 'sm:grid-cols-2' : ''} gap-3`}

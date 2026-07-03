@@ -106,7 +106,7 @@ export function TopicJourney({
           icon={<Brain className="w-5 h-5" />}
           number={2}
           title="מבחן הבנה"
-          subtitle="5 שאלות quiz"
+          subtitle="מבחן מהיר — 5 שאלות"
           done={stage2Done}
           locked={stage2Locked}
           href={`/quiz?subject=${subject}&topic=${encodeURIComponent(topic)}`}
@@ -114,8 +114,8 @@ export function TopicJourney({
         <StepCard
           icon={<Target className="w-5 h-5" />}
           number={3}
-          title="תרגול"
-          subtitle="שאלת בגרות"
+          title="תרגול בגרות"
+          subtitle="שאלה ברמת בחינה אמיתית"
           done={stage3Done}
           locked={stage3Locked}
           href={`/practice/${subject}/${encodeURIComponent(topic)}/exercise?mode=bagrut`}
@@ -165,7 +165,9 @@ function StepCard({
             שלב {number}
           </div>
           <div className="text-sm font-black text-slate-900">{title}</div>
-          <div className="text-[11px] text-slate-600 mt-0.5">{subtitle}</div>
+          <div className="text-[11px] text-slate-600 mt-0.5">
+            {locked ? `🔒 נפתח אחרי שתסיים את שלב ${number - 1}` : subtitle}
+          </div>
         </div>
         {!locked && !done && (
           <PlayCircle className="w-4 h-4 text-indigo-700 flex-shrink-0 mt-1" />
