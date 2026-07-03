@@ -49,13 +49,13 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       >
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2"
         >
           <BookOpen className="w-3.5 h-3.5" />
           <span>סיכום לימודי</span>
         </motion.div>
         <motion.h1 variants={fadeUp} className="text-2xl sm:text-3xl font-black leading-tight">
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             {lesson.title}
           </span>
         </motion.h1>
@@ -66,7 +66,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
 
         <motion.div
           variants={fadeUp}
-          className="chat-md text-sm sm:text-base text-slate-300 leading-relaxed"
+          className="chat-md text-sm sm:text-base text-slate-700 leading-relaxed"
         >
           <MathText>{lesson.intro}</MathText>
         </motion.div>
@@ -80,15 +80,15 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         className="group flex items-center gap-3 surface-premium rounded-2xl px-4 py-3 hover:border-indigo-500/50 transition-colors"
       >
         <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center">
-          <MessageCircle className="w-5 h-5 text-indigo-200" />
+          <MessageCircle className="w-5 h-5 text-indigo-800" />
         </div>
         <div className="flex-1 text-right">
-          <div className="text-sm font-bold text-white">שאל את המורה הפרטי על הנושא</div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-sm font-bold text-slate-900">שאל את המורה הפרטי על הנושא</div>
+          <div className="text-[11px] text-slate-600">
             מורה מעוגן בחומר — מסביר, מכוון, ולא נותן תשובות מוכנות
           </div>
         </div>
-        <ArrowLeft className="w-4 h-4 text-indigo-300 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+        <ArrowLeft className="w-4 h-4 text-indigo-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
       </Link>
 
       {/* Course tracks — base (learn-from-0) + advanced (bagrut level).
@@ -101,7 +101,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase flex items-center gap-2"
         >
           <Target className="w-3.5 h-3.5" />
           <span>מושגים מרכזיים</span>
@@ -115,10 +115,10 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
               transition={{ duration: 0.2 }}
               className="surface-premium rounded-2xl px-4 py-3"
             >
-              <div className="text-sm font-black text-indigo-200 mb-1.5 chat-md">
+              <div className="text-sm font-black text-indigo-800 mb-1.5 chat-md">
                 <MathText inline>{c.title}</MathText>
               </div>
-              <div className="chat-md text-sm text-slate-200 leading-relaxed">
+              <div className="chat-md text-sm text-slate-800 leading-relaxed">
                 <MathText>{c.body}</MathText>
               </div>
               {c.diagrams && c.diagrams.length > 0 && (
@@ -134,7 +134,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase"
+            className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase"
           >
             נוסחאות
           </motion.div>
@@ -152,12 +152,12 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase flex items-center gap-2"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>דוגמאות פתורות</span>
         </motion.div>
-        <motion.p variants={fadeUp} className="text-xs text-slate-400 mb-3">
+        <motion.p variants={fadeUp} className="text-xs text-slate-600 mb-3">
           נסה לפתור בעצמך לפני שאתה לוחץ — אחר כך חשוף את הצעדים אחד-אחד.
         </motion.p>
         <motion.div variants={staggerContainer} className="space-y-2">
@@ -174,7 +174,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-amber-300 mb-3 uppercase flex items-center gap-2"
+            className="text-xs font-black tracking-widest text-amber-700 mb-3 uppercase flex items-center gap-2"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
             <span>טעויות נפוצות</span>
@@ -188,7 +188,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                 transition={{ duration: 0.2 }}
                 className="bg-amber-500/5 border border-amber-500/30 rounded-2xl px-4 py-3 flex gap-3"
               >
-                <Lightbulb className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
+                <Lightbulb className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div className="chat-md text-sm text-amber-50/95 leading-relaxed">
                   <MathText>{p}</MathText>
                 </div>
@@ -203,7 +203,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-emerald-300 mb-3 uppercase flex items-center gap-2"
+            className="text-xs font-black tracking-widest text-emerald-700 mb-3 uppercase flex items-center gap-2"
           >
             <CheckCircle className="w-3.5 h-3.5" />
             <span>סיכום — מה לזכור</span>
@@ -218,7 +218,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                 variants={fadeUp}
                 className="flex gap-2 text-sm text-emerald-50/95 leading-relaxed"
               >
-                <span className="text-emerald-300 flex-shrink-0 mt-0.5">✓</span>
+                <span className="text-emerald-700 flex-shrink-0 mt-0.5">✓</span>
                 <div className="chat-md flex-1">
                   <MathText>{s}</MathText>
                 </div>
@@ -233,7 +233,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase flex items-center gap-2"
+            className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase flex items-center gap-2"
           >
             <Award className="w-3.5 h-3.5" />
             <span>טיפים לבחינה</span>
@@ -248,7 +248,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                 variants={fadeUp}
                 className="flex gap-2 text-sm text-indigo-50/95 leading-relaxed"
               >
-                <span className="text-indigo-300 flex-shrink-0 mt-0.5">★</span>
+                <span className="text-indigo-700 flex-shrink-0 mt-0.5">★</span>
                 <div className="chat-md flex-1">
                   <MathText>{t}</MathText>
                 </div>
@@ -272,7 +272,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
           <motion.section {...inViewProps} variants={staggerContainer} className="order-1 pt-2">
             <motion.div
               variants={fadeUp}
-              className="text-xs font-black tracking-widest text-emerald-300 mb-2 uppercase flex items-center gap-2"
+              className="text-xs font-black tracking-widest text-emerald-700 mb-2 uppercase flex items-center gap-2"
             >
               <GraduationCap className="w-3.5 h-3.5" />
               <span>התחל כאן · לימוד ותרגול מודול-אחרי-מודול · {subs.length} מודולים</span>
@@ -284,12 +284,12 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
               className="surface-premium rounded-2xl p-3 mb-3"
             >
               <div className="flex items-baseline justify-between mb-2">
-                <div className="text-sm font-bold text-emerald-100">
+                <div className="text-sm font-bold text-emerald-800">
                   {allDone ? '🎓 סיימת את כל המודולים!' : `${doneCount}/${subs.length} מודולים הושלמו`}
                 </div>
                 <div className="text-xs text-emerald-300/80 font-mono">{percent}%</div>
               </div>
-              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: '0%' }}
                   animate={{ width: `${percent}%` }}
@@ -298,12 +298,12 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                 />
               </div>
               {!allDone && (
-                <p className="text-[11px] text-slate-400 mt-2 leading-snug">
+                <p className="text-[11px] text-slate-600 mt-2 leading-snug">
                   עבור כל מודול בסדר — סיכום, נוסחאות, ותרגול ייעודי. אחרי שהמסלול מלא, נסה את הבגרות המלאה.
                 </p>
               )}
               {allDone && (
-                <p className="text-[11px] text-emerald-200 mt-2 leading-snug">
+                <p className="text-[11px] text-emerald-800 mt-2 leading-snug">
                   כל הכבוד! עכשיו אתה מוכן לבגרות המלאה. גלול למטה ל-CTA. 🎯
                 </p>
               )}
@@ -335,10 +335,10 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                         <div
                           className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-black shadow-sm border ${
                             isDone
-                              ? 'bg-emerald-500/30 border-emerald-400/60 text-emerald-100'
+                              ? 'bg-emerald-500/30 border-emerald-400/60 text-emerald-800'
                               : isNext
-                                ? 'bg-amber-500/25 border-amber-400/60 text-amber-100'
-                                : 'bg-white/5 border-white/15 text-slate-300'
+                                ? 'bg-amber-500/25 border-amber-400/60 text-amber-800'
+                                : 'bg-slate-900/[0.03] border-slate-900/[0.12] text-slate-700'
                           }`}
                         >
                           {isDone ? (
@@ -350,22 +350,22 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <span className="font-bold text-sm sm:text-base text-white">
+                            <span className="font-bold text-sm sm:text-base text-slate-900">
                               {sub.emoji && <span className="ml-1">{sub.emoji}</span>}
                               {sub.title}
                             </span>
                             {isNext && (
-                              <span className="text-[10px] font-black tracking-wide bg-amber-500/25 border border-amber-400/50 text-amber-200 px-1.5 py-0.5 rounded-full">
+                              <span className="text-[10px] font-black tracking-wide bg-amber-500/25 border border-amber-400/50 text-amber-800 px-1.5 py-0.5 rounded-full">
                                 ▶ הבא בתור
                               </span>
                             )}
                             {isDone && (
-                              <span className="text-[10px] font-black tracking-wide bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 px-1.5 py-0.5 rounded-full">
+                              <span className="text-[10px] font-black tracking-wide bg-emerald-500/25 border border-emerald-400/50 text-emerald-800 px-1.5 py-0.5 rounded-full">
                                 ✓ הושלם
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-slate-400 leading-snug">{sub.tagline}</div>
+                          <div className="text-xs text-slate-600 leading-snug">{sub.tagline}</div>
                           <div className="text-[10px] text-emerald-300/80 mt-1.5 flex items-center gap-3">
                             <span>{sub.questions.length} תרגילים</span>
                             <span>·</span>
@@ -376,7 +376,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                           {isDone ? (
                             <PlayCircle className="w-4 h-4 text-emerald-300/60" />
                           ) : (
-                            <ArrowLeft className="w-4 h-4 text-emerald-300" />
+                            <ArrowLeft className="w-4 h-4 text-emerald-700" />
                           )}
                         </div>
                       </div>
@@ -393,7 +393,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       <motion.section {...inViewProps} variants={staggerContainer} className="order-3 pt-2">
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase"
+          className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase"
         >
           {lesson.subTopics && lesson.subTopics.length > 0 ? '🏁 מבחן סיום — בגרות מלאה ומשולבת' : 'מוכן/ה לתרגל?'}
         </motion.div>

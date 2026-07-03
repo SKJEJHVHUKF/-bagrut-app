@@ -50,7 +50,7 @@ function BagrutLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const s = sizes[size];
 
   return (
-    <div className={`relative ${s.box} ${s.radius} bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-600/40 ring-1 ring-white/15`}>
+    <div className={`relative ${s.box} ${s.radius} bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-600/40 ring-1 ring-slate-900/10`}>
       <svg viewBox="0 0 24 24" fill="none" className={`${s.icon} text-white`}>
         <path
           d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
@@ -82,7 +82,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 /** Section heading — serif display face (Frank Ruhl Libre), solid near-white. */
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-display text-3xl sm:text-5xl font-bold mb-4 text-slate-100 leading-[1.2]">
+    <h2 className="font-display text-3xl sm:text-5xl font-bold mb-4 text-slate-800 leading-[1.2]">
       {children}
     </h2>
   );
@@ -124,7 +124,7 @@ export default function Landing() {
 
   return (
     <div
-      className="min-h-screen text-slate-100 relative overflow-x-hidden"
+      className="min-h-screen text-slate-800 relative overflow-x-hidden"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
       {/* Hero glow accent — the global grain, vignette & depth come from body */}
@@ -133,29 +133,29 @@ export default function Landing() {
       </div>
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#0A0E1A]/70 border-b border-white/[0.07]">
+      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/[0.06]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BagrutLogo size="md" />
-            <span className="font-display text-xl sm:text-2xl font-black text-slate-100">
+            <span className="font-display text-xl sm:text-2xl font-black text-slate-800">
               בגרות בכיס
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Link
               href="/practice"
-              className="group flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-indigo-500/40 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-200 transition-all"
+              className="group flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-indigo-500/40 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition-all"
               title="תרגול מודרך"
             >
-              <Target className="w-4 h-4 text-indigo-400" />
+              <Target className="w-4 h-4 text-indigo-600" />
               <span className="hidden sm:inline">תרגול מודרך</span>
             </Link>
             <Link
               href="/chat"
-              className="group flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-indigo-500/40 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-200 transition-all"
+              className="group flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-indigo-500/40 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition-all"
               title="צ'אט עם המורה הפרטי"
             >
-              <MessageSquare className="w-4 h-4 text-indigo-400" />
+              <MessageSquare className="w-4 h-4 text-indigo-600" />
               <span className="hidden sm:inline">המורה הפרטי</span>
             </Link>
           </div>
@@ -199,8 +199,8 @@ export default function Landing() {
         </div>
 
         <motion.div variants={fadeUp} className="mb-7">
-          <span className="inline-flex items-center gap-2 surface-premium rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium text-slate-300 tracking-wide">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+          <span className="inline-flex items-center gap-2 surface-premium rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium text-slate-700 tracking-wide">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-700" />
             תרגול חכם לבגרות · בעברית · בחינם
           </span>
         </motion.div>
@@ -210,12 +210,12 @@ export default function Landing() {
           className="font-display text-5xl sm:text-7xl md:text-8xl font-black leading-[1.05] mb-7 sm:mb-9 text-slate-50"
         >
           <span className="block">הבגרות שלך,</span>
-          <span className="block text-indigo-300">בכיס שלך</span>
+          <span className="block text-indigo-700">בכיס שלך</span>
         </motion.h1>
 
         <motion.p
           variants={fadeUp}
-          className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto mb-9 sm:mb-12 leading-relaxed"
+          className="text-lg sm:text-xl text-slate-600 max-w-xl mx-auto mb-9 sm:mb-12 leading-relaxed"
         >
           תרגול חכם של שאלות בגרות אמיתיות, נוצרות בזמן אמת ע&quot;י בינה מלאכותית.
           <br className="hidden sm:block" />
@@ -230,7 +230,7 @@ export default function Landing() {
           <motion.a
             {...buttonTap}
             href="#how-it-works"
-            className="inline-flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/25 px-6 py-4 rounded-2xl font-bold text-slate-200 transition-all"
+            className="inline-flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-slate-900/20 px-6 py-4 rounded-2xl font-bold text-slate-800 transition-all"
           >
             <span>איך זה עובד?</span>
             <ChevronDown className="w-5 h-5" />
@@ -242,11 +242,11 @@ export default function Landing() {
           variants={fadeUp}
           className="flex items-center justify-center gap-3 sm:gap-5 mt-12 sm:mt-14 text-sm text-slate-500"
         >
-          <span><strong className="text-slate-300 font-bold">7</strong> מקצועות</span>
+          <span><strong className="text-slate-700 font-bold">7</strong> מקצועות</span>
           <span className="w-1 h-1 rounded-full bg-slate-600" />
-          <span><strong className="text-slate-300 font-bold">∞</strong> שאלות</span>
+          <span><strong className="text-slate-700 font-bold">∞</strong> שאלות</span>
           <span className="w-1 h-1 rounded-full bg-slate-600" />
-          <span><strong className="text-slate-300 font-bold">100%</strong> חינם</span>
+          <span><strong className="text-slate-700 font-bold">100%</strong> חינם</span>
         </motion.div>
       </motion.section>
 
@@ -259,7 +259,7 @@ export default function Landing() {
         <motion.div variants={fadeUp} className="text-center mb-10 sm:mb-14">
           <Eyebrow>3 דרכים ללמוד</Eyebrow>
           <SectionTitle>בחר את הדרך שמתאימה לך</SectionTitle>
-          <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+          <p className="text-slate-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
             כל מצב פותר בעיה שונה. אפשר לשלב ביניהם — ולעבור בין מצב לאחר תוך כדי לימוד.
           </p>
         </motion.div>
@@ -301,11 +301,11 @@ export default function Landing() {
       >
         <div className="text-center mb-10 sm:mb-12">
           <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 rounded-full px-3 py-1 mb-4">
-            <span className="text-[10px] sm:text-xs font-bold tracking-wide text-amber-300">חדש · ללא AI</span>
+            <span className="text-[10px] sm:text-xs font-bold tracking-wide text-amber-700">חדש · ללא AI</span>
           </div>
           <SectionTitle>מאגר בגרויות עם רמזים</SectionTitle>
-          <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            שאלות בגרות <strong className="text-slate-200 font-bold">אמיתיות</strong> מהשאלון של משרד החינוך.
+          <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            שאלות בגרות <strong className="text-slate-800 font-bold">אמיתיות</strong> מהשאלון של משרד החינוך.
             תפתור לבד, תקבל רמזים מדורגים כשנתקעת, ותראה את הפתרון רק כשאתה מוכן.
           </p>
         </div>
@@ -351,7 +351,7 @@ export default function Landing() {
             </Link>
             <Link
               href="/bagruyot"
-              className="text-sm text-slate-400 hover:text-slate-200 inline-flex items-center gap-1.5 transition-colors"
+              className="text-sm text-slate-600 hover:text-slate-800 inline-flex items-center gap-1.5 transition-colors"
             >
               <span>איך זה עובד?</span>
               <ChevronDown className="w-4 h-4 -rotate-90" />
@@ -359,7 +359,7 @@ export default function Landing() {
           </div>
 
           {/* Trust line */}
-          <div className="mt-6 pt-6 border-t border-white/[0.07] flex gap-2 items-start max-w-2xl mx-auto">
+          <div className="mt-6 pt-6 border-t border-slate-900/[0.06] flex gap-2 items-start max-w-2xl mx-auto">
             <ShieldCheck className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
             <p className="text-[11px] sm:text-xs text-slate-500 leading-relaxed">
               השאלות מתועתקות מהשאלונים הרשמיים של משרד החינוך. הפתרונות והרמזים נכתבים בסגנון האפליקציה.
@@ -377,7 +377,7 @@ export default function Landing() {
         <motion.div variants={fadeUp} className="text-center mb-12 sm:mb-16">
           <Eyebrow>הבעיה</Eyebrow>
           <SectionTitle>כל תלמיד מכיר את זה</SectionTitle>
-          <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto">
+          <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto">
             בגרות זה לחץ. מצאנו דרך להפוך את התרגול לפשוט, מהיר ואפילו מהנה.
           </p>
         </motion.div>
@@ -393,11 +393,11 @@ export default function Landing() {
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-indigo-500/12 border border-indigo-500/25 flex items-center justify-center flex-shrink-0">
-                  <p.icon className="w-6 h-6 text-indigo-300" />
+                  <p.icon className="w-6 h-6 text-indigo-700" />
                 </div>
                 <div>
-                  <h3 className="font-display text-lg sm:text-xl font-bold mb-2 text-slate-100">{p.title}</h3>
-                  <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{p.desc}</p>
+                  <h3 className="font-display text-lg sm:text-xl font-bold mb-2 text-slate-800">{p.title}</h3>
+                  <p className="text-sm sm:text-base text-slate-600 leading-relaxed">{p.desc}</p>
                 </div>
               </div>
             </motion.div>
@@ -426,15 +426,15 @@ export default function Landing() {
               transition={{ duration: 0.2 }}
               className="group relative surface-premium rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors overflow-hidden"
             >
-              <div className="absolute top-2 left-4 font-display text-7xl sm:text-8xl font-black text-white/[0.04] select-none">
+              <div className="absolute top-2 left-4 font-display text-7xl sm:text-8xl font-black text-slate-900/[0.04] select-none">
                 {s.num}
               </div>
               <div className="relative z-10">
                 <div className="w-14 h-14 rounded-2xl bg-indigo-500/12 border border-indigo-500/25 flex items-center justify-center mb-5">
-                  <s.icon className="w-7 h-7 text-indigo-300" />
+                  <s.icon className="w-7 h-7 text-indigo-700" />
                 </div>
-                <h3 className="font-display text-xl font-bold mb-3 text-slate-100">{s.title}</h3>
-                <p className="text-slate-400 leading-relaxed">{s.desc}</p>
+                <h3 className="font-display text-xl font-bold mb-3 text-slate-800">{s.title}</h3>
+                <p className="text-slate-600 leading-relaxed">{s.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -450,7 +450,7 @@ export default function Landing() {
         <motion.div variants={fadeUp} className="text-center mb-12 sm:mb-16">
           <Eyebrow>מקצועות</Eyebrow>
           <SectionTitle>7 מקצועות בגרות, מקום אחד</SectionTitle>
-          <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto">
+          <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto">
             מכל המקצועות העיקריים, ברמת 5 יחידות. בקרוב יתווספו עוד.
           </p>
         </motion.div>
@@ -466,7 +466,7 @@ export default function Landing() {
                 className="card-3d group relative surface-premium rounded-2xl p-5 sm:p-6 text-center hover:border-indigo-500/40 block h-full"
               >
                 <div className="icon-3d text-4xl sm:text-5xl mb-3 inline-block">{s.emoji}</div>
-                <div className="font-bold text-sm sm:text-base mb-1 text-slate-100">{s.name}</div>
+                <div className="font-bold text-sm sm:text-base mb-1 text-slate-800">{s.name}</div>
                 <div className="text-xs text-slate-500">{s.topics} נושאים</div>
               </Link>
             </motion.div>
@@ -483,7 +483,7 @@ export default function Landing() {
         <motion.div variants={fadeUp} className="text-center mb-12 sm:mb-16">
           <Eyebrow>מחיר</Eyebrow>
           <SectionTitle>חינם להתחיל. תמיד.</SectionTitle>
-          <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto">
+          <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto">
             בחר את המסלול שמתאים לך. ה-Free תמיד יישאר חינם.
           </p>
         </motion.div>
@@ -497,11 +497,11 @@ export default function Landing() {
             className="relative surface-premium rounded-3xl p-8 hover:border-indigo-500/30 transition-colors"
           >
             <div className="flex items-center gap-2 mb-2">
-              <Gift className="w-5 h-5 text-indigo-400" />
-              <span className="text-indigo-300 font-bold text-sm tracking-wide">חינמי</span>
+              <Gift className="w-5 h-5 text-indigo-600" />
+              <span className="text-indigo-700 font-bold text-sm tracking-wide">חינמי</span>
             </div>
             <div className="flex items-baseline gap-2 mb-6">
-              <span className="font-display text-5xl font-black text-slate-100">₪0</span>
+              <span className="font-display text-5xl font-black text-slate-800">₪0</span>
               <span className="text-slate-500">לתמיד</span>
             </div>
             <ul className="space-y-3 mb-8">
@@ -512,9 +512,9 @@ export default function Landing() {
                 'תוצאות וסטטיסטיקות',
                 'גישה ממכל מכשיר',
               ].map((f, i) => (
-                <li key={i} className="flex items-center gap-3 text-slate-300">
+                <li key={i} className="flex items-center gap-3 text-slate-700">
                   <div className="w-5 h-5 rounded-full bg-indigo-500/15 border border-indigo-500/35 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3 h-3 text-indigo-300" strokeWidth={3} />
+                    <Check className="w-3 h-3 text-indigo-700" strokeWidth={3} />
                   </div>
                   <span>{f}</span>
                 </li>
@@ -522,7 +522,7 @@ export default function Landing() {
             </ul>
             <Link
               href="/quiz"
-              className="block w-full text-center bg-white/[0.06] hover:bg-white/10 border border-white/15 px-6 py-3.5 rounded-xl font-bold text-slate-100 transition-all"
+              className="block w-full text-center bg-slate-900/[0.04] hover:bg-slate-900/5 border border-slate-900/[0.12] px-6 py-3.5 rounded-xl font-bold text-slate-800 transition-all"
             >
               התחל עכשיו - חינם
             </Link>
@@ -539,11 +539,11 @@ export default function Landing() {
               בקרוב
             </div>
             <div className="flex items-center gap-2 mb-2">
-              <Rocket className="w-5 h-5 text-indigo-300" />
-              <span className="text-indigo-300 font-bold text-sm tracking-wide">Pro</span>
+              <Rocket className="w-5 h-5 text-indigo-700" />
+              <span className="text-indigo-700 font-bold text-sm tracking-wide">Pro</span>
             </div>
             <div className="flex items-baseline gap-2 mb-6">
-              <span className="font-display text-5xl font-black text-indigo-200">בהשקה</span>
+              <span className="font-display text-5xl font-black text-indigo-800">בהשקה</span>
             </div>
             <ul className="space-y-3 mb-8">
               {[
@@ -554,9 +554,9 @@ export default function Landing() {
                 'צ\'אט עם AI לעזרה אישית',
                 'דוחות התקדמות שבועיים',
               ].map((f, i) => (
-                <li key={i} className="flex items-center gap-3 text-slate-200">
+                <li key={i} className="flex items-center gap-3 text-slate-800">
                   <div className="w-5 h-5 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3 h-3 text-indigo-200" strokeWidth={3} />
+                    <Check className="w-3 h-3 text-indigo-800" strokeWidth={3} />
                   </div>
                   <span>{f}</span>
                 </li>
@@ -564,7 +564,7 @@ export default function Landing() {
             </ul>
             <button
               type="button"
-              className="block w-full text-center bg-white/5 border border-indigo-500/30 px-6 py-3.5 rounded-xl font-bold text-indigo-200 cursor-not-allowed opacity-80"
+              className="block w-full text-center bg-slate-900/[0.03] border border-indigo-500/30 px-6 py-3.5 rounded-xl font-bold text-indigo-800 cursor-not-allowed opacity-80"
               disabled
             >
               בקרוב · רשימת המתנה
@@ -593,11 +593,11 @@ export default function Landing() {
             >
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="w-full px-6 py-5 flex items-center justify-between gap-4 text-right hover:bg-white/[0.02] transition-colors"
+                className="w-full px-6 py-5 flex items-center justify-between gap-4 text-right hover:bg-slate-900/[0.02] transition-colors"
               >
-                <span className="text-base sm:text-lg font-bold text-slate-100">{item.q}</span>
+                <span className="text-base sm:text-lg font-bold text-slate-800">{item.q}</span>
                 <ChevronDown
-                  className={`w-5 h-5 text-indigo-400 flex-shrink-0 transition-transform ${
+                  className={`w-5 h-5 text-indigo-600 flex-shrink-0 transition-transform ${
                     openFaq === i ? 'rotate-180' : ''
                   }`}
                 />
@@ -612,7 +612,7 @@ export default function Landing() {
                     transition={{ duration: 0.25, ease: 'easeOut' }}
                     style={{ overflow: 'hidden' }}
                   >
-                    <div className="px-6 pb-5 text-slate-400 leading-relaxed border-t border-white/[0.07] pt-4">
+                    <div className="px-6 pb-5 text-slate-600 leading-relaxed border-t border-slate-900/[0.06] pt-4">
                       {item.a}
                     </div>
                   </motion.div>
@@ -636,12 +636,12 @@ export default function Landing() {
           <div className="absolute top-[-30%] left-1/2 -translate-x-1/2 w-[400px] h-[260px] rounded-full bg-indigo-500/15 blur-[120px] pointer-events-none" />
           <div className="relative z-10">
             <div className="inline-flex w-14 h-14 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 items-center justify-center mb-6">
-              <Sparkles className="w-7 h-7 text-indigo-300" />
+              <Sparkles className="w-7 h-7 text-indigo-700" />
             </div>
-            <motion.h2 variants={fadeUp} className="font-display text-3xl sm:text-5xl font-bold mb-4 text-slate-100 leading-[1.2]">
+            <motion.h2 variants={fadeUp} className="font-display text-3xl sm:text-5xl font-bold mb-4 text-slate-800 leading-[1.2]">
               מוכן להפוך את הבגרות לקלה?
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-slate-400 text-base sm:text-xl max-w-2xl mx-auto mb-8">
+            <motion.p variants={fadeUp} className="text-slate-600 text-base sm:text-xl max-w-2xl mx-auto mb-8">
               לחיצה אחת. בלי רישום. בלי כסף. בלי תירוצים.
             </motion.p>
             <motion.div variants={fadeUp}>
@@ -661,18 +661,18 @@ export default function Landing() {
       </motion.section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/[0.07] mt-8">
+      <footer className="relative z-10 border-t border-slate-900/[0.06] mt-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <BagrutLogo size="sm" />
-            <span className="font-display text-sm font-bold text-slate-200">בגרות בכיס</span>
+            <span className="font-display text-sm font-bold text-slate-800">בגרות בכיס</span>
           </div>
-          <nav className="flex items-center gap-3 text-xs text-slate-400">
-            <Link href="/privacy" className="hover:text-slate-200 underline-offset-2 hover:underline transition-colors">
+          <nav className="flex items-center gap-3 text-xs text-slate-600">
+            <Link href="/privacy" className="hover:text-slate-800 underline-offset-2 hover:underline transition-colors">
               מדיניות פרטיות
             </Link>
             <span className="text-slate-600">·</span>
-            <Link href="/terms" className="hover:text-slate-200 underline-offset-2 hover:underline transition-colors">
+            <Link href="/terms" className="hover:text-slate-800 underline-offset-2 hover:underline transition-colors">
               תנאי שימוש
             </Link>
           </nav>
@@ -705,8 +705,8 @@ function ModeCard({
   badge?: string;
 }) {
   const tones = {
-    indigo: { chip: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300', cta: 'text-indigo-300' },
-    amber: { chip: 'bg-amber-400/15 border-amber-400/30 text-amber-300', cta: 'text-amber-300' },
+    indigo: { chip: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-700', cta: 'text-indigo-700' },
+    amber: { chip: 'bg-amber-400/15 border-amber-400/30 text-amber-700', cta: 'text-amber-700' },
     teal: { chip: 'bg-teal-500/15 border-teal-500/30 text-teal-300', cta: 'text-teal-300' },
   }[tone];
 
@@ -717,15 +717,15 @@ function ModeCard({
         className="card-3d-strong group relative surface-premium hover:border-indigo-500/40 rounded-3xl p-6 block h-full"
       >
         {badge && (
-          <div className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-amber-400/15 border border-amber-400/35 text-[10px] font-black tracking-wide text-amber-300">
+          <div className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-amber-400/15 border border-amber-400/35 text-[10px] font-black tracking-wide text-amber-700">
             {badge}
           </div>
         )}
         <div className={`icon-3d w-12 h-12 rounded-2xl border flex items-center justify-center mb-4 ${tones.chip}`}>
           {icon}
         </div>
-        <h3 className="font-display text-xl font-bold mb-2 text-slate-100">{title}</h3>
-        <p className="text-sm text-slate-400 leading-relaxed mb-4">{desc}</p>
+        <h3 className="font-display text-xl font-bold mb-2 text-slate-800">{title}</h3>
+        <p className="text-sm text-slate-600 leading-relaxed mb-4">{desc}</p>
         <div className={`text-xs font-bold flex items-center gap-1.5 ${tones.cta}`}>
           {cta}
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
@@ -747,11 +747,11 @@ function BagruyotFeature({
 }) {
   return (
     <div className="surface-premium rounded-2xl p-4 text-center sm:text-right">
-      <div className="w-9 h-9 rounded-xl bg-indigo-500/12 border border-indigo-500/25 flex items-center justify-center text-indigo-300 mb-2 mx-auto sm:mx-0">
+      <div className="w-9 h-9 rounded-xl bg-indigo-500/12 border border-indigo-500/25 flex items-center justify-center text-indigo-700 mb-2 mx-auto sm:mx-0">
         {icon}
       </div>
-      <div className="font-bold text-sm text-slate-100 mb-1">{title}</div>
-      <div className="text-xs text-slate-400 leading-relaxed">{body}</div>
+      <div className="font-bold text-sm text-slate-800 mb-1">{title}</div>
+      <div className="text-xs text-slate-600 leading-relaxed">{body}</div>
     </div>
   );
 }
@@ -760,7 +760,7 @@ function BagruyotFeature({
 function BagruyotStat({ value, label }: { value: number; label: string }) {
   return (
     <div className="surface-premium rounded-xl p-3 text-center">
-      <div className="font-display text-2xl sm:text-3xl font-black text-slate-100">
+      <div className="font-display text-2xl sm:text-3xl font-black text-slate-800">
         {value}
       </div>
       <div className="text-[10px] sm:text-xs text-slate-500 mt-0.5">{label}</div>

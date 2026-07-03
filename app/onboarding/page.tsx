@@ -105,7 +105,7 @@ export default function OnboardingPage() {
                   ? 'w-8 h-2 rounded-full bg-gradient-to-l from-indigo-500 to-indigo-500'
                   : n < step
                   ? 'w-2 h-2 rounded-full bg-indigo-500/60'
-                  : 'w-2 h-2 rounded-full bg-white/10'
+                  : 'w-2 h-2 rounded-full bg-slate-900/5'
               }
             />
           ))}
@@ -160,31 +160,31 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
       </div>
       <div>
         <h1 className="font-display text-3xl sm:text-4xl font-black mb-3">
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             ברוך הבא! בוא נכין לך תוכנית
           </span>
         </h1>
-        <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-md mx-auto">
+        <p className="text-slate-700 text-base sm:text-lg leading-relaxed max-w-md mx-auto">
           תוכנית אישית לבגרות במתמטיקה — לפי תאריך הבחינה שלך, הנושאים שאתה רוצה לחזק, וזמן הלימוד שיש לך.
         </p>
       </div>
 
       <div className="surface-premium rounded-2xl p-5 text-right space-y-3">
         <div className="flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-indigo-300 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-slate-200">
+          <CheckCircle className="w-5 h-5 text-indigo-700 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-slate-800">
             <strong>סדר לימוד מסודר</strong> — נושא אחר נושא, מהקל לקשה.
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-indigo-300 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-slate-200">
+          <CheckCircle className="w-5 h-5 text-indigo-700 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-slate-800">
             <strong>שלוש שלבים לכל נושא</strong> — קריאה → מבחן הבנה → תרגול בגרות.
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-indigo-300 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-slate-200">
+          <CheckCircle className="w-5 h-5 text-indigo-700 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-slate-800">
             <strong>ספירה לאחור</strong> עד הבגרות — תמיד תדע איפה אתה.
           </div>
         </div>
@@ -228,17 +228,17 @@ function DateStep({
           <Calendar className="w-8 h-8 text-white" />
         </div>
         <h2 className="font-display text-2xl sm:text-3xl font-black">
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             מתי הבגרות שלך?
           </span>
         </h2>
-        <p className="text-slate-400 text-sm sm:text-base">
+        <p className="text-slate-600 text-sm sm:text-base">
           נשתמש בתאריך הזה כדי לחלק לך את התוכנית בזמן.
         </p>
       </div>
 
       <div className="surface-premium rounded-2xl p-5 space-y-3">
-        <label className="block text-xs font-black tracking-widest text-indigo-300 uppercase">
+        <label className="block text-xs font-black tracking-widest text-indigo-700 uppercase">
           תאריך הבגרות
         </label>
         <input
@@ -246,11 +246,11 @@ function DateStep({
           value={value}
           min={today}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-slate-950/60 border border-white/10 focus:border-indigo-500/60 rounded-xl px-4 py-3 text-base text-white outline-none transition-colors"
+          className="w-full bg-[#FDFDFB]/80 border border-slate-900/10 focus:border-indigo-500/60 rounded-xl px-4 py-3 text-base text-slate-900 outline-none transition-colors"
         />
         {daysAway > 0 && (
-          <div className="text-sm text-slate-300">
-            ⏱️ <strong className="text-amber-300">{daysAway} ימים</strong> עד הבגרות שלך.
+          <div className="text-sm text-slate-700">
+            ⏱️ <strong className="text-amber-700">{daysAway} ימים</strong> עד הבגרות שלך.
           </div>
         )}
       </div>
@@ -281,11 +281,11 @@ function TopicsStep({
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="font-display text-2xl sm:text-3xl font-black">
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             על אילו נושאים תרצה לעבוד?
           </span>
         </h2>
-        <p className="text-slate-400 text-sm sm:text-base">
+        <p className="text-slate-600 text-sm sm:text-base">
           בחר נושאים, וסמן לכל אחד מה הרמה שלך עכשיו.
         </p>
       </div>
@@ -300,7 +300,7 @@ function TopicsStep({
               className={
                 isSelected
                   ? 'bg-indigo-500/10 border-indigo-500/40 rounded-2xl p-3 border transition-all'
-                  : 'bg-white/[0.03] border-white/10 rounded-2xl p-3 border transition-all'
+                  : 'bg-slate-900/[0.02] border-slate-900/10 rounded-2xl p-3 border transition-all'
               }
             >
               <button
@@ -311,13 +311,13 @@ function TopicsStep({
                   className={
                     isSelected
                       ? 'w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center flex-shrink-0'
-                      : 'w-5 h-5 rounded-md border-2 border-white/30 flex-shrink-0'
+                      : 'w-5 h-5 rounded-md border-2 border-slate-900/20 flex-shrink-0'
                   }
                 >
                   {isSelected && <CheckCircle className="w-4 h-4 text-white" />}
                 </div>
                 <div className="flex-1 min-w-0 text-right">
-                  <div className="font-bold text-sm sm:text-base text-white">{topic}</div>
+                  <div className="font-bold text-sm sm:text-base text-slate-900">{topic}</div>
                   <div className="mt-1">
                     <BagrutBadge topic={topic} variant="inline" />
                   </div>
@@ -325,8 +325,8 @@ function TopicsStep({
               </button>
 
               {isSelected && (
-                <div className="mt-3 flex items-center gap-2 pt-3 border-t border-white/5">
-                  <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                <div className="mt-3 flex items-center gap-2 pt-3 border-t border-slate-900/[0.06]">
+                  <span className="text-[10px] font-black tracking-widest text-slate-600 uppercase">
                     הרמה שלי
                   </span>
                   <div className="grid grid-cols-3 gap-1.5 flex-1">
@@ -336,8 +336,8 @@ function TopicsStep({
                         onClick={() => setLevel(subject, topic, lvl)}
                         className={
                           sel.level === lvl
-                            ? 'px-2 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-l from-indigo-600/40 to-indigo-600/40 border border-indigo-500/60 text-white'
-                            : 'px-2 py-1.5 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300'
+                            ? 'px-2 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 border border-indigo-600 text-white'
+                            : 'px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-700'
                         }
                       >
                         {LEVEL_LABELS[lvl]}
@@ -386,20 +386,20 @@ function SummaryStep({
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="font-display text-2xl sm:text-3xl font-black">
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             התוכנית שלך
           </span>
         </h2>
-        <p className="text-slate-400 text-sm sm:text-base">
+        <p className="text-slate-600 text-sm sm:text-base">
           תוכל לסדר את הנושאים בסדר שמתאים לך. הנושא הראשון יהיה הפתוח להתחלה.
         </p>
       </div>
 
       <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl p-5 text-center">
-        <div className="text-xs font-black tracking-widest text-amber-300 mb-1 uppercase">
+        <div className="text-xs font-black tracking-widest text-amber-700 mb-1 uppercase">
           ספירה לאחור
         </div>
-        <div className="text-3xl sm:text-4xl font-black text-amber-100">{daysAway} ימים</div>
+        <div className="text-3xl sm:text-4xl font-black text-amber-800">{daysAway} ימים</div>
         <div className="text-xs text-amber-200/70 mt-1">עד הבגרות ב-{bagrutDate}</div>
       </div>
 
@@ -413,14 +413,14 @@ function SummaryStep({
               {i + 1}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-sm text-white">{t.topic}</div>
-              <div className="text-xs text-slate-400">{LEVEL_LABELS[t.level]}</div>
+              <div className="font-bold text-sm text-slate-900">{t.topic}</div>
+              <div className="text-xs text-slate-600">{LEVEL_LABELS[t.level]}</div>
             </div>
             <div className="flex flex-col gap-1">
               <button
                 onClick={() => moveTopic(i, -1)}
                 disabled={i === 0}
-                className="p-1 rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300"
+                className="p-1 rounded-md bg-slate-900/[0.03] hover:bg-slate-900/5 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700"
                 aria-label="העלה למעלה"
               >
                 <ChevronRight className="w-3 h-3 rotate-90" />
@@ -428,7 +428,7 @@ function SummaryStep({
               <button
                 onClick={() => moveTopic(i, 1)}
                 disabled={i === selected.length - 1}
-                className="p-1 rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300"
+                className="p-1 rounded-md bg-slate-900/[0.03] hover:bg-slate-900/5 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700"
                 aria-label="הורד למטה"
               >
                 <ChevronLeft className="w-3 h-3 rotate-90" />
@@ -441,7 +441,7 @@ function SummaryStep({
       <div className="flex gap-2">
         <button
           onClick={onBack}
-          className="px-5 py-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 font-bold text-white text-sm transition-all"
+          className="px-5 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 font-bold text-slate-900 text-sm transition-all"
         >
           חזור
         </button>
@@ -476,7 +476,7 @@ function NavButtons({
     <div className="flex gap-2">
       <button
         onClick={onBack}
-        className="px-5 py-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 font-bold text-white text-sm transition-all"
+        className="px-5 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 font-bold text-slate-900 text-sm transition-all"
       >
         חזור
       </button>
@@ -508,15 +508,15 @@ function BackgroundOrbs() {
 
 function TopBar() {
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/60 border-b border-white/10">
+    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/10">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
               <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
             </svg>
           </div>
-          <div className="text-base font-black font-display text-slate-100">
+          <div className="text-base font-black font-display text-slate-800">
             בגרות בכיס
           </div>
         </Link>

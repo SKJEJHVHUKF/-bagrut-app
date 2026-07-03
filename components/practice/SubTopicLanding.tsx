@@ -45,7 +45,7 @@ export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null 
       {/* Breadcrumb back */}
       <Link
         href={backHref}
-        className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
+        className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800"
       >
         → חזרה ל{topic}
       </Link>
@@ -59,7 +59,7 @@ export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null 
       >
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-emerald-300 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-emerald-700 uppercase flex items-center gap-2"
         >
           <BookOpen className="w-3.5 h-3.5" />
           <span>תת-נושא · {topic}</span>
@@ -69,11 +69,11 @@ export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null 
           className="text-2xl sm:text-3xl font-black leading-tight flex items-baseline gap-2"
         >
           {subTopic.emoji && <span className="text-3xl sm:text-4xl">{subTopic.emoji}</span>}
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             {subTopic.title}
           </span>
         </motion.h1>
-        <motion.p variants={fadeUp} className="text-sm sm:text-base text-slate-300 leading-relaxed">
+        <motion.p variants={fadeUp} className="text-sm sm:text-base text-slate-700 leading-relaxed">
           {subTopic.tagline}
         </motion.p>
       </motion.header>
@@ -82,14 +82,14 @@ export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null 
       <motion.section {...inViewProps} variants={staggerContainer}>
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-emerald-300 mb-3 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-emerald-700 mb-3 uppercase flex items-center gap-2"
         >
           <Target className="w-3.5 h-3.5" />
           <span>סיכום ממוקד</span>
         </motion.div>
         <motion.div
           variants={fadeUp}
-          className="surface-premium rounded-2xl px-4 py-3 chat-md text-sm sm:text-base text-slate-200 leading-relaxed"
+          className="surface-premium rounded-2xl px-4 py-3 chat-md text-sm sm:text-base text-slate-800 leading-relaxed"
         >
           <MathText>{subTopic.summary}</MathText>
         </motion.div>
@@ -105,7 +105,7 @@ export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null 
         <motion.section {...inViewProps} variants={staggerContainer}>
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-emerald-300 mb-3 uppercase flex items-center gap-2"
+            className="text-xs font-black tracking-widest text-emerald-700 mb-3 uppercase flex items-center gap-2"
           >
             <CheckCircle className="w-3.5 h-3.5" />
             <span>נקודות מפתח לזכירה</span>
@@ -120,7 +120,7 @@ export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null 
                 variants={fadeUp}
                 className="flex gap-2 text-sm text-emerald-50/95 leading-relaxed"
               >
-                <span className="text-emerald-300 flex-shrink-0 mt-0.5">✓</span>
+                <span className="text-emerald-700 flex-shrink-0 mt-0.5">✓</span>
                 <div className="chat-md flex-1">
                   <MathText>{k}</MathText>
                 </div>
@@ -135,7 +135,7 @@ export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null 
         <motion.section {...inViewProps} variants={staggerContainer}>
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-indigo-300 mb-3 uppercase"
+            className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase"
           >
             נוסחאות לתת-נושא הזה
           </motion.div>
@@ -153,7 +153,7 @@ export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null 
       <motion.section {...inViewProps} variants={staggerContainer} className="pt-2">
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-emerald-300 mb-3 uppercase"
+          className="text-xs font-black tracking-widest text-emerald-700 mb-3 uppercase"
         >
           מוכן/ה לתרגל?
         </motion.div>

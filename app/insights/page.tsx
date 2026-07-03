@@ -53,9 +53,9 @@ function subTopicTitle(subject: string, topic: string, subId: string): string {
 }
 
 function pctColor(p: number): string {
-  if (p >= 0.7) return 'text-emerald-300';
-  if (p >= 0.4) return 'text-amber-300';
-  return 'text-rose-300';
+  if (p >= 0.7) return 'text-emerald-700';
+  if (p >= 0.4) return 'text-amber-700';
+  return 'text-rose-700';
 }
 
 function barColor(p: number): string {
@@ -82,14 +82,14 @@ export default function InsightsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-slate-100 px-4 py-8">
+    <div className="min-h-screen bg-[var(--background)] text-slate-800 px-4 py-8">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-sm text-slate-400 hover:text-slate-200 transition-colors">
+          <Link href="/" className="text-sm text-slate-600 hover:text-slate-800 transition-colors">
             → חזרה הביתה
           </Link>
-          <Link href="/quiz" className="text-sm text-indigo-300 hover:text-indigo-200 transition-colors">
+          <Link href="/quiz" className="text-sm text-indigo-700 hover:text-indigo-800 transition-colors">
             מבחן מהיר ⚡
           </Link>
         </div>
@@ -98,7 +98,7 @@ export default function InsightsPage() {
           <h1 className="font-display text-3xl sm:text-4xl font-black gradient-text">
             📈 התמונה שלי
           </h1>
-          <p className="text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
+          <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
             כל שאלה שאתה עונה — במבחן המהיר ובתרגול המודרך — נצברת לתמונה אחת:
             איפה אתה חזק, ומה שווה לחזק לפני הבגרות.
           </p>
@@ -116,9 +116,9 @@ export default function InsightsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="surface-premium rounded-3xl p-8 text-center space-y-4"
           >
-            <Sparkles className="w-10 h-10 mx-auto text-indigo-300" />
-            <h2 className="text-xl font-black text-white">עדיין אין נתונים</h2>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-sm mx-auto">
+            <Sparkles className="w-10 h-10 mx-auto text-indigo-700" />
+            <h2 className="text-xl font-black text-slate-900">עדיין אין נתונים</h2>
+            <p className="text-sm text-slate-600 leading-relaxed max-w-sm mx-auto">
               ענה על כמה שאלות — מבחן מהיר אחד מספיק — והעמוד הזה יתחיל להראות
               לך בדיוק איפה אתה עומד בכל נושא.
             </p>
@@ -142,7 +142,7 @@ export default function InsightsPage() {
               transition={{ duration: 0.35, ease: 'easeOut' }}
               className="space-y-4"
             >
-              <div className="flex items-center gap-2 text-xs font-black tracking-widest text-indigo-300 uppercase">
+              <div className="flex items-center gap-2 text-xs font-black tracking-widest text-indigo-700 uppercase">
                 <BarChart3 className="w-3.5 h-3.5" />
                 <span>{SUBJECT_NAMES[subject] ?? subject}</span>
               </div>
@@ -150,18 +150,18 @@ export default function InsightsPage() {
               {/* Totals */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="surface-premium rounded-2xl p-4 text-center">
-                  <div className="text-2xl font-black text-white">{totals.attempts}</div>
-                  <div className="text-[11px] text-slate-400 font-bold mt-1">שאלות נענו</div>
+                  <div className="text-2xl font-black text-slate-900">{totals.attempts}</div>
+                  <div className="text-[11px] text-slate-600 font-bold mt-1">שאלות נענו</div>
                 </div>
                 <div className="surface-premium rounded-2xl p-4 text-center">
                   <div className={`text-2xl font-black ${pctColor(totals.accuracy)}`}>
                     {Math.round(totals.accuracy * 100)}%
                   </div>
-                  <div className="text-[11px] text-slate-400 font-bold mt-1">דיוק כולל</div>
+                  <div className="text-[11px] text-slate-600 font-bold mt-1">דיוק כולל</div>
                 </div>
                 <div className="surface-premium rounded-2xl p-4 text-center">
-                  <div className="text-2xl font-black text-emerald-300">{totals.correct}</div>
-                  <div className="text-[11px] text-slate-400 font-bold mt-1">תשובות נכונות</div>
+                  <div className="text-2xl font-black text-emerald-700">{totals.correct}</div>
+                  <div className="text-[11px] text-slate-600 font-bold mt-1">תשובות נכונות</div>
                 </div>
               </div>
 
@@ -182,7 +182,7 @@ export default function InsightsPage() {
                         {Math.round(boostTarget.accuracy * 100)}% דיוק
                       </div>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-white rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+                    <ArrowRight className="w-5 h-5 text-slate-900 rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
                   </Link>
                 </motion.div>
               )}
@@ -190,7 +190,7 @@ export default function InsightsPage() {
               {/* Weakest sub-topics */}
               {weakSubs.length > 0 && (
                 <div className="surface-premium rounded-3xl p-5 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-black tracking-widest text-rose-300 uppercase">
+                  <div className="flex items-center gap-2 text-xs font-black tracking-widest text-rose-700 uppercase">
                     <Target className="w-3.5 h-3.5" />
                     <span>מה שווה לחזק</span>
                   </div>
@@ -198,13 +198,13 @@ export default function InsightsPage() {
                     <Link
                       key={`${s.topic}|${s.subTopicId}`}
                       href={`/practice/${subject}/${encodeURIComponent(s.topic)}/sub/${s.subTopicId}/practice`}
-                      className="flex items-center justify-between gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 transition-colors group"
+                      className="flex items-center justify-between gap-3 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 rounded-xl px-4 py-3 transition-colors group"
                     >
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-white truncate">
+                        <div className="text-sm font-bold text-slate-900 truncate">
                           {subTopicTitle(subject, s.topic, s.subTopicId)}
                         </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
+                        <div className="text-[11px] text-slate-600 mt-0.5">
                           {s.topic} · {s.correct}/{s.attempts} נכונות
                         </div>
                       </div>
@@ -212,7 +212,7 @@ export default function InsightsPage() {
                         <span className={`text-sm font-black ${pctColor(s.accuracy)}`}>
                           {Math.round(s.accuracy * 100)}%
                         </span>
-                        <span className="text-xs text-indigo-300 group-hover:text-indigo-200 font-bold">
+                        <span className="text-xs text-indigo-700 group-hover:text-indigo-800 font-bold">
                           תרגל ←
                         </span>
                       </div>
@@ -224,7 +224,7 @@ export default function InsightsPage() {
               {/* Per-topic accuracy bars */}
               {topics.length > 0 && (
                 <div className="surface-premium rounded-3xl p-5 space-y-4">
-                  <div className="flex items-center gap-2 text-xs font-black tracking-widest text-indigo-300 uppercase">
+                  <div className="flex items-center gap-2 text-xs font-black tracking-widest text-indigo-700 uppercase">
                     <TrendingUp className="w-3.5 h-3.5" />
                     <span>דיוק לפי נושא — מהחלש לחזק</span>
                   </div>
@@ -233,7 +233,7 @@ export default function InsightsPage() {
                       <div className="flex items-center justify-between text-sm">
                         <Link
                           href={`/practice/${subject}/${encodeURIComponent(t.topic)}`}
-                          className="font-bold text-slate-200 hover:text-indigo-300 transition-colors"
+                          className="font-bold text-slate-800 hover:text-indigo-700 transition-colors"
                         >
                           {t.topic}
                         </Link>
@@ -244,7 +244,7 @@ export default function InsightsPage() {
                           </span>
                         </span>
                       </div>
-                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-2 bg-slate-900/[0.03] rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${Math.round(t.accuracy * 100)}%` }}

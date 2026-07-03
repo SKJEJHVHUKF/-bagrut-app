@@ -48,7 +48,7 @@ function BagrutLogo({ size = 'md' as 'sm' | 'md' }) {
   const dim = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
   return (
     <div
-      className={`relative ${dim} rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20`}
+      className={`relative ${dim} rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10`}
     >
       <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
         <path
@@ -227,20 +227,20 @@ export default function ChatPage() {
       </div>
 
       {/* Top bar */}
-      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/60 border-b border-white/10">
+      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/10">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BagrutLogo size="md" />
             <div>
-              <div className="text-base font-black font-display text-slate-100">
+              <div className="text-base font-black font-display text-slate-800">
                 בגרות בכיס
               </div>
-              <div className="text-[10px] text-slate-400 -mt-0.5">המורה הפרטי שלך</div>
+              <div className="text-[10px] text-slate-600 -mt-0.5">המורה הפרטי שלך</div>
             </div>
           </div>
           <Link
             href="/quiz"
-            className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
           >
             <span>לתרגול</span>
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
@@ -252,7 +252,7 @@ export default function ChatPage() {
           student see the tutor is teaching from the verified content. */}
       {grounded && (
         <div className="relative z-10 max-w-3xl w-full mx-auto px-4 pt-3">
-          <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-200 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-3 py-1.5">
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-800 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-3 py-1.5">
             <Sparkles className="w-3 h-3 flex-shrink-0" />
             <span>מצב מורה מעוגן · {topic} — מלמד מהחומר המאומת, מכוון ולא נותן תשובות מוכנות</span>
           </div>
@@ -263,7 +263,7 @@ export default function ChatPage() {
       <main className="relative z-10 flex-1 max-w-3xl w-full mx-auto px-3 sm:px-4 pt-4 pb-40">
         {loadingHistory ? (
           <div className="flex justify-center py-16">
-            <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+            <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
           </div>
         ) : isEmpty ? (
           <EmptyState onPick={(t) => send(t)} />
@@ -279,10 +279,10 @@ export default function ChatPage() {
       </main>
 
       {/* Composer */}
-      <div className="fixed bottom-0 inset-x-0 z-20 bg-slate-950/85 backdrop-blur-xl border-t border-white/10">
+      <div className="fixed bottom-0 inset-x-0 z-20 bg-[#FDFDFB]/90 backdrop-blur-xl border-t border-slate-900/10">
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3">
           {error && (
-            <div className="mb-2 text-sm text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-3 py-2">
+            <div className="mb-2 text-sm text-indigo-700 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-3 py-2">
               {error}
             </div>
           )}
@@ -296,7 +296,7 @@ export default function ChatPage() {
               rows={1}
               maxLength={MAX_MESSAGE_LEN}
               disabled={sending || remaining <= 0}
-              className="flex-1 surface-premium rounded-2xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.07] transition-all resize-none max-h-32"
+              className="flex-1 surface-premium rounded-2xl px-4 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/[0.04] transition-all resize-none max-h-32"
               style={{ unicodeBidi: 'plaintext', textAlign: 'start' }}
             />
             <button
@@ -355,7 +355,7 @@ function MessageBubble({ role, content }: { role: 'user' | 'assistant'; content:
   return (
     <div className="flex justify-end">
       <div
-        className="chat-md max-w-[85%] bg-white/5 backdrop-blur-md border border-white/10 text-slate-100 px-4 py-3 rounded-2xl rounded-tr-md"
+        className="chat-md max-w-[85%] bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 text-slate-800 px-4 py-3 rounded-2xl rounded-tr-md"
         style={{ unicodeBidi: 'plaintext', textAlign: 'start' }}
       >
         <ReactMarkdown
@@ -372,8 +372,8 @@ function MessageBubble({ role, content }: { role: 'user' | 'assistant'; content:
 function TypingBubble() {
   return (
     <div className="flex justify-end">
-      <div className="max-w-[85%] bg-white/5 backdrop-blur-md border border-white/10 text-slate-300 px-4 py-3 rounded-2xl rounded-tr-md inline-flex items-center gap-2">
-        <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+      <div className="max-w-[85%] bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 text-slate-700 px-4 py-3 rounded-2xl rounded-tr-md inline-flex items-center gap-2">
+        <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
         <span className="text-sm">המורה כותב…</span>
       </div>
     </div>
@@ -384,14 +384,14 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-4">
       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mb-5">
-        <MessageCircle className="w-8 h-8 text-indigo-300" />
+        <MessageCircle className="w-8 h-8 text-indigo-700" />
       </div>
       <h2 className="font-display text-2xl font-black mb-2">
-        <span className="font-display text-slate-100">
+        <span className="font-display text-slate-800">
           המורה הפרטי שלך
         </span>
       </h2>
-      <p className="text-slate-400 max-w-md mb-8">
+      <p className="text-slate-600 max-w-md mb-8">
         שאל אותי כל דבר על חומרי הבגרות. אענה בקצרה וברור. נסה אחת מהשאלות:
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full max-w-xl">
@@ -399,11 +399,11 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
           <button
             key={i}
             onClick={() => onPick(s)}
-            className="group bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-indigo-500/40 rounded-xl px-4 py-3 text-right text-sm text-slate-200 transition-all flex items-center gap-2.5"
+            className="group bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-indigo-500/40 rounded-xl px-4 py-3 text-right text-sm text-slate-800 transition-all flex items-center gap-2.5"
           >
-            <Lightbulb className="w-4 h-4 text-amber-300 group-hover:scale-110 transition-transform flex-shrink-0" />
+            <Lightbulb className="w-4 h-4 text-amber-700 group-hover:scale-110 transition-transform flex-shrink-0" />
             <span className="flex-1">{s}</span>
-            <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-300 group-hover:-translate-x-1 transition-all" />
+            <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-700 group-hover:-translate-x-1 transition-all" />
           </button>
         ))}
       </div>

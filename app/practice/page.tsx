@@ -116,7 +116,7 @@ type SubjectKey = keyof typeof SUBJECTS;
 
 function BagrutLogo() {
   return (
-    <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20">
+    <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10">
       <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
         <path
           d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
@@ -144,20 +144,20 @@ function BackgroundOrbs() {
 
 function TopBar() {
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/60 border-b border-white/10">
+    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/10">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <BagrutLogo />
           <div>
-            <div className="text-base font-black font-display text-slate-100">
+            <div className="text-base font-black font-display text-slate-800">
               בגרות בכיס
             </div>
-            <div className="text-[10px] text-slate-400 -mt-0.5">תרגול מודרך</div>
+            <div className="text-[10px] text-slate-600 -mt-0.5">תרגול מודרך</div>
           </div>
         </Link>
         <Link
           href="/quiz"
-          className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+          className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
         >
           <span>למבחן</span>
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
@@ -213,18 +213,18 @@ export default function PracticePage() {
       <main className="relative z-10 max-w-2xl mx-auto px-4 py-8">
         <div className="mb-7">
           <h1 className="font-display text-3xl sm:text-4xl font-black mb-2">
-            <span className="font-display text-slate-100">
+            <span className="font-display text-slate-800">
               תרגול מודרך 🎯
             </span>
           </h1>
-          <p className="text-slate-400 text-sm leading-relaxed">
+          <p className="text-slate-600 text-sm leading-relaxed">
             סיכום לימודי בנושא + שאלת בגרות עם רמזים ופתרון. כמו מורה פרטי שיושב לידך.
           </p>
         </div>
 
         {/* Subject tabs */}
         <div className="mb-5">
-          <div className="text-xs font-black tracking-widest text-indigo-300 mb-2 uppercase">
+          <div className="text-xs font-black tracking-widest text-indigo-700 mb-2 uppercase">
             מקצוע
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -237,8 +237,8 @@ export default function PracticePage() {
                 }}
                 className={
                   subject === key
-                    ? 'flex-shrink-0 px-4 py-2 rounded-xl bg-gradient-to-l from-indigo-600/40 to-indigo-600/40 border border-indigo-500/60 text-white font-bold text-sm transition-all'
-                    : 'flex-shrink-0 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-bold text-sm transition-all'
+                    ? 'flex-shrink-0 px-4 py-2 rounded-xl bg-indigo-600 border border-indigo-600 text-white font-bold text-sm transition-all'
+                    : 'flex-shrink-0 px-4 py-2 rounded-xl bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-700 font-bold text-sm transition-all'
                 }
               >
                 {s.emoji} {s.name}
@@ -259,7 +259,7 @@ export default function PracticePage() {
           />
         ) : (
           <div className="mb-6">
-            <div className="text-xs font-black tracking-widest text-indigo-300 mb-2 uppercase">
+            <div className="text-xs font-black tracking-widest text-indigo-700 mb-2 uppercase">
               נושא
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 perspective-1500">
@@ -274,23 +274,23 @@ export default function PracticePage() {
                     className={
                       topic === t.name
                         ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-indigo-600/30 to-indigo-600/30 border border-indigo-500/60'
-                        : 'card-3d text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-indigo-500/40'
+                        : 'card-3d text-right px-4 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border border-slate-900/10 hover:border-indigo-500/40'
                     }
                   >
                     <div className="flex items-start gap-2">
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold text-sm text-white">{t.name}</div>
-                        <div className="text-xs text-slate-400 mt-0.5">{t.sub}</div>
+                        <div className="font-bold text-sm text-slate-900">{t.name}</div>
+                        <div className="text-xs text-slate-600 mt-0.5">{t.sub}</div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         {hasL && (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-200">
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-800">
                             <BookOpen className="w-2.5 h-2.5" />
                             סיכום
                           </span>
                         )}
                         {viewed && (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-200">
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-800">
                             <Check className="w-2.5 h-2.5" />
                             נלמד
                           </span>
@@ -352,7 +352,7 @@ function Math5TopicsByPaper({
       {papers.map((paper) => (
         <div key={paper}>
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-black tracking-widest text-indigo-300 uppercase">
+            <div className="text-xs font-black tracking-widest text-indigo-700 uppercase">
               {paperLabel(paper)}
             </div>
             <div className="text-[10px] text-slate-500">
@@ -372,26 +372,26 @@ function Math5TopicsByPaper({
                   className={
                     isSelected
                       ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-indigo-600/30 to-indigo-600/30 border border-indigo-500/60'
-                      : 'card-3d text-right px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/[0.07] border border-white/10 hover:border-indigo-500/40'
+                      : 'card-3d text-right px-4 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border border-slate-900/10 hover:border-indigo-500/40'
                   }
                 >
                   <div className="flex items-start gap-2 mb-1.5">
                     <span className="text-base flex-shrink-0">{t.emoji}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-white">{t.displayName}</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5 line-clamp-2">
+                      <div className="font-bold text-sm text-slate-900">{t.displayName}</div>
+                      <div className="text-[11px] text-slate-600 mt-0.5 line-clamp-2">
                         {t.examStyle}
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       {hasL && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-200">
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-800">
                           <BookOpen className="w-2.5 h-2.5" />
                           סיכום
                         </span>
                       )}
                       {viewed && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-200">
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-800">
                           <Check className="w-2.5 h-2.5" />
                           נלמד
                         </span>

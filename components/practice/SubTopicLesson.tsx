@@ -43,22 +43,22 @@ export function SubTopicLesson({
     <article className="space-y-6">
       <Link
         href={backHref}
-        className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
+        className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800"
       >
         → חזרה ל{topic}
       </Link>
 
       {/* Header */}
       <header className="space-y-3">
-        <div className="text-xs font-black tracking-widest text-emerald-300 uppercase flex items-center gap-2">
+        <div className="text-xs font-black tracking-widest text-emerald-700 uppercase flex items-center gap-2">
           <GraduationCap className="w-3.5 h-3.5" />
           <span>לימוד מודרך · {topic}</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-black leading-tight flex items-baseline gap-2">
           {subTopic.emoji && <span className="text-3xl sm:text-4xl">{subTopic.emoji}</span>}
-          <span className="font-display text-slate-100">{subTopic.title}</span>
+          <span className="font-display text-slate-800">{subTopic.title}</span>
         </h1>
-        <p className="text-sm sm:text-base text-slate-300 leading-relaxed">{subTopic.tagline}</p>
+        <p className="text-sm sm:text-base text-slate-700 leading-relaxed">{subTopic.tagline}</p>
         <div className="text-[11px] text-slate-500">
           {steps.length} שלבים · קרא ברוגע, פתח דוגמה כשבא לך, ואז צא לתרגול.
         </div>
@@ -76,15 +76,15 @@ export function SubTopicLesson({
             className="surface-premium rounded-2xl p-5 sm:p-6 space-y-4"
           >
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-emerald-500/25 border border-emerald-400/50 flex items-center justify-center text-sm font-black text-emerald-100">
+              <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-emerald-500/25 border border-emerald-400/50 flex items-center justify-center text-sm font-black text-emerald-800">
                 {i + 1}
               </div>
-              <h2 className="font-display text-lg sm:text-xl font-bold text-white chat-md">
+              <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900 chat-md">
                 <MathText inline>{step.title}</MathText>
               </h2>
             </div>
 
-            <div className="chat-md text-sm sm:text-base text-slate-200">
+            <div className="chat-md text-sm sm:text-base text-slate-800">
               <MathText>{step.teach}</MathText>
             </div>
 
@@ -104,14 +104,14 @@ export function SubTopicLesson({
       {/* Recap — key points */}
       {subTopic.keyPoints.length > 0 && (
         <div>
-          <div className="text-xs font-black tracking-widest text-emerald-300 mb-2 uppercase flex items-center gap-2">
+          <div className="text-xs font-black tracking-widest text-emerald-700 mb-2 uppercase flex items-center gap-2">
             <CheckCircle className="w-3.5 h-3.5" />
             <span>לסיכום — מה לזכור</span>
           </div>
           <ul className="bg-emerald-500/5 border border-emerald-500/30 rounded-2xl px-4 py-3 space-y-2">
             {subTopic.keyPoints.map((k, i) => (
               <li key={i} className="flex gap-2 text-sm text-emerald-50/95 leading-relaxed">
-                <span className="text-emerald-300 flex-shrink-0 mt-0.5">✓</span>
+                <span className="text-emerald-700 flex-shrink-0 mt-0.5">✓</span>
                 <div className="chat-md flex-1">
                   <MathText>{k}</MathText>
                 </div>
@@ -124,7 +124,7 @@ export function SubTopicLesson({
       {/* Recap — formulas */}
       {subTopic.formulas.length > 0 && (
         <div>
-          <div className="text-xs font-black tracking-widest text-indigo-300 mb-2 uppercase">
+          <div className="text-xs font-black tracking-widest text-indigo-700 mb-2 uppercase">
             נוסחאות לתת-נושא הזה
           </div>
           <div className="grid grid-cols-1 gap-3">
@@ -156,7 +156,7 @@ export function SubTopicLesson({
       {nextHref && nextSubTopic && (
         <Link
           href={nextHref}
-          className="group flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-emerald-200 transition-colors"
+          className="group flex items-center justify-center gap-2 text-xs text-slate-600 hover:text-emerald-800 transition-colors"
         >
           <span>או דלג לתת-הנושא הבא: {nextSubTopic.title}</span>
           <ArrowRight className="w-3.5 h-3.5 rotate-180 group-hover:-translate-x-1 transition-transform" />

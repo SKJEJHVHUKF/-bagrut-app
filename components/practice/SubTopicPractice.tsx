@@ -171,12 +171,12 @@ export function SubTopicPractice({
         className="space-y-4"
       >
         <div className="bg-gradient-to-br from-emerald-600/15 to-teal-600/15 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 text-center space-y-4">
-          <Trophy className="w-12 h-12 mx-auto text-amber-300" />
-          <h2 className="font-display text-2xl font-black text-white">
+          <Trophy className="w-12 h-12 mx-auto text-amber-700" />
+          <h2 className="font-display text-2xl font-black text-slate-900">
             {bagrutQuestions.length > 0 ? 'יפה! עברת את הדרילים 🎯' : 'סיימת את התרגול!'}
           </h2>
-          <div className="text-5xl font-black text-emerald-200">{correctCount}/{total}</div>
-          <div className="text-sm text-slate-300">
+          <div className="text-5xl font-black text-emerald-800">{correctCount}/{total}</div>
+          <div className="text-sm text-slate-700">
             {percent === 100
               ? '🌟 ציון מושלם — אתה שולט בתת-נושא הזה.'
               : percent >= 70
@@ -189,11 +189,11 @@ export function SubTopicPractice({
 
         {bagrutQuestions.length > 0 && (
           <section className="space-y-3 pt-1">
-            <div className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2">
+            <div className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2">
               <Target className="w-3.5 h-3.5" />
               <span>שאלת בגרות על הנושא — רמת בגרות אמיתית</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               פתור כמו בבחינה. אפשר לבדוק כל סעיף, לקבל רמז מדורג, או לשאול &quot;למה טעיתי?&quot; — המורה מעוגן בחומר הנושא.
             </p>
             {bagrutQuestions.map((bq) => (
@@ -218,7 +218,7 @@ export function SubTopicPractice({
           <motion.button
             {...buttonTap}
             onClick={restart}
-            className="inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-3 rounded-2xl font-bold text-white text-sm transition-colors"
+            className="inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 px-4 py-3 rounded-2xl font-bold text-slate-900 text-sm transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             <span>תרגל שוב</span>
@@ -236,7 +236,7 @@ export function SubTopicPractice({
 
         <Link
           href="/insights"
-          className="block text-center text-xs text-slate-400 hover:text-indigo-300 transition-colors pt-1"
+          className="block text-center text-xs text-slate-600 hover:text-indigo-700 transition-colors pt-1"
         >
           📈 התמונה שלי — איפה אתה חזק ומה כדאי לחזק
         </Link>
@@ -251,20 +251,20 @@ export function SubTopicPractice({
       <div className="flex items-center justify-between text-xs">
         <Link
           href={`/practice/${subject}/${encodeURIComponent(topic)}/sub/${subTopic.id}`}
-          className="text-slate-400 hover:text-slate-200"
+          className="text-slate-600 hover:text-slate-800"
         >
           → חזרה לסיכום
         </Link>
         <div className="flex items-center gap-2">
-          <span className="text-slate-400">שאלה</span>
-          <span className="font-bold text-emerald-300">
+          <span className="text-slate-600">שאלה</span>
+          <span className="font-bold text-emerald-700">
             {idx + 1}/{total}
           </span>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
         <motion.div
           initial={{ width: '0%' }}
           animate={{ width: `${((idx + 1) / total) * 100}%` }}
@@ -281,13 +281,13 @@ export function SubTopicPractice({
         transition={{ duration: 0.35, ease: 'easeOut' }}
         className="surface-premium rounded-2xl p-5 chat-md"
       >
-        <div className="text-xs font-black tracking-widest text-emerald-300 mb-3 uppercase flex items-center gap-2">
+        <div className="text-xs font-black tracking-widest text-emerald-700 mb-3 uppercase flex items-center gap-2">
           <Target className="w-3.5 h-3.5" />
           <span>
             {current.difficulty === 'easy' ? '🟢 קל' : current.difficulty === 'mid' ? '🟡 בינוני' : '🔴 מאתגר'}
           </span>
         </div>
-        <div className="text-base sm:text-lg font-medium leading-relaxed text-white">
+        <div className="text-base sm:text-lg font-medium leading-relaxed text-slate-900">
           <MathText>{current.question}</MathText>
         </div>
       </motion.div>
@@ -300,10 +300,10 @@ export function SubTopicPractice({
             const triedWrong = wrongTries.includes(i);
             const locked = solutionShown;
 
-            let cls = 'bg-white/5 hover:bg-white/10 border-white/10 text-white';
-            if (locked && isTheCorrect) cls = 'bg-emerald-500/15 border-emerald-500/50 text-emerald-50';
-            else if (locked && triedWrong) cls = 'bg-rose-500/15 border-rose-500/50 text-rose-100';
-            else if (locked) cls = 'bg-white/[0.02] border-white/5 text-slate-400';
+            let cls = 'bg-slate-900/[0.03] hover:bg-slate-900/5 border-slate-900/10 text-slate-900';
+            if (locked && isTheCorrect) cls = 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900';
+            else if (locked && triedWrong) cls = 'bg-rose-500/15 border-rose-500/50 text-rose-800';
+            else if (locked) cls = 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-600';
             else if (triedWrong) cls = 'bg-rose-500/10 border-rose-500/40 text-rose-200/70 line-through';
 
             return (
@@ -325,7 +325,7 @@ export function SubTopicPractice({
             <motion.button
               {...buttonTap}
               onClick={() => setSolutionShown(true)}
-              className="w-full inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2.5 rounded-xl font-bold text-slate-200 text-sm transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 px-4 py-2.5 rounded-xl font-bold text-slate-800 text-sm transition-colors"
             >
               <KeyRound className="w-4 h-4" />
               <span>הצג פתרון</span>
@@ -342,13 +342,13 @@ export function SubTopicPractice({
             onChange={(e) => setOpenAnswer(e.target.value)}
             placeholder="כתוב כאן את התשובה שלך..."
             rows={3}
-            className="w-full bg-slate-950/50 border border-white/10 focus:border-emerald-500/60 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
+            className="w-full bg-slate-900/[0.04] border border-slate-900/10 focus:border-emerald-500/60 rounded-xl px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y"
             dir="auto"
           />
           <motion.button
             {...buttonTap}
             onClick={handleOpenCheck}
-            className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-100 text-sm transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-800 text-sm transition-colors"
           >
             <span>הצג פתרון להשוואה</span>
           </motion.button>
@@ -366,10 +366,10 @@ export function SubTopicPractice({
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex gap-2 items-start"
           >
-            <Lightbulb className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
+            <Lightbulb className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <div className="text-[10px] font-black tracking-widest text-amber-300 uppercase mb-1">רמז</div>
-              <div className="chat-md text-sm text-amber-50">
+              <div className="text-[10px] font-black tracking-widest text-amber-700 uppercase mb-1">רמז</div>
+              <div className="chat-md text-sm text-amber-900">
                 <MathText inline>{current.hint}</MathText>
               </div>
             </div>
@@ -382,7 +382,7 @@ export function SubTopicPractice({
         <motion.button
           {...buttonTap}
           onClick={revealHint}
-          className="w-full inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-100 text-sm transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-800 text-sm transition-colors"
         >
           <Lightbulb className="w-4 h-4" />
           <span>💡 רמז</span>
@@ -401,7 +401,7 @@ export function SubTopicPractice({
             style={{ overflow: 'hidden' }}
             className="bg-gradient-to-br from-emerald-600/10 to-teal-600/10 border border-emerald-500/30 rounded-2xl p-4"
           >
-            <div className="text-xs font-black tracking-widest text-emerald-300 mb-3 uppercase flex items-center gap-2">
+            <div className="text-xs font-black tracking-widest text-emerald-700 mb-3 uppercase flex items-center gap-2">
               <KeyRound className="w-3 h-3" />
               <span>פתרון</span>
             </div>
@@ -414,10 +414,10 @@ export function SubTopicPractice({
                   transition={{ duration: 0.25, delay: 0.05 + i * 0.06, ease: 'easeOut' }}
                   className="flex gap-2.5"
                 >
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/30 border border-emerald-400/50 flex items-center justify-center text-[11px] font-black text-emerald-100">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/30 border border-emerald-400/50 flex items-center justify-center text-[11px] font-black text-emerald-800">
                     {i + 1}
                   </div>
-                  <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
+                  <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5">
                     <MathText>{step}</MathText>
                   </div>
                 </motion.li>
@@ -433,16 +433,16 @@ export function SubTopicPractice({
               }}
               className="mt-3 bg-emerald-500/15 border border-emerald-500/40 rounded-xl px-3 py-2.5"
             >
-              <div className="text-[10px] font-black tracking-widest text-emerald-300 mb-1 uppercase flex items-center gap-1.5">
+              <div className="text-[10px] font-black tracking-widest text-emerald-700 mb-1 uppercase flex items-center gap-1.5">
                 <CheckCircle className="w-3 h-3" />
                 <span>תשובה סופית</span>
               </div>
-              <div className="text-sm font-bold text-emerald-50 chat-md">
+              <div className="text-sm font-bold text-emerald-900 chat-md">
                 <MathText inline>{current.solution.finalAnswer}</MathText>
               </div>
             </motion.div>
             {current.solution.explanation && (
-              <div className="mt-3 text-xs text-slate-400 chat-md leading-relaxed">
+              <div className="mt-3 text-xs text-slate-600 chat-md leading-relaxed">
                 <MathText>{current.solution.explanation}</MathText>
               </div>
             )}
@@ -457,7 +457,7 @@ export function SubTopicPractice({
             <motion.button
               {...buttonTap}
               onClick={() => reportOpen(true)}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-100 text-sm transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-800 text-sm transition-colors"
             >
               <CheckCircle className="w-4 h-4" />
               <span>פתרתי נכון</span>
@@ -465,13 +465,13 @@ export function SubTopicPractice({
             <motion.button
               {...buttonTap}
               onClick={() => reportOpen(false)}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2.5 rounded-xl font-bold text-slate-300 text-sm transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 px-4 py-2.5 rounded-xl font-bold text-slate-700 text-sm transition-colors"
             >
               <span>עוד לא הצלחתי</span>
             </motion.button>
           </div>
         ) : (
-          <div className="text-center text-xs text-slate-400 py-1">
+          <div className="text-center text-xs text-slate-600 py-1">
             {openReport === 'correct'
               ? '✓ נספר כנכון — כל הכבוד!'
               : 'בסדר גמור — ככה לומדים. אפשר לחזור על השאלה בסוף.'}

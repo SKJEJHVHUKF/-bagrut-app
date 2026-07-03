@@ -87,13 +87,13 @@ export default function MyPlanPage() {
         >
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-amber-300 mb-2 uppercase"
+            className="text-xs font-black tracking-widest text-amber-700 mb-2 uppercase"
           >
             הבגרות שלך
           </motion.div>
           <motion.div
             variants={scaleIn}
-            className="text-5xl sm:text-6xl font-black text-amber-100 mb-1"
+            className="text-5xl sm:text-6xl font-black text-amber-800 mb-1"
           >
             {days}
           </motion.div>
@@ -121,8 +121,8 @@ export default function MyPlanPage() {
         {/* Topics list */}
         <motion.section {...inViewProps} variants={staggerContainer}>
           <motion.div variants={fadeUp} className="flex items-baseline justify-between mb-3">
-            <h2 className="font-display text-lg font-black text-white">תוכנית הלימוד</h2>
-            <span className="text-xs text-slate-400">{plan.topics.length} נושאים</span>
+            <h2 className="font-display text-lg font-black text-slate-900">תוכנית הלימוד</h2>
+            <span className="text-xs text-slate-600">{plan.topics.length} נושאים</span>
           </motion.div>
 
           <motion.div variants={staggerContainer} className="space-y-2">
@@ -146,9 +146,9 @@ export default function MyPlanPage() {
             page itself paywalls free users). Visually distinguished from
             "חומרים" because it's interactive, not reference material. */}
         <motion.section {...inViewProps} variants={staggerContainer}>
-          <motion.h2 variants={fadeUp} className="text-lg font-black text-white mb-3">
+          <motion.h2 variants={fadeUp} className="text-lg font-black text-slate-900 mb-3">
             צלם שאלה
-            {pro ? null : <span className="text-xs font-normal text-amber-300 mr-2">Pro</span>}
+            {pro ? null : <span className="text-xs font-normal text-amber-700 mr-2">Pro</span>}
           </motion.h2>
           <motion.div variants={fadeUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
             <Link
@@ -160,27 +160,27 @@ export default function MyPlanPage() {
                   <Camera className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm sm:text-base text-white">צלמי שאלה — קבלי פתרון מ-AI</div>
-                  <div className="text-xs text-slate-400 mt-0.5">פתרון צעד-אחר-צעד, נשמר בספרייה לפי נושא</div>
+                  <div className="font-bold text-sm sm:text-base text-slate-900">צלמי שאלה — קבלי פתרון מ-AI</div>
+                  <div className="text-xs text-slate-600 mt-0.5">פתרון צעד-אחר-צעד, נשמר בספרייה לפי נושא</div>
                 </div>
-                <ArrowLeft className="w-4 h-4 text-indigo-300 flex-shrink-0" />
+                <ArrowLeft className="w-4 h-4 text-indigo-700 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
           <motion.div variants={fadeUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }} className="mt-2">
             <Link
               href="/library"
-              className="card-3d block bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-white/20 rounded-2xl p-4"
+              className="card-3d block bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-slate-900/15 rounded-2xl p-4"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                  <BookOpen className="w-5 h-5 text-indigo-200" />
+                <div className="w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="w-5 h-5 text-indigo-800" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm sm:text-base text-white">הספרייה שלי</div>
-                  <div className="text-xs text-slate-400 mt-0.5">השאלות ששמרת, מקובצות לפי נושא</div>
+                  <div className="font-bold text-sm sm:text-base text-slate-900">הספרייה שלי</div>
+                  <div className="text-xs text-slate-600 mt-0.5">השאלות ששמרת, מקובצות לפי נושא</div>
                 </div>
-                <ArrowLeft className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <ArrowLeft className="w-4 h-4 text-slate-600 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -194,12 +194,12 @@ export default function MyPlanPage() {
                   <BookOpen className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm sm:text-base text-white">
-                    מאגר בגרויות {!pro && <span className="text-xs font-normal text-amber-300 mr-2">Pro</span>}
+                  <div className="font-bold text-sm sm:text-base text-slate-900">
+                    מאגר בגרויות {!pro && <span className="text-xs font-normal text-amber-700 mr-2">Pro</span>}
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">שאלות מבגרויות עבר + פתרונות מלאים, ללא AI</div>
+                  <div className="text-xs text-slate-600 mt-0.5">שאלות מבגרויות עבר + פתרונות מלאים, ללא AI</div>
                 </div>
-                <ArrowLeft className="w-4 h-4 text-emerald-300 flex-shrink-0" />
+                <ArrowLeft className="w-4 h-4 text-emerald-700 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -207,7 +207,7 @@ export default function MyPlanPage() {
 
         {/* Resources */}
         <motion.section {...inViewProps} variants={staggerContainer}>
-          <motion.h2 variants={fadeUp} className="text-lg font-black text-white mb-3">חומרים</motion.h2>
+          <motion.h2 variants={fadeUp} className="text-lg font-black text-slate-900 mb-3">חומרים</motion.h2>
           <motion.div variants={fadeUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
             <Link
               href="/formulas"
@@ -223,10 +223,10 @@ export default function MyPlanPage() {
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm sm:text-base text-white">דף נוסחאות</div>
-                  <div className="text-xs text-slate-400 mt-0.5">כל הנוסחאות של מתמטיקה 5 — מסודרות לפי נושא</div>
+                  <div className="font-bold text-sm sm:text-base text-slate-900">דף נוסחאות</div>
+                  <div className="text-xs text-slate-600 mt-0.5">כל הנוסחאות של מתמטיקה 5 — מסודרות לפי נושא</div>
                 </div>
-                <ArrowLeft className="w-4 h-4 text-amber-300 flex-shrink-0" />
+                <ArrowLeft className="w-4 h-4 text-amber-700 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -236,10 +236,10 @@ export default function MyPlanPage() {
         <section className="pt-4 space-y-2">
           {!pro && (
             <div className="bg-gradient-to-br from-indigo-600/15 to-indigo-600/15 border border-indigo-500/40 rounded-2xl p-5 text-center space-y-3">
-              <Crown className="w-8 h-8 mx-auto text-amber-300" />
+              <Crown className="w-8 h-8 mx-auto text-amber-700" />
               <div>
-                <div className="text-base font-black text-white mb-1">שדרג ל-Pro</div>
-                <div className="text-sm text-slate-300">
+                <div className="text-base font-black text-slate-900 mb-1">שדרג ל-Pro</div>
+                <div className="text-sm text-slate-700">
                   פתח את **כל** הנושאים בתוכנית שלך, מאגר שאלות בלתי מוגבל, וסימולציות בגרות מלאות.
                 </div>
               </div>
@@ -252,7 +252,7 @@ export default function MyPlanPage() {
 
           <button
             onClick={resetPlan}
-            className="w-full text-xs text-slate-500 hover:text-slate-300 transition-colors py-2 inline-flex items-center justify-center gap-2"
+            className="w-full text-xs text-slate-500 hover:text-slate-700 transition-colors py-2 inline-flex items-center justify-center gap-2"
           >
             <Trash2 className="w-3 h-3" />
             <span>התחל תוכנית חדשה</span>
@@ -285,8 +285,8 @@ function TopicCard({
     <div
       className={
         accessible
-          ? 'card-3d bg-white/5 hover:bg-white/[0.07] border-white/10 hover:border-indigo-500/40 rounded-2xl p-4 border transition-all block'
-          : 'bg-white/[0.02] border-white/5 rounded-2xl p-4 border opacity-70'
+          ? 'card-3d bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border-slate-900/10 hover:border-indigo-500/40 rounded-2xl p-4 border transition-all block'
+          : 'bg-slate-900/[0.02] border-slate-900/[0.06] rounded-2xl p-4 border opacity-70'
       }
     >
       <div className="flex items-center gap-3">
@@ -294,40 +294,40 @@ function TopicCard({
           className={
             accessible
               ? 'w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white flex-shrink-0'
-              : 'w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-black text-slate-500 flex-shrink-0'
+              : 'w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center font-black text-slate-500 flex-shrink-0'
           }
         >
           {topic.completion >= 80 ? <CheckCircle className="w-5 h-5" /> : index + 1}
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="font-bold text-sm sm:text-base text-white">{topic.topic}</div>
+          <div className="font-bold text-sm sm:text-base text-slate-900">{topic.topic}</div>
           <div className="mt-0.5">
             <BagrutBadge topic={topic.topic} variant="inline" />
           </div>
           <div className="flex items-center gap-3 mt-1.5">
-            <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden max-w-[120px]">
+            <div className="flex-1 h-1.5 bg-slate-900/5 rounded-full overflow-hidden max-w-[120px]">
               <div
                 className="h-full bg-gradient-to-l from-indigo-500 to-indigo-500 transition-all"
                 style={{ width: `${topic.completion}%` }}
               />
             </div>
-            <span className="text-[10px] text-slate-400 font-bold">{topic.completion}%</span>
+            <span className="text-[10px] text-slate-600 font-bold">{topic.completion}%</span>
           </div>
         </div>
 
         <div className="flex-shrink-0">
           {lockReason === 'pro-required' && (
             <div className="px-2 py-1 rounded-md bg-amber-500/20 border border-amber-500/40 flex items-center gap-1">
-              <Crown className="w-3 h-3 text-amber-300" />
-              <span className="text-[10px] font-black text-amber-200">PRO</span>
+              <Crown className="w-3 h-3 text-amber-700" />
+              <span className="text-[10px] font-black text-amber-800">PRO</span>
             </div>
           )}
           {lockReason === 'locked-progress' && (
             <Lock className="w-4 h-4 text-slate-500" />
           )}
           {accessible && (
-            <ArrowLeft className="w-4 h-4 text-indigo-300" />
+            <ArrowLeft className="w-4 h-4 text-indigo-700" />
           )}
         </div>
       </div>
@@ -354,14 +354,14 @@ function Stat({
   accent: 'emerald' | 'purple' | 'amber';
 }) {
   const colors = {
-    emerald: 'text-emerald-300',
-    purple: 'text-indigo-300',
-    amber: 'text-amber-300',
+    emerald: 'text-emerald-700',
+    purple: 'text-indigo-700',
+    amber: 'text-amber-700',
   };
   return (
     <div>
       <div className={`text-base sm:text-lg font-black ${colors[accent]}`}>{value}</div>
-      <div className="text-[10px] text-slate-400 tracking-wide mt-0.5">{label}</div>
+      <div className="text-[10px] text-slate-600 tracking-wide mt-0.5">{label}</div>
     </div>
   );
 }
@@ -392,24 +392,24 @@ function BackgroundOrbs() {
 
 function TopBar() {
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/60 border-b border-white/10">
+    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/10">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
               <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
             </svg>
           </div>
           <div>
-            <div className="text-base font-black font-display text-slate-100">
+            <div className="text-base font-black font-display text-slate-800">
               בגרות בכיס
             </div>
-            <div className="text-[10px] text-slate-400 -mt-0.5">התוכנית שלי</div>
+            <div className="text-[10px] text-slate-600 -mt-0.5">התוכנית שלי</div>
           </div>
         </Link>
         <Link
           href="/"
-          className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+          className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
           title="חזרה לדף הבית"
         >
           <Home className="w-3.5 h-3.5" />

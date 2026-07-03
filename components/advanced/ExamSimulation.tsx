@@ -94,8 +94,8 @@ export function ExamSimulation({
       <div className="space-y-3">
         {passed && (
           <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-2xl px-4 py-3 flex items-center gap-3">
-            <Trophy className="w-5 h-5 text-amber-300 flex-shrink-0" />
-            <div className="text-sm text-emerald-50">
+            <Trophy className="w-5 h-5 text-amber-700 flex-shrink-0" />
+            <div className="text-sm text-emerald-900">
               <span className="font-bold">עברת את הסימולציה — הנושא הושלם ברמת בגרות. </span>
               אפשר לחזור עליה מתי שרוצים.
             </div>
@@ -103,19 +103,19 @@ export function ExamSimulation({
         )}
         <div className="surface-premium rounded-2xl p-4 space-y-3">
           <div className="flex items-center gap-2.5">
-            <Timer className="w-5 h-5 text-indigo-300" />
-            <div className="text-sm font-black text-white">מצב בחינה</div>
+            <Timer className="w-5 h-5 text-indigo-700" />
+            <div className="text-sm font-black text-slate-900">מצב בחינה</div>
           </div>
-          <p className="text-sm text-slate-300 leading-relaxed chat-md">
+          <p className="text-sm text-slate-700 leading-relaxed chat-md">
             <MathText inline>{simulation.brief}</MathText>
           </p>
-          <div className="flex items-center gap-3 text-xs text-slate-400">
+          <div className="flex items-center gap-3 text-xs text-slate-600">
             <span className="inline-flex items-center gap-1 surface-premium rounded-full px-2.5 py-1">
               <Timer className="w-3.5 h-3.5" />
               {simulation.timeLimitMinutes} דקות
             </span>
             <span className="inline-flex items-center gap-1 surface-premium rounded-full px-2.5 py-1">
-              <Medal className="w-3.5 h-3.5 text-amber-300" />
+              <Medal className="w-3.5 h-3.5 text-amber-700" />
               {q.totalPoints} נקודות
             </span>
             <span className="inline-flex items-center gap-1 surface-premium rounded-full px-2.5 py-1">
@@ -142,22 +142,22 @@ export function ExamSimulation({
       <div
         className={`sticky top-16 z-20 backdrop-blur-md border rounded-2xl px-4 py-2.5 flex items-center gap-3 ${
           phase === 'review'
-            ? 'bg-slate-900/80 border-white/10'
+            ? 'bg-[#FDFDFB]/90 border-slate-900/10'
             : lowTime
-              ? 'bg-indigo-950/80 border-indigo-500/50'
-              : 'bg-slate-900/80 border-white/15'
+              ? 'bg-indigo-50/90 border-indigo-500/50'
+              : 'bg-[#FDFDFB]/90 border-slate-900/[0.12]'
         }`}
       >
-        <Timer className={`w-4 h-4 ${lowTime && phase === 'running' ? 'text-indigo-300' : 'text-slate-300'}`} />
+        <Timer className={`w-4 h-4 ${lowTime && phase === 'running' ? 'text-indigo-700' : 'text-slate-700'}`} />
         <span
           className={`font-mono text-lg font-black tabular-nums ${
-            phase === 'review' ? 'text-slate-400' : lowTime ? 'text-indigo-200' : 'text-white'
+            phase === 'review' ? 'text-slate-600' : lowTime ? 'text-indigo-800' : 'text-slate-900'
           }`}
           dir="ltr"
         >
           {mm}:{ss}
         </span>
-        <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 bg-slate-900/5 rounded-full overflow-hidden">
           <div
             className={`h-full transition-all ${lowTime ? 'bg-indigo-500' : 'bg-indigo-500'}`}
             style={{ width: `${(secondsLeft / totalSeconds) * 100}%` }}
@@ -167,7 +167,7 @@ export function ExamSimulation({
           <motion.button
             {...buttonTap}
             onClick={finish}
-            className="inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-bold text-emerald-100 text-xs transition-colors"
+            className="inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-bold text-emerald-800 text-xs transition-colors"
           >
             <Flag className="w-3.5 h-3.5" />
             <span>סיימתי</span>
@@ -176,13 +176,13 @@ export function ExamSimulation({
       </div>
 
       {timedOut && phase === 'review' && (
-        <div className="bg-indigo-500/10 border border-indigo-500/40 rounded-xl px-4 py-2.5 text-sm text-indigo-100 font-bold">
+        <div className="bg-indigo-500/10 border border-indigo-500/40 rounded-xl px-4 py-2.5 text-sm text-indigo-800 font-bold">
           הזמן נגמר. בבחינה אמיתית זה הרגע לעבור לשאלה הבאה — עכשיו השווה למחוון.
         </div>
       )}
 
       {/* Question */}
-      <div className="bg-slate-950/40 border border-white/10 rounded-xl px-4 py-3 chat-md text-sm text-white leading-relaxed">
+      <div className="bg-slate-900/[0.03] border border-slate-900/10 rounded-xl px-4 py-3 chat-md text-sm text-slate-900 leading-relaxed">
         <MathText>{q.context}</MathText>
       </div>
       {q.diagrams && q.diagrams.length > 0 && <DiagramRenderer diagrams={q.diagrams} />}
@@ -195,10 +195,10 @@ export function ExamSimulation({
               <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-indigo-500/30">
                 {part.label}
               </div>
-              <div className="flex-1 chat-md text-sm sm:text-base text-white leading-relaxed pt-0.5">
+              <div className="flex-1 chat-md text-sm sm:text-base text-slate-900 leading-relaxed pt-0.5">
                 <MathText>{part.prompt}</MathText>
               </div>
-              <span className="flex-shrink-0 text-[11px] font-black text-amber-200 bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-lg">
+              <span className="flex-shrink-0 text-[11px] font-black text-amber-800 bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-lg">
                 {part.points} נק׳
               </span>
             </div>
@@ -210,7 +210,7 @@ export function ExamSimulation({
               rows={2}
               dir="auto"
               disabled={phase === 'review'}
-              className="w-full bg-slate-950/50 border border-white/10 focus:border-indigo-500/60 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y disabled:opacity-60"
+              className="w-full bg-slate-900/[0.04] border border-slate-900/10 focus:border-indigo-500/60 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y disabled:opacity-60"
             />
 
             {/* Solutions — review phase only */}
@@ -224,40 +224,40 @@ export function ExamSimulation({
                   className="space-y-2.5"
                 >
                   <div className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-xl p-3.5">
-                    <div className="text-[10px] font-black tracking-widest text-indigo-300 mb-2 uppercase">
+                    <div className="text-[10px] font-black tracking-widest text-indigo-700 mb-2 uppercase">
                       פתרון סעיף {part.label}
                     </div>
                     <ol className="space-y-2">
                       {part.solution.steps.map((step, i) => (
                         <li key={i} className="flex gap-2.5">
-                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
+                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-800">
                             {i + 1}
                           </div>
-                          <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
+                          <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5">
                             <MathText>{step}</MathText>
                           </div>
                         </li>
                       ))}
                     </ol>
                     <div className="mt-2.5 bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2">
-                      <div className="text-[10px] font-black tracking-widest text-emerald-300 mb-1 uppercase flex items-center gap-1.5">
+                      <div className="text-[10px] font-black tracking-widest text-emerald-700 mb-1 uppercase flex items-center gap-1.5">
                         <CheckCircle className="w-3 h-3" />
                         <span>תשובה סופית</span>
                       </div>
-                      <div className="text-sm font-bold text-emerald-50 chat-md">
+                      <div className="text-sm font-bold text-emerald-900 chat-md">
                         <MathText inline>{part.solution.finalAnswer}</MathText>
                       </div>
                     </div>
                   </div>
                   <div className="bg-indigo-500/5 border border-indigo-500/25 rounded-xl px-3 py-2.5">
-                    <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase flex items-center gap-1.5 mb-1.5">
+                    <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase flex items-center gap-1.5 mb-1.5">
                       <MinusCircle className="w-3 h-3" />
                       <span>מחוון ({part.points} נק׳)</span>
                     </div>
                     <ul className="space-y-1">
                       {part.deductions.map((d, i) => (
                         <li key={i} className="flex gap-2 text-xs text-indigo-50/90 leading-relaxed">
-                          <span className="text-indigo-300 flex-shrink-0 mt-0.5">−</span>
+                          <span className="text-indigo-700 flex-shrink-0 mt-0.5">−</span>
                           <div className="chat-md flex-1">
                             <MathText inline>{d}</MathText>
                           </div>
@@ -275,7 +275,7 @@ export function ExamSimulation({
       {/* Self-judgment — review phase */}
       {phase === 'review' && (
         <div className="surface-premium rounded-2xl p-4 space-y-3 text-center">
-          <div className="text-sm font-black text-white">
+          <div className="text-sm font-black text-slate-900">
             עבור על המחוון וגרד את עצמך בכנות: צברת לפחות {Math.ceil(q.totalPoints * 0.8)} מתוך{' '}
             {q.totalPoints} נקודות?
           </div>
@@ -296,7 +296,7 @@ export function ExamSimulation({
             <motion.button
               {...buttonTap}
               onClick={restart}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-3 rounded-2xl font-bold text-white text-sm transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 px-4 py-3 rounded-2xl font-bold text-slate-900 text-sm transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
               <span>עוד לא — אנסה שוב אחר כך</span>

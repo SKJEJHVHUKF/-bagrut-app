@@ -61,20 +61,20 @@ export function LearningPathView({ path }: { path: LearningPath }) {
       >
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-emerald-300 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-emerald-700 uppercase flex items-center gap-2"
         >
           <GraduationCap className="w-3.5 h-3.5" />
           <span>מסלול לימוד מ-0</span>
         </motion.div>
         <motion.h1 variants={fadeUp} className="text-2xl sm:text-3xl font-black leading-tight">
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             {path.title}
           </span>
         </motion.h1>
-        <motion.p variants={fadeUp} className="text-sm text-slate-300 leading-relaxed">
+        <motion.p variants={fadeUp} className="text-sm text-slate-700 leading-relaxed">
           {path.tagline}
         </motion.p>
-        <motion.div variants={fadeUp} className="flex items-center gap-3 text-xs text-slate-400">
+        <motion.div variants={fadeUp} className="flex items-center gap-3 text-xs text-slate-600">
           <span className="inline-flex items-center gap-1.5 surface-premium rounded-full px-2.5 py-1">
             <Clock className="w-3.5 h-3.5" />
             {path.estimatedMinutes} דקות
@@ -92,12 +92,12 @@ export function LearningPathView({ path }: { path: LearningPath }) {
         className="surface-premium rounded-2xl p-4 space-y-3"
       >
         <div className="flex items-baseline justify-between">
-          <div className="text-sm font-bold text-emerald-100">
+          <div className="text-sm font-bold text-emerald-800">
             {allDone ? '🎓 סיימת את כל המסלול!' : `${doneCount}/${totalSections} חלקים הושלמו`}
           </div>
           <div className="text-xs text-emerald-300/80 font-mono">{percent}%</div>
         </div>
-        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
           <motion.div
             initial={{ width: '0%' }}
             animate={{ width: `${percent}%` }}
@@ -113,8 +113,8 @@ export function LearningPathView({ path }: { path: LearningPath }) {
               href={`#section-${s.id}`}
               className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-lg border transition-colors ${
                 done.has(s.id)
-                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
-                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-800'
+                  : 'bg-slate-900/[0.03] border-slate-900/10 text-slate-700 hover:bg-slate-900/5'
               }`}
             >
               <span>{done.has(s.id) ? '✓' : i + 1}</span>
@@ -175,7 +175,7 @@ export function LearningPathView({ path }: { path: LearningPath }) {
         onToggle={() => onToggle('examples')}
       >
         <div className="space-y-2">
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600">
             נסה לפתור לבד לפני שאתה חושף — אחר כך גלה צעד-צעד.
           </p>
           {path.guidedExamples.map((ex, i) => (
@@ -288,17 +288,17 @@ export function LearningPathView({ path }: { path: LearningPath }) {
             >
               <div className="flex items-center gap-3">
                 <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-indigo-500/25 border border-indigo-400/50 flex items-center justify-center">
-                  <Rocket className="w-6 h-6 text-indigo-200" />
+                  <Rocket className="w-6 h-6 text-indigo-800" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-black text-sm sm:text-base text-white mb-0.5">
+                  <div className="font-black text-sm sm:text-base text-slate-900 mb-0.5">
                     הצעד הבא: קורס מתקדם — רמת בגרות
                   </div>
                   <div className="text-xs text-indigo-100/80 leading-snug">
                     זיהוי תבניות, טכניקות, בגרויות מפורקות עם מחוון, וסימולציית סיום עם טיימר.
                   </div>
                 </div>
-                <ArrowLeft className="w-5 h-5 text-indigo-300 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+                <ArrowLeft className="w-5 h-5 text-indigo-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -311,11 +311,11 @@ export function LearningPathView({ path }: { path: LearningPath }) {
           variants={fadeUp}
           className="bg-gradient-to-br from-emerald-600/15 to-teal-600/10 border border-emerald-500/30 rounded-2xl p-5 text-center space-y-3"
         >
-          <Sparkles className="w-8 h-8 mx-auto text-emerald-300" />
-          <div className="text-base font-black text-white">
+          <Sparkles className="w-8 h-8 mx-auto text-emerald-700" />
+          <div className="text-base font-black text-slate-900">
             {allDone ? 'כל הכבוד — שלטת בנושא!' : 'מוכן ליותר תרגול?'}
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed max-w-md mx-auto">
+          <p className="text-xs text-slate-700 leading-relaxed max-w-md mx-auto">
             המשך לתרגול נוסף בנושא — שאלות מהירות ושאלות בגרות מלאות עם בדיקת תשובה.
           </p>
           {hasLegacyLesson && (
@@ -351,9 +351,9 @@ function PracticeLevel({
   children: React.ReactNode;
 }) {
   const toneMap = {
-    emerald: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200',
-    amber: 'bg-amber-500/15 border-amber-500/40 text-amber-200',
-    rose: 'bg-indigo-500/15 border-indigo-500/40 text-indigo-200',
+    emerald: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-800',
+    amber: 'bg-amber-500/15 border-amber-500/40 text-amber-800',
+    rose: 'bg-indigo-500/15 border-indigo-500/40 text-indigo-800',
   };
   return (
     <div className="space-y-2.5">
@@ -364,8 +364,8 @@ function PracticeLevel({
           {badge}
         </span>
         <div>
-          <div className="text-sm font-bold text-white">{title}</div>
-          <div className="text-[11px] text-slate-400">{subtitle}</div>
+          <div className="text-sm font-bold text-slate-900">{title}</div>
+          <div className="text-[11px] text-slate-600">{subtitle}</div>
         </div>
       </div>
       {children}

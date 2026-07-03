@@ -39,7 +39,7 @@ function scoreClass(pct: number): {
 } {
   if (pct >= 80) {
     return {
-      ringText: 'text-emerald-400',
+      ringText: 'text-emerald-700',
       ringBg: 'bg-emerald-500/10 border-emerald-500/40',
       label: 'מצוין',
     };
@@ -52,7 +52,7 @@ function scoreClass(pct: number): {
     };
   }
   return {
-    ringText: 'text-indigo-400',
+    ringText: 'text-indigo-600',
     ringBg: 'bg-indigo-500/10 border-indigo-500/40',
     label: 'יש מה לשפר',
   };
@@ -60,7 +60,7 @@ function scoreClass(pct: number): {
 
 function BagrutLogo() {
   return (
-    <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20">
+    <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10">
       <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
         <path
           d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
@@ -128,20 +128,20 @@ export default async function HistoryPage() {
       </div>
 
       {/* Top bar */}
-      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/60 border-b border-white/10">
+      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/10">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <BagrutLogo />
             <div>
-              <div className="text-base font-black font-display text-slate-100">
+              <div className="text-base font-black font-display text-slate-800">
                 בגרות בכיס
               </div>
-              <div className="text-[10px] text-slate-400 -mt-0.5">ההיסטוריה שלי</div>
+              <div className="text-[10px] text-slate-600 -mt-0.5">ההיסטוריה שלי</div>
             </div>
           </Link>
           <Link
             href="/quiz"
-            className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
           >
             <span>לתרגול</span>
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
@@ -153,11 +153,11 @@ export default async function HistoryPage() {
         {/* Heading */}
         <div className="mb-7">
           <h1 className="font-display text-3xl sm:text-4xl font-black mb-2">
-            <span className="font-display text-slate-100">
+            <span className="font-display text-slate-800">
               ההיסטוריה שלי 📊
             </span>
           </h1>
-          <p className="text-slate-400 text-sm">כל התרגולים שעשית, מסודרים מהחדש לישן.</p>
+          <p className="text-slate-600 text-sm">כל התרגולים שעשית, מסודרים מהחדש לישן.</p>
         </div>
 
         {/* Summary stats */}
@@ -204,11 +204,11 @@ function StatCard({
     <div
       className={`bg-gradient-to-br ${accent} backdrop-blur-md border rounded-2xl p-4 text-center`}
     >
-      <Icon className="w-4 h-4 mx-auto mb-1.5 text-white/80" />
-      <div className="text-2xl font-black mb-0.5 font-display text-slate-100">
+      <Icon className="w-4 h-4 mx-auto mb-1.5 text-slate-500" />
+      <div className="text-2xl font-black mb-0.5 font-display text-slate-800">
         {value}
       </div>
-      <div className="text-[11px] text-slate-300 font-bold tracking-wide">
+      <div className="text-[11px] text-slate-700 font-bold tracking-wide">
         {label}
       </div>
     </div>
@@ -219,15 +219,15 @@ function SessionRow({ session }: { session: Session }) {
   const pct = Math.round((session.score / session.total) * 100);
   const sc = scoreClass(pct);
   return (
-    <div className="bg-white/5 hover:bg-white/[0.07] backdrop-blur-md border border-white/10 hover:border-indigo-500/40 rounded-2xl p-4 flex items-center gap-4 transition-all">
+    <div className="bg-slate-900/[0.03] hover:bg-slate-900/[0.04] backdrop-blur-md border border-slate-900/10 hover:border-indigo-500/40 rounded-2xl p-4 flex items-center gap-4 transition-all">
       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 text-2xl">
         {session.subject_emoji}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-bold text-slate-100 text-sm sm:text-base truncate">
+        <div className="font-bold text-slate-800 text-sm sm:text-base truncate">
           {session.subject_name}
         </div>
-        <div className="text-xs text-slate-400 truncate">{session.topic}</div>
+        <div className="text-xs text-slate-600 truncate">{session.topic}</div>
         <div className="text-[11px] text-slate-500 mt-0.5">
           {timeAgoHebrew(session.completed_at)}
         </div>
@@ -244,16 +244,16 @@ function SessionRow({ session }: { session: Session }) {
 
 function EmptyState() {
   return (
-    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-10 text-center">
+    <div className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-3xl p-10 text-center">
       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mb-5 mx-auto">
-        <BookOpen className="w-8 h-8 text-indigo-300" />
+        <BookOpen className="w-8 h-8 text-indigo-700" />
       </div>
       <h2 className="font-display text-xl sm:text-2xl font-black mb-2">
-        <span className="font-display text-slate-100">
+        <span className="font-display text-slate-800">
           עוד לא תרגלת
         </span>
       </h2>
-      <p className="text-slate-400 mb-6 text-sm">
+      <p className="text-slate-600 mb-6 text-sm">
         כל תרגול שתעשה יישמר פה אוטומטית. כך תוכל לעקוב אחרי ההתקדמות שלך.
       </p>
       <Link

@@ -89,25 +89,25 @@ function SignupForm() {
 
   if (success) {
     return (
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-indigo-500/10 text-center">
+      <div className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-indigo-500/10 text-center">
         <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center mb-5">
-          <CheckCircle className="w-8 h-8 text-emerald-400" />
+          <CheckCircle className="w-8 h-8 text-emerald-700" />
         </div>
         <h1 className="font-display text-2xl sm:text-3xl font-black mb-3">
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             כמעט שם!
           </span>
         </h1>
-        <p className="text-slate-300 leading-relaxed mb-4">
-          שלחנו לך מייל אישור ל-<span className="text-indigo-300 font-bold" dir="ltr">{email}</span>
+        <p className="text-slate-700 leading-relaxed mb-4">
+          שלחנו לך מייל אישור ל-<span className="text-indigo-700 font-bold" dir="ltr">{email}</span>
         </p>
-        <p className="text-slate-400 text-sm leading-relaxed">
+        <p className="text-slate-600 text-sm leading-relaxed">
           לחץ על הקישור במייל כדי להפעיל את החשבון.<br />
           (בדוק גם בתיקיית הספאם אם לא הגיע)
         </p>
         <Link
           href="/login"
-          className="mt-7 inline-flex items-center gap-2 text-indigo-300 hover:text-indigo-200 font-bold"
+          className="mt-7 inline-flex items-center gap-2 text-indigo-700 hover:text-indigo-800 font-bold"
         >
           <ArrowLeft className="w-4 h-4" />
           חזרה להתחברות
@@ -119,18 +119,18 @@ function SignupForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-indigo-500/10"
+      className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-indigo-500/10"
     >
       <h1 className="font-display text-3xl sm:text-4xl font-black mb-2 text-center">
-        <span className="font-display text-slate-100">
+        <span className="font-display text-slate-800">
           הצטרף עכשיו ✨
         </span>
       </h1>
-      <p className="text-slate-400 text-center mb-7">חינם. בלי כרטיס אשראי.</p>
+      <p className="text-slate-600 text-center mb-7">חינם. בלי כרטיס אשראי.</p>
 
       {/* Email */}
       <label className="block mb-4">
-        <span className="block text-sm font-bold text-slate-300 mb-2">אימייל</span>
+        <span className="block text-sm font-bold text-slate-700 mb-2">אימייל</span>
         <div className="relative">
           <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
@@ -140,7 +140,7 @@ function SignupForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full surface-premium rounded-xl pr-10 pl-3 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.07] transition-all"
+            className="w-full surface-premium rounded-xl pr-10 pl-3 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/[0.04] transition-all"
             disabled={loading}
             dir="ltr"
           />
@@ -149,7 +149,7 @@ function SignupForm() {
 
       {/* Password */}
       <label className="block mb-3">
-        <span className="block text-sm font-bold text-slate-300 mb-2">סיסמה</span>
+        <span className="block text-sm font-bold text-slate-700 mb-2">סיסמה</span>
         <div className="relative">
           <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
@@ -159,14 +159,14 @@ function SignupForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="לפחות 8 תווים"
-            className="w-full surface-premium rounded-xl pr-10 pl-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.07] transition-all"
+            className="w-full surface-premium rounded-xl pr-10 pl-10 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/[0.04] transition-all"
             disabled={loading}
             dir="ltr"
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition-colors"
             tabIndex={-1}
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -177,15 +177,15 @@ function SignupForm() {
       {/* Password strength hints */}
       {password.length > 0 && (
         <ul className="text-xs space-y-1 mb-2">
-          <li className={`flex items-center gap-2 ${hasMinLength ? 'text-emerald-400' : 'text-slate-500'}`}>
+          <li className={`flex items-center gap-2 ${hasMinLength ? 'text-emerald-700' : 'text-slate-500'}`}>
             <Check className={`w-3 h-3 ${hasMinLength ? 'opacity-100' : 'opacity-30'}`} strokeWidth={3} />
             לפחות 8 תווים
           </li>
-          <li className={`flex items-center gap-2 ${hasLetter ? 'text-emerald-400' : 'text-slate-500'}`}>
+          <li className={`flex items-center gap-2 ${hasLetter ? 'text-emerald-700' : 'text-slate-500'}`}>
             <Check className={`w-3 h-3 ${hasLetter ? 'opacity-100' : 'opacity-30'}`} strokeWidth={3} />
             אות באנגלית
           </li>
-          <li className={`flex items-center gap-2 ${hasNumber ? 'text-emerald-400' : 'text-slate-500'}`}>
+          <li className={`flex items-center gap-2 ${hasNumber ? 'text-emerald-700' : 'text-slate-500'}`}>
             <Check className={`w-3 h-3 ${hasNumber ? 'opacity-100' : 'opacity-30'}`} strokeWidth={3} />
             ספרה
           </li>
@@ -199,15 +199,15 @@ function SignupForm() {
           checked={agreedToTerms}
           onChange={(e) => setAgreedToTerms(e.target.checked)}
           disabled={loading}
-          className="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-indigo-500/50 cursor-pointer flex-shrink-0"
+          className="mt-1 w-4 h-4 rounded border-slate-900/15 bg-slate-900/[0.03] text-indigo-500 focus:ring-indigo-500/50 cursor-pointer flex-shrink-0"
         />
-        <span className="text-xs text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">
+        <span className="text-xs text-slate-600 leading-relaxed group-hover:text-slate-700 transition-colors">
           קראתי ואני מאשר את{' '}
           <Link
             href="/terms"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-300 hover:text-indigo-200 font-bold underline-offset-2 hover:underline"
+            className="text-indigo-700 hover:text-indigo-800 font-bold underline-offset-2 hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             תנאי השימוש
@@ -217,7 +217,7 @@ function SignupForm() {
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-300 hover:text-indigo-200 font-bold underline-offset-2 hover:underline"
+            className="text-indigo-700 hover:text-indigo-800 font-bold underline-offset-2 hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             מדיניות הפרטיות
@@ -247,11 +247,11 @@ function SignupForm() {
         )}
       </button>
 
-      <div className="mt-6 text-center text-sm text-slate-400">
+      <div className="mt-6 text-center text-sm text-slate-600">
         כבר יש לך חשבון?{' '}
         <Link
           href={`/login${next !== '/quiz' ? `?next=${encodeURIComponent(next)}` : ''}`}
-          className="text-indigo-300 hover:text-indigo-200 font-bold underline-offset-2 hover:underline"
+          className="text-indigo-700 hover:text-indigo-800 font-bold underline-offset-2 hover:underline"
         >
           התחבר כאן
         </Link>
@@ -270,19 +270,19 @@ export default function SignupPage() {
 
       <nav className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20 group-hover:scale-105 transition-transform">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10 group-hover:scale-105 transition-transform">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
               <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
             </svg>
           </div>
-          <span className="text-xl sm:text-2xl font-black font-display text-slate-100">
+          <span className="text-xl sm:text-2xl font-black font-display text-slate-800">
             בגרות בכיס
           </span>
         </Link>
       </nav>
 
       <main className="relative z-10 max-w-md mx-auto px-4 sm:px-6 pt-8 pb-16">
-        <Suspense fallback={<div className="text-slate-400 text-center">טוען…</div>}>
+        <Suspense fallback={<div className="text-slate-600 text-center">טוען…</div>}>
           <SignupForm />
         </Suspense>
       </main>

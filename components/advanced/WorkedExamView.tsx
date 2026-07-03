@@ -16,19 +16,19 @@ import { buttonTap } from '@/lib/animations';
  */
 export function WorkedExamView({ exam, index }: { exam: WorkedExam; index: number }) {
   return (
-    <div className="bg-white/[0.03] border border-indigo-500/20 rounded-2xl overflow-hidden">
-      <div className="bg-gradient-to-l from-indigo-600/15 to-indigo-600/10 border-b border-white/10 px-4 py-3 flex items-center gap-2.5">
-        <FileSearch className="w-4 h-4 text-indigo-200 flex-shrink-0" />
+    <div className="bg-slate-900/[0.02] border border-indigo-500/20 rounded-2xl overflow-hidden">
+      <div className="bg-gradient-to-l from-indigo-600/15 to-indigo-600/10 border-b border-slate-900/10 px-4 py-3 flex items-center gap-2.5">
+        <FileSearch className="w-4 h-4 text-indigo-800 flex-shrink-0" />
         <div className="flex-1">
-          <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase">
+          <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase">
             בגרות מפורקת {index + 1}
           </div>
-          <div className="text-sm font-bold text-white">{exam.title}</div>
+          <div className="text-sm font-bold text-slate-900">{exam.title}</div>
         </div>
       </div>
 
       <div className="px-4 py-3 space-y-3">
-        <div className="bg-slate-950/40 border border-white/10 rounded-xl px-4 py-3 chat-md text-sm text-white leading-relaxed">
+        <div className="bg-slate-900/[0.03] border border-slate-900/10 rounded-xl px-4 py-3 chat-md text-sm text-slate-900 leading-relaxed">
           <MathText>{exam.context}</MathText>
         </div>
 
@@ -56,7 +56,7 @@ function WorkedPartCard({ part }: { part: WorkedExamPart }) {
         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-indigo-500/30">
           {part.label}
         </div>
-        <div className="flex-1 chat-md text-sm sm:text-base text-white leading-relaxed pt-0.5">
+        <div className="flex-1 chat-md text-sm sm:text-base text-slate-900 leading-relaxed pt-0.5">
           <MathText>{part.prompt}</MathText>
         </div>
       </div>
@@ -75,9 +75,9 @@ function WorkedPartCard({ part }: { part: WorkedExamPart }) {
       {/* How it builds on earlier parts */}
       {part.buildsOn && (
         <div className="flex items-start gap-2 border-r-2 border-indigo-500/40 pr-3">
-          <Link2 className="w-3.5 h-3.5 text-indigo-300 flex-shrink-0 mt-0.5" />
-          <div className="chat-md text-xs text-slate-300 leading-relaxed flex-1">
-            <span className="font-bold text-indigo-200">הקשר לסעיפים הקודמים: </span>
+          <Link2 className="w-3.5 h-3.5 text-indigo-700 flex-shrink-0 mt-0.5" />
+          <div className="chat-md text-xs text-slate-700 leading-relaxed flex-1">
+            <span className="font-bold text-indigo-800">הקשר לסעיפים הקודמים: </span>
             <MathText inline>{part.buildsOn}</MathText>
           </div>
         </div>
@@ -87,7 +87,7 @@ function WorkedPartCard({ part }: { part: WorkedExamPart }) {
       {part.patternId && (
         <a
           href={`#pattern-${part.patternId}`}
-          className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-indigo-500/15 border border-indigo-500/40 text-indigo-200 px-2.5 py-1 rounded-full hover:bg-indigo-500/25 transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-indigo-500/15 border border-indigo-500/40 text-indigo-800 px-2.5 py-1 rounded-full hover:bg-indigo-500/25 transition-colors"
         >
           <span>🗺️ זו התבנית — לחץ לרענון</span>
         </a>
@@ -103,10 +103,10 @@ function WorkedPartCard({ part }: { part: WorkedExamPart }) {
             transition={{ duration: 0.25, ease: 'easeOut' }}
             className="flex gap-2.5"
           >
-            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-800">
               {i + 1}
             </div>
-            <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
+            <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5">
               <MathText>{step}</MathText>
             </div>
           </motion.li>
@@ -117,25 +117,25 @@ function WorkedPartCard({ part }: { part: WorkedExamPart }) {
         <motion.button
           {...buttonTap}
           onClick={() => setStepsShown((n) => n + 1)}
-          className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-lg font-bold text-indigo-100 text-sm transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-lg font-bold text-indigo-800 text-sm transition-colors"
         >
           {stepsShown === 0 ? 'פתח את הפתרון צעד-צעד' : `הצעד הבא (${stepsShown + 1}/${total})`}
         </motion.button>
       ) : (
         <>
           <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2.5">
-            <div className="text-[10px] font-black tracking-widest text-emerald-300 mb-1 uppercase flex items-center gap-1.5">
+            <div className="text-[10px] font-black tracking-widest text-emerald-700 mb-1 uppercase flex items-center gap-1.5">
               <CheckCircle className="w-3 h-3" />
               <span>תשובה סופית</span>
             </div>
-            <div className="text-sm font-bold text-emerald-50 chat-md">
+            <div className="text-sm font-bold text-emerald-900 chat-md">
               <MathText inline>{part.finalAnswer}</MathText>
             </div>
           </div>
 
           {/* Grader notes — what earns full credit */}
           <div className="bg-amber-500/5 border border-amber-500/30 rounded-xl px-3 py-2.5">
-            <div className="text-[10px] font-black tracking-widest text-amber-300 uppercase flex items-center gap-1.5 mb-1">
+            <div className="text-[10px] font-black tracking-widest text-amber-700 uppercase flex items-center gap-1.5 mb-1">
               <Award className="w-3 h-3" />
               <span>מה הבודק מחפש</span>
             </div>

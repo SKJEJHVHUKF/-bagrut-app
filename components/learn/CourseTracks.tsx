@@ -32,13 +32,13 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
     const baseDone = getCompletedSections(subject, topic).size;
     setBaseStatus(
       baseDone >= PATH_SECTIONS.length
-        ? { label: '✓ הושלם', cls: 'bg-emerald-500/25 border-emerald-400/50 text-emerald-200' }
+        ? { label: '✓ הושלם', cls: 'bg-emerald-500/25 border-emerald-400/50 text-emerald-800' }
         : baseDone > 0
           ? {
               label: `בתהליך · ${baseDone}/${PATH_SECTIONS.length}`,
-              cls: 'bg-amber-500/20 border-amber-400/40 text-amber-200',
+              cls: 'bg-amber-500/20 border-amber-400/40 text-amber-800',
             }
-          : { label: 'התחל כאן', cls: 'bg-white/10 border-white/20 text-slate-200' },
+          : { label: 'התחל כאן', cls: 'bg-slate-900/5 border-slate-900/15 text-slate-800' },
     );
 
     // Advanced track status
@@ -47,13 +47,13 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
       const advDone = getCompletedAdvancedSections(subject, topic).size;
       setAdvStatus(
         p.simulationPassed
-          ? { label: '🎓 הושלם', cls: 'bg-indigo-500/25 border-indigo-400/50 text-indigo-200' }
+          ? { label: '🎓 הושלם', cls: 'bg-indigo-500/25 border-indigo-400/50 text-indigo-800' }
           : p.gatePassed
             ? {
                 label: `בתהליך · ${advDone}/${ADVANCED_SECTIONS.length}`,
-                cls: 'bg-amber-500/20 border-amber-400/40 text-amber-200',
+                cls: 'bg-amber-500/20 border-amber-400/40 text-amber-800',
               }
-            : { label: '🔒 שער כניסה', cls: 'bg-white/10 border-white/20 text-slate-300' },
+            : { label: '🔒 שער כניסה', cls: 'bg-slate-900/5 border-slate-900/15 text-slate-700' },
       );
     }
   }, [subject, topic, advanced]);
@@ -70,11 +70,11 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
         >
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-emerald-500/25 border border-emerald-400/50 flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-emerald-200" />
+              <GraduationCap className="w-6 h-6 text-emerald-800" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                <span className="font-black text-sm sm:text-base text-white">קורס בסיס — לימוד מ-0</span>
+                <span className="font-black text-sm sm:text-base text-slate-900">קורס בסיס — לימוד מ-0</span>
                 {baseStatus && (
                   <span className={`text-[9px] font-black tracking-wide border px-1.5 py-0.5 rounded-full ${baseStatus.cls}`}>
                     {baseStatus.label}
@@ -85,7 +85,7 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
                 לא מכיר את הנושא? מכאן: אינטואיציה, מושגים, דוגמאות ותרגול מדורג.
               </div>
             </div>
-            <ArrowLeft className="w-5 h-5 text-emerald-300 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+            <ArrowLeft className="w-5 h-5 text-emerald-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
           </div>
         </Link>
 
@@ -98,14 +98,14 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-indigo-500/25 border border-indigo-400/50 flex items-center justify-center">
                 {advStatus?.label === '🔒 שער כניסה' ? (
-                  <Lock className="w-5 h-5 text-indigo-200" />
+                  <Lock className="w-5 h-5 text-indigo-800" />
                 ) : (
-                  <Rocket className="w-6 h-6 text-indigo-200" />
+                  <Rocket className="w-6 h-6 text-indigo-800" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                  <span className="font-black text-sm sm:text-base text-white">קורס מתקדם — רמת בגרות</span>
+                  <span className="font-black text-sm sm:text-base text-slate-900">קורס מתקדם — רמת בגרות</span>
                   {advStatus && (
                     <span className={`text-[9px] font-black tracking-wide border px-1.5 py-0.5 rounded-full ${advStatus.cls}`}>
                       {advStatus.label}
@@ -116,7 +116,7 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
                   סיימת את הבסיס? תבניות, מחוון, בגרויות מפורקות וסימולציה עם טיימר.
                 </div>
               </div>
-              <ArrowLeft className="w-5 h-5 text-indigo-300 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+              <ArrowLeft className="w-5 h-5 text-indigo-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
             </div>
           </Link>
         )}

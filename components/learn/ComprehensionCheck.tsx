@@ -45,7 +45,7 @@ export function ComprehensionCheck({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-slate-400 leading-relaxed">
+      <p className="text-xs text-slate-600 leading-relaxed">
         ענה על כל השאלות כדי לוודא שאתה שולט בנושא לפני שאתה ממשיך הלאה. תשובה נבדקת מיד.
       </p>
 
@@ -55,10 +55,10 @@ export function ComprehensionCheck({
         return (
           <div key={q.id} className="surface-premium rounded-2xl p-4 space-y-2.5">
             <div className="flex items-start gap-2.5">
-              <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center text-[11px] font-black text-slate-200">
+              <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-slate-900/5 border border-slate-900/[0.12] flex items-center justify-center text-[11px] font-black text-slate-800">
                 {qi + 1}
               </div>
-              <div className="flex-1 chat-md text-sm sm:text-base text-white leading-relaxed pt-0.5">
+              <div className="flex-1 chat-md text-sm sm:text-base text-slate-900 leading-relaxed pt-0.5">
                 <MathText>{q.question}</MathText>
               </div>
             </div>
@@ -76,12 +76,12 @@ export function ComprehensionCheck({
                     disabled={answered}
                     className={`w-full text-right px-4 py-2.5 rounded-xl border transition-colors chat-md text-sm ${
                       answered && isCorrect
-                        ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-50'
+                        ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900'
                         : answered && isPicked
-                          ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-50'
+                          ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-900'
                           : answered
-                            ? 'bg-white/[0.02] border-white/5 text-slate-400'
-                            : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                            ? 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-600'
+                            : 'bg-slate-900/[0.03] hover:bg-slate-900/5 border-slate-900/10 text-slate-900'
                     }`}
                   >
                     <span className="font-bold opacity-60 ml-2">{MCQ_LABELS[i]}.</span>
@@ -101,14 +101,14 @@ export function ComprehensionCheck({
                   style={{ overflow: 'hidden' }}
                   className={`rounded-xl px-3 py-2 text-sm chat-md flex items-start gap-2 ${
                     picked === q.correct
-                      ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-50'
-                      : 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-50'
+                      ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-900'
+                      : 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-900'
                   }`}
                 >
                   {picked === q.correct ? (
-                    <CheckCircle className="w-4 h-4 text-emerald-300 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
                   ) : (
-                    <XCircle className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-0.5" />
+                    <XCircle className="w-4 h-4 text-indigo-700 flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1">
                     <MathText inline>{q.explanation}</MathText>
@@ -129,11 +129,11 @@ export function ComprehensionCheck({
             transition={{ duration: 0.4, ease: 'easeOut' }}
             className="bg-gradient-to-br from-emerald-600/15 to-teal-600/15 border border-emerald-500/40 rounded-2xl p-5 text-center space-y-2"
           >
-            <Trophy className="w-9 h-9 mx-auto text-amber-300" />
-            <div className="text-3xl font-black text-emerald-100">
+            <Trophy className="w-9 h-9 mx-auto text-amber-700" />
+            <div className="text-3xl font-black text-emerald-800">
               {correctCount}/{questions.length}
             </div>
-            <div className="text-sm text-slate-200">
+            <div className="text-sm text-slate-800">
               {correctCount === questions.length
                 ? '🌟 שליטה מלאה — אתה מוכן לנושא הבא!'
                 : correctCount >= Math.ceil(questions.length * 0.6)

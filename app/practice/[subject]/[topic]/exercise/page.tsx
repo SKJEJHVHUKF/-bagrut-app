@@ -73,18 +73,18 @@ export default async function ExercisePage({
     <PracticeShell subtitle={subtitle} backHref={backHref} backLabel={backLabel}>
       <div className="space-y-4">
         <header className="space-y-2">
-          <div className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2">
+          <div className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2">
             <span>{headerLabel}</span>
           </div>
           <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
-            <span className="font-display text-slate-100">
+            <span className="font-display text-slate-800">
               {topic}
             </span>
           </h1>
           {lessonExists && (
             <Link
               href={`/practice/${subject}/${encodeURIComponent(topic)}`}
-              className="inline-flex items-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-indigo-700 hover:text-indigo-800 transition-colors"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>חזור לסיכום הלימודי</span>
@@ -93,7 +93,7 @@ export default async function ExercisePage({
           <div>
             <Link
               href={`/chat?topic=${encodeURIComponent(topic)}`}
-              className="inline-flex items-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-indigo-700 hover:text-indigo-800 transition-colors"
             >
               <MessageCircle className="w-3.5 h-3.5" />
               <span>שאל את המורה על הנושא</span>

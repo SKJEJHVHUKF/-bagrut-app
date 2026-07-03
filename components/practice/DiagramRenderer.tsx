@@ -36,7 +36,7 @@ function FigureCard({ spec }: { spec: DiagramSpec }) {
         <DiagramSVG spec={spec} />
       </div>
       {spec.caption && (
-        <figcaption className="mt-2 text-xs text-slate-300 text-center font-bold chat-md">
+        <figcaption className="mt-2 text-xs text-slate-700 text-center font-bold chat-md">
           <MathText inline>{spec.caption}</MathText>
         </figcaption>
       )}

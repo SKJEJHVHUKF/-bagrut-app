@@ -28,19 +28,19 @@ import { sparkle } from '@/lib/confetti';
  */
 export function ExamQuestionCard({ q, index }: { q: ExamQuestion; index: number }) {
   return (
-    <div className="bg-white/[0.03] border border-indigo-500/20 rounded-2xl overflow-hidden">
+    <div className="bg-slate-900/[0.02] border border-indigo-500/20 rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-l from-indigo-600/15 to-indigo-600/10 border-b border-white/10 px-4 py-3 space-y-1.5">
+      <div className="bg-gradient-to-l from-indigo-600/15 to-indigo-600/10 border-b border-slate-900/10 px-4 py-3 space-y-1.5">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <FileText className="w-4 h-4 text-indigo-200 flex-shrink-0" />
-          <span className="text-[11px] font-black tracking-widest text-indigo-200 uppercase flex-1">
+          <FileText className="w-4 h-4 text-indigo-800 flex-shrink-0" />
+          <span className="text-[11px] font-black tracking-widest text-indigo-800 uppercase flex-1">
             שאלה {index + 1}
           </span>
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/10 border border-white/15 text-slate-100 px-2 py-0.5 rounded-full">
-            <Medal className="w-3 h-3 text-amber-300" />
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-slate-900/5 border border-slate-900/[0.12] text-slate-800 px-2 py-0.5 rounded-full">
+            <Medal className="w-3 h-3 text-amber-700" />
             {q.totalPoints} נק׳
           </span>
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/10 border border-white/15 text-slate-100 px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-slate-900/5 border border-slate-900/[0.12] text-slate-800 px-2 py-0.5 rounded-full">
             <Clock className="w-3 h-3 text-sky-300" />
             יעד: {q.targetMinutes} דק׳
           </span>
@@ -60,7 +60,7 @@ export function ExamQuestionCard({ q, index }: { q: ExamQuestion; index: number 
 
       <div className="px-4 py-3 space-y-3">
         {q.context && (
-          <div className="bg-slate-950/40 border border-white/10 rounded-xl px-4 py-3 chat-md text-sm text-white leading-relaxed">
+          <div className="bg-slate-900/[0.03] border border-slate-900/10 rounded-xl px-4 py-3 chat-md text-sm text-slate-900 leading-relaxed">
             <MathText>{q.context}</MathText>
           </div>
         )}
@@ -100,10 +100,10 @@ function ExamPartCard({ part }: { part: ExamPart }) {
         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-indigo-500/30">
           {part.label}
         </div>
-        <div className="flex-1 chat-md text-sm sm:text-base text-white leading-relaxed pt-0.5">
+        <div className="flex-1 chat-md text-sm sm:text-base text-slate-900 leading-relaxed pt-0.5">
           <MathText>{part.prompt}</MathText>
         </div>
-        <span className="flex-shrink-0 text-[11px] font-black text-amber-200 bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-lg">
+        <span className="flex-shrink-0 text-[11px] font-black text-amber-800 bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-lg">
           {part.points} נק׳
         </span>
       </div>
@@ -118,7 +118,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
           placeholder="התשובה שלך…"
           rows={2}
           dir="auto"
-          className="w-full bg-slate-950/50 border border-white/10 focus:border-indigo-500/60 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
+          className="w-full bg-slate-900/[0.04] border border-slate-900/10 focus:border-indigo-500/60 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y"
         />
       )}
 
@@ -134,7 +134,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
                 transition={{ duration: 0.3, ease: 'easeOut' }}
                 className="bg-amber-500/5 border border-amber-500/30 rounded-lg px-3 py-2 chat-md"
               >
-                <div className="text-[10px] font-black tracking-widest text-amber-300 mb-1 uppercase flex items-center gap-1.5">
+                <div className="text-[10px] font-black tracking-widest text-amber-700 mb-1 uppercase flex items-center gap-1.5">
                   <Lightbulb className="w-3 h-3" />
                   <span>רמז {i + 1}</span>
                 </div>
@@ -153,7 +153,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
           <motion.button
             {...buttonTap}
             onClick={revealHint}
-            className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2 rounded-lg font-bold text-amber-100 text-sm transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2 rounded-lg font-bold text-amber-800 text-sm transition-colors"
           >
             <Lightbulb className="w-4 h-4" />
             <span>{hintsShown === 0 ? 'רמז' : `רמז נוסף (${hintsShown + 1}/${part.hints.length})`}</span>
@@ -184,7 +184,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
             className="space-y-2.5"
           >
             <div className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-xl p-3.5">
-              <div className="text-[10px] font-black tracking-widest text-indigo-300 mb-2 uppercase flex items-center gap-1.5">
+              <div className="text-[10px] font-black tracking-widest text-indigo-700 mb-2 uppercase flex items-center gap-1.5">
                 <KeyRound className="w-3 h-3" />
                 <span>פתרון סעיף {part.label}</span>
               </div>
@@ -197,21 +197,21 @@ function ExamPartCard({ part }: { part: ExamPart }) {
                     transition={{ duration: 0.25, delay: 0.05 + i * 0.06, ease: 'easeOut' }}
                     className="flex gap-3"
                   >
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-800">
                       {i + 1}
                     </div>
-                    <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
+                    <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5">
                       <MathText>{step}</MathText>
                     </div>
                   </motion.li>
                 ))}
               </ol>
               <div className="mt-3 bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2.5">
-                <div className="text-[10px] font-black tracking-widest text-emerald-300 mb-1 uppercase flex items-center gap-1.5">
+                <div className="text-[10px] font-black tracking-widest text-emerald-700 mb-1 uppercase flex items-center gap-1.5">
                   <CheckCircle className="w-3 h-3" />
                   <span>תשובה סופית</span>
                 </div>
-                <div className="text-sm font-bold text-emerald-50 chat-md">
+                <div className="text-sm font-bold text-emerald-900 chat-md">
                   <MathText inline>{part.solution.finalAnswer}</MathText>
                 </div>
               </div>
@@ -219,14 +219,14 @@ function ExamPartCard({ part }: { part: ExamPart }) {
 
             {/* Rubric — on what points are lost */}
             <div className="bg-indigo-500/5 border border-indigo-500/25 rounded-xl px-3 py-2.5">
-              <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase flex items-center gap-1.5 mb-1.5">
+              <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase flex items-center gap-1.5 mb-1.5">
                 <MinusCircle className="w-3 h-3" />
                 <span>מחוון — על מה מורידים נקודות ({part.points} נק׳ לסעיף)</span>
               </div>
               <ul className="space-y-1">
                 {part.deductions.map((d, i) => (
                   <li key={i} className="flex gap-2 text-xs text-indigo-50/90 leading-relaxed">
-                    <span className="text-indigo-300 flex-shrink-0 mt-0.5">−</span>
+                    <span className="text-indigo-700 flex-shrink-0 mt-0.5">−</span>
                     <div className="chat-md flex-1">
                       <MathText inline>{d}</MathText>
                     </div>

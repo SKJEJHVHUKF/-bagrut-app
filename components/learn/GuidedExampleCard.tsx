@@ -9,10 +9,10 @@ import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
 import { buttonTap } from '@/lib/animations';
 
 const DIFF_META: Record<GuidedExample['difficulty'], { label: string; dot: string; color: string }> = {
-  trivial: { label: 'טריוויאלי', dot: '⚪', color: 'text-slate-300' },
-  easy: { label: 'קל', dot: '🟢', color: 'text-emerald-300' },
-  mid: { label: 'בינוני', dot: '🟡', color: 'text-amber-300' },
-  hard: { label: 'מאתגר', dot: '🔴', color: 'text-indigo-300' },
+  trivial: { label: 'טריוויאלי', dot: '⚪', color: 'text-slate-700' },
+  easy: { label: 'קל', dot: '🟢', color: 'text-emerald-700' },
+  mid: { label: 'בינוני', dot: '🟡', color: 'text-amber-700' },
+  hard: { label: 'מאתגר', dot: '🔴', color: 'text-indigo-700' },
 };
 
 /**
@@ -32,25 +32,25 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
     <div className="surface-premium rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full text-right px-4 py-3 flex items-start gap-3 hover:bg-white/5 transition-colors"
+        className="w-full text-right px-4 py-3 flex items-start gap-3 hover:bg-slate-900/[0.03] transition-colors"
       >
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-xs font-black text-indigo-100">
+        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-xs font-black text-indigo-800">
           {index + 1}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+            <span className="text-[10px] font-black tracking-widest text-slate-600 uppercase">
               דוגמה מודרכת
             </span>
             <span className={`text-xs font-bold ${meta.color}`}>
               {meta.dot} {meta.label}
             </span>
           </div>
-          <div className="text-sm text-white chat-md line-clamp-2">
+          <div className="text-sm text-slate-900 chat-md line-clamp-2">
             <MathText inline>{example.problem}</MathText>
           </div>
         </div>
-        <div className="flex-shrink-0 text-slate-400 pt-1">
+        <div className="flex-shrink-0 text-slate-600 pt-1">
           {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
       </button>
@@ -58,7 +58,7 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
       {open && (
         <div className="px-4 pb-4 space-y-3">
           {/* Problem restated */}
-          <div className="bg-slate-950/40 border border-white/10 rounded-xl px-4 py-3 chat-md text-sm text-white">
+          <div className="bg-slate-900/[0.03] border border-slate-900/10 rounded-xl px-4 py-3 chat-md text-sm text-slate-900">
             <MathText>{example.problem}</MathText>
           </div>
 
@@ -108,14 +108,14 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
                 transition={{ duration: 0.3, ease: 'easeOut' }}
                 className="flex gap-3"
               >
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-800">
                   {i + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="chat-md text-sm text-slate-100 leading-relaxed">
+                  <div className="chat-md text-sm text-slate-800 leading-relaxed">
                     <MathText>{step.action}</MathText>
                   </div>
-                  <div className="chat-md text-xs text-slate-400 leading-relaxed mt-1 border-r-2 border-indigo-500/30 pr-2.5">
+                  <div className="chat-md text-xs text-slate-600 leading-relaxed mt-1 border-r-2 border-indigo-500/30 pr-2.5">
                     <span className="font-bold text-indigo-200/90">למה: </span>
                     <MathText inline>{step.why}</MathText>
                   </div>
@@ -128,7 +128,7 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
             <motion.button
               {...buttonTap}
               onClick={() => setStepsShown((n) => n + 1)}
-              className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2.5 rounded-xl font-bold text-indigo-100 text-sm transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2.5 rounded-xl font-bold text-indigo-800 text-sm transition-all"
             >
               {stepsShown === 0 ? 'הצג צעד ראשון' : `הצעד הבא (${stepsShown + 1}/${total})`}
             </motion.button>
@@ -139,11 +139,11 @@ export function GuidedExampleCard({ example, index }: { example: GuidedExample; 
               transition={{ duration: 0.35 }}
               className="bg-emerald-500/10 border border-emerald-500/40 rounded-xl px-4 py-3"
             >
-              <div className="text-[11px] font-black tracking-widest text-emerald-300 mb-1.5 uppercase flex items-center gap-1.5">
+              <div className="text-[11px] font-black tracking-widest text-emerald-700 mb-1.5 uppercase flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5" />
                 <span>תשובה</span>
               </div>
-              <div className="text-sm sm:text-base font-bold text-emerald-50 chat-md">
+              <div className="text-sm sm:text-base font-bold text-emerald-900 chat-md">
                 <MathText inline>{example.answer}</MathText>
               </div>
             </motion.div>

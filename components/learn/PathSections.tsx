@@ -59,25 +59,25 @@ export function SectionShell({
         <div
           className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm border transition-colors ${
             done
-              ? 'bg-emerald-500/25 border-emerald-400/60 text-emerald-100'
-              : 'bg-white/5 border-white/15 text-slate-200'
+              ? 'bg-emerald-500/25 border-emerald-400/60 text-emerald-800'
+              : 'bg-slate-900/[0.03] border-slate-900/[0.12] text-slate-800'
           }`}
         >
           {done ? <CheckCircle2 className="w-5 h-5" /> : index}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+          <div className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
             <span>{emoji}</span>
             <span>{title}</span>
           </div>
-          {subtitle && <div className="text-xs text-slate-400 mt-0.5">{subtitle}</div>}
+          {subtitle && <div className="text-xs text-slate-600 mt-0.5">{subtitle}</div>}
         </div>
         <button
           onClick={onToggle}
           className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${
             done
-              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/25'
-              : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-800 hover:bg-emerald-500/25'
+              : 'bg-slate-900/[0.03] border-slate-900/10 text-slate-700 hover:bg-slate-900/5'
           }`}
           aria-pressed={done}
         >
@@ -97,7 +97,7 @@ export function SectionShell({
 export function PrerequisitesView({ items }: { items: Prerequisite[] }) {
   return (
     <div className="space-y-2.5">
-      <p className="text-xs text-slate-400 leading-relaxed mb-1">
+      <p className="text-xs text-slate-600 leading-relaxed mb-1">
         לפני שמתחילים — ודא שאתה שולט בדברים הבאים. לכל אחד יש רענון קצר; אם זה עדיין לא ברור, יש קישור
         לנושא המלא.
       </p>
@@ -112,7 +112,7 @@ export function PrerequisitesView({ items }: { items: Prerequisite[] }) {
               <MathText inline>{p.title}</MathText>
             </div>
           </div>
-          <div className="chat-md text-sm text-slate-200 leading-relaxed">
+          <div className="chat-md text-sm text-slate-800 leading-relaxed">
             <MathText>{p.refresher}</MathText>
           </div>
           {p.selfCheck && (
@@ -145,23 +145,23 @@ export function IntuitionView({ data }: { data: IntuitionData }) {
     <div className="space-y-3">
       <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/30 rounded-2xl px-4 py-3.5">
         <div className="flex items-start gap-2.5">
-          <Lightbulb className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" />
-          <div className="chat-md text-sm sm:text-base text-amber-50 leading-relaxed font-medium">
+          <Lightbulb className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+          <div className="chat-md text-sm sm:text-base text-amber-900 leading-relaxed font-medium">
             <MathText>{data.hook}</MathText>
           </div>
         </div>
       </div>
 
-      <div className="chat-md text-sm text-slate-200 leading-relaxed">
+      <div className="chat-md text-sm text-slate-800 leading-relaxed">
         <MathText>{data.body}</MathText>
       </div>
 
       {data.diagrams && data.diagrams.length > 0 && <DiagramRenderer diagrams={data.diagrams} />}
 
       <div className="bg-emerald-500/5 border border-emerald-500/30 rounded-2xl px-4 py-3 flex items-start gap-2.5">
-        <span className="text-emerald-300 mt-0.5">🎯</span>
+        <span className="text-emerald-700 mt-0.5">🎯</span>
         <div className="text-sm text-emerald-50/95 leading-relaxed chat-md">
-          <span className="font-bold text-emerald-200">בסוף המסלול תדע: </span>
+          <span className="font-bold text-emerald-800">בסוף המסלול תדע: </span>
           <MathText inline>{data.payoff}</MathText>
         </div>
       </div>
@@ -176,7 +176,7 @@ export function IntuitionView({ data }: { data: IntuitionData }) {
 export function ConceptsView({ atoms }: { atoms: ConceptAtom[] }) {
   return (
     <div className="space-y-3">
-      <p className="text-xs text-slate-400 leading-relaxed mb-1">
+      <p className="text-xs text-slate-600 leading-relaxed mb-1">
         כל מושג נבנה בארבעה צעדים: הסבר בשפה פשוטה ← הגדרה פורמלית ← הדוגמה הכי פשוטה ← למה זה עובד.
       </p>
       {atoms.map((atom, i) => (
@@ -185,11 +185,11 @@ export function ConceptsView({ atoms }: { atoms: ConceptAtom[] }) {
           id={`concept-${atom.id}`}
           className="scroll-mt-24 surface-premium rounded-2xl overflow-hidden"
         >
-          <div className="bg-white/[0.03] border-b border-white/10 px-4 py-2.5 flex items-center gap-2.5">
-            <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
+          <div className="bg-slate-900/[0.02] border-b border-slate-900/10 px-4 py-2.5 flex items-center gap-2.5">
+            <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-800">
               {i + 1}
             </span>
-            <div className="font-black text-sm text-indigo-100 chat-md">
+            <div className="font-black text-sm text-indigo-800 chat-md">
               <MathText inline>{atom.title}</MathText>
             </div>
           </div>
@@ -198,7 +198,7 @@ export function ConceptsView({ atoms }: { atoms: ConceptAtom[] }) {
             {/* Plain language */}
             <div>
               <StepTag color="sky">בשפה פשוטה</StepTag>
-              <div className="chat-md text-sm text-slate-100 leading-relaxed mt-1">
+              <div className="chat-md text-sm text-slate-800 leading-relaxed mt-1">
                 <MathText>{atom.plain}</MathText>
               </div>
             </div>
@@ -206,26 +206,26 @@ export function ConceptsView({ atoms }: { atoms: ConceptAtom[] }) {
             {/* Formal */}
             <div>
               <StepTag color="purple">הגדרה פורמלית</StepTag>
-              <div className="chat-md text-sm text-slate-100 leading-relaxed mt-1">
+              <div className="chat-md text-sm text-slate-800 leading-relaxed mt-1">
                 <MathText>{atom.formal}</MathText>
               </div>
             </div>
 
             {/* Simplest example */}
-            <div className="bg-slate-950/40 border border-white/10 rounded-xl px-3 py-2.5">
+            <div className="bg-slate-900/[0.03] border border-slate-900/10 rounded-xl px-3 py-2.5">
               <StepTag color="emerald">הדוגמה הכי פשוטה</StepTag>
-              <div className="chat-md text-sm text-white leading-relaxed mt-1">
+              <div className="chat-md text-sm text-slate-900 leading-relaxed mt-1">
                 <MathText>{atom.simplestExample.problem}</MathText>
               </div>
-              <div className="chat-md text-sm text-emerald-50/90 leading-relaxed mt-1.5 border-t border-white/5 pt-1.5">
+              <div className="chat-md text-sm text-emerald-50/90 leading-relaxed mt-1.5 border-t border-slate-900/[0.06] pt-1.5">
                 <MathText>{atom.simplestExample.solution}</MathText>
               </div>
             </div>
 
             {/* Why it works */}
             {atom.whyItWorks && (
-              <div className="text-xs text-slate-400 chat-md leading-relaxed border-r-2 border-indigo-500/40 pr-3">
-                <span className="font-bold text-indigo-200">למה זה עובד: </span>
+              <div className="text-xs text-slate-600 chat-md leading-relaxed border-r-2 border-indigo-500/40 pr-3">
+                <span className="font-bold text-indigo-800">למה זה עובד: </span>
                 <MathText inline>{atom.whyItWorks}</MathText>
               </div>
             )}
@@ -241,8 +241,8 @@ export function ConceptsView({ atoms }: { atoms: ConceptAtom[] }) {
 function StepTag({ children, color }: { children: ReactNode; color: 'sky' | 'purple' | 'emerald' }) {
   const map = {
     sky: 'text-sky-300',
-    purple: 'text-indigo-300',
-    emerald: 'text-emerald-300',
+    purple: 'text-indigo-700',
+    emerald: 'text-emerald-700',
   };
   return (
     <span className={`text-[10px] font-black tracking-widest uppercase ${map[color]}`}>{children}</span>
@@ -262,20 +262,20 @@ export function PitfallsView({ items }: { items: Pitfall[] }) {
           className="bg-amber-500/5 border border-amber-500/30 rounded-2xl px-4 py-3"
         >
           <div className="flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
             <div className="flex-1 space-y-1.5">
-              <div className="chat-md text-sm text-amber-50 leading-relaxed">
-                <span className="font-bold text-indigo-300">✗ </span>
+              <div className="chat-md text-sm text-amber-900 leading-relaxed">
+                <span className="font-bold text-indigo-700">✗ </span>
                 <MathText inline>{p.mistake}</MathText>
               </div>
               <div className="chat-md text-sm text-emerald-50/90 leading-relaxed">
-                <span className="font-bold text-emerald-300">✓ </span>
+                <span className="font-bold text-emerald-700">✓ </span>
                 <MathText inline>{p.correction}</MathText>
               </div>
               {p.relatedConceptId && (
                 <a
                   href={`#concept-${p.relatedConceptId}`}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-300/80 hover:text-indigo-200 transition-colors"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-300/80 hover:text-indigo-800 transition-colors"
                 >
                   <span>חזור למושג הרלוונטי</span>
                   <ArrowLeft className="w-3 h-3" />
@@ -297,13 +297,13 @@ export function FormulaSheetView({ data }: { data: FormulaSheet }) {
   return (
     <div className="space-y-3">
       <div className="bg-emerald-500/5 border border-emerald-500/30 rounded-2xl px-4 py-3">
-        <div className="text-[10px] font-black tracking-widest text-emerald-300 mb-2 uppercase">
+        <div className="text-[10px] font-black tracking-widest text-emerald-700 mb-2 uppercase">
           סקירה מהירה
         </div>
         <ul className="space-y-2">
           {data.quickReview.map((s, i) => (
             <li key={i} className="flex gap-2 text-sm text-emerald-50/95 leading-relaxed">
-              <span className="text-emerald-300 flex-shrink-0 mt-0.5">✓</span>
+              <span className="text-emerald-700 flex-shrink-0 mt-0.5">✓</span>
               <div className="chat-md flex-1">
                 <MathText>{s}</MathText>
               </div>

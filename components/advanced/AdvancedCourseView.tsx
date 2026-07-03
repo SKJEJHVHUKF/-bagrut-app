@@ -70,20 +70,20 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
       <motion.header initial="hidden" animate="visible" variants={staggerContainer} className="space-y-3">
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2"
         >
           <Rocket className="w-3.5 h-3.5" />
           <span>קורס מתקדם · רמת בגרות</span>
         </motion.div>
         <motion.h1 variants={fadeUp} className="text-2xl sm:text-3xl font-black leading-tight">
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             {course.title}
           </span>
         </motion.h1>
-        <motion.p variants={fadeUp} className="text-sm text-slate-300 leading-relaxed chat-md">
+        <motion.p variants={fadeUp} className="text-sm text-slate-700 leading-relaxed chat-md">
           <MathText inline>{course.tagline}</MathText>
         </motion.p>
-        <motion.div variants={fadeUp} className="flex items-center gap-3 text-xs text-slate-400 flex-wrap">
+        <motion.div variants={fadeUp} className="flex items-center gap-3 text-xs text-slate-600 flex-wrap">
           <span className="inline-flex items-center gap-1.5 surface-premium rounded-full px-2.5 py-1">
             <Clock className="w-3.5 h-3.5" />
             {course.estimatedMinutes} דקות
@@ -93,7 +93,7 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
           </span>
           <Link
             href={`/learn/${subject}/${encodeURIComponent(topic)}`}
-            className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 rounded-full px-2.5 py-1 hover:bg-emerald-500/20 transition-colors"
+            className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 rounded-full px-2.5 py-1 hover:bg-emerald-500/20 transition-colors"
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>לקורס הבסיס</span>
@@ -108,14 +108,14 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
         className="surface-premium rounded-2xl p-4 space-y-3"
       >
         <div className="flex items-baseline justify-between">
-          <div className="text-sm font-bold text-indigo-100">
+          <div className="text-sm font-bold text-indigo-800">
             {simPassed
               ? '🎓 הנושא הושלם ברמת בגרות!'
               : `${doneCount}/${totalSections} חלקים הושלמו`}
           </div>
           <div className="text-xs text-indigo-300/80 font-mono">{percent}%</div>
         </div>
-        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
           <motion.div
             initial={{ width: '0%' }}
             animate={{ width: `${percent}%` }}
@@ -132,10 +132,10 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
                 href={locked ? '#section-gate' : `#section-${s.id}`}
                 className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-lg border transition-colors ${
                   done.has(s.id)
-                    ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-200'
+                    ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-800'
                     : locked
-                      ? 'bg-white/[0.02] border-white/5 text-slate-500'
-                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                      ? 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-500'
+                      : 'bg-slate-900/[0.03] border-slate-900/10 text-slate-700 hover:bg-slate-900/5'
                 }`}
               >
                 <span>{done.has(s.id) ? '✓' : locked ? '🔒' : i + 1}</span>
@@ -223,7 +223,7 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
           onToggle={() => onToggle('exam-practice')}
         >
           <div className="space-y-4">
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               פתור עם שעון ביד — זמן היעד רשום על כל שאלה. אחרי הפתרון, גרד את עצמך מול המחוון
               בדיוק כמו בודק.
             </p>
@@ -246,10 +246,10 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
             {course.traps.map((t, i) => (
               <div key={i} className="bg-amber-500/5 border border-amber-500/30 rounded-2xl px-4 py-3">
                 <div className="flex items-start gap-2.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 space-y-1.5">
-                    <div className="chat-md text-sm text-amber-50 leading-relaxed">
-                      <span className="font-bold text-indigo-300">המלכודת: </span>
+                    <div className="chat-md text-sm text-amber-900 leading-relaxed">
+                      <span className="font-bold text-indigo-700">המלכודת: </span>
                       <MathText inline>{t.trap}</MathText>
                     </div>
                     <div className="chat-md text-xs text-indigo-200/90 leading-relaxed">
@@ -257,13 +257,13 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
                       <MathText inline>{t.consequence}</MathText>
                     </div>
                     <div className="chat-md text-sm text-emerald-50/90 leading-relaxed">
-                      <span className="font-bold text-emerald-300">ההרגל שמציל: </span>
+                      <span className="font-bold text-emerald-700">ההרגל שמציל: </span>
                       <MathText inline>{t.avoid}</MathText>
                     </div>
                     {t.relatedPatternId && (
                       <a
                         href={`#pattern-${t.relatedPatternId}`}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-300/80 hover:text-indigo-200 transition-colors"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-300/80 hover:text-indigo-800 transition-colors"
                       >
                         <span>לתבנית הרלוונטית</span>
                         <ArrowLeft className="w-3 h-3" />
@@ -307,14 +307,14 @@ function LockedGroup({ locked, children }: { locked: boolean; children: ReactNod
       className="surface-premium border-dashed rounded-2xl p-8 text-center space-y-3"
     >
       <Lock className="w-10 h-10 mx-auto text-slate-500" />
-      <div className="text-base font-black text-slate-300">שאר הקורס נעול</div>
-      <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+      <div className="text-base font-black text-slate-700">שאר הקורס נעול</div>
+      <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
         מפת התבניות, הטכניקות, הבגרויות המפורקות, התרגול והסימולציה ייפתחו אחרי שתעבור את שער
         הכניסה (או תבחר לדלג עליו).
       </p>
       <a
         href="#section-gate"
-        className="inline-flex items-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-xl font-bold text-indigo-100 text-sm transition-colors"
+        className="inline-flex items-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-xl font-bold text-indigo-800 text-sm transition-colors"
       >
         <span>לשער הכניסה</span>
         <ArrowLeft className="w-4 h-4" />

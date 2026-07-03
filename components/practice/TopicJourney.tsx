@@ -73,18 +73,18 @@ export function TopicJourney({
     <section className="mb-5 space-y-3">
       {/* Header with progress count */}
       <div className="flex items-baseline justify-between">
-        <div className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2">
+        <div className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2">
           <Target className="w-3.5 h-3.5" />
           <span>מסלול הלימוד</span>
         </div>
-        <div className="text-xs text-slate-400">
-          <span className="font-black text-indigo-300">{completed}/3</span>
+        <div className="text-xs text-slate-600">
+          <span className="font-black text-indigo-700">{completed}/3</span>
           <span> שלבים</span>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
         <div
           className="h-full bg-gradient-to-l from-indigo-500 to-indigo-500 transition-all duration-500"
           style={{ width: `${(completed / 3) * 100}%` }}
@@ -145,13 +145,13 @@ function StepCard({
   const accent = done
     ? 'border-emerald-500/40 bg-emerald-500/10'
     : locked
-    ? 'border-white/5 bg-white/[0.02] opacity-60'
+    ? 'border-slate-900/[0.06] bg-slate-900/[0.02] opacity-60'
     : 'border-indigo-500/40 bg-gradient-to-br from-indigo-600/15 to-indigo-600/15 hover:border-indigo-500/60';
 
   const iconBg = done
-    ? 'bg-emerald-500/30 text-emerald-200'
+    ? 'bg-emerald-500/30 text-emerald-800'
     : locked
-    ? 'bg-white/5 text-slate-500'
+    ? 'bg-slate-900/[0.03] text-slate-500'
     : 'bg-gradient-to-br from-indigo-500 to-indigo-500 text-white';
 
   const content = (
@@ -161,17 +161,17 @@ function StepCard({
           {done ? <CheckCircle className="w-5 h-5" /> : locked ? <Lock className="w-4 h-4" /> : icon}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+          <div className="text-[10px] font-black tracking-widest text-slate-600 uppercase">
             שלב {number}
           </div>
-          <div className="text-sm font-black text-white">{title}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">{subtitle}</div>
+          <div className="text-sm font-black text-slate-900">{title}</div>
+          <div className="text-[11px] text-slate-600 mt-0.5">{subtitle}</div>
         </div>
         {!locked && !done && (
-          <PlayCircle className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-1" />
+          <PlayCircle className="w-4 h-4 text-indigo-700 flex-shrink-0 mt-1" />
         )}
         {done && (
-          <ArrowLeft className="w-4 h-4 text-emerald-300 flex-shrink-0 mt-1" />
+          <ArrowLeft className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-1" />
         )}
       </div>
     </div>

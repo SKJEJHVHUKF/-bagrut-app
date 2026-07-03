@@ -45,7 +45,7 @@ export function StaticBagrutExerciseView({
 
   if (questions.length === 0) {
     return (
-      <div className="text-sm text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-4 py-3">
+      <div className="text-sm text-indigo-700 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-4 py-3">
         אין כרגע שאלות בגרות מוכנות לנושא זה.
       </div>
     );
@@ -95,15 +95,15 @@ export function StaticBagrutExerciseView({
     <div className="space-y-4">
       {/* Meta strip */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-200 font-bold">
+        <span className="px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-800 font-bold">
           {subjectLabel}
         </span>
         <span className="text-slate-500">•</span>
-        <span className="text-slate-300">{topic}</span>
+        <span className="text-slate-700">{topic}</span>
         {current.topic_tag && (
           <>
             <span className="text-slate-500">•</span>
-            <span className="text-slate-400">{current.topic_tag}</span>
+            <span className="text-slate-600">{current.topic_tag}</span>
           </>
         )}
         <span className="text-slate-500">•</span>
@@ -112,20 +112,20 @@ export function StaticBagrutExerciseView({
 
       {/* Context (collapsible — long ones don't take over the screen) */}
       {current.context && current.context.trim().length > 0 && (
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden">
+        <div className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-2xl overflow-hidden">
           <button
             onClick={() => setContextOpen((o) => !o)}
-            className="w-full text-right px-5 py-3 flex items-center gap-3 hover:bg-white/[0.02] transition-colors"
+            className="w-full text-right px-5 py-3 flex items-center gap-3 hover:bg-slate-900/[0.02] transition-colors"
           >
-            <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase flex-1 text-right">
+            <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase flex-1 text-right">
               נתוני השאלה
             </div>
-            <div className="flex-shrink-0 text-slate-400">
+            <div className="flex-shrink-0 text-slate-600">
               {contextOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </div>
           </button>
           {contextOpen && (
-            <div className="px-5 pb-4 chat-md text-sm sm:text-base text-white leading-relaxed border-t border-white/5 pt-3">
+            <div className="px-5 pb-4 chat-md text-sm sm:text-base text-slate-900 leading-relaxed border-t border-slate-900/[0.06] pt-3">
               <MathText>{current.context}</MathText>
             </div>
           )}
@@ -151,10 +151,10 @@ export function StaticBagrutExerciseView({
         <motion.button
           {...buttonTap}
           onClick={newQuestion}
-          className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-bold text-white shadow-lg transition-colors text-sm ${
+          className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-bold text-slate-900 shadow-lg transition-colors text-sm ${
             questions.length > 1
               ? 'bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 shadow-indigo-500/30'
-              : 'bg-white/10 hover:bg-white/15 border border-white/20 shadow-white/5'
+              : 'bg-slate-900/5 hover:bg-slate-900/[0.06] border border-slate-900/15 shadow-white/5'
           }`}
         >
           {questions.length > 1 ? (

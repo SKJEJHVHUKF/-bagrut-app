@@ -113,7 +113,7 @@ export default function ScanPage() {
   if (auth.status === 'loading') {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
       </main>
     );
   }
@@ -122,9 +122,9 @@ export default function ScanPage() {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
         <div className="surface-premium rounded-2xl p-8 max-w-md text-center space-y-4">
-          <Camera className="w-12 h-12 text-indigo-400 mx-auto" />
+          <Camera className="w-12 h-12 text-indigo-600 mx-auto" />
           <h1 className="font-display text-2xl font-black">צלמי שאלה וקבלי פתרון</h1>
-          <p className="text-slate-300">יש להתחבר כדי להשתמש בפיצ׳ר.</p>
+          <p className="text-slate-700">יש להתחבר כדי להשתמש בפיצ׳ר.</p>
           <Link
             href={`/login?next=${encodeURIComponent('/scan')}`}
             className="inline-flex items-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 px-6 py-3 rounded-2xl font-bold"
@@ -142,7 +142,7 @@ export default function ScanPage() {
         <div className="surface-premium rounded-2xl p-8 max-w-md text-center space-y-4">
           <Sparkles className="w-12 h-12 text-amber-400 mx-auto" />
           <h1 className="font-display text-2xl font-black">פיצ׳ר Pro</h1>
-          <p className="text-slate-300 leading-relaxed">
+          <p className="text-slate-700 leading-relaxed">
             צילום שאלה והסבר מ-AI הוא חלק מ-Pro. שדרגי כדי לקבל גישה.
           </p>
           <Link
@@ -161,16 +161,16 @@ export default function ScanPage() {
   return (
     <main className="min-h-screen px-4 sm:px-6 py-8 max-w-3xl mx-auto">
       <header className="space-y-2 mb-6">
-        <div className="text-xs font-black tracking-widest text-indigo-300 uppercase flex items-center gap-2">
+        <div className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2">
           <Camera className="w-3.5 h-3.5" />
           <span>צילום וניתוח</span>
         </div>
         <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             צלמי שאלה. קבלי הסבר מלא.
           </span>
         </h1>
-        <p className="text-sm text-slate-400 leading-relaxed">
+        <p className="text-sm text-slate-600 leading-relaxed">
           העלי תמונה של שאלת בגרות במתמטיקה, ו-AI יזהה את הנושא, יתמלל את השאלה ויפתור אותה צעד-אחר-צעד.
         </p>
       </header>
@@ -197,20 +197,20 @@ export default function ScanPage() {
             onClick={() => cameraInputRef.current?.click()}
             className="group flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-indigo-600/20 to-indigo-600/20 border-2 border-dashed border-indigo-400/40 hover:border-indigo-400/80 rounded-2xl py-10 px-6 transition-all"
           >
-            <Camera className="w-10 h-10 text-indigo-300 group-hover:scale-110 transition-transform" />
+            <Camera className="w-10 h-10 text-indigo-700 group-hover:scale-110 transition-transform" />
             <div className="text-center">
               <div className="font-black text-base">צלמי עכשיו</div>
-              <div className="text-xs text-slate-400 mt-1">פתיחת המצלמה</div>
+              <div className="text-xs text-slate-600 mt-1">פתיחת המצלמה</div>
             </div>
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="group flex flex-col items-center justify-center gap-3 bg-white/[0.03] border-2 border-dashed border-white/15 hover:border-white/30 rounded-2xl py-10 px-6 transition-all"
+            className="group flex flex-col items-center justify-center gap-3 bg-slate-900/[0.02] border-2 border-dashed border-slate-900/[0.12] hover:border-slate-900/20 rounded-2xl py-10 px-6 transition-all"
           >
-            <Upload className="w-10 h-10 text-slate-300 group-hover:scale-110 transition-transform" />
+            <Upload className="w-10 h-10 text-slate-700 group-hover:scale-110 transition-transform" />
             <div className="text-center">
               <div className="font-black text-base">העלי מהגלריה</div>
-              <div className="text-xs text-slate-400 mt-1">בחירת קובץ</div>
+              <div className="text-xs text-slate-600 mt-1">בחירת קובץ</div>
             </div>
           </button>
         </div>
@@ -263,28 +263,28 @@ export default function ScanPage() {
         <div className="space-y-5">
           {/* Topic + subject chips */}
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-3 py-1 text-xs font-bold text-indigo-200">
+            <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-3 py-1 text-xs font-bold text-indigo-800">
               📐 {result.subject === 'math5' ? 'מתמטיקה 5 יח׳' : result.subject}
             </span>
-            <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-3 py-1 text-xs font-bold text-indigo-200">
+            <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-3 py-1 text-xs font-bold text-indigo-800">
               {result.topic}
             </span>
           </div>
 
           {/* Transcribed question */}
           <section className="surface-premium rounded-2xl p-5">
-            <div className="text-xs font-black tracking-widest text-indigo-300 uppercase mb-2 flex items-center gap-2">
+            <div className="text-xs font-black tracking-widest text-indigo-700 uppercase mb-2 flex items-center gap-2">
               <BookOpen className="w-3.5 h-3.5" />
               <span>השאלה</span>
             </div>
-            <div className="chat-md text-sm sm:text-base leading-relaxed text-slate-100">
+            <div className="chat-md text-sm sm:text-base leading-relaxed text-slate-800">
               <MathText>{result.transcribedQuestion}</MathText>
             </div>
           </section>
 
           {/* Steps */}
           <section>
-            <div className="text-xs font-black tracking-widest text-emerald-300 uppercase mb-3 flex items-center gap-2">
+            <div className="text-xs font-black tracking-widest text-emerald-700 uppercase mb-3 flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5" />
               <span>פתרון צעד-אחר-צעד</span>
             </div>
@@ -294,14 +294,14 @@ export default function ScanPage() {
                   key={i}
                   className="surface-premium rounded-2xl p-4 flex gap-3"
                 >
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-xs font-black text-emerald-200">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-xs font-black text-emerald-800">
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-black text-emerald-200 mb-1.5 chat-md">
+                    <div className="text-sm font-black text-emerald-800 mb-1.5 chat-md">
                       <MathText inline>{step.title}</MathText>
                     </div>
-                    <div className="chat-md text-sm text-slate-200 leading-relaxed">
+                    <div className="chat-md text-sm text-slate-800 leading-relaxed">
                       <MathText>{step.content}</MathText>
                     </div>
                   </div>
@@ -312,11 +312,11 @@ export default function ScanPage() {
 
           {/* Final answer */}
           <section className="bg-emerald-500/10 border border-emerald-500/40 rounded-2xl p-5">
-            <div className="text-xs font-black tracking-widest text-emerald-300 uppercase mb-2 flex items-center gap-2">
+            <div className="text-xs font-black tracking-widest text-emerald-700 uppercase mb-2 flex items-center gap-2">
               <CheckCircle className="w-3.5 h-3.5" />
               <span>תשובה סופית</span>
             </div>
-            <div className="chat-md text-base sm:text-lg font-bold leading-relaxed text-emerald-50">
+            <div className="chat-md text-base sm:text-lg font-bold leading-relaxed text-emerald-900">
               <MathText>{result.finalAnswer}</MathText>
             </div>
           </section>
@@ -343,7 +343,7 @@ export default function ScanPage() {
             )}
             <button
               onClick={reset}
-              className="inline-flex items-center justify-center gap-2 bg-white/[0.05] hover:bg-white/[0.08] border border-white/15 px-6 py-4 rounded-2xl font-bold transition-all"
+              className="inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/[0.12] px-6 py-4 rounded-2xl font-bold transition-all"
             >
               <Camera className="w-5 h-5" />
               שאלה חדשה
@@ -354,12 +354,12 @@ export default function ScanPage() {
 
       {/* Bottom nav helpers when no result yet */}
       {!result && !solving && (
-        <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap gap-3 text-sm">
-          <Link href="/library" className="text-indigo-300 hover:text-indigo-200 inline-flex items-center gap-1">
+        <div className="mt-8 pt-6 border-t border-slate-900/10 flex flex-wrap gap-3 text-sm">
+          <Link href="/library" className="text-indigo-700 hover:text-indigo-800 inline-flex items-center gap-1">
             <BookOpen className="w-4 h-4" />
             הספרייה שלי
           </Link>
-          <Link href="/my-plan" className="text-slate-400 hover:text-slate-200 inline-flex items-center gap-1">
+          <Link href="/my-plan" className="text-slate-600 hover:text-slate-800 inline-flex items-center gap-1">
             חזרה לתוכנית
           </Link>
         </div>

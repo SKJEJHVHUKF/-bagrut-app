@@ -36,8 +36,8 @@ export function BagrutBadge({
 function InlineBadge({ mapping }: { mapping: TopicMapping }) {
   const paperColor =
     mapping.paper === '581'
-      ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-200'
-      : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-200';
+      ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-800'
+      : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-800';
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-xs">
@@ -46,7 +46,7 @@ function InlineBadge({ mapping }: { mapping: TopicMapping }) {
       >
         <span>{paperLabel(mapping.paper)}</span>
       </span>
-      <span className="inline-flex items-center text-slate-400">
+      <span className="inline-flex items-center text-slate-600">
         {mapping.appearsIn} • {mapping.typicalPoints} נק׳
       </span>
     </div>
@@ -76,10 +76,10 @@ function BannerBadge({ mapping }: { mapping: TopicMapping }) {
       className={`bg-gradient-to-br ${paperGradient} border rounded-2xl p-4 sm:p-5`}
     >
       <div className="flex flex-wrap items-center gap-2 mb-2">
-        <span className="bg-white/10 border border-white/15 rounded-full px-3 py-1 text-xs font-black text-white">
+        <span className="bg-slate-900/5 border border-slate-900/[0.12] rounded-full px-3 py-1 text-xs font-black text-slate-900">
           {paperLabel(mapping.paper)}
         </span>
-        <span className="text-xs font-bold text-slate-200">{weightLabel}</span>
+        <span className="text-xs font-bold text-slate-800">{weightLabel}</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3 text-center">
@@ -92,8 +92,8 @@ function BannerBadge({ mapping }: { mapping: TopicMapping }) {
         />
       </div>
 
-      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-        <span className="font-bold text-white">איך נבחן בבגרות: </span>
+      <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+        <span className="font-bold text-slate-900">איך נבחן בבגרות: </span>
         {mapping.examStyle}
       </p>
     </section>
@@ -113,10 +113,10 @@ function Stat({
     <div
       className={`surface-premium rounded-xl px-2 py-2 ${fullClassName ?? ''}`}
     >
-      <div className="text-[10px] text-slate-400 font-bold tracking-wide">
+      <div className="text-[10px] text-slate-600 font-bold tracking-wide">
         {label}
       </div>
-      <div className="text-xs sm:text-sm text-white font-black mt-0.5">{value}</div>
+      <div className="text-xs sm:text-sm text-slate-900 font-black mt-0.5">{value}</div>
     </div>
   );
 }

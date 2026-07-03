@@ -66,7 +66,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
         <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white text-xs shadow-lg shadow-indigo-500/30">
           {index + 1}
         </div>
-        <div className="flex-1 chat-md text-sm sm:text-base text-white leading-relaxed pt-0.5">
+        <div className="flex-1 chat-md text-sm sm:text-base text-slate-900 leading-relaxed pt-0.5">
           <MathText>{q.question}</MathText>
         </div>
       </div>
@@ -89,12 +89,12 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
                 disabled={selected !== null}
                 className={`w-full text-right px-4 py-2.5 rounded-xl border transition-colors chat-md text-sm ${
                   show && isCorrect
-                    ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-50'
+                    ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900'
                     : show && isSelected
-                      ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-50'
+                      ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-900'
                       : show
-                        ? 'bg-white/[0.02] border-white/5 text-slate-400'
-                        : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                        ? 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-600'
+                        : 'bg-slate-900/[0.03] hover:bg-slate-900/5 border-slate-900/10 text-slate-900'
                 }`}
               >
                 <span className="font-bold opacity-60 ml-2">{MCQ_LABELS[i]}.</span>
@@ -113,7 +113,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
           placeholder="כתוב כאן את התשובה שלך (נסה לבד לפני שאתה חושף את הפתרון)…"
           rows={2}
           dir="auto"
-          className="w-full bg-slate-950/50 border border-white/10 focus:border-indigo-500/60 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition-colors resize-y"
+          className="w-full bg-slate-900/[0.04] border border-slate-900/10 focus:border-indigo-500/60 rounded-xl px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y"
         />
       )}
 
@@ -135,7 +135,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
                 transition={{ duration: 0.3, ease: 'easeOut' }}
                 className="bg-amber-500/5 border border-amber-500/30 rounded-xl px-3 py-2.5 chat-md"
               >
-                <div className="text-[10px] font-black tracking-widest text-amber-300 mb-1 uppercase flex items-center gap-1.5">
+                <div className="text-[10px] font-black tracking-widest text-amber-700 mb-1 uppercase flex items-center gap-1.5">
                   <Lightbulb className="w-3 h-3" />
                   <span>רמז {i + 1}</span>
                 </div>
@@ -154,7 +154,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
           <motion.button
             {...buttonTap}
             onClick={revealHint}
-            className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-100 text-sm transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-800 text-sm transition-colors"
           >
             <Lightbulb className="w-4 h-4" />
             <span>{hintsShown === 0 ? 'רמז' : `רמז נוסף (${hintsShown + 1}/${q.hints.length})`}</span>
@@ -184,7 +184,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
             style={{ overflow: 'hidden' }}
             className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-xl p-4"
           >
-            <div className="text-[10px] font-black tracking-widest text-indigo-300 mb-2 uppercase flex items-center gap-1.5">
+            <div className="text-[10px] font-black tracking-widest text-indigo-700 mb-2 uppercase flex items-center gap-1.5">
               <KeyRound className="w-3 h-3" />
               <span>פתרון</span>
             </div>
@@ -197,26 +197,26 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
                   transition={{ duration: 0.25, delay: 0.05 + i * 0.06, ease: 'easeOut' }}
                   className="flex gap-3"
                 >
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-[11px] font-black text-indigo-100">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-[11px] font-black text-indigo-800">
                     {i + 1}
                   </div>
-                  <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
+                  <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5">
                     <MathText>{step}</MathText>
                   </div>
                 </motion.li>
               ))}
             </ol>
             <div className="mt-3 bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2.5">
-              <div className="text-[10px] font-black tracking-widest text-emerald-300 mb-1 uppercase flex items-center gap-1.5">
+              <div className="text-[10px] font-black tracking-widest text-emerald-700 mb-1 uppercase flex items-center gap-1.5">
                 <CheckCircle className="w-3 h-3" />
                 <span>תשובה סופית</span>
               </div>
-              <div className="text-sm font-bold text-emerald-50 chat-md">
+              <div className="text-sm font-bold text-emerald-900 chat-md">
                 <MathText inline>{q.solution.finalAnswer}</MathText>
               </div>
             </div>
             {q.solution.explanation && (
-              <div className="mt-2.5 text-xs text-slate-400 chat-md leading-relaxed">
+              <div className="mt-2.5 text-xs text-slate-600 chat-md leading-relaxed">
                 <MathText>{q.solution.explanation}</MathText>
               </div>
             )}

@@ -123,28 +123,28 @@ export function AITutorActions(props: AITutorActionsProps) {
       show: props.show.explainSimpler,
       label: 'הסבר פשוט יותר',
       icon: <Sparkles className="w-4 h-4" />,
-      tone: 'bg-indigo-500/15 hover:bg-indigo-500/25 border-indigo-500/40 text-indigo-100',
+      tone: 'bg-indigo-500/15 hover:bg-indigo-500/25 border-indigo-500/40 text-indigo-800',
     },
     {
       key: 'whyWrong',
       show: props.show.whyWrong,
       label: 'למה טעיתי?',
       icon: <AlertCircle className="w-4 h-4" />,
-      tone: 'bg-indigo-500/15 hover:bg-indigo-500/25 border-indigo-500/40 text-indigo-100',
+      tone: 'bg-indigo-500/15 hover:bg-indigo-500/25 border-indigo-500/40 text-indigo-800',
     },
     {
       key: 'hintHelp',
       show: props.show.hintHelp,
       label: 'עזרה שלב-שלב',
       icon: <MessageCircle className="w-4 h-4" />,
-      tone: 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/40 text-amber-100',
+      tone: 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/40 text-amber-800',
     },
     {
       key: 'similarQuestion',
       show: props.show.similarQuestion,
       label: 'שאלה דומה',
       icon: <RotateCw className="w-4 h-4" />,
-      tone: 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40 text-emerald-100',
+      tone: 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40 text-emerald-800',
     },
   ];
 
@@ -188,14 +188,14 @@ export function AITutorActions(props: AITutorActionsProps) {
         return (
           <div
             key={`${b.key}-panel`}
-            className={`bg-white/[0.04] border border-white/15 rounded-xl px-3 py-2.5 chat-md text-sm text-slate-100`}
+            className={`bg-slate-900/[0.03] border border-slate-900/[0.12] rounded-xl px-3 py-2.5 chat-md text-sm text-slate-800`}
           >
-            <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase mb-1.5 flex items-center gap-1.5">
+            <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase mb-1.5 flex items-center gap-1.5">
               {b.icon}
               <span>{b.label}</span>
             </div>
             {s.error ? (
-              <div className="text-indigo-200">{s.error}</div>
+              <div className="text-indigo-800">{s.error}</div>
             ) : s.response ? (
               <div className="leading-relaxed">
                 <MathText>{s.response}</MathText>

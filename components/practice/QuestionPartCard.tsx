@@ -226,45 +226,45 @@ export function QuestionPartCard({
     <div className="surface-premium rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full text-right px-4 py-3 flex items-center gap-3 hover:bg-white/[0.02] transition-colors"
+        className="w-full text-right px-4 py-3 flex items-center gap-3 hover:bg-slate-900/[0.02] transition-colors"
       >
         <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white shadow-lg shadow-indigo-500/30">
           {part.label}
         </div>
         <div className="flex-1 text-right">
-          <div className="text-[10px] font-black tracking-widest text-indigo-300 uppercase">
+          <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase">
             סעיף {part.label}
           </div>
-          <div className="text-sm text-slate-200 line-clamp-1 chat-md">
+          <div className="text-sm text-slate-800 line-clamp-1 chat-md">
             <MathText inline>{part.prompt}</MathText>
           </div>
         </div>
         <div className="flex-shrink-0 flex items-center gap-2">
           {checkResult?.verdict === 'correct' && (
-            <CheckCircle className="w-4 h-4 text-emerald-400" />
+            <CheckCircle className="w-4 h-4 text-emerald-700" />
           )}
           {checkResult?.verdict === 'partial' && (
             <AlertCircle className="w-4 h-4 text-amber-400" />
           )}
           {checkResult?.verdict === 'wrong' && (
-            <XCircle className="w-4 h-4 text-indigo-400" />
+            <XCircle className="w-4 h-4 text-indigo-600" />
           )}
-          <div className="text-slate-400">
+          <div className="text-slate-600">
             {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </div>
         </div>
       </button>
 
       {open && (
-        <div className="px-4 pb-4 space-y-3 border-t border-white/5 pt-3">
+        <div className="px-4 pb-4 space-y-3 border-t border-slate-900/[0.06] pt-3">
           {/* Prompt */}
-          <div className="chat-md text-sm sm:text-base text-white leading-relaxed">
+          <div className="chat-md text-sm sm:text-base text-slate-900 leading-relaxed">
             <MathText>{part.prompt}</MathText>
           </div>
 
           {/* Answer input + Check button */}
           <div>
-            <div className="text-[10px] font-black tracking-widest text-slate-400 mb-1.5 uppercase">
+            <div className="text-[10px] font-black tracking-widest text-slate-600 mb-1.5 uppercase">
               התשובה שלי
             </div>
             <AnswerInput
@@ -280,7 +280,7 @@ export function QuestionPartCard({
                 <button
                   onClick={checkAnswer}
                   disabled={!canCheck}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 disabled:opacity-40 disabled:cursor-not-allowed border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-100 text-sm transition-all"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 disabled:opacity-40 disabled:cursor-not-allowed border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-800 text-sm transition-all"
                 >
                   {checking ? (
                     <>
@@ -296,7 +296,7 @@ export function QuestionPartCard({
                 </button>
 
                 {checkError && (
-                  <div className="mt-2 text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-3 py-2">
+                  <div className="mt-2 text-xs text-indigo-700 bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-3 py-2">
                     {checkError}
                   </div>
                 )}
@@ -340,7 +340,7 @@ export function QuestionPartCard({
                     transition={{ duration: 0.3, ease: 'easeOut' }}
                     className="bg-amber-500/5 border border-amber-500/30 rounded-xl px-3 py-2.5 chat-md"
                   >
-                    <div className="text-[10px] font-black tracking-widest text-amber-300 mb-1 uppercase flex items-center gap-1.5">
+                    <div className="text-[10px] font-black tracking-widest text-amber-700 mb-1 uppercase flex items-center gap-1.5">
                       <Lightbulb className="w-3 h-3" />
                       <span>רמז {i + 1}</span>
                     </div>
@@ -357,7 +357,7 @@ export function QuestionPartCard({
             <motion.button
               {...buttonTap}
               onClick={revealHint}
-              className="w-full inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-100 text-sm transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-800 text-sm transition-colors"
             >
               <Lightbulb className="w-4 h-4" />
               <span>
@@ -393,7 +393,7 @@ export function QuestionPartCard({
                 style={{ overflow: 'hidden' }}
                 className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-xl p-4"
               >
-                <div className="text-[10px] font-black tracking-widest text-indigo-300 mb-2 uppercase flex items-center gap-1.5">
+                <div className="text-[10px] font-black tracking-widest text-indigo-700 mb-2 uppercase flex items-center gap-1.5">
                   <KeyRound className="w-3 h-3" />
                   <span>פתרון</span>
                 </div>
@@ -406,10 +406,10 @@ export function QuestionPartCard({
                       transition={{ duration: 0.3, ease: 'easeOut' }}
                       className="flex gap-3"
                     >
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-[11px] font-black text-indigo-100">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-[11px] font-black text-indigo-800">
                         {i + 1}
                       </div>
-                      <div className="flex-1 chat-md text-sm text-slate-100 pt-0.5">
+                      <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5">
                         <MathText>{step}</MathText>
                       </div>
                     </motion.li>
@@ -420,7 +420,7 @@ export function QuestionPartCard({
                   <motion.button
                     {...buttonTap}
                     onClick={nextStep}
-                    className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-lg font-bold text-indigo-100 text-sm transition-colors"
+                    className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-lg font-bold text-indigo-800 text-sm transition-colors"
                   >
                     הצעד הבא ({stepsShown + 2}/{totalSteps})
                   </motion.button>
@@ -431,11 +431,11 @@ export function QuestionPartCard({
                     transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
                     className="mt-3 bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2.5"
                   >
-                    <div className="text-[10px] font-black tracking-widest text-emerald-300 mb-1 uppercase flex items-center gap-1.5">
+                    <div className="text-[10px] font-black tracking-widest text-emerald-700 mb-1 uppercase flex items-center gap-1.5">
                       <CheckCircle className="w-3 h-3" />
                       <span>תשובה סופית</span>
                     </div>
-                    <div className="text-sm font-bold text-emerald-50 chat-md">
+                    <div className="text-sm font-bold text-emerald-900 chat-md">
                       <MathText inline>{part.solution.final_answer}</MathText>
                     </div>
                   </motion.div>
@@ -481,21 +481,21 @@ function CheckResultPanel({ result }: { result: CheckResult }) {
     result.verdict === 'correct'
       ? {
           wrap: 'bg-emerald-500/10 border-emerald-500/40',
-          accent: 'text-emerald-300',
-          icon: <CheckCircle className="w-4 h-4 text-emerald-300" />,
+          accent: 'text-emerald-700',
+          icon: <CheckCircle className="w-4 h-4 text-emerald-700" />,
           label: 'נכון!',
         }
       : result.verdict === 'partial'
       ? {
           wrap: 'bg-amber-500/10 border-amber-500/40',
-          accent: 'text-amber-300',
-          icon: <AlertCircle className="w-4 h-4 text-amber-300" />,
+          accent: 'text-amber-700',
+          icon: <AlertCircle className="w-4 h-4 text-amber-700" />,
           label: 'חלקית נכון',
         }
       : {
           wrap: 'bg-indigo-500/10 border-indigo-500/40',
-          accent: 'text-indigo-300',
-          icon: <XCircle className="w-4 h-4 text-indigo-300" />,
+          accent: 'text-indigo-700',
+          icon: <XCircle className="w-4 h-4 text-indigo-700" />,
           label: 'לא נכון',
         };
 
@@ -505,11 +505,11 @@ function CheckResultPanel({ result }: { result: CheckResult }) {
         {style.icon}
         <span>{style.label}</span>
       </div>
-      <div className="text-sm text-slate-100 chat-md">
+      <div className="text-sm text-slate-800 chat-md">
         <MathText>{result.feedback}</MathText>
       </div>
       {result.tip && (
-        <div className="text-xs text-slate-300 chat-md border-t border-white/5 pt-2">
+        <div className="text-xs text-slate-700 chat-md border-t border-slate-900/[0.06] pt-2">
           💡 <MathText inline>{result.tip}</MathText>
         </div>
       )}

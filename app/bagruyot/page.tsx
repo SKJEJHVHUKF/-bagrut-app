@@ -46,7 +46,7 @@ export default function BagruyotLandingPage() {
   if (auth.status === 'loading') {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
       </main>
     );
   }
@@ -67,7 +67,7 @@ export default function BagruyotLandingPage() {
       {/* Back link */}
       <Link
         href="/my-plan"
-        className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 mb-6"
+        className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800 mb-6"
       >
         ← חזרה לתוכנית הלימוד
       </Link>
@@ -81,20 +81,20 @@ export default function BagruyotLandingPage() {
       >
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-emerald-300 uppercase flex items-center gap-2 justify-center sm:justify-start"
+          className="text-xs font-black tracking-widest text-emerald-700 uppercase flex items-center gap-2 justify-center sm:justify-start"
         >
           <BookOpen className="w-3.5 h-3.5" />
           <span>מאגר בגרויות</span>
         </motion.div>
         <motion.h1 variants={fadeUp} className="text-3xl sm:text-4xl font-black leading-tight">
-          <span className="font-display text-slate-100">
+          <span className="font-display text-slate-800">
             תרגל מבגרויות אמיתיות
           </span>
         </motion.h1>
-        <motion.p variants={fadeUp} className="text-base text-slate-300 leading-relaxed max-w-2xl">
+        <motion.p variants={fadeUp} className="text-base text-slate-700 leading-relaxed max-w-2xl">
           שאלות מבגרויות עבר — מתועתקות מילה במילה מהשאלון של משרד החינוך. תפתור לבד,
           תקבל רמזים מדורגים כשתיתקע, ותראה את הפתרון המלא רק כשאתה מוכן.{' '}
-          <strong className="text-white">ללא AI.</strong>
+          <strong className="text-slate-900">ללא AI.</strong>
         </motion.p>
       </motion.header>
 
@@ -126,7 +126,7 @@ export default function BagruyotLandingPage() {
       >
         <motion.h2
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-slate-400 uppercase"
+          className="text-xs font-black tracking-widest text-slate-600 uppercase"
         >
           איך זה עובד
         </motion.h2>
@@ -161,7 +161,7 @@ export default function BagruyotLandingPage() {
         <motion.section {...inViewProps} variants={staggerContainer} className="mb-8">
           <motion.h2
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-slate-400 uppercase mb-3"
+            className="text-xs font-black tracking-widest text-slate-600 uppercase mb-3"
           >
             דוגמית
           </motion.h2>
@@ -172,13 +172,13 @@ export default function BagruyotLandingPage() {
             className="surface-premium rounded-2xl p-4 sm:p-5 space-y-3"
           >
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="bg-emerald-500/15 border border-emerald-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-emerald-200">
+              <span className="bg-emerald-500/15 border border-emerald-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-emerald-800">
                 שאלון {sampleQuestion.paper}
               </span>
-              <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-indigo-200">
+              <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-indigo-800">
                 {sampleQuestion.topic}
               </span>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-slate-600">
                 {sampleQuestion.season === 'summer' ? 'קיץ' : 'חורף'} {sampleQuestion.year}
                 {sampleQuestion.moed === 'a'
                   ? ' מועד א\''
@@ -190,15 +190,15 @@ export default function BagruyotLandingPage() {
                 {' • סעיף '}{samplePart.label}
               </span>
             </div>
-            <p className="text-sm text-slate-200 leading-relaxed line-clamp-3">{stripMath(samplePart.prompt)}</p>
+            <p className="text-sm text-slate-800 leading-relaxed line-clamp-3">{stripMath(samplePart.prompt)}</p>
             {samplePart.hints && samplePart.hints.length > 0 && (
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 flex gap-2 items-start">
-                <Lightbulb className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
+                <Lightbulb className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <div className="text-[10px] font-black tracking-widest text-amber-300 uppercase mb-0.5">
+                  <div className="text-[10px] font-black tracking-widest text-amber-700 uppercase mb-0.5">
                     רמז 1 — לפתיחה
                   </div>
-                  <p className="text-xs text-amber-50 leading-relaxed line-clamp-2">
+                  <p className="text-xs text-amber-900 leading-relaxed line-clamp-2">
                     {stripMath(samplePart.hints[0])}
                   </p>
                 </div>
@@ -221,10 +221,10 @@ export default function BagruyotLandingPage() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-base sm:text-lg font-black text-white">התחבר כדי להיכנס</div>
-                  <div className="text-xs text-slate-300 mt-0.5">דרושה התחברות כדי לתרגל מהמאגר</div>
+                  <div className="text-base sm:text-lg font-black text-slate-900">התחבר כדי להיכנס</div>
+                  <div className="text-xs text-slate-700 mt-0.5">דרושה התחברות כדי לתרגל מהמאגר</div>
                 </div>
-                <ArrowLeft className="w-5 h-5 text-indigo-300 flex-shrink-0" />
+                <ArrowLeft className="w-5 h-5 text-indigo-700 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -234,10 +234,10 @@ export default function BagruyotLandingPage() {
             className="card-3d bg-gradient-to-br from-amber-600/15 to-orange-600/15 border border-amber-500/40 rounded-2xl p-5"
           >
             <div className="flex items-start gap-3 mb-3">
-              <Crown className="w-6 h-6 text-amber-300 flex-shrink-0 mt-0.5" />
+              <Crown className="w-6 h-6 text-amber-700 flex-shrink-0 mt-0.5" />
               <div>
-                <div className="text-base sm:text-lg font-black text-white">מאגר בגרויות — פיצ׳ר Pro</div>
-                <div className="text-xs text-slate-300 mt-0.5">
+                <div className="text-base sm:text-lg font-black text-slate-900">מאגר בגרויות — פיצ׳ר Pro</div>
+                <div className="text-xs text-slate-700 mt-0.5">
                   תרגול מהבגרויות עם רמזים ופתרונות הוא חלק מהמנוי Pro.
                 </div>
               </div>
@@ -260,14 +260,14 @@ export default function BagruyotLandingPage() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-base sm:text-lg font-black text-white">כניסה למאגר</div>
-                  <div className="text-xs text-slate-300 mt-0.5">
+                  <div className="text-base sm:text-lg font-black text-slate-900">כניסה למאגר</div>
+                  <div className="text-xs text-slate-700 mt-0.5">
                     {total > 0
                       ? `${total} ${total === 1 ? 'שאלה זמינה' : 'שאלות זמינות'} עכשיו`
                       : 'המאגר עוד מתמלא'}
                   </div>
                 </div>
-                <ArrowLeft className="w-5 h-5 text-emerald-300 flex-shrink-0" />
+                <ArrowLeft className="w-5 h-5 text-emerald-700 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -278,12 +278,12 @@ export default function BagruyotLandingPage() {
       <motion.div
         {...inViewProps}
         variants={fadeUp}
-        className="bg-white/[0.02] border border-white/5 rounded-xl p-3 flex gap-2.5 items-start"
+        className="bg-slate-900/[0.02] border border-slate-900/[0.06] rounded-xl p-3 flex gap-2.5 items-start"
       >
-        <ShieldCheck className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
-        <div className="text-[11px] text-slate-400 leading-relaxed">
+        <ShieldCheck className="w-4 h-4 text-slate-600 flex-shrink-0 mt-0.5" />
+        <div className="text-[11px] text-slate-600 leading-relaxed">
           כל השאלות מתועתקות מהשאלונים הרשמיים של משרד החינוך (
-          <code className="text-[10px] bg-white/5 px-1 rounded">meyda.education.gov.il</code>).
+          <code className="text-[10px] bg-slate-900/[0.03] px-1 rounded">meyda.education.gov.il</code>).
           הפתרונות והרמזים נכתבים בסגנון האפליקציה — לא מועתקים מספרי לימוד.
         </div>
       </motion.div>
@@ -298,10 +298,10 @@ export default function BagruyotLandingPage() {
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <div className="surface-premium rounded-xl p-3 text-center">
-      <div className="text-2xl sm:text-3xl font-black font-display text-slate-100">
+      <div className="text-2xl sm:text-3xl font-black font-display text-slate-800">
         {value}
       </div>
-      <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5">{label}</div>
+      <div className="text-[10px] sm:text-xs text-slate-600 mt-0.5">{label}</div>
     </div>
   );
 }
@@ -318,16 +318,16 @@ function FeatureCard({
   body: string;
 }) {
   const colorClasses = {
-    purple: 'from-indigo-600/10 to-indigo-600/10 border-indigo-500/30 text-indigo-300',
-    amber: 'from-amber-600/10 to-orange-600/10 border-amber-500/30 text-amber-300',
-    emerald: 'from-emerald-600/10 to-teal-600/10 border-emerald-500/30 text-emerald-300',
+    purple: 'from-indigo-600/10 to-indigo-600/10 border-indigo-500/30 text-indigo-700',
+    amber: 'from-amber-600/10 to-orange-600/10 border-amber-500/30 text-amber-700',
+    emerald: 'from-emerald-600/10 to-teal-600/10 border-emerald-500/30 text-emerald-700',
   }[color];
   return (
     <div className={`bg-gradient-to-br ${colorClasses} border rounded-2xl p-4 flex gap-3`}>
       <div className="flex-shrink-0 mt-0.5">{icon}</div>
       <div className="flex-1 min-w-0">
-        <div className="font-bold text-sm text-white">{title}</div>
-        <div className="text-xs text-slate-300 mt-1 leading-relaxed">{body}</div>
+        <div className="font-bold text-sm text-slate-900">{title}</div>
+        <div className="text-xs text-slate-700 mt-1 leading-relaxed">{body}</div>
       </div>
     </div>
   );

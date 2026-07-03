@@ -70,8 +70,8 @@ export function EntryGate({
   if (passed && !failedNow) {
     return (
       <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-2xl px-4 py-3.5 flex items-center gap-3">
-        <Unlock className="w-5 h-5 text-emerald-300 flex-shrink-0" />
-        <div className="flex-1 text-sm text-emerald-50">
+        <Unlock className="w-5 h-5 text-emerald-700 flex-shrink-0" />
+        <div className="flex-1 text-sm text-emerald-900">
           <span className="font-bold">השער פתוח. </span>
           {skipped ? 'בחרת לדלג על הבדיקה — הקורס המתקדם פתוח לפניך.' : 'עברת את בדיקת הכניסה — הקורס המתקדם פתוח לפניך.'}
         </div>
@@ -82,15 +82,15 @@ export function EntryGate({
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-2.5 surface-premium rounded-2xl px-4 py-3">
-        <Lock className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-slate-300 leading-relaxed flex-1">
+        <Lock className="w-4 h-4 text-indigo-700 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-slate-700 leading-relaxed flex-1">
           {questions.length} שאלות מקורס הבסיס. צריך לפחות {gate.passThreshold} נכונות כדי לפתוח את
           הקורס המתקדם — מי שלא עובר מקבל הפניה ממוקדת לחלק שצריך לחזור עליו.
         </p>
         <motion.button
           {...buttonTap}
           onClick={() => onPassed(true)}
-          className="flex-shrink-0 text-[11px] font-bold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-1.5 rounded-lg transition-colors"
+          className="flex-shrink-0 text-[11px] font-bold text-slate-700 hover:text-slate-900 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 px-2.5 py-1.5 rounded-lg transition-colors"
         >
           דלג — אני יודע את הבסיס
         </motion.button>
@@ -102,10 +102,10 @@ export function EntryGate({
         return (
           <div key={`${q.id}-${attempt}`} className="surface-premium rounded-2xl p-4 space-y-2.5">
             <div className="flex items-start gap-2.5">
-              <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-100">
+              <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-800">
                 {qi + 1}
               </div>
-              <div className="flex-1 chat-md text-sm sm:text-base text-white leading-relaxed pt-0.5">
+              <div className="flex-1 chat-md text-sm sm:text-base text-slate-900 leading-relaxed pt-0.5">
                 <MathText>{q.question}</MathText>
               </div>
             </div>
@@ -122,12 +122,12 @@ export function EntryGate({
                     disabled={answered}
                     className={`w-full text-right px-4 py-2.5 rounded-xl border transition-colors chat-md text-sm ${
                       answered && isCorrect
-                        ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-50'
+                        ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900'
                         : answered && isPicked
-                          ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-50'
+                          ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-900'
                           : answered
-                            ? 'bg-white/[0.02] border-white/5 text-slate-400'
-                            : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                            ? 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-600'
+                            : 'bg-slate-900/[0.03] hover:bg-slate-900/5 border-slate-900/10 text-slate-900'
                     }`}
                   >
                     <span className="font-bold opacity-60 ml-2">{MCQ_LABELS[i]}.</span>
@@ -147,14 +147,14 @@ export function EntryGate({
                   style={{ overflow: 'hidden' }}
                   className={`rounded-xl px-3 py-2 text-sm chat-md flex items-start gap-2 ${
                     picked === q.correct
-                      ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-50'
-                      : 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-50'
+                      ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-900'
+                      : 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-900'
                   }`}
                 >
                   {picked === q.correct ? (
-                    <CheckCircle className="w-4 h-4 text-emerald-300 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
                   ) : (
-                    <XCircle className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-0.5" />
+                    <XCircle className="w-4 h-4 text-indigo-700 flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1">
                     <MathText inline>{q.explanation}</MathText>
@@ -174,11 +174,11 @@ export function EntryGate({
             animate={{ opacity: 1, scale: 1 }}
             className="bg-gradient-to-br from-emerald-600/15 to-teal-600/15 border border-emerald-500/40 rounded-2xl p-5 text-center space-y-2"
           >
-            <Unlock className="w-9 h-9 mx-auto text-emerald-300" />
-            <div className="text-2xl font-black text-emerald-100">
+            <Unlock className="w-9 h-9 mx-auto text-emerald-700" />
+            <div className="text-2xl font-black text-emerald-800">
               {correctCount}/{questions.length} — השער נפתח!
             </div>
-            <div className="text-sm text-slate-200">הבסיס יושב טוב. ממשיכים למפת סוגי השאלות.</div>
+            <div className="text-sm text-slate-800">הבסיס יושב טוב. ממשיכים למפת סוגי השאלות.</div>
           </motion.div>
         )}
 
@@ -188,7 +188,7 @@ export function EntryGate({
             animate={{ opacity: 1, scale: 1 }}
             className="bg-amber-500/10 border border-amber-500/40 rounded-2xl p-4 space-y-3"
           >
-            <div className="text-sm font-black text-amber-100">
+            <div className="text-sm font-black text-amber-800">
               {correctCount}/{questions.length} — עוד לא שם. הנה בדיוק מה לחזק:
             </div>
             <div className="space-y-1.5">
@@ -196,7 +196,7 @@ export function EntryGate({
                 <Link
                   key={q.id}
                   href={`${baseHref}${q.reviewRef.conceptId ? `#concept-${q.reviewRef.conceptId}` : q.reviewRef.sectionId ? `#section-${q.reviewRef.sectionId}` : ''}`}
-                  className="flex items-center gap-2 text-sm text-sky-200 hover:text-sky-100 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-xl px-3 py-2 transition-colors"
+                  className="flex items-center gap-2 text-sm text-sky-200 hover:text-sky-100 bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 rounded-xl px-3 py-2 transition-colors"
                 >
                   <BookOpen className="w-4 h-4 flex-shrink-0 text-sky-300" />
                   <span className="flex-1">{q.reviewRef.label}</span>
@@ -207,7 +207,7 @@ export function EntryGate({
             <div className="flex flex-col sm:flex-row gap-2 pt-1">
               <Link
                 href={baseHref}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-100 text-sm transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-800 text-sm transition-colors"
               >
                 <BookOpen className="w-4 h-4" />
                 <span>חזרה לקורס הבסיס</span>
@@ -215,7 +215,7 @@ export function EntryGate({
               <motion.button
                 {...buttonTap}
                 onClick={retry}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2.5 rounded-xl font-bold text-white text-sm transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 px-4 py-2.5 rounded-xl font-bold text-slate-900 text-sm transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>נסה שוב</span>

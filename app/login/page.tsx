@@ -60,18 +60,18 @@ function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-indigo-500/10"
+      className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-indigo-500/10"
     >
       <h1 className="font-display text-3xl sm:text-4xl font-black mb-2 text-center">
-        <span className="font-display text-slate-100">
+        <span className="font-display text-slate-800">
           ברוך שובך 👋
         </span>
       </h1>
-      <p className="text-slate-400 text-center mb-7">התחבר כדי להתחיל לתרגל</p>
+      <p className="text-slate-600 text-center mb-7">התחבר כדי להתחיל לתרגל</p>
 
       {/* Email */}
       <label className="block mb-4">
-        <span className="block text-sm font-bold text-slate-300 mb-2">אימייל</span>
+        <span className="block text-sm font-bold text-slate-700 mb-2">אימייל</span>
         <div className="relative">
           <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
@@ -81,7 +81,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full surface-premium rounded-xl pr-10 pl-3 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.07] transition-all"
+            className="w-full surface-premium rounded-xl pr-10 pl-3 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/[0.04] transition-all"
             disabled={loading}
             dir="ltr"
           />
@@ -90,7 +90,7 @@ function LoginForm() {
 
       {/* Password */}
       <label className="block mb-2">
-        <span className="block text-sm font-bold text-slate-300 mb-2">סיסמה</span>
+        <span className="block text-sm font-bold text-slate-700 mb-2">סיסמה</span>
         <div className="relative">
           <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
@@ -100,14 +100,14 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full surface-premium rounded-xl pr-10 pl-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.07] transition-all"
+            className="w-full surface-premium rounded-xl pr-10 pl-10 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/[0.04] transition-all"
             disabled={loading}
             dir="ltr"
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition-colors"
             tabIndex={-1}
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -137,11 +137,11 @@ function LoginForm() {
         )}
       </button>
 
-      <div className="mt-6 text-center text-sm text-slate-400">
+      <div className="mt-6 text-center text-sm text-slate-600">
         עדיין אין לך חשבון?{' '}
         <Link
           href={`/signup${next !== '/quiz' ? `?next=${encodeURIComponent(next)}` : ''}`}
-          className="text-indigo-300 hover:text-indigo-200 font-bold underline-offset-2 hover:underline"
+          className="text-indigo-700 hover:text-indigo-800 font-bold underline-offset-2 hover:underline"
         >
           הירשם עכשיו
         </Link>
@@ -162,19 +162,19 @@ export default function LoginPage() {
       {/* Top bar */}
       <nav className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-white/20 group-hover:scale-105 transition-transform">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10 group-hover:scale-105 transition-transform">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
               <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
             </svg>
           </div>
-          <span className="text-xl sm:text-2xl font-black font-display text-slate-100">
+          <span className="text-xl sm:text-2xl font-black font-display text-slate-800">
             בגרות בכיס
           </span>
         </Link>
       </nav>
 
       <main className="relative z-10 max-w-md mx-auto px-4 sm:px-6 pt-8 pb-16">
-        <Suspense fallback={<div className="text-slate-400 text-center">טוען…</div>}>
+        <Suspense fallback={<div className="text-slate-600 text-center">טוען…</div>}>
           <LoginForm />
         </Suspense>
       </main>
