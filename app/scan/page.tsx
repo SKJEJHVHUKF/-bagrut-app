@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Camera, Upload, Loader2, AlertTriangle, CheckCircle, Sparkles, BookOpen, ArrowLeft, X } from 'lucide-react';
+import { Camera, Upload, Loader2, AlertTriangle, CheckCircle, Sparkles, BookOpen, ArrowLeft, X, ShieldCheck, Zap, Crown } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
 import { MathText } from '@/components/practice/MathText';
 import { saveScan, compressToThumbnail, type Scan } from '@/lib/scans';
+
+type SolveSource = 'library' | 'cache' | 'ai';
 
 type SolveResult = {
   subject: string;
@@ -14,7 +16,13 @@ type SolveResult = {
   transcribedQuestion: string;
   steps: { title: string; content: string }[];
   finalAnswer: string;
+  source?: SolveSource;
 };
+
+// The upsell shown to free users when a scan needs a NEW AI solution (not
+// in the verified library or the shared cache). Carries the transcription so
+// they can see we read their question.
+type ProUpsell = { transcribedQuestion: string; topic: string };
 
 type AuthState =
   | { status: 'loading' }
@@ -29,6 +37,7 @@ export default function ScanPage() {
   const [solving, setSolving] = useState(false);
   const [result, setResult] = useState<SolveResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [upsell, setUpsell] = useState<ProUpsell | null>(null);
   const [saved, setSaved] = useState<Scan | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,6 +58,7 @@ export default function ScanPage() {
     setFile(f);
     setResult(null);
     setError(null);
+    setUpsell(null);
     setSaved(null);
     const url = URL.createObjectURL(f);
     setPreview(url);
@@ -59,11 +69,18 @@ export default function ScanPage() {
     setSolving(true);
     setError(null);
     setResult(null);
+    setUpsell(null);
     try {
       const formData = new FormData();
       formData.append('image', file);
       const res = await fetch('/api/solve-photo', { method: 'POST', body: formData });
       const data = await res.json();
+      // Free user hit a NEW question that needs an AI solve → soft upsell,
+      // not a hard error. We still show them the transcription we read.
+      if (res.status === 402 && data.proRequired) {
+        setUpsell({ transcribedQuestion: data.transcribedQuestion ?? '', topic: data.topic ?? '' });
+        return;
+      }
       if (!res.ok) {
         setError(data.error || 'שגיאה בפתרון השאלה');
         return;
@@ -105,6 +122,7 @@ export default function ScanPage() {
     setFile(null);
     setResult(null);
     setError(null);
+    setUpsell(null);
     setSaved(null);
   };
 
@@ -136,44 +154,88 @@ export default function ScanPage() {
     );
   }
 
-  if (auth.status === 'free') {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="surface-premium rounded-2xl p-8 max-w-md text-center space-y-4">
-          <Sparkles className="w-12 h-12 text-amber-400 mx-auto" />
-          <h1 className="font-display text-2xl font-black">פיצ׳ר Pro</h1>
-          <p className="text-slate-700 leading-relaxed">
-            צילום שאלה והסבר מ-AI הוא חלק מ-Pro. שדרגי כדי לקבל גישה.
-          </p>
-          <Link
-            href="/my-plan"
-            className="inline-flex items-center gap-2 bg-gradient-to-l from-amber-500 to-orange-500 px-6 py-3 rounded-2xl font-bold"
-          >
-            פרטים על Pro
-          </Link>
-        </div>
-      </main>
-    );
-  }
+  // ----- Main UI (any logged-in user; free users get library/cache hits
+  //       for free, and a soft upsell only when a NEW AI solve is needed) -----
 
-  // ----- Main UI (Pro user) -----
+  const isPro = auth.status === 'pro';
 
   return (
     <main className="min-h-screen px-4 sm:px-6 py-8 max-w-3xl mx-auto">
-      <header className="space-y-2 mb-6">
-        <div className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2">
-          <Camera className="w-3.5 h-3.5" />
-          <span>צילום וניתוח</span>
-        </div>
-        <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
-          <span className="font-display text-slate-800">
-            צלמי שאלה. קבלי הסבר מלא.
-          </span>
-        </h1>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          העלי תמונה של שאלת בגרות במתמטיקה, ו-AI יזהה את הנושא, יתמלל את השאלה ויפתור אותה צעד-אחר-צעד.
-        </p>
-      </header>
+      {/* ===== INTRO / LANDING — shown before a photo is picked ===== */}
+      {!preview && !result && (
+        <section className="mb-8 space-y-5">
+          <div className="text-center space-y-3">
+            <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/25 rounded-full px-4 py-1.5 text-xs font-bold text-indigo-800">
+              <Camera className="w-3.5 h-3.5" />
+              <span>צילום שאלה → פתרון מלא</span>
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl font-black leading-tight">
+              <span className="gradient-text">תקוע בשאלה? צלם אותה.</span>
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-lg mx-auto">
+              מצלמים כל שאלת מתמטיקה — מהמחברת, מספר הלימוד או ממבחן — ומקבלים
+              פתרון מלא צעד-אחר-שלב, בעברית, עם התשובה הסופית המדויקת.
+            </p>
+          </div>
+
+          {/* Trust badge — the free verified-library corpus */}
+          <div className="surface-premium rounded-2xl px-4 py-3 flex items-center gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-500/12 border border-emerald-500/30 flex items-center justify-center">
+              <ShieldCheck className="w-5 h-5 text-emerald-700" />
+            </div>
+            <div className="text-sm text-slate-700 leading-snug">
+              <b className="text-slate-900">מאות שאלות בגרות כבר פתורות במערכת.</b> אם צילמת
+              שאלה מוכרת — מקבלים את הפתרון המאומת מיידית ו<b>בחינם</b>.
+            </div>
+          </div>
+
+          {/* How it works — 3 numbered steps */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {[
+              { n: 1, t: 'מצלמים', d: 'שאלה מהמחברת או מהספר' },
+              { n: 2, t: 'מזהים', d: 'המערכת קוראת ומחפשת במאגר' },
+              { n: 3, t: 'פותרים', d: 'פתרון מלא צעד-אחר-שלב' },
+            ].map((s) => (
+              <div key={s.n} className="surface-premium rounded-2xl p-4 text-center">
+                <div className="w-7 h-7 mx-auto rounded-lg bg-indigo-500/12 border border-indigo-500/30 text-indigo-800 text-sm font-black flex items-center justify-center mb-2">
+                  {s.n}
+                </div>
+                <div className="text-sm font-black text-slate-900">{s.t}</div>
+                <div className="text-[11px] text-slate-600 mt-0.5">{s.d}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Before → after mini-example */}
+          <div className="surface-premium rounded-2xl p-4">
+            <div className="text-[11px] font-black tracking-widest text-slate-500 uppercase mb-3">
+              דוגמה
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3">
+              <div className="rounded-xl bg-slate-900/[0.03] border border-slate-900/[0.08] p-3 text-center">
+                <div className="text-[10px] text-slate-500 mb-1">מה שצילמת</div>
+                <div className="chat-md text-slate-800">
+                  <MathText inline>{'$x^2 - 5x + 6 = 0$'}</MathText>
+                </div>
+              </div>
+              <ArrowLeft className="w-5 h-5 text-indigo-600 mx-auto rotate-180 sm:rotate-0" />
+              <div className="rounded-xl bg-emerald-500/[0.06] border border-emerald-500/25 p-3 text-center">
+                <div className="text-[10px] text-emerald-700 mb-1">מה שתקבל</div>
+                <div className="chat-md text-emerald-900 font-bold">
+                  <MathText inline>{'$x_1 = 2,\\ x_2 = 3$'}</MathText>
+                </div>
+                <div className="text-[10px] text-slate-500 mt-1">+ כל הצעדים בדרך</div>
+              </div>
+            </div>
+          </div>
+
+          {!isPro && (
+            <div className="text-center text-[11px] text-slate-500">
+              שאלה חדשה שלא במאגר ודורשת פתרון AI חדש — פיצ׳ר Pro.
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Upload area — visible only before the user picks a file */}
       {!preview && (
@@ -224,7 +286,7 @@ export default function ScanPage() {
             <img src={preview} alt="שאלה שצולמה" className="w-full max-h-[400px] object-contain" />
             <button
               onClick={reset}
-              className="absolute top-2 left-2 bg-black/60 hover:bg-black/80 rounded-full p-2"
+              className="absolute top-2 left-2 bg-slate-900/60 hover:bg-slate-900/80 text-white rounded-full p-2"
               aria-label="הסר"
             >
               <X className="w-4 h-4" />
@@ -253,14 +315,74 @@ export default function ScanPage() {
       {/* Error display */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 mb-6 flex gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-300 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-red-100">{error}</div>
+          <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-red-800">{error}</div>
+        </div>
+      )}
+
+      {/* Pro upsell — free user scanned a NEW question needing an AI solve.
+          We show the transcription we read so they know the scan worked. */}
+      {upsell && (
+        <div className="space-y-4 mb-6">
+          <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/40 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Crown className="w-5 h-5 text-amber-700" />
+              <div className="font-black text-slate-900">זו שאלה חדשה — פתרון AI הוא פיצ׳ר Pro</div>
+            </div>
+            <p className="text-sm text-slate-700 leading-relaxed">
+              קראנו את השאלה שלך, אבל היא עדיין לא במאגר הפתרונות המאומתים. פתרון חדש
+              נוצר על-ידי ה-AI וזמין למנויי Pro. שאלות שכבר במאגר — תמיד חינם.
+            </p>
+            {upsell.transcribedQuestion && (
+              <div className="rounded-xl bg-white/60 border border-slate-900/[0.08] p-3">
+                <div className="text-[10px] text-slate-500 mb-1">השאלה שזיהינו{upsell.topic ? ` · ${upsell.topic}` : ''}</div>
+                <div className="chat-md text-sm text-slate-800">
+                  <MathText>{upsell.transcribedQuestion}</MathText>
+                </div>
+              </div>
+            )}
+            <Link
+              href="/my-plan"
+              className="btn-primary inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold text-white w-full sm:w-auto"
+            >
+              <Crown className="w-4 h-4" />
+              <span>שדרג ל-Pro</span>
+            </Link>
+          </div>
+          <button
+            onClick={reset}
+            className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800"
+          >
+            <Camera className="w-4 h-4" />
+            נסה שאלה אחרת
+          </button>
         </div>
       )}
 
       {/* Result */}
       {result && (
         <div className="space-y-5">
+          {/* Source badge — shows WHERE the solution came from (trust + it
+              also makes the free caching visible). */}
+          {result.source === 'library' && (
+            <div className="inline-flex items-center gap-2 bg-emerald-500/12 border border-emerald-500/35 rounded-full px-3 py-1.5 text-xs font-bold text-emerald-800">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>פתרון מאומת מהמאגר — חינם</span>
+            </div>
+          )}
+          {result.source === 'cache' && (
+            <div className="inline-flex items-center gap-2 bg-indigo-500/12 border border-indigo-500/35 rounded-full px-3 py-1.5 text-xs font-bold text-indigo-800">
+              <Zap className="w-3.5 h-3.5" />
+              <span>נפתר כבר בעבר — חינם</span>
+            </div>
+          )}
+          {result.source === 'ai' && (
+            <div className="inline-flex items-center gap-2 bg-amber-500/12 border border-amber-500/35 rounded-full px-3 py-1.5 text-xs font-bold text-amber-800">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>נפתר עכשיו ע״י AI</span>
+            </div>
+          )}
+
           {/* Topic + subject chips */}
           <div className="flex flex-wrap gap-2 items-center">
             <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-3 py-1 text-xs font-bold text-indigo-800">

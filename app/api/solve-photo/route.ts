@@ -4,12 +4,26 @@ import { createClient } from '@/lib/supabase/server';
 import { isProUser } from '@/lib/access';
 import { MATH5 } from '@/content/bagrut-context';
 import { allLessonKeys, getLesson } from '@/content/lessons';
+import { matchQuestion } from '@/lib/solution-library';
+import { normalizeQuestionText, fingerprint } from '@/lib/question-match';
+import { getCachedSolution, putCachedSolution } from '@/lib/solution-cache';
 
-// Vision + math reasoning. Sonnet 4.5 reads the photo, classifies the topic,
-// transcribes the question, and writes a step-by-step solution. Vercel
-// Hobby caps function duration at 60s — Sonnet typically finishes within
-// 15-30s for a single math problem.
+// Vision + math reasoning, in TWO phases to keep API cost down:
+//   1. transcribeImage() — a cheap vision pass that only reads + classifies
+//      the question (no solving). ~$0.007.
+//   2. match against the verified library (free) → shared cache (free) →
+//      and only on a true miss, solveText() — a text-only solve (no image)
+//      of the transcription, Pro-gated, result stored in the cache so the
+//      next scan of the same question is free.
+// Vercel Hobby caps function duration at 60s; both phases fit comfortably.
 export const maxDuration = 60;
+
+// Free users get library + cache hits for free; a modest daily cap on
+// transcriptions keeps the cheap-but-not-free vision calls from being
+// abused. Pro users get a much higher ceiling. Enforced via scan_log
+// (degrades to "no cap" if the table is missing).
+const FREE_DAILY_SCANS = 15;
+const PRO_DAILY_SCANS = 150;
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 MB — Anthropic limit is 5MB for base64, but we'll allow some headroom for transcoding
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -137,39 +151,53 @@ const OUTPUT_FORMAT_EXAMPLE = `## פורמט הפלט
 }
 \`\`\``;
 
-const VISION_TASK_INSTRUCTIONS = `## המשימה שלך עכשיו
+const TEXT_SOLVE_INSTRUCTIONS = `## המשימה שלך עכשיו
 
-יוצג לך **צילום של שאלת בגרות במתמטיקה 5 יחידות**. עליך:
+תקבל **טקסט של שאלת בגרות במתמטיקה 5 יחידות** (כבר תומללה מצילום). עליך:
 
-1. **לתמלל** את השאלה במדויק כפי שמופיעה בתמונה — כולל כל הסעיפים (א, ב, ג). הצב את הביטויים המתמטיים ב-LaTeX (\`$...$\` inline, \`$$...$$\` block). שמור על פיסוק ועברית מקורית.
-2. **לזהות** את הנושא העיקרי מתוך הרשימה הסגורה: ${KNOWN_TOPICS.join(' • ')}. אם השאלה חוצה נושאים — בחר את הנושא הדומיננטי. אם השאלה לא מתאימה לאף אחד מה-13 — בחר "אלגברה" כברירת מחדל.
-3. **לפתור** את השאלה צעד-אחר-צעד, לפי המתודולוגיה לעיל ולפי הסטנדרט של הנוסחאות במאגר. כתוב 4-10 צעדים. אם השאלה כוללת מספר סעיפים (א, ב, ג) — פתור את כולם, וציין בכותרת הצעד את הסעיף.
+1. **לפתור** את השאלה צעד-אחר-צעד, לפי המתודולוגיה לעיל ולפי הסטנדרט של הנוסחאות במאגר. כתוב 4-10 צעדים. אם השאלה כוללת מספר סעיפים (א, ב, ג) — פתור את כולם, וציין בכותרת הצעד את הסעיף.
+2. **לזהות** את הנושא העיקרי מתוך הרשימה הסגורה: ${KNOWN_TOPICS.join(' • ')}. אם השאלה חוצה נושאים — בחר את הנושא הדומיננטי. אם השאלה לא מתאימה לאף אחד — בחר "אלגברה" כברירת מחדל.
+3. **להחזיר** את השאלה כפי שקיבלת אותה בשדה \`transcribedQuestion\` (בלי לשנות).
 4. **לתת תשובה סופית** ברורה ומדויקת.
 
 **הגבלות:**
-- אם איכות התמונה גרועה ואי-אפשר לקרוא את השאלה — \`{"error": "התמונה לא ברורה מספיק. נסי לצלם שוב בתאורה טובה יותר ובזווית ישרה."}\`.
-- אם התמונה לא מכילה שאלת מתמטיקה — \`{"error": "התמונה לא נראית כמו שאלת מתמטיקה. נסי לצלם שאלה מספר תרגול או בגרות."}\`.
-- אם השאלה חורגת מסילבוס 5 יחידות (נדיר — למשל חומר אוניברסיטאי) — תפתור בכל זאת, אבל ציין בצעד הראשון: "שים לב: שאלה זו חורגת מסילבוס בגרות 5 יח׳, אבל הנה הפתרון."
+- אם הטקסט לא נראה כמו שאלת מתמטיקה — \`{"error": "לא זיהיתי שאלת מתמטיקה. נסי לצלם שוב."}\`.
+- אם השאלה חורגת מסילבוס 5 יחידות — תפתור בכל זאת, וציין בצעד הראשון: "שים לב: שאלה זו חורגת מסילבוס בגרות 5 יח׳, אבל הנה הפתרון."
 
-**אסור:**
-- לדלג צעדים.
-- לתת תשובה עשרונית כשיש צורה מדויקת ($\\sqrt{2}, \\pi/4$).
-- להסביר תחילת הצעד באנגלית.`;
+**אסור:** לדלג צעדים · תשובה עשרונית כשיש צורה מדויקת ($\\sqrt{2}, \\pi/4$) · לפתוח צעד באנגלית.`;
 
-function buildSystemPrompt(): string {
-  return [
-    MATH5.identity,
-    MATH5.examStructure,
-    MATH5.styleGuide,
-    PEDAGOGICAL_PRINCIPLES,
-    SOLUTION_METHODOLOGY,
-    buildTopicReference(),
-    VISION_TASK_INSTRUCTIONS,
-    OUTPUT_FORMAT_EXAMPLE,
-  ].join('\n\n');
-}
+// Solve prompt (text input). Built once at module load; marked for prompt
+// caching in the API call so the recurring ~4k tokens are billed ~once per
+// 5-min window instead of every request.
+const SOLVE_SYSTEM_PROMPT = [
+  MATH5.identity,
+  MATH5.examStructure,
+  MATH5.styleGuide,
+  PEDAGOGICAL_PRINCIPLES,
+  SOLUTION_METHODOLOGY,
+  buildTopicReference(),
+  TEXT_SOLVE_INSTRUCTIONS,
+  OUTPUT_FORMAT_EXAMPLE,
+].join('\n\n');
 
-const SYSTEM_PROMPT = buildSystemPrompt();
+// Transcription prompt (vision input) — deliberately tiny so the cheap
+// read-only pass stays cheap. It ONLY transcribes + classifies; no solving.
+const TRANSCRIBE_SYSTEM_PROMPT = `אתה קורא צילום של שאלת בגרות במתמטיקה 5 יחידות (עברית) ומחזיר אותה כטקסט מדויק.
+- תמלל את השאלה בדיוק כפי שהיא, כולל כל הסעיפים (א, ב, ג). ביטויים מתמטיים ב-LaTeX ($...$ בשורה, $$...$$ בבלוק). שמור על העברית והפיסוק המקוריים.
+- זהה את הנושא העיקרי מתוך: ${KNOWN_TOPICS.join(' • ')}. אם לא ברור — "אלגברה".
+- אל תפתור. רק תמלל וסווג.
+- אם התמונה מטושטשת/לא קריאה → {"error": "התמונה לא ברורה מספיק. נסי לצלם שוב בתאורה טובה ובזווית ישרה."}.
+- אם אין בתמונה שאלת מתמטיקה → {"error": "התמונה לא נראית כמו שאלת מתמטיקה."}.`;
+
+const TRANSCRIBE_SCHEMA = {
+  type: 'object',
+  properties: {
+    error: { type: 'string' },
+    topic: { type: 'string' },
+    transcribedQuestion: { type: 'string' },
+  },
+  additionalProperties: false,
+};
 
 const RESPONSE_SCHEMA = {
   type: 'object',
@@ -195,15 +223,105 @@ const RESPONSE_SCHEMA = {
   additionalProperties: false,
 };
 
-type SolveResponse =
+type Solution = {
+  subject: 'math5';
+  topic: string;
+  transcribedQuestion: string;
+  steps: { title: string; content: string }[];
+  finalAnswer: string;
+};
+
+type Transcription =
   | { error: string }
-  | {
-      subject: 'math5';
-      topic: string;
-      transcribedQuestion: string;
-      steps: { title: string; content: string }[];
-      finalAnswer: string;
-    };
+  | { topic: string; transcribedQuestion: string };
+
+// Phase 1 — cheap vision pass: transcribe + classify only, no solving.
+async function transcribeImage(
+  client: Anthropic,
+  base64: string,
+  mime: string,
+): Promise<Transcription> {
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-5', // Hebrew+LaTeX transcription needs Sonnet's vision
+    max_tokens: 900,
+    system: TRANSCRIBE_SYSTEM_PROMPT,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: mime as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
+              data: base64,
+            },
+          },
+          { type: 'text', text: 'תמלל את השאלה וזהה את הנושא. אל תפתור.' },
+        ],
+      },
+    ],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...({ output_config: { format: { type: 'json_schema', schema: TRANSCRIBE_SCHEMA } } } as any),
+  });
+  const content = message.content[0];
+  if (content.type !== 'text') throw new Error('Unexpected transcription shape');
+  return JSON.parse(content.text) as Transcription;
+}
+
+// Phase 2 (miss only) — text solve of the transcription. No image; the big
+// system prompt is prompt-cached so its ~4k tokens amortize across solves.
+async function solveText(
+  client: Anthropic,
+  topic: string,
+  transcribedQuestion: string,
+): Promise<Solution | { error: string }> {
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-5',
+    max_tokens: 3072,
+    system: [
+      {
+        type: 'text' as const,
+        text: SOLVE_SYSTEM_PROMPT,
+        cache_control: { type: 'ephemeral' as const },
+      },
+    ],
+    messages: [
+      {
+        role: 'user',
+        content: `נושא (זיהוי ראשוני): ${topic}\n\nהשאלה לתמלול ולפתרון:\n${transcribedQuestion}`,
+      },
+    ],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...({ output_config: { format: { type: 'json_schema', schema: RESPONSE_SCHEMA } } } as any),
+  });
+  const content = message.content[0];
+  if (content.type !== 'text') throw new Error('Unexpected solve shape');
+  const parsed = JSON.parse(content.text) as Solution | { error: string };
+  if (!('error' in parsed) && !parsed.subject) parsed.subject = 'math5';
+  return parsed;
+}
+
+// Count today's scans for the daily cap. Degrades to 0 (no cap) if the
+// scan_log table doesn't exist yet.
+async function scansToday(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<number> {
+  try {
+    const midnight = new Date();
+    midnight.setUTCHours(0, 0, 0, 0);
+    const { count, error } = await supabase
+      .from('scan_log')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', midnight.toISOString());
+    if (error) return 0;
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -214,8 +332,8 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const fingerprint = getFingerprint(request);
-    const limit = checkRateLimit(fingerprint);
+    const fp = getFingerprint(request);
+    const limit = checkRateLimit(fp);
     if (!limit.allowed) {
       return Response.json(
         { error: 'יותר מדי בקשות. נסי שוב בעוד דקה.' },
@@ -223,7 +341,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Auth + Pro check
+    // Auth (required). NOTE: Pro is NOT checked here — library/cache hits are
+    // free for everyone. The Pro gate is applied only before an AI solve.
     const supabase = await createClient();
     const {
       data: { user },
@@ -231,10 +350,21 @@ export async function POST(request: Request) {
     if (!user) {
       return Response.json({ error: 'יש להתחבר' }, { status: 401 });
     }
-    if (!isProUser(user)) {
+    const pro = isProUser(user);
+
+    // Daily scan cap (per user). Keeps the cheap-but-not-free vision pass
+    // from being abused. Free < Pro.
+    const dailyCap = pro ? PRO_DAILY_SCANS : FREE_DAILY_SCANS;
+    const usedToday = await scansToday(supabase, user.id);
+    if (usedToday >= dailyCap) {
       return Response.json(
-        { error: 'פיצ׳ר Pro — שדרגי כדי לפתור שאלות מצילום' },
-        { status: 402 }
+        {
+          error: pro
+            ? `הגעת למכסת ${dailyCap} הצילומים היומית. חזרי מחר.`
+            : `הגעת למכסת ${dailyCap} הצילומים היומית בחשבון החינמי. שדרגי ל-Pro לצילומים נוספים.`,
+          quotaExceeded: true,
+        },
+        { status: 429 }
       );
     }
 
@@ -276,63 +406,95 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    // Encode image to base64 for the Anthropic SDK
     const arrayBuffer = await file.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString('base64');
-
     const client = new Anthropic({ apiKey });
-    const message = await client.messages.create({
-      // Sonnet 4.5 — best vision-capable model for math problems. Haiku
-      // is faster but makes more transcription mistakes on Hebrew + LaTeX.
-      model: 'claude-sonnet-4-5',
-      // Bumped from 2048 → 3072. With the richer prompt the model produces
-      // longer, more thorough explanations (6-10 steps for multi-part
-      // bagrut questions). 3072 fits comfortably in the 60s Vercel cap.
-      max_tokens: 3072,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
-                data: base64,
-              },
-            },
-            {
-              type: 'text',
-              text: 'זוהי שאלת בגרות במתמטיקה. תמלל אותה, זהה את הנושא, ופתור צעד-אחר-צעד לפי המתודולוגיה ומאגר הנוסחאות שניתנו לך.',
-            },
-          ],
-        },
-      ],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...({ output_config: { format: { type: 'json_schema', schema: RESPONSE_SCHEMA } } } as any),
-    });
 
-    const content = message.content[0];
-    if (content.type !== 'text') throw new Error('Unexpected response shape');
+    // ===== PHASE 1: transcribe (cheap vision) =====
+    const transcription = await transcribeImage(client, base64, file.type);
+    if ('error' in transcription && transcription.error) {
+      return Response.json(transcription, { headers: { 'Cache-Control': 'no-store' } });
+    }
+    const { topic, transcribedQuestion } = transcription as {
+      topic: string;
+      transcribedQuestion: string;
+    };
+    const hash = fingerprint(normalizeQuestionText(transcribedQuestion));
 
-    const parsed = JSON.parse(content.text) as SolveResponse;
-
-    // If the model returned an error, surface it as 200 (so the client
-    // shows it as a friendly message rather than a network error toast).
-    if ('error' in parsed && parsed.error) {
-      return Response.json(parsed, {
-        headers: { 'Cache-Control': 'no-store' },
+    const logScan = (source: string) =>
+      void supabase.from('scan_log').insert({ source }).then(({ error }) => {
+        if (error) console.error('[scan_log] insert failed:', error.message);
       });
+    const respond = (result: Solution, source: 'library' | 'cache' | 'ai') => {
+      logScan(source);
+      return Response.json(
+        { ...result, source },
+        { headers: { 'Cache-Control': 'no-store' } }
+      );
+    };
+
+    // ===== PHASE 2a: verified library (free, everyone) =====
+    const libHit = matchQuestion(transcribedQuestion, topic);
+    if (libHit) {
+      const s = libHit.solution;
+      return respond(
+        {
+          subject: 'math5',
+          topic: s.topic,
+          // Prefer the STUDENT's transcription for display continuity, but
+          // the steps/answer are the verified library ones.
+          transcribedQuestion,
+          steps: s.steps,
+          finalAnswer: s.finalAnswer,
+        },
+        'library'
+      );
     }
 
-    // Defensive defaults — ensure subject is set
-    const result = parsed as Exclude<SolveResponse, { error: string }>;
-    if (!result.subject) result.subject = 'math5';
+    // ===== PHASE 2b: shared cache (free) =====
+    const cached = await getCachedSolution(supabase, hash);
+    if (cached) {
+      return respond(
+        {
+          subject: 'math5',
+          topic: cached.topic || topic,
+          transcribedQuestion: cached.transcribedQuestion || transcribedQuestion,
+          steps: cached.steps,
+          finalAnswer: cached.finalAnswer,
+        },
+        'cache'
+      );
+    }
 
-    return Response.json(result, {
-      headers: { 'Cache-Control': 'no-store' },
+    // ===== PHASE 2c: AI solve (Pro only) =====
+    if (!pro) {
+      return Response.json(
+        {
+          error:
+            'זו שאלה חדשה שעדיין לא במאגר — פתרון AI חדש הוא פיצ׳ר Pro. שדרגי כדי לקבל פתרון מלא.',
+          proRequired: true,
+          transcribedQuestion,
+          topic,
+        },
+        { status: 402 }
+      );
+    }
+
+    const solved = await solveText(client, topic, transcribedQuestion);
+    if ('error' in solved && solved.error) {
+      return Response.json(solved, { headers: { 'Cache-Control': 'no-store' } });
+    }
+    const result = solved as Solution;
+
+    // Warm the shared cache so the next scan of this question is free.
+    void putCachedSolution(supabase, hash, {
+      topic: result.topic,
+      transcribedQuestion: result.transcribedQuestion || transcribedQuestion,
+      steps: result.steps,
+      finalAnswer: result.finalAnswer,
     });
+
+    return respond(result, 'ai');
   } catch (error) {
     console.error('solve-photo error:', error);
     return Response.json(
