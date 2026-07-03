@@ -65,16 +65,23 @@ export default function AppChrome() {
   const hidden = isHiddenPath(pathname ?? '/');
 
   // Load the current user whenever we're on a page that shows the chrome.
+  // Robust to a session that hydrates slightly after mount: we read the
+  // cached session immediately, confirm with getUser, AND subscribe to auth
+  // changes so the avatar appears the moment the user is known.
   useEffect(() => {
     if (hidden) {
       setProfile(null);
       return;
     }
     let cancelled = false;
-    (async () => {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
+    const supabase = createClient();
+
+    type AuthUser = {
+      email?: string | null;
+      user_metadata?: Record<string, unknown>;
+    } | null | undefined;
+
+    const apply = (user: AuthUser) => {
       if (cancelled) return;
       if (!user) {
         setProfile(null);
@@ -83,9 +90,20 @@ export default function AppChrome() {
       const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
       const name = (meta.name as string) || (meta.full_name as string) || '';
       setProfile({ email: user.email ?? '', name, pro: isProUser(user) });
-    })();
+    };
+
+    // 1) Cached session — instant, no network round-trip.
+    supabase.auth.getSession().then(({ data }) => apply(data.session?.user));
+    // 2) Authoritative check.
+    supabase.auth.getUser().then(({ data }) => apply(data.user));
+    // 3) Keep in sync if auth resolves/changes later.
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      apply(session?.user);
+    });
+
     return () => {
       cancelled = true;
+      sub.subscription.unsubscribe();
     };
   }, [hidden, pathname]);
 
