@@ -20,6 +20,7 @@ import { buttonTap } from '@/lib/animations';
 import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
 import { markExerciseDone, markSubTopicDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
+import { recordResult } from '@/lib/results';
 import type { SubTopic, StaticBagrutQuestion } from '@/content/lessons/types';
 
 type Props = {
@@ -75,6 +76,19 @@ export function SubTopicPractice({
     // Locked once the question is solved or the solution is shown.
     if (solutionShown || selected === current.correct) return;
     if (wrongTries.includes(i)) return;
+    // Weakness tracking counts only the FIRST attempt on each question —
+    // later retries are learning, not measurement.
+    if (wrongTries.length === 0) {
+      recordResult({
+        subject,
+        topic,
+        subTopicId: subTopic.id,
+        questionId: current.id,
+        source: 'drill',
+        difficulty: current.difficulty,
+        correct: i === current.correct,
+      });
+    }
     if (i === current.correct) {
       setSelected(i);
       // Counts toward the score only if solved on the FIRST try.
@@ -99,6 +113,15 @@ export function SubTopicPractice({
   function reportOpen(correct: boolean) {
     if (openReport !== null) return;
     setOpenReport(correct ? 'correct' : 'wrong');
+    recordResult({
+      subject,
+      topic,
+      subTopicId: subTopic.id,
+      questionId: current.id,
+      source: 'drill',
+      difficulty: current.difficulty,
+      correct,
+    });
     if (correct) {
       setCorrectCount((c) => c + 1);
       celebrateCorrect();
@@ -210,6 +233,13 @@ export function SubTopicPractice({
             </Link>
           </motion.div>
         </div>
+
+        <Link
+          href="/insights"
+          className="block text-center text-xs text-slate-400 hover:text-indigo-300 transition-colors pt-1"
+        >
+          📈 התמונה שלי — איפה אתה חזק ומה כדאי לחזק
+        </Link>
       </motion.div>
     );
   }

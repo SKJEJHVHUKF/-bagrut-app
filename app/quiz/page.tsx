@@ -9,6 +9,7 @@ import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
 import { markStep } from '@/lib/study-plan';
+import { recordResult } from '@/lib/results';
 
 // Renders a string with markdown + LaTeX math.
 // `inline` strips the wrapping <p> so the content can sit inside a flex
@@ -91,6 +92,45 @@ const SUBJECTS = {
   chem: { name: 'כימיה', emoji: '🧪', tabCls: 'tab-chem', gridCls: 's-chem', badge: { color: '#f472b6', bg: 'rgba(244,114,182,0.12)', border: 'rgba(244,114,182,0.25)' }, topics: [{ name: 'מבנה האטום', emoji: '⚛️', sub: 'מודלים, קשרים' }, { name: 'כימיה אורגנית', emoji: '🧬', sub: 'פחמימנים' }, { name: 'שיווי משקל', emoji: '⚖️', sub: 'לה-שטליה' }, { name: 'חומצות ובסיסים', emoji: '🔬', sub: 'pH, טיטרציה' }, { name: 'אלקטרוכימיה', emoji: '🔋', sub: 'תאים, אלקטרוליזה' }] }
 };
 
+// Sentinel "topic" for the mixed quiz — questions drawn from EVERY topic of
+// the subject that has a static question bank. Never sent to the AI fallback.
+const MIXED_TOPIC = '__mixed__';
+
+// Statistics is reserve content, outside the current syllabus — a mixed exam
+// simulating the real bagrut shouldn't pull questions from it.
+const MIXED_EXCLUDED_TOPICS = new Set(['סטטיסטיקה']);
+
+// Adapt a static PracticeQuestion into the shape this quiz UI renders,
+// keeping id/difficulty/topic so the answer can be recorded for the
+// weakness-tracking insights page.
+function adaptBankQuestion(
+  q: { id: string; difficulty: 'easy' | 'mid' | 'hard'; question: string; answers?: string[]; correct?: number; solution: { steps: string[]; finalAnswer: string; explanation: string } },
+  topic: string
+) {
+  return {
+    id: q.id,
+    difficulty: q.difficulty,
+    topic,
+    question: q.question,
+    answers: q.answers,
+    correct: q.correct,
+    explanation: {
+      why_correct: `${q.solution.explanation}\n\n${q.solution.steps.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}`,
+      why_wrong: '',
+      concept: '',
+      remember: `**תשובה סופית:** ${q.solution.finalAnswer}`,
+    },
+  };
+}
+
+function shuffleInPlace<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 // Next.js 16 requires useSearchParams() to be wrapped in a Suspense boundary
 // so the rest of the tree can pre-render statically. The inner component
 // holds the actual logic; the default export is the Suspense wrapper.
@@ -152,6 +192,45 @@ function Quiz() {
     setSelectedAnswer(null);
     setIsCorrect(null);
 
+    // ===== MIXED QUIZ =====
+    // Draws MCQs from every topic of the subject that has a static bank,
+    // round-robin so no single topic dominates. 8 questions, zero API cost.
+    if (selectedTopic === MIXED_TOPIC) {
+      const perTopic: any[][] = [];
+      for (const t of subject.topics) {
+        if (MIXED_EXCLUDED_TOPICS.has(t.name)) continue;
+        if (!hasQuestionBank(currentSubject, t.name)) continue;
+        const mcqs = getQuestions(currentSubject, t.name)
+          .filter((q) => q.kind === 'mcq' && Array.isArray(q.answers) && typeof q.correct === 'number')
+          .map((q) => adaptBankQuestion(q, t.name));
+        if (mcqs.length > 0) perTopic.push(shuffleInPlace(mcqs));
+      }
+      // Round-robin: one question from each topic (random topic order),
+      // then a second pass, until we have 8.
+      shuffleInPlace(perTopic);
+      const picked: any[] = [];
+      for (let round = 0; picked.length < 8; round++) {
+        let took = false;
+        for (const list of perTopic) {
+          if (round < list.length && picked.length < 8) {
+            picked.push(list[round]);
+            took = true;
+          }
+        }
+        if (!took) break; // every bank exhausted
+      }
+      shuffleInPlace(picked);
+      if (picked.length === 0) {
+        alert('אין עדיין בנק שאלות למקצוע הזה — בחר נושא ספציפי');
+        setScreen('home');
+        setLoading(false);
+        return;
+      }
+      setQuestions(picked);
+      setLoading(false);
+      return;
+    }
+
     // ===== STATIC-FIRST PATH =====
     // If we have a hand-written question bank for this subject/topic,
     // serve from it instantly — no API call, no loading wait, no cost.
@@ -161,25 +240,8 @@ function Quiz() {
     if (hasQuestionBank(currentSubject, selectedTopic)) {
       const bank = getQuestions(currentSubject, selectedTopic)
         .filter((q) => q.kind === 'mcq' && Array.isArray(q.answers) && typeof q.correct === 'number');
-      // Fisher-Yates shuffle, take 5 (or all available if bank is smaller).
-      const shuffled = [...bank];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      const picked = shuffled.slice(0, 5).map((q) => ({
-        question: q.question,
-        answers: q.answers,
-        correct: q.correct,
-        // Adapt the static `solution` into the structured-explanation shape
-        // the existing UI renders.
-        explanation: {
-          why_correct: `${q.solution.explanation}\n\n${q.solution.steps.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}`,
-          why_wrong: '',
-          concept: '',
-          remember: `**תשובה סופית:** ${q.solution.finalAnswer}`,
-        },
-      }));
+      const shuffled = shuffleInPlace([...bank]);
+      const picked = shuffled.slice(0, 5).map((q) => adaptBankQuestion(q, selectedTopic));
 
       if (picked.length > 0) {
         setQuestions(picked);
@@ -226,15 +288,29 @@ function Quiz() {
     const ok = idx === q.correct;
     setSelectedAnswer(idx);
     setIsCorrect(ok);
-    setAnswered([...answered, { question: q.question, correct: ok }]);
+    // `topic` per answer feeds the per-topic breakdown on the results screen
+    // (meaningful in the mixed quiz, where every question has its own topic).
+    const answerTopic: string = q.topic ?? selectedTopic ?? '';
+    setAnswered([...answered, { question: q.question, correct: ok, topic: answerTopic }]);
     if (ok) setScore(score + 1);
+    // Weakness tracking for the insights page ("התמונה שלי").
+    if (answerTopic) {
+      recordResult({
+        subject: currentSubject,
+        topic: answerTopic,
+        questionId: q.id,
+        source: 'quiz',
+        difficulty: q.difficulty,
+        correct: ok,
+      });
+    }
   };
 
   // Persist the completed session to Supabase. Fire-and-forget so the UX
   // never blocks waiting for the network. Errors are logged for debugging
   // but never surfaced to the user — losing a history row is worse UX
   // than blocking the results screen on a flaky DB call.
-  const saveSession = (finalScore: number, finalAnswered: Array<{ question: string; correct: boolean }>) => {
+  const saveSession = (finalScore: number, finalAnswered: Array<{ question: string; correct: boolean; topic?: string }>) => {
     if (!selectedTopic) return;
     const supabase = createClient();
     supabase
@@ -244,7 +320,7 @@ function Quiz() {
         subject_key: currentSubject,
         subject_name: subject.name,
         subject_emoji: subject.emoji,
-        topic: selectedTopic,
+        topic: selectedTopic === MIXED_TOPIC ? 'מבחן מעורב' : selectedTopic,
         score: finalScore,
         total: questions.length,
         answered: finalAnswered,
@@ -291,6 +367,18 @@ function Quiz() {
       </div>
       <div className="section-label">בחר נושא</div>
       <div className="topics-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+        {subject.topics.some((t) => hasQuestionBank(currentSubject, t.name)) && (
+          <div
+            className={`topic-card ${selectedTopic === MIXED_TOPIC ? 'selected' : ''}`}
+            onClick={() => setSelectedTopic(MIXED_TOPIC)}
+            style={{ gridColumn: '1 / -1' }}
+          >
+            <span className="topic-check">✓</span>
+            <span className="topic-emoji">🎯</span>
+            <div className="topic-name">מבחן מעורב — כמו בבגרות</div>
+            <div className="topic-sub">8 שאלות מכל הנושאים · מגלה לך איפה אתה חזק ואיפה צריך חיזוק</div>
+          </div>
+        )}
         {subject.topics.map((t, i) => (
           <div key={i} className={`topic-card ${selectedTopic === t.name ? 'selected' : ''}`} onClick={() => setSelectedTopic(t.name)}>
             <span className="topic-check">✓</span>
@@ -309,6 +397,9 @@ function Quiz() {
       <a href="/history" className="chat-link" style={{ marginTop: '8px' }}>
         📊 ההיסטוריה שלי
       </a>
+      <a href="/insights" className="chat-link" style={{ marginTop: '8px' }}>
+        📈 התמונה שלי — חוזקות וחולשות
+      </a>
     </div>
   );
 
@@ -319,7 +410,7 @@ function Quiz() {
           <div className="loading-state">
             <div className="loader-ring"></div>
             <div className="loading-tip">
-              <strong>{subject.emoji} {subject.name} — {selectedTopic}</strong>
+              <strong>{subject.emoji} {subject.name} — {selectedTopic === MIXED_TOPIC ? 'מבחן מעורב' : selectedTopic}</strong>
               <span>⚡ מכין לך שאלות עם הסברים מעמיקים...</span>
               <span style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '8px' }}>בדרך כלל 5-15 שניות</span>
             </div>
@@ -350,7 +441,9 @@ function Quiz() {
             <span className="meta-subject-badge" style={{ color: subject.badge.color, background: subject.badge.bg, borderColor: subject.badge.border }}>
               {subject.emoji} {subject.name}
             </span>
-            <span className="meta-topic-label">{selectedTopic}</span>
+            <span className="meta-topic-label">
+              {selectedTopic === MIXED_TOPIC ? `🎯 מבחן מעורב · ${q.topic ?? ''}` : selectedTopic}
+            </span>
           </div>
           <div className="question-card">
             <div className="q-number">שאלה {currentQ + 1}</div>
@@ -463,6 +556,21 @@ function Quiz() {
     const pct = Math.round((score / total) * 100);
     const [emoji, title, sub] = pct === 100 ? ['🏆', 'מושלם!', 'ציון 100 — אתה מוכן לבגרות!'] : pct >= 80 ? ['🔥', 'מצוין!', `${pct}% — כמעט שם!`] : pct >= 60 ? ['👍', 'לא רע!', `${pct}% — חזור על מה שפספסת`] : ['💪', 'יש מה לשפר', `${pct}% — תנסה שוב`];
 
+    // Per-topic breakdown — the "מה גילינו עליך" moment. Only meaningful
+    // when the session spans more than one topic (the mixed quiz).
+    const byTopic = new Map<string, { correct: number; total: number }>();
+    for (const a of answered) {
+      const t = (a as { topic?: string }).topic;
+      if (!t) continue;
+      const cur = byTopic.get(t) ?? { correct: 0, total: 0 };
+      cur.total += 1;
+      if (a.correct) cur.correct += 1;
+      byTopic.set(t, cur);
+    }
+    const breakdown = [...byTopic.entries()].sort(
+      (a, b) => a[1].correct / a[1].total - b[1].correct / b[1].total
+    );
+
     return (
       <div className="results-inner">
         <div className="result-hero">
@@ -484,8 +592,29 @@ function Quiz() {
             <div className="stat-lbl">שאלות</div>
           </div>
         </div>
+        {breakdown.length > 1 && (
+          <div className="breakdown-box">
+            <div className="breakdown-title">פירוק לפי נושא — מהחלש לחזק</div>
+            {breakdown.map(([t, s]) => {
+              const topicPct = Math.round((s.correct / s.total) * 100);
+              return (
+                <div key={t} className="breakdown-row">
+                  <span className="breakdown-topic">{t}</span>
+                  <span className={`breakdown-score ${topicPct >= 70 ? 'bd-good' : topicPct >= 40 ? 'bd-mid' : 'bd-weak'}`}>
+                    {s.correct}/{s.total}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
         <div className="action-row">
-          <button className="start-btn" onClick={startQuiz}>סבב נוסף באותו נושא 🔁</button>
+          <button className="start-btn" onClick={startQuiz}>
+            {selectedTopic === MIXED_TOPIC ? 'מבחן מעורב נוסף 🔁' : 'סבב נוסף באותו נושא 🔁'}
+          </button>
+          <a href="/insights" className="btn-outline" style={{ textAlign: 'center', textDecoration: 'none', display: 'block' }}>
+            📈 התמונה שלי — חוזקות, חולשות ותרגול חיזוק
+          </a>
           <button className="btn-outline" onClick={() => setScreen('home')}>בחר נושא אחר</button>
         </div>
       </div>
@@ -617,6 +746,14 @@ function Quiz() {
         .stat-lbl { font-size: 12px; color: var(--text3); font-weight: 700; letter-spacing: 0.05em; }
         .stat-correct .stat-val { color: var(--correct); }
         .stat-wrong .stat-val { color: var(--wrong); }
+        .breakdown-box { width: 100%; background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+        .breakdown-title { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+        .breakdown-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .breakdown-topic { font-size: 14px; font-weight: 600; color: var(--text); }
+        .breakdown-score { font-size: 14px; font-weight: 800; }
+        .bd-good { color: var(--correct); }
+        .bd-mid { color: #f59e0b; }
+        .bd-weak { color: var(--wrong); }
         .action-row { display: flex; flex-direction: column; gap: 12px; width: 100%; }
         .btn-outline { background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 15px; font-family: var(--font-heebo), sans-serif; font-size: 15px; font-weight: 700; color: var(--text2); cursor: pointer; transition: all 0.25s; letter-spacing: 0.05em; }
         .btn-outline:hover { color: var(--text); background: var(--surface); border-color: var(--accent); }
