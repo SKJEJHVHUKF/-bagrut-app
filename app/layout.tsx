@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   applicationName: "בגרות בכיס",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "בגרות בכיס",
   },
   formatDetection: {
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#a855f7",
+  themeColor: "#FDFDFB",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -70,7 +70,7 @@ export default function RootLayout({
         <Toaster
           position="top-center"
           dir="rtl"
-          theme="dark"
+          theme="light"
           richColors
           closeButton
           toastOptions={{
