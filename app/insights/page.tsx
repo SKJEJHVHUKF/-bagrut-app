@@ -36,6 +36,12 @@ import {
   type SubTopicStat,
   type DayActivity,
 } from '@/lib/results';
+import {
+  predictOverall,
+  topImpactTopics,
+  type OverallPrediction,
+  type TopicImpact,
+} from '@/lib/prediction';
 
 const SUBJECT_NAMES: Record<string, string> = {
   math5: 'מתמטיקה 5 יח׳',
@@ -80,6 +86,8 @@ type Habit = {
 export default function InsightsPage() {
   const [data, setData] = useState<SubjectData[] | null>(null);
   const [habit, setHabit] = useState<Habit | null>(null);
+  const [prediction, setPrediction] = useState<OverallPrediction | null>(null);
+  const [impact, setImpact] = useState<TopicImpact[]>([]);
 
   function refreshHabit() {
     setHabit({
@@ -103,6 +111,8 @@ export default function InsightsPage() {
       }))
     );
     refreshHabit();
+    setPrediction(predictOverall('math5'));
+    setImpact(topImpactTopics('math5', 3));
   }, []);
 
   function bumpGoal(delta: number) {
@@ -157,6 +167,68 @@ export default function InsightsPage() {
             >
               <span>🎯 התחל מבחן מעורב</span>
             </Link>
+          </motion.div>
+        )}
+
+        {/* Grade prediction hero — the flagship number */}
+        {prediction && data !== null && data.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="surface-premium rounded-3xl p-6 space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2">
+                <Target className="w-3.5 h-3.5" />
+                <span>אם תיגש היום — הציון החזוי שלך</span>
+              </div>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-900/[0.04] border border-slate-900/10 rounded-full px-2 py-0.5">
+                הערכה — לא הבטחה
+              </span>
+            </div>
+
+            <div className="flex items-end justify-center gap-3">
+              <div className="text-6xl font-black gradient-text leading-none">{prediction.score}</div>
+              <div className="text-xs text-slate-500 font-bold pb-1.5">
+                טווח {prediction.low}–{prediction.high}
+              </div>
+            </div>
+            <div className="text-center text-[11px] text-slate-500">
+              מבוסס על {prediction.totalAttempts} תשובות
+              {prediction.totalAttempts < 30 && ' — ענה על עוד שאלות כדי לדייק את ההערכה'}
+            </div>
+
+            {/* Per-paper mini rows */}
+            <div className="grid grid-cols-2 gap-2">
+              {prediction.papers.map((p) => (
+                <div key={p.paper} className="bg-slate-900/[0.03] border border-slate-900/[0.08] rounded-xl px-3 py-2 text-center">
+                  <div className="text-[10px] font-bold text-slate-500">שאלון {p.paper}</div>
+                  <div className={`text-lg font-black ${pctColor(p.score / 100)}`}>{p.score}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Where improvement pays the most */}
+            {impact.length > 0 && (
+              <div className="pt-1">
+                <div className="text-[11px] font-black text-slate-600 mb-2">
+                  💡 הכי משתלם לשפר עכשיו:
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {impact.map((t) => (
+                    <Link
+                      key={t.topic}
+                      href={`/practice/math5/${encodeURIComponent(t.topic)}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/15 border border-indigo-500/25 text-indigo-800 rounded-full px-3 py-1.5 transition-colors"
+                    >
+                      <span>{t.emoji}</span>
+                      <span>{t.topic}</span>
+                      <span className="text-[10px] text-indigo-600">+{t.gainPer10} נק׳ לכל 10% שיפור</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 
