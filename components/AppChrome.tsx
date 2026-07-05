@@ -24,6 +24,7 @@ import {
   Pencil,
   LogOut,
   ChevronLeft,
+  Search as SearchIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
@@ -281,6 +282,17 @@ export default function AppChrome() {
 
               {/* Quick links */}
               <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    window.dispatchEvent(new Event('open-global-search'));
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-900/[0.04] text-slate-700 hover:text-slate-900 transition-colors group"
+                >
+                  <SearchIcon className="w-4.5 h-4.5 text-indigo-600" />
+                  <span className="flex-1 text-right text-sm font-bold">חיפוש</span>
+                  <span className="text-[10px] text-slate-400 font-mono">Ctrl+K</span>
+                </button>
                 {[
                   { href: '/my-plan', icon: BookOpen, label: 'התוכנית שלי' },
                   { href: '/insights', icon: BarChart3, label: 'התמונה שלי' },

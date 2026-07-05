@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import ServiceWorkerRegistration from "./sw-register";
 import AppChrome from "@/components/AppChrome";
+import GlobalSearch from "@/components/GlobalSearch";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,6 +69,7 @@ export default function RootLayout({
       <body className="w-screen overflow-x-hidden m-0 p-0">
         <ServiceWorkerRegistration />
         <AppChrome />
+        <GlobalSearch />
         {children}
         <Toaster
           position="top-center"
