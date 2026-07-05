@@ -7,9 +7,15 @@
 
 import type { AdvancedCourse } from './types';
 import { math5ComplexNumbersAdvanced } from './math5/complex-numbers';
+import { math5ExpFunctionsAdvanced } from './math5/exp-functions';
+import { math5LnFunctionAdvanced } from './math5/ln-function';
+import { math5AnalyticGeometryAdvanced } from './math5/analytic-geometry';
 
 const COURSES: Record<string, AdvancedCourse> = {
   'math5:מספרים מרוכבים': math5ComplexNumbersAdvanced,
+  'math5:פונקציה מעריכית': math5ExpFunctionsAdvanced,
+  'math5:פונקציית ln': math5LnFunctionAdvanced,
+  'math5:גאומטריה אנליטית': math5AnalyticGeometryAdvanced,
 };
 
 /** Look up an advanced course by subject + topic. Null if none exists. */
