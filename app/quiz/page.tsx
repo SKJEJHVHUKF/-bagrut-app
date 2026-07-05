@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
 import { markStep } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
+import { studentTier, pickQuestions } from '@/lib/adaptive';
 
 // Renders a string with markdown + LaTeX math.
 // `inline` strips the wrapping <p> so the content can sit inside a flex
@@ -240,8 +241,11 @@ function Quiz() {
     if (hasQuestionBank(currentSubject, selectedTopic)) {
       const bank = getQuestions(currentSubject, selectedTopic)
         .filter((q) => q.kind === 'mcq' && Array.isArray(q.answers) && typeof q.correct === 'number');
-      const shuffled = shuffleInPlace([...bank]);
-      const picked = shuffled.slice(0, 5).map((q) => adaptBankQuestion(q, selectedTopic));
+      // Level-aware pick: the 5 questions match the student's tier (unit
+      // level 3/4/5 + self-assessed level + live accuracy) instead of a
+      // blind random sample.
+      const tier = studentTier(currentSubject, selectedTopic);
+      const picked = pickQuestions(bank, 5, tier).map((q) => adaptBankQuestion(q, selectedTopic));
 
       if (picked.length > 0) {
         setQuestions(picked);

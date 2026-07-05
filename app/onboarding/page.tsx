@@ -12,7 +12,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { allLessonKeys } from '@/content/lessons';
-import { createPlan, type ProficiencyLevel } from '@/lib/study-plan';
+import { createPlan, type ProficiencyLevel, type UnitLevel } from '@/lib/study-plan';
 import { curriculumIndex } from '@/content/bagrut-curriculum';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 
@@ -50,6 +50,7 @@ export default function OnboardingPage() {
   });
 
   const [selected, setSelected] = useState<SelectedTopic[]>([]);
+  const [unitLevel, setUnitLevel] = useState<UnitLevel>(5);
 
   function toggleTopic(subject: string, topic: string) {
     setSelected((prev) => {
@@ -81,6 +82,7 @@ export default function OnboardingPage() {
     if (selected.length === 0) return;
     createPlan({
       bagrutDate,
+      unitLevel,
       topics: selected.map(({ subject, topic, level }) => ({ subject, topic, level })),
     });
     router.push('/my-plan');
@@ -119,6 +121,8 @@ export default function OnboardingPage() {
           <DateStep
             value={bagrutDate}
             onChange={setBagrutDate}
+            unitLevel={unitLevel}
+            onUnitLevel={setUnitLevel}
             onBack={() => setStep(1)}
             onNext={() => setStep(3)}
           />
@@ -208,11 +212,15 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 function DateStep({
   value,
   onChange,
+  unitLevel,
+  onUnitLevel,
   onBack,
   onNext,
 }: {
   value: string;
   onChange: (v: string) => void;
+  unitLevel: UnitLevel;
+  onUnitLevel: (u: UnitLevel) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
@@ -253,6 +261,34 @@ function DateStep({
             ⏱️ <strong className="text-amber-700">{daysAway} ימים</strong> עד הבגרות שלך.
           </div>
         )}
+      </div>
+
+      {/* Unit level — drives question difficulty across the whole app */}
+      <div className="surface-premium rounded-2xl p-5 space-y-3">
+        <label className="block text-xs font-black tracking-widest text-indigo-700 uppercase">
+          כמה יחידות אתה לומד?
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {([3, 4, 5] as UnitLevel[]).map((u) => (
+            <button
+              key={u}
+              onClick={() => onUnitLevel(u)}
+              className={
+                unitLevel === u
+                  ? 'rounded-xl px-3 py-3.5 text-center bg-indigo-600 border border-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                  : 'rounded-xl px-3 py-3.5 text-center bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-700'
+              }
+            >
+              <div className="text-xl font-black">{u}</div>
+              <div className={`text-[10px] font-bold mt-0.5 ${unitLevel === u ? 'text-indigo-100' : 'text-slate-500'}`}>
+                יחידות
+              </div>
+            </button>
+          ))}
+        </div>
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          השאלות והתרגול יותאמו לרמת היחידות שלך. אפשר לשנות בכל רגע מהפרופיל.
+        </p>
       </div>
 
       <NavButtons onBack={onBack} onNext={onNext} nextDisabled={daysAway <= 0} />

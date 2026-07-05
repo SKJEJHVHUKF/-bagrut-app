@@ -28,6 +28,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
 import { currentStreak } from '@/lib/results';
+import { getUnitLevel, setUnitLevel, hasPlan, type UnitLevel } from '@/lib/study-plan';
 
 // Public / auth routes where the floating avatar must NOT appear.
 // Hide only on the auth/onboarding flows. On the landing ("/") the avatar
@@ -107,10 +108,19 @@ export default function AppChrome() {
     };
   }, [hidden, pathname]);
 
-  // Streak is client-only (localStorage) — read when the drawer opens.
+  // Streak + unit level are client-only (localStorage) — read on drawer open.
+  const [units, setUnits] = useState<UnitLevel | null>(null);
   useEffect(() => {
-    if (open) setStreak(currentStreak());
+    if (open) {
+      setStreak(currentStreak());
+      setUnits(hasPlan() ? getUnitLevel() : null);
+    }
   }, [open]);
+
+  const changeUnits = (u: UnitLevel) => {
+    setUnitLevel(u);
+    setUnits(u);
+  };
 
   // Close on ESC
   useEffect(() => {
@@ -243,6 +253,30 @@ export default function AppChrome() {
                     <Flame className="w-3 h-3" /> {streak} ימי רצף
                   </span>
                 </div>
+
+                {/* Unit level — every question in the app adapts to this. */}
+                {units !== null && (
+                  <div className="mt-3">
+                    <div className="text-[10px] font-black tracking-widest text-slate-500 uppercase mb-1.5">
+                      רמת לימוד
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {([3, 4, 5] as UnitLevel[]).map((u) => (
+                        <button
+                          key={u}
+                          onClick={() => changeUnits(u)}
+                          className={
+                            units === u
+                              ? 'rounded-lg py-1.5 text-xs font-black bg-indigo-600 text-white border border-indigo-600'
+                              : 'rounded-lg py-1.5 text-xs font-bold bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-600'
+                          }
+                        >
+                          {u} יח׳
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Quick links */}

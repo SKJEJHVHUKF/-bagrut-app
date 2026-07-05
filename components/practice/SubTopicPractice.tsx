@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -21,7 +21,8 @@ import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
 import { markExerciseDone, markSubTopicDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
-import type { SubTopic, StaticBagrutQuestion } from '@/content/lessons/types';
+import { studentTier, orderQuestions, tierLabel, type Tier } from '@/lib/adaptive';
+import type { SubTopic, StaticBagrutQuestion, PracticeQuestion } from '@/content/lessons/types';
 
 type Props = {
   subject: string;
@@ -48,7 +49,19 @@ export function SubTopicPractice({
   nextSubTopic = null,
   bagrutQuestions = [],
 }: Props) {
-  const questions = subTopic.questions;
+  // Questions ordered for the student's tier (unit level + self-assessed
+  // level + live accuracy). Reordered once after mount — localStorage reads
+  // must not run during SSR/hydration, and the effect fires before any
+  // interaction so the swap is invisible.
+  const [questions, setQuestions] = useState<PracticeQuestion[]>(subTopic.questions);
+  const [tier, setTier] = useState<Tier | null>(null);
+  useEffect(() => {
+    const t = studentTier(subject, topic, subTopic.id);
+    setTier(t);
+    setQuestions(orderQuestions(subTopic.questions, t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject, topic, subTopic.id]);
+
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [wrongTries, setWrongTries] = useState<number[]>([]);
@@ -256,6 +269,11 @@ export function SubTopicPractice({
           → חזרה לסיכום
         </Link>
         <div className="flex items-center gap-2">
+          {tier !== null && (
+            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-500/10 border border-indigo-500/25 rounded-full px-2 py-0.5">
+              {tierLabel(tier)}
+            </span>
+          )}
           <span className="text-slate-600">שאלה</span>
           <span className="font-bold text-emerald-700">
             {idx + 1}/{total}

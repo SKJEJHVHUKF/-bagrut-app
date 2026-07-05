@@ -33,6 +33,9 @@ export type PlanTopic = {
   lastSeenAt?: number;         // ms epoch
 };
 
+/** How many bagrut units (יחידות לימוד) the student is studying toward. */
+export type UnitLevel = 3 | 4 | 5;
+
 export type StudyPlan = {
   /** Bagrut exam date as ISO yyyy-mm-dd. */
   bagrutDate: string;
@@ -40,6 +43,9 @@ export type StudyPlan = {
   topics: PlanTopic[];
   /** When the plan was created. */
   createdAt: number;
+  /** 3/4/5 units — drives question difficulty + default subject. Optional
+   *  for plans created before this field existed (treated as 5). */
+  unitLevel?: UnitLevel;
 };
 
 function isBrowser() {
@@ -90,10 +96,12 @@ export function clearPlan(): void {
 export function createPlan(args: {
   bagrutDate: string;
   topics: Array<{ subject: string; topic: string; level: ProficiencyLevel }>;
+  unitLevel?: UnitLevel;
 }): StudyPlan {
   const plan: StudyPlan = {
     bagrutDate: args.bagrutDate,
     createdAt: Date.now(),
+    unitLevel: args.unitLevel ?? 5,
     topics: args.topics.map((t) => ({
       subject: t.subject,
       topic: t.topic,
@@ -104,6 +112,26 @@ export function createPlan(args: {
   };
   savePlan(plan);
   return plan;
+}
+
+/** The student's unit level; 5 for legacy plans / no plan. */
+export function getUnitLevel(): UnitLevel {
+  return getPlan()?.unitLevel ?? 5;
+}
+
+/** Update the unit level on an existing plan (e.g. from the profile panel). */
+export function setUnitLevel(level: UnitLevel): void {
+  const plan = getPlan();
+  if (!plan) return;
+  plan.unitLevel = level;
+  savePlan(plan);
+}
+
+/** The student's self-assessed level for a topic, if it's in the plan. */
+export function getTopicLevel(subject: string, topic: string): ProficiencyLevel | null {
+  const plan = getPlan();
+  if (!plan) return null;
+  return plan.topics.find((t) => t.subject === subject && t.topic === topic)?.level ?? null;
 }
 
 // ============================================================
