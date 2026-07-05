@@ -117,7 +117,7 @@ export default function BagruyotArchivePage() {
             תרגול שאלות בגרות אמיתיות עם רמזים מדורגים ופתרונות מלאים. שדרג ל-Pro כדי לגשת.
           </p>
           <Link
-            href="/my-plan"
+            href="/pricing"
             className="inline-flex items-center gap-2 bg-gradient-to-l from-amber-500 to-orange-500 px-6 py-3 rounded-2xl font-bold"
           >
             פרטים על Pro
@@ -247,7 +247,7 @@ export default function BagruyotArchivePage() {
 
       {/* Bottom nav */}
       <div className="mt-8 pt-6 border-t border-slate-900/10">
-        <Link href="/my-plan" className="text-sm text-slate-600 hover:text-slate-800">
+        <Link href="/pricing" className="text-sm text-slate-600 hover:text-slate-800">
           ← חזרה לתוכנית הלימוד
         </Link>
       </div>

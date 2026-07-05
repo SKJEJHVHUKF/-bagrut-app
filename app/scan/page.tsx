@@ -342,7 +342,7 @@ export default function ScanPage() {
               </div>
             )}
             <Link
-              href="/my-plan"
+              href="/pricing"
               className="btn-primary inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold text-white w-full sm:w-auto"
             >
               <Crown className="w-4 h-4" />
@@ -481,7 +481,7 @@ export default function ScanPage() {
             <BookOpen className="w-4 h-4" />
             הספרייה שלי
           </Link>
-          <Link href="/my-plan" className="text-slate-600 hover:text-slate-800 inline-flex items-center gap-1">
+          <Link href="/pricing" className="text-slate-600 hover:text-slate-800 inline-flex items-center gap-1">
             חזרה לתוכנית
           </Link>
         </div>

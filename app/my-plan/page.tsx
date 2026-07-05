@@ -235,19 +235,22 @@ export default function MyPlanPage() {
         {/* Footer actions */}
         <section className="pt-4 space-y-2">
           {!pro && (
-            <div className="bg-gradient-to-br from-indigo-600/15 to-indigo-600/15 border border-indigo-500/40 rounded-2xl p-5 text-center space-y-3">
+            <Link
+              href="/pricing"
+              className="block bg-gradient-to-br from-indigo-600/15 to-indigo-600/15 border border-indigo-500/40 rounded-2xl p-5 text-center space-y-3"
+            >
               <Crown className="w-8 h-8 mx-auto text-amber-700" />
               <div>
                 <div className="text-base font-black text-slate-900 mb-1">שדרג ל-Pro</div>
                 <div className="text-sm text-slate-700">
-                  פתח את **כל** הנושאים בתוכנית שלך, מאגר שאלות בלתי מוגבל, וסימולציות בגרות מלאות.
+                  הקורס המתקדם ברמת בגרות, מאגר הבגרויות המלא, סימולציות ועזרת-AI ללא הגבלה. הלימוד עצמו תמיד חינם.
                 </div>
               </div>
-              <button className="btn-3d w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 px-5 py-3 rounded-xl font-bold text-white text-sm">
+              <span className="btn-3d w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 px-5 py-3 rounded-xl font-bold text-white text-sm">
                 <Crown className="w-4 h-4" />
-                <span>שדרג עכשיו — בקרוב</span>
-              </button>
-            </div>
+                <span>לפרטים ולמסלולים</span>
+              </span>
+            </Link>
           )}
 
           <button
@@ -274,7 +277,7 @@ function TopicCard({
 }: {
   index: number;
   topic: { subject: string; topic: string; completion: number; level: string };
-  lockReason: 'open' | 'pro-required' | 'locked-progress';
+  lockReason: 'open' | 'locked-progress';
 }) {
   const accessible = lockReason === 'open';
   const href = accessible
@@ -317,14 +320,10 @@ function TopicCard({
         </div>
 
         <div className="flex-shrink-0">
-          {lockReason === 'pro-required' && (
-            <div className="px-2 py-1 rounded-md bg-amber-500/20 border border-amber-500/40 flex items-center gap-1">
-              <Crown className="w-3 h-3 text-amber-700" />
-              <span className="text-[10px] font-black text-amber-800">PRO</span>
-            </div>
-          )}
           {lockReason === 'locked-progress' && (
-            <Lock className="w-4 h-4 text-slate-500" />
+            <div className="flex items-center gap-1 text-slate-500" title="יפתח כשתסיים את הנושאים הקודמים">
+              <Lock className="w-4 h-4" />
+            </div>
           )}
           {accessible && (
             <ArrowLeft className="w-4 h-4 text-indigo-700" />

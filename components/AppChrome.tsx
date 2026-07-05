@@ -313,7 +313,7 @@ export default function AppChrome() {
 
                 {!profile.pro && (
                   <Link
-                    href="/my-plan"
+                    href="/pricing"
                     onClick={() => setOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-l from-amber-500/10 to-orange-500/10 border border-amber-500/25 text-amber-800 mt-2"
                   >

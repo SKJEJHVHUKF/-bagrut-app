@@ -22,6 +22,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { getSubTopic } from '@/content/lessons';
+import { createClient } from '@/lib/supabase/client';
+import { isProUser } from '@/lib/access';
 import {
   totalStats,
   topicStats,
@@ -89,6 +91,11 @@ export default function InsightsPage() {
   const [habit, setHabit] = useState<Habit | null>(null);
   const [prediction, setPrediction] = useState<OverallPrediction | null>(null);
   const [impact, setImpact] = useState<TopicImpact[]>([]);
+  const [pro, setPro] = useState(true); // assume pro until known → no upsell flash
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => setPro(isProUser(data.user)));
+  }, []);
 
   function refreshHabit() {
     setHabit({
@@ -229,6 +236,23 @@ export default function InsightsPage() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Upsell — the killer spot: they're staring at their grade. */}
+            {!pro && (
+              <Link
+                href="/pricing"
+                className="mt-1 flex items-center gap-3 bg-gradient-to-l from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl px-4 py-3 group"
+              >
+                <span className="text-xl flex-shrink-0">👑</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-black text-slate-900">רוצה להעלות את הציון?</span>
+                  <span className="block text-[11px] text-slate-600">
+                    הקורס המתקדם, מאגר הבגרויות והסימולציות — ב-Pro
+                  </span>
+                </span>
+                <ArrowRight className="w-4 h-4 text-amber-600 rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+              </Link>
             )}
           </motion.div>
         )}

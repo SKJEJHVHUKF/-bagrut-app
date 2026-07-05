@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
+import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
 import { hasLesson } from '@/content/lessons';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -22,7 +23,6 @@ import {
   X,
 } from 'lucide-react';
 
-const MAX_DAILY_MESSAGES = 20;
 const MAX_MESSAGE_LEN = 500;
 
 type ChatMessage = {
@@ -73,7 +73,8 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [remaining, setRemaining] = useState<number>(MAX_DAILY_MESSAGES);
+  const [remaining, setRemaining] = useState<number>(FREE_DAILY_CHAT);
+  const [dailyCap, setDailyCap] = useState<number>(FREE_DAILY_CHAT);
   const [error, setError] = useState<string | null>(null);
   // Saved-conversations sidebar. `conversationId` is null on a fresh chat
   // until the first message creates a conversation server-side.
@@ -115,6 +116,10 @@ export default function ChatPage() {
     (async () => {
       const supabase = createClient();
 
+      // Tier-aware daily cap: free vs Pro.
+      const { data: { user } } = await supabase.auth.getUser();
+      const cap = isProUser(user) ? PRO_DAILY_CHAT : FREE_DAILY_CHAT;
+
       // Today's user-sent count to compute remaining.
       const { count } = await supabase
         .from('chat_messages')
@@ -123,7 +128,8 @@ export default function ChatPage() {
         .gte('created_at', utcDayStartIso());
 
       if (cancelled) return;
-      setRemaining(Math.max(0, MAX_DAILY_MESSAGES - (count ?? 0)));
+      setDailyCap(cap);
+      setRemaining(Math.max(0, cap - (count ?? 0)));
       loadConversations();
     })();
     return () => {
@@ -196,7 +202,11 @@ export default function ChatPage() {
       return;
     }
     if (remaining <= 0) {
-      setError(`הגעת למכסת ${MAX_DAILY_MESSAGES} ההודעות היומית. חזור מחר.`);
+      setError(
+        dailyCap <= FREE_DAILY_CHAT
+          ? `הגעת למכסת ${dailyCap} ההודעות היומית בחשבון החינמי. שדרג ל-Pro לצ׳אט ללא הגבלה.`
+          : `הגעת למכסת ${dailyCap} ההודעות היומית. חזור מחר.`
+      );
       return;
     }
 

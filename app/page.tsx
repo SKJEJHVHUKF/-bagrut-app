@@ -39,8 +39,6 @@ import {
   availableYears as bagruyotYears,
   availableTopics as bagruyotTopics,
 } from '@/content/past-bagruyot';
-import { allLessonKeys, getLesson } from '@/content/lessons';
-import { MathText } from '@/components/practice/MathText';
 
 // Custom Logo Component — single indigo brand mark (no rainbow gradient).
 function BagrutLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
@@ -250,8 +248,6 @@ export default function Landing() {
           <span className="w-1 h-1 rounded-full bg-slate-600" />
           <span><strong className="text-slate-700 font-bold">100%</strong> חינם</span>
         </motion.div>
-
-        <DailyTip />
       </motion.section>
 
       {/* Three modes — quiz / practice / chat */}
@@ -540,23 +536,24 @@ export default function Landing() {
             className="relative bg-indigo-600/[0.08] border-2 border-indigo-500/40 rounded-3xl p-8 shadow-xl shadow-indigo-600/15"
           >
             <div className="absolute -top-3 right-6 bg-amber-400 px-3 py-1 rounded-full text-xs font-black tracking-wide text-amber-950 shadow-lg">
-              בקרוב
+              למי שרוצה 100
             </div>
             <div className="flex items-center gap-2 mb-2">
               <Rocket className="w-5 h-5 text-indigo-700" />
               <span className="text-indigo-700 font-bold text-sm tracking-wide">Pro</span>
             </div>
             <div className="flex items-baseline gap-2 mb-6">
-              <span className="font-display text-5xl font-black text-indigo-800">בהשקה</span>
+              <span className="font-display text-5xl font-black text-indigo-800">₪129</span>
+              <span className="text-sm text-slate-500">חצי שנה · כמו שיעור אחד</span>
             </div>
             <ul className="space-y-3 mb-8">
               {[
-                'כל מה שכלול בחינמי',
-                'שמירת היסטוריית תרגול',
-                'מבחני סימולציה מלאים',
-                'סטטיסטיקות וגרפי שיפור',
-                'צ\'אט עם AI לעזרה אישית',
-                'דוחות התקדמות שבועיים',
+                'כל הלימוד והתרגול — חינם, תמיד',
+                'הקורס המתקדם ברמת בגרות',
+                'מאגר בגרויות אמיתיות + פתרונות',
+                'סימולציית בגרות מלאה בזמן אמת',
+                'צ\'אט ועזרת-AI ללא הגבלה',
+                'מחברת טעויות ואנליטיקה מתקדמת',
               ].map((f, i) => (
                 <li key={i} className="flex items-center gap-3 text-slate-800">
                   <div className="w-5 h-5 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center flex-shrink-0">
@@ -566,13 +563,12 @@ export default function Landing() {
                 </li>
               ))}
             </ul>
-            <button
-              type="button"
-              className="block w-full text-center bg-slate-900/[0.03] border border-indigo-500/30 px-6 py-3.5 rounded-xl font-bold text-indigo-800 cursor-not-allowed opacity-80"
-              disabled
+            <Link
+              href="/pricing"
+              className="block w-full text-center btn-primary px-6 py-3.5 rounded-xl font-bold text-white"
             >
-              בקרוב · רשימת המתנה
-            </button>
+              לפרטים ולמסלולים
+            </Link>
           </motion.div>
         </motion.div>
       </motion.section>
@@ -809,41 +805,3 @@ function PrimaryCTA() {
   );
 }
 
-// Daily rotating exam tip — pooled from every lesson's examTips, picked by
-// day-of-year so the whole class sees the same tip each day. Computed in
-// useEffect (client date) to avoid an SSR hydration mismatch.
-function DailyTip() {
-  const [tip, setTip] = useState<{ topic: string; tip: string } | null>(null);
-
-  useEffect(() => {
-    const pool = allLessonKeys().flatMap(({ subject, topic }) => {
-      if (subject !== 'math5') return [];
-      const tips = getLesson(subject, topic)?.examTips ?? [];
-      return tips.map((t) => ({ topic, tip: t }));
-    });
-    if (pool.length === 0) return;
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 0);
-    const dayOfYear = Math.floor((now.getTime() - start.getTime()) / 86400000);
-    setTip(pool[dayOfYear % pool.length]);
-  }, []);
-
-  if (!tip) return null;
-
-  return (
-    <motion.div
-      variants={fadeUp}
-      className="max-w-xl mx-auto mt-8 surface-premium rounded-2xl px-4 py-3 flex items-start gap-3 text-right"
-    >
-      <span className="text-lg flex-shrink-0 mt-0.5">💡</span>
-      <div className="min-w-0">
-        <div className="text-[10px] font-black tracking-widest text-[var(--accent)] uppercase mb-0.5">
-          טיפ הבגרות היומי · {tip.topic}
-        </div>
-        <div className="chat-md text-sm text-slate-700 leading-relaxed">
-          <MathText>{tip.tip}</MathText>
-        </div>
-      </div>
-    </motion.div>
-  );
-}

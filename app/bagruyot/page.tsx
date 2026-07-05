@@ -66,7 +66,7 @@ export default function BagruyotLandingPage() {
     <main className="min-h-screen px-4 sm:px-6 py-8 max-w-3xl mx-auto">
       {/* Back link */}
       <Link
-        href="/my-plan"
+        href="/pricing"
         className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800 mb-6"
       >
         ← חזרה לתוכנית הלימוד
@@ -244,7 +244,7 @@ export default function BagruyotLandingPage() {
             </div>
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="inline-block">
               <Link
-                href="/my-plan"
+                href="/pricing"
                 className="inline-flex items-center gap-2 bg-gradient-to-l from-amber-500 to-orange-500 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
               >
                 שדרג ל-Pro

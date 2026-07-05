@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, Rocket, ArrowLeft, Lock } from 'lucide-react';
+import { GraduationCap, Rocket, ArrowLeft, Lock, Crown } from 'lucide-react';
 import { PATH_SECTIONS } from '@/content/learning-paths/types';
 import { ADVANCED_SECTIONS } from '@/content/advanced-courses/types';
 import { hasAdvancedCourse } from '@/content/advanced-courses';
 import { getCompletedSections } from '@/lib/learn-progress';
 import { getAdvancedProgress, getCompletedAdvancedSections } from '@/lib/advanced-progress';
+import { createClient } from '@/lib/supabase/client';
+import { isProUser } from '@/lib/access';
 import { fadeUp, inViewProps } from '@/lib/animations';
 
 type TrackStatus = { label: string; cls: string };
@@ -26,6 +28,11 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
 
   const [baseStatus, setBaseStatus] = useState<TrackStatus | null>(null);
   const [advStatus, setAdvStatus] = useState<TrackStatus | null>(null);
+  const [pro, setPro] = useState(false);
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => setPro(isProUser(data.user)));
+  }, []);
 
   useEffect(() => {
     // Base track status
@@ -106,10 +113,16 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                   <span className="font-black text-sm sm:text-base text-slate-900">קורס מתקדם — רמת בגרות</span>
-                  {advStatus && (
-                    <span className={`text-[9px] font-black tracking-wide border px-1.5 py-0.5 rounded-full ${advStatus.cls}`}>
-                      {advStatus.label}
+                  {!pro ? (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-black tracking-wide border border-amber-400/50 bg-amber-500/15 text-amber-800 px-1.5 py-0.5 rounded-full">
+                      <Crown className="w-2.5 h-2.5" /> PRO
                     </span>
+                  ) : (
+                    advStatus && (
+                      <span className={`text-[9px] font-black tracking-wide border px-1.5 py-0.5 rounded-full ${advStatus.cls}`}>
+                        {advStatus.label}
+                      </span>
+                    )
                   )}
                 </div>
                 <div className="text-xs text-indigo-800 leading-snug">

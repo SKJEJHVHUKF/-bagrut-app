@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { isGroundedTopic, buildTutorSystemPrompt } from '@/lib/tutor-grounding';
+import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
 
 // Hobby plan needs an explicit ceiling. Haiku 4.5 with a tight 6-message
 // context + max_tokens=800 typically finishes in 5-15s, well under 60s.
@@ -48,7 +49,9 @@ $$\\frac{d}{dx}[\\ln(u)] = \\frac{u'}{u}$$
 // ===== LIMITS =====
 const MAX_MESSAGE_LEN = 500;
 const MIN_MESSAGE_LEN = 1;
-const MAX_DAILY_MESSAGES = 20; // hard cap per user per day
+// Daily cap is tier-based: free students get FREE_DAILY_CHAT, Pro get a
+// much higher (effectively unlimited) ceiling. The cap itself is a gentle
+// conversion lever — a heavy free user feels the wall and upgrades.
 const CONTEXT_MESSAGE_COUNT = 6; // last 3 user/assistant pairs
 
 // Block obvious prompt-injection / abuse markers — same lightweight check
@@ -165,12 +168,16 @@ export async function POST(request: Request) {
       return Response.json({ error: 'שגיאה זמנית. נסה שוב.' }, { status: 500 });
     }
 
+    const dailyCap = isProUser(user) ? PRO_DAILY_CHAT : FREE_DAILY_CHAT;
     const used = todayCount ?? 0;
-    if (used >= MAX_DAILY_MESSAGES) {
+    if (used >= dailyCap) {
       return Response.json(
         {
-          error: `הגעת למכסת ${MAX_DAILY_MESSAGES} ההודעות היומית. חזור מחר.`,
+          error: isProUser(user)
+            ? `הגעת למכסת ${dailyCap} ההודעות היומית. חזור מחר.`
+            : `הגעת למכסת ${dailyCap} ההודעות היומית בחשבון החינמי. שדרג ל-Pro לצ׳אט ללא הגבלה.`,
           quotaExceeded: true,
+          proRequired: !isProUser(user),
           remaining: 0,
         },
         { status: 429 }
@@ -331,7 +338,7 @@ export async function POST(request: Request) {
       {
         reply: reply.text,
         conversationId: convEnabled ? convId : null,
-        remaining: Math.max(0, MAX_DAILY_MESSAGES - (used + 1)),
+        remaining: Math.max(0, dailyCap - (used + 1)),
       },
       {
         headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' },
