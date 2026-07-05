@@ -15,7 +15,7 @@ import { poolHas } from '@/lib/pool-availability';
 import { hasBagrutBank } from '@/content/lessons';
 import { hasLearningPath } from '@/content/learning-paths';
 import { CourseTracks } from '@/components/learn/CourseTracks';
-import { markStep } from '@/lib/study-plan';
+import { markStep, getTopicLevel, type ProficiencyLevel } from '@/lib/study-plan';
 import { TopicJourney } from './TopicJourney';
 import { fadeUp, staggerContainer, inViewProps, buttonTap } from '@/lib/animations';
 
@@ -24,11 +24,15 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
   // Re-read on mount and after returning from the practice page (handled
   // implicitly because Next.js re-mounts when the route changes back).
   const [completedSubs, setCompletedSubs] = useState<Set<string>>(new Set());
+  // Self-assessed level for this topic (study plan) — light-touch guidance
+  // banner only, never a forced flow.
+  const [planLevel, setPlanLevel] = useState<ProficiencyLevel | null>(null);
 
   useEffect(() => {
     markLessonViewed(lesson.subject, lesson.topic);
     markStep(lesson.subject, lesson.topic, 'understand');
     setCompletedSubs(getCompletedSubTopics(lesson.subject, lesson.topic));
+    setPlanLevel(getTopicLevel(lesson.subject, lesson.topic));
   }, [lesson.subject, lesson.topic]);
 
   return (
@@ -38,6 +42,26 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
     <article className="flex flex-col gap-6">
       {/* 3-step journey header — only renders if the student has a plan */}
       <TopicJourney subject={lesson.subject} topic={lesson.topic} />
+
+      {/* Level-aware guidance banner */}
+      {planLevel === 'weak' && (
+        <div className="bg-indigo-500/[0.06] border border-indigo-500/25 rounded-2xl px-4 py-3 text-sm text-indigo-900 flex items-start gap-2.5">
+          <Lightbulb className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+          <span>
+            סימנת שהנושא הזה מרגיש לך חלש — מומלץ להתחיל מ<b>מודול 1</b> ולעבור
+            שלב-אחר-שלב. התרגול יתאים את עצמו לרמה שלך.
+          </span>
+        </div>
+      )}
+      {planLevel === 'strong' && (
+        <div className="bg-emerald-500/[0.06] border border-emerald-500/25 rounded-2xl px-4 py-3 text-sm text-emerald-900 flex items-start gap-2.5">
+          <Target className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+          <span>
+            אתה חזק בנושא הזה — אפשר לרפרף על הסיכום ולקפוץ ישר ל<b>שאלות הבגרות</b>
+            {' '}בתחתית העמוד. התרגול יגיש לך שאלות ברמה מתקדמת.
+          </span>
+        </div>
+      )}
 
       {/* Title + intro */}
       <motion.header

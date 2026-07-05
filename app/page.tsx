@@ -39,6 +39,8 @@ import {
   availableYears as bagruyotYears,
   availableTopics as bagruyotTopics,
 } from '@/content/past-bagruyot';
+import { allLessonKeys, getLesson } from '@/content/lessons';
+import { MathText } from '@/components/practice/MathText';
 
 // Custom Logo Component — single indigo brand mark (no rainbow gradient).
 function BagrutLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
@@ -248,6 +250,8 @@ export default function Landing() {
           <span className="w-1 h-1 rounded-full bg-slate-600" />
           <span><strong className="text-slate-700 font-bold">100%</strong> חינם</span>
         </motion.div>
+
+        <DailyTip />
       </motion.section>
 
       {/* Three modes — quiz / practice / chat */}
@@ -802,5 +806,44 @@ function PrimaryCTA() {
       <span className="text-lg">{planExists ? 'המשך לתוכנית שלי' : 'צור תוכנית אישית'}</span>
       <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
     </Link>
+  );
+}
+
+// Daily rotating exam tip — pooled from every lesson's examTips, picked by
+// day-of-year so the whole class sees the same tip each day. Computed in
+// useEffect (client date) to avoid an SSR hydration mismatch.
+function DailyTip() {
+  const [tip, setTip] = useState<{ topic: string; tip: string } | null>(null);
+
+  useEffect(() => {
+    const pool = allLessonKeys().flatMap(({ subject, topic }) => {
+      if (subject !== 'math5') return [];
+      const tips = getLesson(subject, topic)?.examTips ?? [];
+      return tips.map((t) => ({ topic, tip: t }));
+    });
+    if (pool.length === 0) return;
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((now.getTime() - start.getTime()) / 86400000);
+    setTip(pool[dayOfYear % pool.length]);
+  }, []);
+
+  if (!tip) return null;
+
+  return (
+    <motion.div
+      variants={fadeUp}
+      className="max-w-xl mx-auto mt-8 surface-premium rounded-2xl px-4 py-3 flex items-start gap-3 text-right"
+    >
+      <span className="text-lg flex-shrink-0 mt-0.5">💡</span>
+      <div className="min-w-0">
+        <div className="text-[10px] font-black tracking-widest text-[var(--accent)] uppercase mb-0.5">
+          טיפ הבגרות היומי · {tip.topic}
+        </div>
+        <div className="chat-md text-sm text-slate-700 leading-relaxed">
+          <MathText>{tip.tip}</MathText>
+        </div>
+      </div>
+    </motion.div>
   );
 }

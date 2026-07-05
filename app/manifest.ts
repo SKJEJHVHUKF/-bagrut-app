@@ -14,6 +14,12 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'he',
     dir: 'rtl',
     categories: ['education', 'productivity'],
+    // Long-press app icon → jump straight into the three core actions.
+    shortcuts: [
+      { name: 'מבחן מהיר', url: '/quiz' },
+      { name: 'המורה הפרטי', url: '/chat' },
+      { name: 'צילום שאלה', url: '/scan' },
+    ],
     icons: [
       {
         // SVG (vector) — best quality where supported
