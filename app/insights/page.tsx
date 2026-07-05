@@ -42,6 +42,7 @@ import {
   type OverallPrediction,
   type TopicImpact,
 } from '@/lib/prediction';
+import ShareCardButton from '@/components/ShareCardButton';
 
 const SUBJECT_NAMES: Record<string, string> = {
   math5: 'מתמטיקה 5 יח׳',
@@ -244,7 +245,7 @@ export default function InsightsPage() {
               <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-[var(--accent)]/10 border border-[var(--accent)]/30 flex items-center justify-center">
                 <Flame className="w-6 h-6 text-[var(--accent)]" />
               </div>
-              <div>
+              <div className="flex-1">
                 <div className="text-2xl font-black text-slate-900 leading-none">
                   {habit.streak}
                   <span className="text-xs font-bold text-slate-500 mr-1">ימים</span>
@@ -252,6 +253,18 @@ export default function InsightsPage() {
                 <div className="text-[11px] text-slate-600 font-bold mt-1">
                   {habit.streak >= 2 ? 'רצף למידה — שמור עליו! 🔥' : 'רצף למידה — יום ביום'}
                 </div>
+                {habit.streak >= 3 && (
+                  <div className="mt-2">
+                    <ShareCardButton
+                      card={{
+                        headline: 'רצף למידה בוער',
+                        bigStat: String(habit.streak),
+                        statLabel: 'ימים ברצף של תרגול',
+                      }}
+                      label="שתף את הרצף"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

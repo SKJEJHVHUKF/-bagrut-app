@@ -22,6 +22,7 @@ import { markExerciseDone, markSubTopicDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
 import { studentTier, orderQuestions, tierLabel, type Tier } from '@/lib/adaptive';
+import ShareCardButton from '@/components/ShareCardButton';
 import type { SubTopic, StaticBagrutQuestion, PracticeQuestion } from '@/content/lessons/types';
 
 type Props = {
@@ -189,6 +190,19 @@ export function SubTopicPractice({
             {bagrutQuestions.length > 0 ? 'יפה! עברת את הדרילים 🎯' : 'סיימת את התרגול!'}
           </h2>
           <div className="text-5xl font-black text-emerald-800">{correctCount}/{total}</div>
+          {total > 0 && correctCount / total >= 0.7 && (
+            <div className="flex justify-center">
+              <ShareCardButton
+                card={{
+                  headline: 'סיימתי מודול בהצלחה',
+                  bigStat: `${correctCount}/${total}`,
+                  statLabel: 'תשובות נכונות',
+                  sub: `${topic} · ${subTopic.title}`,
+                }}
+                label="שתף את ההישג"
+              />
+            </div>
+          )}
           <div className="text-sm text-slate-700">
             {percent === 100
               ? '🌟 ציון מושלם — אתה שולט בתת-נושא הזה.'
