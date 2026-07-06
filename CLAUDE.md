@@ -6,157 +6,140 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**בגרות בכיס** — Hebrew bagrut (Israeli matriculation exam) practice tool.
-Live production: <https://bagrut-app.vercel.app>.
+**בגרות בכיס** — a Hebrew (RTL) study platform for the Israeli bagrut, focused on **math 5-units** (שאלונים 581 + 582). Live production: <https://bagrut-app.vercel.app> (Vercel Hobby, auto-deploys on push to `main`).
 
-Owner / site admin: **meitalm1020@gmail.com**. Treat their direction as authoritative on product decisions.
+Owner / site admin: **meitalm1020@gmail.com** (Itay). Non-technical, operates in Hebrew, male forms. Treat his direction as authoritative on product decisions. Communicate with him in Hebrew; leave code/errors in their original language; state per-request Anthropic cost up front before spending budget.
+
+The product has evolved from an AI-question generator into a **static-first learning platform**: hundreds of hand-authored, mathematically-verified lessons/questions/solutions render with **zero API cost**. AI is now the *fallback*, not the engine.
 
 ---
 
-## Project status (as of 2026-05-18)
+## Hard constraints — do not violate
 
-### Features completed ✅
+Breaking any of these wastes the owner's budget, breaks production, or corrupts content:
 
-| Feature | Route | Notes |
+1. **Build + typecheck before every push.** `npx tsc --noEmit` **and** `npm run build` must pass. Push to `main` auto-deploys; the owner views the LIVE site (no local dev server), so **an edit isn't "done" until it's pushed**. Vercel Hobby runtime differs from `next dev` — the owner has lost money to deploys that passed local typecheck but failed in prod.
+2. **Git: pathspec commits only — NEVER `git add .` / `-A`.** The repo carries parallel WIP. Run `git status` first. **Never touch / never stage:** `content/lessons/math5/statistics.ts`, `content/past-bagruyot/2020-summer-582.ts` (in-flight edits), and untracked dirs `.claude/`, `app/privacy/`, `app/terms/`, `app/topic-demo/`, `components/topic/`, `content/topics/`.
+3. **Vercel Hobby caps serverless functions at 60s.** Every API route sets `export const maxDuration = 60`. Pair every model call with a `max_tokens` that fits inside 60s, or it returns nothing *and still bills Anthropic*.
+4. **Anthropic budget is ~$5/month.** Don't ping-pong models during a bug hunt. Prefer the static-first / cache paths (below) that cost $0. Use prompt caching (`cache_control: ephemeral`) on large static system prompts.
+5. **NEVER put Hebrew inside KaTeX** (`$...$`). KaTeX has no bidi → Hebrew renders reversed. Hebrew goes OUTSIDE the math; Latin subscripts only (`$m_1$`, not `$m_{משיק}$`). After any content edit run `npx tsx scripts/check-katex-hebrew.ts` — it must report 0.
+6. **Math conventions (5-unit bagrut):** complex numbers use **cis notation in degrees** (never `e^{iθ}`, never radians); parabola is **`y²=2px`**, focus `(p/2,0)`, directrix `x=−p/2` (NOT the American `4px`); ellipse `c²=a²−b²`. Clean-stacked steps (one math result per array entry; Hebrew only as a short leading label). Zero step-skipping — show every algebraic line.
+7. **IP boundary is firm.** NEVER ingest publisher solution books (יואל גבע, m-math.co.il, publisher PDFs) even if "free". Valid sources only: MOE bagrut PDFs (question text = public domain), MOE syllabus, own training knowledge for fresh authoring, or Itay's own handwritten solutions.
+8. **Only two question types exist** (MCQ + open). The owner already rejected drag-drop / fill-blank / match / speed-drill — add MORE of the existing two, don't invent new ones.
+9. **Never commit `.env.local`** (Anthropic key + Supabase publishable key). Only the RLS-safe `NEXT_PUBLIC_*` publishable key reaches the browser.
+10. **Don't undo the polish:** framer-motion, sonner toasts, canvas-confetti, the KaTeX/RTL bidi handling in `MathText.tsx`, or the light theme.
+
+---
+
+## Design system — "premium white" (light theme)
+
+The app is **light-only** (no dark mode, no toggle). Ivory canvas, indigo primary, gold reserved for achievements. Source of truth: `app/globals.css` `:root`.
+
+- `--background #FDFDFB` (ivory) · `--surface-1 #FFFFFF` · `--surface-2 #F6F6F2` · `--foreground #0F172A`
+- `--primary #4F46E5` (indigo-600) · `--primary-bright #6366F1` · `--primary-deep #4338CA` · `--accent #B8860B` (gold) · `--success #059669` · `--danger #DC2626`
+- Utilities: `.surface-premium` (white card + ink shadow), `.btn-primary`, `.formula-surface`, `.result-box`, `.gradient-text`, `.chat-md` (Hebrew RTL + KaTeX). New UI uses Tailwind + these utilities. Text: `text-slate-800/900` on cards, `text-white` only on colored/gradient fills.
+- **SVG diagrams** (in content + `components/practice/DiagramRenderer.tsx`) use a **dark-ink-on-light** palette: strokes `rgba(51,65,85,.85)`, labels `#0F172A`, accents indigo `#4F46E5` / emerald `#059669` / amber `#B45309` / pink `#DB2777`. NEVER light-on-dark values (`#f1f5f9`, `rgba(226,232,240,…)`) — they're invisible on white. Diagrams are `type:'custom'` raw SVG only — **never `fn:` closures** (they break the RSC server→client boundary).
+- The `/quiz` page is a self-contained inline-`<style>` island with its own light `:root` vars.
+
+---
+
+## Monetization — "free base, Pro depth" (source of truth: `lib/access.ts`)
+
+Decided 2026-07. **Learning is free; depth is Pro.** Guided lessons + drills are static (zero cost) and are the growth hook — do not gate them.
+
+- **FREE (all topics):** guided learning + drills, quick quiz, insights + **grade prediction** (`lib/prediction.ts` — the upsell engine), formulas, photo-scan **library/cache matches**, chat capped at `FREE_DAILY_CHAT` (10/day).
+- **PRO (`isFeaturePro` / `canUseFeature`):** the **advanced course** (bagrut-mastery, the premium anchor), past-bagrut **archive**, **simulation** (when built), **unlimited chat + AI-tutor buttons**, **new AI photo-solve**, advanced **analytics**. Chat Pro cap `PRO_DAILY_CHAT` (200).
+- **`canAccessTopic` no longer paywalls topics** — the old "free = first topic only" was removed. `topicLockReason` is now purely pedagogical (`'open'`/`'locked-progress'`).
+- Pricing page `/pricing` (public): 3 plans, comparison table, anchor "חצי-שנתי = כמו שיעור פרטי אחד". All "שדרג" CTAs link there.
+- **⚠️ There is NO real billing.** `isProUser` = admin email (`ADMIN_EMAIL`) or `user_metadata.pro` (never set). To sell, a payment provider is needed — recommend **Lemon Squeezy / Paddle** (merchant-of-record: handles Israeli VAT/invoicing, no עוסק needed at first, ₪ pricing). That's the owner's business decision; the gating structure is ready to wire.
+
+---
+
+## Content architecture — static-first (zero API cost)
+
+Content is hand-authored TypeScript, verified, and rendered without any API call. **~829 fully-solved questions exist.**
+
+```
+content/
+  bagrut-curriculum.ts        MATH5_CURRICULUM — topic weights, points, appearsIn (drives prediction)
+  bagrut-context.ts           MATH5.* — exam structure + style guide (used by AI prompts)
+  lessons/math5/*.ts          16 topics: subTopics[] with lesson[] (guided), questions[] (MCQ+open),
+                              bagrutQuestions[] (multi-part, expected:AnswerSpec). Accessors in index.ts.
+  learning-paths/math5/*.ts   "base course" — teach concepts from 0 (8 sections). STYLE_GUIDE.md is the bar.
+  advanced-courses/math5/*.ts "advanced course" — bagrut MASTERY (7 sections: gate/patterns/techniques/
+                              workedExams/examPractice/traps/simulation). Pro-gated. Registered in index.ts.
+                              DONE: מרוכבים, מעריכית, ln, גאומטריה אנליטית. TODO: וקטורים, גדילה ודעיכה.
+  past-bagruyot/*.ts          61 real past-exam questions (582 only), full worked solutions.
+```
+
+**Photo-scan caching ("answer library first, AI last"):** `/api/solve-photo` → cheap Sonnet-vision transcription → `lib/solution-library.ts` `matchQuestion` (exact hash + Jaccard fuzzy ≥0.82 over all static questions, FREE) → Supabase `solution_cache` (FREE) → only a true miss calls the AI text-solve (Pro), whose result is written back to the cache. `lib/question-match.ts` = normalize/fingerprint/jaccard.
+
+**Client state is localStorage** (works without login, $0): `lib/results.ts` (answer log → insights, streak, prediction), `lib/study-plan.ts` (plan + `unitLevel` 3/4/5), `lib/progress.ts`, `lib/adaptive.ts` (difficulty by unit-level + self-level + live accuracy), `lib/scans.ts`.
+
+**Verify scripts (run the REAL checker, don't trust authoring agents):** `scripts/verify-specs.ts` (runs `lib/answer-check.ts checkAnswer` on every `expected`), per-topic `verify-<topic>.ts`, `verify-match.ts`, `verify-prediction.ts`, `verify-advanced.ts` (point sums + reviewRef integrity), `check-katex-hebrew.ts`. **When bulk-authoring content, spawn one agent per file (topics = separate files → no write conflict), then verify INDEPENDENTLY yourself** — an agent's own verify is circular.
+
+`lib/answer-check.ts`: deterministic mathjs grading. Natural log is `log` (mathjs `log` IS natural — write `expected` as `log(2)` not `ln(2)`); trig evaluates in RADIANS (so trig `expected` must be plain numbers/degrees, else `{kind:'manual'}`); `π` and `ln`/`\ln` are normalized.
+
+---
+
+## Key routes & global UI
+
+| Area | Route / file | Notes |
 |---|---|---|
-| Landing page | `/` | Dark glassmorphism, Tailwind, 7 subjects grid, FAQ, pricing |
-| Quiz — 5 MCQ | `/quiz` | Picks subject + topic → 5 AI questions with 4-section explanations |
-| Guided practice | `/practice` | 1 deep exercise with 3 progressive hints + step-by-step solution |
-| AI tutor chat | `/chat` | Haiku 4.5, persists history to Supabase, 20-message daily quota |
-| Chat history | `/history` | Reads `chat_messages` from Supabase, time-ago in Hebrew |
-| Authentication | `/login` `/signup` | Supabase email/password, OAuth callback, protected-route middleware |
-| Rate limiting | `lib/rate-limit.ts` | In-memory, per-fingerprint + global circuit breaker |
-| Security hardening | all API routes | Origin check, bot UA filter, honeypot field, prompt-injection blacklist |
-| Math rendering | global | react-markdown + remark-math + rehype-katex; bidi fix in globals.css |
-| PWA manifest + icons | `/manifest.ts` `apple-icon.tsx` | installable |
+| Landing | `/` (`app/page.tsx`) | Light theme, hero, 3 modes, pricing card → `/pricing` |
+| Quick quiz | `/quiz` | Static bank first (adaptive by tier); mixed-exam mode; records to `lib/results` |
+| Guided practice | `/practice/[subject]/[topic]` + `/sub/[subId]` | LessonView + SubTopicPractice; adaptive ordering |
+| Base + advanced course | `/learn/[subject]/[topic]` + `/advanced` | CourseTracks card; advanced route is **Pro-gated** |
+| AI tutor chat | `/chat` | Opens fresh each time; conversations sidebar; grounded per-topic; tier-capped |
+| Photo solve | `/scan` | Intro screen + library/cache/AI flow with source badge |
+| Past exams | `/bagruyot` + `/archive` | Pro-gated |
+| Insights | `/insights` | Grade prediction hero, streak/goal, weakest sub-topics, share card |
+| Pricing | `/pricing` | Public; free↔Pro comparison |
+| Global profile | `components/AppChrome.tsx` | Floating avatar (initials) on every authed page → side drawer (name/email/plan/streak/unit-level/links/signout). Mounted once in `app/layout.tsx`. |
+| Global search | `components/GlobalSearch.tsx` | Ctrl+K palette over topics/formulas/bagruyot |
 
-### Known bugs / open issues 🐛
-
-1. **`correct` index mismatch** — Sonnet 4.6 with structured outputs occasionally marks an answer index that doesn't match the explanation. Fix: add a post-generation validator in `app/api/questions/route.ts` that checks `parsed.questions[i].answers[parsed.questions[i].correct]` matches what `why_correct` describes; retry once on mismatch.
-2. **Practice page requires login** — `/api/practice` returns 401 to logged-out users but the UI doesn't surface a friendly message; user sees a spinner or vague error.
-
-### Next steps 🚀
-
-1. **Fix the `correct` index bug** — validator + one retry in `app/api/questions/route.ts`. Highest priority; directly harms learning.
-2. **Practice page login wall** — show a clear "יש להתחבר כדי לתרגל" message when the 401 comes back, with a link to `/login`.
-3. **Quiz history** — save quiz attempts (subject, topic, score, timestamp) to a new `quiz_attempts` Supabase table; surface them in `/history`.
-4. **Question pool** — pre-generate questions per topic into Supabase, serve random rows. Cuts per-session cost from ~$0.04 to ~$0.001.
-5. **Pro tier / waitlist** — the landing page already shows a "בקרוב" Pro card; wiring up an email waitlist (Resend or simple Supabase insert) would capture interest.
+Middleware (`lib/supabase/middleware.ts`): `PROTECTED_PREFIXES` = `/quiz /chat /history /practice /learn`. Add a prefix there to protect a new route. `/pricing` is intentionally public.
 
 ---
+
+## Supabase
+
+Tables are created via SQL in the **dashboard** (not git migrations). Repo ships the SQL as reference: `supabase-conversations.sql`, and comment blocks in `lib/solution-cache.ts`. **All app code degrades gracefully if a table is missing** (try/catch → feature just no-ops). RLS enforced on everything.
+
+Existing/expected tables: `chat_messages` (+ `conversation_id`), `conversations`, `practice_sessions`, `question_pool`, `solution_cache`, `scan_log`. ⚠️ Itay must run the SQL for a new table before its feature works live.
+
+Clients: `lib/supabase/client.ts` (browser), `lib/supabase/server.ts` (async — `cookies()` is async in Next.js 16).
+
+---
+
+## Models (deliberate — don't swap without reason)
+
+- `/api/chat` → grounded topics `claude-sonnet-4-6` (prompt-cached) + generic `claude-haiku-4-5`. Grounding from `lib/tutor-grounding.ts` (all 14 math5 topics). Env `TUTOR_SONNET_TOPICS` demotes to Haiku per-topic if cost climbs.
+- `/api/solve-photo` → `claude-sonnet-4-5` vision (Hebrew+LaTeX transcription needs Sonnet); text-solve uses the full prompt with `cache_control: ephemeral`.
+- Micro-endpoints (`why-wrong`/`hint-help`/`explain-simpler`) → Haiku + grounding, Pro-gated via `lib/ai-tutor.ts requireProUser`.
+- Question-generation routes exist as a legacy fallback for topics without a static bank (math4/other subjects); math5 serves static.
 
 ## Commands
 
 ```bash
-npm run dev      # local dev on :3000
-npm run build    # production build (also a smoke test before pushing)
-npm run start    # serve a built app
-npm run lint     # ESLint via eslint.config.mjs
+npm run dev            # local dev :3000  (owner does NOT run this — he sees prod)
+npm run build          # REQUIRED before push
+npx tsc --noEmit       # REQUIRED before push
+npx tsx scripts/check-katex-hebrew.ts   # after any content edit → must be 0
 ```
 
-There are no tests. Before pushing changes that touch routes or middleware, always run `npm run build` — the user has lost real money to deploys that failed in production after passing local typecheck because Vercel's Hobby plan has different runtime constraints than `next dev`.
+## Hebrew + math rendering
 
-## Hard constraints — do not violate
-
-These are not preferences. Breaking any of these wastes the user's budget or breaks production:
-
-1. **Vercel Hobby caps serverless functions at 60s.** Every API route uses `export const maxDuration = 60`. Generation prompts that overrun this cap return no response *and* still bill the Anthropic API. Always pair model choice with a `max_tokens` value that fits inside 60s.
-2. **Anthropic budget is $5/month.** Every model swap during debugging costs real money on failed calls. Pick the model once, prove it works, move on. Do **not** ping-pong between Haiku and Sonnet during a single bug hunt.
-3. **Model assignments are deliberate** — don't swap them without a reason worth explaining:
-   - `app/api/questions/route.ts` → `claude-sonnet-4-6` (`max_tokens: ~3500`). Bagrut question quality requires Sonnet; Haiku produces math errors and rambling explanations.
-   - `app/api/chat/route.ts` → `claude-haiku-4-5` (`max_tokens: 800`). Chat replies are short and conversational; Haiku is fine and ~3× cheaper.
-4. **Structured outputs are mandatory** in `/api/questions`. Free-form JSON generation in Hebrew breaks on unescaped quotes inside strings. The route passes `output_config.format` with an explicit `json_schema` so the API guarantees parseable JSON.
-5. **Never commit `.env.local`.** It contains the Anthropic key and Supabase publishable key.
-
-## Architecture
-
-### Routing layout (Next.js 16 App Router)
-
-```
-app/
-  page.tsx              landing (Tailwind, dark-mode glassmorphism)
-  quiz/page.tsx         the quiz UI (inline <style>, not Tailwind)
-  chat/page.tsx         AI tutor chat (Tailwind + react-markdown + KaTeX)
-  login/, signup/       auth forms
-
-  api/
-    questions/route.ts  generates 5 quiz questions with 4-section explanations
-    chat/route.ts       single-turn chat reply, persists to Supabase
-  auth/
-    callback/route.ts   Supabase OAuth/email-confirm callback
-    signout/route.ts    sign-out, redirects to /
-```
-
-The **quiz page** is the one outlier: it uses an inline `<style>` block instead of Tailwind, because it predates the chat UI and the styles are fine. New pages should use Tailwind to match `app/page.tsx` and `app/login/page.tsx`.
-
-### Auth + protected routes
-
-- Supabase auth (email/password). Browser client at `lib/supabase/client.ts`; server client at `lib/supabase/server.ts` (async — `cookies()` is async in Next.js 16).
-- `middleware.ts` runs `updateSession` from `lib/supabase/middleware.ts` on every non-static request. That helper refreshes the auth cookie *and* enforces route gating: anonymous users hitting any path in `PROTECTED_PREFIXES` get redirected to `/login?next=<original>`. Public paths (`/`, `/login`, `/signup`, `/auth/*`, icons, manifest, `_next`) skip the check.
-- To add a new protected route: append its prefix to `PROTECTED_PREFIXES` in `lib/supabase/middleware.ts`. No other change needed.
-
-### Supabase schema
-
-Tables live in the Supabase dashboard, not in git. Current schema:
-
-```sql
--- chat history (live)
-create table public.chat_messages (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid not null default auth.uid() references auth.users(id) on delete cascade,
-  role        text not null check (role in ('user', 'assistant')),
-  content     text not null,
-  tokens_in   int default 0,
-  tokens_out  int default 0,
-  created_at  timestamptz not null default now()
-);
-create index chat_messages_user_recent_idx on public.chat_messages (user_id, created_at desc);
-alter table public.chat_messages enable row level security;
-create policy "users read own messages" on public.chat_messages
-  for select using (auth.uid() = user_id);
-create policy "users insert own messages" on public.chat_messages
-  for insert with check (auth.uid() = user_id);
-```
-
-RLS is enforced — every query from the client uses the user's JWT, so users can only ever see their own rows. Don't bypass RLS via service-role calls without a specific reason.
-
-### Rate limiting
-
-`lib/rate-limit.ts` is in-memory and runs at the edge of every protected API route. It fingerprints by IP + UA hash + a global circuit-breaker (200 req/min site-wide).
-
-- Per-fingerprint limit is **per serverless instance** — Vercel can spin up multiple instances under load, so the limit is approximate. Good enough for hobby/free traffic.
-- The chat route adds a **daily quota** on top: counts rows in `chat_messages` since UTC midnight, currently 20 user-messages/day. Defined inline in `app/api/chat/route.ts`.
-
-### Hebrew + math rendering
-
-The quiz and chat both render Hebrew (RTL) prose mixed with LTR math. Non-obvious bits:
-
-- Markdown + LaTeX pipeline: `react-markdown` → `remark-math` → `rehype-katex`. KaTeX CSS is imported once via `import 'katex/dist/katex.min.css'`.
-- Bidi handling lives in `app/globals.css` under `:is(.chat-md, .math-content)`. Math elements get `direction: ltr; unicode-bidi: isolate;` so the surrounding Hebrew doesn't reverse equation order. Without `isolate`, "f(x) = ln(3x)" reads back as "ln(3x) = f(x)".
-- The system/tutor prompt instructs the model to emit `$...$` (inline math) and `$$...$$` (block math). For the chat route, the prompt explicitly enumerates allowed Markdown.
-
-### Known model behaviors and outstanding bugs
-
-- **Top open bug:** Sonnet 4.6 + structured outputs occasionally returns a `correct` index that doesn't match the explanation. The right fix is a post-generation validator that re-reads `explanations[correct].why_correct` and verifies it matches `answers[correct]`, retrying once on mismatch.
-- Haiku for chat is fine in Hebrew for conversational tutoring but unreliable for *generating* math problems. Don't drop chat below Haiku 4.5.
-- Each `/api/questions` call is fresh — there is no question cache (an earlier localStorage cache was removed because it served identical questions on every re-attempt). The next planned optimization is pre-generating a pool of questions per topic into Supabase and serving random rows — would drop per-session cost from ~$0.05 to ~$0.001.
-
-### CSP
-
-`next.config.ts` ships strict security headers including a CSP that allows `self` plus `*.supabase.co` for REST and websocket. If you add a new external service (Stripe, Resend, etc.), update the relevant directive (`connect-src` for APIs, `script-src` for hosted JS) or it will silently break in production.
+`components/practice/MathText.tsx`: react-markdown → remark-math → rehype-katex, `dir="auto"` per block. Bidi handling in `app/globals.css` under `:is(.chat-md, .math-content)` — math gets `direction:ltr; unicode-bidi:isolate !important` so Hebrew doesn't reverse equations. Automated checks validate that LaTeX *parses*, NOT that math is *right* — always re-derive numbers by hand (a wrong-but-valid angle like `\cos(545°)` passes the build).
 
 ## Environment variables
 
-Required in `.env.local` for local dev, and in Vercel project settings for production:
-
 ```
-ANTHROPIC_API_KEY=<from console.anthropic.com>
+ANTHROPIC_API_KEY=<console.anthropic.com>
 NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+ADMIN_EMAIL=meitalm1020@gmail.com   # comma-separated; grants Pro/admin
+TUTOR_SONNET_TOPICS=                 # optional cost valve (comma-separated topic names)
 ```
 
-`NEXT_PUBLIC_*` is sent to the browser by Next.js — only the publishable (RLS-safe) Supabase key goes there, never the service-role key.
-
-## Communicating with the owner
-
-The owner is non-technical and operates in Hebrew. When you need to ask a question, ask in Hebrew. When showing console output, error messages, or code, leave those in their original language. When proposing a change that costs Anthropic credit, state the per-request cost up front so the owner can decide before you spend the budget.
+`next.config.ts` ships a strict CSP (`self` + `*.supabase.co`). Adding an external service (payment provider, Resend, etc.) requires updating `connect-src`/`script-src` or it silently breaks in prod.
