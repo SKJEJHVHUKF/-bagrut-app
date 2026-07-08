@@ -11,6 +11,8 @@
  *   Q3 — מספרים מרוכבים.
  *   Q4 — פונקציה מעריכית: חקירת f(x)=(e^x-b)/(e^x-4)^2, אסימפטוטות, קיצון,
  *        g(x)=1/f(x), נקודות חיתוך ואומדן אינטגרל.
+ *   Q5 — פונקציית ln: חקירת f(x)=x((lnx)^2-2lnx+2), פיתול, סקיצות f ו-f',
+ *        ושטחים עם g(x)=(lnx)^2-9 ו-h(x)=f(x)/x^2.
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -873,6 +875,266 @@ export const bagrut2024Summer582: PastBagrutQuestion[] = [
             'כלומר האינטגרל קטן מ-$1\\frac{1}{2}$.',
           ],
           final_answer: 'הערך קטן מ-$1\\frac{1}{2}$ (שכן $f - g < \\frac{3}{2}$ בכל הקטע, ורוחבו $1$).',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+  {
+    id: 'b2024s582a-q5',
+    year: 2024,
+    season: 'summer',
+    moed: 'a',
+    paper: '582',
+    questionNumber: 5,
+    topic: 'פונקציית לוגריתם טבעי',
+    totalPoints: 25,
+    context:
+      'נתונה הפונקציה $\\;f(x) = x\\big((\\ln x)^2 - 2\\ln x + 2\\big)\\;$, המוגדרת בתחום $x > 0$.',
+    parts: [
+      {
+        label: 'א',
+        prompt: 'מצאו את תחומי העלייה והירידה של הפונקציה $f(x)$ (אם יש כאלה).',
+        points: 4,
+        answer_type: 'text',
+        hints: [
+          'גזרו לפי כלל המכפלה: $u = x$, $\\;v = (\\ln x)^2 - 2\\ln x + 2$.',
+          "אחרי כינוס האיברים הנגזרת מצטמצמת יפה — נסו לפני שתשוו לאפס.",
+          "$f'(x) = (\\ln x)^2$ הוא ריבוע, ולכן אף פעם אינו שלילי. מה זה אומר על המונוטוניות?",
+        ],
+        solution: {
+          steps: [
+            'נגזור לפי כלל המכפלה, עם $u = x$ ו-$v = (\\ln x)^2 - 2\\ln x + 2$.',
+            "$u' = 1$.",
+            "$v' = 2\\ln x \\cdot \\dfrac{1}{x} - 2\\cdot\\dfrac{1}{x} = \\dfrac{2\\ln x - 2}{x}$.",
+            "$f'(x) = u'v + uv' = 1\\cdot\\big((\\ln x)^2 - 2\\ln x + 2\\big) + x\\cdot\\dfrac{2\\ln x - 2}{x}$.",
+            "$f'(x) = (\\ln x)^2 - 2\\ln x + 2 + 2\\ln x - 2 = (\\ln x)^2$.",
+            "נשווה לאפס: $\\;f'(x) = (\\ln x)^2 = 0 \\Rightarrow \\ln x = 0 \\Rightarrow x = 1$.",
+            "$f'(x) = (\\ln x)^2$ הוא ריבוע, ולכן $f'(x) \\ge 0$ לכל $x > 0$, והוא מתאפס רק ב-$x = 1$.",
+            "$\\begin{array}{c|c|c|c} x & 0 < x < 1 & 1 & x > 1 \\\\ \\hline f'(x) & + & 0 & + \\\\ f(x) & \\nearrow & & \\nearrow \\end{array}$",
+            'המסקנה: הפונקציה עולה בכל תחום הגדרתה $x > 0$, ואין תחום ירידה. ב-$x = 1$ יש משיק אופקי, אך זו אינה נקודת קיצון (הפונקציה ממשיכה לעלות).',
+          ],
+          final_answer: 'עולה לכל $x > 0$; אין תחום ירידה. ב-$x = 1$ משיק אופקי שאינו קיצון.',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: 'מצאו את שיעורי נקודת הפיתול של הפונקציה $f(x)$.',
+        points: 3,
+        answer_type: 'expression',
+        hints: [
+          "גזרו שוב את $f'(x) = (\\ln x)^2$ כדי לקבל את $f''(x)$.",
+          "$f''(x) = \\dfrac{2\\ln x}{x}$; אפסו אותה ובדקו שינוי סימן (שינוי קעירות).",
+        ],
+        solution: {
+          steps: [
+            "נגזור את $f'(x) = (\\ln x)^2$: $\\;f''(x) = 2\\ln x \\cdot \\dfrac{1}{x} = \\dfrac{2\\ln x}{x}$.",
+            "נשווה לאפס: $\\;\\dfrac{2\\ln x}{x} = 0 \\Rightarrow \\ln x = 0 \\Rightarrow x = 1$.",
+            "$\\begin{array}{c|c|c|c} x & 0 < x < 1 & 1 & x > 1 \\\\ \\hline f''(x) & - & 0 & + \\\\ f(x) & \\cap & & \\cup \\end{array}$",
+            "משמאל ל-$1$ ($\\ln x < 0$) הקעירות כלפי מטה, ומימין ($\\ln x > 0$) כלפי מעלה — יש שינוי קעירות, ולכן $x = 1$ נקודת פיתול.",
+            'נחשב את שיעור ה-$y$: $\\;f(1) = 1\\cdot\\big((\\ln 1)^2 - 2\\ln 1 + 2\\big) = 1\\cdot(0 - 0 + 2) = 2$.',
+          ],
+          final_answer: 'נקודת הפיתול היא $\\left(1,\\ 2\\right)$.',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: 'מצאו את תחומי החיוביות והשליליות של הפונקציה $f(x)$ (אם יש כאלה).',
+        points: 3,
+        answer_type: 'text',
+        hints: [
+          'פתרו $f(x) = 0$. מכיוון ש-$x > 0$, הגורם $x$ אינו מתאפס.',
+          'הציבו $t = \\ln x$ בגורם השני ובדקו את הדיסקרימיננטה של $t^2 - 2t + 2$.',
+        ],
+        solution: {
+          steps: [
+            'נפתור $\\;f(x) = x\\big((\\ln x)^2 - 2\\ln x + 2\\big) = 0$.',
+            'מכיוון ש-$x > 0$, הגורם $x$ חיובי ואינו מתאפס — צריך לבדוק את הגורם השני.',
+            'נציב $t = \\ln x$: $\\;t^2 - 2t + 2 = 0$, דיסקרימיננטה $\\;(-2)^2 - 4\\cdot1\\cdot2 = 4 - 8 = -4 < 0$ — אין פתרון.',
+            'לכן $(\\ln x)^2 - 2\\ln x + 2 > 0$ לכל $x$ (פרבולה נפתחת כלפי מעלה ללא שורשים), ומכפלתה ב-$x > 0$ חיובית.',
+            'מסקנה: אין נקודות חיתוך עם ציר $x$, והפונקציה חיובית בכל תחום הגדרתה.',
+          ],
+          final_answer: 'חיובית לכל $x > 0$; אין תחום שליליות.',
+        },
+      },
+      {
+        label: 'ד1',
+        prompt: 'סרטטו סקיצה של גרף הפונקציה $f(x)$.',
+        points: 3,
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 300 280',
+            svg: `
+              <line x1="45" y1="250" x2="290" y2="250" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <line x1="45" y1="30" x2="45" y2="268" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <text x="283" y="245" fill="#475569" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <text x="33" y="38" fill="#475569" font-size="11" font-family="Heebo, sans-serif">y</text>
+              <polyline points="45,250 45.4,242 47,230 49,221 53,213 65,204 85,202 125,197 165,177 205,140 245,86 257,66" fill="none" stroke="rgba(180,83,9,0.95)" stroke-width="2"/>
+              <circle cx="85" cy="202" r="2.8" fill="rgba(180,83,9,0.95)"/>
+              <text x="90" y="199" fill="#B45309" font-size="9.5" font-family="Heebo, sans-serif">(1, 2)</text>
+              <text x="235" y="60" fill="#B45309" font-size="11" font-family="Heebo, sans-serif">f(x)</text>
+              <text x="52" y="262" fill="#475569" font-size="9" font-family="Heebo, sans-serif">lim(x→0+)=0</text>
+            `,
+            caption:
+              'סקיצת $f(x) = x\\big((\\ln x)^2 - 2\\ln x + 2\\big)$: $\\lim\\limits_{x\\to 0^+} f(x) = 0$ (יוצאת מהראשית), עולה בכל התחום, קעורה כלפי מטה עד לפיתול $\\left(1, 2\\right)$ שם המשיק אופקי, ואז קעורה כלפי מעלה ועולה אל $+\\infty$.',
+          },
+        ],
+        hints: [
+          'נצלו את סעיפים א–ג: עולה תמיד, פיתול $\\left(1, 2\\right)$ עם משיק אופקי, חיובית תמיד.',
+          '$\\lim\\limits_{x\\to 0^+} x(\\ln x)^2 = 0$, ולכן הגרף יוצא מהראשית.',
+        ],
+        solution: {
+          steps: [
+            'מסעיף א: עולה לכל $x > 0$ (משיק אופקי ב-$x = 1$). מסעיף ב: פיתול $\\left(1, 2\\right)$ (קעורה מטה ואז מעלה). מסעיף ג: חיובית תמיד.',
+            'התנהגות בקצה: $\\;\\lim\\limits_{x\\to 0^+} f(x) = \\lim\\limits_{x\\to 0^+} x\\big((\\ln x)^2 - 2\\ln x + 2\\big) = 0$ (הגורם $x$ מכריע), ולכן הגרף יוצא מהראשית.',
+            'ל-$x \\to \\infty$ הפונקציה שואפת ל-$+\\infty$.',
+            'התוצאה: עקומה עולה מהראשית, שטוחה סביב הפיתול $\\left(1, 2\\right)$, וממשיכה לעלות בתלילות גוברת.',
+          ],
+          final_answer: 'ראו הסקיצה: יוצאת מהראשית, עולה תמיד, פיתול עם משיק אופקי ב-$\\left(1, 2\\right)$.',
+        },
+      },
+      {
+        label: 'ד2',
+        prompt: "סרטטו סקיצה של גרף פונקציית הנגזרת $f'(x)$.",
+        points: 3,
+        answer_type: 'text',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 300 250',
+            svg: `
+              <line x1="45" y1="220" x2="290" y2="220" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <line x1="45" y1="20" x2="45" y2="238" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <text x="283" y="215" fill="#475569" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <text x="33" y="28" fill="#475569" font-size="11" font-family="Heebo, sans-serif">y</text>
+              <polyline points="46.5,41 48,114 51,168 55.5,198 60,210 75,220 105,210 135,196 165,182 195,168 225,156 255,144 285,134" fill="none" stroke="rgba(37,99,235,0.9)" stroke-width="2"/>
+              <circle cx="75" cy="220" r="2.8" fill="rgba(37,99,235,0.9)"/>
+              <text x="70" y="233" fill="#2563EB" font-size="9.5" font-family="Heebo, sans-serif">(1, 0)</text>
+              <text x="250" y="128" fill="#2563EB" font-size="11" font-family="Heebo, sans-serif">f'(x)</text>
+              <text x="50" y="34" fill="#475569" font-size="9" font-family="Heebo, sans-serif">lim(x→0+)=+∞</text>
+            `,
+            caption:
+              "סקיצת פונקציית הנגזרת $f'(x) = (\\ln x)^2$: $\\lim\\limits_{x\\to 0^+} f'(x) = +\\infty$, יורדת אל מינימום $\\left(1, 0\\right)$ (נוגעת בציר ה-$x$), ואז עולה שוב אל $+\\infty$. הערכים אינם שליליים לעולם.",
+          },
+        ],
+        hints: [
+          "$f'(x) = (\\ln x)^2 \\ge 0$, מינימום $0$ ב-$x = 1$.",
+          "$\\lim\\limits_{x\\to 0^+} (\\ln x)^2 = +\\infty$ ו-$\\lim\\limits_{x\\to\\infty}(\\ln x)^2 = +\\infty$.",
+        ],
+        solution: {
+          steps: [
+            "$f'(x) = (\\ln x)^2$ — ריבוע, ולכן אינו שלילי; המינימום $0$ מתקבל ב-$x = 1$, בנקודה $\\left(1, 0\\right)$.",
+            "$\\lim\\limits_{x\\to 0^+} f'(x) = +\\infty$ (כי $\\ln x \\to -\\infty$), וגם $\\lim\\limits_{x\\to\\infty} f'(x) = +\\infty$.",
+            "הגרף יורד מ-$+\\infty$ אל המינימום $\\left(1, 0\\right)$ הנוגע בציר, ואז עולה חזרה אל $+\\infty$.",
+          ],
+          final_answer: "ראו הסקיצה: $f'(x) = (\\ln x)^2 \\ge 0$, מינימום $\\left(1, 0\\right)$, שואפת ל-$+\\infty$ בשני הקצוות.",
+        },
+      },
+      {
+        label: 'ה',
+        prompt: [
+          'נתונות הפונקציות $\\;h(x) = \\dfrac{f(x)}{x^2}\\;$ ו-$\\;g(x) = (\\ln x)^2 - 9\\;$, המוגדרות בתחום $x > 0$.',
+          '',
+          'מצאו את השטח המוגבל על ידי גרף הפונקציה $g(x)$ ועל ידי ציר ה-$x$.',
+        ].join('\n'),
+        points: 4,
+        answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 320 200',
+            svg: `
+              <line x1="20" y1="55" x2="305" y2="55" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <text x="298" y="50" fill="#475569" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <polygon points="46,55 84,95 122,119 160,127 198,119 236,95 274,55" fill="rgba(180,83,9,0.18)" stroke="none"/>
+              <polyline points="31,34 46,55 84,95 122,119 160,127 198,119 236,95 274,55 289,34" fill="none" stroke="rgba(180,83,9,0.95)" stroke-width="2"/>
+              <line x1="46" y1="50" x2="46" y2="60" stroke="rgba(51,65,85,0.7)" stroke-width="1"/>
+              <line x1="274" y1="50" x2="274" y2="60" stroke="rgba(51,65,85,0.7)" stroke-width="1"/>
+              <text x="34" y="72" fill="#475569" font-size="9.5" font-family="Heebo, sans-serif">e^-3</text>
+              <text x="266" y="72" fill="#475569" font-size="9.5" font-family="Heebo, sans-serif">e^3</text>
+              <text x="146" y="123" fill="#B45309" font-size="9.5" font-family="Heebo, sans-serif">-9</text>
+              <text x="152" y="90" fill="#B45309" font-size="12" font-family="Heebo, sans-serif">S₁</text>
+              <text x="182" y="28" fill="#B45309" font-size="10" font-family="Heebo, sans-serif">g(x)=ln²x-9</text>
+            `,
+            caption:
+              'הפונקציה $g(x) = (\\ln x)^2 - 9$ חותכת את ציר ה-$x$ ב-$x = e^{-3}$ וב-$x = e^{3}$, ובין החיתוכים היא שלילית (מינימום $-9$ ב-$x = 1$). השטח $S_1$ הכלוא מתחת לציר הוא $\\;S_1 = 4e^{3} + 8e^{-3} \\approx 80.74$.',
+          },
+        ],
+        hints: [
+          'מצאו חיתוכים: $(\\ln x)^2 - 9 = 0 \\Rightarrow \\ln x = \\pm 3$.',
+          'בין החיתוכים $g < 0$ (למשל $g(1) = -9$), ולכן $S = -\\int g\\,dx$.',
+          "נצלו ש-$f'(x) = (\\ln x)^2$ מסעיף א: לכן $f$ היא קדומה של $(\\ln x)^2$, ו-$\\int\\big((\\ln x)^2 - 9\\big)dx = f(x) - 9x$.",
+        ],
+        solution: {
+          steps: [
+            'נמצא את נקודות החיתוך עם ציר $x$: $\\;(\\ln x)^2 - 9 = 0 \\Rightarrow (\\ln x)^2 = 9 \\Rightarrow \\ln x = \\pm 3$.',
+            '$x = e^{-3}$ או $x = e^{3}$.',
+            'בין החיתוכים $g$ שלילית ($g(1) = 0 - 9 = -9 < 0$), ולכן השטח הוא $\\;S_1 = -\\displaystyle\\int_{e^{-3}}^{e^{3}} g(x)\\,dx$.',
+            "מסעיף א ראינו $f'(x) = (\\ln x)^2$, כלומר $f$ היא פונקציה קדומה של $(\\ln x)^2$. לכן קדומה של $g$ היא $\\;f(x) - 9x$.",
+            'נכתוב במפורש: $\\;f(x) - 9x = x\\big((\\ln x)^2 - 2\\ln x + 2\\big) - 9x = x\\big((\\ln x)^2 - 2\\ln x - 7\\big)$.',
+            '$S_1 = -\\Big[\\,x\\big((\\ln x)^2 - 2\\ln x - 7\\big)\\Big]_{e^{-3}}^{e^{3}}$.',
+            'הצבה ב-$x = e^{3}$ ($\\ln = 3$): $\\;e^{3}\\big(9 - 6 - 7\\big) = -4e^{3}$.',
+            'הצבה ב-$x = e^{-3}$ ($\\ln = -3$): $\\;e^{-3}\\big(9 + 6 - 7\\big) = 8e^{-3}$.',
+            '$S_1 = -\\big(-4e^{3} - 8e^{-3}\\big) = 4e^{3} + 8e^{-3}$.',
+            'מספרית: $\\;S_1 \\approx 4\\cdot 20.09 + 8\\cdot 0.0498 \\approx 80.74$.',
+          ],
+          final_answer: '$S_1 = 4e^{3} + 8e^{-3} \\approx 80.74$.',
+        },
+      },
+      {
+        label: 'ו',
+        prompt: [
+          'דרך נקודות החיתוך של גרף הפונקציה $g(x)$ עם ציר ה-$x$ מעבירים אנכים לציר ה-$x$.',
+          '',
+          'מצאו את השטח המוגבל על ידי גרף הפונקציה $g(x)$, על ידי גרף הפונקציה $h(x)$ ועל ידי האנכים.',
+        ].join('\n'),
+        points: 5,
+        answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 320 210',
+            svg: `
+              <line x1="20" y1="90" x2="305" y2="90" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <text x="298" y="85" fill="#475569" font-size="11" font-family="Heebo, sans-serif">x</text>
+              <line x1="46" y1="20" x2="46" y2="152" stroke="rgba(51,65,85,0.55)" stroke-width="1" stroke-dasharray="5,4"/>
+              <line x1="274" y1="20" x2="274" y2="152" stroke="rgba(51,65,85,0.55)" stroke-width="1" stroke-dasharray="5,4"/>
+              <polygon points="46,90 84,120 122,138 160,144 198,138 236,120 274,90" fill="rgba(180,83,9,0.18)" stroke="none"/>
+              <polygon points="46,90 46,25 84,33 122,45 160,70 198,76 236,80 274,84 274,90" fill="rgba(37,99,235,0.14)" stroke="none"/>
+              <polyline points="46,90 84,120 122,138 160,144 198,138 236,120 274,90" fill="none" stroke="rgba(180,83,9,0.95)" stroke-width="2"/>
+              <polyline points="46,25 84,33 122,45 160,70 198,76 236,80 274,84" fill="none" stroke="rgba(37,99,235,0.9)" stroke-width="2"/>
+              <text x="36" y="105" fill="#475569" font-size="9.5" font-family="Heebo, sans-serif">e^-3</text>
+              <text x="266" y="105" fill="#475569" font-size="9.5" font-family="Heebo, sans-serif">e^3</text>
+              <text x="152" y="122" fill="#B45309" font-size="12" font-family="Heebo, sans-serif">S₁</text>
+              <text x="150" y="60" fill="#2563EB" font-size="12" font-family="Heebo, sans-serif">S₂</text>
+              <text x="240" y="102" fill="#B45309" font-size="10" font-family="Heebo, sans-serif">g(x)</text>
+              <text x="86" y="26" fill="#2563EB" font-size="10" font-family="Heebo, sans-serif">h(x)</text>
+            `,
+            caption:
+              'האנכים ב-$x = e^{-3}$ וב-$x = e^{3}$. $h(x) = \\frac{f(x)}{x^2} > 0$ נמצאת מעל הציר, ו-$g(x)$ מתחתיו. השטח הכולל הוא $S = S_1 + S_2$, כאשר $S_2 = \\int_{e^{-3}}^{e^{3}} h\\,dx = 30$. סה"כ $\\;S = 4e^{3} + 8e^{-3} + 30 \\approx 110.74$.',
+          },
+        ],
+        hints: [
+          'פשטו: $h(x) = \\dfrac{f(x)}{x^2} = \\dfrac{(\\ln x)^2 - 2\\ln x + 2}{x}$.',
+          'האנכים ב-$x = e^{-3}$ וב-$x = e^{3}$; $h > 0$ מעל הציר ו-$g < 0$ מתחתיו, לכן השטח הכולל $S = S_1 + S_2$.',
+          'ל-$S_2$ פרקו לאיברים $\\frac{(\\ln x)^2}{x} - 2\\frac{\\ln x}{x} + \\frac{2}{x}$ ונצלו $\\int\\frac{(\\ln x)^n}{x}dx = \\frac{(\\ln x)^{n+1}}{n+1}$.',
+        ],
+        solution: {
+          steps: [
+            'נפשט את $h$: $\\;h(x) = \\dfrac{f(x)}{x^2} = \\dfrac{x\\big((\\ln x)^2 - 2\\ln x + 2\\big)}{x^2} = \\dfrac{(\\ln x)^2 - 2\\ln x + 2}{x}$.',
+            'המונה $(\\ln x)^2 - 2\\ln x + 2 > 0$ תמיד (מסעיף ג) ו-$x > 0$, ולכן $h(x) > 0$ — הגרף כולו מעל ציר ה-$x$.',
+            'האנכים עוברים בנקודות החיתוך של $g$: $\\;x = e^{-3}$ ו-$x = e^{3}$. בקטע זה $g$ מתחת לציר ו-$h$ מעליו, לכן השטח הכולל הוא $\\;S = S_1 + S_2$, כאשר $S_2 = \\displaystyle\\int_{e^{-3}}^{e^{3}} h(x)\\,dx$.',
+            'נפרק את $h$ לאיברים: $\\;h(x) = \\dfrac{(\\ln x)^2}{x} - 2\\cdot\\dfrac{\\ln x}{x} + \\dfrac{2}{x}$.',
+            'נמצא קדומה (לפי $\\int\\frac{(\\ln x)^n}{x}dx = \\frac{(\\ln x)^{n+1}}{n+1}$): $\\;H(x) = \\dfrac{(\\ln x)^3}{3} - (\\ln x)^2 + 2\\ln x$.',
+            '$S_2 = \\Big[\\,\\dfrac{(\\ln x)^3}{3} - (\\ln x)^2 + 2\\ln x\\,\\Big]_{e^{-3}}^{e^{3}}$.',
+            'הצבה ב-$x = e^{3}$ ($\\ln = 3$): $\\;\\dfrac{27}{3} - 9 + 6 = 6$.',
+            'הצבה ב-$x = e^{-3}$ ($\\ln = -3$): $\\;\\dfrac{-27}{3} - 9 - 6 = -24$.',
+            '$S_2 = 6 - (-24) = 30$.',
+            'סה"כ: $\\;S = S_1 + S_2 = \\big(4e^{3} + 8e^{-3}\\big) + 30 \\approx 80.74 + 30 = 110.74$.',
+          ],
+          final_answer: '$S = 4e^{3} + 8e^{-3} + 30 \\approx 110.74$.',
         },
       },
     ],
