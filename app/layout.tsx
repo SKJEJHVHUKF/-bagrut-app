@@ -5,6 +5,7 @@ import "./globals.css";
 import ServiceWorkerRegistration from "./sw-register";
 import AppChrome from "@/components/AppChrome";
 import GlobalSearch from "@/components/GlobalSearch";
+import FormulaSheet from "@/components/FormulaSheet";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -70,6 +71,7 @@ export default function RootLayout({
         <ServiceWorkerRegistration />
         <AppChrome />
         <GlobalSearch />
+        <FormulaSheet />
         {children}
         <Toaster
           position="top-center"
