@@ -24,6 +24,7 @@ import {
   Pencil,
   LogOut,
   ChevronLeft,
+  NotebookPen,
   Search as SearchIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -337,6 +338,7 @@ export default function AppChrome() {
                 {[
                   { href: '/my-plan', icon: BookOpen, label: 'התוכנית שלי' },
                   { href: '/insights', icon: BarChart3, label: 'התמונה שלי' },
+                  { href: '/errors', icon: NotebookPen, label: 'מחברת הטעויות' },
                   { href: '/history', icon: History, label: 'ההיסטוריה שלי' },
                   { href: '/library', icon: Library, label: 'הספרייה שלי' },
                 ].map(({ href, icon: Icon, label }) => (

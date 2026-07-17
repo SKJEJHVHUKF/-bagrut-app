@@ -149,6 +149,12 @@ export default function InsightsPage() {
             כל שאלה שאתה עונה — במבחן המהיר ובתרגול המודרך — נצברת לתמונה אחת:
             איפה אתה חזק, ומה שווה לחזק לפני הבגרות.
           </p>
+          <Link
+            href="/errors"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 transition-colors"
+          >
+            📓 מחברת הטעויות שלי ←
+          </Link>
         </div>
 
         {/* Loading (first client render) */}

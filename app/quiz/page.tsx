@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
 import { markStep, getPaper } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
+import { recordMistake } from '@/lib/mistakes';
 import { isTopicInActivePaper, type BagrutPaper } from '@/content/bagrut-curriculum';
 
 // Renders a string with markdown + LaTeX math.
@@ -305,6 +306,19 @@ function Quiz() {
         difficulty: q.difficulty,
         correct: ok,
       });
+      // Wrong answers also go to the error notebook (מחברת טעויות).
+      if (!ok) {
+        recordMistake({
+          subject: currentSubject,
+          topic: answerTopic,
+          questionId: q.id,
+          questionText: q.question,
+          userAnswer: Array.isArray(q.answers) ? q.answers[idx] : undefined,
+          correctAnswer: Array.isArray(q.answers) ? q.answers[q.correct] : undefined,
+          category: 'אחר',
+          source: 'quiz',
+        });
+      }
     }
   };
 

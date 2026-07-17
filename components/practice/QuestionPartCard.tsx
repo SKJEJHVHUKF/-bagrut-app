@@ -20,6 +20,13 @@ import { AITutorActions } from './AITutorActions';
 import { checkAnswer as runDeterministicCheck, type AnswerSpec } from '@/lib/answer-check';
 import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
 import { buttonTap } from '@/lib/animations';
+import {
+  recordMistake,
+  updateMistakeCategory,
+  toErrorCategory,
+  type ErrorCategory,
+} from '@/lib/mistakes';
+import { MistakeTagger } from './MistakeTagger';
 
 export type QuestionPart = {
   label: string;
@@ -41,12 +48,15 @@ type CheckResult = { verdict: Verdict; feedback: string; tip: string };
 
 export function QuestionPartCard({
   part,
+  subject = 'math5',
   context,
   topic,
   onDone,
   onSelfAssess,
 }: {
   part: QuestionPart;
+  /** Subject key for logging mistakes to the error notebook. */
+  subject?: string;
   /** Optional surrounding context (question.context) — helps the checker
    *  understand the broader problem when judging a sub-part answer. */
   context?: string;
@@ -67,6 +77,33 @@ export function QuestionPartCard({
   // Self-assessment after revealing the full solution (the "solved on paper"
   // path) — null until the student grades themselves.
   const [selfReport, setSelfReport] = useState<'correct' | 'wrong' | null>(null);
+  // Error-notebook state — one mistake per part, re-taggable.
+  const [mistakeId, setMistakeId] = useState<string | null>(null);
+  const [aiCategory, setAiCategory] = useState<ErrorCategory | null>(null);
+
+  // Log a wrong answer to the error notebook (once per part). If a category
+  // is known (from the AI), apply it; otherwise it defaults to 'אחר' and the
+  // student can tag it via the MistakeTagger.
+  function logWrong(userAnswer: string, category?: ErrorCategory) {
+    if (mistakeId) {
+      if (category) {
+        updateMistakeCategory(mistakeId, category);
+        setAiCategory(category);
+      }
+      return;
+    }
+    const id = recordMistake({
+      subject,
+      topic: topic ?? '',
+      questionText: part.prompt,
+      userAnswer: userAnswer || undefined,
+      correctAnswer: part.solution.final_answer,
+      category: category ?? 'אחר',
+      source: 'bagrut',
+    });
+    setMistakeId(id);
+    if (category) setAiCategory(category);
+  }
 
   function selfAssess(correct: boolean) {
     if (selfReport) return;
@@ -76,6 +113,7 @@ export function QuestionPartCard({
       toast.success('כל הכבוד! 🎯', { description: 'סימנת שפתרת נכון', duration: 2000 });
     } else {
       toast.info('סומן — כדאי לחזור על הסעיף הזה', { duration: 2000 });
+      logWrong(answer);
     }
     onSelfAssess?.(correct);
   }
@@ -196,6 +234,7 @@ export function QuestionPartCard({
             : 'התשובה אינה שקולה לתשובה הנכונה. בדוק אם פספסת חלק מהפתרון או טעית בסימן.',
           tip: '',
         });
+        logWrong(answer);
         setChecking(false);
         return;
       }
@@ -228,8 +267,11 @@ export function QuestionPartCard({
         }
         throw new Error(msg || `HTTP ${res.status}`);
       }
-      const data = (await res.json()) as CheckResult;
+      const data = (await res.json()) as CheckResult & { category?: string };
       applyResult(data);
+      if (data.verdict === 'wrong') {
+        logWrong(answer, toErrorCategory(data.category));
+      }
     } catch (e) {
       setCheckError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -336,7 +378,18 @@ export function QuestionPartCard({
                     context={context}
                     topic={topic}
                     show={{ whyWrong: true }}
+                    onCategory={(c) => {
+                      const cat = toErrorCategory(c);
+                      if (mistakeId) {
+                        updateMistakeCategory(mistakeId, cat);
+                        setAiCategory(cat);
+                      }
+                    }}
                   />
+                )}
+
+                {mistakeId && checkResult?.verdict === 'wrong' && (
+                  <MistakeTagger mistakeId={mistakeId} initial={aiCategory} />
                 )}
               </div>
             )}
@@ -501,15 +554,16 @@ export function QuestionPartCard({
                           </button>
                         </div>
                       </>
+                    ) : selfReport === 'correct' ? (
+                      <div className="text-center text-xs font-bold text-emerald-700">
+                        ✓ סימנת: פתרתי נכון
+                      </div>
                     ) : (
-                      <div
-                        className={`text-center text-xs font-bold ${
-                          selfReport === 'correct' ? 'text-emerald-700' : 'text-amber-700'
-                        }`}
-                      >
-                        {selfReport === 'correct'
-                          ? '✓ סימנת: פתרתי נכון'
-                          : 'סומן: טעיתי — נחזור לזה בתרגול'}
+                      <div>
+                        <div className="text-center text-xs font-bold text-amber-700 mb-1">
+                          סומן: טעיתי — נחזור לזה בתרגול
+                        </div>
+                        {mistakeId && <MistakeTagger mistakeId={mistakeId} initial={aiCategory} />}
                       </div>
                     )}
                   </div>

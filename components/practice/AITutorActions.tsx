@@ -50,6 +50,10 @@ type AITutorActionsProps = {
   // Optional callback when "similar question" returns a result.
   // The parent can wire this to replace its current question state.
   onSimilarQuestion?: (q: SimilarQuestionResult) => void;
+
+  // Optional callback when "why wrong?" returns an error category — the
+  // parent uses it to tag the mistake in the error notebook.
+  onCategory?: (category: string) => void;
 };
 
 type ActionKey = 'explainSimpler' | 'whyWrong' | 'similarQuestion' | 'hintHelp';
@@ -108,6 +112,15 @@ export function AITutorActions(props: AITutorActionsProps) {
       // swap the visible exercise.
       if (key === 'similarQuestion' && data && props.onSimilarQuestion) {
         props.onSimilarQuestion(data as SimilarQuestionResult);
+      }
+      // Special: why-wrong returns an error category → tag the mistake.
+      if (
+        key === 'whyWrong' &&
+        data &&
+        typeof (data as { category?: unknown }).category === 'string' &&
+        props.onCategory
+      ) {
+        props.onCategory((data as { category: string }).category);
       }
     } catch (e) {
       setState(key, {

@@ -22,6 +22,8 @@ import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
 import { markExerciseDone, markSubTopicDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
+import { recordMistake } from '@/lib/mistakes';
+import { MistakeTagger } from './MistakeTagger';
 import { studentTier, orderQuestions, tierLabel, type Tier } from '@/lib/adaptive';
 import ShareCardButton from '@/components/ShareCardButton';
 import type { SubTopic, StaticBagrutQuestion, PracticeQuestion } from '@/content/lessons/types';
@@ -73,6 +75,7 @@ export function SubTopicPractice({
   const [solutionShown, setSolutionShown] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [done, setDone] = useState(false);
+  const [mistakeId, setMistakeId] = useState<string | null>(null);
 
   const total = questions.length;
   const current = questions[idx];
@@ -85,6 +88,7 @@ export function SubTopicPractice({
     setOpenReport(null);
     setHintShown(false);
     setSolutionShown(false);
+    setMistakeId(null);
   }
 
   function handleMCQSelect(i: number) {
@@ -103,6 +107,21 @@ export function SubTopicPractice({
         difficulty: current.difficulty,
         correct: i === current.correct,
       });
+      // First-attempt miss → log to the error notebook (student tags it).
+      if (i !== current.correct && !mistakeId) {
+        const id = recordMistake({
+          subject,
+          topic,
+          subTopicId: subTopic.id,
+          questionId: current.id,
+          questionText: current.question,
+          userAnswer: current.answers?.[i],
+          correctAnswer: current.solution.finalAnswer,
+          category: 'אחר',
+          source: 'drill',
+        });
+        setMistakeId(id);
+      }
     }
     if (i === current.correct) {
       setSelected(i);
@@ -140,6 +159,19 @@ export function SubTopicPractice({
     if (correct) {
       setCorrectCount((c) => c + 1);
       celebrateCorrect();
+    } else if (!mistakeId) {
+      const id = recordMistake({
+        subject,
+        topic,
+        subTopicId: subTopic.id,
+        questionId: current.id,
+        questionText: current.question,
+        userAnswer: openAnswer || undefined,
+        correctAnswer: current.solution.finalAnswer,
+        category: 'אחר',
+        source: 'drill',
+      });
+      setMistakeId(id);
     }
   }
 
@@ -503,6 +535,13 @@ export function SubTopicPractice({
               : 'בסדר גמור — ככה לומדים. אפשר לחזור על השאלה בסוף.'}
           </div>
         )
+      )}
+
+      {/* Error notebook — tag the mistake so /errors can profile it */}
+      {mistakeId && solutionShown && (
+        <div className="surface-premium rounded-xl p-3">
+          <MistakeTagger mistakeId={mistakeId} />
+        </div>
       )}
 
       {/* Next */}
