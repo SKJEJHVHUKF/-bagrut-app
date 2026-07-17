@@ -8,9 +8,10 @@ import 'katex/dist/katex.min.css';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
-import { markStep } from '@/lib/study-plan';
+import { markStep, getPaper } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
 import { studentTier, pickQuestions } from '@/lib/adaptive';
+import { isTopicInActivePaper, type BagrutPaper } from '@/content/bagrut-curriculum';
 
 // Renders a string with markdown + LaTeX math.
 // `inline` strips the wrapping <p> so the content can sit inside a flex
@@ -161,8 +162,22 @@ function Quiz() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
+  // The bagrut paper the student is focused on (581/582); null = show all.
+  // Read once after mount (localStorage), used to filter the math5 topic list.
+  const [activePaper, setActivePaper] = useState<BagrutPaper | null>(null);
+  useEffect(() => {
+    setActivePaper(getPaper());
+  }, []);
+
   const subject = SUBJECTS[currentSubject as keyof typeof SUBJECTS];
   const letters = ['א', 'ב', 'ג', 'ד'];
+
+  // math5 topic list filtered to the student's active paper (581/582);
+  // other subjects / no chosen paper → the full list.
+  const visibleTopics =
+    currentSubject === 'math5' && activePaper
+      ? subject.topics.filter((t) => isTopicInActivePaper(t.name, activePaper))
+      : subject.topics;
 
   // Deep-link auto-start: if /quiz?subject=...&topic=... has both params and
   // the topic has a static question bank, jump straight into the quiz.
@@ -200,6 +215,9 @@ function Quiz() {
       const perTopic: any[][] = [];
       for (const t of subject.topics) {
         if (MIXED_EXCLUDED_TOPICS.has(t.name)) continue;
+        // Respect the student's active paper — a 581 student's mixed quiz
+        // shouldn't pull vectors/complex, and vice versa.
+        if (currentSubject === 'math5' && activePaper && !isTopicInActivePaper(t.name, activePaper)) continue;
         if (!hasQuestionBank(currentSubject, t.name)) continue;
         const mcqs = getQuestions(currentSubject, t.name)
           .filter((q) => q.kind === 'mcq' && Array.isArray(q.answers) && typeof q.correct === 'number')
@@ -371,7 +389,7 @@ function Quiz() {
       </div>
       <div className="section-label">בחר נושא</div>
       <div className="topics-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        {subject.topics.some((t) => hasQuestionBank(currentSubject, t.name)) && (
+        {visibleTopics.some((t) => hasQuestionBank(currentSubject, t.name)) && (
           <div
             className={`topic-card ${selectedTopic === MIXED_TOPIC ? 'selected' : ''}`}
             onClick={() => setSelectedTopic(MIXED_TOPIC)}
@@ -383,7 +401,7 @@ function Quiz() {
             <div className="topic-sub">8 שאלות מכל הנושאים · מגלה לך איפה אתה חזק ואיפה צריך חיזוק</div>
           </div>
         )}
-        {subject.topics.map((t, i) => (
+        {visibleTopics.map((t, i) => (
           <div key={i} className={`topic-card ${selectedTopic === t.name ? 'selected' : ''}`} onClick={() => setSelectedTopic(t.name)}>
             <span className="topic-check">✓</span>
             <span className="topic-emoji">{t.emoji}</span>

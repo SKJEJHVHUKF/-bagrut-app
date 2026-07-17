@@ -29,7 +29,15 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
 import { currentStreak } from '@/lib/results';
-import { getUnitLevel, setUnitLevel, hasPlan, type UnitLevel } from '@/lib/study-plan';
+import {
+  getUnitLevel,
+  setUnitLevel,
+  getPaper,
+  setPaper as persistPaper,
+  hasPlan,
+  type UnitLevel,
+} from '@/lib/study-plan';
+import { paperLabel, type BagrutPaper } from '@/content/bagrut-curriculum';
 
 // Public / auth routes where the floating avatar must NOT appear.
 // Hide only on the auth/onboarding flows. On the landing ("/") the avatar
@@ -109,18 +117,27 @@ export default function AppChrome() {
     };
   }, [hidden, pathname]);
 
-  // Streak + unit level are client-only (localStorage) — read on drawer open.
+  // Streak + unit level + active paper are client-only (localStorage) —
+  // read on drawer open.
   const [units, setUnits] = useState<UnitLevel | null>(null);
+  const [paper, setPaperState] = useState<BagrutPaper | null>(null);
   useEffect(() => {
     if (open) {
       setStreak(currentStreak());
-      setUnits(hasPlan() ? getUnitLevel() : null);
+      const planned = hasPlan();
+      setUnits(planned ? getUnitLevel() : null);
+      setPaperState(planned ? getPaper() : null);
     }
   }, [open]);
 
   const changeUnits = (u: UnitLevel) => {
     setUnitLevel(u);
     setUnits(u);
+  };
+
+  const changePaper = (p: BagrutPaper) => {
+    persistPaper(p);
+    setPaperState(p);
   };
 
   // Close on ESC
@@ -273,6 +290,30 @@ export default function AppChrome() {
                           }
                         >
                           {u} יח׳
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Active bagrut paper — filters topic lists across the app. */}
+                {units !== null && (
+                  <div className="mt-3">
+                    <div className="text-[10px] font-black tracking-widest text-slate-500 uppercase mb-1.5">
+                      שאלון פעיל
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(['581', '582'] as BagrutPaper[]).map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => changePaper(p)}
+                          className={
+                            paper === p
+                              ? 'rounded-lg py-1.5 text-xs font-black bg-indigo-600 text-white border border-indigo-600'
+                              : 'rounded-lg py-1.5 text-xs font-bold bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-600'
+                          }
+                        >
+                          {paperLabel(p)}
                         </button>
                       ))}
                     </div>

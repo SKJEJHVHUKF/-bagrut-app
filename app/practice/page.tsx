@@ -12,7 +12,13 @@ import {
 } from 'lucide-react';
 import { hasLesson } from '@/content/lessons';
 import { getAllProgress } from '@/lib/progress';
-import { topicsByPaper, paperLabel, type BagrutPaper } from '@/content/bagrut-curriculum';
+import {
+  topicsByPaper,
+  topicsForActivePaper,
+  paperLabel,
+  type BagrutPaper,
+} from '@/content/bagrut-curriculum';
+import { getPaper, setPaper } from '@/lib/study-plan';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 
 // ===== SUBJECTS (mirror of /quiz subject map, trimmed to the fields we need here) =====
@@ -173,6 +179,21 @@ export default function PracticePage() {
   const [topic, setTopic] = useState<string | null>(null);
   const [navigating, setNavigating] = useState(false);
 
+  // The bagrut paper the student is focused on (581/582). null = never chosen
+  // → show both papers. Read once after mount (localStorage).
+  const [activePaper, setActivePaper] = useState<BagrutPaper | null>(null);
+  useEffect(() => {
+    setActivePaper(getPaper());
+  }, []);
+
+  function switchPaper() {
+    if (!activePaper) return;
+    const other: BagrutPaper = activePaper === '581' ? '582' : '581';
+    setPaper(other);
+    setActivePaper(other);
+    setTopic(null);
+  }
+
   // Read localStorage once after mount. We don't subscribe to changes —
   // the badges refresh next time the user lands on the picker, which is
   // good enough for "did I already open this lesson?".
@@ -256,6 +277,8 @@ export default function PracticePage() {
             selectedTopic={topic}
             onSelect={setTopic}
             viewedKeys={viewedKeys}
+            activePaper={activePaper}
+            onSwitchPaper={switchPaper}
           />
         ) : (
           <div className="mb-6">
@@ -341,26 +364,48 @@ function Math5TopicsByPaper({
   selectedTopic,
   onSelect,
   viewedKeys,
+  activePaper,
+  onSwitchPaper,
 }: {
   selectedTopic: string | null;
   onSelect: (topic: string) => void;
   viewedKeys: Set<string>;
+  activePaper: BagrutPaper | null;
+  onSwitchPaper: () => void;
 }) {
-  const papers: BagrutPaper[] = ['581', '582'];
+  // If the student chose a paper, show ONLY that paper (shared topics folded
+  // in via topicsForActivePaper). Otherwise show both papers grouped.
+  const single = activePaper !== null;
+  const papers: BagrutPaper[] = single ? [activePaper] : ['581', '582'];
   return (
     <div className="mb-6 space-y-5">
+      {single && (
+        <div className="flex items-center justify-between rounded-2xl bg-indigo-500/[0.07] border border-indigo-500/20 px-4 py-2.5">
+          <div className="text-xs font-black text-indigo-800">
+            מציג את נושאי {paperLabel(activePaper)}
+          </div>
+          <button
+            onClick={onSwitchPaper}
+            className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 underline underline-offset-2"
+          >
+            החלף ל{paperLabel(activePaper === '581' ? '582' : '581')}
+          </button>
+        </div>
+      )}
       {papers.map((paper) => (
         <div key={paper}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-black tracking-widest text-indigo-700 uppercase">
-              {paperLabel(paper)}
+          {!single && (
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-black tracking-widest text-indigo-700 uppercase">
+                {paperLabel(paper)}
+              </div>
+              <div className="text-[10px] text-slate-500">
+                {paper === '581' ? 'אלגברה ואנליזה אלגברית' : 'אנליזה טרנסצנדנטית • הסתברות'}
+              </div>
             </div>
-            <div className="text-[10px] text-slate-500">
-              {paper === '581' ? 'אלגברה ואנליזה אלגברית' : 'אנליזה טרנסצנדנטית • הסתברות'}
-            </div>
-          </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 perspective-1500">
-            {topicsByPaper(paper).map((t) => {
+            {(single ? topicsForActivePaper(paper) : topicsByPaper(paper)).map((t) => {
               const k = `math5:${t.key}`;
               const viewed = viewedKeys.has(k);
               const hasL = hasLesson('math5', t.key);

@@ -15,6 +15,8 @@
  * Everything lives in localStorage. No server round-trip, no Supabase.
  */
 
+import type { BagrutPaper } from '../content/bagrut-curriculum';
+
 const STORAGE_KEY = 'bagrut-study-plan-v1';
 const UNLOCK_THRESHOLD = 80; // % completion required to unlock next topic
 
@@ -46,6 +48,10 @@ export type StudyPlan = {
   /** 3/4/5 units — drives question difficulty + default subject. Optional
    *  for plans created before this field existed (treated as 5). */
   unitLevel?: UnitLevel;
+  /** The bagrut paper the student is actively focused on (581/582). Filters
+   *  topic pickers to that paper's topics + shared topics. Optional/undefined
+   *  for legacy plans — treated as "no filter" (all topics visible). */
+  paper?: BagrutPaper;
 };
 
 function isBrowser() {
@@ -97,11 +103,13 @@ export function createPlan(args: {
   bagrutDate: string;
   topics: Array<{ subject: string; topic: string; level: ProficiencyLevel }>;
   unitLevel?: UnitLevel;
+  paper?: BagrutPaper;
 }): StudyPlan {
   const plan: StudyPlan = {
     bagrutDate: args.bagrutDate,
     createdAt: Date.now(),
     unitLevel: args.unitLevel ?? 5,
+    paper: args.paper,
     topics: args.topics.map((t) => ({
       subject: t.subject,
       topic: t.topic,
@@ -124,6 +132,19 @@ export function setUnitLevel(level: UnitLevel): void {
   const plan = getPlan();
   if (!plan) return;
   plan.unitLevel = level;
+  savePlan(plan);
+}
+
+/** The paper the student is focused on, or null if never chosen (= no filter). */
+export function getPaper(): BagrutPaper | null {
+  return getPlan()?.paper ?? null;
+}
+
+/** Update the active paper on an existing plan (e.g. from the profile panel). */
+export function setPaper(paper: BagrutPaper): void {
+  const plan = getPlan();
+  if (!plan) return;
+  plan.paper = paper;
   savePlan(plan);
 }
 

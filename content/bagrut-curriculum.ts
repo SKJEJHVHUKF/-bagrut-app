@@ -300,6 +300,35 @@ export function topicsByPaper(paper: BagrutPaper): TopicMapping[] {
   return MATH5_CURRICULUM.filter((t) => t.paper === paper);
 }
 
+/**
+ * Topics a student should see when they're actively focused on `paper`.
+ *
+ * Unlike `topicsByPaper` (strict primary-paper only), this INCLUDES topics
+ * shared with the other paper via `alsoIn` — so a 582 student still gets
+ * טריגונומטריה / חדו"א / פונקציות (which are primary-581 but also examined
+ * in 582), while the other paper's EXCLUSIVE topics (וקטורים / מרוכבים /
+ * אנליטית for 581; אלגברה / סדרות / הסתברות / אוקלידית for 582) are hidden.
+ * Out-of-scope topics (סטטיסטיקה) are excluded unless explicitly requested.
+ */
+export function topicsForActivePaper(
+  paper: BagrutPaper,
+  opts?: { includeOutOfScope?: boolean }
+): TopicMapping[] {
+  return MATH5_CURRICULUM.filter(
+    (t) =>
+      (t.paper === paper || t.alsoIn === paper) &&
+      (opts?.includeOutOfScope || t.weight !== 'out-of-scope')
+  );
+}
+
+/** Should `topic` be visible for a student focused on `paper`? */
+export function isTopicInActivePaper(topic: string, paper: BagrutPaper): boolean {
+  const m = getTopicMapping(topic);
+  if (!m) return true; // unknown topic (e.g. non-math5) — never hide
+  if (m.weight === 'out-of-scope') return false;
+  return m.paper === paper || m.alsoIn === paper;
+}
+
 /** Returns the canonical index (0-based) of a topic in the curriculum.
  *  Useful for sorting any user-defined list back into bagrut order. */
 export function curriculumIndex(topic: string): number {

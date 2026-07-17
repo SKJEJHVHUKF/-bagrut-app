@@ -13,7 +13,12 @@ import {
 } from 'lucide-react';
 import { allLessonKeys } from '@/content/lessons';
 import { createPlan, type ProficiencyLevel, type UnitLevel } from '@/lib/study-plan';
-import { curriculumIndex } from '@/content/bagrut-curriculum';
+import {
+  curriculumIndex,
+  isTopicInActivePaper,
+  paperLabel,
+  type BagrutPaper,
+} from '@/content/bagrut-curriculum';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 
 // All math5 topics, sorted into the canonical bagrut curriculum order
@@ -51,6 +56,13 @@ export default function OnboardingPage() {
 
   const [selected, setSelected] = useState<SelectedTopic[]>([]);
   const [unitLevel, setUnitLevel] = useState<UnitLevel>(5);
+  const [paper, setPaper] = useState<BagrutPaper>('581');
+
+  function choosePaper(p: BagrutPaper) {
+    setPaper(p);
+    // Drop any already-selected topics that don't belong to the new paper.
+    setSelected((prev) => prev.filter((t) => isTopicInActivePaper(t.topic, p)));
+  }
 
   function toggleTopic(subject: string, topic: string) {
     setSelected((prev) => {
@@ -83,6 +95,7 @@ export default function OnboardingPage() {
     createPlan({
       bagrutDate,
       unitLevel,
+      paper,
       topics: selected.map(({ subject, topic, level }) => ({ subject, topic, level })),
     });
     router.push('/my-plan');
@@ -123,6 +136,8 @@ export default function OnboardingPage() {
             onChange={setBagrutDate}
             unitLevel={unitLevel}
             onUnitLevel={setUnitLevel}
+            paper={paper}
+            onPaper={choosePaper}
             onBack={() => setStep(1)}
             onNext={() => setStep(3)}
           />
@@ -130,6 +145,7 @@ export default function OnboardingPage() {
 
         {step === 3 && (
           <TopicsStep
+            paper={paper}
             selected={selected}
             toggleTopic={toggleTopic}
             setLevel={setLevel}
@@ -214,6 +230,8 @@ function DateStep({
   onChange,
   unitLevel,
   onUnitLevel,
+  paper,
+  onPaper,
   onBack,
   onNext,
 }: {
@@ -221,6 +239,8 @@ function DateStep({
   onChange: (v: string) => void;
   unitLevel: UnitLevel;
   onUnitLevel: (u: UnitLevel) => void;
+  paper: BagrutPaper;
+  onPaper: (p: BagrutPaper) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
@@ -291,6 +311,43 @@ function DateStep({
         </p>
       </div>
 
+      {/* Active bagrut paper — filters which topics you see across the app */}
+      <div className="surface-premium rounded-2xl p-5 space-y-3">
+        <label className="block text-xs font-black tracking-widest text-indigo-700 uppercase">
+          לאיזה שאלון אתה מתכונן עכשיו?
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {(
+            [
+              { p: '581' as BagrutPaper, desc: 'אלגברה · הסתברות · אוקלידית · טריגו · חדו״א' },
+              { p: '582' as BagrutPaper, desc: 'מעריכית · ln · אנליטית · וקטורים · מרוכבים' },
+            ]
+          ).map(({ p, desc }) => (
+            <button
+              key={p}
+              onClick={() => onPaper(p)}
+              className={
+                paper === p
+                  ? 'rounded-xl px-3 py-3 text-right bg-indigo-600 border border-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                  : 'rounded-xl px-3 py-3 text-right bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-700'
+              }
+            >
+              <div className="text-base font-black">{paperLabel(p)}</div>
+              <div
+                className={`text-[10px] font-bold mt-0.5 leading-tight ${
+                  paper === p ? 'text-indigo-100' : 'text-slate-500'
+                }`}
+              >
+                {desc}
+              </div>
+            </button>
+          ))}
+        </div>
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          נציג לך את נושאי השאלון שבחרת. נושאים משותפים (טריגו, חדו״א, פונקציות) יופיעו בשני השאלונים. אפשר להחליף בכל רגע מהפרופיל.
+        </p>
+      </div>
+
       <NavButtons onBack={onBack} onNext={onNext} nextDisabled={daysAway <= 0} />
     </div>
   );
@@ -301,18 +358,24 @@ function DateStep({
 // ============================================================
 
 function TopicsStep({
+  paper,
   selected,
   toggleTopic,
   setLevel,
   onBack,
   onNext,
 }: {
+  paper: BagrutPaper;
   selected: SelectedTopic[];
   toggleTopic: (subject: string, topic: string) => void;
   setLevel: (subject: string, topic: string, level: ProficiencyLevel) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
+  // Only show topics that belong to the student's chosen paper (shared
+  // topics like טריגו/חדו״א appear for both; the other paper's exclusive
+  // topics are hidden).
+  const topics = ALL_TOPICS.filter(({ topic }) => isTopicInActivePaper(topic, paper));
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -327,7 +390,7 @@ function TopicsStep({
       </div>
 
       <div className="space-y-2">
-        {ALL_TOPICS.map(({ subject, topic }) => {
+        {topics.map(({ subject, topic }) => {
           const sel = selected.find((t) => t.subject === subject && t.topic === topic);
           const isSelected = !!sel;
           return (
