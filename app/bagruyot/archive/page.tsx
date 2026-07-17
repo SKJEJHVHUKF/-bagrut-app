@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { sparkle, celebrateCompletion } from '@/lib/confetti';
+import { sparkle, celebrateCompletion, celebrateCorrect } from '@/lib/confetti';
 import {
   BookOpen,
   Loader2,
@@ -22,6 +22,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
 import { MathText } from '@/components/practice/MathText';
+import { AnswerInput } from '@/components/practice/AnswerInput';
 import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
 import {
   ALL_PAST_BAGRUYOT,
@@ -381,6 +382,7 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
   const [answer, setAnswer] = useState('');
   const [hintsShown, setHintsShown] = useState(0);
   const [solutionShown, setSolutionShown] = useState(false);
+  const [selfReport, setSelfReport] = useState<'correct' | 'wrong' | null>(null);
 
   const hasHints = !!part.hints && part.hints.length > 0;
   const moreHintsAvailable = hasHints && hintsShown < (part.hints?.length ?? 0);
@@ -409,17 +411,14 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
             <label className="block text-[10px] font-black tracking-widest text-slate-600 uppercase mb-1.5">
               התשובה שלך
             </label>
-            <textarea
+            <AnswerInput
               value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              placeholder={
-                part.answer_type === 'proof'
-                  ? 'כתוב כאן את ההוכחה שלך, צעד אחר צעד...'
-                  : 'כתוב כאן את התשובה...'
+              onChange={setAnswer}
+              type={
+                part.answer_type === 'number' || part.answer_type === 'expression'
+                  ? part.answer_type
+                  : 'text'
               }
-              rows={3}
-              className="w-full bg-slate-900/[0.04] border border-slate-900/10 focus:border-indigo-500/60 rounded-xl px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y"
-              dir="auto"
             />
           </motion.div>
         )}
@@ -460,7 +459,7 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
             className="inline-flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-800 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors"
           >
             <Eye className="w-3.5 h-3.5" />
-            הצג פתרון
+            פתרתי על דף — הצג פתרון מלא
           </motion.button>
         )}
         {solutionShown && (
@@ -477,6 +476,44 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
           </motion.button>
         )}
       </div>
+
+      {/* Self-assessment after revealing the solution (paper-solver path) */}
+      {solutionShown && (
+        <div className="pt-2 border-t border-slate-900/[0.06]">
+          {selfReport === null ? (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  setSelfReport('correct');
+                  celebrateCorrect();
+                  toast.success('כל הכבוד! פתרת נכון', { duration: 1800 });
+                }}
+                className="inline-flex items-center justify-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-800 rounded-lg px-3 py-2 text-xs font-bold transition-colors"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                פתרתי נכון
+              </button>
+              <button
+                onClick={() => {
+                  setSelfReport('wrong');
+                  toast.info('סומן — כדאי לחזור על הסעיף', { duration: 1800 });
+                }}
+                className="inline-flex items-center justify-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-800 rounded-lg px-3 py-2 text-xs font-bold transition-colors"
+              >
+                טעיתי כאן
+              </button>
+            </div>
+          ) : (
+            <div
+              className={`text-center text-xs font-bold ${
+                selfReport === 'correct' ? 'text-emerald-700' : 'text-amber-700'
+              }`}
+            >
+              {selfReport === 'correct' ? '✓ סימנת: פתרתי נכון' : 'סומן: טעיתי כאן'}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Hints display — each slides in from top */}
       <AnimatePresence initial={false}>

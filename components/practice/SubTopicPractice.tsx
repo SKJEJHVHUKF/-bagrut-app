@@ -15,6 +15,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { MathText } from './MathText';
+import { AnswerInput } from './AnswerInput';
 import { BagrutQuestionBlock } from './BagrutQuestionBlock';
 import { buttonTap } from '@/lib/animations';
 import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
@@ -369,20 +370,13 @@ export function SubTopicPractice({
       {/* Open answer */}
       {current.kind === 'open' && !solutionShown && (
         <div className="space-y-2">
-          <textarea
-            value={openAnswer}
-            onChange={(e) => setOpenAnswer(e.target.value)}
-            placeholder="כתוב כאן את התשובה שלך..."
-            rows={3}
-            className="w-full bg-slate-900/[0.04] border border-slate-900/10 focus:border-emerald-500/60 rounded-xl px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y"
-            dir="auto"
-          />
+          <AnswerInput value={openAnswer} onChange={setOpenAnswer} type="text" symbolBar />
           <motion.button
             {...buttonTap}
             onClick={handleOpenCheck}
             className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-800 text-sm transition-colors"
           >
-            <span>הצג פתרון להשוואה</span>
+            <span>פתרתי על דף — הצג פתרון מלא</span>
           </motion.button>
         </div>
       )}

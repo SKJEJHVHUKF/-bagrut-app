@@ -115,13 +115,16 @@ function normalizeExpr(raw: string): string {
   s = s.replace(/√\s*(\d+(?:\.\d+)?)/g, 'sqrt($1)');
   s = s.replace(/\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '(($1)/($2))');
 
-  // Operators and powers.
-  s = s.replace(/\\cdot|\\times|·/g, '*');
-  s = s.replace(/\\div/g, '/');
+  // Operators and powers. Also normalise the bare Unicode glyphs a math
+  // keyboard inserts (× ÷ − π) — without this they reach mathjs unparsed
+  // and every such answer would come back 'unparseable'.
+  s = s.replace(/\\cdot|\\times|·|×/g, '*');
+  s = s.replace(/\\div|÷/g, '/');
+  s = s.replace(/−/g, '-'); // U+2212 minus sign → ASCII hyphen-minus
   s = s.replace(/\^\s*\{([^{}]*)\}/g, '^($1)');
   s = s.replace(/_\s*\{[^{}]*\}/g, ''); // drop subscripts (labels)
   s = s.replace(/[°]/g, ' '); // any stray degree marks
-  s = s.replace(/\\pi/g, 'pi');
+  s = s.replace(/\\pi|π/g, 'pi');
 
   // Natural log: LaTeX "\ln" and bare "ln" → mathjs `log` (whose one-arg form
   // IS the natural log). Lets exp/ln/growth answers grade whether the student

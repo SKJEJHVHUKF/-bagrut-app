@@ -44,6 +44,7 @@ export function QuestionPartCard({
   context,
   topic,
   onDone,
+  onSelfAssess,
 }: {
   part: QuestionPart;
   /** Optional surrounding context (question.context) — helps the checker
@@ -53,12 +54,31 @@ export function QuestionPartCard({
    *  endpoints (why-wrong etc.) teach from the verified content. */
   topic?: string;
   onDone?: () => void;
+  /** Fired when the student self-grades against the revealed solution
+   *  ("פתרתי נכון" / "טעיתי כאן"). Lets the parent record the result and
+   *  (Task 7) log a mistake with a category. */
+  onSelfAssess?: (correct: boolean) => void;
 }) {
   const [open, setOpen] = useState(true);
   const [answer, setAnswer] = useState('');
   const [hintsShown, setHintsShown] = useState(0);
   const [stepsShown, setStepsShown] = useState(-1);
   const [revealedFinal, setRevealedFinal] = useState(false);
+  // Self-assessment after revealing the full solution (the "solved on paper"
+  // path) — null until the student grades themselves.
+  const [selfReport, setSelfReport] = useState<'correct' | 'wrong' | null>(null);
+
+  function selfAssess(correct: boolean) {
+    if (selfReport) return;
+    setSelfReport(correct ? 'correct' : 'wrong');
+    if (correct) {
+      celebrateCorrect();
+      toast.success('כל הכבוד! 🎯', { description: 'סימנת שפתרת נכון', duration: 2000 });
+    } else {
+      toast.info('סומן — כדאי לחזור על הסעיף הזה', { duration: 2000 });
+    }
+    onSelfAssess?.(correct);
+  }
 
   // ===== Answer checking state =====
   const [checking, setChecking] = useState(false);
@@ -453,6 +473,47 @@ export function QuestionPartCard({
                     show={{ explainSimpler: true }}
                   />
                 )}
+
+                {/* Self-assessment — the "solved on paper" payoff. Lets the
+                    student grade their own draft against the solution instead
+                    of fighting strict string-matching on messy expressions. */}
+                {onLastStep && checkResult?.verdict !== 'correct' && (
+                  <div className="mt-3 pt-3 border-t border-indigo-500/20">
+                    {selfReport === null ? (
+                      <>
+                        <div className="text-[11px] font-bold text-slate-600 mb-2 text-center">
+                          השווה את הפתרון שלך — איך יצא לך?
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => selfAssess(true)}
+                            className="inline-flex items-center justify-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-3 py-2 rounded-lg font-bold text-emerald-800 text-sm transition-colors"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            פתרתי נכון
+                          </button>
+                          <button
+                            onClick={() => selfAssess(false)}
+                            className="inline-flex items-center justify-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 px-3 py-2 rounded-lg font-bold text-amber-800 text-sm transition-colors"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            טעיתי כאן
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div
+                        className={`text-center text-xs font-bold ${
+                          selfReport === 'correct' ? 'text-emerald-700' : 'text-amber-700'
+                        }`}
+                      >
+                        {selfReport === 'correct'
+                          ? '✓ סימנת: פתרתי נכון'
+                          : 'סומן: טעיתי — נחזור לזה בתרגול'}
+                      </div>
+                    )}
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -464,7 +525,7 @@ export function QuestionPartCard({
               className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-indigo-500/30 transition-colors"
             >
               <KeyRound className="w-4 h-4" />
-              <span>הצג פתרון מלא</span>
+              <span>פתרתי על דף — הצג פתרון מלא</span>
             </motion.button>
           )}
         </div>
