@@ -10,7 +10,6 @@ import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
 import { markStep, getPaper } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
-import { studentTier, pickQuestions } from '@/lib/adaptive';
 import { isTopicInActivePaper, type BagrutPaper } from '@/content/bagrut-curriculum';
 
 // Renders a string with markdown + LaTeX math.
@@ -250,35 +249,16 @@ function Quiz() {
       return;
     }
 
-    // ===== STATIC-FIRST PATH =====
-    // If we have a hand-written question bank for this subject/topic,
-    // serve from it instantly — no API call, no loading wait, no cost.
-    // The static PracticeQuestion shape matches what this UI already
-    // expects (question + answers + correct), so we filter to MCQs and
-    // pick 5 at random.
-    if (hasQuestionBank(currentSubject, selectedTopic)) {
-      const bank = getQuestions(currentSubject, selectedTopic)
-        .filter((q) => q.kind === 'mcq' && Array.isArray(q.answers) && typeof q.correct === 'number');
-      // Level-aware pick: the 5 questions match the student's tier (unit
-      // level 3/4/5 + self-assessed level + live accuracy) instead of a
-      // blind random sample.
-      const tier = studentTier(currentSubject, selectedTopic);
-      const picked = pickQuestions(bank, 5, tier).map((q) => adaptBankQuestion(q, selectedTopic));
-
-      if (picked.length > 0) {
-        setQuestions(picked);
-        setLoading(false);
-        return;
-      }
-      // If the bank existed but had no MCQs, fall through to API.
-    }
-
-    // ===== API FALLBACK (temporary, removed after migration) =====
+    // ===== CONCEPTS QUIZ (AI + pool) =====
+    // "בוחן מושגים מהיר" asks for theory/rules questions, so we skip the
+    // static bagrut bank (which holds full multi-step problems, not
+    // concepts) and request concept questions — served from the
+    // pre-generated pool when it's warm, else generated live.
     try {
       const res = await fetch('/api/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: currentSubject, topic: selectedTopic })
+        body: JSON.stringify({ subject: currentSubject, topic: selectedTopic, mode: 'concept' })
       });
 
       if (!res.ok) {
@@ -342,7 +322,7 @@ function Quiz() {
         subject_key: currentSubject,
         subject_name: subject.name,
         subject_emoji: subject.emoji,
-        topic: selectedTopic === MIXED_TOPIC ? 'מבחן מעורב' : selectedTopic,
+        topic: selectedTopic === MIXED_TOPIC ? 'בדיקה מעורבת' : selectedTopic,
         score: finalScore,
         total: questions.length,
         answered: finalAnswered,
@@ -375,9 +355,9 @@ function Quiz() {
   const renderHome = () => (
     <div className="home-inner">
       <div className="hero">
-        <div className="hero-badge">⚡ AI אמיתי · שאלות בגרות</div>
-        <h1>10 דקות<br />ואתה מוכן</h1>
-        <p>שאלות בגרות אמיתיות, הסבר מיידי לכל תשובה, בכל מקצוע</p>
+        <div className="hero-badge">⚡ בוחן מושגים מהיר</div>
+        <h1>בוחן מושגים<br />מהיר</h1>
+        <p>בדיקה מהירה של הבנת מושגים — הגדרות, אסימפטוטות, כללי גזירה. לא סימולציית בגרות, אלא חימום מהיר לראש.</p>
       </div>
       <div className="section-label">בחר מקצוע</div>
       <div className="subject-tabs">
@@ -397,8 +377,8 @@ function Quiz() {
           >
             <span className="topic-check">✓</span>
             <span className="topic-emoji">🎯</span>
-            <div className="topic-name">מבחן מעורב — כמו בבגרות</div>
-            <div className="topic-sub">8 שאלות מכל הנושאים · מגלה לך איפה אתה חזק ואיפה צריך חיזוק</div>
+            <div className="topic-name">בדיקה מעורבת — כל הנושאים</div>
+            <div className="topic-sub">שאלות מושג מכל נושאי השאלון · מגלה לך איפה אתה חזק ואיפה צריך חיזוק</div>
           </div>
         )}
         {visibleTopics.map((t, i) => (
@@ -411,7 +391,7 @@ function Quiz() {
         ))}
       </div>
       <button className="start-btn" onClick={startQuiz} disabled={!selectedTopic}>
-        התחל תרגול →
+        התחל בוחן מושגים →
       </button>
       <a href="/chat" className="chat-link">
         💬 שאל את המורה — צ&apos;אט עם AI
@@ -432,8 +412,8 @@ function Quiz() {
           <div className="loading-state">
             <div className="loader-ring"></div>
             <div className="loading-tip">
-              <strong>{subject.emoji} {subject.name} — {selectedTopic === MIXED_TOPIC ? 'מבחן מעורב' : selectedTopic}</strong>
-              <span>⚡ מכין לך שאלות עם הסברים מעמיקים...</span>
+              <strong>{subject.emoji} {subject.name} — {selectedTopic === MIXED_TOPIC ? 'בדיקה מעורבת' : selectedTopic}</strong>
+              <span>⚡ מכין לך שאלות מושגים...</span>
               <span style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '8px' }}>בדרך כלל 5-15 שניות</span>
             </div>
           </div>
@@ -464,7 +444,7 @@ function Quiz() {
               {subject.emoji} {subject.name}
             </span>
             <span className="meta-topic-label">
-              {selectedTopic === MIXED_TOPIC ? `🎯 מבחן מעורב · ${q.topic ?? ''}` : selectedTopic}
+              {selectedTopic === MIXED_TOPIC ? `🎯 בדיקה מעורבת · ${q.topic ?? ''}` : selectedTopic}
             </span>
           </div>
           <div className="question-card">
@@ -632,7 +612,7 @@ function Quiz() {
         )}
         <div className="action-row">
           <button className="start-btn" onClick={startQuiz}>
-            {selectedTopic === MIXED_TOPIC ? 'מבחן מעורב נוסף 🔁' : 'סבב נוסף באותו נושא 🔁'}
+            {selectedTopic === MIXED_TOPIC ? 'בדיקה מעורבת נוספת 🔁' : 'סבב נוסף באותו נושא 🔁'}
           </button>
           <a href="/insights" className="btn-outline" style={{ textAlign: 'center', textDecoration: 'none', display: 'block' }}>
             📈 התמונה שלי — חוזקות, חולשות ותרגול חיזוק

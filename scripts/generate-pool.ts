@@ -35,7 +35,7 @@ import { createClient } from '@supabase/supabase-js';
 const [subject, topic, kind, countStr = '10'] = process.argv.slice(2);
 const count = parseInt(countStr, 10);
 
-const VALID_KINDS = ['quiz', 'bagrut'] as const;
+const VALID_KINDS = ['quiz', 'bagrut', 'concept'] as const;
 type Kind = typeof VALID_KINDS[number];
 
 function printUsageAndExit(msg: string): never {
@@ -46,17 +46,17 @@ function printUsageAndExit(msg: string): never {
   console.error('Args:');
   console.error('  subject : math5 | math4 | physics | english | history | bible | chem');
   console.error('  topic   : exact topic name in quotes (e.g. "אלגברה")');
-  console.error('  kind    : quiz | bagrut');
+  console.error('  kind    : quiz | bagrut | concept');
   console.error('  count   : how many items to generate (e.g. 10)');
   console.error('');
-  console.error('Cost estimate: ~$0.04 per quiz item, ~$0.05 per bagrut item.');
+  console.error('Cost estimate: ~$0.04 per quiz item, ~$0.05 per bagrut item, ~$0.03 per concept item.');
   process.exit(1);
 }
 
 if (!subject) printUsageAndExit('Missing subject');
 if (!topic) printUsageAndExit('Missing topic');
 if (!kind || !VALID_KINDS.includes(kind as Kind)) {
-  printUsageAndExit(`Invalid kind "${kind}" — must be quiz or bagrut`);
+  printUsageAndExit(`Invalid kind "${kind}" — must be quiz, bagrut or concept`);
 }
 if (!Number.isFinite(count) || count <= 0 || count > 100) {
   printUsageAndExit(`Invalid count "${countStr}" — must be 1..100`);
@@ -140,6 +140,28 @@ function buildQuizPrompt(subject: string, topic: string): string {
 שפה: עברית (אנגלית רק אם המקצוע אנגלית).
 מזהה גיוון: ${seed}`;
   return opener(topic) + tutorInstruction;
+}
+
+// Concept quiz — mirrors buildConceptPrompt in app/api/questions/route.ts.
+function buildConceptPrompt(subject: string, topic: string): string {
+  const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  const opener =
+    subject === 'math5' || subject === 'math4'
+      ? `אתה מורה פרטי מומחה למתמטיקה ברמת ${
+          subject === 'math5' ? '5 יחידות (שאלון 581/582)' : '4 יחידות'
+        }. צור בדיוק 5 שאלות מושגים קצרות ורב-ברירתיות (MCQ) בנושא: ${topic}.
+זהו "בוחן מושגים מהיר" — לא סימולציית בגרות. המטרה: לבדוק הבנה תיאורטית ושליטה בכללים.
+כל שאלה נפתרת בראש תוך פחות מדקה, ומתמקדת באחד מאלה: הגדרות ותחום הגדרה; אסימפטוטות והתנהגות בקצוות; כללי גזירה/אינטגרציה; זהויות ותכונות; זיהוי תפיסה שגויה נפוצה. הימנע מחישוב ארוך רב-שלבי.`
+      : `${QUIZ_PROMPTS[subject]?.(topic) ?? ''} התמקד בשאלות מושג קצרות שנפתרות במהירות.`;
+  const tutorInstruction = `
+
+🎯 צור בדיוק 5 שאלות מושגים קצרות.
+📐 פורמט: LaTeX + Markdown. inline $...$, block $$...$$. השתמש ב-\\frac, \\sqrt, \\ln, \\int, ^, _.
+⚠️ correct = האינדקס (0-3) של התשובה הנכונה. ודא ש-answers[correct] תואם ל-why_correct.
+מבנה: question, answers (4), correct (0-3), explanation: { why_correct, why_wrong, concept, remember } — כל שדה 1-2 משפטים.
+שפה: עברית (אנגלית רק אם המקצוע אנגלית).
+מזהה גיוון: ${seed}`;
+  return opener + tutorInstruction;
 }
 
 function buildBagrutPrompt(subject: string, topic: string): string {
@@ -240,8 +262,14 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
 });
 
 async function generateOnce(): Promise<unknown> {
-  const prompt = kind === 'quiz' ? buildQuizPrompt(subject, topic) : buildBagrutPrompt(subject, topic);
-  const schema = kind === 'quiz' ? QUIZ_SCHEMA : BAGRUT_SCHEMA;
+  const prompt =
+    kind === 'bagrut'
+      ? buildBagrutPrompt(subject, topic)
+      : kind === 'concept'
+      ? buildConceptPrompt(subject, topic)
+      : buildQuizPrompt(subject, topic);
+  // Concept + quiz share the 5-MCQ shape; only bagrut differs.
+  const schema = kind === 'bagrut' ? BAGRUT_SCHEMA : QUIZ_SCHEMA;
   // 3500 max_tokens leaves comfortable headroom over the ~2500 budget the
   // production API uses. Sonnet 4.6 with structured-output occasionally
   // emits malformed JSON for Hebrew content; a slightly larger ceiling
@@ -286,7 +314,7 @@ async function main() {
   console.log(`  subject : ${subject}`);
   console.log(`  topic   : ${topic}`);
   console.log(`  count   : ${count}`);
-  const estCost = (kind === 'quiz' ? 0.04 : 0.05) * count;
+  const estCost = (kind === 'bagrut' ? 0.05 : kind === 'concept' ? 0.03 : 0.04) * count;
   console.log(`  est cost: ~$${estCost.toFixed(2)}`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('');

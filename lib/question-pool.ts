@@ -9,7 +9,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-type Kind = 'quiz' | 'bagrut';
+type Kind = 'quiz' | 'bagrut' | 'concept';
 
 /**
  * Pull a random pool row for the given subject/topic/kind, or return null
