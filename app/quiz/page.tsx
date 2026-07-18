@@ -11,6 +11,7 @@ import { hasQuestionBank, getQuestions } from '@/content/lessons';
 import { markStep, getPaper } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
+import { getConceptQuestions, hasConceptBank } from '@/content/concept-quiz';
 import { isTopicInActivePaper, type BagrutPaper } from '@/content/bagrut-curriculum';
 
 // Renders a string with markdown + LaTeX math.
@@ -250,11 +251,22 @@ function Quiz() {
       return;
     }
 
-    // ===== CONCEPTS QUIZ (AI + pool) =====
-    // "בוחן מושגים מהיר" asks for theory/rules questions, so we skip the
-    // static bagrut bank (which holds full multi-step problems, not
-    // concepts) and request concept questions — served from the
-    // pre-generated pool when it's warm, else generated live.
+    // ===== STATIC CONCEPT BANK FIRST (no API, no Supabase) =====
+    // 582 topics have a pre-authored, hand-verified concept bank — serve 5
+    // from it instantly, no network. This is what "טמונות מראש" means.
+    if (hasConceptBank(selectedTopic)) {
+      const bank = getConceptQuestions(selectedTopic).map((q) => ({ ...q, topic: selectedTopic }));
+      const picked = shuffleInPlace([...bank]).slice(0, 5);
+      if (picked.length > 0) {
+        setQuestions(picked);
+        setLoading(false);
+        return;
+      }
+    }
+
+    // ===== CONCEPTS QUIZ (AI fallback — topics without a static bank) =====
+    // Theory/rules questions served from the pre-generated pool when warm,
+    // else generated live.
     try {
       const res = await fetch('/api/questions', {
         method: 'POST',
