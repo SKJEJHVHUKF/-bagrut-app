@@ -243,6 +243,23 @@ export default function PracticePage() {
           </p>
         </div>
 
+        {/* Unseen Buster — conceptual thinking mode */}
+        <Link
+          href="/thinking"
+          className="group flex items-center gap-3 mb-6 bg-gradient-to-l from-violet-600/10 to-indigo-600/10 hover:from-violet-600/[0.15] hover:to-indigo-600/[0.15] border border-violet-500/25 rounded-2xl p-4 transition-colors"
+        >
+          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+            <span className="text-xl">🧠</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-black text-slate-900 text-sm">סעיפי חשיבה והבנה</div>
+            <div className="text-[11px] text-slate-600 mt-0.5">
+              אימון לשאלות ה&quot;לא מוכר&quot; — ניתוח גרפים ונימוקים מילוליים · Pro
+            </div>
+          </div>
+          <ArrowLeft className="w-4 h-4 text-violet-600 rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+        </Link>
+
         {/* Subject tabs */}
         <div className="mb-5">
           <div className="text-xs font-black tracking-widest text-indigo-700 mb-2 uppercase">
