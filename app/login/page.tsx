@@ -18,7 +18,7 @@ import {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/quiz';
+  const next = searchParams.get('next') || '/roadmap';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -140,7 +140,7 @@ function LoginForm() {
       <div className="mt-6 text-center text-sm text-slate-600">
         עדיין אין לך חשבון?{' '}
         <Link
-          href={`/signup${next !== '/quiz' ? `?next=${encodeURIComponent(next)}` : ''}`}
+          href={`/signup${next !== '/roadmap' ? `?next=${encodeURIComponent(next)}` : ''}`}
           className="text-indigo-700 hover:text-indigo-800 font-bold underline-offset-2 hover:underline"
         >
           הירשם עכשיו

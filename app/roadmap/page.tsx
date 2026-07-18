@@ -10,7 +10,6 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Lock, CheckCircle, PlayCircle, MapPin } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
-import { fadeUp } from '@/lib/animations';
 import { buildRoadmap582, allRoadmap582Nodes } from '@/constants/roadmapData';
 import { nodeStatus, countCompleted } from '@/lib/roadmap-progress';
 import type { StepStatus, RoadmapNode } from '@/types/roadmap';
@@ -37,7 +36,12 @@ export default function RoadmapPage() {
         </div>
 
         {/* Overall progress */}
-        <motion.div {...fadeUp} className="surface-premium rounded-3xl p-5 flex items-center gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="surface-premium rounded-3xl p-5 flex items-center gap-4"
+        >
           <div className="relative flex-shrink-0 w-16 h-16">
             <svg viewBox="0 0 48 48" className="w-16 h-16 -rotate-90">
               <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(15,23,42,0.08)" strokeWidth="5" />
@@ -71,7 +75,13 @@ export default function RoadmapPage() {
           const topicDone = ready ? countCompleted(mt.nodes) : 0;
           const topicPct = mt.nodes.length ? Math.round((topicDone / mt.nodes.length) * 100) : 0;
           return (
-            <motion.section {...fadeUp} key={mt.topic} className="surface-premium rounded-3xl p-5 space-y-4">
+            <motion.section
+              key={mt.topic}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+              className="surface-premium rounded-3xl p-5 space-y-4"
+            >
               <div className="flex items-center gap-3">
                 <span className="text-2xl flex-shrink-0">{mt.emoji}</span>
                 <div className="flex-1 min-w-0">

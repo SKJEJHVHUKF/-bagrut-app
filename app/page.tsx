@@ -256,12 +256,42 @@ export default function Landing() {
         variants={staggerContainer}
         className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20"
       >
-        <motion.div variants={fadeUp} className="text-center mb-10 sm:mb-14">
-          <Eyebrow>3 דרכים ללמוד</Eyebrow>
-          <SectionTitle>בחר את הדרך שמתאימה לך</SectionTitle>
+        <motion.div variants={fadeUp} className="text-center mb-8 sm:mb-10">
+          <Eyebrow>הלב של האפליקציה</Eyebrow>
+          <SectionTitle>מסלול הלמידה שלך</SectionTitle>
           <p className="text-slate-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            כל מצב פותר בעיה שונה. אפשר לשלב ביניהם — ולעבור בין מצב לאחר תוך כדי לימוד.
+            מפה מסודרת שמובילה אותך שלב-אחר-שלב עד הבגרות. זו נקודת ההתחלה המומלצת.
           </p>
+        </motion.div>
+
+        {/* Featured roadmap banner — the primary path / heart of the app */}
+        <motion.div variants={fadeUp} className="mb-8 sm:mb-10">
+          <Link
+            href="/roadmap"
+            className="card-3d-strong group relative block rounded-3xl p-6 sm:p-8 bg-gradient-to-l from-emerald-600/12 to-indigo-600/12 border border-emerald-500/30 hover:border-indigo-500/50 overflow-hidden"
+          >
+            <div className="flex items-center gap-4 sm:gap-5">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center text-2xl sm:text-3xl shadow-lg shadow-emerald-500/30 flex-shrink-0">
+                🗺️
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="inline-block text-[10px] font-black tracking-wide text-emerald-700 bg-emerald-400/15 border border-emerald-400/30 rounded-full px-2 py-0.5 mb-1.5">
+                  מומלץ · חדש
+                </span>
+                <h3 className="font-display text-xl sm:text-2xl font-bold text-slate-800">
+                  מסלול הלמידה שלי — שאלון 582
+                </h3>
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed mt-1">
+                  תיאוריה ← נוסחאות ← דוגמה ← בוחן. כל שלב פותח את הבא, עם מעקב התקדמות מלא.
+                </p>
+              </div>
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+            </div>
+          </Link>
+        </motion.div>
+
+        <motion.div variants={fadeUp} className="text-center mb-5">
+          <span className="text-xs font-semibold text-slate-500 tracking-wide">או בחר דרך ספציפית</span>
         </motion.div>
 
         <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
@@ -788,18 +818,18 @@ function PrimaryCTA() {
   // SSR / first paint: render an identical-size placeholder.
   if (planExists === null) {
     return (
-      <Link href="/onboarding" className={className}>
+      <Link href="/roadmap" className={className}>
         <Sparkles className="w-5 h-5" />
-        <span className="text-lg">צור תוכנית אישית</span>
+        <span className="text-lg">התחל את מסלול הלמידה</span>
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
       </Link>
     );
   }
 
   return (
-    <Link href={planExists ? '/my-plan' : '/onboarding'} className={className}>
+    <Link href="/roadmap" className={className}>
       <Sparkles className="w-5 h-5" />
-      <span className="text-lg">{planExists ? 'המשך לתוכנית שלי' : 'צור תוכנית אישית'}</span>
+      <span className="text-lg">{planExists ? 'המשך למסלול הלמידה' : 'התחל את מסלול הלמידה'}</span>
       <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
     </Link>
   );

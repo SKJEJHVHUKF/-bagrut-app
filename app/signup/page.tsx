@@ -20,7 +20,7 @@ import {
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/quiz';
+  const next = searchParams.get('next') || '/roadmap';
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -273,7 +273,7 @@ function SignupForm() {
       <div className="mt-6 text-center text-sm text-slate-600">
         כבר יש לך חשבון?{' '}
         <Link
-          href={`/login${next !== '/quiz' ? `?next=${encodeURIComponent(next)}` : ''}`}
+          href={`/login${next !== '/roadmap' ? `?next=${encodeURIComponent(next)}` : ''}`}
           className="text-indigo-700 hover:text-indigo-800 font-bold underline-offset-2 hover:underline"
         >
           התחבר כאן

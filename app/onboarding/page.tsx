@@ -98,7 +98,7 @@ export default function OnboardingPage() {
       paper,
       topics: selected.map(({ subject, topic, level }) => ({ subject, topic, level })),
     });
-    router.push('/my-plan');
+    router.push('/roadmap');
   }
 
   return (
