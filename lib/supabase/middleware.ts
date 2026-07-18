@@ -68,9 +68,23 @@ export async function updateSession(request: NextRequest) {
   // IMPORTANT: do not run code between createServerClient() and getUser().
   // A simple mistake (e.g. logging the request) can break session refresh
   // and cause users to be randomly logged out.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  //
+  // Safety net: never let a Supabase outage (paused/deleted project, network
+  // blip) hang the edge middleware and 504 the ENTIRE site. Cap the auth call
+  // with a short timeout and, on any failure, degrade gracefully — let the
+  // request through as anonymous so public pages still load and each page's
+  // own client-side auth checks take over.
+  let user: unknown = null;
+  try {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('supabase-timeout')), 2500)
+    );
+    const result = await Promise.race([supabase.auth.getUser(), timeout]);
+    user = (result as { data: { user: unknown } }).data.user;
+  } catch {
+    // Supabase unreachable/slow — don't block the site.
+    return response;
+  }
 
   const { pathname } = request.nextUrl;
 
