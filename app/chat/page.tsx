@@ -21,7 +21,9 @@ import {
   History,
   Trash2,
   X,
+  Camera,
 } from 'lucide-react';
+import { SolutionAudit } from '@/components/practice/SolutionAudit';
 
 const MAX_MESSAGE_LEN = 500;
 
@@ -85,6 +87,7 @@ export default function ChatPage() {
   // pilot ("מספרים מרוכבים") the chat tutor teaches from the verified content
   // and follows the private-tutor bar; otherwise it's the normal chat.
   const [topic, setTopic] = useState('');
+  const [showAudit, setShowAudit] = useState(false);
 
   const listEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -392,6 +395,21 @@ export default function ChatPage() {
         )}
       </main>
 
+      {/* Solution-audit overlay (camera button in composer) */}
+      {showAudit && (
+        <div
+          className="fixed inset-0 z-30 flex items-end sm:items-center justify-center bg-slate-900/30 backdrop-blur-[2px] p-3"
+          onClick={() => setShowAudit(false)}
+        >
+          <div
+            className="w-full max-w-md max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <SolutionAudit topic={topic} onClose={() => setShowAudit(false)} />
+          </div>
+        </div>
+      )}
+
       {/* Composer */}
       <div className="fixed bottom-0 inset-x-0 z-20 bg-[#FDFDFB]/90 backdrop-blur-xl border-t border-slate-900/10">
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3">
@@ -401,6 +419,14 @@ export default function ChatPage() {
             </div>
           )}
           <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+            <button
+              type="button"
+              onClick={() => setShowAudit(true)}
+              aria-label="בדוק פתרון מצילום"
+              className="flex-shrink-0 surface-premium hover:bg-slate-900/[0.04] text-indigo-700 p-3 rounded-2xl transition-all"
+            >
+              <Camera className="w-5 h-5" />
+            </button>
             <textarea
               ref={textareaRef}
               value={input}
