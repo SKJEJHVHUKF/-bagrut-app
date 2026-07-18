@@ -243,6 +243,23 @@ export default function PracticePage() {
           </p>
         </div>
 
+        {/* Personalized roadmap — the structured, step-by-step learning path */}
+        <Link
+          href="/roadmap"
+          className="group flex items-center gap-3 mb-3 bg-gradient-to-l from-emerald-600/10 to-indigo-600/10 hover:from-emerald-600/[0.15] hover:to-indigo-600/[0.15] border border-emerald-500/25 rounded-2xl p-4 transition-colors"
+        >
+          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <span className="text-xl">🗺️</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-black text-slate-900 text-sm">מסלול הלמידה שלי — שאלון 582</div>
+            <div className="text-[11px] text-slate-600 mt-0.5">
+              מפה מסודרת שלב-אחר-שלב, עם מעקב התקדמות ופתיחת שלבים
+            </div>
+          </div>
+          <ArrowLeft className="w-4 h-4 text-emerald-600 rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+        </Link>
+
         {/* Unseen Buster — conceptual thinking mode */}
         <Link
           href="/thinking"
