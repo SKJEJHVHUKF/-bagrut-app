@@ -7,7 +7,7 @@
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PracticeShell } from '@/components/practice/PracticeShell';
-import { RoadmapLessonView } from '@/components/roadmap/RoadmapLessonView';
+import { SubTopicLadder } from '@/components/roadmap/SubTopicLadder';
 import { resolveRoadmapNode } from '@/constants/roadmapData';
 import { getSubTopic } from '@/content/lessons';
 
@@ -39,7 +39,7 @@ export default function RoadmapLessonPage() {
 
   return (
     <PracticeShell subtitle={resolved.topic} backHref="/roadmap" backLabel="למפה">
-      <RoadmapLessonView
+      <SubTopicLadder
         subject="math5"
         topic={resolved.topic}
         subTopic={subTopic}

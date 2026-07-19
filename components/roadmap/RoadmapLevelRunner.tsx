@@ -1,62 +1,70 @@
 'use client';
 
-// RoadmapStepQuiz — the "בוחן שלב" tab. 3 hyper-targeted questions drawn from
-// the sub-topic's STATIC bank (no API). Pass 2 of 3 → the node is completed,
-// the next node in the topic unlocks, and we celebrate. MCQ auto-grades;
-// open questions reveal the solution and the student self-reports.
+// RoadmapLevelRunner — runs ONE practice rung (easy / mid / hard) of a
+// sub-topic's level ladder. Goes through the tier's questions one at a time
+// (MCQ auto-grades; open reveals the solution + self-report), tallies the
+// score, then awards 1-3 stars and reports the clear up to the ladder.
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, Trophy, RefreshCw, ArrowLeft, KeyRound } from 'lucide-react';
+import { CheckCircle, XCircle, KeyRound, Lightbulb, ArrowLeft } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { buttonTap } from '@/lib/animations';
-import { celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
+import { celebrateCorrect, sparkle } from '@/lib/confetti';
 import { recordResult } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
-import { markNodePassed, PASS_NUMERATOR } from '@/lib/roadmap-progress';
+import { computeStars, type RoadmapLevel } from '@/lib/roadmap-levels';
+import type { ClearResult } from '@/lib/roadmap-progress';
+import { LevelClearedPanel } from './ladder-ui';
 import type { PracticeQuestion } from '@/content/lessons/types';
 
 const LETTERS = ['א', 'ב', 'ג', 'ד'];
 
-export function RoadmapStepQuiz({
+export function RoadmapLevelRunner({
   subject,
   topic,
   subId,
-  questions,
-  nextSubId,
+  level,
+  onCleared,
   nextTitle,
-  onPassed,
+  onNext,
+  onBack,
 }: {
   subject: string;
   topic: string;
   subId: string;
-  questions: PracticeQuestion[];
-  nextSubId: string | null;
+  level: RoadmapLevel;
+  onCleared: (stars: number, score: number, total: number) => ClearResult;
   nextTitle?: string;
-  onPassed?: () => void;
+  onNext?: () => void;
+  onBack: () => void;
 }) {
-  // Prefer MCQ (auto-gradeable), fill with open, take 3.
-  const quizQs = useMemo(() => {
-    const mcqs = questions.filter((q) => q.kind === 'mcq' && Array.isArray(q.answers));
-    const opens = questions.filter((q) => q.kind === 'open');
-    return [...mcqs, ...opens].slice(0, 3);
-  }, [questions]);
+  // Fixed order: easy MCQs are naturally first; keep the authored order so the
+  // rung itself climbs gently.
+  const questions = useMemo<PracticeQuestion[]>(() => level.questions, [level]);
 
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [openRevealed, setOpenRevealed] = useState(false);
+  const [hintShown, setHintShown] = useState(false);
   const [answered, setAnswered] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
-  const [done, setDone] = useState(false);
-  const [passed, setPassed] = useState(false);
+  const [result, setResult] = useState<ClearResult | null>(null);
 
-  const total = quizQs.length;
-  const current = quizQs[idx];
+  const total = questions.length;
+  const current = questions[idx];
   const isLast = idx === total - 1;
 
   function logAnswer(correct: boolean, userAnswer?: string) {
-    recordResult({ subject, topic, subTopicId: subId, questionId: current.id, source: 'drill', difficulty: current.difficulty, correct });
+    recordResult({
+      subject,
+      topic,
+      subTopicId: subId,
+      questionId: current.id,
+      source: 'drill',
+      difficulty: current.difficulty,
+      correct,
+    });
     if (!correct) {
       recordMistake({
         subject,
@@ -96,109 +104,65 @@ export function RoadmapStepQuiz({
 
   function next() {
     if (isLast) {
-      const didPass = markNodePassed(topic, subId, correctCount, total);
-      setPassed(didPass);
-      setDone(true);
-      if (didPass) {
-        celebrateCompletion();
-        onPassed?.();
-      }
+      const stars = computeStars(level.kind, correctCount, total);
+      setResult(onCleared(stars, correctCount, total));
       return;
     }
     setIdx((i) => i + 1);
     setSelected(null);
     setOpenRevealed(false);
+    setHintShown(false);
     setAnswered(false);
-  }
-
-  function restart() {
-    setIdx(0);
-    setSelected(null);
-    setOpenRevealed(false);
-    setAnswered(false);
-    setCorrectCount(0);
-    setDone(false);
-    setPassed(false);
   }
 
   if (total === 0) {
-    return <div className="text-sm text-slate-500 text-center py-6">אין שאלות לשלב הזה עדיין.</div>;
+    return <div className="text-sm text-slate-500 text-center py-6">אין תרגילים ברמה הזו.</div>;
   }
 
-  // ===== Results =====
-  if (done) {
+  // ===== Cleared =====
+  if (result) {
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
-        <div
-          className={`rounded-3xl p-6 text-center space-y-3 border ${
-            passed ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-amber-500/10 border-amber-500/40'
-          }`}
-        >
-          <Trophy className={`w-12 h-12 mx-auto ${passed ? 'text-amber-600' : 'text-slate-400'}`} />
-          <div className="text-4xl font-black text-slate-900">
-            {correctCount}/{total}
-          </div>
-          <h3 className="font-display text-xl font-black text-slate-900">
-            {passed ? 'עברת את השלב! 🎉' : 'כמעט שם'}
-          </h3>
-          <p className="text-sm text-slate-700">
-            {passed
-              ? 'השלב סומן כהושלם והשלב הבא נפתח.'
-              : `צריך ${PASS_NUMERATOR} תשובות נכונות כדי לפתוח את הבא. נסה שוב — אתה קרוב.`}
-          </p>
-        </div>
-
-        {passed ? (
-          <div className="grid grid-cols-1 gap-2">
-            {nextSubId ? (
-              <Link
-                href={`/roadmap/${encodeURIComponent(nextSubId)}`}
-                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-emerald-500/30 transition-colors"
-              >
-                <span>המשך לשלב הבא{nextTitle ? `: ${nextTitle}` : ''}</span>
-                <ArrowLeft className="w-4 h-4" />
-              </Link>
-            ) : (
-              <Link
-                href="/roadmap"
-                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-emerald-600 to-teal-600 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-emerald-500/30"
-              >
-                סיימת את הנושא! חזרה למפה
-              </Link>
-            )}
-            <Link href="/roadmap" className="text-center text-xs text-slate-600 hover:text-indigo-700 py-1">
-              חזרה למפת הלמידה
-            </Link>
-          </div>
-        ) : (
-          <motion.button
-            {...buttonTap}
-            onClick={restart}
-            className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-5 py-3 rounded-2xl font-bold text-indigo-800 transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>נסה שוב</span>
-          </motion.button>
-        )}
-      </motion.div>
+      <LevelClearedPanel level={level} result={result} nextTitle={nextTitle} onNext={onNext} onBack={onBack} />
     );
   }
 
   // ===== Active question =====
   return (
     <div className="space-y-4">
+      {/* Rung header + progress */}
       <div className="flex items-center justify-between text-xs">
-        <span className="font-black text-indigo-700">בוחן שלב</span>
-        <span className="text-slate-600">
-          שאלה <span className="font-bold text-indigo-700">{idx + 1}/{total}</span> · {correctCount} נכונות
+        <button onClick={onBack} className="text-slate-500 hover:text-slate-800 inline-flex items-center gap-1">
+          → לסולם
+        </button>
+        <span className="inline-flex items-center gap-2">
+          <span className="font-black text-indigo-700">
+            {level.emoji} רמת {level.title}
+          </span>
+          <span className="text-slate-600">
+            {idx + 1}/{total} · {correctCount} נכונות
+          </span>
         </span>
       </div>
+      <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${((idx + (answered ? 1 : 0)) / total) * 100}%` }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="h-full bg-gradient-to-l from-indigo-500 to-violet-500"
+        />
+      </div>
 
-      <div className="surface-premium rounded-2xl p-5 chat-md">
+      <motion.div
+        key={idx}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="surface-premium rounded-2xl p-5 chat-md"
+      >
         <div className="text-base font-medium leading-relaxed text-slate-900">
           <MathText>{current.question}</MathText>
         </div>
-      </div>
+      </motion.div>
 
       {/* MCQ */}
       {current.kind === 'mcq' && current.answers && (
@@ -235,7 +199,7 @@ export function RoadmapStepQuiz({
               className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-4 py-2.5 rounded-xl font-bold text-emerald-800 text-sm transition-colors"
             >
               <KeyRound className="w-4 h-4" />
-              <span>פתרתי — הצג פתרון להשוואה</span>
+              <span>פתרתי על דף — הצג פתרון להשוואה</span>
             </motion.button>
           ) : (
             <div className="bg-gradient-to-br from-emerald-600/10 to-teal-600/10 border border-emerald-500/30 rounded-2xl p-4 space-y-2">
@@ -263,13 +227,13 @@ export function RoadmapStepQuiz({
                     onClick={() => reportOpen(true)}
                     className="inline-flex items-center justify-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-3 py-2 rounded-lg font-bold text-emerald-800 text-sm"
                   >
-                    <CheckCircle className="w-4 h-4" /> ידעתי
+                    <CheckCircle className="w-4 h-4" /> פתרתי נכון
                   </button>
                   <button
                     onClick={() => reportOpen(false)}
                     className="inline-flex items-center justify-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 px-3 py-2 rounded-lg font-bold text-amber-800 text-sm"
                   >
-                    <XCircle className="w-4 h-4" /> לא ידעתי
+                    <XCircle className="w-4 h-4" /> עוד לא
                   </button>
                 </div>
               )}
@@ -278,13 +242,36 @@ export function RoadmapStepQuiz({
         </div>
       )}
 
+      {/* Hint (MCQ-side helper) */}
+      {current.hint && !answered && (
+        hintShown ? (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex gap-2 items-start">
+            <Lightbulb className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
+            <div className="chat-md text-sm text-amber-900 flex-1">
+              <MathText inline>{current.hint}</MathText>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setHintShown(true);
+              sparkle();
+            }}
+            className="w-full inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2 rounded-xl font-bold text-amber-800 text-sm transition-colors"
+          >
+            <Lightbulb className="w-4 h-4" />
+            <span>💡 רמז</span>
+          </button>
+        )
+      )}
+
       {answered && (
         <motion.button
           {...buttonTap}
           onClick={next}
-          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/30 transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/25 transition-colors"
         >
-          <span>{isLast ? 'סיים בוחן' : 'השאלה הבאה'}</span>
+          <span>{isLast ? 'סיים את הרמה' : 'השאלה הבאה'}</span>
           {!isLast && <ArrowLeft className="w-4 h-4" />}
         </motion.button>
       )}
