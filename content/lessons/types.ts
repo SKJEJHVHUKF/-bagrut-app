@@ -284,6 +284,11 @@ export type SubTopicLessonStep = {
   example?: WorkedExample;
   /** Optional inline diagram(s) for this step. */
   diagrams?: DiagramSpec[];
+  /** Optional micro-drill — ONE short question the student answers RIGHT
+   *  after this step's idea, before moving on (the "micro-loop": idea →
+   *  example → try-it-yourself). Formative — answered inline in the learn
+   *  level, not scored into the ladder stars. Prefer a quick MCQ. */
+  drill?: PracticeQuestion;
 };
 
 export type SubTopic = {

@@ -17,6 +17,7 @@ import type { RoadmapLevel } from '@/lib/roadmap-levels';
 import type { ClearResult } from '@/lib/roadmap-progress';
 import type { SubTopic } from '@/content/lessons/types';
 import { LevelClearedPanel } from './ladder-ui';
+import { MicroDrill } from './MicroDrill';
 
 export function LearnLevel({
   subTopic,
@@ -86,6 +87,7 @@ export function LearnLevel({
                   <WorkedExampleCard example={step.example} index={exampleCount++} />
                 </div>
               )}
+              {step.drill && <MicroDrill drill={step.drill} />}
             </motion.div>
           ))}
         </div>

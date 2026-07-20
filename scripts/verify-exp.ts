@@ -184,6 +184,119 @@ check('bag009 a spec value', E('0'), 0);
 }
 
 // ============================================================
+// SUB-TOPIC 3 (NEW): exp-investigation drills + bank Q006–Q013
+// ============================================================
+// drill-002: (x-3)e^x crosses x-axis at x=3
+check('inv drill-002 (x-3)e^x zero at x=3', (3 - 3) * Math.exp(3), 0);
+// drill-003: ((x-3)e^x)' = e^x(x-2)
+dcheck('inv drill-003 deriv = e^x(x-2)', '(x-3)*e^x', 'e^x*(x-2)');
+// drill-004: f'=e^x(x-2) sign change -> minimum at x=2
+{
+  const fp = (x: number) => Math.exp(x) * (x - 2);
+  check('inv drill-004 f\'(1.9) negative', Math.sign(fp(1.9)), -1);
+  check('inv drill-004 f\'(2.1) positive', Math.sign(fp(2.1)), 1);
+}
+// drill-005: x^2 e^x -> 0 as x->-inf ; ->inf as x->+inf
+check('inv drill-005 x^2 e^x ->0 at -inf', 1600 * Math.exp(-40), 0);
+check('inv drill-005 x^2 e^x grows at +inf', Math.sign(1600 * Math.exp(40) - 1), 1);
+// drill-006: x^2 e^x touches x-axis once at x=0 (double root), f>=0
+check('inv drill-006 f(0)=0', 0 * 0 * Math.exp(0), 0);
+check('inv drill-006 f(-1)>0', Math.sign(1 * Math.exp(-1)), 1);
+check('inv drill-006 f(1)>0', Math.sign(1 * Math.exp(1)), 1);
+// Q006: domain of 1/(e^x-1) excludes x=0
+check('inv-006 denom zero at x=0', Math.exp(0) - 1, 0);
+// Q007: (x+2)e^x at x=0 -> y-intercept 2
+check('inv-007 f(0)=2', (0 + 2) * Math.exp(0), 2);
+// Q008: zeros of e^{2x}(x^2-9) are ±3
+checkSet('inv-008 zeros ±3', [E('3'), E('-3')], [3, -3]);
+for (const x of [3, -3]) check(`inv-008 x^2-9 at ${x}`, x * x - 9, 0);
+// Q009: f=e^x/(2-e^x): domain x≠ln2 ; asymptotes y=-1 (+inf), y=0 (-inf)
+{
+  const f = (x: number) => Math.exp(x) / (2 - Math.exp(x));
+  check('inv-009 denom zero at ln2', 2 - Math.exp(Math.log(2)), 0);
+  check('inv-009 asymptote +inf = -1', f(40), -1);
+  check('inv-009 asymptote -inf = 0', f(-40), 0);
+}
+// Q010: ((x^2-2x)e^x)' = e^x(x^2-2) ; extrema at ±sqrt2
+dcheck('inv-010 deriv = e^x(x^2-2)', '(x^2-2x)*e^x', 'e^x*(x^2-2)');
+checkSet('inv-010 extrema ±sqrt2', [E('sqrt(2)'), E('-sqrt(2)')], [Math.SQRT2, -Math.SQRT2]);
+for (const x of [Math.SQRT2, -Math.SQRT2]) check(`inv-010 x^2-2 at ${x}`, x * x - 2, 0);
+// Q011: vertical asymptote of (e^x+1)/(e^x-4) at x=ln4 (numerator ≠0)
+check('inv-011 denom zero at ln4', Math.exp(Math.log(4)) - 4, 0);
+check('inv-011 numerator at ln4 = 5', Math.exp(Math.log(4)) + 1, 5);
+// Q012: f=e^x/(e^x+1): f'=e^x/(e^x+1)^2>0 ; asymptotes y=1 (+inf), y=0 (-inf)
+{
+  const f = (x: number) => Math.exp(x) / (Math.exp(x) + 1);
+  dcheck('inv-012 deriv = e^x/(e^x+1)^2', 'e^x/(e^x+1)', 'e^x/(e^x+1)^2');
+  check('inv-012 asymptote +inf = 1', f(40), 1);
+  check('inv-012 asymptote -inf = 0', f(-40), 0);
+}
+// Q013: f=(x^2-4)e^{-x}: f'=-e^{-x}(x^2-2x-4) ; intercepts ±2 & -4 ; extrema 1±sqrt5
+dcheck('inv-013 deriv = -e^{-x}(x^2-2x-4)', '(x^2-4)*e^(-x)', '-e^(-x)*(x^2-2x-4)');
+check('inv-013 f(0)=-4', (0 - 4) * Math.exp(0), -4);
+checkSet('inv-013 x-intercepts ±2', [E('2'), E('-2')], [2, -2]);
+checkSet('inv-013 extrema 1±sqrt5', [E('1+sqrt(5)'), E('1-sqrt(5)')], [1 + Math.sqrt(5), 1 - Math.sqrt(5)]);
+for (const x of [1 + Math.sqrt(5), 1 - Math.sqrt(5)]) check(`inv-013 x^2-2x-4 at ${x}`, x * x - 2 * x - 4, 0);
+
+// ============================================================
+// SUB-TOPIC 4 (NEW): exp-integrals drills + bank Q006–Q013
+// ============================================================
+// drill-001: ∫e^{5x} = (1/5)e^{5x}+C  -> d/dx = e^{5x}
+dcheck('int drill-001 antideriv (1/5)e^{5x}', '(1/5)*e^(5x)', 'e^(5x)');
+// drill-002: ∫_0^1 e^{2x} = (1/2)(e^2-1)
+dcheck('int drill-002 antideriv (1/2)e^{2x}', '(1/2)*e^(2x)', 'e^(2x)');
+check('int drill-002 value = (1/2)(e^2-1)', 0.5 * Math.exp(2) - 0.5 * Math.exp(0), 0.5 * (Math.exp(2) - 1));
+// drill-003: ∫2x e^{x^2} = e^{x^2}+C
+dcheck('int drill-003 antideriv e^{x^2}', 'e^(x^2)', '2*x*e^(x^2)');
+// drill-004: area of -e^x on [0,1] = |1-e| = e-1
+check('int drill-004 area = e-1', Math.abs(-(Math.exp(1) - Math.exp(0))), Math.E - 1);
+// drill-005: area between e^x (upper) and 1 (lower) on [0,1] = e-2  (antider e^x - x)
+dcheck('int drill-005 antideriv e^x - x', 'e^x - x', 'e^x - 1');
+{
+  const F = (x: number) => Math.exp(x) - x;
+  const area = F(1) - F(0);
+  check('int drill-005 area = e-2', area, Math.E - 2);
+  check('int drill-005 area positive', Math.sign(area), 1);
+}
+// drill-006: ∫_0^1 e^{-x^2} dx  is bounded in [e^{-1}, 1]  (no elementary antideriv -> numeric integ)
+{
+  let s = 0;
+  const N = 200000;
+  for (let i = 0; i < N; i++) { const x = (i + 0.5) / N; s += Math.exp(-x * x); }
+  s /= N;
+  check('int drill-006 ∫_0^1 e^{-x^2} ≤ 1 holds', s <= 1 ? 0 : 1, 0);
+  check('int drill-006 ∫_0^1 e^{-x^2} ≥ e^{-1} holds', s >= Math.exp(-1) ? 0 : 1, 0);
+}
+// Q006: ∫e^{3x+2} = (1/3)e^{3x+2}+C
+dcheck('int-006 antideriv (1/3)e^{3x+2}', '(1/3)*e^(3x+2)', 'e^(3x+2)');
+// Q007: ∫e^{-x} = -e^{-x}+C
+dcheck('int-007 antideriv -e^{-x}', '-e^(-x)', 'e^(-x)');
+// Q008: ∫_0^1 e^{-x} = 1 - e^{-1}
+check('int-008 value = 1 - e^{-1}', -Math.exp(-1) - -Math.exp(0), 1 - Math.exp(-1));
+// Q009: area between e^x and e^{-x} on [0,1] = e + e^{-1} - 2  (antider e^x + e^{-x})
+dcheck('int-009 antideriv e^x + e^{-x}', 'e^x + e^(-x)', 'e^x - e^(-x)');
+check('int-009 value = e + e^{-1} - 2', (Math.exp(1) + Math.exp(-1)) - (Math.exp(0) + Math.exp(0)), Math.E + Math.exp(-1) - 2);
+// Q010: ∫_0^2 e^{x/2} = 2e - 2  (antider 2 e^{x/2})
+dcheck('int-010 antideriv 2 e^{x/2}', '2*e^(x/2)', 'e^(x/2)');
+check('int-010 value = 2e - 2', 2 * Math.exp(1) - 2 * Math.exp(0), 2 * Math.E - 2);
+// Q011: ∫_0^2 e^{-x} = 1 - e^{-2} < 2
+check('int-011 value = 1 - e^{-2}', -Math.exp(-2) - -Math.exp(0), 1 - Math.exp(-2));
+check('int-011 bound < 2 holds', (1 - Math.exp(-2)) < 2 ? 0 : 1, 0);
+// Q012: split area of e^x-1 on [-2,1] = (1+e^{-2}) + (e-2) = e + e^{-2} - 1  (antider e^x - x)
+dcheck('int-012 antideriv e^x - x', 'e^x - x', 'e^x - 1');
+{
+  const F = (x: number) => Math.exp(x) - x;
+  const neg = F(0) - F(-2); // -1 - e^{-2}  (below axis on [-2,0])
+  const pos = F(1) - F(0); // e - 2
+  check('int-012 neg part = -1 - e^{-2}', neg, -1 - Math.exp(-2));
+  check('int-012 pos part = e - 2', pos, Math.E - 2);
+  check('int-012 total area = e + e^{-2} - 1', Math.abs(neg) + pos, Math.E + Math.exp(-2) - 1);
+}
+// Q013: ∫_0^1 x e^{x^2} = (1/2)(e-1)  (antider (1/2)e^{x^2})
+dcheck('int-013 antideriv (1/2)e^{x^2}', '(1/2)*e^(x^2)', 'x*e^(x^2)');
+check('int-013 value = (1/2)(e-1)', 0.5 * Math.exp(1) - 0.5 * Math.exp(0), 0.5 * (Math.E - 1));
+
+// ============================================================
 // REPORT
 // ============================================================
 console.log(`\n${pass}/${pass + fail} passed`);

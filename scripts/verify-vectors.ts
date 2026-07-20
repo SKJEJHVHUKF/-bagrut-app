@@ -7,6 +7,9 @@
  * bug from the lesson authoring. A passing build/KaTeX render does NOT catch a
  * wrong-but-valid number — only re-computation does (see lessons_learned).
  */
+import { create, all } from 'mathjs';
+const mj = create(all);
+
 type V = [number, number, number];
 const sub = (a: V, b: V): V => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const add = (a: V, b: V): V => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
@@ -146,6 +149,115 @@ console.log('— vec-bag-006 distances —');
 num('d(P,π)=2/3', Math.abs(2 * 3 - 2 * 1 + 4 - 6) / norm([2, -2, 1]), 2 / 3);
 num('line⟂plane sinθ=1', Math.abs(dot([2, -2, 1], [2, -2, 1])) / (norm([2, -2, 1]) * norm([2, -2, 1])), 1);
 num('d(O,π)=2', Math.abs(-6) / norm([2, -2, 1]), 2);
+
+// ============================================================
+// mathjs re-derivation of EVERY newly-added drill & question in the two
+// sub-topics vec-line-plane & vec-distances-angles. Uses mathjs — a
+// DIFFERENT engine than the hand-rolled helpers above — so a bug in one
+// implementation can't hide in the other. Each check recomputes the numeric
+// answer / MCQ correct option from scratch. (Purely-conceptual MCQs — with no
+// numeric claim to recompute — are noted inline and skipped.)
+// ============================================================
+const mSub = (a: V, b: V): V => mj.subtract(a, b) as unknown as V;
+const mAdd = (a: V, b: V): V => mj.add(a, b) as unknown as V;
+const mScale = (k: number, a: V): V => mj.multiply(k, a) as unknown as V;
+const mDot = (a: V, b: V): number => mj.dot(a, b) as unknown as number;
+const mCross = (a: V, b: V): V => mj.cross(a, b) as unknown as V;
+const mNorm = (a: V): number => mj.norm(a) as unknown as number;
+const mAcosDeg = (x: number): number => ((mj.acos(x) as unknown as number) * 180) / Math.PI;
+const mAsinDeg = (x: number): number => ((mj.asin(x) as unknown as number) * 180) / Math.PI;
+
+console.log('— [mathjs] NEW vec-line-plane drills —');
+// drill-003: normal of 2x+y=6 is (2,1,0) — re-derive: (2,1,0) ⟂ two in-plane dirs
+num('lp-drill-003 n⟂(0,0,1)', mDot([2, 1, 0], [0, 0, 1]), 0);
+num('lp-drill-003 n⟂(1,-2,0)', mDot([2, 1, 0], [1, -2, 0]), 0);
+// drill-004: n·AB=0, n·AC=0 (AB=(1,1,0),AC=(0,1,1)) → n=(1,-1,1)
+num('lp-drill-004 n·AB', mDot([1, -1, 1], [1, 1, 0]), 0);
+num('lp-drill-004 n·AC', mDot([1, -1, 1], [0, 1, 1]), 0);
+// drill-005: plane n=(1,2,1) through P(1,1,1) → d=4
+num('lp-drill-005 d=n·P', mDot([1, 2, 1], [1, 1, 1]), 4);
+// drill-006: line ⟂ plane x+4y-2z=7 → dir=(1,4,-2); re-derive ⟂ two in-plane dirs
+num('lp-drill-006 n⟂(4,-1,0)', mDot([1, 4, -2], [4, -1, 0]), 0);
+num('lp-drill-006 n⟂(2,0,1)', mDot([1, 4, -2], [2, 0, 1]), 0);
+// drill-007: X=(1,1,1)+t(1,0,2) ∩ x+z=8 → t=2, point (3,1,5)
+{
+  const t = (8 - (1 + 1)) / (1 + 2); // (1+t)+(1+2t)=2+3t=8
+  num('lp-drill-007 t=2', t, 2);
+  const p = mAdd([1, 1, 1], mScale(t, [1, 0, 2]));
+  vec('lp-drill-007 point', p, [3, 1, 5]);
+  num('lp-drill-007 on x+z=8', p[0] + p[2], 8);
+}
+
+console.log('— [mathjs] NEW vec-line-plane questions —');
+// lp-006: AB = B-A = (2,1,3)
+vec('lp-006 AB', mSub([3, 1, 5], [1, 0, 2]), [2, 1, 3]);
+// lp-007: (1,1,0) on x+2y-z=3
+num('lp-007 on plane', 1 + 2 * 1 - 0, 3);
+// lp-008: (5,2,1) on X=(1,0,3)+t(2,1,-1) → t=2
+{
+  const t = (5 - 1) / 2;
+  num('lp-008 t=2', t, 2);
+  vec('lp-008 point', mAdd([1, 0, 3], mScale(t, [2, 1, -1])), [5, 2, 1]);
+}
+// lp-009: plane through A(2,0,0),B(0,1,0),C(0,0,2) → n=(1,2,1), plane x+2y+z=2
+{
+  const A: V = [2, 0, 0];
+  const B: V = [0, 1, 0];
+  const C: V = [0, 0, 2];
+  const n: V = [1, 2, 1];
+  num('lp-009 n·AB', mDot(n, mSub(B, A)), 0);
+  num('lp-009 n·AC', mDot(n, mSub(C, A)), 0);
+  num('lp-009 d @A', mDot(n, A), 2);
+  num('lp-009 @B', mDot(n, B), 2);
+  num('lp-009 @C', mDot(n, C), 2);
+}
+// lp-010: line ⟂ plane x-3y+2z=7 → dir=(1,-3,2); re-derive ⟂ two in-plane dirs
+num('lp-010 n⟂(3,1,0)', mDot([1, -3, 2], [3, 1, 0]), 0);
+num('lp-010 n⟂(2,0,-1)', mDot([1, -3, 2], [2, 0, -1]), 0);
+// lp-011: plane ⊃ AC=(6,18,0), ∥ SD=(6,8,-12) → n=(18,-6,5), through origin (Q2ד, מועד א)
+{
+  const n: V = [18, -6, 5];
+  num('lp-011 n·AC', mDot(n, [6, 18, 0]), 0);
+  num('lp-011 n·SD', mDot(n, [6, 8, -12]), 0);
+}
+// lp-012: SB=(0,10,0)+t(0,10,-12) ∩ 18x-6y+5z=0 → t=-1/2, K=(0,5,6) (Q2ה1, מועד א)
+{
+  const t = -60 / 120; // -6(10+10t)+5(-12t) = -60-120t = 0
+  num('lp-012 t=-1/2', t, -0.5);
+  const K = mAdd([0, 10, 0], mScale(t, [0, 10, -12]));
+  vec('lp-012 K', K, [0, 5, 6]);
+  num('lp-012 K on plane', mDot([18, -6, 5], K), 0);
+}
+
+console.log('— [mathjs] NEW vec-distances-angles drills —');
+// drill-001: d(P(1,0,0), 2x+2y+z=8) = 2
+num('da-drill-001 d=2', Math.abs(mDot([2, 2, 1], [1, 0, 0]) - 8) / mNorm([2, 2, 1]), 2);
+// drill-002 (use normals) & drill-003 (sin vs cos): conceptual — no numeric claim.
+// drill-004: d(P(1,2,0), line through O dir (1,0,0)) = 2
+num('da-drill-004 d=2', mNorm(mCross([1, 2, 0], [1, 0, 0])) / mNorm([1, 0, 0]), 2);
+
+console.log('— [mathjs] NEW vec-distances-angles questions —');
+// da-006: d(O, x+2y+2z=6) = 2
+num('da-006 d=2', Math.abs(mDot([1, 2, 2], [0, 0, 0]) - 6) / mNorm([1, 2, 2]), 2);
+// da-007: conceptual (sin) — no numeric claim.
+// da-008: angle between planes n1=(1,1,0),n2=(1,-1,0) → 90°
+num(
+  'da-008 θ=90',
+  mAcosDeg(Math.abs(mDot([1, 1, 0], [1, -1, 0])) / (mNorm([1, 1, 0]) * mNorm([1, -1, 0]))),
+  90,
+);
+// da-009: parallel planes x+2y+2z=3 & =12 → d=3
+num('da-009 d=3', Math.abs(12 - 3) / mNorm([1, 2, 2]), 3);
+// da-010: line (0,1,0) to plane y+z=4, n=(0,1,1) → sinθ=1/√2 → 45°
+num(
+  'da-010 θ=45',
+  mAsinDeg(Math.abs(mDot([0, 1, 0], [0, 1, 1])) / (mNorm([0, 1, 0]) * mNorm([0, 1, 1]))),
+  45,
+);
+// da-011: d(N(3,2.25,13.5), 3x+4y-36=0) = 18/5 = 3.6 (Q2ד1, מועד ב)
+num('da-011 d=3.6', Math.abs(mDot([3, 4, 0], [3, 2.25, 13.5]) - 36) / mNorm([3, 4, 0]), 3.6);
+// da-012: d(P(1,0,0), line through O dir (0,1,1)) = 1
+num('da-012 d=1', mNorm(mCross([1, 0, 0], [0, 1, 1])) / mNorm([0, 1, 1]), 1);
 
 console.log(`\n${pass} passed, ${fail} failed.`);
 if (fail > 0) process.exit(1);
