@@ -27,6 +27,10 @@ import {
   NotebookPen,
   Map as MapIcon,
   Search as SearchIcon,
+  Target,
+  MessageCircle,
+  ScrollText,
+  Sigma,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
@@ -339,12 +343,16 @@ export default function AppChrome() {
                   <span className="text-[10px] text-slate-400 font-mono">Ctrl+K</span>
                 </button>
                 {[
-                  { href: '/my-plan', icon: BookOpen, label: 'התוכנית שלי' },
                   { href: '/roadmap', icon: MapIcon, label: 'מסלול הלמידה' },
+                  { href: '/quiz', icon: Target, label: 'בוחן מהיר' },
+                  { href: '/chat', icon: MessageCircle, label: 'מורה AI' },
+                  { href: '/bagruyot', icon: ScrollText, label: 'בגרויות קודמות' },
+                  { href: '/formulas', icon: Sigma, label: 'דף נוסחאות' },
+                  { href: '/my-plan', icon: BookOpen, label: 'התוכנית שלי' },
                   { href: '/insights', icon: BarChart3, label: 'התמונה שלי' },
                   { href: '/errors', icon: NotebookPen, label: 'מחברת הטעויות' },
-                  { href: '/history', icon: History, label: 'ההיסטוריה שלי' },
                   { href: '/library', icon: Library, label: 'הספרייה שלי' },
+                  { href: '/history', icon: History, label: 'ההיסטוריה שלי' },
                 ].map(({ href, icon: Icon, label }) => (
                   <Link
                     key={href}

@@ -62,7 +62,7 @@ export function buildIndex(): SearchItem[] {
         title: sub.title,
         subtitle: topic,
         emoji: sub.emoji,
-        href: `/practice/math5/${encodeURIComponent(topic)}/sub/${sub.id}`,
+        href: `/roadmap/${encodeURIComponent(sub.id)}`,
         norm: normalizeQuestionText(`${sub.title} ${sub.tagline} ${topic}`),
       });
     }

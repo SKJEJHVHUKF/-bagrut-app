@@ -143,12 +143,12 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href="/practice"
+              href="/roadmap"
               className="group flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-indigo-500/40 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition-all"
-              title="תרגול מודרך"
+              title="מסלול הלמידה"
             >
               <Target className="w-4 h-4 text-indigo-600" />
-              <span className="hidden sm:inline">תרגול מודרך</span>
+              <span className="hidden sm:inline">מסלול הלמידה</span>
             </Link>
             <Link
               href="/chat"
@@ -279,10 +279,10 @@ export default function Landing() {
                   מומלץ · חדש
                 </span>
                 <h3 className="font-display text-xl sm:text-2xl font-bold text-slate-800">
-                  מסלול הלמידה שלי — שאלון 582
+                  מסלול הלמידה שלי — לפי השאלון שלך
                 </h3>
                 <p className="text-sm sm:text-base text-slate-600 leading-relaxed mt-1">
-                  תיאוריה ← נוסחאות ← דוגמה ← בוחן. כל שלב פותח את הבא, עם מעקב התקדמות מלא.
+                  לומדים ← חימום ← ביסוס ← אתגר ← בגרות. כל רמה פותחת את הבאה, עם כוכבים ומעקב התקדמות מלא.
                 </p>
               </div>
               <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
@@ -304,13 +304,13 @@ export default function Landing() {
             cta="התחל בחינה"
           />
           <ModeCard
-            href="/practice"
+            href="/roadmap"
             tone="amber"
             badge="חדש"
             icon={<Target className="w-6 h-6" />}
-            title="תרגול מודרך"
-            desc="תרגיל אחד מעמיק עם רמזים פרוגרסיביים ופתרון צעד-אחר-צעד. מתאים ללמידה לעומק של נושא חדש או למי שתקוע."
-            cta="קבל תרגיל"
+            title="מסלול הלמידה"
+            desc="לומדים ← חימום ← ביסוס ← אתגר ← בגרות. כל תת-נושא הוא סולם רמות מטפס, עם כוכבים ומעקב התקדמות מלא."
+            cta="למסלול שלי"
           />
           <ModeCard
             href="/chat"

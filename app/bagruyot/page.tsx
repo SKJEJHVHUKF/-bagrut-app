@@ -66,10 +66,10 @@ export default function BagruyotLandingPage() {
     <main className="min-h-screen px-4 sm:px-6 py-8 max-w-3xl mx-auto">
       {/* Back link */}
       <Link
-        href="/pricing"
+        href="/roadmap"
         className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800 mb-6"
       >
-        ← חזרה לתוכנית הלימוד
+        ← חזרה למסלול הלמידה
       </Link>
 
       {/* Hero */}
