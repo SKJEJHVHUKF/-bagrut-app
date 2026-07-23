@@ -56,6 +56,9 @@ export function BagrutQuestionBlock({
             part={p}
             context={question.context}
             topic={topic}
+            subTopicId={question.subTopicId}
+            questionId={`${question.id}-${p.label}`}
+            difficulty={question.difficulty}
             onDone={() => onPartDone?.(i, question.parts.length)}
           />
         ))}

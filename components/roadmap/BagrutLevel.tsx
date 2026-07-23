@@ -92,6 +92,9 @@ export function BagrutLevel({
                 subject={subject}
                 topic={topic}
                 context={q.context}
+                subTopicId={q.subTopicId}
+                questionId={`${q.id}-${part.label}`}
+                difficulty={q.difficulty}
                 onDone={() => setPart(id, 'correct')}
                 onSelfAssess={(correct) => setPart(id, correct ? 'correct' : 'wrong', true)}
               />

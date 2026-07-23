@@ -5,7 +5,7 @@
 // (MCQ auto-grades; open reveals the solution + self-report), tallies the
 // score, then awards 1-3 stars and reports the clear up to the ladder.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, KeyRound, Lightbulb, ArrowLeft } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
@@ -13,6 +13,7 @@ import { buttonTap } from '@/lib/animations';
 import { celebrateCorrect, sparkle } from '@/lib/confetti';
 import { recordResult } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
+import { studentTier, orderQuestions, tierLabel, type Tier } from '@/lib/adaptive';
 import { computeStars, type RoadmapLevel } from '@/lib/roadmap-levels';
 import type { ClearResult } from '@/lib/roadmap-progress';
 import { LevelClearedPanel } from './ladder-ui';
@@ -39,9 +40,17 @@ export function RoadmapLevelRunner({
   onNext?: () => void;
   onBack: () => void;
 }) {
-  // Fixed order: easy MCQs are naturally first; keep the authored order so the
-  // rung itself climbs gently.
-  const questions = useMemo<PracticeQuestion[]>(() => level.questions, [level]);
+  // Order the tier's questions for the student's level (3/4/5 units + live
+  // accuracy) — reordered once after mount (localStorage), matching the old
+  // SubTopicPractice so the difficulty experience is consistent across surfaces.
+  const [questions, setQuestions] = useState<PracticeQuestion[]>(level.questions);
+  const [tier, setTier] = useState<Tier | null>(null);
+  useEffect(() => {
+    const t = studentTier(subject, topic, subId);
+    setTier(t);
+    setQuestions(orderQuestions(level.questions, t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject, topic, subId, level]);
 
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -138,6 +147,11 @@ export function RoadmapLevelRunner({
           <span className="font-black text-indigo-700">
             {level.emoji} רמת {level.title}
           </span>
+          {tier !== null && (
+            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-500/10 border border-indigo-500/25 rounded-full px-2 py-0.5">
+              {tierLabel(tier)}
+            </span>
+          )}
           <span className="text-slate-600">
             {idx + 1}/{total} · {correctCount} נכונות
           </span>

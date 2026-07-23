@@ -28,6 +28,7 @@ import {
   toErrorCategory,
   type ErrorCategory,
 } from '@/lib/mistakes';
+import { recordResult } from '@/lib/results';
 import { MistakeTagger } from './MistakeTagger';
 
 export type QuestionPart = {
@@ -53,6 +54,9 @@ export function QuestionPartCard({
   subject = 'math5',
   context,
   topic,
+  subTopicId,
+  questionId,
+  difficulty,
   onDone,
   onSelfAssess,
 }: {
@@ -65,6 +69,12 @@ export function QuestionPartCard({
   /** Topic key — when it's the grounded pilot ("מספרים מרוכבים") the tutor
    *  endpoints (why-wrong etc.) teach from the verified content. */
   topic?: string;
+  /** Sub-topic id, difficulty, and question id — so a graded/self-assessed
+   *  outcome is logged to lib/results (source 'bagrut') for /insights + the
+   *  grade prediction, not only to the mistake notebook. */
+  subTopicId?: string;
+  questionId?: string;
+  difficulty?: 'easy' | 'mid' | 'hard';
   onDone?: () => void;
   /** Fired when the student self-grades against the revealed solution
    *  ("פתרתי נכון" / "טעיתי כאן"). Lets the parent record the result and
@@ -83,6 +93,14 @@ export function QuestionPartCard({
   // Error-notebook state — one mistake per part, re-taggable.
   const [mistakeId, setMistakeId] = useState<string | null>(null);
   const [aiCategory, setAiCategory] = useState<ErrorCategory | null>(null);
+  // Log the FIRST measured outcome (graded or self-assessed) to lib/results so
+  // /insights + grade prediction count bagrut work — once per part.
+  const [recorded, setRecorded] = useState(false);
+  function recordOutcome(correct: boolean) {
+    if (recorded) return;
+    setRecorded(true);
+    recordResult({ subject, topic: topic ?? '', subTopicId, questionId, source: 'bagrut', difficulty, correct });
+  }
 
   // Log a wrong answer to the error notebook (once per part). If a category
   // is known (from the AI), apply it; otherwise it defaults to 'אחר' and the
@@ -111,6 +129,7 @@ export function QuestionPartCard({
   function selfAssess(correct: boolean) {
     if (selfReport) return;
     setSelfReport(correct ? 'correct' : 'wrong');
+    recordOutcome(correct);
     if (correct) {
       celebrateCorrect();
       toast.success('כל הכבוד! 🎯', { description: 'סימנת שפתרת נכון', duration: 2000 });
@@ -182,6 +201,7 @@ export function QuestionPartCard({
     // gets marked complete even if the student didn't reveal the solution.
     if (data.verdict === 'correct' && !revealedFinal) {
       setRevealedFinal(true);
+      recordOutcome(true);
       celebrateCorrect();
       toast.success('תשובה נכונה! 🎯', {
         description: `סעיף ${part.label} נסגר בכבוד`,
@@ -194,6 +214,7 @@ export function QuestionPartCard({
         duration: 2500,
       });
     } else if (data.verdict === 'wrong') {
+      recordOutcome(false);
       toast.error('לא נכון', {
         description: 'אל תוותר — נסה רמז או בקש "למה טעיתי?"',
         duration: 2500,
