@@ -13,7 +13,9 @@ import { motion } from 'framer-motion';
 import { Lock, CheckCircle, PlayCircle, Crown, Star, Sparkles } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { MathText } from '@/components/practice/MathText';
-import { buildRoadmap582, allRoadmap582Nodes } from '@/constants/roadmapData';
+import { buildRoadmap, allRoadmapNodes, DEFAULT_PAPER } from '@/constants/roadmapData';
+import { getPaper } from '@/lib/study-plan';
+import type { BagrutPaper } from '@/content/bagrut-curriculum';
 import { getSubTopic } from '@/content/lessons';
 import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
 import { nodeStatus, countCompleted, nodeLevelSummary, type NodeLevelSummary } from '@/lib/roadmap-progress';
@@ -22,8 +24,10 @@ import type { StepStatus, RoadmapNode } from '@/types/roadmap';
 const SUBJECT = 'math5';
 
 export default function RoadmapPage() {
-  const roadmap = useMemo(() => buildRoadmap582(), []);
-  const allNodes = useMemo(() => allRoadmap582Nodes(), []);
+  // Active paper (581/582) — read after mount to avoid hydration mismatch.
+  const [paper, setPaperState] = useState<BagrutPaper>(DEFAULT_PAPER);
+  const roadmap = useMemo(() => buildRoadmap(paper), [paper]);
+  const allNodes = useMemo(() => allRoadmapNodes(paper), [paper]);
 
   // Levels per node are pure (content-derived) → build once.
   const levelsBySub = useMemo(() => {
@@ -37,7 +41,14 @@ export default function RoadmapPage() {
 
   // localStorage read only after mount (avoids hydration mismatch).
   const [ready, setReady] = useState(false);
-  useEffect(() => setReady(true), []);
+  useEffect(() => {
+    setReady(true);
+    setPaperState(getPaper() ?? DEFAULT_PAPER);
+    // The AppChrome paper switcher dispatches this so the map re-renders live.
+    const onPaperChange = () => setPaperState(getPaper() ?? DEFAULT_PAPER);
+    window.addEventListener('bagrut-paper-changed', onPaperChange);
+    return () => window.removeEventListener('bagrut-paper-changed', onPaperChange);
+  }, []);
 
   // Per-node ladder summaries (depend on stored progress).
   const summaries = useMemo(() => {
@@ -56,7 +67,7 @@ export default function RoadmapPage() {
   const masteredCount = ready ? Object.values(summaries).filter((x) => x.mastered).length : 0;
 
   return (
-    <PracticeShell subtitle="מסלול הלמידה" backHref="/practice" backLabel="לתרגול">
+    <PracticeShell subtitle="מסלול הלמידה" backHref="/" backLabel="בית">
       <div className="space-y-6">
         {/* Title */}
         <div className="text-center space-y-1">
@@ -94,7 +105,7 @@ export default function RoadmapPage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-black tracking-widest text-indigo-700 uppercase">
-                ההתקדמות שלך בשאלון 582
+                ההתקדמות שלך ב{roadmap.label}
               </div>
               <div className="text-sm text-slate-700 mt-1">
                 {overallDone} מתוך {allNodes.length} שלבים הושלמו — המשך במסלול המסומן.
@@ -176,6 +187,15 @@ export default function RoadmapPage() {
                   })}
                 </div>
               </div>
+
+              {/* Reference + advanced course for this topic (formulas, worked
+                  examples, Pro course) — kept reachable from the spine. */}
+              <Link
+                href={`/practice/${SUBJECT}/${encodeURIComponent(mt.topic)}`}
+                className="block text-center text-[11px] text-slate-500 hover:text-indigo-700 transition-colors pt-1"
+              >
+                📚 חומרי עזר וקורס מתקדם בנושא
+              </Link>
             </motion.section>
           );
         })}

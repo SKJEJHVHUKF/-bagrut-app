@@ -76,7 +76,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
           className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2"
         >
           <BookOpen className="w-3.5 h-3.5" />
-          <span>מסלול הלמידה בנושא</span>
+          <span>חומרי עזר לנושא</span>
         </motion.div>
         <motion.h1 variants={fadeUp} className="text-2xl sm:text-3xl font-black leading-tight">
           <span className="font-display text-slate-800">
@@ -108,7 +108,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
             <ol className="space-y-1.5 text-sm text-slate-700">
               <li className="flex gap-2">
                 <span className="flex-shrink-0 w-5 h-5 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-800 text-[11px] font-black flex items-center justify-center">1</span>
-                <span><b>המסלול המודרך</b> — לומדים שלב אחר שלב: כל שלב מלמד תת-נושא אחד, עם תרגול ושאלת בגרות בסופו.</span>
+                <span><b>שלבי המסלול</b> — כל שלב נפתח כסולם רמות (לומדים ← תרגול ← בגרות). זו דרך הלימוד הראשית.</span>
               </li>
               <li className="flex gap-2">
                 <span className="flex-shrink-0 w-5 h-5 rounded-md bg-indigo-500/15 border border-indigo-500/40 text-indigo-800 text-[11px] font-black flex items-center justify-center">2</span>
@@ -351,10 +351,10 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
               <div>
                 <div className="text-sm font-black text-slate-900 flex items-center gap-1.5">
                   <GraduationCap className="w-4 h-4 text-emerald-700" />
-                  <span>המסלול המודרך — התחל כאן</span>
+                  <span>שלבי המסלול — קפוץ לשלב</span>
                 </div>
                 <div className="text-[11px] text-slate-600">
-                  {subs.length} שלבים בסדר הנכון · כל שלב: שיעור קצר ← תרגול ← שאלת בגרות
+                  {subs.length} שלבים בסדר הנכון · כל שלב נפתח כסולם רמות: לומדים ← תרגול ← בגרות
                 </div>
               </div>
               <div className="flex-1 h-px bg-slate-900/10" />
@@ -403,7 +403,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                     transition={{ duration: 0.2 }}
                   >
                     <Link
-                      href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/sub/${sub.id}`}
+                      href={`/roadmap/${encodeURIComponent(sub.id)}`}
                       className={`card-3d block rounded-2xl p-4 transition-colors border ${
                         isDone
                           ? 'bg-gradient-to-br from-emerald-700/15 to-teal-700/10 border-emerald-500/50 hover:border-emerald-400'

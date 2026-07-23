@@ -140,6 +140,8 @@ export default function AppChrome() {
   const changePaper = (p: BagrutPaper) => {
     persistPaper(p);
     setPaperState(p);
+    // Let paper-aware surfaces (e.g. /roadmap) re-render live to the new paper.
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('bagrut-paper-changed'));
   };
 
   // Close on ESC

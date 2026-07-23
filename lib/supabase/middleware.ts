@@ -19,7 +19,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED_PREFIXES = ['/quiz', '/chat', '/history', '/practice', '/learn'];
+// The guided learning spine (/roadmap) is public; /practice now only redirects
+// into it, so it must be public too (else an anonymous old-link visitor hits a
+// login wall on the redirect). Chat/history/learn stay gated (cost/server/Pro).
+const PROTECTED_PREFIXES = ['/quiz', '/chat', '/history', '/learn'];
 
 const PUBLIC_PREFIXES = [
   '/login',
@@ -100,7 +103,7 @@ export async function updateSession(request: NextRequest) {
   if (user && (pathname === '/login' || pathname === '/signup')) {
     const url = request.nextUrl.clone();
     const next = request.nextUrl.searchParams.get('next');
-    url.pathname = next && next.startsWith('/') ? next : '/quiz';
+    url.pathname = next && next.startsWith('/') ? next : '/roadmap';
     url.search = '';
     return NextResponse.redirect(url);
   }
