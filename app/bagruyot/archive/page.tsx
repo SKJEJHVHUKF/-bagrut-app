@@ -28,6 +28,7 @@ import {
   ALL_PAST_BAGRUYOT,
   availableYears,
   availableTopics,
+  availablePapers,
   totalQuestions,
   type PastBagrutQuestion,
   type PastBagrutPart,
@@ -132,6 +133,7 @@ export default function BagruyotArchivePage() {
 
   const years = availableYears();
   const topics = availableTopics();
+  const papers = availablePapers();
   const totalCount = totalQuestions();
   const hasActiveFilter = filterYear !== 'all' || filterPaper !== 'all' || filterTopic !== 'all' || !!query;
 
@@ -204,8 +206,7 @@ export default function BagruyotArchivePage() {
               onChange={(v) => setFilterPaper(v as BagrutPaper | 'all')}
               options={[
                 { value: 'all', label: 'כל השאלונים' },
-                { value: '581', label: 'שאלון 581' },
-                { value: '582', label: 'שאלון 582' },
+                ...papers.map((p) => ({ value: p, label: `שאלון ${p}` })),
               ]}
             />
             <FilterSelect

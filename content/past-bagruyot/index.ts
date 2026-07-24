@@ -37,8 +37,10 @@ import { bagrut2023Summer582 } from './2023-summer-582';
 import { bagrut2023Summer582Special } from './2023-summer-582-special';
 import { bagrut2023Summer582MoedB } from './2023-summer-582-moed-b';
 import { bagrut2024Summer582 } from './2024-summer-582';
+import { bagrut2024Summer572MoedB } from './2024-summer-572-moed-b';
 import { bagrut2025Summer582 } from './2025-summer-582';
 import { bagrut2025Summer582MoedB } from './2025-summer-582-moed-b';
+import { bagrut2026Summer572 } from './2026-summer-572';
 
 export const ALL_PAST_BAGRUYOT: PastBagrutQuestion[] = [
   ...bagrut2020Summer582,
@@ -52,8 +54,10 @@ export const ALL_PAST_BAGRUYOT: PastBagrutQuestion[] = [
   ...bagrut2023Summer582Special,
   ...bagrut2023Summer582MoedB,
   ...bagrut2024Summer582,
+  ...bagrut2024Summer572MoedB,
   ...bagrut2025Summer582,
   ...bagrut2025Summer582MoedB,
+  ...bagrut2026Summer572,
 ];
 
 // ============================================================
@@ -83,6 +87,11 @@ export function availableYears(): number[] {
 
 export function availableTopics(): string[] {
   const set = new Set(ALL_PAST_BAGRUYOT.map((q) => q.topic));
+  return Array.from(set).sort();
+}
+
+export function availablePapers(): BagrutPaper[] {
+  const set = new Set(ALL_PAST_BAGRUYOT.map((q) => q.paper));
   return Array.from(set).sort();
 }
 

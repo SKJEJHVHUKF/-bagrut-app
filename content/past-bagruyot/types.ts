@@ -21,7 +21,8 @@
 import type { DiagramSpec } from '../lessons/types';
 
 export type BagrutSeason = 'summer' | 'winter';
-export type BagrutPaper = '581' | '582';
+/** שאלוני 5 יח"ל (581, 582) ושאלוני 4 יח"ל (571, 572). */
+export type BagrutPaper = '571' | '572' | '581' | '582';
 /** מועד הבחינה — 'a' = מועד א', 'b' = מועד ב', 'special' = מועד מיוחד. */
 export type BagrutMoed = 'a' | 'b' | 'special';
 
