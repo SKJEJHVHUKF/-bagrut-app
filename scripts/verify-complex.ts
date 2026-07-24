@@ -86,6 +86,19 @@ check('drill-005 6cis120°', cis(6, 120), C(-3, 3 * S3));
 check('drill-007 (2cis15)^4', cis(16, 60), cis(16, 60));
 check('drill-008 (1−i)^4', powN(C(1, -1), 4), C(-4, 0));
 checkNum('drill-009 area×|3cis90|²', 5 * absC(cis(3, 90)) ** 2, 45);
+// polar rewrite (gold): new answers
+checkNum('polar-002 arg(−1+√3i)=120°', argDeg(C(-1, S3)), 120);
+check('polar-008 i·(2cis30°)=2cis120°', mul(C(0, 1), cis(2, 30)), cis(2, 120));
+// polar-011 triangle A=z, B=iz, C=−z: right-angled at B, area = r². Check numerically at r=2, θ=50°.
+(() => {
+  const r = 2, th = 50;
+  const A = cis(r, th), B = mul(C(0, 1), A), Cpt = C(-A.re, -A.im);
+  const AB = absC(C(A.re - B.re, A.im - B.im));
+  const BC = absC(C(B.re - Cpt.re, B.im - Cpt.im));
+  checkNum('polar-011 leg AB=r√2', AB, r * Math.SQRT2);
+  checkNum('polar-011 leg BC=r√2', BC, r * Math.SQRT2);
+  checkNum('polar-011 area=r²', (AB * BC) / 2, r * r);
+})();
 
 // ===== complex-roots (angles + representative roots) =====
 check('roots-004 z^4=16 root z1', powN(C(0, 2), 4), C(16, 0)); // (2i)^4 = 16
