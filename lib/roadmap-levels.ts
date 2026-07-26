@@ -104,16 +104,5 @@ export function buildSubTopicLevels(
   return levels;
 }
 
-/**
- * Stars (1-3) for a cleared rung, from first-pass accuracy. The `learn` rung
- * (no grading) always earns 3. Practice/bagrut rungs: perfect → 3, at least
- * half → 2, otherwise 1 (a rung is never worth 0 stars once completed —
- * finishing is progress).
- */
-export function computeStars(kind: RoadmapLevelKind, score: number, total: number): number {
-  if (kind === 'learn' || total <= 0) return 3;
-  const ratio = score / total;
-  if (ratio >= 0.999) return 3;
-  if (ratio >= 0.5) return 2;
-  return 1;
-}
+// Pass/fail + stars now live in lib/roadmap-mastery.ts (a rung can no longer be
+// "cleared" with zero correct answers). This module only builds the ladder.

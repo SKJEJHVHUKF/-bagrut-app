@@ -20,7 +20,7 @@ import { AnswerInput } from './AnswerInput';
 import { AITutorActions } from './AITutorActions';
 import { SolutionAudit } from './SolutionAudit';
 import { checkAnswer as runDeterministicCheck, type AnswerSpec } from '@/lib/answer-check';
-import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
+import { sparkle, celebrateCorrect } from '@/lib/confetti';
 import { buttonTap } from '@/lib/animations';
 import {
   recordMistake,
@@ -155,11 +155,13 @@ export function QuestionPartCard({
     setStepsShown(part.solution.steps.length - 1);
     if (!revealedFinal) {
       setRevealedFinal(true);
-      celebrateCompletion();
-      onDone?.();
+      // Revealing the solution is NOT evidence of mastery — do NOT call
+      // onDone() here (that used to mark the part 'correct', so a student could
+      // earn full stars just by opening the answer). The self-assess panel
+      // below is now the only way to mark the part correct/wrong.
     }
     toast.success(`סעיף ${part.label} — פתרון מלא`, {
-      description: 'עבור על הפתרון ובדוק שהבנת',
+      description: 'השווה לפתרון שלך וסמן איך יצא לך',
       duration: 2000,
     });
   }
@@ -170,12 +172,12 @@ export function QuestionPartCard({
       const next = Math.min(n + 1, total - 1);
       if (next === total - 1 && !revealedFinal) {
         setRevealedFinal(true);
-        celebrateCompletion();
-        toast.success(`סעיף ${part.label} הושלם! 🎯`, {
-          description: 'עברת על כל הצעדים',
+        // Stepping through the solution is not evidence of mastery — no
+        // onDone() here. The self-assess panel marks the outcome.
+        toast.info(`סעיף ${part.label} — עברת על כל הצעדים`, {
+          description: 'סמן למטה איך יצא לך',
           duration: 2500,
         });
-        onDone?.();
       }
       return next;
     });

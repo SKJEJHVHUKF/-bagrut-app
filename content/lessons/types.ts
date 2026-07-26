@@ -183,6 +183,13 @@ export type PracticeQuestion = {
   /** Optional single hint shown before the student opens the full solution. */
   hint?: string;
 
+  /** Machine-checkable answer spec for `open` questions → deterministic ($0)
+   *  grading via lib/answer-check, exactly like BagrutQuestionPart.expected.
+   *  Absent → the ladder falls back to reveal-and-self-report (still honest).
+   *  Use `{ kind: 'manual' }` for genuinely un-gradable answers (proofs, "find
+   *  all n", loci) so the intent is explicit. */
+  expected?: AnswerSpec;
+
   solution: {
     /** Step-by-step solution — one sentence per step, LaTeX-aware. */
     steps: string[];

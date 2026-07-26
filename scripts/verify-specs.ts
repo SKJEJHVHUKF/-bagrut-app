@@ -43,24 +43,40 @@ const LESSONS: Array<[string, Lesson]> = [
 
 let pass = 0;
 let fail = 0;
+
+// Feed a spec's OWN canonical value through checkAnswer and assert it grades
+// 'correct' — proving a student typing the clean answer would pass, and
+// catching specs that silently degrade to manual/unparseable.
+function checkSpec(where: string, spec: unknown, reference: string) {
+  const s = spec as { kind: string; value?: string; values?: string[] };
+  if (!s || s.kind === 'manual') return;
+  const input = s.kind === 'value' ? (s.value ?? '') : (s.values ?? []).join(' , ');
+  const res = checkAnswer(input, spec as never);
+  if (res.verdict === 'correct') {
+    pass++;
+  } else {
+    fail++;
+    console.log(
+      `  ✗ ${where}: verdict=${res.verdict}  readAs=${res.readAs ?? '—'}\n      reference="${reference}"  spec=${JSON.stringify(spec)}`,
+    );
+  }
+}
+
 for (const [name, L] of LESSONS) {
+  // Bagrut-question parts.
   for (const q of L.bagrutQuestions ?? []) {
     for (const p of q.parts) {
-      const spec = p.expected;
-      if (!spec || spec.kind === 'manual') continue;
-      // Feed the spec's OWN canonical value as the student input: this proves
-      // the grading path parses + evaluates it (a student typing the clean
-      // answer grades 'correct'). Catches specs that degrade to manual/
-      // unparseable (e.g. natural-log expressions the parser can't read).
-      const input = spec.kind === 'value' ? spec.value : spec.values.join(' , ');
-      const res = checkAnswer(input, spec);
-      if (res.verdict === 'correct') {
-        pass++;
-      } else {
-        fail++;
-        console.log(
-          `  ✗ ${name}/${q.id}/${p.label}: verdict=${res.verdict}  readAs=${res.readAs ?? '—'}\n      final="${p.solution.final_answer}"  spec=${JSON.stringify(spec)}`,
-        );
+      checkSpec(`${name}/${q.id}/${p.label}`, p.expected, p.solution.final_answer);
+    }
+  }
+  // Sub-topic practice questions + their micro-drills (the ladder loop).
+  for (const st of L.subTopics ?? []) {
+    for (const question of st.questions ?? []) {
+      checkSpec(`${name}/${st.id}/${question.id}`, question.expected, question.solution.finalAnswer);
+    }
+    for (const step of st.lesson ?? []) {
+      if (step.drill) {
+        checkSpec(`${name}/${st.id}/drill:${step.drill.id}`, step.drill.expected, step.drill.solution.finalAnswer);
       }
     }
   }

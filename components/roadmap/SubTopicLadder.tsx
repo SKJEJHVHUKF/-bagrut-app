@@ -15,9 +15,10 @@ import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
 import {
   levelStatus,
   levelStars,
+  levelAttemptedNotCleared,
   nodeLevelSummary,
-  markLevelCleared,
-  type ClearResult,
+  submitLevelResult,
+  type AttemptResult,
 } from '@/lib/roadmap-progress';
 import type { SubTopic } from '@/content/lessons/types';
 import type { StepStatus } from '@/types/roadmap';
@@ -57,16 +58,24 @@ export function SubTopicLadder({
     return levelStatus(topic, subTopic.id, level, levels);
   }
 
-  function handleCleared(level: RoadmapLevel, stars: number, score: number, total: number): ClearResult {
-    const res = markLevelCleared(topic, subTopic.id, level, levels, stars, score, total);
-    if (res.justMastered || res.justCoreDone) celebrateCompletion();
-    else if (res.firstClear) sparkle();
+  function handleSubmit(
+    level: RoadmapLevel,
+    score: number,
+    total: number,
+    opts?: { viaRetry?: boolean; force?: boolean },
+  ): AttemptResult {
+    const res = submitLevelResult(topic, subTopic.id, level, levels, score, total, opts);
+    if (res.passed) {
+      if (res.justMastered || res.justCoreDone) celebrateCompletion();
+      else if (res.firstClear) sparkle();
+    }
     setVersion((v) => v + 1);
     return res;
   }
 
   const openLevel = openIndex !== null ? levels[openIndex] : null;
   const nextOf = (i: number) => (i + 1 < levels.length ? levels[i + 1] : null);
+  const learnIndex = levels.findIndex((l) => l.kind === 'learn');
 
   // ===== A single rung is open → render its runner =====
   if (openLevel) {
@@ -77,6 +86,10 @@ export function SubTopicLadder({
     const nl = nextOf(openLevel.index);
     const onNext = nl ? () => setOpenIndex(nl.index) : undefined;
     const nextTitleLevel = nl?.title;
+    const onBackToLearn =
+      learnIndex >= 0 && openLevel.kind !== 'learn' ? () => setOpenIndex(learnIndex) : undefined;
+    const onSubmit = (sc: number, t: number, o?: { viaRetry?: boolean; force?: boolean }) =>
+      handleSubmit(openLevel, sc, t, o);
 
     return (
       <div className="space-y-4">
@@ -93,7 +106,7 @@ export function SubTopicLadder({
               <LearnLevel
                 subTopic={subTopic}
                 level={openLevel}
-                onCleared={(s, sc, t) => handleCleared(openLevel, s, sc, t)}
+                onSubmit={onSubmit}
                 nextTitle={nextTitleLevel}
                 onNext={onNext}
                 onBack={onBack}
@@ -103,7 +116,7 @@ export function SubTopicLadder({
                 subject={subject}
                 topic={topic}
                 level={openLevel}
-                onCleared={(s, sc, t) => handleCleared(openLevel, s, sc, t)}
+                onSubmit={onSubmit}
                 onBack={onBack}
               />
             ) : (
@@ -112,10 +125,11 @@ export function SubTopicLadder({
                 topic={topic}
                 subId={subTopic.id}
                 level={openLevel}
-                onCleared={(s, sc, t) => handleCleared(openLevel, s, sc, t)}
+                onSubmit={onSubmit}
                 nextTitle={nextTitleLevel}
                 onNext={onNext}
                 onBack={onBack}
+                onBackToLearn={onBackToLearn}
               />
             )}
         </motion.div>
@@ -187,6 +201,7 @@ export function SubTopicLadder({
           const status = statusOf(level);
           const isCurrent = ready && current?.index === level.index && status !== 'COMPLETED';
           const st = ready ? levelStars(topic, subTopic.id, level.kind) : 0;
+          const attempted = ready ? levelAttemptedNotCleared(topic, subTopic.id, level.kind) : false;
           const prevTitle = level.index > 0 ? levels[level.index - 1].title : undefined;
           return (
             <RungCard
@@ -194,6 +209,7 @@ export function SubTopicLadder({
               level={level}
               status={status}
               isCurrent={isCurrent}
+              attempted={attempted}
               stars={st}
               prevTitle={prevTitle}
               onOpen={() => setOpenIndex(level.index)}
@@ -260,6 +276,7 @@ function RungCard({
   level,
   status,
   isCurrent,
+  attempted,
   stars,
   prevTitle,
   onOpen,
@@ -267,26 +284,33 @@ function RungCard({
   level: RoadmapLevel;
   status: StepStatus;
   isCurrent: boolean;
+  attempted: boolean;
   stars: number;
   prevTitle?: string;
   onOpen: () => void;
 }) {
   const done = status === 'COMPLETED';
   const locked = status === 'LOCKED';
+  // Played but not yet passed — amber "כמעט", never re-locked.
+  const almost = !done && !locked && attempted;
 
   const shell = done
     ? 'border-emerald-500/40 bg-emerald-500/[0.08]'
     : locked
       ? 'border-slate-900/[0.06] bg-slate-900/[0.02] opacity-60'
-      : isCurrent
-        ? 'border-indigo-500/50 bg-gradient-to-br from-indigo-600/15 to-violet-600/10 shadow-md shadow-indigo-500/10'
-        : 'border-indigo-500/30 bg-indigo-500/[0.05] hover:border-indigo-500/50';
+      : almost
+        ? 'border-amber-500/50 bg-amber-500/[0.07]'
+        : isCurrent
+          ? 'border-indigo-500/50 bg-gradient-to-br from-indigo-600/15 to-violet-600/10 shadow-md shadow-indigo-500/10'
+          : 'border-indigo-500/30 bg-indigo-500/[0.05] hover:border-indigo-500/50';
 
   const badge = done
     ? 'bg-emerald-500/25 text-emerald-800'
     : locked
       ? 'bg-slate-900/[0.03] text-slate-400'
-      : 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white';
+      : almost
+        ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white'
+        : 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white';
 
   const inner = (
     <div className={`relative rounded-2xl border p-3.5 transition-all ${shell}`}>
@@ -310,8 +334,12 @@ function RungCard({
             )}
           </div>
           <div className="text-sm font-black text-slate-900">{level.title}</div>
-          <div className="text-[11px] text-slate-600 mt-0.5">
-            {locked ? `🔒 נפתח אחרי רמת "${prevTitle ?? 'הקודמת'}"` : level.subtitle}
+          <div className={`text-[11px] mt-0.5 ${almost ? 'text-amber-700 font-bold' : 'text-slate-600'}`}>
+            {locked
+              ? `🔒 נפתח אחרי רמת "${prevTitle ?? 'הקודמת'}"`
+              : almost
+                ? 'כמעט! נסה שוב — רק מה שפספסת'
+                : level.subtitle}
           </div>
         </div>
         <div className="flex-shrink-0">

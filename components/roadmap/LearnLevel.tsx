@@ -2,8 +2,10 @@
 
 // LearnLevel — the 📖 "לומדים" rung. Teaches the sub-topic step by step
 // (guided lesson steps with their embedded worked examples), then the
-// sub-topic's formulas and a "לזכור" recap. Cleared (3 stars, no grading)
-// when the student taps "סיימתי ללמוד" — the gateway into the practice rungs.
+// sub-topic's formulas and a "לזכור" recap. Gated on the micro-drills: the
+// student must ANSWER every drill before moving on (engagement, not
+// correctness). Stars reward getting them right — all first-try-correct → 3★,
+// some wrong → 2★, a sub-topic with no drills → 1★ (an honest "acknowledged").
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -14,7 +16,7 @@ import { WorkedExampleCard } from '@/components/practice/WorkedExampleCard';
 import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
 import { buttonTap } from '@/lib/animations';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
-import type { ClearResult } from '@/lib/roadmap-progress';
+import type { AttemptResult } from '@/lib/roadmap-progress';
 import type { SubTopic } from '@/content/lessons/types';
 import { LevelClearedPanel } from './ladder-ui';
 import { MicroDrill } from './MicroDrill';
@@ -22,20 +24,29 @@ import { MicroDrill } from './MicroDrill';
 export function LearnLevel({
   subTopic,
   level,
-  onCleared,
+  onSubmit,
   nextTitle,
   onNext,
   onBack,
 }: {
   subTopic: SubTopic;
   level: RoadmapLevel;
-  onCleared: (stars: number, score: number, total: number) => ClearResult;
+  onSubmit: (score: number, total: number, opts?: { viaRetry?: boolean; force?: boolean }) => AttemptResult;
   nextTitle?: string;
   onNext?: () => void;
   onBack: () => void;
 }) {
-  const [result, setResult] = useState<ClearResult | null>(null);
+  const [result, setResult] = useState<AttemptResult | null>(null);
   const steps = subTopic.lesson ?? [];
+  const drillTotal = steps.filter((s) => s.drill).length;
+  const [drillsAnswered, setDrillsAnswered] = useState(0);
+  const [drillsCorrect, setDrillsCorrect] = useState(0);
+  const allDrillsDone = drillTotal === 0 || drillsAnswered >= drillTotal;
+
+  function onDrillAnswered(correct: boolean) {
+    setDrillsAnswered((n) => n + 1);
+    if (correct) setDrillsCorrect((n) => n + 1);
+  }
 
   if (result) {
     return (
@@ -87,7 +98,7 @@ export function LearnLevel({
                   <WorkedExampleCard example={step.example} index={exampleCount++} />
                 </div>
               )}
-              {step.drill && <MicroDrill drill={step.drill} />}
+              {step.drill && <MicroDrill drill={step.drill} onAnswered={onDrillAnswered} />}
             </motion.div>
           ))}
         </div>
@@ -122,13 +133,19 @@ export function LearnLevel({
         </div>
       )}
 
+      {drillTotal > 0 && !allDrillsDone && (
+        <div className="text-center text-xs text-slate-500">
+          ענה על {drillTotal} התרגילים הקצרים למעלה כדי להמשיך ({drillsAnswered}/{drillTotal})
+        </div>
+      )}
       <motion.button
         {...buttonTap}
-        onClick={() => setResult(onCleared(3, 0, 0))}
-        className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/25 transition-colors"
+        onClick={() => allDrillsDone && setResult(onSubmit(drillsCorrect, drillTotal))}
+        disabled={!allDrillsDone}
+        className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/25 transition-colors"
       >
         <GraduationCap className="w-4 h-4" />
-        <span>סיימתי ללמוד — קדימה לתרגול</span>
+        <span>{drillTotal === 0 ? 'הבנתי — קדימה לתרגול' : 'סיימתי ללמוד — קדימה לתרגול'}</span>
         <ArrowLeft className="w-4 h-4" />
       </motion.button>
     </div>

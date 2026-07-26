@@ -15,7 +15,16 @@ import type { PracticeQuestion } from '@/content/lessons/types';
 
 const LETTERS = ['א', 'ב', 'ג', 'ד'];
 
-export function MicroDrill({ drill }: { drill: PracticeQuestion }) {
+export function MicroDrill({
+  drill,
+  onAnswered,
+}: {
+  drill: PracticeQuestion;
+  /** Fired once, the first time the student answers — `correct` is the MCQ
+   *  outcome (open drills report true on reveal). Lets the learn rung gate on
+   *  engagement. */
+  onAnswered?: (correct: boolean) => void;
+}) {
   const [selected, setSelected] = useState<number | null>(null); // original index
   const [revealed, setRevealed] = useState(false);
   const answered = selected !== null || revealed;
@@ -30,7 +39,9 @@ export function MicroDrill({ drill }: { drill: PracticeQuestion }) {
   function pick(i: number) {
     if (answered) return;
     setSelected(i);
-    if (i === drill.correct) celebrateCorrect();
+    const correct = i === drill.correct;
+    if (correct) celebrateCorrect();
+    onAnswered?.(correct);
   }
 
   const correct = selected !== null && selected === drill.correct;
@@ -78,7 +89,7 @@ export function MicroDrill({ drill }: { drill: PracticeQuestion }) {
       {/* Open micro-drill — solve on paper, reveal to compare */}
       {drill.kind === 'open' && !revealed && (
         <button
-          onClick={() => setRevealed(true)}
+          onClick={() => { setRevealed(true); onAnswered?.(true); }}
           className="w-full inline-flex items-center justify-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/40 px-3 py-2 rounded-xl font-bold text-violet-800 text-sm transition-colors"
         >
           <KeyRound className="w-4 h-4" />

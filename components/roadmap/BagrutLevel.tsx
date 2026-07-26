@@ -11,24 +11,24 @@ import { Target, Flag } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { QuestionPartCard } from '@/components/practice/QuestionPartCard';
 import { buttonTap } from '@/lib/animations';
-import { computeStars, type RoadmapLevel } from '@/lib/roadmap-levels';
-import type { ClearResult } from '@/lib/roadmap-progress';
-import { LevelClearedPanel } from './ladder-ui';
+import type { RoadmapLevel } from '@/lib/roadmap-levels';
+import type { AttemptResult } from '@/lib/roadmap-progress';
+import { LevelClearedPanel, LevelFailedPanel } from './ladder-ui';
 
 export function BagrutLevel({
   subject,
   topic,
   level,
-  onCleared,
+  onSubmit,
   onBack,
 }: {
   subject: string;
   topic: string;
   level: RoadmapLevel;
-  onCleared: (stars: number, score: number, total: number) => ClearResult;
+  onSubmit: (score: number, total: number, opts?: { viaRetry?: boolean; force?: boolean }) => AttemptResult;
   onBack: () => void;
 }) {
-  const [result, setResult] = useState<ClearResult | null>(null);
+  const [result, setResult] = useState<AttemptResult | null>(null);
   // Per-part outcome keyed by a stable "<qIndex>.<partIndex>" id.
   const [status, setStatus] = useState<Record<string, 'correct' | 'wrong'>>({});
 
@@ -45,13 +45,46 @@ export function BagrutLevel({
     });
   }
 
+  const [isRetry, setIsRetry] = useState(false);
+
   function finish() {
-    const stars = computeStars('bagrut', correctParts, totalParts);
-    setResult(onCleared(stars, correctParts, totalParts));
+    setResult(onSubmit(correctParts, totalParts, { viaRetry: isRetry }));
+  }
+
+  function retry() {
+    setStatus({});
+    setIsRetry(true);
+    setResult(null);
+  }
+
+  function continueAnyway() {
+    setResult(onSubmit(correctParts, totalParts, { force: true }));
   }
 
   if (result) {
-    return <LevelClearedPanel level={level} result={result} onBack={onBack} />;
+    if (result.passed) {
+      return (
+        <LevelClearedPanel
+          level={level}
+          result={result}
+          onBack={onBack}
+          onReplay={result.stars < 3 ? retry : undefined}
+        />
+      );
+    }
+    return (
+      <LevelFailedPanel
+        level={level}
+        score={result.score}
+        total={result.total}
+        required={result.requiredCorrect}
+        missedCount={result.total - result.score}
+        attempts={result.attempts}
+        onRetry={retry}
+        onContinueAnyway={continueAnyway}
+        onBack={onBack}
+      />
+    );
   }
 
   return (

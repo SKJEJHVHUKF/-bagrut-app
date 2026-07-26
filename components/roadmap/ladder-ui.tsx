@@ -5,7 +5,7 @@
 //   <LevelClearedPanel> the celebration shown when a rung is cleared
 
 import { motion } from 'framer-motion';
-import { Star, ArrowLeft, RefreshCw, Trophy, Crown, Map } from 'lucide-react';
+import { Star, ArrowLeft, RefreshCw, Trophy, Crown, Map, RotateCcw, BookOpen } from 'lucide-react';
 import { buttonTap } from '@/lib/animations';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
 import type { ClearResult } from '@/lib/roadmap-progress';
@@ -105,6 +105,95 @@ export function LevelClearedPanel({
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>תרגל את הרמה הזו שוב</span>
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * Shown when a rung play falls below the pass bar. Deliberately encouraging, not
+ * punishing — the rung is never re-locked. Always offers a concrete next step;
+ * after two attempts it also offers a "continue anyway" escape so the hardest
+ * rung can never dead-end the whole climb.
+ */
+export function LevelFailedPanel({
+  level,
+  score,
+  total,
+  required,
+  missedCount,
+  attempts,
+  onRetry,
+  onContinueAnyway,
+  onBackToLearn,
+  onBack,
+}: {
+  level: RoadmapLevel;
+  score: number;
+  total: number;
+  required: number;
+  missedCount: number;
+  attempts: number;
+  onRetry: () => void;
+  onContinueAnyway?: () => void;
+  onBackToLearn?: () => void;
+  onBack: () => void;
+}) {
+  const canContinue = attempts >= 2 && !!onContinueAnyway;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="space-y-4"
+    >
+      <div className="rounded-3xl p-6 text-center space-y-2 border bg-gradient-to-br from-amber-500/10 to-rose-500/[0.05] border-amber-500/40">
+        <div className="text-4xl">💪</div>
+        <h3 className="font-display text-xl font-black text-slate-900">
+          כמעט — רמת "{level.title}" עוד קצת
+        </h3>
+        <p className="text-sm text-slate-600">
+          ענית נכון על {score} מתוך {total}. כדי לעבור צריך {required}. בוא נחזק את מה שפספסת.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2">
+        <motion.button
+          {...buttonTap}
+          onClick={onRetry}
+          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/25 transition-colors"
+        >
+          <RotateCcw className="w-4 h-4" />
+          <span>נסה שוב — רק ה-{missedCount} שטעית</span>
+        </motion.button>
+        {onBackToLearn && (
+          <motion.button
+            {...buttonTap}
+            onClick={onBackToLearn}
+            className="w-full inline-flex items-center justify-center gap-2 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 px-5 py-3 rounded-2xl font-bold text-sky-800 transition-colors"
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>חזור לרמת "לומדים"</span>
+          </motion.button>
+        )}
+        <motion.button
+          {...buttonTap}
+          onClick={onBack}
+          className="w-full inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 px-5 py-3 rounded-2xl font-bold text-slate-800 transition-colors"
+        >
+          <Map className="w-4 h-4" />
+          <span>חזרה לסולם הרמות</span>
+        </motion.button>
+        {canContinue && (
+          <button
+            onClick={onContinueAnyway}
+            className="w-full inline-flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-slate-700 py-1 transition-colors"
+          >
+            <span>המשך בכל זאת — אפתח את הרמה הבאה ואוסיף את השאלות לחזרה</span>
+            <ArrowLeft className="w-3 h-3" />
           </button>
         )}
       </div>

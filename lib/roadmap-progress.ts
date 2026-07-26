@@ -25,6 +25,7 @@ import { isSubTopicDone, markSubTopicDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
 import { getSubTopics } from '@/content/lessons';
 import { CORE_LEVELS, type RoadmapLevel, type RoadmapLevelKind } from '@/lib/roadmap-levels';
+import { didPass, computeStars, requiredCorrect } from '@/lib/roadmap-mastery';
 import type { StepStatus } from '@/types/roadmap';
 
 const STORAGE_KEY = 'bagrut-roadmap-v1';
@@ -35,11 +36,14 @@ export const PASS_DENOMINATOR = 3;
 
 type LevelRecord = {
   cleared: boolean;
-  /** Best stars (1-3) ever earned on this rung. */
+  /** Best stars (0-3) ever earned on this rung. */
   stars: number;
   bestScore?: number;
   total?: number;
   clearedAt?: number;
+  /** How many times the rung has been played (pass or fail). Drives the
+   *  "כמעט — נסה שוב" amber state and the "continue anyway" escape hatch. */
+  attempts?: number;
 };
 
 type NodeRecord = {
@@ -96,6 +100,22 @@ export function isLevelCleared(topic: string, subId: string, kind: RoadmapLevelK
 /** Stars earned on a rung (0 if untouched). */
 export function levelStars(topic: string, subId: string, kind: RoadmapLevelKind): number {
   return levelRec(readAll()[nodeKey(topic, subId)], kind)?.stars ?? 0;
+}
+
+/** How many times a rung has been played (0 if untouched). */
+export function levelAttempts(topic: string, subId: string, kind: RoadmapLevelKind): number {
+  return levelRec(readAll()[nodeKey(topic, subId)], kind)?.attempts ?? 0;
+}
+
+/** A rung the student has played but not yet cleared — shown amber ("כמעט —
+ *  נסה שוב"), never re-locked. */
+export function levelAttemptedNotCleared(
+  topic: string,
+  subId: string,
+  kind: RoadmapLevelKind,
+): boolean {
+  const lr = levelRec(readAll()[nodeKey(topic, subId)], kind);
+  return !!lr && !lr.cleared && (lr.attempts ?? 0) > 0;
 }
 
 /**
@@ -205,20 +225,35 @@ export type ClearResult = {
   justMastered: boolean;
 };
 
+export type AttemptResult = ClearResult & {
+  /** Did this play meet the rung's pass bar (or was it a forced continue)? */
+  passed: boolean;
+  /** Total plays of this rung so far (including this one). */
+  attempts: number;
+  score: number;
+  total: number;
+  /** How many correct answers the rung needed. */
+  requiredCorrect: number;
+};
+
 /**
- * Record a cleared rung. Keeps the best stars, awards XP on first clear, and —
- * when the core rungs are all cleared — marks the whole sub-topic done and
- * syncs to the existing progress stores (so the next sub-topic unlocks).
+ * Submit a rung play. Decides pass/fail against the mastery bar
+ * (lib/roadmap-mastery), records the attempt either way, and — only on a PASS —
+ * clears the rung, keeps the best stars, awards XP on first clear, and syncs to
+ * the legacy stores when the core rungs are all done (so the next sub-topic
+ * unlocks). A FAIL is recorded (attempts++) but never clears and never
+ * re-locks; the UI offers a retry. `force` clears the rung at 0★ (the
+ * "continue anyway" escape after repeated fails).
  */
-export function markLevelCleared(
+export function submitLevelResult(
   topic: string,
   subId: string,
   level: RoadmapLevel,
   levels: RoadmapLevel[],
-  stars: number,
   score: number,
   total: number,
-): ClearResult {
+  opts: { viaRetry?: boolean; force?: boolean } = {},
+): AttemptResult {
   const store = readAll();
   const key = nodeKey(topic, subId);
   const rec: NodeRecord = store[key] ?? {};
@@ -226,20 +261,29 @@ export function markLevelCleared(
   const prev = prevLevels[level.kind];
 
   const wasCoreDone = computeCoreDone(rec, topic, subId, levels);
-  const prevCleared = levels.filter((l) => !!prevLevels[l.kind]?.cleared).length;
-  const wasMastered = levels.length > 0 && prevCleared === levels.length;
+  const prevClearedCount = levels.filter((l) => !!prevLevels[l.kind]?.cleared).length;
+  const wasMastered = levels.length > 0 && prevClearedCount === levels.length;
 
-  const firstClear = !prev?.cleared;
-  const bestStars = Math.max(stars, prev?.stars ?? 0);
+  const passed = opts.force || didPass(level.kind, score, total);
+  const attempts = (prev?.attempts ?? 0) + 1;
+  const req = requiredCorrect(level.kind, total);
+  const earnedStars = passed
+    ? computeStars(level.kind, score, total, { viaRetry: opts.viaRetry, viaForce: opts.force })
+    : 0;
+  const firstClear = passed && !prev?.cleared;
+  // Never downgrade a rung already cleared (best stays best).
+  const cleared = passed || !!prev?.cleared;
+  const bestStars = Math.max(earnedStars, prev?.stars ?? 0);
 
   const nextLevels: NodeRecord['levels'] = {
     ...prevLevels,
     [level.kind]: {
-      cleared: true,
+      cleared,
       stars: bestStars,
       bestScore: Math.max(score, prev?.bestScore ?? 0),
       total,
-      clearedAt: prev?.clearedAt ?? Date.now(),
+      attempts,
+      clearedAt: cleared ? prev?.clearedAt ?? Date.now() : prev?.clearedAt,
     },
   };
 
@@ -269,6 +313,11 @@ export function markLevelCleared(
   }
 
   return {
+    passed,
+    attempts,
+    score,
+    total,
+    requiredCorrect: req,
     firstClear,
     xpGained: firstClear ? level.xp : 0,
     stars: bestStars,

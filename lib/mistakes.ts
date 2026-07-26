@@ -39,7 +39,7 @@ export function toErrorCategory(raw: unknown): ErrorCategory {
     : 'אחר';
 }
 
-export type MistakeSource = 'quiz' | 'drill' | 'bagrut' | 'scan' | 'thinking';
+export type MistakeSource = 'quiz' | 'drill' | 'bagrut' | 'scan' | 'thinking' | 'review';
 
 export type MistakeRecord = {
   id: string;
