@@ -119,3 +119,11 @@ export function canUseFeature(user: UserLike, feature: ProFeature): boolean {
 /** Free daily chat cap; Pro is unlimited. */
 export const FREE_DAILY_CHAT = 10;
 export const PRO_DAILY_CHAT = 200; // effectively unlimited, keeps a sane ceiling
+
+// Daily cap on LIVE AI question generation (/api/questions misses that fall
+// through to Anthropic). Static concept/lesson banks and the pre-generated
+// pool don't count — only a real ~$0.04 Sonnet call does. This bounds the
+// per-user cost exposure; the vast majority of quizzes now serve from static
+// banks and never reach the model.
+export const FREE_DAILY_AI_QUIZ = 30;
+export const PRO_DAILY_AI_QUIZ = 200;
