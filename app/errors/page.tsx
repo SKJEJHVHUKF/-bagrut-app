@@ -149,12 +149,21 @@ export default function ErrorsPage() {
             {/* Practice my mistakes */}
             {reviewList.length > 0 && (
               <div className="space-y-3">
+                {/* Primary: the spaced-repetition daily review (schedules the
+                    hard ones to come back). */}
+                <a
+                  href="/roadmap/review"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-rose-500 to-orange-500 hover:from-rose-400 hover:to-orange-400 px-5 py-3.5 rounded-2xl font-black text-white shadow-xl shadow-rose-500/25 transition-colors"
+                >
+                  🔁
+                  <span>התחל חזרה על הטעויות שלי</span>
+                </a>
                 <button
                   onClick={() => setReviewing((v) => !v)}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-3.5 rounded-2xl font-bold text-white shadow-xl shadow-indigo-500/25 transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-slate-900/[0.04] hover:bg-slate-900/[0.07] border border-slate-900/10 px-5 py-3 rounded-2xl font-bold text-slate-700 transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  <span>תרגל את הטעויות שלי ({reviewList.length})</span>
+                  <span>עיין ברשימה ({reviewList.length})</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${reviewing ? 'rotate-180' : ''}`} />
                 </button>
 

@@ -22,6 +22,7 @@ import {
 } from '@/lib/roadmap-progress';
 import type { SubTopic } from '@/content/lessons/types';
 import type { StepStatus } from '@/types/roadmap';
+import { seedFromClear } from '@/lib/review';
 import { StarRow } from './ladder-ui';
 import { LearnLevel } from './LearnLevel';
 import { RoadmapLevelRunner } from './RoadmapLevelRunner';
@@ -80,6 +81,8 @@ export function SubTopicLadder({
     if (res.passed) {
       if (res.justMastered || res.justCoreDone) celebrateCompletion();
       else if (res.firstClear) sparkle();
+      // Lightly schedule one question from this rung for a future memory check.
+      if (res.firstClear) seedFromClear(subject, topic, subTopic.id, level);
     }
     setVersion((v) => v + 1);
     return res;

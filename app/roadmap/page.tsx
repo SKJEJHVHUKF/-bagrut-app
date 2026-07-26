@@ -21,7 +21,9 @@ import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
 import { nodeStatus, countCompleted, nodeLevelSummary, type NodeLevelSummary } from '@/lib/roadmap-progress';
 import { getResumePoint } from '@/lib/roadmap-resume';
 import { computePacing } from '@/lib/pacing';
+import { dueCount, dueCountBySubTopic, backfillFromMistakes } from '@/lib/review';
 import { createClient } from '@/lib/supabase/client';
+import { RotateCcw } from 'lucide-react';
 import type { StepStatus, RoadmapNode } from '@/types/roadmap';
 
 const SUBJECT = 'math5';
@@ -48,6 +50,7 @@ export default function RoadmapPage() {
   const [syncTick, setSyncTick] = useState(0);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   useEffect(() => {
+    backfillFromMistakes(); // seed the review queue from past mistakes (once)
     setReady(true);
     setPaperState(getPaper() ?? DEFAULT_PAPER);
     setPlan(getPlan());
@@ -100,6 +103,13 @@ export default function RoadmapPage() {
     () => (ready ? computePacing(roadmap.mainTopics, levelsBySub, plan) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ready, roadmap, levelsBySub, plan, summaries],
+  );
+
+  // Spaced-repetition: how many questions are due for review today.
+  const reviewDue = useMemo(() => (ready ? dueCount() : 0), [ready, syncTick]);
+  const dueBySub = useMemo(
+    () => (ready ? dueCountBySubTopic() : {}),
+    [ready, syncTick],
   );
 
   return (
@@ -168,6 +178,30 @@ export default function RoadmapPage() {
             </div>
           </div>
         </motion.div>
+
+        {/* Daily spaced-repetition review — the highest-priority thing today */}
+        {reviewDue > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
+            <Link
+              href="/roadmap/review"
+              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-rose-500 to-orange-500 shadow-lg shadow-rose-500/25 hover:from-rose-400 hover:to-orange-400 transition-colors"
+            >
+              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl">
+                🔁
+              </div>
+              <div className="flex-1 min-w-0 text-white">
+                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">הכי חשוב היום</div>
+                <div className="text-sm font-black leading-tight mt-0.5">חזרה יומית · {reviewDue} שאלות</div>
+                <div className="text-[11px] text-white/80 mt-0.5">מחזק את מה שכבר למדת כדי שלא יישכח</div>
+              </div>
+              <RotateCcw className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-500 flex-shrink-0" />
+            </Link>
+          </motion.div>
+        )}
 
         {/* Anonymous students: nudge to sign in so progress isn't device-bound */}
         {signedIn === false && overallDone > 0 && (
@@ -309,6 +343,7 @@ export default function RoadmapPage() {
                         levelCount={levelsBySub[node.subId]?.length ?? 0}
                         prevTitle={prev?.title}
                         stepNumber={i + 1}
+                        reviewDue={dueBySub[node.subId] ?? 0}
                       />
                     );
                   })}
@@ -347,6 +382,7 @@ function RoadmapNodeCard({
   levelCount,
   prevTitle,
   stepNumber,
+  reviewDue,
 }: {
   node: RoadmapNode;
   status: StepStatus;
@@ -354,6 +390,7 @@ function RoadmapNodeCard({
   levelCount: number;
   prevTitle?: string;
   stepNumber: number;
+  reviewDue: number;
 }) {
   const mastered = !!summary?.mastered;
   const done = status === 'COMPLETED';
@@ -427,6 +464,11 @@ function RoadmapNodeCard({
                   <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-600">
                     <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
                     {summary.stars}
+                  </span>
+                )}
+                {reviewDue > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-rose-600 bg-rose-500/10 border border-rose-500/25 rounded-full px-1.5">
+                    🔁 {reviewDue}
                   </span>
                 )}
               </div>

@@ -25,6 +25,7 @@ import { checkAnswer, type CheckResult } from '@/lib/answer-check';
 import { recordResult, type ResultSource } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
 import type { ErrorCategory } from '@/lib/mistakes';
+import { seedFromMiss, gradeReview } from '@/lib/review';
 import type { PracticeQuestion } from '@/content/lessons/types';
 
 const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה'];
@@ -78,6 +79,10 @@ export function QuestionRunnerCard({
   // attempts also seed the error notebook and give us a mistakeId to tag.
   function logFirst(correct: boolean, userAnswer?: string) {
     recordResult({ subject, topic, subTopicId: subId, questionId: q.id, source, difficulty: q.difficulty, correct });
+    // Spaced repetition: a review answer re-schedules the card; a fresh miss in
+    // a practice rung drops the question into the review queue (box 1).
+    if (source === 'review') gradeReview(q.id, correct);
+    else if (!correct) seedFromMiss({ subject, topic, subTopicId: subId, questionId: q.id });
     if (!correct) {
       const id = recordMistake({
         subject,
