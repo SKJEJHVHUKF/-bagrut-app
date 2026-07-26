@@ -35,6 +35,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
 import { currentStreak } from '@/lib/results';
+import { initSync, syncNow } from '@/lib/sync/roadmap-sync';
 import {
   getUnitLevel,
   setUnitLevel,
@@ -122,6 +123,14 @@ export default function AppChrome() {
       sub.subscription.unsubscribe();
     };
   }, [hidden, pathname]);
+
+  // Cross-device sync: start the push/pull loop once, and re-sync (adopt local
+  // progress + pull remote) whenever the signed-in user changes — this is the
+  // moment an anonymous student who just signed up keeps everything they did.
+  useEffect(() => initSync(), []);
+  useEffect(() => {
+    if (profile?.email) void syncNow();
+  }, [profile?.email]);
 
   // Streak + unit level + active paper are client-only (localStorage) —
   // read on drawer open.

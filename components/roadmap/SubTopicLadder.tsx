@@ -45,7 +45,19 @@ export function SubTopicLadder({
   const [ready, setReady] = useState(false);
   const [version, setVersion] = useState(0); // bump to recompute after a clear
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  useEffect(() => setReady(true), []);
+  useEffect(() => {
+    setReady(true);
+    // Deep-link: /roadmap/<sub>?level=<kind> opens that rung directly (used by
+    // "continue where you left off" and the "back to the explanation" link).
+    const kind = new URLSearchParams(window.location.search).get('level');
+    if (kind) {
+      const idx = levels.findIndex((l) => l.kind === kind);
+      if (idx >= 0 && levelStatus(topic, subTopic.id, levels[idx], levels) !== 'LOCKED') {
+        setOpenIndex(idx);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Recompute derived progress whenever storage changes (version) or mount.
   const summary = useMemo(

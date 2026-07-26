@@ -79,6 +79,8 @@ function writeAll(store: RoadmapStore) {
   if (!isBrowser()) return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    // Nudge the sync layer (if mounted) to push this change to the server.
+    window.dispatchEvent(new Event('bagrut-state-dirty'));
   } catch {
     // quota / disabled — ignore
   }
