@@ -295,77 +295,114 @@ export async function POST(request: Request) {
       { role: 'user', content: lastUserContent },
     ];
 
-    const completion = await client.messages.create({
-      model,
-      // 800 caps the assistant reply at roughly 3-5 short paragraphs.
-      max_tokens: 800,
-      // Cost valve: a tutor that gives ONE hint at a time (see the tutor-bar
-      // prompt) doesn't need deep reasoning. effort:'low' on Sonnet 4.6 cuts
-      // token spend materially vs the default 'high' with no quality loss for
-      // this short-turn workload (Anthropic's own guidance for chat). thinking
-      // stays off by omission on 4.6. output_config is passed through via `as
-      // any` — same shape the questions route already uses.
-      // Prompt caching: the system block (persona + grounding) is static per
-      // topic and re-sent every turn of a multi-turn tutoring chat — caching
-      // it cuts the dominant input cost by ~90% within the 5-minute TTL.
-      system: [
-        {
-          type: 'text' as const,
-          text: systemPrompt,
-          cache_control: { type: 'ephemeral' as const },
-        },
-      ],
-      messages: claudeMessages,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...({ output_config: { effort: 'low' } } as any),
+    // ===== 11. STREAM THE REPLY (SSE) =====
+    // Streaming is the single biggest perceived-latency win: the student sees
+    // the hint form word-by-word instead of staring at a spinner for seconds.
+    // Same tokens, same cost. The persist/quota/conversation logic runs after
+    // the stream completes, inside the stream body.
+    const encoder = new TextEncoder();
+    const remaining = Math.max(0, dailyCap - (used + 1));
+
+    const sseStream = new ReadableStream({
+      async start(controller) {
+        const send = (event: string, data: unknown) => {
+          controller.enqueue(
+            encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+          );
+        };
+
+        // First frame: id + remaining, so the client can adopt the new
+        // conversation and update the counter before any token arrives.
+        send('meta', {
+          conversationId: convEnabled ? convId : null,
+          remaining,
+        });
+
+        let fullText = '';
+        let usageIn = 0;
+        let usageOut = 0;
+
+        try {
+          const stream = client.messages.stream({
+            model,
+            // 800 caps the assistant reply at roughly 3-5 short paragraphs.
+            max_tokens: 800,
+            // Cost valve: a tutor that gives ONE hint at a time (see the
+            // tutor-bar prompt) doesn't need deep reasoning. effort:'low' on
+            // Sonnet 4.6 cuts token spend vs the default 'high' with no quality
+            // loss for this short-turn workload. thinking stays off by omission
+            // on 4.6. Prompt caching: the system block (persona + grounding) is
+            // static per topic and re-sent every turn — caching cuts the
+            // dominant input cost by ~90% within the 5-minute TTL.
+            system: [
+              {
+                type: 'text' as const,
+                text: systemPrompt,
+                cache_control: { type: 'ephemeral' as const },
+              },
+            ],
+            messages: claudeMessages,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ...({ output_config: { effort: 'low' } } as any),
+          });
+
+          stream.on('text', (delta: string) => {
+            fullText += delta;
+            send('delta', { text: delta });
+          });
+
+          const final = await stream.finalMessage();
+          const block = final.content[0];
+          if (block && block.type === 'text' && block.text.trim()) {
+            fullText = block.text; // authoritative
+          }
+          usageIn = final.usage.input_tokens;
+          usageOut = final.usage.output_tokens;
+        } catch (streamErr) {
+          console.error('Chat stream error:', streamErr);
+          send('error', { error: "שגיאת צ'אט. נסה שוב." });
+          controller.close();
+          return;
+        }
+
+        // ===== persist assistant reply (best-effort, after the stream) =====
+        if (fullText.trim()) {
+          const assistantRow: Record<string, unknown> = {
+            role: 'assistant',
+            content: fullText,
+            tokens_in: usageIn,
+            tokens_out: usageOut,
+          };
+          if (convEnabled && convId) assistantRow.conversation_id = convId;
+          const { error: insertAssistantError } = await supabase
+            .from('chat_messages')
+            .insert(assistantRow);
+          if (insertAssistantError) {
+            console.error('insert assistant msg error:', insertAssistantError);
+          }
+
+          // Touch the conversation so it sorts to the top of the sidebar.
+          if (convEnabled && convId) {
+            const { error: touchErr } = await supabase
+              .from('conversations')
+              .update({ updated_at: new Date().toISOString() })
+              .eq('id', convId);
+            if (touchErr) console.error('conversation touch error:', touchErr.message);
+          }
+        }
+
+        send('done', { reply: fullText });
+        controller.close();
+      },
     });
 
-    const reply = completion.content[0];
-    if (reply.type !== 'text' || !reply.text.trim()) {
-      throw new Error('Unexpected response shape from Claude');
-    }
-
-    // ===== 11. INSERT ASSISTANT REPLY =====
-    const assistantRow: Record<string, unknown> = {
-      role: 'assistant',
-      content: reply.text,
-      tokens_in: completion.usage.input_tokens,
-      tokens_out: completion.usage.output_tokens,
-    };
-    if (convEnabled && convId) assistantRow.conversation_id = convId;
-    const { error: insertAssistantError } = await supabase
-      .from('chat_messages')
-      .insert(assistantRow);
-
-    if (insertAssistantError) {
-      // Not fatal — user got their reply, we just couldn't persist.
-      // Log and continue; the UI will show the reply but it won't be in
-      // history on next page load.
-      console.error('insert assistant msg error:', insertAssistantError);
-    }
-
-    // Touch the conversation so it sorts to the top of the sidebar.
-    // Best-effort — never block the reply on it.
-    if (convEnabled && convId) {
-      void supabase
-        .from('conversations')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', convId)
-        .then(({ error }) => {
-          if (error) console.error('conversation touch error:', error.message);
-        });
-    }
-
-    return Response.json(
-      {
-        reply: reply.text,
-        conversationId: convEnabled ? convId : null,
-        remaining: Math.max(0, dailyCap - (used + 1)),
+    return new Response(sseStream, {
+      headers: {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        Connection: 'keep-alive',
       },
-      {
-        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' },
-      }
-    );
+    });
   } catch (error) {
     console.error('Chat error:', error);
     return Response.json(
