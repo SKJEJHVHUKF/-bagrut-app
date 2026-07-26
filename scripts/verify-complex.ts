@@ -132,6 +132,11 @@ check('eq-011 z=2i solves z²−(2+2i)z+4i', (() => {
   return C(powN(z, 2).re - mul(C(2, 2), z).re + 0, powN(z, 2).im - mul(C(2, 2), z).im + 4);
 })(), C(0, 0));
 check('eq-012 (3+2i)²', powN(C(3, 2), 2), C(5, 12));
+// eq-006 Vieta: sum of roots of z²−6z+13 = −b/a = 6
+checkNum('eq-006 sum of roots', -(-6) / 1, 6);
+// eq-013 z²−2z+5 roots 1±2i; distance |z1−z2| = |4i| = 4
+check('eq-013 1+2i solves z²−2z+5', quadHolds(C(1, 2), -2, 5), C(0, 0));
+checkNum('eq-013 root distance', absC(C(0, 4)), 4);
 
 // ===== finding-z =====
 check('find-001 5cis60°', cis(5, 60), C(2.5, 2.5 * S3));
