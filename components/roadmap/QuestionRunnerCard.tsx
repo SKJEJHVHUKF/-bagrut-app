@@ -303,6 +303,26 @@ export function QuestionRunnerCard({
             style={{ overflow: 'hidden' }}
             className="space-y-3"
           >
+            {/* FREE, static "why did I get it wrong?" for MCQ — no API. Names the
+                specific wrong option the student picked vs the correct one, plus
+                an authored per-distractor note when available. */}
+            {wrong && q.kind === 'mcq' && selected !== null && q.answers && q.correct != null && (
+              <div className="bg-rose-500/[0.06] border border-rose-500/25 rounded-2xl p-4">
+                <div className="text-[10px] font-black tracking-widest text-rose-700 uppercase mb-1.5 flex items-center gap-1.5">
+                  <XCircle className="w-3 h-3" /> למה טעית?
+                </div>
+                <div className="text-sm text-slate-800 chat-md leading-relaxed">
+                  סימנת <span className="font-bold text-rose-800"><MathText inline>{q.answers[selected]}</MathText></span>,
+                  {' '}אבל התשובה הנכונה היא{' '}
+                  <span className="font-bold text-emerald-800"><MathText inline>{q.answers[q.correct]}</MathText></span>.
+                </div>
+                {q.distractorNotes?.[selected] && (
+                  <div className="mt-2 text-sm text-rose-900 chat-md leading-relaxed">
+                    <MathText>{q.distractorNotes[selected]!}</MathText>
+                  </div>
+                )}
+              </div>
+            )}
             {wrong && (
               <div className="flex items-center gap-1.5 text-sm font-bold text-rose-700">
                 <XCircle className="w-4 h-4" /> לא נורא — ככה פותרים, שלב אחר שלב:

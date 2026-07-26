@@ -179,6 +179,11 @@ export type PracticeQuestion = {
   answers?: string[];
   /** MCQ-only: index of the correct option in `answers`. */
   correct?: number;
+  /** MCQ-only, OPTIONAL: per-option "why this is a mistake" note, aligned to
+   *  `answers` (the distractors are authored as real misconceptions, so this
+   *  gives a FREE, static, targeted "why did I get it wrong?" — no API. Leave an
+   *  entry empty/undefined for the correct option or where not yet authored. */
+  distractorNotes?: (string | undefined)[];
 
   /** Optional single hint shown before the student opens the full solution. */
   hint?: string;
