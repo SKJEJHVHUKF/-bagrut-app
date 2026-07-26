@@ -299,12 +299,6 @@ export async function POST(request: Request) {
       model,
       // 800 caps the assistant reply at roughly 3-5 short paragraphs.
       max_tokens: 800,
-      // Cost valve: a tutor that gives ONE hint at a time (see the tutor-bar
-      // prompt) doesn't need deep reasoning. effort:'low' on Sonnet 4.6 cuts
-      // token spend materially vs the default 'high' with no quality loss for
-      // this short-turn workload (Anthropic's own guidance for chat). thinking
-      // stays off by omission on 4.6. output_config is passed through via `as
-      // any` — same shape the questions route already uses.
       // Prompt caching: the system block (persona + grounding) is static per
       // topic and re-sent every turn of a multi-turn tutoring chat — caching
       // it cuts the dominant input cost by ~90% within the 5-minute TTL.
@@ -316,8 +310,14 @@ export async function POST(request: Request) {
         },
       ],
       messages: claudeMessages,
+      // Cost valve: effort:'low' cuts token spend on the grounded Sonnet path
+      // (a tutor giving ONE hint doesn't need deep reasoning) with no quality
+      // loss for this short-turn workload. ⚠️ effort is ONLY supported on
+      // Sonnet/Opus — Haiku 4.5 (the ungrounded path) 400s with "This model
+      // does not support the effort parameter", so gate it on useSonnet.
+      // Haiku is already the cheap tier, so it needs no valve anyway.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...({ output_config: { effort: 'low' } } as any),
+      ...(useSonnet ? ({ output_config: { effort: 'low' } } as any) : {}),
     });
 
     const reply = completion.content[0];
