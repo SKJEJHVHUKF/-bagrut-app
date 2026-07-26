@@ -11,6 +11,8 @@
  *        מקום גאומטרי → פרבולה $y^2 = 4x$, ושני מעגלים משיקים.
  *   Q2 — וקטורים במרחב: פירמידה SABCD עם בסיס ריבוע — הבעת וקטורים, מכפלה
  *        סקלרית, זווית בין ישר למישור, משוואת מישור הבסיס ושיעורי קדקוד.
+ *   Q3 — מספרים מרוכבים: פתרון $z^6 + 729i = 0$, פסילת שורשי המכנה, שטח מרובע
+ *        במישור גאוס, וסיבוב — מכפלת הקדקודים כפונקציה של זווית הסיבוב.
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -512,6 +514,225 @@ export const bagrut2024Summer572MoedB: PastBagrutQuestion[] = [
             'לכן $\\;B(3, 0, 5)$.',
           ],
           final_answer: '$B(3,\\, 0,\\, 5)$',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+  {
+    id: 'b2024s572b-q3',
+    year: 2024,
+    season: 'summer',
+    moed: 'b',
+    paper: '572',
+    questionNumber: 3,
+    topic: 'מספרים מרוכבים',
+    // הערה: ניקוד השאלה הוא הערכה — יש לאמת מול השאלון הרשמי.
+    totalPoints: 25,
+    context:
+      'בשאלה זו נעבוד עם מספרים מרוכבים בהצגה קוטבית ($r\\,\\operatorname{cis}\\,\\theta$, בזוויות במעלות), ונשתמש בהם כקדקודים של מרובע במישור גאוס.',
+    parts: [
+      {
+        label: 'א1',
+        prompt: 'מצאו את פתרונות המשוואה $z^6 + 729i = 0$ (כאשר $z$ מספר מרוכב).',
+        answer_type: 'expression',
+        hints: [
+          'העבירו אגף: $z^6 = -729i$, וכתבו את $-729i$ בהצגה קוטבית.',
+          '$-729i = 729\\,\\operatorname{cis}\\,270°$. הוציאו שורש שישי — שורש מהרדיוס, והזווית $\\dfrac{270° + 360°k}{6}$.',
+          '$\\sqrt[6]{729} = 3$, והזוויות יוצאות $45° + 60°k$ עבור $k = 0, 1, \\dots, 5$.',
+        ],
+        solution: {
+          steps: [
+            'מעבירים אגף: $\\;z^6 = -729i$.',
+            'כותבים את $-729i$ בהצגה קוטבית: $\\;z^6 = 729\\,\\operatorname{cis}\\,270°$.',
+            'מוציאים שורש שישי — שורש מהרדיוס וחלוקת הזווית: $\\;z_k = \\sqrt[6]{729}\\,\\operatorname{cis}\\!\\left(\\dfrac{270° + 360°k}{6}\\right)$.',
+            'מציבים $\\sqrt[6]{729} = 3$ (כי $3^6 = 729$): $\\;z_k = 3\\,\\operatorname{cis}(45° + 60°k)$.',
+            'מציבים $k = 0, 1, 2$: $\\;z_0 = 3\\,\\operatorname{cis}\\,45°,\\quad z_1 = 3\\,\\operatorname{cis}\\,105°,\\quad z_2 = 3\\,\\operatorname{cis}\\,165°$.',
+            'מציבים $k = 3, 4, 5$: $\\;z_3 = 3\\,\\operatorname{cis}\\,225°,\\quad z_4 = 3\\,\\operatorname{cis}\\,285°,\\quad z_5 = 3\\,\\operatorname{cis}\\,345°$.',
+          ],
+          final_answer:
+            'ששת הפתרונות: $\\;3\\,\\operatorname{cis}\\,45°,\\ 105°,\\ 165°,\\ 225°,\\ 285°,\\ 345°$ (כולם ברדיוס $3$).',
+        },
+      },
+      {
+        label: 'א2',
+        prompt: 'מצאו את ארבעת הפתרונות של המשוואה $\\dfrac{z^6 + 729i}{z^2 - 9i} = 0$ (כאשר $z$ מספר מרוכב).',
+        answer_type: 'expression',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 280 240',
+            svg: `
+              <line x1="55" y1="120" x2="230" y2="120" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <line x1="140" y1="35" x2="140" y2="210" stroke="rgba(51,65,85,0.5)" stroke-width="1"/>
+              <text x="232" y="124" fill="#475569" font-size="10" font-family="Heebo, sans-serif">Re</text>
+              <text x="124" y="40" fill="#475569" font-size="10" font-family="Heebo, sans-serif">Im</text>
+              <circle cx="140" cy="120" r="70" fill="none" stroke="rgba(100,116,139,0.4)" stroke-width="1" stroke-dasharray="4,3"/>
+              <circle cx="121.9" cy="52.4" r="3" fill="#2563EB"/>
+              <text x="112" y="42" fill="#2563EB" font-size="10" font-family="Heebo, sans-serif">z₁</text>
+              <circle cx="72.4" cy="101.9" r="3" fill="#2563EB"/>
+              <text x="52" y="99" fill="#2563EB" font-size="10" font-family="Heebo, sans-serif">z₂</text>
+              <circle cx="158.1" cy="187.6" r="3" fill="#2563EB"/>
+              <text x="157" y="210" fill="#2563EB" font-size="10" font-family="Heebo, sans-serif">z₄</text>
+              <circle cx="207.6" cy="138.1" r="3" fill="#2563EB"/>
+              <text x="216" y="144" fill="#2563EB" font-size="10" font-family="Heebo, sans-serif">z₅</text>
+              <circle cx="189.5" cy="70.5" r="3.6" fill="none" stroke="#DC2626" stroke-width="1.3"/>
+              <line x1="187" y1="68" x2="192" y2="73" stroke="#DC2626" stroke-width="1.1"/>
+              <line x1="192" y1="68" x2="187" y2="73" stroke="#DC2626" stroke-width="1.1"/>
+              <text x="197" y="60" fill="#DC2626" font-size="10" font-family="Heebo, sans-serif">z₀</text>
+              <circle cx="90.5" cy="169.5" r="3.6" fill="none" stroke="#DC2626" stroke-width="1.3"/>
+              <line x1="88" y1="167" x2="93" y2="172" stroke="#DC2626" stroke-width="1.1"/>
+              <line x1="93" y1="167" x2="88" y2="172" stroke="#DC2626" stroke-width="1.1"/>
+              <text x="72" y="184" fill="#DC2626" font-size="10" font-family="Heebo, sans-serif">z₃</text>
+              <circle cx="140" cy="120" r="1.8" fill="#334155"/>
+            `,
+            caption:
+              'ששת הפתרונות של $z^6 = -729i$ על מעגל שרדיוסו $3$. בסעיף א2 נפסלים $z_0$ ($45°$) ו-$z_3$ ($225°$) — הם מאפסים את המכנה $z^2 - 9i$ (מסומנים באדום); נשארים ארבעת קדקודי המרובע (בכחול).',
+          },
+        ],
+        hints: [
+          'שבר שווה $0$ כאשר המונה מתאפס וגם המכנה שונה מ-$0$. המונה נותן את ששת הפתרונות מסעיף א1.',
+          'מוצאים אילו פתרונות מאפסים את המכנה: $z^2 - 9i = 0$, כלומר $z^2 = 9i$.',
+          '$z^2 = 9\\,\\operatorname{cis}\\,90°$ נותן $z = 3\\,\\operatorname{cis}\\,45°$ ו-$z = 3\\,\\operatorname{cis}\\,225°$ — אלה נפסלים.',
+        ],
+        solution: {
+          steps: [
+            'שבר שווה $0$ רק כאשר המונה מתאפס והמכנה שונה מ-$0$.',
+            'המונה $z^6 + 729i = 0$ נותן את ששת הפתרונות מסעיף א1.',
+            'נמצא אילו מהם מאפסים את המכנה: $\\;z^2 - 9i = 0$, כלומר $z^2 = 9i$.',
+            'בהצגה קוטבית: $\\;z^2 = 9\\,\\operatorname{cis}\\,90°$.',
+            'שורש ריבועי: $\\;z = 3\\,\\operatorname{cis}(45° + 180°k)$, כלומר $z = 3\\,\\operatorname{cis}\\,45°$ או $z = 3\\,\\operatorname{cis}\\,225°$.',
+            'שני אלה ($z_0$ ו-$z_3$) מאפסים את המכנה, ולכן הם נפסלים.',
+            'נשארים ארבעת הפתרונות: $\\;z_1 = 3\\,\\operatorname{cis}\\,105°,\\quad z_2 = 3\\,\\operatorname{cis}\\,165°,\\quad z_4 = 3\\,\\operatorname{cis}\\,285°,\\quad z_5 = 3\\,\\operatorname{cis}\\,345°$.',
+          ],
+          final_answer:
+            'ארבעת הפתרונות: $\\;3\\,\\operatorname{cis}\\,105°,\\ 3\\,\\operatorname{cis}\\,165°,\\ 3\\,\\operatorname{cis}\\,285°,\\ 3\\,\\operatorname{cis}\\,345°$.',
+        },
+      },
+      {
+        label: 'ב',
+        prompt:
+          'הפתרונות שמצאתם בסעיף א2 מייצגים קדקודים של מרובע במישור גאוס. מצאו את שטח המרובע.',
+        answer_type: 'number',
+        diagrams: [
+          {
+            type: 'custom',
+            viewBox: '0 0 280 240',
+            svg: `
+              <line x1="55" y1="120" x2="230" y2="120" stroke="rgba(51,65,85,0.45)" stroke-width="1"/>
+              <line x1="140" y1="35" x2="140" y2="210" stroke="rgba(51,65,85,0.45)" stroke-width="1"/>
+              <text x="232" y="124" fill="#475569" font-size="10" font-family="Heebo, sans-serif">Re</text>
+              <text x="124" y="40" fill="#475569" font-size="10" font-family="Heebo, sans-serif">Im</text>
+              <circle cx="140" cy="120" r="70" fill="none" stroke="rgba(100,116,139,0.35)" stroke-width="1" stroke-dasharray="4,3"/>
+              <polygon points="121.9,52.4 72.4,101.9 158.1,187.6 207.6,138.1" fill="rgba(124,58,237,0.09)" stroke="rgba(124,58,237,0.9)" stroke-width="1.5"/>
+              <line x1="140" y1="120" x2="121.9" y2="52.4" stroke="rgba(100,116,139,0.6)" stroke-width="0.9" stroke-dasharray="3,2"/>
+              <line x1="140" y1="120" x2="72.4" y2="101.9" stroke="rgba(100,116,139,0.6)" stroke-width="0.9" stroke-dasharray="3,2"/>
+              <line x1="140" y1="120" x2="158.1" y2="187.6" stroke="rgba(100,116,139,0.6)" stroke-width="0.9" stroke-dasharray="3,2"/>
+              <line x1="140" y1="120" x2="207.6" y2="138.1" stroke="rgba(100,116,139,0.6)" stroke-width="0.9" stroke-dasharray="3,2"/>
+              <text x="112" y="93" fill="#B45309" font-size="8.5" font-family="Heebo, sans-serif">60°</text>
+              <text x="110" y="150" fill="#B45309" font-size="8.5" font-family="Heebo, sans-serif">120°</text>
+              <text x="152" y="150" fill="#B45309" font-size="8.5" font-family="Heebo, sans-serif">60°</text>
+              <text x="150" y="93" fill="#B45309" font-size="8.5" font-family="Heebo, sans-serif">120°</text>
+              <circle cx="121.9" cy="52.4" r="3" fill="#2563EB"/>
+              <text x="112" y="42" fill="#2563EB" font-size="10" font-family="Heebo, sans-serif">z₁</text>
+              <circle cx="72.4" cy="101.9" r="3" fill="#2563EB"/>
+              <text x="52" y="99" fill="#2563EB" font-size="10" font-family="Heebo, sans-serif">z₂</text>
+              <circle cx="158.1" cy="187.6" r="3" fill="#2563EB"/>
+              <text x="157" y="210" fill="#2563EB" font-size="10" font-family="Heebo, sans-serif">z₄</text>
+              <circle cx="207.6" cy="138.1" r="3" fill="#2563EB"/>
+              <text x="216" y="144" fill="#2563EB" font-size="10" font-family="Heebo, sans-serif">z₅</text>
+              <circle cx="140" cy="120" r="1.8" fill="#334155"/>
+              <text x="143" y="132" fill="#475569" font-size="9" font-family="Heebo, sans-serif">O</text>
+            `,
+            caption:
+              'המרובע $z_1 z_2 z_4 z_5$ (רדיוס $3$). מחברים את המרכז $O$ לקדקודים; הזוויות המרכזיות הן $60°, 120°, 60°, 120°$. השטח הוא סכום ארבעת המשולשים: $S = 9\\sqrt{3}$.',
+          },
+        ],
+        hints: [
+          'כל ארבעת הקדקודים על מעגל ברדיוס $3$. חברו את המרכז $O$ לכל קדקוד — נוצרים ארבעה משולשים.',
+          'הזוויות המרכזיות הן ההפרשים בין הזוויות הסמוכות: $60°, 120°, 60°, 120°$.',
+          'שטח משולש עם שתי צלעות $3$ וזווית $\\theta$ ביניהן: $\\dfrac{1}{2} \\cdot 3 \\cdot 3 \\cdot \\sin\\theta$.',
+        ],
+        solution: {
+          steps: [
+            'ארבעת הקדקודים על מעגל שרדיוסו $3$, בזוויות $105°, 165°, 285°, 345°$.',
+            'מחברים את המרכז $O$ לכל קדקוד ומקבלים ארבעה משולשים.',
+            'הזוויות המרכזיות (הפרשי הזוויות הסמוכות): $\\;60°,\\ 120°,\\ 60°,\\ 120°$ (סכומן $360°$).',
+            'שטח משולש עם צלעות $3, 3$ וזווית $60°$: $\\;\\dfrac{3 \\cdot 3 \\cdot \\sin 60°}{2} = \\dfrac{9\\sqrt{3}}{4}$.',
+            'שטח משולש עם זווית $120°$: $\\;\\dfrac{3 \\cdot 3 \\cdot \\sin 120°}{2} = \\dfrac{9\\sqrt{3}}{4}$ (כי $\\sin 120° = \\sin 60°$).',
+            'יש שני משולשים מכל סוג, ולכן: $\\;S = 4 \\cdot \\dfrac{9\\sqrt{3}}{4}$.',
+            'מפשטים: $\\;S = 9\\sqrt{3}$.',
+          ],
+          final_answer: 'שטח המרובע: $\\;S = 9\\sqrt{3} \\approx 15.59$.',
+        },
+      },
+      {
+        label: 'ג',
+        prompt: [
+          'מסובבים את המרובע סביב הראשית בזווית $\\alpha$ נגד כיוון השעון ($0° < \\alpha < 90°$).',
+          '',
+          'מהו הערך של מכפלת כל המספרים המייצגים את קדקודי המרובע בעבור $\\alpha = 45°$? נמקו את תשובתכם.',
+        ].join('\n'),
+        answer_type: 'number',
+        hints: [
+          'סיבוב בזווית $\\alpha$ נגד כיוון השעון = כפל כל מספר ב-$\\operatorname{cis}\\,\\alpha$. יש ארבעה קדקודים, ולכן המכפלה נכפלת ב-$\\operatorname{cis}\\,4\\alpha$.',
+          'מכפלת הקדקודים המקוריים: $\\;3^4\\,\\operatorname{cis}(105° + 165° + 285° + 345°)$.',
+          'סכום הזוויות $900°$, ו-$\\operatorname{cis}\\,900° = \\operatorname{cis}\\,180° = -1$.',
+        ],
+        solution: {
+          steps: [
+            'סיבוב בזווית $\\alpha$ נגד כיוון השעון פירושו כפל כל קדקוד ב-$\\operatorname{cis}\\,\\alpha$.',
+            'לאחר הסיבוב הקדקודים הם $\\;3\\,\\operatorname{cis}(105° + \\alpha),\\ \\dots,\\ 3\\,\\operatorname{cis}(345° + \\alpha)$.',
+            'מכפלת ארבעתם: $\\;3^4\\,\\operatorname{cis}(105° + 165° + 285° + 345°) \\cdot \\operatorname{cis}(4\\alpha)$.',
+            'מחשבים רדיוס וסכום זוויות: $\\;81\\,\\operatorname{cis}\\,900° \\cdot \\operatorname{cis}(4\\alpha)$.',
+            'מצמצמים $\\operatorname{cis}\\,900° = \\operatorname{cis}\\,180° = -1$: $\\;-81\\,\\operatorname{cis}(4\\alpha)$.',
+            'מציבים $\\alpha = 45°$: $\\;-81\\,\\operatorname{cis}(4 \\cdot 45°) = -81\\,\\operatorname{cis}\\,180°$.',
+            'ומכיוון ש-$\\operatorname{cis}\\,180° = -1$: $\\;-81 \\cdot (-1) = 81$.',
+          ],
+          final_answer: 'המכפלה בעבור $\\alpha = 45°$ היא $\\;81$ (מספר ממשי).',
+        },
+      },
+      {
+        label: 'ד1',
+        prompt: [
+          'ממשיכים עם הסיבוב בזווית $\\alpha$ (נגד כיוון השעון, $0° < \\alpha < 90°$).',
+          '',
+          'מצאו את שני הערכים של $\\alpha$ שעבורם מכפלת כל המספרים המייצגים את קדקודי המרובע לאחר הסיבוב היא מספר מדומה טהור.',
+        ].join('\n'),
+        answer_type: 'number',
+        hints: [
+          'מסעיף ג, המכפלה לאחר הסיבוב היא $-81\\,\\operatorname{cis}(4\\alpha)$.',
+          'מספר מדומה טהור ⟺ החלק הממשי מתאפס ⟺ $\\operatorname{cis}(4\\alpha) = \\pm i$.',
+          '$\\operatorname{cis}(4\\alpha) = \\pm i$ כאשר $4\\alpha = 90°$ או $4\\alpha = 270°$ (בתחום הנתון).',
+        ],
+        solution: {
+          steps: [
+            'מסעיף ג, המכפלה לאחר סיבוב בזווית $\\alpha$ היא $\\;-81\\,\\operatorname{cis}(4\\alpha)$.',
+            'המכפלה מדומה טהורה כאשר חלקהּ הממשי מתאפס, כלומר $\\;\\operatorname{cis}(4\\alpha) = \\pm i$.',
+            'הערך $\\operatorname{cis}(4\\alpha) = i$ מתקבל כאשר $\\;4\\alpha = 90°$.',
+            'הערך $\\operatorname{cis}(4\\alpha) = -i$ מתקבל כאשר $\\;4\\alpha = 270°$.',
+            'מחלקים ב-$4$: $\\;\\alpha = 22.5°$ או $\\alpha = 67.5°$.',
+            'שני הערכים נמצאים בתחום $0° < \\alpha < 90°$.',
+          ],
+          final_answer: '$\\alpha = 22.5°$ או $\\alpha = 67.5°$.',
+        },
+      },
+      {
+        label: 'ד2',
+        prompt: 'מהו הערך של המכפלה בעבור כל אחד מן הערכים של $\\alpha$ שמצאתם?',
+        answer_type: 'expression',
+        hints: [
+          'הציבו כל ערך של $\\alpha$ בביטוי $-81\\,\\operatorname{cis}(4\\alpha)$.',
+          'עבור $\\alpha = 22.5°$: $\\;4\\alpha = 90°$ ו-$\\operatorname{cis}\\,90° = i$.',
+          'עבור $\\alpha = 67.5°$: $\\;4\\alpha = 270°$ ו-$\\operatorname{cis}\\,270° = -i$.',
+        ],
+        solution: {
+          steps: [
+            'מציבים בביטוי $-81\\,\\operatorname{cis}(4\\alpha)$ מסעיף ד1.',
+            'עבור $\\alpha = 22.5°$: $\\;-81\\,\\operatorname{cis}\\,90° = -81 \\cdot i = -81i$.',
+            'עבור $\\alpha = 67.5°$: $\\;-81\\,\\operatorname{cis}\\,270° = -81 \\cdot (-i) = 81i$.',
+          ],
+          final_answer: 'בעבור $\\alpha = 22.5°$ המכפלה היא $-81i$, ובעבור $\\alpha = 67.5°$ המכפלה היא $81i$.',
         },
       },
     ],
