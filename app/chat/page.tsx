@@ -263,23 +263,79 @@ export default function ChatPage() {
         throw new Error(serverMsg || `HTTP ${res.status}`);
       }
 
-      const data = await res.json();
-      if (!data.reply) throw new Error('No reply field in response');
+      // ===== consume the SSE stream =====
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No response stream');
+      const decoder = new TextDecoder();
+      const assistantId = `assist-${Date.now()}`;
+      let buf = '';
+      let acc = '';
+      let created = false;
+      let streamErr: string | null = null;
 
-      const assistantMsg: ChatMessage = {
-        id: `assist-${Date.now()}`,
-        role: 'assistant',
-        content: data.reply,
-        created_at: new Date().toISOString(),
+      const applyEvent = (event: string, dataStr: string) => {
+        let data: {
+          text?: string;
+          reply?: string;
+          error?: string;
+          remaining?: number;
+          conversationId?: string | null;
+        };
+        try {
+          data = JSON.parse(dataStr);
+        } catch {
+          return;
+        }
+        if (event === 'meta') {
+          if (typeof data.remaining === 'number') setRemaining(data.remaining);
+          if (data.conversationId) {
+            const isNew = data.conversationId !== conversationId;
+            setConversationId(data.conversationId);
+            if (isNew) loadConversations();
+          }
+        } else if (event === 'delta') {
+          acc += data.text ?? '';
+          if (!created) {
+            created = true;
+            setMessages((m) => [
+              ...m,
+              { id: assistantId, role: 'assistant', content: acc, created_at: new Date().toISOString() },
+            ]);
+          } else {
+            setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, content: acc } : x)));
+          }
+        } else if (event === 'error') {
+          streamErr = data.error || "שגיאת צ'אט. נסה שוב.";
+        } else if (event === 'done') {
+          if (typeof data.reply === 'string' && data.reply.trim()) {
+            acc = data.reply;
+            setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, content: acc } : x)));
+          }
+        }
       };
-      setMessages((m) => [...m, assistantMsg]);
-      if (typeof data.remaining === 'number') setRemaining(data.remaining);
-      // First message of a fresh chat → server created a conversation.
-      // Adopt its id and refresh the sidebar so it appears at the top.
-      if (data.conversationId) {
-        const isNew = data.conversationId !== conversationId;
-        setConversationId(data.conversationId);
-        if (isNew) loadConversations();
+
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buf.indexOf('\n\n')) !== -1) {
+          const raw = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          let ev = 'message';
+          let dataStr = '';
+          for (const line of raw.split('\n')) {
+            if (line.startsWith('event:')) ev = line.slice(6).trim();
+            else if (line.startsWith('data:')) dataStr += line.slice(5).trim();
+          }
+          if (dataStr) applyEvent(ev, dataStr);
+        }
+      }
+
+      if (streamErr || !acc.trim()) {
+        setMessages((m) => m.filter((x) => x.id !== assistantId && x.id !== optimisticId));
+        throw new Error(streamErr || 'לא התקבלה תשובה. נסה שוב.');
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -405,7 +461,11 @@ export default function ChatPage() {
             {messages.map((m) => (
               <MessageBubble key={m.id} role={m.role} content={m.content} />
             ))}
-            {sending && <TypingBubble />}
+            {/* Typing dots only until the streamed reply's first token lands
+                (while the last bubble is still the user's). */}
+            {sending && messages[messages.length - 1]?.role !== 'assistant' && (
+              <TypingBubble />
+            )}
             <div ref={listEndRef} />
           </div>
         )}
