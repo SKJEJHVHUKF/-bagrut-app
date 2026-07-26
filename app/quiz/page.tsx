@@ -14,6 +14,10 @@ import { recordMistake } from '@/lib/mistakes';
 import { getConceptQuestions, hasConceptBank } from '@/content/concept-quiz';
 import { isTopicInActivePaper, type BagrutPaper } from '@/content/bagrut-curriculum';
 import { seededOrder } from '@/lib/shuffle';
+import { pickQuestions, studentTier } from '@/lib/adaptive';
+import { predictOverall } from '@/lib/prediction';
+import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
+import { toast } from 'sonner';
 
 // Renders a string with markdown + LaTeX math.
 // `inline` strips the wrapping <p> so the content can sit inside a flex
@@ -108,7 +112,7 @@ const MIXED_EXCLUDED_TOPICS = new Set(['סטטיסטיקה']);
 // keeping id/difficulty/topic so the answer can be recorded for the
 // weakness-tracking insights page.
 function adaptBankQuestion(
-  q: { id: string; difficulty: 'easy' | 'mid' | 'hard'; question: string; answers?: string[]; correct?: number; solution: { steps: string[]; finalAnswer: string; explanation: string } },
+  q: { id: string; difficulty: 'easy' | 'mid' | 'hard'; question: string; answers?: string[]; correct?: number; distractorNotes?: (string | undefined)[]; solution: { steps: string[]; finalAnswer: string; explanation: string } },
   topic: string
 ) {
   return {
@@ -118,6 +122,9 @@ function adaptBankQuestion(
     question: q.question,
     answers: q.answers,
     correct: q.correct,
+    // Per-option "why this is a mistake" note — a FREE, static, targeted
+    // explanation the end-of-quiz review shows for the chosen wrong answer.
+    distractorNotes: q.distractorNotes,
     explanation: {
       why_correct: `${q.solution.explanation}\n\n${q.solution.steps.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}`,
       why_wrong: '',
@@ -163,6 +170,9 @@ function Quiz() {
   const [loading, setLoading] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  // Predicted-grade snapshot taken when the quiz starts, so the results screen
+  // can show "your predicted grade moved +N" once these answers are recorded.
+  const [startPrediction, setStartPrediction] = useState<number | null>(null);
 
   // The bagrut paper the student is focused on (571/572); null = show all.
   // Read once after mount (localStorage), used to filter the math5 topic list.
@@ -193,15 +203,17 @@ function Quiz() {
       : subject.topics;
 
   // Deep-link auto-start: if /quiz?subject=...&topic=... has both params and
-  // the topic has a static question bank, jump straight into the quiz.
-  // This is how the TopicJourney "step 2" button gets students into a
-  // topic-specific quiz without making them pick again.
+  // the topic has ANY static bank (concept OR lesson), jump straight into the
+  // quiz. This is how the TopicJourney "step 2" button gets students into a
+  // topic-specific quiz without making them pick again. Gate matches what
+  // startQuiz can actually serve statically — previously it checked only the
+  // lesson bank while startQuiz served from the concept bank, a mismatch.
   useEffect(() => {
     if (
       urlSubject &&
       urlTopic &&
       urlSubject in SUBJECTS &&
-      hasQuestionBank(urlSubject, urlTopic) &&
+      (hasConceptBank(urlTopic) || hasQuestionBank(urlSubject, urlTopic)) &&
       screen === 'home'
     ) {
       // Defer one tick so state updates land before startQuiz runs.
@@ -220,6 +232,9 @@ function Quiz() {
     setAnswered([]);
     setSelectedAnswer(null);
     setIsCorrect(null);
+    // Snapshot the predicted grade now, so the results screen can show the
+    // delta after these answers land in the stats.
+    setStartPrediction(predictOverall(currentSubject)?.score ?? null);
 
     // ===== MIXED QUIZ =====
     // Draws MCQs from every topic of the subject that has a static bank,
@@ -253,7 +268,7 @@ function Quiz() {
       }
       shuffleInPlace(picked);
       if (picked.length === 0) {
-        alert('אין עדיין בנק שאלות למקצוע הזה — בחר נושא ספציפי');
+        toast.error('אין עדיין בנק שאלות למקצוע הזה — בחר נושא ספציפי');
         setScreen('home');
         setLoading(false);
         return;
@@ -263,12 +278,18 @@ function Quiz() {
       return;
     }
 
+    // Difficulty mix adapted to the student's level (unit level + self-rating
+    // + live accuracy). Zero API cost — just picks from the static bank.
+    const tier = studentTier(currentSubject, selectedTopic);
+
     // ===== STATIC CONCEPT BANK FIRST (no API, no Supabase) =====
-    // 572 topics have a pre-authored, hand-verified concept bank — serve 5
-    // from it instantly, no network. This is what "טמונות מראש" means.
+    // Both 571 and 572 core topics have a pre-authored, hand-verified concept
+    // bank — serve 5 from it instantly, level-matched. "טמונות מראש".
     if (hasConceptBank(selectedTopic)) {
       const bank = getConceptQuestions(selectedTopic).map((q) => ({ ...q, topic: selectedTopic }));
-      const picked = shuffleInPlace([...bank]).slice(0, 5);
+      // pickQuestions reads only `.difficulty` (shared by ConceptQuestion).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const picked = pickQuestions(bank as any, 5, tier);
       if (picked.length > 0) {
         setQuestions(picked);
         setLoading(false);
@@ -276,11 +297,29 @@ function Quiz() {
       }
     }
 
-    // ===== CONCEPTS QUIZ (AI fallback — topics without a static bank) =====
-    // Theory/rules questions served from the pre-generated pool when warm,
-    // else generated live.
+    // ===== LESSON MCQ BANK (no API) — topics without a concept bank =====
+    // ~490 verified MCQs live in the sub-topic banks; serve them level-matched
+    // before ever paying for a live generation. This is what keeps a 571
+    // single-topic quiz at zero API cost even for topics we haven't authored a
+    // dedicated concept bank for.
+    if (hasQuestionBank(currentSubject, selectedTopic)) {
+      const mcqs = getQuestions(currentSubject, selectedTopic)
+        .filter((q) => q.kind === 'mcq' && Array.isArray(q.answers) && typeof q.correct === 'number')
+        .map((q) => adaptBankQuestion(q, selectedTopic));
+      if (mcqs.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const picked = pickQuestions(mcqs as any, 5, tier);
+        setQuestions(picked);
+        setLoading(false);
+        return;
+      }
+    }
+
+    // ===== CONCEPTS QUIZ (AI fallback — topics with no static bank at all) =====
+    // Theory/rules questions served from the pre-generated pool when warm, else
+    // generated live. Timeout-guarded so a hung request can't spin forever.
     try {
-      const res = await fetch('/api/questions', {
+      const res = await fetchWithTimeout('/api/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject: currentSubject, topic: selectedTopic, mode: 'concept' })
@@ -294,17 +333,17 @@ function Quiz() {
         } catch {
           serverMsg = await res.text().catch(() => '');
         }
-        throw new Error(`HTTP ${res.status}: ${serverMsg || '(no body)'}`);
+        throw new Error(serverMsg || `שגיאה ${res.status}`);
       }
 
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      if (!data.questions) throw new Error('No questions field in response');
+      if (!data.questions) throw new Error('לא התקבלו שאלות. נסה שוב.');
 
       setQuestions(data.questions);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      alert(`שגיאה: ${msg}`);
+      toast.error(msg);
       setScreen('home');
     }
     setLoading(false);
@@ -318,7 +357,23 @@ function Quiz() {
     // `topic` per answer feeds the per-topic breakdown on the results screen
     // (meaningful in the mixed quiz, where every question has its own topic).
     const answerTopic: string = q.topic ?? selectedTopic ?? '';
-    setAnswered([...answered, { question: q.question, correct: ok, topic: answerTopic }]);
+    // Keep enough to REVIEW wrong answers at the end: the chosen option, the
+    // correct option, the explanation, and the per-option misconception note.
+    const chosenText = Array.isArray(q.answers) ? q.answers[idx] : undefined;
+    const correctText = Array.isArray(q.answers) ? q.answers[q.correct] : undefined;
+    const distractorNote = Array.isArray(q.distractorNotes) ? q.distractorNotes[idx] : undefined;
+    setAnswered([
+      ...answered,
+      {
+        question: q.question,
+        correct: ok,
+        topic: answerTopic,
+        chosenText,
+        correctText,
+        distractorNote,
+        explanation: q.explanation,
+      },
+    ]);
     if (ok) setScore(score + 1);
     // Weakness tracking for the insights page ("התמונה שלי").
     if (answerTopic) {
@@ -619,6 +674,18 @@ function Quiz() {
       (a, b) => a[1].correct / a[1].total - b[1].correct / b[1].total
     );
 
+    // Wrong answers to REVIEW — the highest-value part of a quiz. Each carries
+    // the chosen option, the correct one, and a targeted "why" note.
+    const wrongAnswers = answered.filter((a) => !a.correct);
+
+    // Predicted-grade delta — the strongest motivation hook. These answers are
+    // already recorded, so re-predicting now reflects them.
+    const endPrediction = predictOverall(currentSubject)?.score ?? null;
+    const predDelta =
+      startPrediction != null && endPrediction != null
+        ? Math.round(endPrediction - startPrediction)
+        : null;
+
     return (
       <div className="results-inner">
         <div className="result-hero">
@@ -626,6 +693,20 @@ function Quiz() {
           <div className="result-title">{title}</div>
           <div className="result-sub">{sub}</div>
         </div>
+        {predDelta != null && predDelta !== 0 && (
+          <div
+            className="breakdown-box"
+            style={{
+              textAlign: 'center',
+              fontWeight: 700,
+              color: predDelta > 0 ? 'var(--correct)' : 'var(--text2)',
+            }}
+          >
+            {predDelta > 0
+              ? `📈 הציון החזוי שלך עלה ב-${predDelta} נקודות`
+              : `הציון החזוי ירד ב-${Math.abs(predDelta)} — שווה חזרה על הנושא`}
+          </div>
+        )}
         <div className="stats-row">
           <div className="stat-box stat-correct">
             <div className="stat-val">{score}</div>
@@ -656,10 +737,56 @@ function Quiz() {
             })}
           </div>
         )}
+        {wrongAnswers.length > 0 && (
+          <div className="breakdown-box">
+            <div className="breakdown-title">הטעויות שלך בבוחן — כדאי לעבור עליהן</div>
+            {wrongAnswers.map((a, i) => {
+              const why =
+                a.distractorNote ||
+                a.explanation?.why_wrong ||
+                a.explanation?.why_correct ||
+                '';
+              return (
+                <div
+                  key={i}
+                  style={{
+                    padding: '12px 0',
+                    borderTop: i === 0 ? 'none' : '1px solid var(--border)',
+                    fontSize: '14px',
+                  }}
+                >
+                  <div style={{ fontWeight: 600, marginBottom: '6px' }}>
+                    <MathText inline>{a.question}</MathText>
+                  </div>
+                  {a.chosenText && (
+                    <div style={{ color: 'var(--wrong)', marginBottom: '2px' }}>
+                      התשובה שלך: <MathText inline>{a.chosenText}</MathText>
+                    </div>
+                  )}
+                  {a.correctText && (
+                    <div style={{ color: 'var(--correct)', marginBottom: '6px' }}>
+                      הנכונה: <MathText inline>{a.correctText}</MathText>
+                    </div>
+                  )}
+                  {why && (
+                    <div style={{ color: 'var(--text2)', fontSize: '13px' }}>
+                      <MathText>{why}</MathText>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
         <div className="action-row">
           <button className="start-btn" onClick={startQuiz}>
             {selectedTopic === MIXED_TOPIC ? 'בדיקה מעורבת נוספת 🔁' : 'סבב נוסף באותו נושא 🔁'}
           </button>
+          {wrongAnswers.length > 0 && (
+            <a href="/errors" className="btn-outline" style={{ textAlign: 'center', textDecoration: 'none', display: 'block' }}>
+              📓 תרגל את הטעויות שלי — מחברת הטעויות
+            </a>
+          )}
           <a href="/insights" className="btn-outline" style={{ textAlign: 'center', textDecoration: 'none', display: 'block' }}>
             📈 התמונה שלי — חוזקות, חולשות ותרגול חיזוק
           </a>
