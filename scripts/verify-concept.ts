@@ -4,6 +4,7 @@
  *
  *   npx tsx scripts/verify-concept.ts
  */
+import { CONCEPT_571 } from '../content/concept-quiz/571';
 import { CONCEPT_582 } from '../content/concept-quiz/582';
 
 const FIELDS = ['why_correct', 'why_wrong', 'concept', 'remember'] as const;
@@ -12,7 +13,10 @@ let problems = 0;
 let count = 0;
 const ids = new Set<string>();
 
-for (const [topic, qs] of Object.entries(CONCEPT_582)) {
+// One shared id namespace across both papers so a copy-paste collision is caught.
+const ALL = { ...CONCEPT_571, ...CONCEPT_582 };
+
+for (const [topic, qs] of Object.entries(ALL)) {
   if (!Array.isArray(qs) || qs.length === 0) {
     console.log(`FAIL topic "${topic}": no questions`);
     problems++;
