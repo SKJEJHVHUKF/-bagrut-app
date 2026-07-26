@@ -101,12 +101,18 @@ check('polar-008 i·(2cis30°)=2cis120°', mul(C(0, 1), cis(2, 30)), cis(2, 120)
 })();
 
 // ===== complex-roots (angles + representative roots) =====
-check('roots-004 z^4=16 root z1', powN(C(0, 2), 4), C(16, 0)); // (2i)^4 = 16
-check('roots-005 z^3=i root cis30', powN(cis(1, 30), 3), C(0, 1));
-check('roots-009 z^3=8i root 2cis30', powN(cis(2, 30), 3), C(0, 8));
-check('roots-010 z^4=81 root 3i', powN(C(0, 3), 4), C(81, 0));
-checkNum('roots-011 area equilateral r=2', (3 * S3 / 4) * 2 ** 2, 3 * S3);
-check('roots-012 z^6=64 root 1+√3i', powN(C(1, S3), 6), C(64, 0));
+check('roots z^4=16 root 2i', powN(C(0, 2), 4), C(16, 0)); // (2i)^4 = 16
+check('roots z^3=i root cis30', powN(cis(1, 30), 3), C(0, 1));
+check('roots z^3=8i root 2cis30', powN(cis(2, 30), 3), C(0, 8));
+check('roots z^4=81 root 3i', powN(C(0, 3), 4), C(81, 0));
+check('roots z^6=64 root 1+√3i', powN(C(1, S3), 6), C(64, 0));
+// roots-009/011: z^6=1, the root in quadrant IV is cis300° = 1/2 − (√3/2)i
+check('roots z^6=1 root cis300 is 6th root of 1', powN(cis(1, 300), 6), C(1, 0));
+check('roots cis300° = 1/2 − (√3/2)i', cis(1, 300), C(0.5, -S3 / 2));
+// roots-012 triangle area (z^3=8i, equilateral, r=2) = 3√3
+checkNum('roots-012 triangle area', (3 * S3 / 4) * 2 ** 2, 3 * S3);
+// roots-013 square from z^4=16 (vertices 2,2i,−2,−2i): diagonals 4, area = d1·d2/2 = 8
+checkNum('roots-013 square area', (4 * 4) / 2, 8);
 
 // ===== complex-equations (Vieta + roots satisfy the equation) =====
 // z^2 + bz + c = 0  ⇔  root r: r^2 + b r + c = 0
