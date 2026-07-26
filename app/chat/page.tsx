@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
 import { hasLesson } from '@/content/lessons';
+import { buildStudentSnapshot } from '@/lib/tutor-context';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -45,7 +46,7 @@ const SUGGESTIONS = [
   'הסבר לי על מספרים מרוכבים',
   'תפתור איתי בעיה בנגזרות',
   'מה ההבדל בין סדרה חשבונית להנדסית?',
-  'איך כותבים אנליזה ספרותית בבגרות?',
+  'תעזור לי להבין אינטגרלים',
 ];
 
 function utcDayStartIso() {
@@ -228,10 +229,25 @@ export default function ChatPage() {
     setMessages((m) => [...m, optimistic]);
 
     try {
+      // Student snapshot (mistakes / level / pace / due reviews) — lets the
+      // tutor diagnose instead of guessing. Call-only: the server injects it
+      // into this turn, never persists it. Best-effort — never block sending.
+      let studentContext = '';
+      try {
+        studentContext = buildStudentSnapshot('math5', topic);
+      } catch {
+        studentContext = '';
+      }
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed, topic, conversationId }),
+        body: JSON.stringify({
+          message: trimmed,
+          topic,
+          conversationId,
+          ...(studentContext ? { context: studentContext } : {}),
+        }),
       });
 
       if (!res.ok) {
@@ -549,7 +565,7 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
       </div>
       <p className="mt-8 text-xs text-slate-500">
         <Sparkles className="inline w-3 h-3 -mt-0.5 mr-1" />
-        מבוסס Claude AI · מקסימום 20 שאלות ביום
+        מבוסס Claude AI · {FREE_DAILY_CHAT} שאלות ביום בחינם
       </p>
     </div>
   );
