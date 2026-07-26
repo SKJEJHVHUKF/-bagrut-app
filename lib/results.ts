@@ -11,9 +11,15 @@
 // mirrored to a Supabase table without changing the callers.
 
 const STORAGE_KEY = 'bagrut-results-v1';
+// Companion set of already-counted `${source}:${questionId}` keys. The insights
+// page and the grade prediction must count only the FIRST answer to each
+// question — replaying a cleared rung is learning, not a new measurement — so
+// once a (source, questionId) pair is logged, later attempts are ignored.
+const SEEN_KEY = 'bagrut-results-seen-v1';
 const MAX_EVENTS = 1000;
+const MAX_SEEN = 5000;
 
-export type ResultSource = 'quiz' | 'drill' | 'bagrut';
+export type ResultSource = 'quiz' | 'drill' | 'bagrut' | 'review';
 
 export type ResultEvent = {
   ts: number;
@@ -26,6 +32,11 @@ export type ResultEvent = {
   source: ResultSource;
   difficulty?: 'easy' | 'mid' | 'hard';
   correct: boolean;
+  /** True when this (source, questionId) was already answered before — a replay.
+   *  Replays still count as ACTIVITY (streak, daily goal, 14-day chart) but are
+   *  excluded from ACCURACY (per-topic stats → grade prediction), so raising
+   *  stars by re-doing a rung can't inflate the predicted grade. */
+  repeat?: boolean;
 };
 
 export type Stats = {
@@ -73,12 +84,55 @@ function writeAll(events: ResultEvent[]) {
   }
 }
 
-/** Record a single answered question. Fire-and-forget. */
+function readSeen(): Set<string> {
+  if (!isBrowser()) return new Set();
+  try {
+    const raw = window.localStorage.getItem(SEEN_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(parsed) ? (parsed as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeSeen(seen: Set<string>) {
+  if (!isBrowser()) return;
+  try {
+    // Keep only the most-recent keys if the set grows huge.
+    const arr = [...seen];
+    const trimmed = arr.length > MAX_SEEN ? arr.slice(arr.length - MAX_SEEN) : arr;
+    window.localStorage.setItem(SEEN_KEY, JSON.stringify(trimmed));
+  } catch {
+    // quota exceeded or storage disabled — silently ignore
+  }
+}
+
+/** Record a single answered question. Fire-and-forget.
+ *  The event is always logged (so activity/streak counts every answer), but a
+ *  replay of the same `${source}:${questionId}` is flagged `repeat: true` so the
+ *  accuracy aggregations (and thus the grade prediction) count only the first
+ *  answer. Questions with no stable id (AI-generated) never repeat. */
 export function recordResult(event: Omit<ResultEvent, 'ts'>) {
+  let repeat = false;
+  if (event.questionId) {
+    const key = `${event.source}:${event.questionId}`;
+    const seen = readSeen();
+    if (seen.has(key)) {
+      repeat = true;
+    } else {
+      seen.add(key);
+      writeSeen(seen);
+    }
+  }
   const events = readAll();
-  events.push({ ...event, ts: Date.now() });
+  events.push({ ...event, ts: Date.now(), ...(repeat ? { repeat: true } : {}) });
   // Cap the log so localStorage never bloats — oldest events fall off.
   writeAll(events.length > MAX_EVENTS ? events.slice(events.length - MAX_EVENTS) : events);
+}
+
+/** First-attempt events only — the measurement subset (excludes replays). */
+function measured(events: ResultEvent[]): ResultEvent[] {
+  return events.filter((e) => !e.repeat);
 }
 
 /** All events, optionally filtered to one subject. Newest last. */
@@ -95,7 +149,7 @@ export function subjectsWithResults(): string[] {
 }
 
 export function totalStats(subject?: string): Stats & { lastTs: number } {
-  const events = getResults(subject);
+  const events = measured(getResults(subject));
   const correct = events.filter((e) => e.correct).length;
   return {
     attempts: events.length,
@@ -108,7 +162,7 @@ export function totalStats(subject?: string): Stats & { lastTs: number } {
 /** Per-topic accuracy for a subject, sorted weakest-first. */
 export function topicStats(subject: string): TopicStat[] {
   const map = new Map<string, TopicStat>();
-  for (const e of getResults(subject)) {
+  for (const e of measured(getResults(subject))) {
     const cur = map.get(e.topic) ?? {
       subject,
       topic: e.topic,
@@ -131,7 +185,7 @@ export function topicStats(subject: string): TopicStat[] {
 /** Per-sub-topic accuracy for a subject, sorted weakest-first. */
 export function subTopicStats(subject: string): SubTopicStat[] {
   const map = new Map<string, SubTopicStat>();
-  for (const e of getResults(subject)) {
+  for (const e of measured(getResults(subject))) {
     if (!e.subTopicId) continue;
     const key = `${e.topic}|${e.subTopicId}`;
     const cur = map.get(key) ?? {

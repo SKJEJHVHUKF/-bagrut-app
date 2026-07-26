@@ -961,6 +961,7 @@ $$x = x_0 + k\\pi$$ (שים לב: $\\pi$ ולא $2\\pi$, כי המחזור של 
     },
     {
       id: 'trig-bag-004',
+      subTopicId: 'trig-equations',
       difficulty: 'mid',
       topic_tag: 'גרף פונקציה עם פרמטרים',
       context: 'נתונה הפונקציה $f(x) = A\\sin(Bx) + 2$ בתחום $[0, 2\\pi]$. ידוע שמשרעת הפונקציה היא 3 ושהיא משלימה **שני מחזורים מלאים** בתחום זה.',
@@ -1027,6 +1028,7 @@ $$x = x_0 + k\\pi$$ (שים לב: $\\pi$ ולא $2\\pi$, כי המחזור של 
     },
     {
       id: 'trig-bag-005',
+      subTopicId: 'trig-identities',
       difficulty: 'mid',
       topic_tag: 'חקירת sin·cos',
       context: 'נתונה $f(x) = \\sin x \\cdot \\cos x$ בתחום $[0, 2\\pi]$.',
@@ -1094,6 +1096,7 @@ $$x = x_0 + k\\pi$$ (שים לב: $\\pi$ ולא $2\\pi$, כי המחזור של 
     },
     {
       id: 'trig-bag-006',
+      subTopicId: 'trig-calculus',
       difficulty: 'hard',
       topic_tag: 'אינטגרל וחישוב שטח',
       context: 'נתונה $f(x) = \\sin x + \\sin 2x$ בתחום $[0, \\pi]$.',
@@ -1163,6 +1166,7 @@ $$x = x_0 + k\\pi$$ (שים לב: $\\pi$ ולא $2\\pi$, כי המחזור של 
     },
     {
       id: 'trig-bag-007',
+      subTopicId: 'trig-calculus',
       difficulty: 'hard',
       topic_tag: 'חקירה מלאה',
       context: 'נתונה הפונקציה $f(x) = 2\\sin x - \\sin 2x$ בתחום $[0, 2\\pi]$.',

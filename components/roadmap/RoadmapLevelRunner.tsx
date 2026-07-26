@@ -5,7 +5,7 @@
 // (MCQ auto-grades; open reveals the solution + self-report), tallies the
 // score, then awards 1-3 stars and reports the clear up to the ladder.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, KeyRound, Lightbulb, ArrowLeft } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
@@ -13,7 +13,8 @@ import { buttonTap } from '@/lib/animations';
 import { celebrateCorrect, sparkle } from '@/lib/confetti';
 import { recordResult } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
-import { studentTier, orderQuestions, tierLabel, type Tier } from '@/lib/adaptive';
+import { seededOrder } from '@/lib/shuffle';
+import { studentTier, orderQuestions } from '@/lib/adaptive';
 import { computeStars, type RoadmapLevel } from '@/lib/roadmap-levels';
 import type { ClearResult } from '@/lib/roadmap-progress';
 import { LevelClearedPanel } from './ladder-ui';
@@ -44,10 +45,8 @@ export function RoadmapLevelRunner({
   // accuracy) — reordered once after mount (localStorage), matching the old
   // SubTopicPractice so the difficulty experience is consistent across surfaces.
   const [questions, setQuestions] = useState<PracticeQuestion[]>(level.questions);
-  const [tier, setTier] = useState<Tier | null>(null);
   useEffect(() => {
     const t = studentTier(subject, topic, subId);
-    setTier(t);
     setQuestions(orderQuestions(level.questions, t));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subject, topic, subId, level]);
@@ -63,6 +62,13 @@ export function RoadmapLevelRunner({
   const total = questions.length;
   const current = questions[idx];
   const isLast = idx === total - 1;
+
+  // Deterministic per-question option order (seeded by id) so the correct
+  // answer isn't always in slot א. Stable across renders and SSR-safe.
+  const order = useMemo(
+    () => (current?.kind === 'mcq' ? seededOrder(current.answers?.length ?? 0, current.id) : []),
+    [current],
+  );
 
   function logAnswer(correct: boolean, userAnswer?: string) {
     recordResult({
@@ -147,11 +153,6 @@ export function RoadmapLevelRunner({
           <span className="font-black text-indigo-700">
             {level.emoji} רמת {level.title}
           </span>
-          {tier !== null && (
-            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-500/10 border border-indigo-500/25 rounded-full px-2 py-0.5">
-              {tierLabel(tier)}
-            </span>
-          )}
           <span className="text-slate-600">
             {idx + 1}/{total} · {correctCount} נכונות
           </span>
@@ -181,17 +182,18 @@ export function RoadmapLevelRunner({
       {/* MCQ */}
       {current.kind === 'mcq' && current.answers && (
         <div className="space-y-2">
-          {current.answers.map((ans, i) => {
-            const isCorrect = i === current.correct;
+          {order.map((origIdx, i) => {
+            const ans = current.answers![origIdx];
+            const isCorrect = origIdx === current.correct;
             let cls = 'bg-slate-900/[0.03] hover:bg-slate-900/5 border-slate-900/10 text-slate-900';
             if (answered && isCorrect) cls = 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900';
-            else if (answered && i === selected) cls = 'bg-rose-500/15 border-rose-500/50 text-rose-800';
+            else if (answered && origIdx === selected) cls = 'bg-rose-500/15 border-rose-500/50 text-rose-800';
             else if (answered) cls = 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-500';
             return (
               <motion.button
-                key={i}
+                key={origIdx}
                 {...buttonTap}
-                onClick={() => pickMCQ(i)}
+                onClick={() => pickMCQ(origIdx)}
                 disabled={answered}
                 className={`w-full text-right px-4 py-3 rounded-xl border transition-colors chat-md text-sm ${cls}`}
               >

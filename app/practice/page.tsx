@@ -252,7 +252,9 @@ export default function PracticePage() {
             <span className="text-xl">🗺️</span>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-black text-slate-900 text-sm">מסלול הלמידה שלי — שאלון 582</div>
+            <div className="font-black text-slate-900 text-sm">
+              מסלול הלמידה שלי{activePaper ? ` — ${paperLabel(activePaper)}` : ''}
+            </div>
             <div className="text-[11px] text-slate-600 mt-0.5">
               מפה מסודרת שלב-אחר-שלב, עם מעקב התקדמות ופתיחת שלבים
             </div>

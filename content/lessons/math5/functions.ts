@@ -1059,6 +1059,7 @@ $$g(f(x)) = 3(x^2 + 1) - 2 = 3x^2 + 1$$
     },
     {
       id: 'fn-bag-005',
+      subTopicId: 'domain-definition',
       difficulty: 'hard',
       topic_tag: 'הרכבת פונקציות',
       context: 'נתונות הפונקציות $f(x) = x^2 - 4$ ו-$g(x) = \\sqrt{x + 5}$.',
@@ -1119,6 +1120,7 @@ $$g(f(x)) = 3(x^2 + 1) - 2 = 3x^2 + 1$$
     },
     {
       id: 'fn-bag-006',
+      subTopicId: 'even-odd-inverse',
       difficulty: 'mid',
       topic_tag: 'פונקציה זוגית ואי-זוגית',
       context: 'נתונות שלוש פונקציות: $f(x) = x^4 + 2x^2$, $g(x) = x^3 - x$, $h(x) = x^2 + x$.',
@@ -1180,6 +1182,7 @@ $$g(f(x)) = 3(x^2 + 1) - 2 = 3x^2 + 1$$
     },
     {
       id: 'fn-bag-007',
+      subTopicId: 'intersections-signs',
       difficulty: 'mid',
       topic_tag: 'שינויי גרף',
       context: 'נתון גרף הפונקציה $f(x) = x^2$. נגדיר $g(x) = (x + 3)^2 - 4$.',
@@ -1240,6 +1243,7 @@ $$g(f(x)) = 3(x^2 + 1) - 2 = 3x^2 + 1$$
     },
     {
       id: 'fn-bag-008',
+      subTopicId: 'asymptotes-rational',
       difficulty: 'hard',
       topic_tag: 'פונקציה מעריכית',
       context: 'נתונה הפונקציה $f(x) = 2 \\cdot 3^x - 6$.',

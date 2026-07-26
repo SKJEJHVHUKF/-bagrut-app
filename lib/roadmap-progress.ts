@@ -23,6 +23,7 @@
 
 import { isSubTopicDone, markSubTopicDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
+import { getSubTopics } from '@/content/lessons';
 import { CORE_LEVELS, type RoadmapLevel, type RoadmapLevelKind } from '@/lib/roadmap-levels';
 import type { StepStatus } from '@/types/roadmap';
 
@@ -258,7 +259,13 @@ export function markLevelCleared(
   // Sync to the legacy stores the first time we reach core-done.
   if (coreDone && !wasCoreDone) {
     markSubTopicDone(SUBJECT, topic, subId);
-    markStep(SUBJECT, topic, 'practice');
+    // The plan's 'practice' step means the WHOLE topic was practiced — only
+    // mark it once every sub-topic of the topic is core-done, not on the first
+    // one (that over-reported a barely-started topic as practiced).
+    const allSubIds = getSubTopics(SUBJECT, topic).map((s) => s.id);
+    if (allSubIds.length > 0 && allSubIds.every((sid) => isNodePassed(topic, sid))) {
+      markStep(SUBJECT, topic, 'practice');
+    }
   }
 
   return {

@@ -990,6 +990,7 @@ $$f''(x) = 6x - 12$$
     },
     {
       id: 'der-bag-004',
+      subTopicId: 'tangent-line',
       difficulty: 'mid',
       topic_tag: 'משיק וחיתוך גרפים',
       context: 'נתונה הפונקציה $f(x) = x^2 + 2x$.',
@@ -1198,6 +1199,7 @@ $$f''(x) = 6x - 12$$
     },
     {
       id: 'der-bag-007',
+      subTopicId: 'extrema-monotonicity',
       difficulty: 'hard',
       topic_tag: 'נגזרת של פונקציה מעריכית',
       context: 'נתונה הפונקציה $f(x) = x \\cdot e^{-x}$ (תחום הגדרה: כל $\\mathbb{R}$).',
@@ -1262,6 +1264,7 @@ $$f''(x) = 6x - 12$$
     },
     {
       id: 'der-bag-008',
+      subTopicId: 'optimization',
       difficulty: 'hard',
       topic_tag: 'בעיית קיצון פיזית',
       context: 'גוף נע על ציר $x$. מיקומו בזמן $t$ (במטרים, $t$ בשניות) נתון ע"י $s(t) = t^3 - 12t^2 + 36t + 5$, עבור $0 \\le t \\le 10$.',

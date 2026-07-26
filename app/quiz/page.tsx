@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, ReactNode, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, ReactNode, Suspense } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -13,6 +13,7 @@ import { recordResult } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
 import { getConceptQuestions, hasConceptBank } from '@/content/concept-quiz';
 import { isTopicInActivePaper, type BagrutPaper } from '@/content/bagrut-curriculum';
+import { seededOrder } from '@/lib/shuffle';
 
 // Renders a string with markdown + LaTeX math.
 // `inline` strips the wrapping <p> so the content can sit inside a flex
@@ -172,6 +173,17 @@ function Quiz() {
 
   const subject = SUBJECTS[currentSubject as keyof typeof SUBJECTS];
   const letters = ['א', 'ב', 'ג', 'ד'];
+
+  // Deterministic per-question option order (seeded by id) so the correct
+  // answer isn't always in slot א. Stable across renders and SSR-safe.
+  const activeQuestion = questions[currentQ];
+  const answerOrder = useMemo(
+    () =>
+      Array.isArray(activeQuestion?.answers)
+        ? seededOrder(activeQuestion.answers.length, activeQuestion.id ?? String(currentQ))
+        : [],
+    [activeQuestion, currentQ],
+  );
 
   // math5 topic list filtered to the student's active paper (581/582);
   // other subjects / no chosen paper → the full list.
@@ -480,19 +492,27 @@ function Quiz() {
             </div>
           </div>
           <div className="answers">
-            {q.answers.map((ans: string, i: number) => (
-              <button
-                key={i}
-                className={`answer-btn ${selectedAnswer === i ? (isCorrect ? 'correct' : 'wrong') : ''}`}
-                onClick={() => checkAnswer(i)}
-                disabled={selectedAnswer !== null}
-              >
-                <span className="answer-letter">{letters[i]}</span>
-                <span className="answer-text math-content">
-                  <MathText inline>{ans}</MathText>
-                </span>
-              </button>
-            ))}
+            {answerOrder.map((origIdx: number, i: number) => {
+              const ans: string = q.answers[origIdx];
+              // After answering: the picked option turns correct/wrong, and the
+              // right answer is always revealed green so a wrong pick shows what
+              // it should have been.
+              const showAsCorrect = selectedAnswer !== null && origIdx === q.correct;
+              const showAsWrong = selectedAnswer === origIdx && !isCorrect;
+              return (
+                <button
+                  key={origIdx}
+                  className={`answer-btn ${showAsCorrect ? 'correct' : showAsWrong ? 'wrong' : ''}`}
+                  onClick={() => checkAnswer(origIdx)}
+                  disabled={selectedAnswer !== null}
+                >
+                  <span className="answer-letter">{letters[i]}</span>
+                  <span className="answer-text math-content">
+                    <MathText inline>{ans}</MathText>
+                  </span>
+                </button>
+              );
+            })}
           </div>
           {selectedAnswer !== null && (
             <>

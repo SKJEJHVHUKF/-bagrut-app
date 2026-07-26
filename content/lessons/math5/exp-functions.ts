@@ -590,6 +590,7 @@ $$\\Delta V = 2000 \\bigl(e^{0.5} - 1\\bigr) \\approx 1297$$
   bagrutQuestions: [
     {
       id: 'exp-bag-001',
+      subTopicId: 'exp-investigation',
       difficulty: 'mid',
       topic_tag: 'חקירת פונקציה מעריכית',
       context: 'נתונה הפונקציה $\\;f(x) = (x - 2)e^x$.',
@@ -690,6 +691,7 @@ $$\\Delta V = 2000 \\bigl(e^{0.5} - 1\\bigr) \\approx 1297$$
     },
     {
       id: 'exp-bag-002',
+      subTopicId: 'exp-equations',
       difficulty: 'mid',
       topic_tag: 'משוואה מעריכית עם הצבה',
       context: 'נתונה המשוואה $\\;e^{2x} - 7e^x + 12 = 0$.',
@@ -751,6 +753,7 @@ $$\\Delta V = 2000 \\bigl(e^{0.5} - 1\\bigr) \\approx 1297$$
     },
     {
       id: 'exp-bag-004',
+      subTopicId: 'exp-integrals',
       difficulty: 'hard',
       topic_tag: 'אינטגרל, שטח ונפח',
       context: 'נתונה הפונקציה $\\;f(x) = e^x - 1$.',
@@ -815,6 +818,7 @@ $$\\Delta V = 2000 \\bigl(e^{0.5} - 1\\bigr) \\approx 1297$$
     },
     {
       id: 'exp-bag-005',
+      subTopicId: 'exp-investigation',
       difficulty: 'hard',
       topic_tag: 'חקירה מלאה (כמו בבגרות)',
       context: 'נתונה הפונקציה $\\;f(x) = x e^{-x}$.',

@@ -830,6 +830,7 @@ $f(x) > a$ או $f(x) < -a$
     },
     {
       id: 'alg-bag-002',
+      subTopicId: 'quadratic-equations',
       difficulty: 'mid',
       topic_tag: 'מערכת משוואות לא-לינארית',
       context: 'נתונה המערכת: $\\begin{cases} x^2 + y = 4 \\\\ x + y = 2 \\end{cases}$',
@@ -982,6 +983,7 @@ $f(x) > a$ או $f(x) < -a$
     // ===== 5 new bagrut questions (sessions 1.5+) =====
     {
       id: 'alg-bag-004',
+      subTopicId: 'radical-rational',
       difficulty: 'mid',
       topic_tag: 'שאלה מילולית',
       context: 'מכונית יצאה מתל-אביב לחיפה (מרחק 100 ק"מ). שעה לאחר מכן יצאה מכונית שנייה לאותו כיוון, במהירות גדולה ב-20 קמ"ש מהראשונה. שתי המכוניות הגיעו לחיפה באותה שעה.',
@@ -1095,6 +1097,7 @@ $f(x) > a$ או $f(x) < -a$
     },
     {
       id: 'alg-bag-006',
+      subTopicId: 'discriminant-parameter',
       difficulty: 'hard',
       topic_tag: 'משוואה רציונלית עם פרמטר',
       context: 'נתונה המשוואה $\\dfrac{x + m}{x - 2} = \\dfrac{x - 3}{x + 1}$ עם פרמטר $m$.',
@@ -1227,6 +1230,7 @@ $f(x) > a$ או $f(x) < -a$
     },
     {
       id: 'alg-bag-008',
+      subTopicId: 'discriminant-parameter',
       difficulty: 'hard',
       topic_tag: 'מערכת לינארית-ריבועית עם פרמטר',
       context: 'נתונה המערכת: $\\begin{cases} y = x^2 - 4x + k \\\\ y = 2x - 5 \\end{cases}$ עם פרמטר $k$.',

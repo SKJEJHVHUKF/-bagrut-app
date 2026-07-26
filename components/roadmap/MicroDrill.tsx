@@ -5,19 +5,27 @@
 // spot, with instant feedback + the full solution. Formative only — it is
 // NOT scored into the ladder stars and not logged as a measurement.
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Pencil, CheckCircle, XCircle, KeyRound } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { celebrateCorrect } from '@/lib/confetti';
+import { seededOrder } from '@/lib/shuffle';
 import type { PracticeQuestion } from '@/content/lessons/types';
 
 const LETTERS = ['א', 'ב', 'ג', 'ד'];
 
 export function MicroDrill({ drill }: { drill: PracticeQuestion }) {
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(null); // original index
   const [revealed, setRevealed] = useState(false);
   const answered = selected !== null || revealed;
+
+  // Deterministic per-drill option order (seeded by id) so the correct answer
+  // isn't always first. Stable across renders and SSR-safe.
+  const order = useMemo(
+    () => (drill.kind === 'mcq' ? seededOrder(drill.answers?.length ?? 0, drill.id) : []),
+    [drill],
+  );
 
   function pick(i: number) {
     if (answered) return;
@@ -45,16 +53,17 @@ export function MicroDrill({ drill }: { drill: PracticeQuestion }) {
       {/* MCQ micro-drill */}
       {drill.kind === 'mcq' && drill.answers && (
         <div className="space-y-1.5">
-          {drill.answers.map((ans, i) => {
-            const isCorrect = i === drill.correct;
+          {order.map((origIdx, i) => {
+            const ans = drill.answers![origIdx];
+            const isCorrect = origIdx === drill.correct;
             let cls = 'bg-white/70 hover:bg-white border-slate-900/10 text-slate-900';
             if (answered && isCorrect) cls = 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900';
-            else if (answered && i === selected) cls = 'bg-rose-500/15 border-rose-500/50 text-rose-800';
+            else if (answered && origIdx === selected) cls = 'bg-rose-500/15 border-rose-500/50 text-rose-800';
             else if (answered) cls = 'bg-white/40 border-slate-900/[0.06] text-slate-500';
             return (
               <button
-                key={i}
-                onClick={() => pick(i)}
+                key={origIdx}
+                onClick={() => pick(origIdx)}
                 disabled={answered}
                 className={`w-full text-right px-3 py-2 rounded-xl border transition-colors chat-md text-sm ${cls}`}
               >

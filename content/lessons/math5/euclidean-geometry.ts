@@ -640,6 +640,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
   bagrutQuestions: [
     {
       id: 'eg-bag-001',
+      subTopicId: 'eg-congruence',
       difficulty: 'mid',
       topic_tag: 'חפיפת משולשים',
       context: 'נתון משולש שווה-שוקיים $\\triangle ABC$ עם $AB = AC$. נקודה $D$ נמצאת על הצלע $BC$ כך ש-$AD$ חוצה את $\\angle BAC$.',
@@ -687,6 +688,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
     },
     {
       id: 'eg-bag-002',
+      subTopicId: 'eg-similarity',
       difficulty: 'mid',
       topic_tag: 'דמיון משולשים',
       context: 'במשולש $\\triangle ABC$, נקודה $D$ על $AB$ ונקודה $E$ על $AC$ כך ש-$DE \\parallel BC$. נתון $AD = 6, DB = 4, BC = 10$.',
@@ -751,6 +753,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
     },
     {
       id: 'eg-bag-003',
+      subTopicId: 'eg-circle',
       difficulty: 'hard',
       topic_tag: 'מעגל וזווית היקפית',
       context: 'במעגל $O$ נתון מיתר $AB$. נקודה $C$ נמצאת על המעגל בצד אחד של $AB$, ונקודה $D$ בצד השני. נתון ש-$\\angle ACB = 50°$.',
@@ -810,6 +813,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
     },
     {
       id: 'eg-bag-004',
+      subTopicId: 'eg-similarity',
       difficulty: 'hard',
       topic_tag: 'משולש ישר זווית + פרופורצייה',
       context: 'במשולש $\\triangle ABC$ ישר זווית ב-$C$. הגובה מ-$C$ ליתר $AB$ פוגע בנקודה $H$. נתון $AH = 9$ ו-$AB = 25$.',
@@ -869,6 +873,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
     },
     {
       id: 'eg-bag-005',
+      subTopicId: 'eg-circle',
       difficulty: 'hard',
       topic_tag: 'משיק ופרופורצייה במעגל',
       context: 'מנקודה $P$ מחוץ למעגל $O$ יוצאים משיק $PT$ באורך $6$ וחותך $PAB$ (שעובר במעגל בנקודות $A$ ו-$B$, $A$ הקרובה ל-$P$). נתון $PA = 3$.',

@@ -903,6 +903,7 @@ $$x = 8$$
   bagrutQuestions: [
     {
       id: 'ln-bag-001',
+      subTopicId: 'ln-investigation',
       difficulty: 'mid',
       topic_tag: 'חקירת פונקציה לוגריתמית',
       context: 'נתונה הפונקציה $f(x) = x - \\ln x$.',
@@ -948,6 +949,7 @@ $$x = 8$$
     },
     {
       id: 'ln-bag-002',
+      subTopicId: 'ln-equations',
       difficulty: 'mid',
       topic_tag: 'משוואה לוגריתמית',
       context: 'נתונה המשוואה $\\ln(2x + 1) - \\ln(x - 1) = \\ln 3$.',
@@ -992,6 +994,7 @@ $$x = 8$$
     },
     {
       id: 'ln-bag-003',
+      subTopicId: 'ln-integrals',
       difficulty: 'hard',
       topic_tag: 'חקירה + שטח',
       context: 'נתונה הפונקציה $f(x) = \\dfrac{\\ln x}{x}$.',
@@ -1042,6 +1045,7 @@ $$x = 8$$
     },
     {
       id: 'ln-bag-004',
+      subTopicId: 'ln-investigation',
       difficulty: 'hard',
       topic_tag: 'חקירה מורכבת',
       context: 'נתונה הפונקציה $f(x) = \\ln(x^2 - 6x + 10)$.',
