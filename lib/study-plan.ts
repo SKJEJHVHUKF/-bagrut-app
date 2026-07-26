@@ -136,9 +136,19 @@ export function setUnitLevel(level: UnitLevel): void {
   savePlan(plan);
 }
 
+/** Normalize a stored paper value to the current 571/572 numbering. Schools
+ *  moved off 581/582, so plans created before the switch (paper '581'/'582')
+ *  are migrated to their equivalent new שאלון ('571'/'572'). */
+function normalizePaper(raw: unknown): BagrutPaper | null {
+  if (raw === '571' || raw === '572') return raw;
+  if (raw === '581') return '571';
+  if (raw === '582') return '572';
+  return null;
+}
+
 /** The paper the student is focused on, or null if never chosen (= no filter). */
 export function getPaper(): BagrutPaper | null {
-  return getPlan()?.paper ?? null;
+  return normalizePaper(getPlan()?.paper as unknown);
 }
 
 /** Update the active paper on an existing plan (e.g. from the profile panel). */

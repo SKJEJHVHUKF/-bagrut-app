@@ -34,7 +34,7 @@ function MathText({ children, inline = false }: { children: string; inline?: boo
 }
 
 const SUBJECTS = {
-  // ===== Math 5 units (highest level) — שאלון 581/582 =====
+  // ===== Math 5 units (highest level) — שאלון 571/572 =====
   // Topic list reflects the post-2020 reform curriculum.
   math5: {
     name: 'מתמטיקה 5 יח׳',
@@ -43,27 +43,27 @@ const SUBJECTS = {
     gridCls: 's-math',
     badge: { color: '#6D28D9', bg: 'rgba(109,40,217,0.08)', border: 'rgba(109,40,217,0.25)' },
     // Topics ordered to match the official Ministry of Education
-    // syllabus for math5 (שאלון 806/581 + 807/582), 2024-2025 curriculum.
+    // syllabus for math5 (שאלון 806/571 + 807/572), 2024-2025 curriculum.
     // Source of truth: content/bagrut-curriculum.ts.
     topics: [
-      // ===== שאלון 581 (806) =====
+      // ===== שאלון 571 (806) =====
       // אלגברה, גיאו׳ אוקלידית + טריגו, חדו"א של פונקציות אלגבריות
-      { name: 'אלגברה', emoji: '🔣', sub: '581 • בכל בגרות • 15-25 נק׳' },
-      { name: 'סדרות', emoji: '⋯', sub: '581 • ברוב הבגרויות • 15-25 נק׳' },
-      { name: 'הסתברות', emoji: '🎲', sub: '581 • ברוב הבגרויות • 15-25 נק׳' },
-      { name: 'גיאומטריה אוקלידית', emoji: '△', sub: '581 • בכל בגרות • 15-20 נק׳' },
-      { name: 'פונקציות', emoji: '📈', sub: '581/582 • יסודות חקירה — מקדים חדו"א' },
-      { name: 'טריגונומטריה', emoji: '🔺', sub: '581 (במישור) + 582 (במרחב) • 20-25 נק׳' },
-      { name: 'חשבון דיפרנציאלי', emoji: '∂', sub: '581 + 582 • בכל בגרות • 20-25 נק׳' },
-      { name: 'חשבון אינטגרלי', emoji: '∫', sub: '581 + 582 • בכל בגרות • 20-25 נק׳' },
-      // ===== שאלון 582 (807) =====
+      { name: 'אלגברה', emoji: '🔣', sub: '571 • בכל בגרות • 15-25 נק׳' },
+      { name: 'סדרות', emoji: '⋯', sub: '571 • ברוב הבגרויות • 15-25 נק׳' },
+      { name: 'הסתברות', emoji: '🎲', sub: '571 • ברוב הבגרויות • 15-25 נק׳' },
+      { name: 'גיאומטריה אוקלידית', emoji: '△', sub: '571 • בכל בגרות • 15-20 נק׳' },
+      { name: 'פונקציות', emoji: '📈', sub: '571/572 • יסודות חקירה — מקדים חדו"א' },
+      { name: 'טריגונומטריה', emoji: '🔺', sub: '571 (במישור) + 572 (במרחב) • 20-25 נק׳' },
+      { name: 'חשבון דיפרנציאלי', emoji: '∂', sub: '571 + 572 • בכל בגרות • 20-25 נק׳' },
+      { name: 'חשבון אינטגרלי', emoji: '∫', sub: '571 + 572 • בכל בגרות • 20-25 נק׳' },
+      // ===== שאלון 572 (807) =====
       // מעריכית/ln, גיאו׳ אנליטית, וקטורים, מרוכבים
-      { name: 'פונקציה מעריכית', emoji: '📊', sub: '582 • בכל בגרות • 20-25 נק׳' },
-      { name: 'גדילה ודעיכה', emoji: '📈', sub: '582 • בכל בגרות • 20-25 נק׳' },
-      { name: 'פונקציית ln', emoji: '🧮', sub: '582 • בכל בגרות • 20-25 נק׳' },
-      { name: 'גאומטריה אנליטית', emoji: '📍', sub: '582 • ברוב הבגרויות • 20-25 נק׳' },
-      { name: 'וקטורים במרחב', emoji: '➡️', sub: '582 • ברוב הבגרויות • 20-25 נק׳' },
-      { name: 'מספרים מרוכבים', emoji: 'ℂ', sub: '582 • בכל בגרות • 15-25 נק׳' },
+      { name: 'פונקציה מעריכית', emoji: '📊', sub: '572 • בכל בגרות • 20-25 נק׳' },
+      { name: 'גדילה ודעיכה', emoji: '📈', sub: '⚠️ מחוץ לסילבוס העדכני — תוכן רזרבי' },
+      { name: 'פונקציית ln', emoji: '🧮', sub: '572 • בכל בגרות • 20-25 נק׳' },
+      { name: 'גאומטריה אנליטית', emoji: '📍', sub: '572 • ברוב הבגרויות • 20-25 נק׳' },
+      { name: 'וקטורים במרחב', emoji: '➡️', sub: '572 • ברוב הבגרויות • 20-25 נק׳' },
+      { name: 'מספרים מרוכבים', emoji: 'ℂ', sub: '572 • בכל בגרות • 15-25 נק׳' },
       { name: 'סטטיסטיקה', emoji: '📉', sub: '⚠️ מחוץ לסילבוס העדכני — תוכן רזרבי' },
     ],
   },
@@ -164,7 +164,7 @@ function Quiz() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
-  // The bagrut paper the student is focused on (581/582); null = show all.
+  // The bagrut paper the student is focused on (571/572); null = show all.
   // Read once after mount (localStorage), used to filter the math5 topic list.
   const [activePaper, setActivePaper] = useState<BagrutPaper | null>(null);
   useEffect(() => {
@@ -185,7 +185,7 @@ function Quiz() {
     [activeQuestion, currentQ],
   );
 
-  // math5 topic list filtered to the student's active paper (581/582);
+  // math5 topic list filtered to the student's active paper (571/572);
   // other subjects / no chosen paper → the full list.
   const visibleTopics =
     currentSubject === 'math5' && activePaper
@@ -228,7 +228,7 @@ function Quiz() {
       const perTopic: any[][] = [];
       for (const t of subject.topics) {
         if (MIXED_EXCLUDED_TOPICS.has(t.name)) continue;
-        // Respect the student's active paper — a 581 student's mixed quiz
+        // Respect the student's active paper — a 571 student's mixed quiz
         // shouldn't pull vectors/complex, and vice versa.
         if (currentSubject === 'math5' && activePaper && !isTopicInActivePaper(t.name, activePaper)) continue;
         if (!hasQuestionBank(currentSubject, t.name)) continue;
@@ -264,7 +264,7 @@ function Quiz() {
     }
 
     // ===== STATIC CONCEPT BANK FIRST (no API, no Supabase) =====
-    // 582 topics have a pre-authored, hand-verified concept bank — serve 5
+    // 572 topics have a pre-authored, hand-verified concept bank — serve 5
     // from it instantly, no network. This is what "טמונות מראש" means.
     if (hasConceptBank(selectedTopic)) {
       const bank = getConceptQuestions(selectedTopic).map((q) => ({ ...q, topic: selectedTopic }));

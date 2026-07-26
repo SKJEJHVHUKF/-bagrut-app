@@ -320,7 +320,7 @@ export default function AppChrome() {
                       שאלון פעיל
                     </div>
                     <div className="grid grid-cols-2 gap-1.5">
-                      {(['581', '582'] as BagrutPaper[]).map((p) => (
+                      {(['571', '572'] as BagrutPaper[]).map((p) => (
                         <button
                           key={p}
                           onClick={() => changePaper(p)}

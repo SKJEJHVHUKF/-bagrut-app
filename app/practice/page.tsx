@@ -188,7 +188,7 @@ export default function PracticePage() {
 
   function switchPaper() {
     if (!activePaper) return;
-    const other: BagrutPaper = activePaper === '581' ? '582' : '581';
+    const other: BagrutPaper = activePaper === '571' ? '572' : '571';
     setPaper(other);
     setActivePaper(other);
     setTopic(null);
@@ -412,7 +412,7 @@ function Math5TopicsByPaper({
   // If the student chose a paper, show ONLY that paper (shared topics folded
   // in via topicsForActivePaper). Otherwise show both papers grouped.
   const single = activePaper !== null;
-  const papers: BagrutPaper[] = single ? [activePaper] : ['581', '582'];
+  const papers: BagrutPaper[] = single ? [activePaper] : ['571', '572'];
   return (
     <div className="mb-6 space-y-5">
       {single && (
@@ -424,7 +424,7 @@ function Math5TopicsByPaper({
             onClick={onSwitchPaper}
             className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 underline underline-offset-2"
           >
-            החלף ל{paperLabel(activePaper === '581' ? '582' : '581')}
+            החלף ל{paperLabel(activePaper === '571' ? '572' : '571')}
           </button>
         </div>
       )}
@@ -436,7 +436,7 @@ function Math5TopicsByPaper({
                 {paperLabel(paper)}
               </div>
               <div className="text-[10px] text-slate-500">
-                {paper === '581' ? 'אלגברה ואנליזה אלגברית' : 'אנליזה טרנסצנדנטית • הסתברות'}
+                {paper === '571' ? 'אלגברה ואנליזה אלגברית' : 'אנליזה טרנסצנדנטית • הסתברות'}
               </div>
             </div>
           )}

@@ -27,7 +27,7 @@ import { getPlan, type ProficiencyLevel } from '@/lib/study-plan';
 // Final-grade composition between the two papers.
 // TODO: verify against the current MOE circular (חוזר מפמ"ר) — commonly
 // cited split for 5 units is 35% (581) / 65% (582).
-export const PAPER_WEIGHTS: Record<BagrutPaper, number> = { '581': 0.35, '582': 0.65 };
+export const PAPER_WEIGHTS: Record<BagrutPaper, number> = { '571': 0.35, '572': 0.65 };
 
 const PROB: Record<AppearsIn, number> = {
   'בכל בגרות': 1,
@@ -136,7 +136,7 @@ export type OverallPrediction = {
 
 /** Weighted 581+582 estimate, or null when there's no usable model. */
 export function predictOverall(subject: string): OverallPrediction | null {
-  const papers = (['581', '582'] as BagrutPaper[])
+  const papers = (['571', '572'] as BagrutPaper[])
     .map((p) => predictPaper(subject, p))
     .filter((p): p is PaperPrediction => p !== null);
   if (papers.length === 0) return null;
@@ -166,7 +166,7 @@ export function predictOverall(subject: string): OverallPrediction | null {
 /** The topics where improvement buys the most FINAL-grade points. */
 export function topImpactTopics(subject: string, limit = 3): TopicImpact[] {
   const all: TopicImpact[] = [];
-  for (const paper of ['581', '582'] as BagrutPaper[]) {
+  for (const paper of ['571', '572'] as BagrutPaper[]) {
     const p = predictPaper(subject, paper);
     if (!p) continue;
     const paperW = PAPER_WEIGHTS[paper];

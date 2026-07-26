@@ -22,7 +22,7 @@ import type { RoadmapVariant, RoadmapMainTopic, RoadmapNode } from '@/types/road
 const SUBJECT = 'math5';
 
 /** Fallback paper when the student has no plan yet. */
-export const DEFAULT_PAPER: BagrutPaper = '582';
+export const DEFAULT_PAPER: BagrutPaper = '572';
 
 /**
  * Topics for `paper` that have guided sub-topic content, in curriculum order.
@@ -132,11 +132,11 @@ export function resolveRoadmapNode(
 // Backward-compat shims — some callers still reference the 582-specific names.
 // ---------------------------------------------------------------------------
 export function buildRoadmap582(): RoadmapVariant {
-  return buildRoadmap('582');
+  return buildRoadmap('572');
 }
 export function allRoadmap582Nodes(): RoadmapNode[] {
-  return allRoadmapNodes('582');
+  return allRoadmapNodes('572');
 }
 export function paper582TopicOrder(): string[] {
-  return roadmapTopicOrder('582');
+  return roadmapTopicOrder('572');
 }

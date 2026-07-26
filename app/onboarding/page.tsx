@@ -56,7 +56,7 @@ export default function OnboardingPage() {
 
   const [selected, setSelected] = useState<SelectedTopic[]>([]);
   const [unitLevel, setUnitLevel] = useState<UnitLevel>(5);
-  const [paper, setPaper] = useState<BagrutPaper>('581');
+  const [paper, setPaper] = useState<BagrutPaper>('571');
 
   function choosePaper(p: BagrutPaper) {
     setPaper(p);
@@ -319,8 +319,8 @@ function DateStep({
         <div className="grid grid-cols-2 gap-2">
           {(
             [
-              { p: '581' as BagrutPaper, desc: 'אלגברה · הסתברות · אוקלידית · טריגו · חדו״א' },
-              { p: '582' as BagrutPaper, desc: 'מעריכית · ln · אנליטית · וקטורים · מרוכבים' },
+              { p: '571' as BagrutPaper, desc: 'אלגברה · הסתברות · אוקלידית · טריגו · חדו״א' },
+              { p: '572' as BagrutPaper, desc: 'מעריכית · ln · אנליטית · וקטורים · מרוכבים' },
             ]
           ).map(({ p, desc }) => (
             <button

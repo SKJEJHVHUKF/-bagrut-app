@@ -18,7 +18,7 @@ const check = (name: string, cond: boolean, detail = '') => {
   }
 };
 
-for (const paper of ['581', '582'] as const) {
+for (const paper of ['571', '572'] as const) {
   const p = predictPaper('math5', paper);
   check(`${paper}: prediction exists`, p !== null);
   if (!p) continue;
