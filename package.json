@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "verify:content": "tsx scripts/verify-content.ts",
+    "verify:content:strict": "tsx scripts/verify-content.ts --strict",
+    "check": "npm run typecheck && npm run verify:content && npm run build",
     "generate-pool": "tsx scripts/generate-pool.ts"
   },
   "dependencies": {
