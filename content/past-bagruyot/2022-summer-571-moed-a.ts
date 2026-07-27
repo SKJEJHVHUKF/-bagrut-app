@@ -13,6 +13,8 @@
  *        הנגזרת (y=0), שתי נקודות פיתול (1/2,0) ו-(1,1), וסקיצה.
  *   Q3 — אינטגרל/צבירת שטח h(t)=∫f (גרף f קווי-למקוטעין): h(0)=0, h(3)=7,
  *        h(5)=5, ותחומי עלייה/ירידה + מקסימום (3,7).
+ *   Q4 — גאומטריה: מעגל חסום במשולש DEF, משולש-מגע ABC שווה-שוקיים (ראש 2α);
+ *        הוכחת ∠D=∠E=2α (זווית משיק-מיתר + משיקים שווים) ו-∠F=180-4α.
  */
 
 import type { PastBagrutQuestion } from './types';
@@ -302,6 +304,94 @@ export const bagrut2022Summer571MoedA: PastBagrutQuestion[] = [
             'ערך המקסימום חושב בסעיף א: $\\;h(3) = 7$, ולכן נקודת המקסימום היא $(3, 7)$.',
           ],
           final_answer: '$h$ עולה ב-$0 < t < 3$ ויורדת ב-$3 < t < 7$; נקודת המקסימום היא $\\;(3, 7)$.',
+        },
+      },
+    ],
+    solutionSource: 'authored',
+  },
+  {
+    id: 'b2022s571a-q4',
+    year: 2022,
+    season: 'summer',
+    moed: 'a',
+    paper: '571',
+    questionNumber: 4,
+    topic: 'גאומטריה',
+    // הערה: ניקוד השאלה הוא הערכה — יש לאמת מול השאלון הרשמי.
+    totalPoints: 25,
+    context: [
+      'נתון משולש $DEF$, ובתוכו חסום מעגל.',
+      'המעגל משיק לצלע $DE$ בנקודה $A$, לצלע $EF$ בנקודה $B$, ולצלע $DF$ בנקודה $C$.',
+      'נתון כי משולש המגע $ABC$ שווה-שוקיים ($AB = AC$), וזווית הראש שלו היא $\\angle BAC = 2\\alpha$.',
+    ].join('\n'),
+    diagrams: [
+      {
+        type: 'custom',
+        viewBox: '0 0 300 280',
+        svg: `
+          <polygon points="82,62 218,62 150,250" fill="none" stroke="rgba(71,85,105,0.85)" stroke-width="1.5"/>
+          <circle cx="150" cy="110" r="48" fill="rgba(37,99,235,0.05)" stroke="rgba(37,99,235,0.85)" stroke-width="1.3"/>
+          <polygon points="150,62 195,126 105,126" fill="rgba(219,39,119,0.06)" stroke="rgba(219,39,119,0.9)" stroke-width="1.3"/>
+          <circle cx="82" cy="62" r="2.4" fill="#475569"/>
+          <text x="70" y="60" fill="#475569" font-size="10" font-family="Heebo, sans-serif">D</text>
+          <circle cx="218" cy="62" r="2.4" fill="#475569"/>
+          <text x="222" y="60" fill="#475569" font-size="10" font-family="Heebo, sans-serif">E</text>
+          <circle cx="150" cy="250" r="2.4" fill="#475569"/>
+          <text x="146" y="263" fill="#475569" font-size="10" font-family="Heebo, sans-serif">F</text>
+          <circle cx="150" cy="62" r="2.6" fill="#DB2777"/>
+          <text x="153" y="56" fill="#DB2777" font-size="9.5" font-family="Heebo, sans-serif">A</text>
+          <circle cx="195" cy="126" r="2.6" fill="#DB2777"/>
+          <text x="199" y="128" fill="#DB2777" font-size="9.5" font-family="Heebo, sans-serif">B</text>
+          <circle cx="105" cy="126" r="2.6" fill="#DB2777"/>
+          <text x="94" y="128" fill="#DB2777" font-size="9.5" font-family="Heebo, sans-serif">C</text>
+          <text x="144" y="88" fill="#B45309" font-size="9" font-family="Heebo, sans-serif">2α</text>
+          <text x="116" y="74" fill="#0284C7" font-size="7.5" font-family="Heebo, sans-serif">90°-α</text>
+          <text x="160" y="74" fill="#0284C7" font-size="7.5" font-family="Heebo, sans-serif">90°-α</text>
+          <text x="92" y="80" fill="#B45309" font-size="9" font-family="Heebo, sans-serif">2α</text>
+          <text x="198" y="80" fill="#B45309" font-size="9" font-family="Heebo, sans-serif">2α</text>
+          <text x="126" y="238" fill="#B45309" font-size="8.5" font-family="Heebo, sans-serif">180°-4α</text>
+          <text x="108" y="116" fill="#0284C7" font-size="7.5" font-family="Heebo, sans-serif">90°-α</text>
+          <text x="168" y="116" fill="#0284C7" font-size="7.5" font-family="Heebo, sans-serif">90°-α</text>
+        `,
+        caption:
+          'משולש $DEF$ ובתוכו מעגל חסום, המשיק ל-$DE$ ב-$A$, ל-$EF$ ב-$B$ ול-$DF$ ב-$C$. משולש המגע $ABC$ שווה-שוקיים עם זווית ראש $\\angle BAC = 2\\alpha$; מכאן זוויות הבסיס $90° - \\alpha$, זוויות משיק-מיתר $90° - \\alpha$, ולבסוף $\\angle D = \\angle E = 2\\alpha$ ו-$\\angle F = 180° - 4\\alpha$.',
+      },
+    ],
+    parts: [
+      {
+        label: 'א',
+        prompt: 'הוכיחו כי $\\angle D = \\angle E = 2\\alpha$.',
+        answer_type: 'proof',
+        hints: [
+          'ממשולש שווה-השוקיים $ABC$ מצאו את זוויות הבסיס $\\angle ABC$ ו-$\\angle ACB$.',
+          'השתמשו במשפט הזווית בין משיק למיתר (שווה לזווית ההיקפית שמעברה השני), ובכך ששני משיקים מנקודה למעגל שווים באורכם.',
+          'ב-$\\triangle EAB$ (שווה-שוקיים כי $EA = EB$) חשבו את $\\angle E$; באותו אופן את $\\angle D$.',
+        ],
+        solution: {
+          steps: [
+            'במשולש שווה-השוקיים $ABC$ זווית הראש היא $\\angle BAC = 2\\alpha$, ולכן זוויות הבסיס: $\\;\\angle ABC = \\angle ACB = \\dfrac{180° - 2\\alpha}{2} = 90° - \\alpha$.',
+            'הצלע $DE$ משיקה למעגל בנקודה $A$; לפי משפט הזווית בין משיק למיתר, הזווית בין המשיק למיתר $AB$ שווה לזווית ההיקפית $\\angle ACB$: $\\;\\angle BAE = \\angle ACB = 90° - \\alpha$.',
+            'באותו אופן, הזווית בין המשיק $DE$ למיתר $AC$: $\\;\\angle CAD = \\angle ABC = 90° - \\alpha$.',
+            'מהנקודה $E$ יוצאים שני משיקים למעגל — $EA$ (על $DE$) ו-$EB$ (על $EF$) — ולכן $EA = EB$, והמשולש $EAB$ שווה-שוקיים.',
+            'לכן זוויות הבסיס של $\\triangle EAB$ שוות: $\\;\\angle EBA = \\angle EAB = 90° - \\alpha$.',
+            'סכום הזוויות ב-$\\triangle EAB$: $\\;\\angle E = 180° - (90° - \\alpha) - (90° - \\alpha) = 2\\alpha$.',
+            'באותו אופן מהנקודה $D$: $DA = DC$, המשולש $DAC$ שווה-שוקיים, $\\angle DCA = \\angle DAC = 90° - \\alpha$, ולכן $\\;\\angle D = 2\\alpha$.',
+          ],
+          final_answer: 'הוכח: $\\;\\angle D = \\angle E = 2\\alpha$.',
+        },
+      },
+      {
+        label: 'ב',
+        prompt: 'הוכיחו כי $\\angle F = 180° - 4\\alpha$.',
+        answer_type: 'proof',
+        hints: ['השתמשו בסכום הזוויות במשולש $DEF$ ובתוצאה מסעיף א.'],
+        solution: {
+          steps: [
+            'סכום הזוויות במשולש $DEF$ שווה $180°$: $\\;\\angle D + \\angle E + \\angle F = 180°$.',
+            'מסעיף א $\\angle D = \\angle E = 2\\alpha$, ולכן $\\;2\\alpha + 2\\alpha + \\angle F = 180°$.',
+            'מבודדים: $\\;\\angle F = 180° - 4\\alpha$.',
+          ],
+          final_answer: 'הוכח: $\\;\\angle F = 180° - 4\\alpha$.',
         },
       },
     ],
