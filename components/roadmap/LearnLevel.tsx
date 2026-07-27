@@ -124,9 +124,14 @@ export function LearnLevel({
           <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase mb-2">לזכור</div>
           <ul className="space-y-1.5">
             {subTopic.keyPoints.map((k, i) => (
-              <li key={i} className="flex gap-2 text-sm text-slate-800 chat-md">
-                <span className="text-indigo-600 font-black">•</span>
-                <MathText inline>{k}</MathText>
+              // chat-md lives on the inner div, NOT the flex <li>: every
+              // .chat-md rule is a descendant combinator, so on the <li>
+              // itself none of them ever applied. Same shape as PathSections.
+              <li key={i} className="flex gap-2 text-sm text-slate-800">
+                <span className="text-indigo-600 font-black flex-shrink-0">•</span>
+                <div className="chat-md flex-1 min-w-0">
+                  <MathText inline>{k}</MathText>
+                </div>
               </li>
             ))}
           </ul>

@@ -209,9 +209,11 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
                     מה שכיסית ✓
                   </div>
                   {evaluation.coveredPoints.map((p, i) => (
-                    <div key={i} className="flex gap-2 items-start text-sm text-slate-800 chat-md">
+                    <div key={i} className="flex gap-2 items-start text-sm text-slate-800">
                       <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <MathText inline>{p}</MathText>
+                      <div className="chat-md flex-1 min-w-0">
+                        <MathText inline>{p}</MathText>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -224,9 +226,11 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
                     מה שחסר
                   </div>
                   {evaluation.missingPoints.map((p, i) => (
-                    <div key={i} className="flex gap-2 items-start text-sm text-slate-800 chat-md">
+                    <div key={i} className="flex gap-2 items-start text-sm text-slate-800">
                       <XCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <MathText inline>{p}</MathText>
+                      <div className="chat-md flex-1 min-w-0">
+                        <MathText inline>{p}</MathText>
+                      </div>
                     </div>
                   ))}
                 </div>
