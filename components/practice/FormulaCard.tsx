@@ -17,14 +17,18 @@ export function FormulaCard({ formula }: { formula: Formula }) {
         <MathText>{`$$${formula.latex}$$`}</MathText>
       </div>
 
+      {/* Two grid tracks, not three flex items. The em-dash used to be a
+          standalone column, which left it floating with no bidi relationship
+          to either neighbour; as an inline sibling of the meaning it sits in
+          one bidi context and hugs the text it introduces. */}
       <div className="space-y-1.5">
         {formula.variables.map((v, i) => (
-          <div key={i} className="flex gap-2 items-start text-sm">
-            <div className="flex-shrink-0 chat-md text-amber-800 font-bold min-w-[2.5rem]">
+          <div key={i} className="grid grid-cols-[minmax(2.5rem,auto)_1fr] gap-x-2 items-start text-sm">
+            <div className="chat-md text-amber-800 font-bold">
               <MathText inline>{`$${v.sym}$`}</MathText>
             </div>
-            <div className="text-slate-500">—</div>
-            <div className="text-slate-800 chat-md flex-1">
+            <div className="text-slate-800 chat-md min-w-0">
+              <span className="text-slate-400 select-none">— </span>
               <MathText inline>{v.meaning}</MathText>
             </div>
           </div>

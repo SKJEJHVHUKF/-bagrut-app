@@ -331,12 +331,13 @@ function DrawerFormula({ formula }: { formula: Formula }) {
               >
                 <div className="mt-2 space-y-1.5">
                   {formula.variables.map((v, i) => (
-                    <div key={i} className="flex gap-2 items-start text-xs">
-                      <div className="flex-shrink-0 chat-md text-amber-800 font-bold min-w-[2rem]">
+                    // Kept in sync with FormulaCard's variables row.
+                    <div key={i} className="grid grid-cols-[minmax(2rem,auto)_1fr] gap-x-2 items-start text-xs">
+                      <div className="chat-md text-amber-800 font-bold">
                         <MathText inline>{`$${v.sym}$`}</MathText>
                       </div>
-                      <div className="text-slate-400">—</div>
-                      <div className="text-slate-700 chat-md flex-1">
+                      <div className="text-slate-700 chat-md min-w-0">
+                        <span className="text-slate-400 select-none">— </span>
                         <MathText inline>{v.meaning}</MathText>
                       </div>
                     </div>
