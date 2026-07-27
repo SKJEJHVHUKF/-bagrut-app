@@ -195,7 +195,7 @@ $$\\ln(xy) = \\ln x + \\ln y \\qquad \\ln\\!\\left(\\dfrac{x}{y}\\right) = \\ln 
       simplestExample: {
         problem: 'פשט (עבור $x > 0$): $\\ln\\!\\left(\\dfrac{x^2}{3}\\right)$.',
         solution:
-          'קודם חוק המנה, ואז חוק החזקה על האיבר הראשון: $$\\ln\\!\\left(\\dfrac{x^2}{3}\\right) = \\ln(x^2) - \\ln 3 = 2\\ln x - \\ln 3.$$',
+          'קודם חוק המנה, ואז חוק החזקה על האיבר הראשון:\n\n$$\\ln\\!\\left(\\dfrac{x^2}{3}\\right) = \\ln(x^2) - \\ln 3 = 2\\ln x - \\ln 3.$$',
       },
       whyItWorks:
         'הוכחה זריזה לחוק המכפלה: נסמן $x = e^a$ ו-$y = e^b$. אז $xy = e^{a+b}$, ולכן $\\ln(xy) = a + b = \\ln x + \\ln y$. אותו רעיון נותן גם את שני החוקים האחרים — הם בדיוק חוקי החזקות מתורגמים.',
@@ -253,7 +253,7 @@ $$\\int \\dfrac{1}{ax+b}\\,dx = \\dfrac{1}{a}\\ln|ax+b| + c$$
       simplestExample: {
         problem: 'חשב: $\\displaystyle\\int_1^e \\dfrac{1}{x}\\,dx$.',
         solution:
-          'הקדומה היא $\\ln|x|$, ולכן: $$\\int_1^e \\dfrac{1}{x}\\,dx = \\ln e - \\ln 1 = 1 - 0 = 1.$$',
+          'הקדומה היא $\\ln|x|$, ולכן:\n\n$$\\int_1^e \\dfrac{1}{x}\\,dx = \\ln e - \\ln 1 = 1 - 0 = 1.$$',
       },
       whyItWorks:
         'מכיוון ש-$(\\ln x)\' = \\dfrac{1}{x}$, הפונקציה הקדומה של $\\dfrac{1}{x}$ היא $\\ln x$ (ובאופן כללי $\\ln|x|$ כדי לכסות גם $x<0$). אינטגרציה היא פשוט היפוך הגזירה.',
