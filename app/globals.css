@@ -138,26 +138,44 @@ html {
   text-align: start;
 }
 .chat-md > * + * { margin-top: 0.65em; }
-/* No explicit `direction` here — each <p> in MathText.tsx gets dir="auto"
- * so the browser picks RTL or LTR based on the FIRST strong character.
- * - Hebrew-first paragraph ("מה זה?") → RTL, right-aligned.
- * - Math-first or math-heavy line ("ln(x-3): דורש x>3 → x-3>0") → LTR,
- *   left-aligned, math reads naturally and Hebrew word "דורש" embeds
- *   in the LTR flow.
- * Forcing direction:rtl here would break the math-heavy lines. */
+/* Every block element from MathText.tsx carries dir="rtl" explicitly — this
+ * is Hebrew content, so the direction is known, not guessed. (dir="auto" was
+ * used here once; it reads KaTeX's hidden <annotation> MathML, so any line
+ * OPENING with a formula saw a Latin first-strong-char and flipped the whole
+ * Hebrew paragraph to LTR. See the contract comment in MathText.tsx.) */
 .chat-md p { margin: 0; }
 .chat-md p + p { margin-top: 0.7em; }
 
-/* When a paragraph or list item STARTS with math (KaTeX), force LTR.
- * Without this, dir="auto" gets fooled: it skips the KaTeX wrapper
- * (because .katex has unicode-bidi: isolate) and picks up the next
- * Hebrew word as the first strong character → RTL, which renders the
- * line backwards. :has() lets us detect "math is the literal first
- * thing in this paragraph" and force LTR + left-alignment. */
-.chat-md p:has(> .katex:first-child),
-.chat-md li:has(> p > .katex:first-child),
-.chat-md li:has(> .katex:first-child) {
-  direction: ltr;
+/* MathText inline mode strips the <p>. Without a wrapper the caller receives
+ * raw siblings — text nodes plus .katex inline-blocks — so a display:flex
+ * caller made each one its own flex item and `.chat-md > * + *` added 0.65em
+ * of top margin to every .katex after the first. The <span> is the fix; these
+ * two declarations only guarantee what it must never lose:
+ *   display: inline       — NEVER `contents` (that re-exposes the children as
+ *                           flex items, i.e. the exact bug) and never
+ *                           `inline-block` (one unbreakable atom, which would
+ *                           kill wrapping inside line-clamp/truncate).
+ *   unicode-bidi: isolate — the UA sheet already grants this to any [dir]
+ *                           element; restated so a reset can't drop it. */
+.mathtext-inline { display: inline; unicode-bidi: isolate; }
+
+/* A string that is nothing BUT math is a standalone worked-solution step
+ * (STYLE_GUIDE §4) — left-align it so the equation starts at the left edge.
+ *
+ * Keyed off the .math-only class that MathText computes from the SOURCE
+ * STRING, deliberately not off a CSS selector. The previous rule matched
+ * `:has(> .katex:first-child)` and forced `direction: ltr; text-align: left`
+ * on any line that merely OPENED with a formula — 700+ Hebrew prose lines
+ * like '$z \cdot \bar{z} = |z|^2$ — זהות מאוד שימושית' were rendered
+ * backwards by it. Tightening to `:only-child` was not enough either:
+ * :only-child counts only ELEMENT children, so "מהם פתרונות המשוואה
+ * $z^2=-25$?" (one .katex + text nodes) still matched and a Hebrew question
+ * came out left-aligned. Only JS can see the text nodes.
+ *
+ * text-align only, never `direction` — a math run is already isolated LTR
+ * by the .katex rules below, so alignment is the entire job here. */
+.mathtext-block.math-only p,
+.mathtext-block.math-only li {
   text-align: left;
 }
 .chat-md h1, .chat-md h2, .chat-md h3, .chat-md h4 {
