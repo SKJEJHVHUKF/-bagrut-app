@@ -38,6 +38,16 @@ export function LearnLevel({
 }) {
   const [result, setResult] = useState<AttemptResult | null>(null);
   const steps = subTopic.lesson ?? [];
+
+  // A sub-topic's formulas[] is the reference set — FormulaSheet needs it
+  // complete. But 72 of 123 of them repeat a formula the student just met
+  // inside a lesson step, so on THIS screen they read as filler: the same
+  // card twice, a few hundred pixels apart. Show only what the steps didn't
+  // already teach. Normalised because the two copies usually differ by no
+  // more than a \quad vs \qquad.
+  const norm = (s: string) => s.replace(/\\quad|\\qquad/g, '').replace(/\\[,;!]|\s+/g, '');
+  const taughtInSteps = new Set(steps.filter((s) => s.formula).map((s) => norm(s.formula!.latex)));
+  const extraFormulas = subTopic.formulas.filter((f) => !taughtInSteps.has(norm(f.latex)));
   const drillTotal = steps.filter((s) => s.drill).length;
   const [drillsAnswered, setDrillsAnswered] = useState(0);
   const [drillsCorrect, setDrillsCorrect] = useState(0);
@@ -108,11 +118,11 @@ export function LearnLevel({
         </div>
       )}
 
-      {/* Formulas for this sub-topic */}
-      {subTopic.formulas.length > 0 && (
+      {/* Formulas the lesson steps did not already cover */}
+      {extraFormulas.length > 0 && (
         <div className="space-y-2">
           <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase">הנוסחאות של השלב</div>
-          {subTopic.formulas.map((f, i) => (
+          {extraFormulas.map((f, i) => (
             <FormulaCard key={i} formula={f} />
           ))}
         </div>
