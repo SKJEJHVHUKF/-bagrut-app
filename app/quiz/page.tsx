@@ -590,6 +590,26 @@ function Quiz() {
                 </div>
               ) : (
                 <div className="lesson-stack">
+                  {/* The student's OWN mistake, first. `selectedAnswer` is the
+                      index into the original answers array (checkAnswer is
+                      called with the unshuffled index), so it lines up with
+                      distractorNotes directly. Shown only on a wrong answer —
+                      on a correct one there is no misconception to unpick. */}
+                  {!isCorrect &&
+                    selectedAnswer !== null &&
+                    Array.isArray(q.distractorNotes) &&
+                    q.distractorNotes[selectedAnswer] && (
+                      <div className="lesson-card lesson-wrong">
+                        <div className="lesson-label">
+                          <span className="lesson-icon">🎯</span>
+                          <span>למה התשובה שבחרת שגויה</span>
+                        </div>
+                        <div className="lesson-text math-content">
+                          <MathText>{q.distractorNotes[selectedAnswer]}</MathText>
+                        </div>
+                      </div>
+                    )}
+
                   {q.explanation?.why_correct && (
                     <div className="lesson-card lesson-correct">
                       <div className="lesson-label">
