@@ -195,7 +195,7 @@ for (const f of files) {
 // would label the whole group by whichever finding happened to land first.
 const byRule = new Map<string, Finding[]>();
 for (const f of findings) {
-  const k = `${f.sev} ${f.rule}`;
+  const k = `${f.sev} ${f.rule}`;
   if (!byRule.has(k)) byRule.set(k, []);
   byRule.get(k)!.push(f);
 }
