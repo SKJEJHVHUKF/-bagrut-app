@@ -18,9 +18,11 @@ export const math5Trigonometry: Lesson = {
 - **משוואות טריגונומטריות** — שיטה אחידה, כולל הצבה לביריבועיות.
 - **חקירת פונקציה טריגונומטרית** — איך מוצאים נקודות קיצון של $f(x) = 2\\sin x + \\cos 2x$.
 
-**חוק זהב #1:** בכל פתרון משוואה, **צייר את התחום בהתחלה**. "פתור ב-$[0, 2\\pi]$" → תחום סגור. "פתור ב-$\\mathbb{R}$" → אינסוף פתרונות, חובה לכתוב את הסדרה הכללית עם $+ 2k\\pi$ או $+ k\\pi$.
+**חוק זהב #1:** בכל פתרון משוואה, **צייר את התחום בהתחלה**. "פתור ב-$[0°, 360°]$" → תחום סגור. "פתור ב-$\\mathbb{R}$" → אינסוף פתרונות, חובה לכתוב את הסדרה הכללית עם $+ 360°k$ או $+ 180°k$.
 
-**חוק זהב #2:** רדיאנים כברירת מחדל. אם רואים $\\sin x$ בלי סימן מעלה — זה רדיאנים. $\\sin 30 \\ne \\sin 30°$.`,
+**חוק זהב #2 — באיזו יחידה עובדים:** בפרקי המשוואות והזוויות המיוחדות עובדים **במעלות**, וכל התשובות נכתבות עם סימן המעלה. בפרק הגזירה והאינטגרציה עוברים ל**רדיאנים**, וזו אינה העדפה סגנונית אלא הכרח: הנוסחה $(\\sin x)' = \\cos x$ נכונה רק ברדיאנים, ובמעלות הנגזרת הייתה יוצאת $\\dfrac{\\pi}{180}\\cos x$. לכן שים לב באיזה פרק אתה נמצא לפני שאתה כותב תשובה.
+
+**המרה בין היחידות:** ממעלות לרדיאנים כופלים ב-$\\dfrac{\\pi}{180°}$, ובכיוון ההפוך כופלים ב-$\\dfrac{180°}{\\pi}$. שים לב ש-$\\sin 30 \\ne \\sin 30°$ — מספר ערום בלי סימן מעלה נקרא כרדיאנים.`,
 
   concepts: [
     {
@@ -1699,13 +1701,13 @@ $\\sin 2x = 2\\sin x\\cos x$, ואז מוציאים גורם משותף.
       formulas: [
         {
           name: 'פתרון כללי לסינוס',
-          latex: '\\sin x = \\sin\\alpha \\;\\Rightarrow\\; x = \\alpha + 2k\\pi \\;\\text{or}\\; x = \\pi - \\alpha + 2k\\pi',
+          latex: '\\sin x = \\sin\\alpha \\;\\Rightarrow\\; x = \\alpha + 360°k \\;\\text{or}\\; x = 180° - \\alpha + 360°k',
           variables: [{ sym: 'k', meaning: 'מספר שלם כלשהו' }],
-          note: 'שתי משפחות פתרונות — אל תשכח את המשפחה השנייה $\\pi - \\alpha$.',
+          note: 'שתי משפחות פתרונות — אל תשכח את המשפחה השנייה $180° - \\alpha$.',
         },
         {
           name: 'פתרון כללי לקוסינוס',
-          latex: '\\cos x = \\cos\\alpha \\;\\Rightarrow\\; x = \\pm\\alpha + 2k\\pi',
+          latex: '\\cos x = \\cos\\alpha \\;\\Rightarrow\\; x = \\pm\\alpha + 360°k',
           variables: [{ sym: 'k', meaning: 'מספר שלם כלשהו' }],
           note: 'הפתרונות סימטריים סביב ציר $x$ — לכן $\\pm\\alpha$.',
         },
@@ -1723,35 +1725,35 @@ $\\sin 2x = 2\\sin x\\cos x$, ואז מוציאים גורם משותף.
           kind: 'mcq',
           question: 'מהו הפתרון הכללי של $\\sin x = \\dfrac{1}{2}$?',
           answers: [
-            '$x = \\dfrac{\\pi}{6} + 2k\\pi$ או $x = \\dfrac{5\\pi}{6} + 2k\\pi$',
-            '$x = \\dfrac{\\pi}{6} + 2k\\pi$ בלבד',
-            '$x = \\pm\\dfrac{\\pi}{6} + 2k\\pi$',
-            '$x = \\dfrac{\\pi}{6} + k\\pi$',
+            '$x = 30° + 360°k$ או $x = 150° + 360°k$',
+            '$x = 30° + 360°k$ בלבד',
+            '$x = \\pm 30° + 360°k$',
+            '$x = 30° + 180°k$',
           ],
           correct: 0,
-          hint: 'ל-$\\sin$ יש שתי משפחות פתרונות: $\\alpha$ ו-$\\pi - \\alpha$.',
+          hint: 'ל-$\\sin$ יש שתי משפחות פתרונות: $\\alpha$ ו-$180° - \\alpha$.',
           solution: {
             steps: [
-              'הפתרון הבסיסי: $\\sin\\dfrac{\\pi}{6} = \\dfrac{1}{2}$.',
-              'המשפחה השנייה: $\\pi - \\dfrac{\\pi}{6} = \\dfrac{5\\pi}{6}$.',
-              'פתרון כללי: $x = \\dfrac{\\pi}{6} + 2k\\pi$ או $x = \\dfrac{5\\pi}{6} + 2k\\pi$.',
+              'הפתרון הבסיסי: $\\sin 30° = \\dfrac{1}{2}$.',
+              'המשפחה השנייה: $180° - 30° = 150°$.',
+              'פתרון כללי: $x = 30° + 360°k$ או $x = 150° + 360°k$.',
             ],
-            finalAnswer: '$x = \\dfrac{\\pi}{6} + 2k\\pi$ או $x = \\dfrac{5\\pi}{6} + 2k\\pi$',
-            explanation: 'הטעות הנפוצה היא לשכוח את משפחת $\\pi - \\alpha$ של הסינוס.',
+            finalAnswer: '$x = 30° + 360°k$ או $x = 150° + 360°k$',
+            explanation: 'הטעות הנפוצה היא לשכוח את משפחת $180° - \\alpha$ של הסינוס.',
           },
         },
         {
           id: 'trig-sub-eq-002',
           difficulty: 'easy',
           kind: 'open',
-          question: 'פתור את $\\cos x = -\\dfrac{1}{2}$ בתחום $[0, 2\\pi)$.',
-          hint: 'הזווית $\\dfrac{\\pi}{3}$ נותנת $\\cos = \\dfrac{1}{2}$. קוסינוס שלילי — באילו רבעים?',
+          question: 'פתור את $\\cos x = -\\dfrac{1}{2}$ בתחום $[0°, 360°)$.',
+          hint: 'הזווית $60°$ נותנת $\\cos = \\dfrac{1}{2}$. קוסינוס שלילי — באילו רבעים?',
           solution: {
             steps: [
-              '$\\cos x = -\\dfrac{1}{2}$ → הזווית הבסיסית $\\dfrac{\\pi}{3}$, וקוסינוס שלילי ברבעים II ו-III.',
-              'רבע II: $\\pi - \\dfrac{\\pi}{3} = \\dfrac{2\\pi}{3}$. רבע III: $\\pi + \\dfrac{\\pi}{3} = \\dfrac{4\\pi}{3}$.',
+              '$\\cos x = -\\dfrac{1}{2}$ → הזווית הבסיסית $60°$, וקוסינוס שלילי ברבעים II ו-III.',
+              'רבע II: $180° - 60° = 120°$. רבע III: $180° + 60° = 240°$.',
             ],
-            finalAnswer: '$x = \\dfrac{2\\pi}{3}, \\; \\dfrac{4\\pi}{3}$',
+            finalAnswer: '$x = 120°, \\; 240°$',
             explanation: 'סימן הקוסינוס קובע את הרבעים: שלילי ⇐ רבעים II ו-III.',
           },
         },
@@ -1759,16 +1761,16 @@ $\\sin 2x = 2\\sin x\\cos x$, ואז מוציאים גורם משותף.
           id: 'trig-sub-eq-003',
           difficulty: 'mid',
           kind: 'open',
-          question: 'פתור את $2\\sin^2 x - \\sin x - 1 = 0$ בתחום $[0, 2\\pi)$.',
+          question: 'פתור את $2\\sin^2 x - \\sin x - 1 = 0$ בתחום $[0°, 360°)$.',
           hint: 'הצב $t = \\sin x$ וקבל משוואה ריבועית.',
           solution: {
             steps: [
               'הצבה $t = \\sin x$: $2t^2 - t - 1 = 0$, שמתפרק ל-$(2t + 1)(t - 1) = 0$.',
               'פתרונות: $t = 1$ או $t = -\\dfrac{1}{2}$.',
-              '$\\sin x = 1$ → $x = \\dfrac{\\pi}{2}$.',
-              '$\\sin x = -\\dfrac{1}{2}$ → $x = \\dfrac{7\\pi}{6}$ או $x = \\dfrac{11\\pi}{6}$ (רבעים III, IV).',
+              '$\\sin x = 1$ → $x = 90°$.',
+              '$\\sin x = -\\dfrac{1}{2}$ → $x = 210°$ או $x = 330°$ (רבעים III, IV).',
             ],
-            finalAnswer: '$x = \\dfrac{\\pi}{2}, \\; \\dfrac{7\\pi}{6}, \\; \\dfrac{11\\pi}{6}$',
+            finalAnswer: '$x = 90°, \\; 210°, \\; 330°$',
             explanation: 'משתנה עזר הופך משוואה טריגונומטרית ריבועית לבעיה אלגברית מוכרת.',
           },
         },
@@ -1776,16 +1778,16 @@ $\\sin 2x = 2\\sin x\\cos x$, ואז מוציאים גורם משותף.
           id: 'trig-sub-eq-004',
           difficulty: 'mid',
           kind: 'open',
-          question: 'פתור את $\\cos 2x + \\cos x = 0$ בתחום $[0, 2\\pi)$.',
+          question: 'פתור את $\\cos 2x + \\cos x = 0$ בתחום $[0°, 360°)$.',
           hint: 'המר $\\cos 2x = 2\\cos^2 x - 1$ כדי לעבוד באותה זווית.',
           solution: {
             steps: [
               'הצב $\\cos 2x = 2\\cos^2 x - 1$: $2\\cos^2 x - 1 + \\cos x = 0$.',
               'עם $t = \\cos x$: $2t^2 + t - 1 = 0$ → $(2t - 1)(t + 1) = 0$, אז $t = \\dfrac{1}{2}$ או $t = -1$.',
-              '$\\cos x = \\dfrac{1}{2}$ → $x = \\dfrac{\\pi}{3}$ או $x = \\dfrac{5\\pi}{3}$.',
-              '$\\cos x = -1$ → $x = \\pi$.',
+              '$\\cos x = \\dfrac{1}{2}$ → $x = 60°$ או $x = 300°$.',
+              '$\\cos x = -1$ → $x = 180°$.',
             ],
-            finalAnswer: '$x = \\dfrac{\\pi}{3}, \\; \\pi, \\; \\dfrac{5\\pi}{3}$',
+            finalAnswer: '$x = 60°, \\; 180°, \\; 300°$',
             explanation: 'בחירת הצורה $2\\cos^2 x - 1$ ל-$\\cos 2x$ נותנת משוואה ריבועית ב-$\\cos x$ בלבד.',
           },
         },
@@ -1793,16 +1795,16 @@ $\\sin 2x = 2\\sin x\\cos x$, ואז מוציאים גורם משותף.
           id: 'trig-sub-eq-005',
           difficulty: 'mid',
           kind: 'mcq',
-          question: 'כמה פתרונות יש למשוואה $\\sin 2x = \\sin x$ בתחום $[0, 2\\pi)$?',
+          question: 'כמה פתרונות יש למשוואה $\\sin 2x = \\sin x$ בתחום $[0°, 360°)$?',
           answers: ['$4$', '$2$', '$3$', '$5$'],
           correct: 0,
           hint: 'פתח $\\sin 2x = 2\\sin x\\cos x$ והעבר לצד אחד כדי להוציא גורם משותף.',
           solution: {
             steps: [
               '$2\\sin x\\cos x - \\sin x = 0$ → $\\sin x(2\\cos x - 1) = 0$.',
-              '$\\sin x = 0$ → $x = 0, \\pi$.',
-              '$\\cos x = \\dfrac{1}{2}$ → $x = \\dfrac{\\pi}{3}, \\dfrac{5\\pi}{3}$.',
-              'סה"כ ארבעה פתרונות: $0, \\dfrac{\\pi}{3}, \\pi, \\dfrac{5\\pi}{3}$.',
+              '$\\sin x = 0$ → $x = 0°, 180°$.',
+              '$\\cos x = \\dfrac{1}{2}$ → $x = 60°, 300°$.',
+              'סה"כ ארבעה פתרונות: $0°, 60°, 180°, 300°$.',
             ],
             finalAnswer: '$4$ פתרונות',
             explanation: 'אסור לחלק ב-$\\sin x$ (מאבדים פתרונות) — מוציאים גורם משותף ומשווים כל גורם לאפס.',
@@ -1812,16 +1814,16 @@ $\\sin 2x = 2\\sin x\\cos x$, ואז מוציאים גורם משותף.
           id: 'trig-sub-eq-006',
           difficulty: 'hard',
           kind: 'open',
-          question: 'פתור את $\\sqrt{3}\\sin x = \\cos x$ בתחום $[0, 2\\pi)$.',
+          question: 'פתור את $\\sqrt{3}\\sin x = \\cos x$ בתחום $[0°, 360°)$.',
           hint: 'חלק את שני האגפים ב-$\\cos x$ כדי לקבל משוואה ב-$\\tan x$.',
           solution: {
             steps: [
               'חלוקה ב-$\\cos x$ (הוא אינו $0$ בפתרונות): $\\sqrt{3}\\tan x = 1$.',
-              '$\\tan x = \\dfrac{1}{\\sqrt{3}}$ → פתרון בסיסי $x = \\dfrac{\\pi}{6}$, מחזור $\\pi$.',
-              'בתחום $[0, 2\\pi)$: $x = \\dfrac{\\pi}{6}$ ו-$x = \\dfrac{\\pi}{6} + \\pi = \\dfrac{7\\pi}{6}$.',
+              '$\\tan x = \\dfrac{1}{\\sqrt{3}}$ → פתרון בסיסי $x = 30°$, מחזור $180°$.',
+              'בתחום $[0°, 360°)$: $x = 30°$ ו-$x = 30° + 180° = 210°$.',
             ],
-            finalAnswer: '$x = \\dfrac{\\pi}{6}, \\; \\dfrac{7\\pi}{6}$',
-            explanation: 'המרה ל-$\\tan$ מאחדת את $\\sin$ ו-$\\cos$ למשתנה אחד; זכור שמחזור הטנגנס הוא $\\pi$.',
+            finalAnswer: '$x = 30°, \\; 210°$',
+            explanation: 'המרה ל-$\\tan$ מאחדת את $\\sin$ ו-$\\cos$ למשתנה אחד; זכור שמחזור הטנגנס הוא $180°$.',
           },
         },
       ],
@@ -1967,12 +1969,12 @@ $$\\sin 30° = \\tfrac{1}{2},\\quad \\sin 45° = \\tfrac{\\sqrt{2}}{2},\\quad \\
       formulas: [
         {
           name: 'זוויות צמצום — רבע II',
-          latex: '\\sin(\\pi - x) = \\sin x \\;,\\; \\cos(\\pi - x) = -\\cos x',
+          latex: '\\sin(180° - x) = \\sin x \\;,\\; \\cos(180° - x) = -\\cos x',
           variables: [{ sym: 'x', meaning: 'זווית בסיס ברבע I' }],
         },
         {
           name: 'זוויות צמצום — רבע III',
-          latex: '\\sin(\\pi + x) = -\\sin x \\;,\\; \\cos(\\pi + x) = -\\cos x',
+          latex: '\\sin(180° + x) = -\\sin x \\;,\\; \\cos(180° + x) = -\\cos x',
           variables: [{ sym: 'x', meaning: 'זווית בסיס ברבע I' }],
         },
         {
@@ -1987,44 +1989,44 @@ $$\\sin 30° = \\tfrac{1}{2},\\quad \\sin 45° = \\tfrac{\\sqrt{2}}{2},\\quad \\
           id: 'trig-sub-sp-001',
           difficulty: 'easy',
           kind: 'mcq',
-          question: 'מהו $\\sin\\dfrac{5\\pi}{6}$?',
+          question: 'מהו $\\sin 150°$?',
           answers: ['$\\dfrac{1}{2}$', '$-\\dfrac{1}{2}$', '$\\dfrac{\\sqrt{3}}{2}$', '$-\\dfrac{\\sqrt{3}}{2}$'],
           correct: 0,
-          hint: '$\\dfrac{5\\pi}{6} = \\pi - \\dfrac{\\pi}{6}$ — איזה רבע?',
+          hint: '$150° = 180° - 30°$ — איזה רבע?',
           solution: {
             steps: [
-              '$\\dfrac{5\\pi}{6} = \\pi - \\dfrac{\\pi}{6}$ — רבע II, שם $\\sin > 0$.',
-              '$\\sin(\\pi - \\dfrac{\\pi}{6}) = \\sin\\dfrac{\\pi}{6} = \\dfrac{1}{2}$.',
+              '$150° = 180° - 30°$ — רבע II, שם $\\sin > 0$.',
+              '$\\sin(180° - 30°) = \\sin 30° = \\dfrac{1}{2}$.',
             ],
-            finalAnswer: '$\\sin\\dfrac{5\\pi}{6} = \\dfrac{1}{2}$',
-            explanation: 'הסינוס נשמר תחת $\\pi - x$ (אותו ערך, אותו סימן ברבע II).',
+            finalAnswer: '$\\sin 150° = \\dfrac{1}{2}$',
+            explanation: 'הסינוס נשמר תחת $180° - x$ (אותו ערך, אותו סימן ברבע II).',
           },
         },
         {
           id: 'trig-sub-sp-002',
           difficulty: 'easy',
           kind: 'open',
-          question: 'חשב את $\\cos\\dfrac{2\\pi}{3}$.',
-          hint: '$\\dfrac{2\\pi}{3} = \\pi - \\dfrac{\\pi}{3}$.',
+          question: 'חשב את $\\cos 120°$.',
+          hint: '$120° = 180° - 60°$.',
           solution: {
             steps: [
-              '$\\dfrac{2\\pi}{3} = \\pi - \\dfrac{\\pi}{3}$ — רבע II, שם $\\cos < 0$.',
-              '$\\cos(\\pi - \\dfrac{\\pi}{3}) = -\\cos\\dfrac{\\pi}{3} = -\\dfrac{1}{2}$.',
+              '$120° = 180° - 60°$ — רבע II, שם $\\cos < 0$.',
+              '$\\cos(180° - 60°) = -\\cos 60° = -\\dfrac{1}{2}$.',
             ],
-            finalAnswer: '$\\cos\\dfrac{2\\pi}{3} = -\\dfrac{1}{2}$',
-            explanation: 'הקוסינוס מתהפך בסימן תחת $\\pi - x$ (רבע II — קוסינוס שלילי).',
+            finalAnswer: '$\\cos 120° = -\\dfrac{1}{2}$',
+            explanation: 'הקוסינוס מתהפך בסימן תחת $180° - x$ (רבע II — קוסינוס שלילי).',
           },
         },
         {
           id: 'trig-sub-sp-003',
           difficulty: 'mid',
           kind: 'open',
-          question: 'חשב את $\\sin\\dfrac{7\\pi}{6} + \\cos\\dfrac{4\\pi}{3}$.',
-          hint: 'שתי הזוויות הן $\\pi + x$, כאשר $x$ זווית הבסיס — רבע III.',
+          question: 'חשב את $\\sin 210° + \\cos 240°$.',
+          hint: 'שתי הזוויות הן $180° + x$, כאשר $x$ זווית הבסיס — רבע III.',
           solution: {
             steps: [
-              '$\\dfrac{7\\pi}{6} = \\pi + \\dfrac{\\pi}{6}$ → $\\sin = -\\sin\\dfrac{\\pi}{6} = -\\dfrac{1}{2}$.',
-              '$\\dfrac{4\\pi}{3} = \\pi + \\dfrac{\\pi}{3}$ → $\\cos = -\\cos\\dfrac{\\pi}{3} = -\\dfrac{1}{2}$.',
+              '$210° = 180° + 30°$ → $\\sin = -\\sin 30° = -\\dfrac{1}{2}$.',
+              '$240° = 180° + 60°$ → $\\cos = -\\cos 60° = -\\dfrac{1}{2}$.',
               'סכום: $-\\dfrac{1}{2} + \\left(-\\dfrac{1}{2}\\right) = -1$.',
             ],
             finalAnswer: '$-1$',
@@ -2035,13 +2037,13 @@ $$\\sin 30° = \\tfrac{1}{2},\\quad \\sin 45° = \\tfrac{\\sqrt{2}}{2},\\quad \\
           id: 'trig-sub-sp-004',
           difficulty: 'mid',
           kind: 'mcq',
-          question: 'הזווית $\\dfrac{5\\pi}{4}$ נמצאת ברבע ___, ובו $\\tan x$ הוא:',
+          question: 'הזווית $225°$ נמצאת ברבע ___, ובו $\\tan x$ הוא:',
           answers: ['רבע III, $\\tan > 0$', 'רבע II, $\\tan < 0$', 'רבע IV, $\\tan < 0$', 'רבע III, $\\tan < 0$'],
           correct: 0,
-          hint: '$\\dfrac{5\\pi}{4} = \\pi + \\dfrac{\\pi}{4}$. סימן $\\tan = \\sin/\\cos$.',
+          hint: '$225° = 180° + 45°$. סימן $\\tan = \\sin/\\cos$.',
           solution: {
             steps: [
-              '$\\dfrac{5\\pi}{4} = \\pi + \\dfrac{\\pi}{4}$ — רבע III.',
+              '$225° = 180° + 45°$ — רבע III.',
               'ברבע III: $\\sin < 0$ וגם $\\cos < 0$, ולכן $\\tan = \\dfrac{\\sin}{\\cos} > 0$ (שלילי חלקי שלילי).',
             ],
             finalAnswer: 'רבע III, $\\tan > 0$',
