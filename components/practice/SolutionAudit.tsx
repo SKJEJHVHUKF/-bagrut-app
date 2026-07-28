@@ -6,7 +6,7 @@
 // Pro-only server-side — free users get a friendly upsell.
 
 import { useRef, useState } from 'react';
-import { Camera, Upload, Loader2, X, CheckCircle, XCircle, Crown, ScanLine } from 'lucide-react';
+import { Camera, Upload, Loader2, X, CheckCircle, XCircle, Crown, ScanLine, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { MathText } from './MathText';
 import { recordMistake, toErrorCategory } from '@/lib/mistakes';
@@ -29,11 +29,15 @@ export function SolutionAudit({
   topic,
   subject = 'math5',
   onClose,
+  onContinueInChat,
 }: {
   questionText?: string;
   topic?: string;
   subject?: string;
   onClose?: () => void;
+  /** When provided, the audit offers to hand its finding to the tutor and
+   *  keep going as a conversation. Only /chat passes this today. */
+  onContinueInChat?: (brief: string) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -204,12 +208,55 @@ export function SolutionAudit({
         </div>
       )}
 
-      {result && <AuditResultView result={result} onReset={() => { setResult(null); setFile(null); setPreview(null); }} />}
+      {result && (
+        <AuditResultView
+          result={result}
+          questionText={questionText}
+          onContinueInChat={onContinueInChat}
+          onReset={() => { setResult(null); setFile(null); setPreview(null); }}
+        />
+      )}
     </div>
   );
 }
 
-function AuditResultView({ result, onReset }: { result: AuditResult; onReset: () => void }) {
+/**
+ * Turns the audit into a short brief for the tutor.
+ *
+ * Deliberately NOT the whole transcription: the tutor needs to know where the
+ * student broke and what they were solving, not to re-read every line. Keeping
+ * it tight also keeps the turn cheap.
+ */
+function auditBrief(result: AuditResult, questionText?: string): string {
+  const lines: string[] = ['[התלמיד צילם את הפתרון שכתב. זה מה שהניתוח מצא:]'];
+  if (questionText) lines.push(`השאלה: ${questionText.slice(0, 400)}`);
+  if (result.isCorrect) lines.push('הפתרון נמצא נכון.');
+  else {
+    const step =
+      typeof result.firstErrorStep === 'number' && result.steps?.[result.firstErrorStep]
+        ? result.steps[result.firstErrorStep].text
+        : null;
+    if (step) lines.push(`הסטייה הראשונה: ${step.slice(0, 300)}`);
+    if (result.diagnosis) lines.push(`האבחון: ${result.diagnosis.slice(0, 400)}`);
+    if (result.category) lines.push(`סוג הטעות: ${result.category}`);
+  }
+  lines.push(
+    'התלמיד כבר ראה את הניתוח הזה — אל תחזור עליו. פתח בשאלה מנחה אחת שתגרום לו לגלות בעצמו למה הצעד הזה שגוי, ותקדם אותו משם.'
+  );
+  return lines.join('\n');
+}
+
+function AuditResultView({
+  result,
+  questionText,
+  onContinueInChat,
+  onReset,
+}: {
+  result: AuditResult;
+  questionText?: string;
+  onContinueInChat?: (brief: string) => void;
+  onReset: () => void;
+}) {
   const correct = result.isCorrect;
   return (
     <div className="space-y-3">
@@ -289,6 +336,18 @@ function AuditResultView({ result, onReset }: { result: AuditResult; onReset: ()
       {/* Encouragement */}
       {result.encouragement && (
         <div className="text-sm text-indigo-800 font-bold text-center">{result.encouragement}</div>
+      )}
+
+      {/* The audit used to end here — a verdict card and a dead end. This hands
+          the finding to the tutor so the student can actually work through it. */}
+      {onContinueInChat && (
+        <button
+          onClick={() => onContinueInChat(auditBrief(result, questionText))}
+          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-indigo-500/30 transition-colors"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span>{correct ? 'שאל את המורה שאלה על זה' : 'תעזור לי להבין את הטעות'}</span>
+        </button>
       )}
 
       <button

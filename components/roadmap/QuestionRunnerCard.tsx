@@ -13,9 +13,8 @@
 
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, Lightbulb, KeyRound, LifeBuoy, ArrowLeft, RotateCcw, ClipboardCheck } from 'lucide-react';
+import { CheckCircle, XCircle, Lightbulb, KeyRound, LifeBuoy, ArrowLeft, RotateCcw } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
-import { SolutionGrader } from '@/components/agents/SolutionGrader';
 import { AnswerInput } from '@/components/practice/AnswerInput';
 import { MistakeTagger } from '@/components/practice/MistakeTagger';
 import { AITutorActions } from '@/components/practice/AITutorActions';
@@ -70,7 +69,6 @@ export function QuestionRunnerCard({
   const [firstTryCorrect, setFirstTryCorrect] = useState<boolean | null>(null);
   const [hintShown, setHintShown] = useState(false);
   const [revealed, setRevealed] = useState(false);
-  const [showGrader, setShowGrader] = useState(false);
   const [check, setCheck] = useState<CheckResult | null>(null);
   const [mistakeId, setMistakeId] = useState<string | null>(null);
   const [aiCategory, setAiCategory] = useState<ErrorCategory | null>(null);
@@ -238,35 +236,13 @@ export function QuestionRunnerCard({
 
       {/* 2 · Open answer — no machine-checkable spec → solve on paper, self-report */}
       {q.kind === 'open' && !autoGradable && !revealed && (
-        <div className="space-y-2">
-          <button
-            onClick={() => { setRevealed(true); setHintShown(true); }}
-            className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/40 px-4 py-3 rounded-xl font-bold text-indigo-800 text-sm transition-colors"
-          >
-            <KeyRound className="w-4 h-4" />
-            <span>פתרתי על דף — הצג פתרון להשוואה</span>
-          </button>
-          {/* Comparing against a model solution asks the student to grade
-              themselves — the one judgement a stuck student is worst at.
-              This sends the actual work to the examiner instead. */}
-          <button
-            onClick={() => setShowGrader((v) => !v)}
-            className="w-full inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 px-4 py-2 rounded-xl font-bold text-slate-700 text-sm transition-colors"
-          >
-            <ClipboardCheck className="w-4 h-4" />
-            <span>בדוק את הפתרון שכתבתי</span>
-          </button>
-          {showGrader && (
-            <SolutionGrader
-              questionText={q.question}
-              topic={topic}
-              subject={subject}
-              subTopicId={subId}
-              questionId={q.id}
-              onClose={() => setShowGrader(false)}
-            />
-          )}
-        </div>
+        <button
+          onClick={() => { setRevealed(true); setHintShown(true); }}
+          className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/40 px-4 py-3 rounded-xl font-bold text-indigo-800 text-sm transition-colors"
+        >
+          <KeyRound className="w-4 h-4" />
+          <span>פתרתי על דף — הצג פתרון להשוואה</span>
+        </button>
       )}
 
       {/* Wrong-first feedback: hint + one free retry (before the full solution) */}

@@ -199,7 +199,12 @@ export default function ChatPage() {
     if (t) setTopic(t);
   }, []);
 
-  async function send(text: string) {
+  /**
+   * @param extraContext Call-only context for THIS turn — e.g. the photo-audit
+   *   brief. Merged with the student snapshot and injected server-side into the
+   *   current turn only; never persisted into the transcript.
+   */
+  async function send(text: string, extraContext?: string) {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
     if (trimmed.length > MAX_MESSAGE_LEN) {
@@ -238,6 +243,14 @@ export default function ChatPage() {
         studentContext = buildStudentSnapshot('math5', topic);
       } catch {
         studentContext = '';
+      }
+      // The audit brief goes FIRST and the snapshot second, because the server
+      // hard-truncates `context` at 2000 chars from the END — snapshot alone can
+      // reach 1800. Brief-last would have silently cut off the very instruction
+      // that tells the tutor how to open. We also trim here rather than letting
+      // the server chop mid-sentence.
+      if (extraContext) {
+        studentContext = [extraContext, studentContext].filter(Boolean).join('\n\n').slice(0, 2000);
       }
 
       // Level + שאלון from the student's own plan, so the tutor pitches a
@@ -496,7 +509,16 @@ export default function ChatPage() {
             className="w-full max-w-md max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <SolutionAudit topic={topic} onClose={() => setShowAudit(false)} />
+            <SolutionAudit
+              topic={topic}
+              onClose={() => setShowAudit(false)}
+              onContinueInChat={(brief) => {
+                // Close the overlay and open the conversation on the finding —
+                // the student lands in a live tutoring turn, not a report card.
+                setShowAudit(false);
+                void send('צילמתי את הפתרון שלי. תעזור לי להבין את הטעות ולתקן אותה בעצמי.', brief);
+              }}
+            />
           </div>
         </div>
       )}

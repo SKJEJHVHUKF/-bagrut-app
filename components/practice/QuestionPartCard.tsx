@@ -14,13 +14,11 @@ import {
   XCircle,
   AlertCircle,
   Camera,
-  ClipboardCheck,
 } from 'lucide-react';
 import { MathText } from './MathText';
 import { AnswerInput } from './AnswerInput';
 import { AITutorActions } from './AITutorActions';
 import { SolutionAudit } from './SolutionAudit';
-import { SolutionGrader } from '@/components/agents/SolutionGrader';
 import { checkAnswer as runDeterministicCheck, type AnswerSpec } from '@/lib/answer-check';
 import { sparkle, celebrateCorrect } from '@/lib/confetti';
 import { buttonTap } from '@/lib/animations';
@@ -92,9 +90,6 @@ export function QuestionPartCard({
   // path) — null until the student grades themselves.
   const [selfReport, setSelfReport] = useState<'correct' | 'wrong' | null>(null);
   const [showAudit, setShowAudit] = useState(false);
-  // Text grader — the "solved on paper" path that gets a real mark instead of
-  // asking the student (who is stuck) to grade themselves.
-  const [showGrader, setShowGrader] = useState(false);
   // Error-notebook state — one mistake per part, re-taggable.
   const [mistakeId, setMistakeId] = useState<string | null>(null);
   const [aiCategory, setAiCategory] = useState<ErrorCategory | null>(null);
@@ -612,26 +607,6 @@ export function QuestionPartCard({
               <KeyRound className="w-4 h-4" />
               <span>פתרתי על דף — הצג פתרון מלא</span>
             </motion.button>
-          )}
-
-          {stepsShown < 0 && (
-            <button
-              onClick={() => setShowGrader((v) => !v)}
-              className="w-full inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 px-4 py-2 rounded-xl font-bold text-slate-700 text-sm transition-colors"
-            >
-              <ClipboardCheck className="w-4 h-4" />
-              <span>בדוק את הפתרון שכתבתי</span>
-            </button>
-          )}
-          {showGrader && (
-            <SolutionGrader
-              questionText={part.prompt}
-              topic={topic}
-              subject={subject}
-              subTopicId={subTopicId}
-              questionId={questionId}
-              onClose={() => setShowGrader(false)}
-            />
           )}
 
           {stepsShown < 0 && (
