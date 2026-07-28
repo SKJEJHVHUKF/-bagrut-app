@@ -28,6 +28,9 @@ const PROSE_FIELDS = new Set([
   'selfCheck', 'payoff', 'hook', 'body', 'plain', 'intro', 'quickReview',
   'title', 'caption', 'brief', 'trap', 'consequence', 'avoid', 'context',
   'problem', 'question', 'finalAnswer', 'answer', 'steps', 'distractorNotes',
+  // examTips was missing until 2026-07-28 and is a favourite home for
+  // decorative emoji, so its ⚠/🎯/✏️ went unflagged across several lessons.
+  'examTips', 'tips', 'tip',
 ]);
 
 // Fields that are NOT delimited prose — never lint them for $ rules.
