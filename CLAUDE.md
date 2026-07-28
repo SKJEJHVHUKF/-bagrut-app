@@ -22,7 +22,7 @@ Breaking any of these wastes the owner's budget, breaks production, or corrupts 
 2. **Git: pathspec commits only — NEVER `git add .` / `-A`.** The repo carries parallel WIP. Run `git status` first. **Never touch / never stage:** `content/lessons/math5/statistics.ts`, `content/past-bagruyot/2020-summer-582.ts` (in-flight edits), and untracked dirs `.claude/`, `app/privacy/`, `app/terms/`, `app/topic-demo/`, `components/topic/`, `content/topics/`.
 3. **Vercel Hobby caps serverless functions at 60s.** Every API route sets `export const maxDuration = 60`. Pair every model call with a `max_tokens` that fits inside 60s, or it returns nothing *and still bills Anthropic*.
 4. **Anthropic budget is ~$5/month.** Don't ping-pong models during a bug hunt. Prefer the static-first / cache paths (below) that cost $0. Use prompt caching (`cache_control: ephemeral`) on large static system prompts.
-5. **NEVER put Hebrew inside KaTeX** (`$...$`). KaTeX has no bidi → Hebrew renders reversed. Hebrew goes OUTSIDE the math; Latin subscripts only (`$m_1$`, not `$m_{משיק}$`). After any content edit run `npx tsx scripts/check-katex-hebrew.ts` — it must report 0.
+5. **NEVER put Hebrew inside KaTeX** (`$...$`). KaTeX has no bidi → Hebrew renders reversed. Hebrew goes OUTSIDE the math; Latin subscripts only (`$m_1$`, not `$m_{משיק}$`). After any content edit run `npm run verify:content` — it must report 0 errors.
 6. **Math conventions (5-unit bagrut):** complex numbers use **cis notation in degrees** (never `e^{iθ}`, never radians); parabola is **`y²=2px`**, focus `(p/2,0)`, directrix `x=−p/2` (NOT the American `4px`); ellipse `c²=a²−b²`. Clean-stacked steps (one math result per array entry; Hebrew only as a short leading label). Zero step-skipping — show every algebraic line.
 7. **IP boundary is firm.** NEVER ingest publisher solution books (יואל גבע, m-math.co.il, publisher PDFs) even if "free". Valid sources only: MOE bagrut PDFs (question text = public domain), MOE syllabus, own training knowledge for fresh authoring, or Itay's own handwritten solutions.
 8. **Only two question types exist** (MCQ + open). The owner already rejected drag-drop / fill-blank / match / speed-drill — add MORE of the existing two, don't invent new ones.
@@ -123,14 +123,29 @@ Clients: `lib/supabase/client.ts` (browser), `lib/supabase/server.ts` (async —
 
 ```bash
 npm run dev            # local dev :3000  (owner does NOT run this — he sees prod)
+npm run check          # THE pre-push gate: typecheck + verify:content + build
 npm run build          # REQUIRED before push
-npx tsc --noEmit       # REQUIRED before push
-npx tsx scripts/check-katex-hebrew.ts   # after any content edit → must be 0
+npm run typecheck      # REQUIRED before push
+npm run verify:content # content gate → must be 0 errors (--strict also fails on warnings)
 ```
+
+`npm run verify:content` (`scripts/verify-content.ts`) supersedes `check-katex-hebrew.ts`.
+It imports the content modules rather than grepping source, so it can scope rules per
+field — `'$= 4 - 3i$'` is fine in `solution.steps` and a defect in `keyPoints`.
+**Errors:** hebrew-in-math, unbalanced `$`, `$$display$$` mid-prose-line.
+**Warnings:** decorative emoji, keyPoints under 30 chars.
 
 ## Hebrew + math rendering
 
-`components/practice/MathText.tsx`: react-markdown → remark-math → rehype-katex, `dir="auto"` per block. Bidi handling in `app/globals.css` under `:is(.chat-md, .math-content)` — math gets `direction:ltr; unicode-bidi:isolate !important` so Hebrew doesn't reverse equations. Automated checks validate that LaTeX *parses*, NOT that math is *right* — always re-derive numbers by hand (a wrong-but-valid angle like `\cos(545°)` passes the build).
+`components/practice/MathText.tsx`: react-markdown → remark-math → rehype-katex. Bidi handling in `app/globals.css` under `:is(.chat-md, .math-content)` — math gets `direction:ltr; unicode-bidi:isolate !important` so Hebrew doesn't reverse equations.
+
+**MathText contract (2026-07-28 — do not regress):** both modes return **exactly one element** — `<span class="mathtext-inline">` / `<div class="mathtext-block">`, each `dir="rtl"`. Inline mode used to return a bare fragment, which let a `display:flex` caller turn every word and formula into its own flex item (the "לזכור" box rendered as 3 scrambled columns). Two consequences for new UI:
+- A flex row containing `MathText` puts `chat-md` on an inner `<div className="chat-md flex-1 min-w-0">`, never on the flex container — every `.chat-md` rule is a descendant combinator.
+- `dir="rtl"`, never `dir="auto"`: KaTeX emits the raw LaTeX in a clip-hidden `<annotation>`, so auto-detection reads a Latin first-strong-char and flips Hebrew lines that open with math.
+
+Left-aligning a standalone equation is driven by the `.math-only` class MathText computes **from the source string** — CSS can't do it, because `:only-child` ignores text nodes and so matches Hebrew prose containing one formula.
+
+Automated checks validate that LaTeX *parses*, NOT that math is *right* — always re-derive numbers by hand (a wrong-but-valid angle like `\cos(545°)` passes the build).
 
 ## Environment variables
 
