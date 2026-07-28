@@ -210,7 +210,7 @@ export const CONCEPT_582: Record<string, ConceptQuestion[]> = {
     {
       id: 'cq-gd-3',
       difficulty: 'mid',
-      question: 'בדעיכה מעריכית, זמן מחצית החיים תלוי ב:',
+      question: 'בדעיכה מעריכית, במה תלוי זמן מחצית החיים?',
       answers: ['בכמות ההתחלתית $N_0$', 'בקבוע הדעיכה $k$ בלבד', 'בזמן $t$', 'בכמות הסופית'],
       correct: 1,
       distractorNotes: [
@@ -496,7 +496,7 @@ export const CONCEPT_582: Record<string, ConceptQuestion[]> = {
     {
       id: 'cq-ag-5',
       difficulty: 'mid',
-      question: 'משיק למעגל מאונך ל:',
+      question: 'משיק למעגל מאונך לאיזה מהקווים הבאים?',
       answers: ['המיתר', 'הרדיוס בנקודת ההשקה', 'הקוטר בכל נקודה', 'צירי המערכת'],
       correct: 1,
       distractorNotes: [
@@ -599,7 +599,7 @@ export const CONCEPT_582: Record<string, ConceptQuestion[]> = {
     {
       id: 'cq-vec-4',
       difficulty: 'mid',
-      question: 'הוקטור $\\vec{u}\\times\\vec{v}$ (מכפלה וקטורית) מאונך ל:',
+      question: 'למה מאונך הוקטור $\\vec{u}\\times\\vec{v}$ (מכפלה וקטורית)?',
       answers: ['רק ל-$\\vec{u}$', 'לשני הוקטורים $\\vec{u}$ ו-$\\vec{v}$', 'למישור אחר לגמרי', 'לאף וקטור'],
       correct: 1,
       distractorNotes: [
