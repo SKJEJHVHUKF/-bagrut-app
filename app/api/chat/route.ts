@@ -1,57 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
-import { isGroundedTopic, buildTutorSystemPrompt } from '@/lib/tutor-grounding';
+import { isGroundedTopic } from '@/lib/tutor-grounding';
 import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
+import { buildTutorSystem } from '@/lib/agents/prompts';
+import { normalizeUnitLevel, normalizeFormNumber } from '@/lib/agents/config';
 
 // Hobby plan needs an explicit ceiling. Haiku 4.5 with a tight 6-message
 // context + max_tokens=800 typically finishes in 5-15s, well under 60s.
 export const maxDuration = 60;
-
-// ===== TUTOR SYSTEM PROMPT (LEGACY / non-pilot topics) =====
-// The chat UI renders markdown + LaTeX math via react-markdown + KaTeX —
-// so writing math in LaTeX is the correct move; it'll display as proper
-// fractions, integrals, etc. Hebrew prose around it stays RTL.
-//
-// PILOT NOTE: when the request carries topic = "מספרים מרוכבים", we replace
-// this generic prompt with the grounded "private tutor" prompt from
-// lib/tutor-grounding (see the API call below). All other topics keep this.
-const SYSTEM_PROMPT = `אתה מורה פרטי אמיתי לבגרות בישראל. המטרה: שהתלמיד יבין ויפתור **בעצמו** — לא שתפתור עבורו.
-
-# איך אתה מלמד (מחייב)
-- **אל תיתן פתרון מלא כברירת מחדל.** כשתלמיד תקוע — תן את הצעד הקטן הבא בלבד: רמז אחד או שאלה מנחה אחת. פתרון מלא רק אחרי ניסיון אמיתי, או בקשה מפורשת אחרי שהיה ניסיון.
-- **אל תאשר ואל תפסול תשובה סופית שנזרקת אליך** ("זה 16?") — החזר לבדיקה: "בוא נוודא — חשב את הצעד המכריע ותראה בעצמך."
-- **אבחן לפני שאתה מסביר.** על "לא הבנתי" או תשובה שגויה — קודם שאל שאלה ממוקדת אחת כדי לאתר איפה הפער, לפני הסבר גנרי.
-- אם אחרי ~2 רמזים התלמיד עדיין תקוע או מתוסכל — עבור להסבר ישיר וברור.
-- חם, סבלני ומעודד. בלי "ברור ש...", "פשוט", "כמובן".
-
-פורמט תשובה — האפליקציה מרנדרת Markdown וגם LaTeX מתמטי:
-1. כל ביטוי מתמטי — כתוב ב-LaTeX:
-   • ביטוי בתוך שורה: עוטפים ב-$...$  (לדוגמה: הנגזרת של $f(x) = x^2$ היא $2x$)
-   • ביטוי בלוק נפרד (שורה משלו): עוטפים ב-$$...$$ (לדוגמה: $$\\frac{d}{dx}[\\ln(x)] = \\frac{1}{x}$$)
-   • השתמש ב-\\frac, \\sqrt, \\ln, \\cdot, ^, _, וכו'.
-2. כותרות / הדגשה: אפשר להשתמש ב-## כותרת, **בולד**, רשימות עם 1. 2. 3. או -.
-3. עברית רגילה לכל הטקסט שמסביב למתמטיקה.
-
-דוגמה לפורמט נכון:
-
-## נגזרת של $\\ln(x)$
-
-הנוסחה הבסיסית:
-$$\\frac{d}{dx}[\\ln(x)] = \\frac{1}{x}$$
-
-**עם שרשרת:** אם יש פונקציה מורכבת $\\ln(u)$ כאשר $u$ היא פונקציה של $x$:
-$$\\frac{d}{dx}[\\ln(u)] = \\frac{u'}{u}$$
-
-דוגמה: עבור $f(x) = \\ln(3x)$, הנגזרת היא $f'(x) = \\frac{3}{3x} = \\frac{1}{x}$.
-
----
-
-סגנון:
-- קצר וממוקד — רמז/שאלה אחת בכל פעם, לא קיר טקסט.
-- אם השאלה לא ברורה, בקש הבהרה.
-- כשאתה כן מסביר צעד — הראה אותו שלב-אחר-שלב ב-LaTeX, בלי לדלג.
-- בעברית ברורה.`;
 
 // ===== LIMITS =====
 const MAX_MESSAGE_LEN = 500;
@@ -128,7 +85,14 @@ export async function POST(request: Request) {
     }
 
     // ===== 6. PARSE & VALIDATE BODY =====
-    let body: { message?: unknown; topic?: unknown; context?: unknown; conversationId?: unknown };
+    let body: {
+      message?: unknown;
+      topic?: unknown;
+      context?: unknown;
+      conversationId?: unknown;
+      unitLevel?: unknown;
+      formNumber?: unknown;
+    };
     try {
       body = await request.json();
     } catch {
@@ -148,6 +112,10 @@ export async function POST(request: Request) {
     const topic = typeof body.topic === 'string' ? body.topic.trim().slice(0, 80) : '';
     const attemptContext =
       typeof body.context === 'string' ? body.context.trim().slice(0, 2000) : '';
+    // Level + שאלון drive how deep the tutor goes. Absent (older client, cached
+    // JS) → the normalizers fall back to 5 units / 572, i.e. today's behaviour.
+    const unitLevel = normalizeUnitLevel(body.unitLevel);
+    const formNumber = normalizeFormNumber(body.formNumber);
     if (message.length < MIN_MESSAGE_LEN) {
       return Response.json({ error: 'הודעה ריקה' }, { status: 400 });
     }
@@ -270,8 +238,13 @@ export async function POST(request: Request) {
     // Cost valve: set TUTOR_SONNET_TOPICS (comma-separated topic names) to
     // restrict Sonnet to an allowlist; grounded topics outside it still get
     // the grounded prompt, just on Haiku.
+    // The system prompt now comes from lib/agents/prompts — the same Socratic
+    // core the /api/chat/tutor agent uses — so the two can't drift apart. It
+    // arrives as ordered blocks (stable core + grounding → cached; the
+    // level/שאלון line → not cached), which is what lets every student share
+    // one cache entry instead of one per level.
     const grounded = isGroundedTopic(topic);
-    const systemPrompt = (grounded && buildTutorSystemPrompt(topic)) || SYSTEM_PROMPT;
+    const system = buildTutorSystem({ unitLevel, formNumber, topic: topic || undefined });
     const sonnetAllowlist = (process.env.TUTOR_SONNET_TOPICS ?? '').trim();
     const useSonnet =
       grounded &&
@@ -325,15 +298,7 @@ export async function POST(request: Request) {
           const stream = client.messages.stream({
             model,
             max_tokens: 800,
-            // Prompt caching: static system block (persona + grounding) cached
-            // per topic → ~90% input-cost cut within the 5-min TTL.
-            system: [
-              {
-                type: 'text' as const,
-                text: systemPrompt,
-                cache_control: { type: 'ephemeral' as const },
-              },
-            ],
+            system,
             messages: claudeMessages,
             // Cost valve: effort:'low' only on the Sonnet path. ⚠️ Haiku 4.5
             // (ungrounded) 400s on effort ("This model does not support the

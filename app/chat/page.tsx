@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
 import { hasLesson } from '@/content/lessons';
 import { buildStudentSnapshot } from '@/lib/tutor-context';
+import { getUnitLevel, getPaper } from '@/lib/study-plan';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -239,6 +240,18 @@ export default function ChatPage() {
         studentContext = '';
       }
 
+      // Level + שאלון from the student's own plan, so the tutor pitches a
+      // 3-unit explanation differently from a 5-unit one. Best-effort: if
+      // there's no plan yet the server falls back to 5 units / 572.
+      let unitLevel: 3 | 4 | 5 | undefined;
+      let formNumber: string | undefined;
+      try {
+        unitLevel = getUnitLevel();
+        formNumber = getPaper() ?? undefined;
+      } catch {
+        /* no plan — let the server default */
+      }
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -247,6 +260,8 @@ export default function ChatPage() {
           topic,
           conversationId,
           ...(studentContext ? { context: studentContext } : {}),
+          ...(unitLevel ? { unitLevel } : {}),
+          ...(formNumber ? { formNumber } : {}),
         }),
       });
 
