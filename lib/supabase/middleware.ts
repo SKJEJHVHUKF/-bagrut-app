@@ -22,7 +22,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 // The guided learning spine (/roadmap) is public; /practice now only redirects
 // into it, so it must be public too (else an anonymous old-link visitor hits a
 // login wall on the redirect). Chat/history/learn stay gated (cost/server/Pro).
-const PROTECTED_PREFIXES = ['/quiz', '/chat', '/history', '/learn'];
+// /tutor is the agent workbench — every turn costs Anthropic money, so it is
+// gated like /chat rather than left public like /roadmap.
+const PROTECTED_PREFIXES = ['/quiz', '/chat', '/history', '/learn', '/tutor'];
 
 const PUBLIC_PREFIXES = [
   '/login',
