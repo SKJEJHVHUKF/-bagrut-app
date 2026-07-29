@@ -10,7 +10,10 @@
     "typecheck": "tsc --noEmit",
     "verify:content": "tsx scripts/verify-content.ts",
     "verify:content:strict": "tsx scripts/verify-content.ts --strict",
-    "check": "npm run typecheck && npm run verify:content && npm run build",
+    "verify:concept": "tsx scripts/verify-concept.ts",
+    "verify:concept:strict": "tsx scripts/verify-concept.ts --strict",
+    "verify:quiz": "tsx scripts/verify-concept.ts && tsx scripts/verify-mcq-distinct.ts --strict && tsx scripts/verify-distractors.ts",
+    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run build",
     "generate-pool": "tsx scripts/generate-pool.ts"
   },
   "dependencies": {

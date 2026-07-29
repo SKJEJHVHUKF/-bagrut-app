@@ -8,7 +8,7 @@ import { hasQuestionBank, getQuestions } from '@/content/lessons';
 import { markStep, getPaper } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
-import { getConceptQuestions, hasConceptBank } from '@/content/concept-quiz';
+import { getConceptQuestions, hasConceptBank, LEVEL_DIFFICULTY } from '@/content/concept-quiz';
 import { isTopicInActivePaper, type BagrutPaper } from '@/content/bagrut-curriculum';
 import { seededOrder } from '@/lib/shuffle';
 import { pickQuestions, studentTier } from '@/lib/adaptive';
@@ -100,7 +100,7 @@ const MIXED_EXCLUDED_TOPICS = new Set(['סטטיסטיקה']);
 // keeping id/difficulty/topic so the answer can be recorded for the
 // weakness-tracking insights page.
 function adaptBankQuestion(
-  q: { id: string; difficulty: 'easy' | 'mid' | 'hard'; question: string; answers?: string[]; correct?: number; distractorNotes?: (string | undefined)[]; solution: { steps: string[]; finalAnswer: string; explanation: string } },
+  q: { id: string; difficulty: 'easy' | 'mid' | 'hard'; question: string; answers?: string[]; correct?: number; distractorNotes?: (string | undefined)[]; hint?: string; solution: { steps: string[]; finalAnswer: string; explanation: string } },
   topic: string
 ) {
   return {
@@ -113,6 +113,11 @@ function adaptBankQuestion(
     // Per-option "why this is a mistake" note — a FREE, static, targeted
     // explanation the end-of-quiz review shows for the chosen wrong answer.
     distractorNotes: q.distractorNotes,
+    // The lesson banks already carry ~598 authored hints and this adapter was
+    // dropping every one of them, so the quiz could never offer a hint on the
+    // lesson-bank or mixed path. Passing the field through switches them all on
+    // at zero authoring cost.
+    hint: q.hint,
     explanation: {
       why_correct: `${q.solution.explanation}\n\n${q.solution.steps.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}`,
       why_wrong: '',
@@ -201,7 +206,7 @@ function Quiz() {
       urlSubject &&
       urlTopic &&
       urlSubject in SUBJECTS &&
-      (hasConceptBank(urlTopic) || hasQuestionBank(urlSubject, urlTopic)) &&
+      (hasConceptBank(urlSubject, urlTopic) || hasQuestionBank(urlSubject, urlTopic)) &&
       screen === 'home'
     ) {
       // Defer one tick so state updates land before startQuiz runs.
@@ -273,9 +278,17 @@ function Quiz() {
     // ===== STATIC CONCEPT BANK FIRST (no API, no Supabase) =====
     // Both 571 and 572 core topics have a pre-authored, hand-verified concept
     // bank — serve 5 from it instantly, level-matched. "טמונות מראש".
-    if (hasConceptBank(selectedTopic)) {
-      const bank = getConceptQuestions(selectedTopic).map((q) => ({ ...q, topic: selectedTopic }));
-      // pickQuestions reads only `.difficulty` (shared by ConceptQuestion).
+    if (hasConceptBank(currentSubject, selectedTopic)) {
+      // ConceptQuestion now carries `level` (1/2/3) instead of `difficulty`.
+      // Stamp the derived difficulty on so `pickQuestions`, `checkAnswer` and
+      // `recordResult` keep speaking easy/mid/hard and need no change — the
+      // mapping is the identity of the migration, so recorded history stays
+      // comparable with what students already have in localStorage.
+      const bank = getConceptQuestions(currentSubject, selectedTopic).map((q) => ({
+        ...q,
+        topic: selectedTopic,
+        difficulty: LEVEL_DIFFICULTY[q.level],
+      }));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const picked = pickQuestions(bank as any, 5, tier);
       if (picked.length > 0) {

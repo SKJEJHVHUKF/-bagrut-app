@@ -23,8 +23,7 @@
  */
 import { create, all } from 'mathjs';
 import { getLesson, allLessonKeys } from '@/content/lessons';
-import { CONCEPT_571 } from '@/content/concept-quiz/571';
-import { CONCEPT_582 } from '@/content/concept-quiz/582';
+import { conceptBankEntries } from '@/content/concept-quiz';
 
 const math = create(all, { number: 'number' });
 const STRICT = process.argv.includes('--strict');
@@ -142,11 +141,12 @@ for (const { subject, topic } of allLessonKeys()) {
   ];
   pool.forEach((q) => scan(topic, q));
 }
-for (const [bank, obj] of [
-  ['concept-571', CONCEPT_571],
-  ['concept-582', CONCEPT_582],
-] as Array<[string, Record<string, Q[]>]>) {
-  Object.values(obj).forEach((qs) => qs.forEach((q) => scan(bank, { ...q, kind: 'mcq' })));
+// Registry-driven, so a newly added concept topic file is compared here without
+// anyone remembering to import it. This is the check that catches "a distractor
+// equals the correct answer written differently" — the bug class that once
+// shipped a wrong answer key (int-011) and 11 duplicate-value options.
+for (const { subject, bank } of conceptBankEntries()) {
+  bank.questions.forEach((q) => scan(`concept-${subject}`, { ...q, kind: 'mcq' } as Q));
 }
 
 const critical = dupes.filter((d) => d.startsWith('🔴'));

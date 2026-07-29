@@ -1,92 +1,224 @@
 /**
- * verify-concept.ts — structural check for the static concept-quiz bank.
+ * verify-concept.ts — structural + contract check for the static concept-quiz banks.
  *
- * ⚠️ THIS SCRIPT CANNOT TELL YOU AN ANSWER IS RIGHT. It checks shape only.
- * "84/84 passed" has never meant the mathematics is correct — every `correct`
- * index still has to be re-derived by hand. Don't cite a green run here as
- * evidence of accuracy.
+ * ⚠️⚠️ THIS SCRIPT CANNOT TELL YOU AN ANSWER IS RIGHT. It checks SHAPE only.
+ * "252/252 passed" has never meant the mathematics is correct — every `correct`
+ * index still has to be re-derived by hand, independently of whoever wrote the
+ * question. Do not cite a green run here as evidence of accuracy. The check that
+ * actually catches wrong answer keys is scripts/verify-mcq-distinct.ts (mathjs,
+ * every option pair) plus a human re-derivation.
  *
- * It now also enforces the teaching contract, because the bank failed it
- * badly: an audit found only 1 of 84 questions whose `why_wrong` addressed all
- * three distractors and 48 that addressed none, so a student who picked the
- * "wrong wrong answer" was handed an explanation of a mistake they didn't make.
- *   - distractorNotes must exist, be 4 long, and be non-empty for every option
- *     other than `correct`
- *   - why_correct must actually explain (>= 60 chars), not just assert
+ * DELIBERATELY NOT IMPLEMENTED: any heuristic claiming to judge whether a
+ * question is *actually* at its declared level. Difficulty is human judgement;
+ * a script pretending to measure it would manufacture exactly the false
+ * confidence this header warns about. Rules 9 and 10 are weak proxies and are
+ * warnings on purpose.
  *
- *   npx tsx scripts/verify-concept.ts
+ * It also enforces the teaching contract, because the bank failed it badly once:
+ * an audit found only 1 of 84 questions whose `why_wrong` addressed all three
+ * distractors and 48 that addressed none, so a student who picked the "wrong
+ * wrong answer" was handed an explanation of a mistake they didn't make.
+ *
+ *   npx tsx scripts/verify-concept.ts            # errors fail, warnings print
+ *   npx tsx scripts/verify-concept.ts --strict    # warnings fail too
  */
-import { CONCEPT_571 } from '../content/concept-quiz/571';
-import { CONCEPT_582 } from '../content/concept-quiz/582';
+import { conceptBankEntries, CONCEPT_LEVELS, type ConceptLevel } from '../content/concept-quiz';
+import { MATH5_CURRICULUM } from '../content/bagrut-curriculum';
 
-const FIELDS = ['why_correct', 'why_wrong', 'concept', 'remember'] as const;
+const STRICT = process.argv.includes('--strict');
+
 const MIN_WHY_CORRECT = 60;
+const MIN_NOTE = 20;
+const MIN_HINT = 25;
+const MAX_HINT = 200;
+const MAX_L1_QUESTION = 160;
+const MIN_L3_WHY_CORRECT = 120;
 
-let problems = 0;
+/** Target inventory per (topic × level). Owner's decision: 6, so a second round
+ *  is not a literal repeat of the first. Rules 4 and 6 are WARNINGS until the
+ *  authoring wave lands, then promoted to errors — a gate that always fails
+ *  gets bypassed within a day, and one that can't fail proves nothing. */
+const MIN_PER_LEVEL = 6;
+const PROMOTED_TO_ERROR = false; // flip to true once authoring is complete
+
+const EXPLANATION_FIELDS = ['why_correct', 'why_wrong', 'concept', 'remember'] as const;
+
+const errors: string[] = [];
+const warnings: string[] = [];
+const err = (m: string) => errors.push(m);
+const warn = (m: string) => warnings.push(m);
+/** Rules 4 and 6 route here so a single constant moves them both. */
+const gated = PROMOTED_TO_ERROR ? err : warn;
+
+const MATH5_KEYS = new Set(MATH5_CURRICULUM.map((t) => t.key));
+
+const seenIds = new Map<string, string>(); // id -> where
 let count = 0;
-const ids = new Set<string>();
 
-// One shared id namespace across both papers so a copy-paste collision is caught.
-const ALL = { ...CONCEPT_571, ...CONCEPT_582 };
+type Counts = Record<ConceptLevel, number>;
+const table: Array<{ label: string; counts: Counts; total: number }> = [];
 
-for (const [topic, qs] of Object.entries(ALL)) {
-  if (!Array.isArray(qs) || qs.length === 0) {
-    console.log(`FAIL topic "${topic}": no questions`);
-    problems++;
+for (const { subject, topic, bank } of conceptBankEntries()) {
+  const where = `${subject}:${topic}`;
+
+  // Rule 8 — a one-character topic mismatch makes the whole file unservable,
+  // and nothing else would notice. math5's curriculum is the source of truth.
+  if (subject === 'math5' && !MATH5_KEYS.has(topic)) {
+    err(`${where}: topic is not a MATH5_CURRICULUM key — this bank can never be served`);
+  }
+  if (bank.topic !== topic) {
+    err(`${where}: registry key does not match bank.topic ("${bank.topic}")`);
+  }
+  if (!bank.slug) err(`${where}: bank has no slug`);
+
+  if (!Array.isArray(bank.questions) || bank.questions.length === 0) {
+    err(`${where}: no questions`);
     continue;
   }
-  for (const q of qs) {
+
+  const counts: Counts = { 1: 0, 2: 0, 3: 0 };
+
+  for (const q of bank.questions) {
     count++;
-    if (ids.has(q.id)) {
-      console.log(`FAIL ${q.id}: duplicate id`);
-      problems++;
+    const at = `${where} ${q.id}`;
+
+    // ---- Rule 2: id uniqueness across the WHOLE registry, not just one paper.
+    const prior = seenIds.get(q.id);
+    if (prior) err(`${at}: duplicate id (also in ${prior})`);
+    seenIds.set(q.id, where);
+
+    // ---- Rule 7: id belongs to this file, and any -L<n>- segment agrees.
+    const prefix = `cq-${bank.slug}-`;
+    if (!q.id.startsWith(prefix)) {
+      err(`${at}: id must start with "${prefix}" — is this question in the right file?`);
     }
-    ids.add(q.id);
+    const idLevel = /-L(\d)-/.exec(q.id);
+    if (idLevel && Number(idLevel[1]) !== q.level) {
+      err(`${at}: id says level ${idLevel[1]} but level is ${q.level}`);
+    }
+
+    // ---- Rule 3: level range. TS covers literal files; this catches an `as any`.
+    if (!CONCEPT_LEVELS.includes(q.level)) {
+      err(`${at}: level must be 1, 2 or 3 (got ${JSON.stringify(q.level)})`);
+    } else {
+      counts[q.level]++;
+    }
+
+    // ---- Rule 1: the original structural contract, unchanged.
     if (!Array.isArray(q.answers) || q.answers.length !== 4) {
-      console.log(`FAIL ${q.id}: must have exactly 4 answers`);
-      problems++;
+      err(`${at}: must have exactly 4 answers`);
     }
     if (typeof q.correct !== 'number' || q.correct < 0 || q.correct > 3) {
-      console.log(`FAIL ${q.id}: correct index out of range (${q.correct})`);
-      problems++;
+      err(`${at}: correct index out of range (${q.correct})`);
     }
     if (!q.question || q.question.trim().length === 0) {
-      console.log(`FAIL ${q.id}: empty question`);
-      problems++;
+      err(`${at}: empty question`);
     }
-    for (const f of FIELDS) {
+    for (const f of EXPLANATION_FIELDS) {
       if (!q.explanation?.[f] || q.explanation[f].trim().length === 0) {
-        console.log(`FAIL ${q.id}: missing explanation.${f}`);
-        problems++;
+        err(`${at}: missing explanation.${f}`);
       }
     }
-
-    // A takeaway under 60 chars is an assertion, not an explanation.
-    if (q.explanation?.why_correct && q.explanation.why_correct.trim().length < MIN_WHY_CORRECT) {
-      console.log(
-        `FAIL ${q.id}: why_correct too thin (${q.explanation.why_correct.trim().length} < ${MIN_WHY_CORRECT}) — "${q.explanation.why_correct}"`,
-      );
-      problems++;
+    const whyCorrect = q.explanation?.why_correct?.trim() ?? '';
+    if (whyCorrect && whyCorrect.length < MIN_WHY_CORRECT) {
+      err(`${at}: why_correct too thin (${whyCorrect.length} < ${MIN_WHY_CORRECT}) — "${whyCorrect}"`);
     }
-
-    // Per-option notes: one per answer, filled for every distractor.
-    const notes = (q as { distractorNotes?: string[] }).distractorNotes;
+    const notes = q.distractorNotes;
     if (!Array.isArray(notes) || notes.length !== 4) {
-      console.log(`FAIL ${q.id}: distractorNotes must be an array of 4 (one per answer)`);
-      problems++;
+      err(`${at}: distractorNotes must be an array of 4 (one per answer)`);
     } else {
       for (let i = 0; i < 4; i++) {
         if (i === q.correct) continue;
-        if (!notes[i] || notes[i].trim().length < 20) {
-          console.log(
-            `FAIL ${q.id}: distractorNotes[${i}] missing/too short for answer "${q.answers?.[i]}"`,
-          );
-          problems++;
+        if (!notes[i] || notes[i].trim().length < MIN_NOTE) {
+          err(`${at}: distractorNotes[${i}] missing/too short for answer "${q.answers?.[i]}"`);
         }
       }
     }
+
+    // ---- Rule 4 (gated): a hint on every question.
+    const hint = q.hint?.trim() ?? '';
+    if (!hint) {
+      gated(`${at}: no hint`);
+    } else if (hint.length < MIN_HINT || hint.length > MAX_HINT) {
+      gated(`${at}: hint length ${hint.length}, want ${MIN_HINT}-${MAX_HINT}`);
+    }
+
+    // ---- Rule 5 (warning ON PURPOSE): a hint must not hand over the answer.
+    // This is the rule with real teeth AND the one most likely to be the gate's
+    // own bug — a hint may legitimately quote the answer's *form*. Promote only
+    // after a full authoring wave shows zero legitimate hits.
+    const correctText = typeof q.correct === 'number' ? q.answers?.[q.correct] : undefined;
+    if (hint && correctText && correctText.trim().length > 3 && hint.includes(correctText.trim())) {
+      warn(`${at}: hint contains the correct answer verbatim ("${correctText}")`);
+    }
+
+    // ---- Rules 9/10: weak level-shape proxies, warnings only.
+    if (q.level === 1 && q.question.length > MAX_L1_QUESTION) {
+      warn(`${at}: level-1 question is ${q.question.length} chars (> ${MAX_L1_QUESTION}) — reads like level 2`);
+    }
+    if (q.level === 3 && whyCorrect.length < MIN_L3_WHY_CORRECT) {
+      warn(`${at}: level-3 why_correct is ${whyCorrect.length} chars (< ${MIN_L3_WHY_CORRECT}) — a bagrut-grade question needs a worked reason`);
+    }
   }
+
+  // ---- Rule 6 (gated): inventory per level.
+  for (const lv of CONCEPT_LEVELS) {
+    if (counts[lv] < MIN_PER_LEVEL) {
+      gated(`${where}: level ${lv} has ${counts[lv]}/${MIN_PER_LEVEL} questions`);
+    }
+  }
+
+  table.push({ label: where, counts, total: bank.questions.length });
 }
 
-console.log(`\n${count} concept questions checked, ${problems} problems.`);
-process.exit(problems > 0 ? 1 : 0);
+// ---------------------------------------------------------------------------
+// Report
+// ---------------------------------------------------------------------------
+const pad = (s: string, n: number) => (s.length >= n ? s : s + ' '.repeat(n - s.length));
+const lpad = (s: string, n: number) => (s.length >= n ? s : ' '.repeat(n - s.length) + s);
+
+console.log('\nINVENTORY — questions per level (target ' + MIN_PER_LEVEL + ' each)\n');
+console.log(pad('bank', 34) + lpad('L1', 4) + lpad('L2', 4) + lpad('L3', 4) + lpad('tot', 6));
+const totals: Counts = { 1: 0, 2: 0, 3: 0 };
+for (const r of table) {
+  const flag = CONCEPT_LEVELS.some((lv) => r.counts[lv] < MIN_PER_LEVEL) ? '  ←' : '';
+  console.log(
+    pad(r.label, 34) +
+      lpad(String(r.counts[1]), 4) +
+      lpad(String(r.counts[2]), 4) +
+      lpad(String(r.counts[3]), 4) +
+      lpad(String(r.total), 6) +
+      flag,
+  );
+  for (const lv of CONCEPT_LEVELS) totals[lv] += r.counts[lv];
+}
+console.log(
+  pad('TOTAL', 34) +
+    lpad(String(totals[1]), 4) +
+    lpad(String(totals[2]), 4) +
+    lpad(String(totals[3]), 4) +
+    lpad(String(count), 6),
+);
+console.log(
+  `\nmissing to target: ${table.reduce(
+    (s, r) => s + CONCEPT_LEVELS.reduce((t, lv) => t + Math.max(0, MIN_PER_LEVEL - r.counts[lv]), 0),
+    0,
+  )} question(s)`,
+);
+
+const show = (list: string[], label: string) => {
+  if (list.length === 0) return;
+  console.log(`\n${label} (${list.length}):`);
+  for (const m of list.slice(0, 40)) console.log(`  ${m}`);
+  if (list.length > 40) console.log(`  … and ${list.length - 40} more`);
+};
+show(errors, 'ERRORS');
+show(warnings, 'WARNINGS');
+
+console.log(
+  `\n${count} concept questions checked — ${errors.length} error(s), ${warnings.length} warning(s).`,
+);
+if (!PROMOTED_TO_ERROR) {
+  console.log('note: hint coverage and per-level inventory are WARNINGS until authoring lands (PROMOTED_TO_ERROR).');
+}
+process.exit(errors.length > 0 || (STRICT && warnings.length > 0) ? 1 : 0);

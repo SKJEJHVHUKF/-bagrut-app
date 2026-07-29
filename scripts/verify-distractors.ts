@@ -19,8 +19,7 @@
  * to be spot-checked by reading. Do not treat a green run as proof of quality.
  */
 import { getLesson, allLessonKeys } from '@/content/lessons';
-import { CONCEPT_571 } from '@/content/concept-quiz/571';
-import { CONCEPT_582 } from '@/content/concept-quiz/582';
+import { conceptBankEntries } from '@/content/concept-quiz';
 
 const STRICT = process.argv.includes('--strict');
 const ONLY = process.argv.find((a) => a.startsWith('--file='))?.slice(7);
@@ -121,28 +120,33 @@ for (const { subject, topic } of allLessonKeys()) {
 // The concept-quiz bank is already fully covered; scanning it here keeps both
 // banks under one number and gives a known-good corpus to sanity-check any
 // future rule against before trusting it on the lesson banks.
-for (const [bank, obj] of [
-  ['concept-571', CONCEPT_571],
-  ['concept-582', CONCEPT_582],
-] as Array<[string, Record<string, Q[]>]>) {
-  const row: Row = { topic: bank, mcq: 0, ok: 0, problems: [] };
-  for (const qs of Object.values(obj)) {
-    for (const q of qs) {
-      row.mcq++;
-      const answers = q.answers ?? [];
-      const notes = q.distractorNotes;
-      if (!Array.isArray(notes) || notes.length !== answers.length) {
-        row.problems.push(`${q.id}: notes/answers length mismatch`);
-        continue;
-      }
-      if (typeof q.correct === 'number' && notes[q.correct] && String(notes[q.correct]).trim()) {
-        row.problems.push(`${q.id}: note present at the CORRECT index ${q.correct} — array is probably misaligned`);
-        continue;
-      }
-      row.ok++;
-    }
+//
+// Iterates the REGISTRY rather than a hardcoded import list, so a topic file
+// added under content/concept-quiz/<subject>/ is covered here automatically
+// instead of quietly escaping the gate. One row per subject.
+const conceptRows = new Map<string, Row>();
+for (const { subject, bank } of conceptBankEntries()) {
+  const label = `concept-${subject}`;
+  let row = conceptRows.get(label);
+  if (!row) {
+    row = { topic: label, mcq: 0, ok: 0, problems: [] };
+    conceptRows.set(label, row);
+    rows.push(row);
   }
-  rows.push(row);
+  for (const q of bank.questions as Q[]) {
+    row.mcq++;
+    const answers = q.answers ?? [];
+    const notes = q.distractorNotes;
+    if (!Array.isArray(notes) || notes.length !== answers.length) {
+      row.problems.push(`${q.id}: notes/answers length mismatch`);
+      continue;
+    }
+    if (typeof q.correct === 'number' && notes[q.correct] && String(notes[q.correct]).trim()) {
+      row.problems.push(`${q.id}: note present at the CORRECT index ${q.correct} — array is probably misaligned`);
+      continue;
+    }
+    row.ok++;
+  }
 }
 
 rows.sort((a, b) => b.mcq - a.mcq);
