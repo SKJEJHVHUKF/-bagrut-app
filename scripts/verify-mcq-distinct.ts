@@ -38,6 +38,13 @@ function toExpr(raw: string): string | null {
   s = s.replace(/\$/g, '').trim();
   if (!s) return null;
 
+  // Ratios "a:b" are a common option form and were invisible to this script
+  // until two duplicate pairs were found by hand — eg-004 offered 1:2 and 2:4,
+  // eg-sub-sim-001 offered 2:3 and 4:6. Compare them as the rational a/b so
+  // an unreduced ratio can no longer masquerade as a different option.
+  const ratio = s.match(/^(-?\d+(?:\.\d+)?)\s*:\s*(-?\d+(?:\.\d+)?)$/);
+  if (ratio) return `(${ratio[1]})/(${ratio[2]})`;
+
   // Strip a leading FUNCTION label — "f(x) =", "f'(x) =", "g(t) =". The
   // parenthesised argument is required: a bare "y =" or "x =" is a real
   // equation (an asymptote, an axis), not a label. Stripping those made
