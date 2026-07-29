@@ -254,10 +254,35 @@ html {
      3. display: inline-block — the math is a single inline atom
      4. !important — any cascading direction from a parent (e.g. an
         accidentally-set dir="ltr" wrapper) cannot override this
-   The combination of !important here + per-element dir="auto" in
-   MathText.tsx is what gives consistent rendering: Hebrew paragraphs
-   detect RTL automatically; math islands inside them stay LTR.
+   The combination of !important here + the per-element dir="rtl"
+   MathText.tsx emits is what gives consistent rendering: the Hebrew
+   paragraph is RTL, and each math island inside it stays LTR.
+   (dir="rtl", NOT dir="auto" — see the contract comment in
+   components/practice/MathText.tsx for why auto-detection flips a
+   Hebrew line that opens with a formula.)
+
+   ---- BASELINE, deliberately UNSCOPED ----
+   Everything below is gated behind `:is(.chat-md, .math-content)`, so a
+   KaTeX span rendered without one of those ancestor classes used to
+   inherit `direction: rtl` from <html dir="rtl"> and render the formula
+   reversed. That is not a hypothetical: the /quiz results-review block
+   rendered four MathText call sites with no wrapper class, and every
+   answer there is pure math ("$3e^{3x}$"), so students saw reversed
+   equations in exactly the place they go to learn from a mistake.
+   Forgetting a utility class must not be able to corrupt mathematics, so
+   the floor lives here, unscoped and unconditional. The scoped rules
+   below keep their !important and still win; this only removes the
+   failure mode where NOTHING applies.
    ============================================================ */
+.katex {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.katex-display {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 :is(.chat-md, .math-content) .katex {
   color: inherit;
   font-size: 1.05em;

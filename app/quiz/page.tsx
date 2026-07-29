@@ -1,11 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, ReactNode, Suspense } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { MathText } from '@/components/practice/MathText';
 import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
 import { markStep, getPaper } from '@/lib/study-plan';
@@ -19,23 +16,14 @@ import { predictOverall } from '@/lib/prediction';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { toast } from 'sonner';
 
-// Renders a string with markdown + LaTeX math.
-// `inline` strips the wrapping <p> so the content can sit inside a flex
-// button / single-line container without taking a full block.
-function MathText({ children, inline = false }: { children: string; inline?: boolean }) {
-  const components = inline
-    ? { p: ({ children }: { children?: ReactNode }) => <>{children}</> }
-    : undefined;
-  return (
-    <ReactMarkdown
-      remarkPlugins={[remarkMath]}
-      rehypePlugins={[rehypeKatex]}
-      components={components}
-    >
-      {children}
-    </ReactMarkdown>
-  );
-}
+// Math rendering comes from the shared, hardened components/practice/MathText.
+// This page used to carry its own 14-line copy, which shadowed the shared one
+// and was frozen at the pre-2026-07-28 behaviour: no remarkGfm, and `inline`
+// returned a BARE FRAGMENT with no wrapper element and no `dir`. The shared
+// version returns exactly ONE element carrying dir="rtl" (so a display:flex
+// caller like .answer-btn gets one flex item, not one per formula) and computes
+// the .math-only class from the source string, which left-aligns a standalone
+// equation — precisely what a final answer needs.
 
 const SUBJECTS = {
   // ===== Math 5 units (highest level) — שאלון 571/572 =====
@@ -766,30 +754,28 @@ function Quiz() {
                 a.explanation?.why_wrong ||
                 a.explanation?.why_correct ||
                 '';
+              // Every text row carries `math-content` — this block is the one
+              // place in the quiz that had none, so its KaTeX inherited
+              // `direction: rtl` from <html dir="rtl"> and students read their
+              // own wrong answer and the correct one as REVERSED equations, in
+              // the exact screen they come to to learn from the mistake.
               return (
-                <div
-                  key={i}
-                  style={{
-                    padding: '12px 0',
-                    borderTop: i === 0 ? 'none' : '1px solid var(--border)',
-                    fontSize: '14px',
-                  }}
-                >
-                  <div style={{ fontWeight: 600, marginBottom: '6px' }}>
+                <div key={i} className={`review-item${i === 0 ? ' review-first' : ''}`}>
+                  <div className="review-q math-content">
                     <MathText inline>{a.question}</MathText>
                   </div>
                   {a.chosenText && (
-                    <div style={{ color: 'var(--wrong)', marginBottom: '2px' }}>
+                    <div className="review-chosen math-content">
                       התשובה שלך: <MathText inline>{a.chosenText}</MathText>
                     </div>
                   )}
                   {a.correctText && (
-                    <div style={{ color: 'var(--correct)', marginBottom: '6px' }}>
+                    <div className="review-correct math-content">
                       הנכונה: <MathText inline>{a.correctText}</MathText>
                     </div>
                   )}
                   {why && (
-                    <div style={{ color: 'var(--text2)', fontSize: '13px' }}>
+                    <div className="review-why math-content">
                       <MathText>{why}</MathText>
                     </div>
                   )}
@@ -946,6 +932,23 @@ function Quiz() {
         .breakdown-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         .breakdown-topic { font-size: 14px; font-weight: 600; color: var(--text); }
         .breakdown-score { font-size: 14px; font-weight: 800; }
+        /* ===== Wrong-answer review rows =====
+           These four rows used to be inline-styled with no class at all, which
+           is why their KaTeX rendered right-to-left: every LTR rule in
+           globals.css is scoped behind :is(.chat-md, .math-content). They now
+           carry math-content in the JSX, and each text row repeats the same
+           bidi pair that .q-text and .lesson-text already use, so a Hebrew
+           label followed by a formula ("הנכונה: $3e^{3x}$") resolves per-row
+           instead of being swept into one LTR run.
+           NOTE: styled per-ROW on purpose — .breakdown-box is shared with the
+           per-topic breakdown (pure Hebrew, already correct), so the container
+           is deliberately left alone. */
+        .review-item { padding: 12px 0; border-top: 1px solid var(--border); font-size: 14px; }
+        .review-item.review-first { border-top: none; }
+        .review-q { font-weight: 600; margin-bottom: 6px; unicode-bidi: plaintext; text-align: start; }
+        .review-chosen { color: var(--wrong); margin-bottom: 2px; unicode-bidi: plaintext; text-align: start; }
+        .review-correct { color: var(--correct); margin-bottom: 6px; unicode-bidi: plaintext; text-align: start; }
+        .review-why { color: var(--text2); font-size: 13px; unicode-bidi: plaintext; text-align: start; }
         .bd-good { color: var(--correct); }
         .bd-mid { color: #B45309; }
         .bd-weak { color: var(--wrong); }
