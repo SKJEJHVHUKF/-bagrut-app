@@ -5,13 +5,22 @@ import { useSearchParams } from 'next/navigation';
 import { MathText } from '@/components/practice/MathText';
 import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
-import { markStep, getPaper } from '@/lib/study-plan';
+import { markStep, getPaper, getUnitLevel } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
-import { getConceptQuestions, hasConceptBank, LEVEL_DIFFICULTY } from '@/content/concept-quiz';
+import {
+  getConceptQuestions,
+  hasConceptBank,
+  conceptLevelCounts,
+  LEVEL_DIFFICULTY,
+  LEVEL_META,
+  CONCEPT_LEVELS,
+  type ConceptLevel,
+} from '@/content/concept-quiz';
+import { getConceptLevel, setConceptLevel, recommendedConceptLevel } from '@/lib/concept-level';
 import { isTopicInActivePaper, type BagrutPaper } from '@/content/bagrut-curriculum';
 import { seededOrder } from '@/lib/shuffle';
-import { pickQuestions, studentTier } from '@/lib/adaptive';
+import { pickQuestions, pickShuffled, studentTier } from '@/lib/adaptive';
 import { predictOverall } from '@/lib/prediction';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { toast } from 'sonner';
@@ -170,12 +179,53 @@ function Quiz() {
   // The bagrut paper the student is focused on (571/572); null = show all.
   // Read once after mount (localStorage), used to filter the math5 topic list.
   const [activePaper, setActivePaper] = useState<BagrutPaper | null>(null);
+  // The level the student picked. `null` until the mount effect reads
+  // localStorage — rendering reads `effectiveLevel` below, never this directly,
+  // so the first paint doesn't flash an unselected picker.
+  const [conceptLevel, setConceptLevelState] = useState<ConceptLevel | null>(null);
+  // Whether the student asked for the hint on the current question.
+  const [hintShown, setHintShown] = useState(false);
+
   useEffect(() => {
     setActivePaper(getPaper());
+    const urlLevel = Number(searchParams.get('level'));
+    if (urlLevel === 1 || urlLevel === 2 || urlLevel === 3) {
+      setConceptLevelState(urlLevel);
+      setConceptLevel(urlSubject && urlSubject in SUBJECTS ? urlSubject : 'math5', urlLevel);
+    } else {
+      setConceptLevelState(getConceptLevel(urlSubject && urlSubject in SUBJECTS ? urlSubject : 'math5'));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const subject = SUBJECTS[currentSubject as keyof typeof SUBJECTS];
   const letters = ['א', 'ב', 'ג', 'ד'];
+
+  // What we'd suggest, from unit level + self-rating + live accuracy. Decorates
+  // one chip; never decides. Recomputed per topic because the live-accuracy
+  // signal is per topic.
+  const recommended = useMemo(
+    () => recommendedConceptLevel(currentSubject, selectedTopic ?? undefined),
+    [currentSubject, selectedTopic],
+  );
+  /** The level actually in force: explicit choice first, else the suggestion. */
+  const effectiveLevel: ConceptLevel = conceptLevel ?? recommended;
+
+  const chooseLevel = (level: ConceptLevel) => {
+    setConceptLevelState(level);
+    setConceptLevel(currentSubject, level);
+  };
+
+  // How many static concept questions exist per level for the selected topic —
+  // so the picker can show real numbers and say when a level isn't written yet
+  // instead of promising something the bank can't serve.
+  const levelCounts = useMemo(
+    () =>
+      selectedTopic && selectedTopic !== MIXED_TOPIC
+        ? conceptLevelCounts(currentSubject, selectedTopic)
+        : null,
+    [currentSubject, selectedTopic],
+  );
 
   // Deterministic per-question option order (seeded by id) so the correct
   // answer isn't always in slot א. Stable across renders and SSR-safe.
@@ -215,8 +265,19 @@ function Quiz() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startQuiz = async () => {
+  const startQuiz = async (levelOverride?: ConceptLevel) => {
     if (!selectedTopic) return;
+    // Resolve the level HERE, not from render state. The deep-link auto-start
+    // below fires through setTimeout(…, 0) and can beat the mount effect that
+    // reads localStorage, so reading `conceptLevel` would race to null.
+    const level: ConceptLevel =
+      levelOverride ??
+      conceptLevel ??
+      getConceptLevel(currentSubject) ??
+      recommendedConceptLevel(currentSubject, selectedTopic);
+    const band = LEVEL_DIFFICULTY[level];
+    const perSession = LEVEL_META[level].perSession;
+
     setLoading(true);
     setScreen('quiz');
     setCurrentQ(0);
@@ -225,6 +286,7 @@ function Quiz() {
     setAnswered([]);
     setSelectedAnswer(null);
     setIsCorrect(null);
+    setHintShown(false);
     // Snapshot the predicted grade now, so the results screen can show the
     // delta after these answers land in the stats.
     setStartPrediction(predictOverall(currentSubject)?.score ?? null);
@@ -234,16 +296,24 @@ function Quiz() {
     // round-robin so no single topic dominates. 8 questions, zero API cost.
     if (selectedTopic === MIXED_TOPIC) {
       const perTopic: any[][] = [];
+      let bandAvailable = 0;
       for (const t of subject.topics) {
         if (MIXED_EXCLUDED_TOPICS.has(t.name)) continue;
         // Respect the student's active paper — a 571 student's mixed quiz
         // shouldn't pull vectors/complex, and vice versa.
         if (currentSubject === 'math5' && activePaper && !isTopicInActivePaper(t.name, activePaper)) continue;
         if (!hasQuestionBank(currentSubject, t.name)) continue;
-        const mcqs = getQuestions(currentSubject, t.name)
+        const all = getQuestions(currentSubject, t.name)
           .filter((q) => q.kind === 'mcq' && Array.isArray(q.answers) && typeof q.correct === 'number')
           .map((q) => adaptBankQuestion(q, t.name));
-        if (mcqs.length > 0) perTopic.push(shuffleInPlace(mcqs));
+        // Honour the chosen level. Band-first, then the rest as reserve — the
+        // lesson banks skew easy/mid, so a STRICT level-3 filter across topics
+        // can yield two questions. Widening beats dead-ending, and the toast
+        // below says when it happened rather than pretending it didn't.
+        const inBand = all.filter((q) => q.difficulty === band);
+        const rest = all.filter((q) => q.difficulty !== band);
+        if (all.length > 0) perTopic.push([...shuffleInPlace(inBand), ...shuffleInPlace(rest)]);
+        bandAvailable += inBand.length;
       }
       // Round-robin: one question from each topic (random topic order),
       // then a second pass, until we have 8.
@@ -266,6 +336,9 @@ function Quiz() {
         setLoading(false);
         return;
       }
+      if (bandAvailable < picked.length) {
+        toast.info(`אין מספיק שאלות ברמה ${level} בכל הנושאים — השלמתי מרמות אחרות`);
+      }
       setQuestions(picked);
       setLoading(false);
       return;
@@ -276,21 +349,22 @@ function Quiz() {
     const tier = studentTier(currentSubject, selectedTopic);
 
     // ===== STATIC CONCEPT BANK FIRST (no API, no Supabase) =====
-    // Both 571 and 572 core topics have a pre-authored, hand-verified concept
-    // bank — serve 5 from it instantly, level-matched. "טמונות מראש".
-    if (hasConceptBank(currentSubject, selectedTopic)) {
-      // ConceptQuestion now carries `level` (1/2/3) instead of `difficulty`.
-      // Stamp the derived difficulty on so `pickQuestions`, `checkAnswer` and
-      // `recordResult` keep speaking easy/mid/hard and need no change — the
-      // mapping is the identity of the migration, so recorded history stays
-      // comparable with what students already have in localStorage.
-      const bank = getConceptQuestions(currentSubject, selectedTopic).map((q) => ({
+    // Pre-authored, hand-verified concept questions AT THE CHOSEN LEVEL.
+    // "טמונות מראש" — zero API cost.
+    if (hasConceptBank(currentSubject, selectedTopic, level)) {
+      // ConceptQuestion carries `level` (1/2/3) instead of `difficulty`. Stamp
+      // the derived difficulty on so `checkAnswer` and `recordResult` keep
+      // speaking easy/mid/hard and need no change — the mapping is the identity
+      // of the migration, so recorded history stays comparable with what
+      // students already have in localStorage.
+      const bank = getConceptQuestions(currentSubject, selectedTopic, level).map((q) => ({
         ...q,
         topic: selectedTopic,
         difficulty: LEVEL_DIFFICULTY[q.level],
       }));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const picked = pickQuestions(bank as any, 5, tier);
+      // pickShuffled, NOT pickQuestions: the student chose this level
+      // explicitly, and TIER_MIX would dilute it back with adjacent bands.
+      const picked = pickShuffled(bank, perSession);
       if (picked.length > 0) {
         setQuestions(picked);
         setLoading(false);
@@ -308,8 +382,18 @@ function Quiz() {
         .filter((q) => q.kind === 'mcq' && Array.isArray(q.answers) && typeof q.correct === 'number')
         .map((q) => adaptBankQuestion(q, selectedTopic));
       if (mcqs.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const picked = pickQuestions(mcqs as any, 5, tier);
+        const inBand = mcqs.filter((q) => q.difficulty === band);
+        let picked: typeof mcqs;
+        if (inBand.length >= 3) {
+          picked = pickShuffled(inBand, perSession);
+        } else {
+          // Too thin to honour the level here. Fall back to the tier mix rather
+          // than serving two questions, and say so — silently substituting is
+          // what makes a level picker feel fake.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          picked = pickQuestions(mcqs as any, perSession, tier) as unknown as typeof mcqs;
+          toast.info(`בנושא הזה אין עדיין מאגר מלא ברמה ${level} — הבוחן מותאם לרמה הקרובה`);
+        }
         setQuestions(picked);
         setLoading(false);
         return;
@@ -323,7 +407,15 @@ function Quiz() {
       const res = await fetchWithTimeout('/api/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: currentSubject, topic: selectedTopic, mode: 'concept' })
+        // `level` and `unitLevel` are new on the wire. Safe to send before the
+        // route honours them — it reads named fields, so extras are ignored.
+        body: JSON.stringify({
+          subject: currentSubject,
+          topic: selectedTopic,
+          mode: 'concept',
+          level,
+          unitLevel: getUnitLevel(),
+        })
       });
 
       if (!res.ok) {
@@ -341,7 +433,20 @@ function Quiz() {
       if (data.error) throw new Error(data.error);
       if (!data.questions) throw new Error('לא התקבלו שאלות. נסה שוב.');
 
-      setQuestions(data.questions);
+      // AI questions arrive with no id and no difficulty, so recordResult was
+      // logging `difficulty: undefined` and seededOrder fell back to the index.
+      // The id MUST vary per generation: a stable synthetic id would make a
+      // second round on the same topic register as a `repeat` in lib/results
+      // readSeen() and drop out of the accuracy that feeds the prediction.
+      const gen = Date.now().toString(36);
+      setQuestions(
+        (data.questions as any[]).map((q, i) => ({
+          ...q,
+          id: q.id ?? `ai-${gen}-${i}`,
+          difficulty: q.difficulty ?? band,
+          topic: q.topic ?? selectedTopic,
+        })),
+      );
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error(msg);
@@ -373,6 +478,10 @@ function Quiz() {
         correctText,
         distractorNote,
         explanation: q.explanation,
+        // Session-local only. Deliberately NOT added to lib/results.ts
+        // ResultEvent — that type has stored data behind it and needs no
+        // migration to surface a per-session note in the review.
+        usedHint: hintShown,
       },
     ]);
     if (ok) setScore(score + 1);
@@ -430,6 +539,7 @@ function Quiz() {
   const nextQuestion = () => {
     setSelectedAnswer(null);
     setIsCorrect(null);
+    setHintShown(false);
     if (currentQ >= questions.length - 1) {
       // This is the transition from the last question to the results
       // screen — the only moment we have the final score AND the full
@@ -449,11 +559,15 @@ function Quiz() {
   const renderHome = () => (
     <div className="home-inner">
       <div className="hero">
-        <div className="hero-badge">⚡ בוחן מושגים מהיר</div>
-        <h1>בוחן מושגים<br />מהיר</h1>
-        <p>בדיקה מהירה של הבנת מושגים — הגדרות, אסימפטוטות, כללי גזירה. לא סימולציית בגרות, אלא חימום מהיר לראש.</p>
+        <div className="hero-badge">⚡ בוחן מושגים · 3 רמות</div>
+        <h1>בוחן מושגים</h1>
+        <p>
+          {effectiveLevel === 3
+            ? 'רמה 3 היא ברמת בגרות — שאלות בסגנון הבחינה, כמה צעדים כל אחת. קח דף ועט.'
+            : 'בדיקה מהירה של הבנת מושגים — הגדרות, אסימפטוטות, כללי גזירה. חימום מהיר לראש, לא סימולציית בגרות.'}
+        </p>
       </div>
-      <div className="section-label">בחר מקצוע</div>
+      <div className="section-label">1 · בחר מקצוע</div>
       <div className="subject-tabs">
         {Object.entries(SUBJECTS).map(([key, s]) => (
           <button key={key} className={`subject-tab ${s.tabCls} ${currentSubject === key ? 'active' : ''}`} onClick={() => { setCurrentSubject(key); setSelectedTopic(null); }}>
@@ -461,7 +575,7 @@ function Quiz() {
           </button>
         ))}
       </div>
-      <div className="section-label">בחר נושא</div>
+      <div className="section-label">2 · בחר נושא</div>
       <div className="topics-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
         {visibleTopics.some((t) => hasQuestionBank(currentSubject, t.name)) && (
           <div
@@ -484,8 +598,51 @@ function Quiz() {
           </div>
         ))}
       </div>
-      <button className="start-btn" onClick={startQuiz} disabled={!selectedTopic}>
-        התחל בוחן מושגים →
+
+      {/* ===== 3 · Level picker =====
+          Always three open chips. No level ever locks another — a level with no
+          static questions is a CONTENT gap, not a gate, and the note underneath
+          says so explicitly rather than leaving the student to guess. */}
+      <div className="section-label">3 · בחר רמה</div>
+      <div className="zone-hint">
+        אותם נושאים בשלוש רמות. אפשר להתחיל ברמה 1 ולעלות — הרמות פתוחות תמיד.
+      </div>
+      <div className="level-grid">
+        {CONCEPT_LEVELS.map((lv) => {
+          const meta = LEVEL_META[lv];
+          const n = levelCounts?.[lv];
+          const countLabel =
+            selectedTopic === MIXED_TOPIC
+              ? 'לפי נושאי השאלון'
+              : levelCounts == null
+                ? 'בחר נושא'
+                : n && n > 0
+                  ? `${n} שאלות מוכנות`
+                  : 'נבנה מהמאגר';
+          return (
+            <button
+              key={lv}
+              className={`level-card ${effectiveLevel === lv ? 'selected' : ''}`}
+              onClick={() => chooseLevel(lv)}
+            >
+              <span className="level-emoji">{meta.emoji}</span>
+              <span className="level-title">{meta.title}</span>
+              <span className="level-blurb">{meta.blurb}</span>
+              <span className="level-count">{countLabel}</span>
+              {recommended === lv && <span className="level-badge-rec">מומלץ לך</span>}
+            </button>
+          );
+        })}
+      </div>
+      {levelCounts != null && (levelCounts[effectiveLevel] ?? 0) === 0 && (
+        <div className="level-note">
+          שאלות המושגים ברמה {effectiveLevel} בנושא הזה עדיין בכתיבה. הרמה פתוחה — הבוחן ייקח
+          שאלות ברמה המקבילה ממאגר התרגול, ותקבל הסבר מלא ורמז בדיוק כמו בשאר הרמות.
+        </div>
+      )}
+
+      <button className="start-btn" onClick={() => startQuiz()} disabled={!selectedTopic}>
+        התחל בוחן — רמה {effectiveLevel} →
       </button>
       <a href="/chat" className="chat-link">
         💬 שאל את המורה — צ&apos;אט עם AI
@@ -537,6 +694,7 @@ function Quiz() {
             <span className="meta-subject-badge" style={{ color: subject.badge.color, background: subject.badge.bg, borderColor: subject.badge.border }}>
               {subject.emoji} {subject.name}
             </span>
+            <span className="meta-level-badge">{LEVEL_META[effectiveLevel].emoji} {LEVEL_META[effectiveLevel].short}</span>
             <span className="meta-topic-label">
               {selectedTopic === MIXED_TOPIC ? `🎯 בדיקה מעורבת · ${q.topic ?? ''}` : selectedTopic}
             </span>
@@ -547,6 +705,40 @@ function Quiz() {
               <MathText>{q.question}</MathText>
             </div>
           </div>
+
+          {/* ===== Hint — asked for, not pushed =====
+              One-shot reveal BEFORE answering, which is what "an option to ask
+              for a hint" means. Deliberately not QuestionRunnerCard's
+              auto-reveal-on-miss + free retry: this quiz has no retry, since
+              checkAnswer records the result and opens the full explanation
+              immediately, so a retry would change the scoring contract. Wording
+              is the same single "רמז" used elsewhere in the app. */}
+          {q.hint && selectedAnswer === null && !hintShown && (
+            <button
+              className="hint-btn"
+              onClick={() => {
+                setHintShown(true);
+                toast.info('רמז', {
+                  description: 'נסה לפתור עם הרמז לפני שתבחר תשובה',
+                  duration: 2500,
+                });
+              }}
+            >
+              💡 בקש רמז
+            </button>
+          )}
+          {q.hint && hintShown && (
+            <div className="hint-card">
+              <div className="lesson-label">
+                <span className="lesson-icon">💡</span>
+                <span>רמז</span>
+              </div>
+              <div className="hint-text math-content">
+                <MathText>{q.hint}</MathText>
+              </div>
+            </div>
+          )}
+
           <div className="answers">
             {answerOrder.map((origIdx: number, i: number) => {
               const ans: string = q.answers[origIdx];
@@ -776,6 +968,7 @@ function Quiz() {
                 <div key={i} className={`review-item${i === 0 ? ' review-first' : ''}`}>
                   <div className="review-q math-content">
                     <MathText inline>{a.question}</MathText>
+                    {a.usedHint && <span className="review-hint-flag">🔎 נעזרת ברמז</span>}
                   </div>
                   {a.chosenText && (
                     <div className="review-chosen math-content">
@@ -798,9 +991,23 @@ function Quiz() {
           </div>
         )}
         <div className="action-row">
-          <button className="start-btn" onClick={startQuiz}>
-            {selectedTopic === MIXED_TOPIC ? 'בדיקה מעורבת נוספת 🔁' : 'סבב נוסף באותו נושא 🔁'}
+          <button className="start-btn" onClick={() => startQuiz()}>
+            {selectedTopic === MIXED_TOPIC
+              ? 'בדיקה מעורבת נוספת 🔁'
+              : `סבב נוסף — רמה ${effectiveLevel} 🔁`}
           </button>
+          {effectiveLevel < 3 && selectedTopic !== MIXED_TOPIC && (
+            <button
+              className="btn-outline"
+              onClick={() => {
+                const next = (effectiveLevel + 1) as ConceptLevel;
+                chooseLevel(next);
+                startQuiz(next);
+              }}
+            >
+              ⬆️ נסה את רמה {effectiveLevel + 1}
+            </button>
+          )}
           {wrongAnswers.length > 0 && (
             <a href="/errors" className="btn-outline" style={{ textAlign: 'center', textDecoration: 'none', display: 'block' }}>
               📓 תרגל את הטעויות שלי — מחברת הטעויות
@@ -863,6 +1070,29 @@ function Quiz() {
         .topic-emoji { font-size: 32px; margin-bottom: 10px; display: block; line-height: 1; }
         .topic-name { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; position: relative; z-index: 1; }
         .topic-sub { font-size: 12px; color: var(--text3); margin-top: 4px; position: relative; z-index: 1; }
+        /* ===== Level picker (3 · בחר רמה) =====
+           Built on .topic-card's visual language so the third zone reads as a
+           sibling of the first two, not a new dialect. Three chips, always
+           clickable: the owner's standing rule is that levels never lock. */
+        .zone-hint { font-size: 13px; color: var(--text3); line-height: 1.6; margin-bottom: 14px; font-weight: 500; }
+        .level-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .level-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 16px 10px 14px; background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.25s cubic-bezier(.4,0,.2,1); font-family: var(--font-heebo), sans-serif; text-align: center; }
+        .level-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 10px 26px -12px rgba(15,23,42,0.14); }
+        .level-card.selected { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border-color: var(--accent); box-shadow: 0 14px 34px -14px rgba(79,70,229,0.22); }
+        .level-emoji { font-size: 22px; line-height: 1; }
+        .level-title { font-size: 13px; font-weight: 800; color: var(--text); }
+        .level-blurb { font-size: 11px; color: var(--text3); line-height: 1.5; font-weight: 500; }
+        .level-count { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 0.03em; margin-top: 2px; }
+        .level-badge-rec { position: absolute; top: -8px; inset-inline-start: 50%; transform: translateX(50%); background: var(--accent); color: #fff; font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 10px; white-space: nowrap; letter-spacing: 0.04em; }
+        .level-note { font-size: 12px; color: var(--text2); line-height: 1.7; background: rgba(180,83,9,0.06); border: 1px solid rgba(180,83,9,0.25); border-radius: var(--radius-sm); padding: 11px 13px; margin-bottom: 18px; font-weight: 500; }
+        /* ===== Hint (asked for, before answering) =====
+           Reuses .lesson-tip's amber so it reads as help, not as a verdict. */
+        .hint-btn { align-self: flex-start; background: rgba(180,83,9,0.07); border: 1.5px solid rgba(180,83,9,0.30); border-radius: var(--radius-sm); padding: 9px 15px; font-family: var(--font-heebo), sans-serif; font-size: 13px; font-weight: 700; color: #92400E; cursor: pointer; transition: all 0.2s; }
+        .hint-btn:hover { background: rgba(180,83,9,0.12); border-color: rgba(180,83,9,0.5); transform: translateY(-1px); }
+        .hint-card { background: linear-gradient(135deg, rgba(180,83,9,0.05) 0%, var(--surface3) 100%); border: 1.5px solid var(--border); border-right: 4px solid #B45309; border-radius: var(--radius-sm); padding: 14px 16px; animation: fadeUp 0.3s ease; }
+        .hint-text { font-size: 14px; line-height: 1.85; color: var(--text); font-weight: 500; unicode-bidi: plaintext; text-align: start; }
+        .meta-level-badge { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 800; color: var(--accent); background: rgba(79,70,229,0.09); border: 1.5px solid rgba(79,70,229,0.28); white-space: nowrap; }
+        .review-hint-flag { display: inline-block; margin-inline-start: 8px; font-size: 11px; font-weight: 700; color: #92400E; background: rgba(180,83,9,0.08); border-radius: 8px; padding: 2px 7px; }
         .start-btn { width: 100%; padding: 16px; border: none; border-radius: var(--radius); font-family: var(--font-heebo), sans-serif; font-size: 16px; font-weight: 800; color: #fff; cursor: pointer; background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%); box-shadow: 0 8px 24px -6px rgba(79,70,229,0.35); transition: all 0.25s cubic-bezier(.4,0,.2,1); margin-top: auto; letter-spacing: 0.05em; }
         .start-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 12px 32px -8px rgba(79,70,229,0.40); }
         .start-btn:active:not(:disabled) { transform: translateY(-1px); }

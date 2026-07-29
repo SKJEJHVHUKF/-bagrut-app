@@ -9,7 +9,21 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-type Kind = 'quiz' | 'bagrut' | 'concept' | 'thinking';
+/**
+ * `concept-l1|l2|l3` buckets the concept pool BY LEVEL. Without the level in the
+ * key, a level-3 request would be served a row generated for level 1 — worse
+ * than generating fresh, because it looks like it worked. `kind` is a text
+ * column, so this needs no Supabase migration; pre-existing `concept` rows just
+ * become unreachable, which is right since their level is unknown.
+ */
+export type Kind =
+  | 'quiz'
+  | 'bagrut'
+  | 'concept'
+  | 'thinking'
+  | 'concept-l1'
+  | 'concept-l2'
+  | 'concept-l3';
 
 /**
  * Pull a random pool row for the given subject/topic/kind, or return null

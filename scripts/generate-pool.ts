@@ -28,12 +28,23 @@ config({ path: resolve(process.cwd(), '.env.local'), override: true });
 
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
+import { buildConceptPrompt as buildSharedConceptPrompt, conceptPoolKind } from '@/lib/concept-prompt';
+import type { ConceptLevel } from '@/content/concept-quiz/types';
+import { normalizeUnitLevel } from '@/lib/agents/config';
 
 // ===========================================================================
 // CLI args
 // ===========================================================================
 const [subject, topic, kind, countStr = '10'] = process.argv.slice(2);
 const count = parseInt(countStr, 10);
+
+// `--level=1|2|3` for concept: it selects the level definitions in the prompt
+// AND becomes part of the pool `kind`, so a warmed level-3 bucket is actually
+// found by a level-3 request. Without it the row lands under bare 'concept',
+// which the route no longer looks up for a levelled request.
+const levelArg = process.argv.find((a) => a.startsWith('--level='))?.slice(8);
+const conceptLevel: ConceptLevel | null =
+  levelArg === '1' ? 1 : levelArg === '2' ? 2 : levelArg === '3' ? 3 : null;
 
 const VALID_KINDS = ['quiz', 'bagrut', 'concept'] as const;
 type Kind = typeof VALID_KINDS[number];
@@ -48,6 +59,9 @@ function printUsageAndExit(msg: string): never {
   console.error('  topic   : exact topic name in quotes (e.g. "אלגברה")');
   console.error('  kind    : quiz | bagrut | concept');
   console.error('  count   : how many items to generate (e.g. 10)');
+  console.error('');
+  console.error('Options:');
+  console.error('  --level=1|2|3  concept only — which level to generate, and which pool bucket to fill');
   console.error('');
   console.error('Cost estimate: ~$0.04 per quiz item, ~$0.05 per bagrut item, ~$0.03 per concept item.');
   process.exit(1);
@@ -142,23 +156,26 @@ function buildQuizPrompt(subject: string, topic: string): string {
   return opener(topic) + tutorInstruction;
 }
 
-// Concept quiz — mirrors buildConceptPrompt in app/api/questions/route.ts.
+// Concept quiz — the opener comes from lib/concept-prompt.ts, which the API
+// route uses too. This file used to carry its own near-copy with a comment
+// saying it "mirrors" the route's; they had already drifted (both still said
+// שאלון 581/582 long after schools moved to 571/572).
 function buildConceptPrompt(subject: string, topic: string): string {
   const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-  const opener =
-    subject === 'math5' || subject === 'math4'
-      ? `אתה מורה פרטי מומחה למתמטיקה ברמת ${
-          subject === 'math5' ? '5 יחידות (שאלון 581/582)' : '4 יחידות'
-        }. צור בדיוק 5 שאלות מושגים קצרות ורב-ברירתיות (MCQ) בנושא: ${topic}.
-זהו "בוחן מושגים מהיר" — לא סימולציית בגרות. המטרה: לבדוק הבנה תיאורטית ושליטה בכללים.
-כל שאלה נפתרת בראש תוך פחות מדקה, ומתמקדת באחד מאלה: הגדרות ותחום הגדרה; אסימפטוטות והתנהגות בקצוות; כללי גזירה/אינטגרציה; זהויות ותכונות; זיהוי תפיסה שגויה נפוצה. הימנע מחישוב ארוך רב-שלבי.`
-      : `${QUIZ_PROMPTS[subject]?.(topic) ?? ''} התמקד בשאלות מושג קצרות שנפתרות במהירות.`;
+  const unitLevel = normalizeUnitLevel(subject === 'math4' ? 4 : 5);
+  const opener = buildSharedConceptPrompt(
+    subject,
+    topic,
+    conceptLevel,
+    unitLevel,
+    QUIZ_PROMPTS[subject],
+  );
   const tutorInstruction = `
 
-🎯 צור בדיוק 5 שאלות מושגים קצרות.
+🎯 צור בדיוק 5 שאלות מושגים.
 📐 פורמט: LaTeX + Markdown. inline $...$, block $$...$$. השתמש ב-\\frac, \\sqrt, \\ln, \\int, ^, _.
 ⚠️ correct = האינדקס (0-3) של התשובה הנכונה. ודא ש-answers[correct] תואם ל-why_correct.
-מבנה: question, answers (4), correct (0-3), explanation: { why_correct, why_wrong, concept, remember } — כל שדה 1-2 משפטים.
+מבנה: question, answers (4), correct (0-3), hint, explanation: { why_correct, why_wrong, concept, remember } — כל שדה הסבר 1-2 משפטים.
 שפה: עברית (אנגלית רק אם המקצוע אנגלית).
 מזהה גיוון: ${seed}`;
   return opener + tutorInstruction;
@@ -197,8 +214,11 @@ const QUIZ_SCHEMA = {
         type: 'object',
         properties: {
           question: { type: 'string' },
-          answers: { type: 'array', items: { type: 'string' } },
-          correct: { type: 'integer' },
+          // Same hardening as the API route's schema: exactly 4 options and a
+          // `correct` in range were prose-only requests before.
+          answers: { type: 'array', items: { type: 'string' }, minItems: 4, maxItems: 4 },
+          correct: { type: 'integer', minimum: 0, maximum: 3 },
+          hint: { type: 'string' },
           explanation: {
             type: 'object',
             properties: {
@@ -211,7 +231,7 @@ const QUIZ_SCHEMA = {
             additionalProperties: false,
           },
         },
-        required: ['question', 'answers', 'correct', 'explanation'],
+        required: ['question', 'answers', 'correct', 'hint', 'explanation'],
         additionalProperties: false,
       },
     },
@@ -332,7 +352,10 @@ async function main() {
       const { error } = await supabase.from('question_pool').insert({
         subject,
         topic,
-        kind,
+        // Concept rows are bucketed per level, matching what the API route
+        // looks up. A row written under bare 'concept' would never be found by
+        // a levelled request.
+        kind: kind === 'concept' ? conceptPoolKind(conceptLevel) : kind,
         data,
       });
       if (error) throw error;

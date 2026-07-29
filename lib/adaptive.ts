@@ -131,6 +131,18 @@ export function orderQuestions(
   return [...sorted.filter((q) => q.difficulty !== 'easy'), ...sorted.filter((q) => q.difficulty === 'easy')];
 }
 
+/**
+ * Shuffle a pool and take `n`.
+ *
+ * For surfaces where the student chose the band EXPLICITLY — the concept quiz's
+ * level picker — `pickQuestions` is wrong: TIER_MIX would dilute a level-3
+ * request with easy and mid questions, which is precisely the choice the student
+ * just made against. Use this instead once the pool is already filtered.
+ */
+export function pickShuffled<T>(pool: T[], n: number): T[] {
+  return shuffle(pool).slice(0, n);
+}
+
 /** Human label for the tier — shown as a small transparency chip. */
 export function tierLabel(tier: Tier): string {
   return tier === 0 ? 'מסלול מדורג' : tier === 1 ? 'מסלול מאוזן' : 'מסלול מתקדם';
