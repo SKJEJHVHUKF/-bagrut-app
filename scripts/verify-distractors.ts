@@ -19,6 +19,8 @@
  * to be spot-checked by reading. Do not treat a green run as proof of quality.
  */
 import { getLesson, allLessonKeys } from '@/content/lessons';
+import { CONCEPT_571 } from '@/content/concept-quiz/571';
+import { CONCEPT_582 } from '@/content/concept-quiz/582';
 
 const STRICT = process.argv.includes('--strict');
 const ONLY = process.argv.find((a) => a.startsWith('--file='))?.slice(7);
@@ -37,6 +39,29 @@ type Q = {
 
 type Row = { topic: string; mcq: number; ok: number; problems: string[] };
 const rows: Row[] = [];
+
+/*
+ * A TOKEN-OVERLAP ALIGNMENT DETECTOR WAS TRIED HERE AND DELIBERATELY REMOVED.
+ *
+ * The idea: note i should mention one of option i's distinctive numbers, so a
+ * note that instead mentions another option's numbers implies a shifted array.
+ * Validated against the concept-quiz bank (85 questions, hand-verified) it
+ * flagged 15 of them — every one a false positive.
+ *
+ * The premise is simply wrong. A good note explains the PROCESS that produces
+ * the wrong value and cites its operands, which are usually the other options:
+ *   answers: ['24', '16', '4', '12']      (4 books in a row, 4! = 24)
+ *   note[1] for "16":  "זה $4^2$ — העלאה בחזקה במקום עצרת"
+ *   note[3] for "12":  "זה $4\cdot 3$ — עצירה אחרי שני מקומות"
+ * Neither writes its own number, both write another option's. Correct notes,
+ * flagged as misaligned.
+ *
+ * The shift it was meant to catch is already caught structurally: a shifted
+ * array puts the empty string somewhere other than `correct`, which the check
+ * below reports as "note present at the CORRECT index". That check is exact.
+ * Semantic alignment beyond it needs a human reading the options; no cheap
+ * textual proxy for it survives contact with real content.
+ */
 
 for (const { subject, topic } of allLessonKeys()) {
   if (ONLY && !topic.includes(ONLY)) {
@@ -85,7 +110,37 @@ for (const { subject, topic } of allLessonKeys()) {
         bad = true;
       }
     }
-    if (!bad) row.ok++;
+    if (!bad) {
+      row.ok++;
+
+    }
+  }
+  rows.push(row);
+}
+
+// The concept-quiz bank is already fully covered; scanning it here keeps both
+// banks under one number and gives a known-good corpus to sanity-check any
+// future rule against before trusting it on the lesson banks.
+for (const [bank, obj] of [
+  ['concept-571', CONCEPT_571],
+  ['concept-582', CONCEPT_582],
+] as Array<[string, Record<string, Q[]>]>) {
+  const row: Row = { topic: bank, mcq: 0, ok: 0, problems: [] };
+  for (const qs of Object.values(obj)) {
+    for (const q of qs) {
+      row.mcq++;
+      const answers = q.answers ?? [];
+      const notes = q.distractorNotes;
+      if (!Array.isArray(notes) || notes.length !== answers.length) {
+        row.problems.push(`${q.id}: notes/answers length mismatch`);
+        continue;
+      }
+      if (typeof q.correct === 'number' && notes[q.correct] && String(notes[q.correct]).trim()) {
+        row.problems.push(`${q.id}: note present at the CORRECT index ${q.correct} — array is probably misaligned`);
+        continue;
+      }
+      row.ok++;
+    }
   }
   rows.push(row);
 }
