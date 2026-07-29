@@ -616,7 +616,7 @@ $$g(f(x)) = 3(x^2 + 1) - 2 = 3x^2 + 1$$
       difficulty: 'mid',
       kind: 'mcq',
       question: 'נתונות $f(x) = 2x + 1$ ו-$g(x) = x^2$. מהו $(f \\circ g)(x)$?',
-      answers: ['$4x^2 + 4x + 1$', '$2x^2 + 1$', '$x^2 + 2x + 1$', '$(2x+1)^2$'],
+      answers: ['$4x^2 + 4x + 1$', '$2x^2 + 1$', '$x^2 + 2x + 1$', '$4x^2 + 1$'],
       correct: 1,
       solution: {
         steps: [

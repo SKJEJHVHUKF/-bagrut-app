@@ -2863,7 +2863,7 @@ $$\\int e^x \\, dx = e^x + C$$
             difficulty: 'mid',
             kind: 'mcq',
             question: 'רוצים את השטח בין $f(x) = -e^x$ לציר $x$ בקטע $[0, 1]$. האינטגרל $\\int_0^1 (-e^x)\\,dx$ יוצא שלילי. מהו השטח?',
-            answers: ['$e - 1$', '$-(e - 1)$', '$1 - e$', '$0$'],
+            answers: ['$e - 1$', '$-(e - 1)$', '$e$', '$0$'],
             correct: 0,
             solution: {
               steps: [

@@ -520,7 +520,7 @@ $$f''(x) = 6x - 12$$
       difficulty: 'easy',
       kind: 'mcq',
       question: 'מהי הנגזרת של $f(x) = x^5$?',
-      answers: ['$f\'(x) = x^4$', '$f\'(x) = 5x^4$', '$f\'(x) = 5x^5$', '$f\'(x) = x^5 \\cdot 5$'],
+      answers: ['$f\'(x) = x^4$', '$f\'(x) = 5x^4$', '$f\'(x) = 5x^5$', '$f\'(x) = \\dfrac{x^6}{6}$'],
       correct: 1,
       solution: {
         steps: [

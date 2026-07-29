@@ -264,7 +264,7 @@ $$P(X = k) = \\binom{n}{k} p^k (1-p)^{n-k}, \\quad k = 0, 1, \\ldots, n$$
       difficulty: 'mid',
       kind: 'mcq',
       question: 'קלף מוצא מחפיסה. נתון שהוא קלף עם תמונה (J, Q, K — 12 קלפים). מה ההסתברות שהוא גם אדום?',
-      answers: ['$\\dfrac{1}{2}$', '$\\dfrac{3}{13}$', '$\\dfrac{1}{4}$', '$\\dfrac{6}{12}$'],
+      answers: ['$\\dfrac{1}{2}$', '$\\dfrac{3}{13}$', '$\\dfrac{1}{4}$', '$\\dfrac{6}{52}$'],
       correct: 0,
       hint: 'מה ההסתברות לאדום, בהינתן שהקלף הוא תמונה?',
       solution: {
@@ -1025,7 +1025,7 @@ $$P(A \\mid R) = \\frac{P(A \\cap R)}{P(R)},$$
             '$\\dfrac{2}{15}$',
             '$\\dfrac{4}{25}$',
             '$\\dfrac{1}{6}$',
-            '$\\dfrac{12}{90}$',
+            '$\\dfrac{3}{25}$',
           ],
           correct: 0,
           hint: 'כפל לאורך מסלול: $\\dfrac{4}{10} \\cdot \\dfrac{3}{9}$.',
