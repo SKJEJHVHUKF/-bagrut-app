@@ -30,6 +30,23 @@ const STRICT = process.argv.includes('--strict');
 
 type Q = { id?: string; kind?: string; question?: string; answers?: string[]; correct?: number };
 
+/**
+ * Read a parenthesised group starting at `open` (which must be a '('), honouring
+ * nesting. Returns the inner text and the index just past the closing ')'.
+ */
+function balancedGroup(s: string, open: number): { body: string; end: number } | null {
+  if (s[open] !== '(') return null;
+  let depth = 0;
+  for (let i = open; i < s.length; i++) {
+    if (s[i] === '(') depth++;
+    else if (s[i] === ')') {
+      depth--;
+      if (depth === 0) return { body: s.slice(open + 1, i), end: i + 1 };
+    }
+  }
+  return null;
+}
+
 /** LaTeX → mathjs source. Returns null when the option isn't a bare expression. */
 function toExpr(raw: string): string | null {
   let s = String(raw).trim();
@@ -67,12 +84,24 @@ function toExpr(raw: string): string | null {
     .replace(/\\sqrt/g, 'sqrt')
     .replace(/\\infty/g, 'Infinity')
     .replace(/[{}]/g, (m) => (m === '{' ? '(' : ')'));
-  // FRAC(a)(b) → ((a)/(b))
+  // FRAC(a)(b) → ((a)/(b)), where a and b may themselves contain parentheses.
+  //
+  // This used to be a regex with `[^()]*` for each group, which silently bailed
+  // on any fraction whose numerator or denominator contained a nested group —
+  // and `\frac{5\sqrt{2}}{6}` becomes exactly that (`FRAC(5sqrt(2))(6)`) once
+  // `{}` are rewritten to `()`. Every radical-in-a-fraction option in the bank
+  // was therefore invisible to this script, which is a script bug rather than
+  // an authoring one. Parse balanced groups instead.
   let guard = 0;
-  while (s.includes('FRAC') && guard++ < 20) {
-    s = s.replace(/FRAC\(([^()]*)\)\(([^()]*)\)/, '(($1)/($2))');
-    if (guard > 18) return null;
+  while (s.includes('FRAC') && guard++ < 30) {
+    const at = s.indexOf('FRAC');
+    const num = balancedGroup(s, at + 4);
+    if (!num) return null;
+    const den = balancedGroup(s, num.end);
+    if (!den) return null;
+    s = s.slice(0, at) + `((${num.body})/(${den.body}))` + s.slice(den.end);
   }
+  if (guard >= 30) return null;
   if (/[\\A-Za-z]{0,}\\/.test(s)) return null; // leftover LaTeX command
   if (/[°|]/.test(s)) return null;
   return s;
