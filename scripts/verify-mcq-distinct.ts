@@ -88,19 +88,29 @@ function valueOf(expr: string, x: number): number | null {
   }
 }
 
-/** Equal at several sample points ⇒ the same expression for our purposes. */
-function sameValue(a: string, b: string): boolean {
+/**
+ * Compare two option expressions at several sample points.
+ *
+ * Returns `evaluated: false` when mathjs could not actually produce numbers for
+ * both at ≥2 points — a case that is NOT the same as "different". `toExpr`
+ * passing is only a syntactic filter: an option like '$e^{x}+C$' survives it and
+ * then fails to evaluate because `C` is a free symbol. Counting that pair as
+ * "compared" is what made an earlier version of the coverage report overstate
+ * how much was really checked, so the caller must distinguish the two.
+ */
+function sameValue(a: string, b: string): { evaluated: boolean; equal: boolean } {
   const pts = [1.7, 2.3, 3.9, 5.1];
   let compared = 0;
+  let equal = true;
   for (const x of pts) {
     const va = valueOf(a, x);
     const vb = valueOf(b, x);
     if (va === null || vb === null) continue;
     compared++;
     const scale = Math.max(1, Math.abs(va), Math.abs(vb));
-    if (Math.abs(va - vb) > 1e-9 * scale) return false;
+    if (Math.abs(va - vb) > 1e-9 * scale) equal = false;
   }
-  return compared >= 2;
+  return { evaluated: compared >= 2, equal };
 }
 
 const dupes: string[] = [];
@@ -139,17 +149,23 @@ function scan(where: string, q: Q) {
   }
   cov.qs++;
   cov.opts += answers.length;
-  cov.comparable += exprs.filter(Boolean).length;
 
+  // Count an option as covered only if it actually took part in a pair that
+  // mathjs could EVALUATE — not merely one that survived toExpr's syntax filter.
+  const tookPart = new Set<number>();
   let pairsHere = 0;
   for (let i = 0; i < answers.length; i++) {
     for (let j = i + 1; j < answers.length; j++) {
       const a = exprs[i];
       const b = exprs[j];
       if (!a || !b) continue;
+      const { evaluated, equal } = sameValue(a, b);
+      if (!evaluated) continue; // parsed but not numerically comparable
       checked++;
       pairsHere++;
-      if (sameValue(a, b)) {
+      tookPart.add(i);
+      tookPart.add(j);
+      if (equal) {
         const flag = i === q.correct || j === q.correct ? '🔴 ONE OF THESE IS THE CORRECT ANSWER' : '⚠';
         dupes.push(
           `${flag} ${where} ${q.id}: option[${i}] "${answers[i]}" == option[${j}] "${answers[j]}"  (correct=${q.correct})`,
@@ -157,9 +173,10 @@ function scan(where: string, q: Q) {
       }
     }
   }
-  // Zero pairs compared = this question got no machine check whatsoever.
+  cov.comparable += tookPart.size;
+  // Zero pairs actually evaluated = this question got no machine check whatsoever.
   if (pairsHere === 0) cov.blind.push(q.id ?? '(no id)');
-  unparsed += exprs.filter((e) => !e).length;
+  unparsed += answers.length - tookPart.size;
 }
 
 for (const { subject, topic } of allLessonKeys()) {

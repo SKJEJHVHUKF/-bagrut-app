@@ -65,6 +65,12 @@ content/
   bagrut-context.ts           MATH5.* — exam structure + style guide (used by AI prompts)
   lessons/math5/*.ts          16 topics: subTopics[] with lesson[] (guided), questions[] (MCQ+open),
                               bagrutQuestions[] (multi-part, expected:AnswerSpec). Accessors in index.ts.
+  concept-quiz/types.ts       ConceptQuestion + ConceptLevel (1|2|3, the axis the STUDENT picks on /quiz)
+  concept-quiz/index.ts       registry keyed `${subject}:${topic}` — NOT topic alone (math4 shares math5's
+                              Hebrew topic names and not always byte-identically). getConceptQuestions /
+                              hasConceptBank / conceptLevelCounts / conceptBankEntries.
+  concept-quiz/math5/*.ts     14 topic files, filenames matching lessons/math5/*.ts. Target 6 questions per
+                              (topic × level) = 252. Adding math4/math3 = one entry in the registry.
   learning-paths/math5/*.ts   "base course" — teach concepts from 0 (8 sections). STYLE_GUIDE.md is the bar.
   advanced-courses/math5/*.ts "advanced course" — bagrut MASTERY (7 sections: gate/patterns/techniques/
                               workedExams/examPractice/traps/simulation). Pro-gated. Registered in index.ts.
@@ -98,7 +104,7 @@ content/
 | Global profile | `components/AppChrome.tsx` | Floating avatar (initials) on every authed page → side drawer (name/email/plan/streak/unit-level/links/signout). Mounted once in `app/layout.tsx`. |
 | Global search | `components/GlobalSearch.tsx` | Ctrl+K palette over topics/formulas/bagruyot |
 
-Middleware (`lib/supabase/middleware.ts`): `PROTECTED_PREFIXES` = `/quiz /chat /history /practice /learn`. Add a prefix there to protect a new route. `/pricing` is intentionally public.
+Middleware (`lib/supabase/middleware.ts`): `PROTECTED_PREFIXES` = `/quiz /chat /history /learn /tutor`. Add a prefix there to protect a new route. `/pricing`, `/roadmap` and `/practice` are intentionally public — `/practice` only redirects into `/roadmap`, so an anonymous visitor following an old link must not hit a login wall. That also makes `/roadmap` and `/practice` the surfaces to use when verifying shared rendering without a login; `/quiz` cannot be checked that way.
 
 ---
 
@@ -127,7 +133,19 @@ npm run check          # THE pre-push gate: typecheck + verify:content + build
 npm run build          # REQUIRED before push
 npm run typecheck      # REQUIRED before push
 npm run verify:content # content gate → must be 0 errors (--strict also fails on warnings)
+npm run verify:concept # concept-quiz gate → inventory table per (topic × level) + contract checks
+npm run verify:quiz    # the per-wave authoring gate: concept + mcq-distinct + distractors
 ```
+
+**Reading a gate's output:** `0 problems` means "nothing I examined failed", not "the data is correct".
+`verify-mcq-distinct` skips any option containing `=`, `<`, `>` or Hebrew — correct (those are
+statements, not values) but it leaves **39% coverage on the concept bank, and 0% on אלגברה**. It now
+prints per-topic coverage and names every question that got no machine check; that list is the
+manual-review worklist. `verify-concept` checks SHAPE only and says so in its header — every
+`correct` index still has to be re-derived by hand, independently of whoever authored it.
+In `verify-concept.ts`, `PROMOTED_TO_ERROR` flips hint-coverage and per-level inventory from
+warnings to errors; keep it `false` until the 252-question target is met, because a gate that
+always fails gets bypassed within a day.
 
 `npm run verify:content` (`scripts/verify-content.ts`) supersedes `check-katex-hebrew.ts`.
 It imports the content modules rather than grepping source, so it can scope rules per
@@ -138,6 +156,10 @@ field — `'$= 4 - 3i$'` is fine in `solution.steps` and a defect in `keyPoints`
 ## Hebrew + math rendering
 
 `components/practice/MathText.tsx`: react-markdown → remark-math → rehype-katex. Bidi handling in `app/globals.css` under `:is(.chat-md, .math-content)` — math gets `direction:ltr; unicode-bidi:isolate !important` so Hebrew doesn't reverse equations.
+
+**The unscoped `.katex` floor above that block is deliberate — do not "clean up" the apparent duplicate.** Every scoped rule needs a `.chat-md`/`.math-content` ancestor, so a `MathText` rendered without one inherited `direction:rtl` from `<html dir="rtl">` and displayed the formula reversed. That is not hypothetical: 4 of the 12 call sites in `/quiz` had no wrapper class, all in the end-of-quiz mistake review, where every answer is pure math — students read their own wrong answer backwards. The floor is soft (two declarations, no `!important`, no font/colour/display) so the scoped block still wins and nothing about the look changes; it only removes the failure mode where *nothing* applies. Verified by knocking `direction` out at runtime: `ltr` → `rtl` → `ltr`.
+
+**Never let a page keep its own copy of `MathText`.** `/quiz` did, and the copy stayed frozen at the pre-2026-07-28 behaviour (no `remarkGfm`; `inline` returned a bare fragment with no wrapper and no `dir`) while the shared component was hardened around it.
 
 **MathText contract (2026-07-28 — do not regress):** both modes return **exactly one element** — `<span class="mathtext-inline">` / `<div class="mathtext-block">`, each `dir="rtl"`. Inline mode used to return a bare fragment, which let a `display:flex` caller turn every word and formula into its own flex item (the "לזכור" box rendered as 3 scrambled columns). Two consequences for new UI:
 - A flex row containing `MathText` puts `chat-md` on an inner `<div className="chat-md flex-1 min-w-0">`, never on the flex container — every `.chat-md` rule is a descendant combinator.
