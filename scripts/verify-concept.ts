@@ -35,11 +35,28 @@ const MAX_L1_QUESTION = 160;
 const MIN_L3_WHY_CORRECT = 120;
 
 /** Target inventory per (topic × level). Owner's decision: 6, so a second round
- *  is not a literal repeat of the first. Rules 4 and 6 are WARNINGS until the
- *  authoring wave lands, then promoted to errors — a gate that always fails
- *  gets bypassed within a day, and one that can't fail proves nothing. */
+ *  is not a literal repeat of the first. Rules 4 and 6 were WARNINGS while the
+ *  authoring waves ran and are now ERRORS — a gate that always fails gets
+ *  bypassed within a day, and one that can't fail proves nothing. */
 const MIN_PER_LEVEL = 6;
-const PROMOTED_TO_ERROR = false; // flip to true once authoring is complete
+const PROMOTED_TO_ERROR = true;
+
+/**
+ * Topics exempt from the inventory target and the hint requirement.
+ *
+ * Derived from `MATH5_CURRICULUM` rather than hardcoded: a topic marked
+ * `weight: 'out-of-scope'` has left the syllabus, so the app keeps its existing
+ * questions as reserve content but does not invest in bringing them to target.
+ * Owner's call (2026-07-30) on גדילה ודעיכה: "זה מחוץ לחומר".
+ *
+ * They are still fully checked for CORRECTNESS — 4 answers, correct in range,
+ * distractor notes, explanation fields. Only the two volume-of-work rules are
+ * relaxed. Retiring a topic must not quietly retire its quality bar, and if the
+ * syllabus ever changes back the exemption disappears on its own.
+ */
+const EXEMPT_TOPICS = new Set(
+  MATH5_CURRICULUM.filter((t) => t.weight === 'out-of-scope').map((t) => t.key),
+);
 
 const EXPLANATION_FIELDS = ['why_correct', 'why_wrong', 'concept', 'remember'] as const;
 
@@ -47,8 +64,11 @@ const errors: string[] = [];
 const warnings: string[] = [];
 const err = (m: string) => errors.push(m);
 const warn = (m: string) => warnings.push(m);
-/** Rules 4 and 6 route here so a single constant moves them both. */
-const gated = PROMOTED_TO_ERROR ? err : warn;
+/** Rules 4 and 6 route here so a single constant moves them both. An exempt
+ *  topic downgrades them to warnings so its state stays VISIBLE rather than
+ *  silently accepted — the row still prints, it just doesn't fail the build. */
+const gated = (topic: string, m: string) =>
+  PROMOTED_TO_ERROR && !EXEMPT_TOPICS.has(topic) ? err(m) : warn(m);
 
 const MATH5_KEYS = new Set(MATH5_CURRICULUM.map((t) => t.key));
 
@@ -138,9 +158,9 @@ for (const { subject, topic, bank } of conceptBankEntries()) {
     // ---- Rule 4 (gated): a hint on every question.
     const hint = q.hint?.trim() ?? '';
     if (!hint) {
-      gated(`${at}: no hint`);
+      gated(topic, `${at}: no hint`);
     } else if (hint.length < MIN_HINT || hint.length > MAX_HINT) {
-      gated(`${at}: hint length ${hint.length}, want ${MIN_HINT}-${MAX_HINT}`);
+      gated(topic, `${at}: hint length ${hint.length}, want ${MIN_HINT}-${MAX_HINT}`);
     }
 
     // ---- Rule 5 (warning ON PURPOSE): a hint must not hand over the answer.
@@ -164,7 +184,7 @@ for (const { subject, topic, bank } of conceptBankEntries()) {
   // ---- Rule 6 (gated): inventory per level.
   for (const lv of CONCEPT_LEVELS) {
     if (counts[lv] < MIN_PER_LEVEL) {
-      gated(`${where}: level ${lv} has ${counts[lv]}/${MIN_PER_LEVEL} questions`);
+      gated(topic, `${where}: level ${lv} has ${counts[lv]}/${MIN_PER_LEVEL} questions`);
     }
   }
 
@@ -181,7 +201,9 @@ console.log('\nINVENTORY — questions per level (target ' + MIN_PER_LEVEL + ' e
 console.log(pad('bank', 34) + lpad('L1', 4) + lpad('L2', 4) + lpad('L3', 4) + lpad('tot', 6));
 const totals: Counts = { 1: 0, 2: 0, 3: 0 };
 for (const r of table) {
-  const flag = CONCEPT_LEVELS.some((lv) => r.counts[lv] < MIN_PER_LEVEL) ? '  ←' : '';
+  const exempt = EXEMPT_TOPICS.has(r.label.split(':')[1] ?? '');
+  const short = CONCEPT_LEVELS.some((lv) => r.counts[lv] < MIN_PER_LEVEL);
+  const flag = exempt ? '  · מחוץ לסילבוס, לא נספר ליעד' : short ? '  ←' : '';
   console.log(
     pad(r.label, 34) +
       lpad(String(r.counts[1]), 4) +
@@ -199,11 +221,22 @@ console.log(
     lpad(String(totals[3]), 4) +
     lpad(String(count), 6),
 );
+// Counted separately: a shortfall in an exempt topic is not work owed, and
+// folding it into one number would make a finished bank look unfinished forever.
+const shortfall = (only: 'required' | 'exempt') =>
+  table
+    .filter((r) => (EXEMPT_TOPICS.has(r.label.split(':')[1] ?? '') ? only === 'exempt' : only === 'required'))
+    .reduce(
+      (s, r) => s + CONCEPT_LEVELS.reduce((t, lv) => t + Math.max(0, MIN_PER_LEVEL - r.counts[lv]), 0),
+      0,
+    );
+const owed = shortfall('required');
+const exemptShort = shortfall('exempt');
 console.log(
-  `\nmissing to target: ${table.reduce(
-    (s, r) => s + CONCEPT_LEVELS.reduce((t, lv) => t + Math.max(0, MIN_PER_LEVEL - r.counts[lv]), 0),
-    0,
-  )} question(s)`,
+  `\nmissing to target: ${owed} question(s)` +
+    (exemptShort > 0
+      ? `  (plus ${exemptShort} in out-of-syllabus topics, not counted — reserve content)`
+      : ''),
 );
 
 const show = (list: string[], label: string) => {
