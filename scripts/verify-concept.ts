@@ -34,12 +34,23 @@ const MAX_HINT = 200;
 const MAX_L1_QUESTION = 160;
 const MIN_L3_WHY_CORRECT = 120;
 
-/** Target inventory per (topic × level). Owner's decision: 6, so a second round
- *  is not a literal repeat of the first. Rules 4 and 6 were WARNINGS while the
- *  authoring waves ran and are now ERRORS — a gate that always fails gets
- *  bypassed within a day, and one that can't fail proves nothing. */
-const MIN_PER_LEVEL = 6;
-const PROMOTED_TO_ERROR = true;
+/**
+ * Target inventory per (topic × level). Raised 6 -> 12 by the owner on
+ * 2026-07-30: at 6, a session of 5 meant a second round repeated 4 of the same
+ * 5 questions, so the reserve has to be roughly double the session size for a
+ * repeat round to feel different.
+ *
+ * The hint rule and the inventory rule are promoted SEPARATELY, because they are
+ * satisfied at different times. Bundling them under one flag would mean raising
+ * the target instantly turns 39 passing rows into build failures, and a gate
+ * that fails on everything gets bypassed within a day — the same reasoning that
+ * kept both as warnings during the first authoring push.
+ */
+const MIN_PER_LEVEL = 12;
+/** Every in-syllabus question already carries a hint — this stays enforced. */
+const HINT_RULE_IS_ERROR = true;
+/** Flip to true once every in-syllabus topic reaches MIN_PER_LEVEL. */
+const INVENTORY_RULE_IS_ERROR = false;
 
 /**
  * Topics exempt from the inventory target and the hint requirement.
@@ -64,11 +75,11 @@ const errors: string[] = [];
 const warnings: string[] = [];
 const err = (m: string) => errors.push(m);
 const warn = (m: string) => warnings.push(m);
-/** Rules 4 and 6 route here so a single constant moves them both. An exempt
- *  topic downgrades them to warnings so its state stays VISIBLE rather than
- *  silently accepted — the row still prints, it just doesn't fail the build. */
-const gated = (topic: string, m: string) =>
-  PROMOTED_TO_ERROR && !EXEMPT_TOPICS.has(topic) ? err(m) : warn(m);
+/** An exempt topic always downgrades to a warning, so its state stays VISIBLE
+ *  rather than silently accepted — the row still prints, it just doesn't fail
+ *  the build. */
+const gated = (isError: boolean, topic: string, m: string) =>
+  isError && !EXEMPT_TOPICS.has(topic) ? err(m) : warn(m);
 
 const MATH5_KEYS = new Set(MATH5_CURRICULUM.map((t) => t.key));
 
@@ -158,9 +169,9 @@ for (const { subject, topic, bank } of conceptBankEntries()) {
     // ---- Rule 4 (gated): a hint on every question.
     const hint = q.hint?.trim() ?? '';
     if (!hint) {
-      gated(topic, `${at}: no hint`);
+      gated(HINT_RULE_IS_ERROR, topic, `${at}: no hint`);
     } else if (hint.length < MIN_HINT || hint.length > MAX_HINT) {
-      gated(topic, `${at}: hint length ${hint.length}, want ${MIN_HINT}-${MAX_HINT}`);
+      gated(HINT_RULE_IS_ERROR, topic, `${at}: hint length ${hint.length}, want ${MIN_HINT}-${MAX_HINT}`);
     }
 
     // ---- Rule 5 (warning ON PURPOSE): a hint must not hand over the answer.
@@ -184,7 +195,7 @@ for (const { subject, topic, bank } of conceptBankEntries()) {
   // ---- Rule 6 (gated): inventory per level.
   for (const lv of CONCEPT_LEVELS) {
     if (counts[lv] < MIN_PER_LEVEL) {
-      gated(topic, `${where}: level ${lv} has ${counts[lv]}/${MIN_PER_LEVEL} questions`);
+      gated(INVENTORY_RULE_IS_ERROR, topic, `${where}: level ${lv} has ${counts[lv]}/${MIN_PER_LEVEL} questions`);
     }
   }
 
@@ -251,7 +262,10 @@ show(warnings, 'WARNINGS');
 console.log(
   `\n${count} concept questions checked — ${errors.length} error(s), ${warnings.length} warning(s).`,
 );
-if (!PROMOTED_TO_ERROR) {
-  console.log('note: hint coverage and per-level inventory are WARNINGS until authoring lands (PROMOTED_TO_ERROR).');
+if (!INVENTORY_RULE_IS_ERROR) {
+  console.log(
+    `note: the per-level inventory target (${MIN_PER_LEVEL}) is a WARNING while authoring is in flight — ` +
+      'flip INVENTORY_RULE_IS_ERROR once every in-syllabus topic reaches it. Hint coverage is already an error.',
+  );
 }
 process.exit(errors.length > 0 || (STRICT && warnings.length > 0) ? 1 : 0);
