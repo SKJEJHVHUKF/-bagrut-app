@@ -82,7 +82,12 @@ export function QuestionRunnerCard({
   // whole diagnostic layer depends on that (lib/cognition reads it against the
   // authored per-distractor notes). `pickMCQ` receives `origIdx` by design;
   // don't "simplify" it to the display position.
-  function logFirst(correct: boolean, userAnswer?: string, chosenIndex?: number) {
+  function logFirst(
+    correct: boolean,
+    userAnswer?: string,
+    chosenIndex?: number,
+    selfReported?: boolean,
+  ) {
     recordResult({
       subject,
       topic,
@@ -92,6 +97,7 @@ export function QuestionRunnerCard({
       difficulty: q.difficulty,
       correct,
       kind: q.kind,
+      ...(selfReported !== undefined ? { selfReported } : {}),
       ...(chosenIndex !== undefined ? { chosenIndex } : {}),
       ...(q.kind === 'mcq' && q.answers ? { optionCount: q.answers.length } : {}),
       // Always false on this surface today: the hint is only revealed AFTER a
@@ -160,7 +166,9 @@ export function QuestionRunnerCard({
     setTries(nextTries);
     if (nextTries === 1) {
       setFirstTryCorrect(correct);
-      logFirst(correct, input);
+      // submitOpen only runs when `expected` exists and isn't 'manual', so this
+      // verdict came from lib/answer-check, not from the student.
+      logFirst(correct, input, undefined, false);
     }
     if (correct) gradeCorrect();
     else gradeWrong();
@@ -174,7 +182,7 @@ export function QuestionRunnerCard({
   function selfReport(correct: boolean) {
     if (firstTryCorrect !== null) return;
     setFirstTryCorrect(correct);
-    logFirst(correct, input || undefined);
+    logFirst(correct, input || undefined, undefined, true);
     setRevealed(true);
     if (correct) celebrateCorrect();
   }

@@ -96,10 +96,25 @@ export function QuestionPartCard({
   // Log the FIRST measured outcome (graded or self-assessed) to lib/results so
   // /insights + grade prediction count bagrut work — once per part.
   const [recorded, setRecorded] = useState(false);
-  function recordOutcome(correct: boolean) {
+  // `selfReported` separates "lib/answer-check compared my expression to the
+  // key" from "I looked at the solution and said I got it" — the tracer in
+  // lib/cognition prices those very differently, and a bagrut part is the one
+  // place in the app where both paths lead to the same recordResult call.
+  function recordOutcome(correct: boolean, selfReported: boolean) {
     if (recorded) return;
     setRecorded(true);
-    recordResult({ subject, topic: topic ?? '', subTopicId, questionId, source: 'bagrut', difficulty, correct });
+    recordResult({
+      subject,
+      topic: topic ?? '',
+      subTopicId,
+      questionId,
+      source: 'bagrut',
+      difficulty,
+      correct,
+      kind: 'open',
+      selfReported,
+      ...(hintsShown > 0 ? { hintUsed: true } : {}),
+    });
   }
 
   // Log a wrong answer to the error notebook (once per part). If a category
@@ -129,7 +144,7 @@ export function QuestionPartCard({
   function selfAssess(correct: boolean) {
     if (selfReport) return;
     setSelfReport(correct ? 'correct' : 'wrong');
-    recordOutcome(correct);
+    recordOutcome(correct, true);
     if (correct) {
       celebrateCorrect();
       toast.success('כל הכבוד! 🎯', { description: 'סימנת שפתרת נכון', duration: 2000 });
@@ -203,7 +218,9 @@ export function QuestionPartCard({
     // gets marked complete even if the student didn't reveal the solution.
     if (data.verdict === 'correct' && !revealedFinal) {
       setRevealedFinal(true);
-      recordOutcome(true);
+      // Graded by lib/answer-check or by the AI fallback — either way, not by
+      // the student, which is what `selfReported` distinguishes.
+      recordOutcome(true, false);
       celebrateCorrect();
       toast.success('תשובה נכונה! 🎯', {
         description: `סעיף ${part.label} נסגר בכבוד`,
@@ -216,7 +233,7 @@ export function QuestionPartCard({
         duration: 2500,
       });
     } else if (data.verdict === 'wrong') {
-      recordOutcome(false);
+      recordOutcome(false, false);
       toast.error('לא נכון', {
         description: 'אל תוותר — נסה רמז או בקש "למה טעיתי?"',
         duration: 2500,

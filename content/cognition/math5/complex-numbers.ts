@@ -937,5 +937,63 @@ export const complexNumbersCognition: TopicCognitionMap = {
     'cx-sub-find-010': ['cx.algebraic.arithmetic', 'cx.findz.xy-substitution'],
     'cx-sub-find-011': ['cx.findz.xy-substitution', 'cx.algebraic.conjugate'],
     'cx-sub-find-012': ['cx.demoivre.power', 'cx.findz.strategy'],
+
+    // ==========================================================
+    // BAGRUT PARTS — keyed `${question.id}-${part.label}`
+    // ==========================================================
+    // That composite is what QuestionPartCard writes to results.ts; the
+    // question id on its own never appears in an event. Each part is mapped to
+    // the skills IT exercises rather than inheriting the whole question's
+    // sub-topic — a bagrut question deliberately walks across skills (convert
+    // to polar → raise to a power → convert back), which is exactly the
+    // information the sub-topic fallback would destroy.
+
+    // cx-bag-001 · z = 1 + i√3
+    'cx-bag-001-א': ['cx.modulus', 'cx.arg.quadrant', 'cx.polar.form'],
+    'cx-bag-001-ב': ['cx.demoivre.power', 'cx.polar.to-algebraic'],
+    'cx-bag-001-ג': ['cx.demoivre.power'],
+
+    // cx-bag-002 · z³ = −8
+    'cx-bag-002-א': ['cx.polar.form', 'cx.roots.formula'],
+    'cx-bag-002-ב': ['cx.roots.formula', 'cx.polar.to-algebraic'],
+    'cx-bag-002-ג': ['cx.roots.geometry'],
+
+    // cx-bag-003 · z² − 4z + 13 = 0
+    'cx-bag-003-א': ['cx.eq.quadratic-real'],
+    'cx-bag-003-ב': ['cx.modulus', 'cx.arg.quadrant'],
+    'cx-bag-003-ג': ['cx.eq.vieta', 'cx.algebraic.conjugate'],
+
+    // cx-bag-004 · loci and their intersection
+    'cx-bag-004-א': ['cx.loci.distance'],
+    'cx-bag-004-ב': ['cx.loci.ray'],
+    'cx-bag-004-ג': ['cx.loci.intersection'],
+
+    // cx-bag-005 · capstone (deliberately crosses four sub-topics)
+    'cx-bag-005-א': ['cx.eq.quadratic-real'],
+    'cx-bag-005-ב': ['cx.polar.form'],
+    'cx-bag-005-ג': ['cx.demoivre.power'],
+    'cx-bag-005-ד': ['cx.modulus', 'cx.loci.distance'],
+    'cx-bag-005-ה': ['cx.polar.geometry'],
+
+    // cx-bag-006 · product in polar form
+    'cx-bag-006-א': ['cx.modulus', 'cx.arg.quadrant', 'cx.polar.form'],
+    'cx-bag-006-ב': ['cx.polar.mult-div'],
+
+    // cx-bag-007 · w⁶, the full round trip
+    'cx-bag-007-א': ['cx.polar.form', 'cx.demoivre.power', 'cx.polar.to-algebraic'],
+
+    // cx-bag-008 · z·z̄ + 2z = 15 + 8i
+    'cx-bag-008-א': ['cx.findz.xy-substitution', 'cx.algebraic.conjugate'],
+
+    // cx-bag-009 · z³ = −8i, then the triangle
+    'cx-bag-009-א': ['cx.roots.formula'],
+    'cx-bag-009-ב': ['cx.roots.geometry'],
+
+    // cx-bag-010 · perpendicular bisector
+    'cx-bag-010-א': ['cx.loci.bisector', 'cx.findz.xy-substitution'],
+
+    // cx-bag-011 · geometric series with a complex ratio
+    'cx-bag-011-א': ['cx.demoivre.power', 'cx.polar.to-algebraic'],
+    'cx-bag-011-ב': ['cx.demoivre.power', 'cx.algebraic.arithmetic'],
   },
 };

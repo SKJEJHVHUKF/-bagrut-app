@@ -46,19 +46,29 @@ function recencyWeight(ts: number, now: number): number {
 
 /**
  * P(correct | doesn't know it) for one observation.
- *  • MCQ            → 1/optionCount (0.25 on the usual four).
- *  • open, graded   → 0.05. Typing a right answer by accident is near-zero.
- *  • open, self-report → 0.15. The student marks their own paper; in this topic
- *    NO open question ships an `expected` spec, so every open answer takes this
- *    branch today.
- *  • replay         → floored at 0.5. Re-answering a question already seen can
- *    be pure recall of the answer, not of the method.
+ *  • MCQ                 → 1/optionCount (0.25 on the usual four).
+ *  • open, machine-graded → 0.05. Typing an equivalent expression by accident
+ *    is near-zero; lib/answer-check compared it symbolically.
+ *  • open, self-reported  → 0.25. The student marked their own paper after
+ *    seeing the solution, which is the most generous grader in the app. All 26
+ *    complex-numbers bagrut parts DO ship an `expected` spec, so most take the
+ *    graded branch — but the `manual` ones and the "solved on paper" path do
+ *    not, and pricing them the same would let a self-flattering session read as
+ *    mastery.
+ *  • open, unknown        → 0.15, splitting the difference. Only events written
+ *    before `selfReported` existed land here.
+ *  • replay               → floored at 0.5. Re-answering a question already seen
+ *    can be recall of the answer rather than of the method.
  */
 export function guessFor(o: Observation): number {
   let guess: number;
   if (o.kind === 'mcq') {
     const n = o.optionCount && o.optionCount > 1 ? o.optionCount : 4;
     guess = 1 / n;
+  } else if (o.selfReported === true) {
+    guess = 0.25;
+  } else if (o.selfReported === false) {
+    guess = 0.05;
   } else {
     guess = o.source === 'review' ? 0.1 : 0.15;
   }

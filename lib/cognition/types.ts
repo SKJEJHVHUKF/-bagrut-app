@@ -25,6 +25,8 @@ export type Observation = {
   optionCount?: number;
   /** The hint was revealed before the counted attempt. */
   hintUsed?: boolean;
+  /** Open questions: the student graded themselves rather than being graded. */
+  selfReported?: boolean;
   /** A re-answer of a question already seen (weaker evidence). */
   isReplay?: boolean;
   source: ResultSource;

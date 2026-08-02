@@ -48,8 +48,11 @@ import type { Skill } from '../content/cognition/types';
 
 const DAY = 24 * 60 * 60 * 1000;
 const T0 = 1_700_000_000_000; // fixed base clock
+const NOW = T0 + 10 * DAY; // "today" for every replay
 const SUBJECT = 'math5';
 const TOPIC = 'מספרים מרוכבים';
+/** The rest of the app as the arbiter sees it: nothing due, a resume target. */
+const CTX = { dueCount: 0, resume: { href: '/roadmap/polar-de-moivre?level=mid', title: 'המשך' } };
 
 let failures = 0;
 let checks = 0;
@@ -220,6 +223,61 @@ section('Hints, decay and confidence');
 }
 
 // ============================================================
+section('Bagrut parts');
+// ============================================================
+
+{
+  // Self-grading is the most generous grader in the app, and the guess
+  // parameter is where that has to be priced in.
+  const graded = guessFor(obs({ kind: 'open', selfReported: false }));
+  const claimed = guessFor(obs({ kind: 'open', selfReported: true }));
+  const unknown = guessFor(obs({ kind: 'open' }));
+  assert(claimed > unknown && unknown > graded, `self-reported > unknown > machine-graded (${claimed} > ${unknown} > ${graded})`);
+
+  const s = skill({ band: 'mid' });
+  const byMachine = traceSkill(s, [obs({ kind: 'open', selfReported: false, ts: T0 })], T0);
+  const byStudent = traceSkill(s, [obs({ kind: 'open', selfReported: true, ts: T0 })], T0);
+  assert(
+    byMachine.p > byStudent.p,
+    `"the checker says I'm right" beats "I say I'm right" (${byMachine.p.toFixed(3)} > ${byStudent.p.toFixed(3)})`,
+  );
+
+  // A bagrut part is recorded under `${question.id}-${part.label}`; if the
+  // catalog is not keyed on that composite the whole question is invisible.
+  const part = (id: string, correct: boolean, day: number): ResultEvent => ({
+    ts: T0 + day * DAY, subject: SUBJECT, topic: TOPIC, subTopicId: 'polar-de-moivre',
+    questionId: id, source: 'bagrut', difficulty: 'mid', correct,
+    kind: 'open', selfReported: false,
+  });
+  const bag = buildCognitiveState({
+    subject: SUBJECT, topic: TOPIC, now: NOW, ...CTX,
+    events: [part('cx-bag-001-א', true, 1), part('cx-bag-001-ב', false, 1), part('cx-bag-001-ג', false, 2)],
+  })!;
+
+  assert(bag.totalObservations > 0, 'bagrut parts reach the tracer at all');
+  const touched = new Set(bag.skills.filter((x) => x.observations > 0).map((x) => x.skillId));
+  assert(
+    touched.has('cx.modulus') && touched.has('cx.arg.quadrant') && touched.has('cx.polar.form'),
+    'part א lands on the three skills it actually exercises',
+  );
+  assert(
+    touched.has('cx.demoivre.power') && touched.has('cx.polar.to-algebraic'),
+    'part ב lands on de Moivre and the conversion back',
+  );
+  assert(
+    !touched.has('cx.polar.mult-div') && !touched.has('cx.polar.geometry'),
+    'and NOT on the rest of the sub-topic — the parts are mapped, not fanned out',
+  );
+
+  // The fan-out this mapping exists to prevent: 3 parts must not produce a
+  // full sub-topic's worth of observations per part.
+  assert(
+    bag.totalObservations <= 8,
+    `3 parts produce ${bag.totalObservations} observations, not 3 x every skill in the module`,
+  );
+}
+
+// ============================================================
 section('Misconception scoring');
 // ============================================================
 
@@ -348,9 +406,6 @@ section('Next-step arbitration');
 // ============================================================
 section('Replay — three archetype students');
 // ============================================================
-
-const NOW = T0 + 10 * DAY;
-const CTX = { dueCount: 0, resume: { href: '/roadmap/polar-de-moivre?level=mid', title: 'המשך' } };
 
 // ---- 1 · The quadrant confuser -----------------------------
 // Solid on |z|; every argument question is answered with the

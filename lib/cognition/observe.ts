@@ -10,7 +10,7 @@
  * Pure: no storage, no clock. The caller passes the events in.
  */
 
-import { getQuestions, getSubTopics } from '@/content/lessons';
+import { getBagrutQuestions, getQuestions, getSubTopics } from '@/content/lessons';
 import { buildTriggerIndex, getCognitionMap } from '@/content/cognition';
 import type { SkillId, TopicCognitionMap } from '@/content/cognition/types';
 import type { ResultEvent } from '@/lib/results';
@@ -51,9 +51,26 @@ export function buildQuestionFacts(subject: string, topic: string): Map<string, 
     for (const q of st.questions ?? []) add(q, st.id);
     for (const step of st.lesson ?? []) if (step.drill) add(step.drill, st.id);
   }
-  // Topic-level bank last: it has no sub-topic, and must not shadow a
-  // sub-topic entry if an id ever appears in both.
+  // Topic-level bank: no sub-topic, and must not shadow a sub-topic entry if
+  // an id ever appears in both.
   for (const q of getQuestions(subject, topic)) if (!facts.has(q.id)) add(q, undefined);
+
+  // Bagrut PARTS. QuestionPartCard records one event per part under
+  // `${question.id}-${part.label}`, so that composite is the id the catalog
+  // has to be keyed on — the question id alone never reaches results.ts.
+  //
+  // These are indexed so the gate can prove the ids exist and so `kind`
+  // resolves to 'open'. Note the sub-topic fallback is a poor fit here: a
+  // 5-part question would emit a full sub-topic's worth of skills per part.
+  // Every part is therefore mapped EXPLICITLY in the catalog, and
+  // verify-cognition warns on any that is not.
+  for (const bq of getBagrutQuestions(subject, topic)) {
+    const sub = bq.subTopicId && bq.subTopicId !== 'capstone' ? bq.subTopicId : undefined;
+    for (const part of bq.parts) {
+      const id = `${bq.id}-${part.label}`;
+      if (!facts.has(id)) facts.set(id, { kind: 'open', subTopicId: sub });
+    }
+  }
 
   questionFactsCache.set(cacheKey, facts);
   return facts;
@@ -145,6 +162,7 @@ export function toObservations(
         kind,
         optionCount,
         hintUsed: e.hintUsed,
+        selfReported: e.selfReported,
         isReplay: e.repeat,
         source: e.source,
         misconceptionId,

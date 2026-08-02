@@ -20,7 +20,7 @@
 
 import { cognitionEntries } from '../content/cognition';
 import type { Skill, SkillId, TopicCognitionMap } from '../content/cognition/types';
-import { getQuestions, getSubTopic, getSubTopics } from '../content/lessons';
+import { getBagrutQuestions, getQuestions, getSubTopic, getSubTopics } from '../content/lessons';
 import { buildSubTopicLevels } from '../lib/roadmap-levels';
 import type { PracticeQuestion } from '../content/lessons/types';
 
@@ -44,7 +44,12 @@ const warn = (rule: string, where: string, detail: string) =>
 // asks the code under test what the content contains can only ever agree with
 // itself.
 
-type QInfo = { q: PracticeQuestion; subTopicId?: string };
+type QInfo = {
+  q: PracticeQuestion;
+  subTopicId?: string;
+  /** A bagrut sub-part rather than a bank question — open, never MCQ. */
+  isBagrutPart?: boolean;
+};
 
 function questionIndex(subject: string, topic: string): Map<string, QInfo> {
   const index = new Map<string, QInfo>();
@@ -56,6 +61,32 @@ function questionIndex(subject: string, topic: string): Map<string, QInfo> {
   }
   for (const q of getQuestions(subject, topic)) {
     if (!index.has(q.id)) index.set(q.id, { q });
+  }
+  // Bagrut parts, under the composite id QuestionPartCard actually records.
+  // Wrapped in a PracticeQuestion-shaped stub so every downstream check
+  // (kind, options, correct index) works on them unchanged — which is what
+  // makes `trigger-not-mcq` reject a trigger aimed at a bagrut part.
+  for (const bq of getBagrutQuestions(subject, topic)) {
+    const sub = bq.subTopicId && bq.subTopicId !== 'capstone' ? bq.subTopicId : undefined;
+    for (const part of bq.parts) {
+      const id = `${bq.id}-${part.label}`;
+      if (index.has(id)) {
+        err('bagrut-part-id-collision', `${subject}:${topic}`, id);
+        continue;
+      }
+      index.set(id, {
+        q: {
+          id,
+          difficulty: bq.difficulty,
+          kind: 'open',
+          question: part.prompt,
+          expected: part.expected,
+          solution: { steps: part.solution.steps, finalAnswer: part.solution.final_answer, explanation: '' },
+        },
+        subTopicId: sub,
+        isBagrutPart: true,
+      });
+    }
   }
   return index;
 }
@@ -242,23 +273,41 @@ function verifyTopic(map: TopicCognitionMap) {
 
 function inventory(map: TopicCognitionMap, claimed: Map<string, string>) {
   const rows: string[][] = [
-    ['sub-topic', 'skills', 'questions', 'mcq', 'misconc.', 'triggers', 'distractors tagged'],
+    ['sub-topic', 'skills', 'bank q', 'mcq', 'bagrut parts', 'misconc.', 'triggers', 'distractors tagged'],
   ];
 
-  const bySub = new Map<string, { skills: number; questions: number; mcq: number; distractors: number; tagged: number }>();
-  for (const st of getSubTopics(map.subject, map.topic)) {
-    bySub.set(st.id, { skills: 0, questions: 0, mcq: 0, distractors: 0, tagged: 0 });
-  }
+  type Row = {
+    skills: number; questions: number; mcq: number;
+    bagrutParts: number; bagrutMapped: number;
+    distractors: number; tagged: number;
+  };
+  const blank = (): Row => ({ skills: 0, questions: 0, mcq: 0, bagrutParts: 0, bagrutMapped: 0, distractors: 0, tagged: 0 });
+  const bySub = new Map<string, Row>();
+  for (const st of getSubTopics(map.subject, map.topic)) bySub.set(st.id, blank());
   for (const s of map.skills) {
     const row = bySub.get(s.subTopicId);
     if (row) row.skills += 1;
   }
 
   const index = questionIndex(map.subject, map.topic);
+  let capstoneParts = 0;
+  let capstoneMapped = 0;
   for (const [qid, info] of index) {
+    const mapped = !!map.questionSkills[qid];
+    if (info.isBagrutPart && !info.subTopicId) {
+      // A capstone question belongs to no single sub-topic by design.
+      capstoneParts += 1;
+      if (mapped) capstoneMapped += 1;
+      continue;
+    }
     if (!info.subTopicId) continue;
     const row = bySub.get(info.subTopicId);
     if (!row) continue;
+    if (info.isBagrutPart) {
+      row.bagrutParts += 1;
+      if (mapped) row.bagrutMapped += 1;
+      continue;
+    }
     row.questions += 1;
     if (info.q.kind === 'mcq' && info.q.answers) {
       row.mcq += 1;
@@ -286,6 +335,7 @@ function inventory(map: TopicCognitionMap, claimed: Map<string, string>) {
       String(row.skills),
       String(row.questions),
       String(row.mcq),
+      `${row.bagrutMapped}/${row.bagrutParts}`,
       String(mcBySub.get(sub) ?? 0),
       String(trigBySub.get(sub) ?? 0),
       `${row.tagged}/${row.distractors} (${pct}%)`,
@@ -299,6 +349,11 @@ function inventory(map: TopicCognitionMap, claimed: Map<string, string>) {
   for (const [n, r] of rows.entries()) {
     console.log('  ' + r.map((c, i) => c.padEnd(widths[i])).join('  '));
     if (n === 0) console.log('  ' + widths.map((w) => '-'.repeat(w)).join('  '));
+  }
+  if (capstoneParts > 0) {
+    console.log(
+      `  (plus ${capstoneMapped}/${capstoneParts} capstone bagrut parts — they belong to no single sub-topic)`,
+    );
   }
 }
 

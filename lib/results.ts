@@ -56,6 +56,12 @@ export type ResultEvent = {
   optionCount?: number;
   /** The hint was revealed before this (counted) attempt. */
   hintUsed?: boolean;
+  /** Open questions only. `false` = graded deterministically by
+   *  lib/answer-check against an `expected` spec; `true` = the student marked
+   *  their own paper. Absent = unknown (events written before this existed).
+   *  The gap matters: "I solved it right" is much weaker evidence than a
+   *  machine-checked answer, and the tracer prices them differently. */
+  selfReported?: boolean;
 };
 
 export type Stats = {
