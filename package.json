@@ -16,7 +16,8 @@
     "verify:teach": "tsx scripts/verify-teach.ts",
     "verify:cognition": "tsx scripts/verify-cognition.ts",
     "test:cognition": "tsx scripts/test-cognition.ts",
-    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run build",
+    "test:sync": "tsx scripts/test-sync.ts",
+    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run test:sync && npm run build",
     "generate-pool": "tsx scripts/generate-pool.ts"
   },
   "dependencies": {

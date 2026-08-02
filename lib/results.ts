@@ -16,7 +16,10 @@ const STORAGE_KEY = 'bagrut-results-v1';
 // question — replaying a cleared rung is learning, not a new measurement — so
 // once a (source, questionId) pair is logged, later attempts are ignored.
 const SEEN_KEY = 'bagrut-results-seen-v1';
-const MAX_EVENTS = 1000;
+/** Exported so lib/sync applies the SAME cap when it merges two devices' logs —
+ *  a sync that kept more than the local store does would be silently undone by
+ *  the next local write. */
+export const MAX_EVENTS = 1000;
 const MAX_SEEN = 5000;
 
 export type ResultSource = 'quiz' | 'drill' | 'bagrut' | 'review';
@@ -104,6 +107,10 @@ function writeAll(events: ResultEvent[]) {
   if (!isBrowser()) return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    // Tell the sync layer (if mounted) there is something to push, exactly as
+    // roadmap-progress does. Without this an answered question would only ever
+    // reach the server on the next unrelated write.
+    window.dispatchEvent(new Event('bagrut-state-dirty'));
   } catch {
     // quota exceeded or storage disabled — silently ignore
   }

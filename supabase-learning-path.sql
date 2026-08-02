@@ -10,7 +10,15 @@
 -- One row per user, JSONB blobs mirroring the client's localStorage keys:
 --   roadmap  ← bagrut-roadmap-v1   (per-rung progress; merged max-wins)
 --   plan     ← bagrut-study-plan-v1 (last-write-wins by updated_at)
---   results / review / mistakes reserved for later phases.
+--   results  ← bagrut-results-v1   (answer log; merged as a SET UNION, capped
+--              at the client's MAX_EVENTS, with the `repeat` flags re-derived
+--              over the merged history — see lib/sync/roadmap-sync.mergeResults)
+--   review / mistakes reserved for later phases.
+--
+-- `results` has been in this file since the table was first created, so a
+-- database built from it needs NO migration to pick up answer-log sync. The
+-- client still guards both directions (star select + upsert retry) in case a
+-- table was created from an older copy.
 -- ============================================================
 
 create table if not exists public.learning_state (
