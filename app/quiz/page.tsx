@@ -494,6 +494,17 @@ function Quiz() {
         source: 'quiz',
         difficulty: q.difficulty,
         correct: ok,
+        // Diagnostic fields for lib/cognition. `idx` is the UNSHUFFLED index
+        // (see the `ok` comparison right above), which is what the
+        // misconception catalog is keyed on. Concept-quiz ids are absent from
+        // the catalog and are simply ignored there; the lesson-bank questions
+        // this route falls back to are mapped, so they carry real signal.
+        // This is also the one surface with a hint BEFORE the answer, so
+        // `hintUsed` is genuinely meaningful here.
+        kind: 'mcq',
+        chosenIndex: idx,
+        ...(Array.isArray(q.answers) ? { optionCount: q.answers.length } : {}),
+        ...(hintShown ? { hintUsed: true } : {}),
       });
       // Wrong answers also go to the error notebook (מחברת טעויות).
       if (!ok) {
