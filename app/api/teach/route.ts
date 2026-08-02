@@ -34,6 +34,7 @@ import { buildRubric, coerceCoveredIds, MIN_RUBRIC_POINTS } from '@/lib/teach/ru
 import {
   TeachRequestSchema,
   TeachReplySchema,
+  toCorrectness,
   type TeachResponse,
 } from '@/lib/teach/schemas';
 import {
@@ -121,10 +122,20 @@ export async function POST(request: Request) {
     // it's user-first — the same 400-avoidance the chat route needs.
     while (history.length && history[0].role === 'assistant') history.shift();
 
-    const messages = [
-      ...history,
-      { role: 'user' as const, content: opening ? OPENING_BOOTSTRAP : message },
-    ];
+    // The client appends the student's turn to its own transcript BEFORE
+    // sending, so `history` can already end with this exact message. Appending
+    // it again sent every explanation to the model twice — the student saw a
+    // classmate reacting to a duplicated turn, and we paid for the extra
+    // tokens on every single turn of every session.
+    const alreadyLast =
+      !opening &&
+      history.length > 0 &&
+      history[history.length - 1].role === 'user' &&
+      history[history.length - 1].content === message;
+
+    const messages = alreadyLast
+      ? history
+      : [...history, { role: 'user' as const, content: opening ? OPENING_BOOTSTRAP : message }];
 
     // ===== 5. MODEL =====
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -172,7 +183,12 @@ export async function POST(request: Request) {
     // return an id that isn't in the rubric. Dropping unknown ids here is what
     // stops an invented id from lighting up a checklist row the student never
     // actually earned.
-    const newlyCovered = coerceCoveredIds(rubric, turn.coveredPointIds);
+    // On the opening turn the student has said NOTHING, so nothing can be
+    // covered. The schema forces `coveredPointIds` to be present on every
+    // response, and a stray id there would permanently mark a point earned —
+    // the client unions it, and the prompt then tells נועה never to ask about
+    // it again. Coverage is only meaningful once there is an explanation.
+    const newlyCovered = opening ? [] : coerceCoveredIds(rubric, turn.coveredPointIds);
     const probeTargetId =
       rubric.points.some((p) => p.id === turn.probeTargetId) ? turn.probeTargetId : null;
 
@@ -183,6 +199,8 @@ export async function POST(request: Request) {
       covered: newlyCovered,
       probeTargetId,
       understood: !!turn.understood,
+      correctness: toCorrectness(turn.correctness),
+      misconception: sanitizeText(turn.misconception, 300),
       remaining,
     };
 

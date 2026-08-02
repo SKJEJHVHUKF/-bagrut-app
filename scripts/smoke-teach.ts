@@ -15,7 +15,7 @@
  * Vieta sum. What to check in the output:
  *   • נועה asks ONE question per turn, stays in character, never teaches.
  *   • Covered ids light up ONLY for what the student actually said —
- *     kp-2 and kp-3 must still be listed as uncovered at the end. A judge that
+ *     uncovered points must still be listed as uncovered at the end. A judge that
  *     marks them covered is rubber-stamping, and the whole feature is a lie.
  *   • The printed cost matches what config.ts documents.
  *

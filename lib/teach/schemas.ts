@@ -50,7 +50,19 @@ export const TeachReplySchema = z.object({
   coveredPointIds: z
     .array(z.string())
     .describe(
-      'מזהי נקודות הרובריקה שההסבר האחרון של התלמיד כיסה, מתוך הרשימה שניתנה לך בלבד. מערך ריק אם לא כוסתה אף נקודה. אל תמציא מזהים.'
+      'מזהי נקודות הרובריקה שההסבר האחרון של התלמיד כיסה **נכון**, מתוך הרשימה שניתנה לך בלבד. נקודה שהתלמיד נגע בה אבל אמר עליה משהו שגוי אינה מכוסה. מערך ריק אם לא כוסתה אף נקודה. אל תמציא מזהים.'
+    ),
+  // ⚠️ Deliberately `string`, not `z.enum` — see the file header. Narrowed in
+  // the route by `toCorrectness`.
+  correctness: z
+    .string()
+    .describe(
+      'האם ההסבר האחרון של התלמיד היה נכון מתמטית. בחר בדיוק אחד: correct | partly | wrong. השתמש ב-none כשהתלמיד עוד לא הסביר כלום (התור הפותח).'
+    ),
+  misconception: z
+    .string()
+    .describe(
+      'אם התלמיד אמר משהו שגוי — משפט אחד בעברית שמתאר את הטעות, לשימוש פנימי. מחרוזת ריקה אם לא נאמר שום דבר שגוי.'
     ),
   probeTargetId: z
     .string()
@@ -62,6 +74,30 @@ export const TeachReplySchema = z.object({
     .describe('האם נועה הבינה את הרעיון — true רק כשההסבר באמת כיסה את מה ששאלת עליו.'),
 });
 
+/** Whether the student's last explanation was mathematically sound. */
+export type Correctness = 'none' | 'correct' | 'partly' | 'wrong';
+
+const CORRECTNESS: Correctness[] = ['none', 'correct', 'partly', 'wrong'];
+
+/**
+ * Narrow whatever the model produced onto the closed set. Structured outputs
+ * constrain shape, not values.
+ *
+ * ⚠️ FAILS CLOSED. This is a safety gate: `'none'` is the permissive value (it
+ * never sets `everWrong`, so the session can still end in celebration), so an
+ * unrecognised answer must NOT collapse to it. `'wrong'`, `'incorrect'`,
+ * `'שגוי'` and even `'wrong.'` all used to become `'none'` — a session with
+ * confirmed bad maths could end in confetti purely because of value drift.
+ * Anything unrecognised but non-empty is treated as `'partly'`; `'none'` is
+ * reserved for a genuinely empty answer, which only the opening turn produces.
+ */
+export function toCorrectness(raw: unknown): Correctness {
+  const s = typeof raw === 'string' ? raw.trim().toLowerCase().replace(/[.!]$/, '') : '';
+  if (!s) return 'none';
+  if ((CORRECTNESS as string[]).includes(s)) return s as Correctness;
+  return 'partly';
+}
+
 /** What /api/teach returns to the browser. `covered` is already narrowed onto
  *  the closed set of real rubric ids, so the client can trust it. */
 export type TeachResponse = {
@@ -70,6 +106,11 @@ export type TeachResponse = {
   covered: string[];
   probeTargetId: string | null;
   understood: boolean;
+  /** Whether the last explanation was mathematically sound. Drives whether the
+   *  session is allowed to end in celebration. */
+  correctness: Correctness;
+  /** One-line description of the error, when correctness is 'wrong'/'partly'. */
+  misconception: string;
   /** Calls left today after this one. */
   remaining: number;
 };

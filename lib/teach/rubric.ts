@@ -1,34 +1,41 @@
 /**
  * teach/rubric.ts — what a good explanation of a sub-topic must contain.
  *
- * "למד את הבוט" asks the student to TEACH. To grade that we need to know what
- * a correct explanation covers — and that already exists in the content layer:
- * every sub-topic carries `keyPoints`, which by house rule (STYLE_GUIDE rule 7)
- * are "triggers and traps, not a restatement of the formulas". That is exactly
- * the checklist a good explanation has to hit, so the rubric needs ZERO new
- * authoring — it is derived, not written.
+ * ⚠️ THE POINTS COME FROM `lesson[].title`, NOT FROM `keyPoints`.
  *
- * That derivation is also what keeps the feature cheap: the model is handed a
- * short closed list of ids and only has to say which ones the student covered,
- * instead of reasoning from scratch about mathematical completeness.
+ * The first version of this file scored the student against `keyPoints`, and
+ * that was wrong at the root. STYLE_GUIDE rule 7 forbids a keyPoint from
+ * restating the definition or the formula — every bullet must be
+ * "מתי זה נדלק / מה זה חוסך / מה המלכודת". So keyPoints are exam TRIGGERS AND
+ * TRAPS, and a checklist built from them can never ask the student for the
+ * actual content of an explanation. For מכפלה סקלרית the scored points were
+ * "the words that trigger a dot product", "what the sign tells you" and two
+ * traps — while what a dot product *is* and both formulas were never asked for.
+ * A student could give a genuinely good beginner explanation and be marked
+ * against a list that never requested it.
+ *
+ * The guided lesson's step titles are the right source: they are, in order, the
+ * shape of a correct explanation of the sub-topic — "מה נותנת מכפלה סקלרית?" →
+ * "הנוסחה הקואורדינטית" → "מבחן הניצבות" → "הזווית בין שני וקטורים". All 58
+ * sub-topics have at least 4 of them, so this still needs ZERO new authoring.
+ *
+ * `keyPoints` and `pitfalls` are still used — as `traps`, the unscored material
+ * the confused-classmate persona draws on to ask authentic wrong-headed
+ * questions. That is what they were written for.
  *
  * Pure functions — no Anthropic call, no storage. Imported by the API route
- * (to build the prompt), by the client (to render the live checklist), and by
+ * (to build the prompt), by the client (to render the checklist), and by
  * scripts/verify-teach.ts.
  */
 
 import { getSubTopic, getLesson } from '@/content/lessons';
 
-/** Where a rubric point came from. Shown as a small label in the UI. */
-export type RubricPointKind = 'keypoint' | 'pitfall';
-
 export type RubricPoint = {
-  /** Stable within a sub-topic (`kp-0`, `pf-1`). The model echoes these back,
-   *  and they are persisted in the mistake record — never renumber them. */
+  /** Stable within a sub-topic (`st-0`, `st-1`). The model echoes these back —
+   *  never renumber them. */
   id: string;
-  /** Hebrew + LaTeX, straight from the authored content. */
+  /** Hebrew + LaTeX, from the guided lesson's step title. */
   text: string;
-  kind: RubricPointKind;
 };
 
 export type Rubric = {
@@ -39,10 +46,10 @@ export type Rubric = {
   title: string;
   tagline: string;
   points: RubricPoint[];
-  /** Topic-level pitfalls NOT used as scored points. The confused-classmate
-   *  persona draws on these to ask authentic wrong-headed questions; the
-   *  student is never marked down for skipping one, because they belong to the
-   *  whole topic rather than to this sub-topic. */
+  /** UNSCORED material for the persona only: the sub-topic's `keyPoints` (exam
+   *  triggers and traps) plus the topic's `pitfalls`. נועה uses these to ask
+   *  authentic wrong-headed questions and to "fall into" a classic mistake on
+   *  purpose. The student is never marked down for not mentioning one. */
   traps: string[];
 };
 
@@ -51,22 +58,55 @@ export type Rubric = {
  *  `verify-teach` names it as authoring work. */
 export const MIN_RUBRIC_POINTS = 3;
 
-/** Keeps the prompt small — the whole rubric block stays a few hundred tokens.
- *  A keyPoint longer than this is a paragraph, not a checklist item. */
+/**
+ * Cap on scored points. A session allows TEACH_MAX_TURNS explanations, so a
+ * rubric longer than this is unfinishable by construction — the student would
+ * be told they "missed" points they were never given a turn to reach.
+ */
+const MAX_POINTS = 5;
+
+/** Keeps the prompt small — the whole rubric block stays a few hundred tokens. */
 const MAX_POINT_CHARS = 300;
-const MAX_TRAPS = 4;
+/** keyPoints run long (~200 chars each), and every trap is re-sent on every
+ *  turn. Three is enough ammunition for a 5-turn confusion arc. */
+const MAX_TRAPS = 3;
 
 function clean(raw: unknown): string {
   return typeof raw === 'string' ? raw.trim().slice(0, MAX_POINT_CHARS) : '';
 }
 
 /**
+ * Lesson step titles are authored for a numbered walkthrough, so many open with
+ * a "צעד 3 — " ordinal. That prefix is navigation, not content: as a rubric row
+ * it reads like an instruction to the student rather than a thing to explain.
+ */
+function stripStepOrdinal(title: string): string {
+  return title.replace(/^\s*צעד\s*\d+\s*[—–-]\s*/, '').trim();
+}
+
+/** Content words of a string, for detecting that a trap restates a scored
+ *  point. Strips LaTeX and Hebrew function words so the comparison is about
+ *  mathematical content rather than phrasing. */
+function significantWords(s: string): Set<string> {
+  const STOP = new Set([
+    'של', 'את', 'עם', 'על', 'אם', 'כי', 'זה', 'הוא', 'היא', 'יש', 'אין', 'לא',
+    'כל', 'או', 'גם', 'רק', 'אבל', 'כדי', 'בין', 'תמיד', 'לכן', 'מה', 'הם',
+  ]);
+  return new Set(
+    s
+      .replace(/\$[^$]*\$/g, ' ')
+      .replace(/[^֐-׿a-zA-Z ]/g, ' ')
+      .split(/\s+/)
+      .map((w) => w.trim())
+      .filter((w) => w.length > 2 && !STOP.has(w))
+  );
+}
+
+/**
  * The rubric for one sub-topic, or null if the sub-topic doesn't exist.
  *
- * Points come from `keyPoints`. If a sub-topic has fewer than MIN_RUBRIC_POINTS
- * of them, we top up from the topic's `pitfalls` rather than returning a stub —
- * a thin-but-real checklist still teaches, and `verify-teach` reports which
- * sub-topics needed the top-up so the gap is visible instead of silent.
+ * Points are the guided lesson's step titles, in order — the shape of a correct
+ * explanation. keyPoints and pitfalls become unscored `traps`.
  */
 export function buildRubric(
   subject: string,
@@ -76,21 +116,37 @@ export function buildRubric(
   const sub = getSubTopic(subject, topic, subTopicId);
   if (!sub) return null;
 
-  const pitfalls = (getLesson(subject, topic)?.pitfalls ?? [])
-    .map(clean)
-    .filter(Boolean);
-
-  const points: RubricPoint[] = (sub.keyPoints ?? [])
-    .map(clean)
+  const points: RubricPoint[] = (sub.lesson ?? [])
+    .map((step) => clean(stripStepOrdinal(step.title)))
     .filter(Boolean)
-    .map((text, i) => ({ id: `kp-${i}`, text, kind: 'keypoint' as const }));
+    .slice(0, MAX_POINTS)
+    .map((text, i) => ({ id: `st-${i}`, text }));
 
-  // Top-up, in order, until the floor is met. Pitfalls used here are scored;
-  // the rest stay in `traps` for the persona only.
-  let topUp = 0;
-  while (points.length < MIN_RUBRIC_POINTS && topUp < pitfalls.length) {
-    points.push({ id: `pf-${topUp}`, text: pitfalls[topUp], kind: 'pitfall' });
-    topUp += 1;
+  // Traps must not hand over a scored point. keyPoints are trigger/trap-shaped
+  // but several of them ARE the correct resolution of a lesson step — for
+  // gauss-loci the keyPoints spell out exactly the three loci the rubric scores.
+  // נועה is told to voice trap material, so an overlapping trap is a free point.
+  const pointWords = points.map((p) => significantWords(p.text));
+  const leaksAPoint = (trap: string) => {
+    const t = significantWords(trap);
+    return pointWords.some((pw) => {
+      if (!pw.size) return false;
+      let shared = 0;
+      for (const w of pw) if (t.has(w)) shared += 1;
+      return shared / pw.size >= 0.6;
+    });
+  };
+
+  // Interleaved, not concatenated: keyPoints alone always filled MAX_TRAPS, so
+  // the topic's `pitfalls` were unreachable in all 58 sub-topics.
+  const keyPoints = (sub.keyPoints ?? []).map(clean).filter(Boolean);
+  const pitfalls = (getLesson(subject, topic)?.pitfalls ?? []).map(clean).filter(Boolean);
+  const traps: string[] = [];
+  for (let i = 0; traps.length < MAX_TRAPS && (i < keyPoints.length || i < pitfalls.length); i++) {
+    for (const candidate of [keyPoints[i], pitfalls[i]]) {
+      if (traps.length >= MAX_TRAPS) break;
+      if (candidate && !leaksAPoint(candidate)) traps.push(candidate);
+    }
   }
 
   return {
@@ -100,7 +156,7 @@ export function buildRubric(
     title: sub.title,
     tagline: sub.tagline,
     points,
-    traps: pitfalls.slice(topUp, topUp + MAX_TRAPS),
+    traps,
   };
 }
 

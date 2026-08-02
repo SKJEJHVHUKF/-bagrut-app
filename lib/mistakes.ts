@@ -39,17 +39,17 @@ export function toErrorCategory(raw: unknown): ErrorCategory {
     : 'אחר';
 }
 
-/** 'teach' = a rubric point the student couldn't explain in "למד את הבוט".
- *  Failing to explain something is a knowledge gap like any other, so it lands
- *  in the same notebook rather than in a parallel store. */
-export type MistakeSource =
-  | 'quiz'
-  | 'drill'
-  | 'bagrut'
-  | 'scan'
-  | 'thinking'
-  | 'review'
-  | 'teach';
+/**
+ * ⚠️ 'teach' is deliberately ABSENT. "למד את הבוט" briefly wrote one record per
+ * rubric point it couldn't confirm, tagged 'אחר' because no category fits
+ * "couldn't explain it". Two sessions were enough to make /errors report
+ * "100% מהטעויות שלך הן מסוג אחר" and name אחר as the student's number-one
+ * mistake — a working feature reduced to noise. Those records also had no
+ * `questionId`, so they rendered as cards the student could neither practise
+ * nor re-tag. Teaching gaps now stay in the teach report and the spaced-review
+ * queue; do not re-add a source here for them.
+ */
+export type MistakeSource = 'quiz' | 'drill' | 'bagrut' | 'scan' | 'thinking' | 'review';
 
 export type MistakeRecord = {
   id: string;
@@ -76,7 +76,14 @@ function readAll(): MistakeRecord[] {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as MistakeRecord[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    // Self-healing sweep: an earlier build wrote `source: 'teach'` records that
+    // skewed the whole error profile (see the MistakeSource note above). Drop
+    // them on read so any browser that ran that build repairs itself, with no
+    // migration flag to maintain.
+    return (parsed as MistakeRecord[]).filter(
+      (m) => (m as { source?: string }).source !== 'teach'
+    );
   } catch {
     return [];
   }

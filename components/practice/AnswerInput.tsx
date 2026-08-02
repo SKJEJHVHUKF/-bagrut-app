@@ -18,6 +18,13 @@ type Props = {
   placeholder?: string;
   /** Textarea height for `type: 'text'`. */
   rows?: number;
+  /** Hard cap on input length. Without it a server-side truncation silently
+   *  eats the end of a long answer mid-word. */
+  maxLength?: number;
+  /** Render at 16px instead of 14px. iOS Safari auto-zooms the page on focus
+   *  for any field under 16px, which on a long-form answer leaves the student
+   *  zoomed in and scrolled sideways. */
+  largeText?: boolean;
 };
 
 const PLACEHOLDER: Record<Props['type'], string> = {
@@ -35,6 +42,8 @@ export function AnswerInput({
   symbols,
   placeholder,
   rows,
+  maxLength,
+  largeText,
 }: Props) {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const setRef = (el: HTMLInputElement | HTMLTextAreaElement | null) => {
@@ -54,7 +63,12 @@ export function AnswerInput({
     }
     const start = el.selectionStart ?? value.length;
     const end = el.selectionEnd ?? value.length;
-    const next = value.slice(0, start) + sym.insert + value.slice(end);
+    // The DOM `maxLength` does not constrain a programmatic value, so without
+    // this clamp the symbol bar could push the field past its own limit and the
+    // server would then truncate mid-word — exactly what maxLength exists to
+    // prevent.
+    const raw = value.slice(0, start) + sym.insert + value.slice(end);
+    const next = maxLength ? raw.slice(0, maxLength) : raw;
     onChange(next);
     // Restore focus + caret after React re-renders the controlled value.
     const caret = start + sym.insert.length - (sym.caretBack ?? 0);
@@ -77,8 +91,11 @@ export function AnswerInput({
         disabled={disabled}
         placeholder={placeholder ?? PLACEHOLDER.text}
         rows={rows ?? 3}
+        maxLength={maxLength}
         dir="auto"
-        className="w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-indigo-500/60 focus:bg-white rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y"
+        className={`w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-indigo-500/60 focus:bg-white rounded-xl px-4 py-3 ${
+          largeText ? 'text-base' : 'text-sm'
+        } text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y`}
       />
     ) : (
       <input
@@ -89,6 +106,7 @@ export function AnswerInput({
         onChange={onInput}
         disabled={disabled}
         placeholder={placeholder ?? PLACEHOLDER[type]}
+        maxLength={maxLength}
         dir="auto"
         className="w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-indigo-500/60 focus:bg-white rounded-xl px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 outline-none transition-colors"
       />

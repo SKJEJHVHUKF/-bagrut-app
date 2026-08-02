@@ -46,8 +46,9 @@ for (const { subject, topic } of allLessonKeys()) {
       subId: sub.id,
       title: rubric.title,
       points: rubric.points.length,
-      // Points that came from the topic's pitfalls because keyPoints were thin.
-      toppedUp: rubric.points.filter((p) => p.kind === 'pitfall').length,
+      // Sub-topics whose guided lesson is thin enough that the rubric is at the
+      // floor — teachable, but the checklist barely covers the explanation.
+      toppedUp: rubric.points.length <= MIN_RUBRIC_POINTS ? 1 : 0,
       traps: rubric.traps.length,
     });
   }
@@ -88,12 +89,12 @@ if (thin.length) {
   }
 }
 
-const toppedUp = rows.filter((r) => r.toppedUp > 0);
-if (toppedUp.length) {
-  console.log(`\n=== ${toppedUp.length} תתי-נושאים הושלמו מ-pitfalls (keyPoints דלים) ===`);
-  console.log('(עוברים, אבל הרובריקה שלהם פחות ממוקדת — מועמדים לכתיבה)\n');
-  for (const r of toppedUp) {
-    console.log(`  WARN   ${r.topic} / ${r.subId} — ${r.toppedUp} מתוך ${r.points} מ-pitfalls`);
+const atFloor = rows.filter((r) => r.toppedUp > 0);
+if (atFloor.length) {
+  console.log(`\n=== ${atFloor.length} תתי-נושאים על הרף בדיוק (${MIN_RUBRIC_POINTS} נקודות) ===`);
+  console.log('(עוברים, אבל השיעור המודרך שלהם קצר — מועמדים להעמקה)\n');
+  for (const r of atFloor) {
+    console.log(`  WARN   ${r.topic} / ${r.subId} — ${r.points} נקודות בלבד`);
     warnings++;
   }
 }

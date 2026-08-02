@@ -265,9 +265,9 @@ export default function PracticePage() {
         {/* למד את הבוט — the student explains, the model plays the classmate */}
         <Link
           href="/teach"
-          className="group flex items-center gap-3 mb-3 bg-gradient-to-l from-fuchsia-600/10 to-violet-600/10 hover:from-fuchsia-600/[0.15] hover:to-violet-600/[0.15] border border-fuchsia-500/25 rounded-2xl p-4 transition-colors"
+          className="group flex items-center gap-3 mb-3 bg-gradient-to-l from-violet-600/10 to-indigo-600/10 hover:from-violet-600/[0.15] hover:to-indigo-600/[0.15] border border-violet-500/25 rounded-2xl p-4 transition-colors"
         >
-          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 flex items-center justify-center shadow-lg shadow-fuchsia-500/30">
+          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
             <span className="text-xl">🙋‍♀️</span>
           </div>
           <div className="flex-1 min-w-0">

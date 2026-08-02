@@ -150,11 +150,11 @@ export const PRO_DAILY_GRADE = 40;
  * to TEACH_MAX_TURNS student turns, so FREE_DAILY_TEACH is sized to exactly one
  * complete free session a day and PRO to six.
  *
- * MEASURED cost (live 3-turn run, 2026-08-02), not estimated:
- *   ~4,500 input + ~120 output tokens PER TURN on Haiku 4.5 ($1/$5 per MTok)
- *   → ~0.5¢ per turn, ~3¢ for a full 6-call session.
+ * MEASURED cost (live runs via scripts/smoke-teach.ts, 2026-08-02), not
+ * estimated: ~5,000-6,000 input + ~150 output tokens PER TURN on Haiku 4.5
+ * ($1/$5 per MTok) → **~0.6¢ per turn, ~3.5¢ for a full 6-call session.**
  *
- * That is ~2.5× the pre-build estimate. The input side is dominated by the
+ * That is ~3× the pre-build estimate. The input side is dominated by the
  * system prompt plus the structured-output schema, both re-sent every turn, and
  * prompt caching cannot amortise them: the stable prefix measures 2,588-3,094
  * tokens across all 58 sub-topics, under Haiku 4.5's 4,096-token cache minimum,

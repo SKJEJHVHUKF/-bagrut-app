@@ -85,15 +85,24 @@ export default function TeachPage() {
           </Link>
         </div>
 
-        <div className="text-center space-y-2">
-          <h1 className="font-display text-3xl sm:text-4xl font-black gradient-text">
-            🙋‍♀️ למד את הבוט
+        {/* The pitch belongs to the picker. Once a session is running it is
+            259px of explanation the student has already read, pushing the
+            actual conversation below the fold on a phone. */}
+        {!subId ? (
+          <div className="text-center space-y-2">
+            <h1 className="font-display text-3xl sm:text-4xl font-black gradient-text">
+              🙋‍♀️ למד את הבוט
+            </h1>
+            <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+              נועה היא תלמידה בכיתה שלך שלא הבינה את הנושא. <strong>אתה מלמד אותה.</strong>{' '}
+              היא תשאל בדיוק את השאלות שיחשפו מה עוד לא ברור לך — ובסוף תראה מה כיסית ומה פספסת.
+            </p>
+          </div>
+        ) : (
+          <h1 className="font-display text-xl font-black text-slate-900 text-center">
+            🙋‍♀️ אתה מלמד את נועה
           </h1>
-          <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-            נועה היא תלמידה בכיתה שלך שלא הבינה את הנושא. <strong>אתה מלמד אותה.</strong>{' '}
-            היא תשאל בדיוק את השאלות שיחשפו מה עוד לא ברור לך — ובסוף תראה מה כיסית ומה פספסת.
-          </p>
-        </div>
+        )}
 
         {!topic ? (
           <div className="surface-premium rounded-3xl p-5 space-y-3">
