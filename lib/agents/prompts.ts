@@ -50,7 +50,11 @@ export type PromptContext = {
 // Shared house rules (kept in one place so both agents can't drift apart)
 // ============================================================
 
-const MATH_FORMAT_RULES = `# פורמט מתמטי — מחייב
+/** Exported so every agent that emits Hebrew+KaTeX shares ONE copy of these
+ *  rules. The teach agent (lib/teach/prompt.ts) imports it rather than keeping
+ *  its own paraphrase — three prompts drifting apart on bidi and bagrut
+ *  conventions is how wrong notation reaches students. */
+export const MATH_FORMAT_RULES = `# פורמט מתמטי — מחייב
 - כל ביטוי מתמטי נכתב ב-LaTeX: בתוך שורה \`$...$\`, בשורה נפרדת \`$$...$$\`.
 - **אף פעם אל תכתוב עברית בתוך \`$...$\`.** ל-KaTeX אין תמיכה דו-כיוונית והעברית תוצג הפוכה. מילים בעברית תמיד מחוץ לנוסחה; אינדקסים באותיות לטיניות בלבד (\`$m_1$\`, לא \`$m_{משיק}$\`).
 - אל תסיים משפט בעברית בנוסחה ואז נקודה — הוסף מילה בעברית אחרי הנוסחה, או העבר אותה לשורה נפרדת.

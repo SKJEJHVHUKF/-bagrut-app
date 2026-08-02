@@ -130,6 +130,7 @@ export function SubTopicLadder({
               <BagrutLevel
                 subject={subject}
                 topic={topic}
+                subId={subTopic.id}
                 level={openLevel}
                 onSubmit={onSubmit}
                 onBack={onBack}

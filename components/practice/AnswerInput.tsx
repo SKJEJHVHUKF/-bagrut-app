@@ -12,6 +12,12 @@ type Props = {
   symbolBar?: boolean;
   /** Override the symbol set (e.g. topic-aware). */
   symbols?: MathSymbol[];
+  /** Override the placeholder. The defaults below assume the student is
+   *  answering a question; /teach has them explaining one, which needs
+   *  different framing. */
+  placeholder?: string;
+  /** Textarea height for `type: 'text'`. */
+  rows?: number;
 };
 
 const PLACEHOLDER: Record<Props['type'], string> = {
@@ -20,7 +26,16 @@ const PLACEHOLDER: Record<Props['type'], string> = {
   text: 'כתוב את התשובה שלך…',
 };
 
-export function AnswerInput({ value, onChange, type, disabled, symbolBar, symbols }: Props) {
+export function AnswerInput({
+  value,
+  onChange,
+  type,
+  disabled,
+  symbolBar,
+  symbols,
+  placeholder,
+  rows,
+}: Props) {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const setRef = (el: HTMLInputElement | HTMLTextAreaElement | null) => {
     inputRef.current = el;
@@ -60,8 +75,8 @@ export function AnswerInput({ value, onChange, type, disabled, symbolBar, symbol
         value={value}
         onChange={onInput}
         disabled={disabled}
-        placeholder={PLACEHOLDER.text}
-        rows={3}
+        placeholder={placeholder ?? PLACEHOLDER.text}
+        rows={rows ?? 3}
         dir="auto"
         className="w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-indigo-500/60 focus:bg-white rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y"
       />
@@ -73,7 +88,7 @@ export function AnswerInput({ value, onChange, type, disabled, symbolBar, symbol
         value={value}
         onChange={onInput}
         disabled={disabled}
-        placeholder={PLACEHOLDER[type]}
+        placeholder={placeholder ?? PLACEHOLDER[type]}
         dir="auto"
         className="w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-indigo-500/60 focus:bg-white rounded-xl px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 outline-none transition-colors"
       />

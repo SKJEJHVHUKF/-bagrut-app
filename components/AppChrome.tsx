@@ -31,6 +31,7 @@ import {
   MessageCircle,
   ScrollText,
   Sigma,
+  GraduationCap,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
@@ -354,6 +355,7 @@ export default function AppChrome() {
                 {[
                   { href: '/roadmap', icon: MapIcon, label: 'מסלול הלמידה' },
                   { href: '/quiz', icon: Target, label: 'בוחן מהיר' },
+                  { href: '/teach', icon: GraduationCap, label: 'למד את הבוט' },
                   { href: '/chat', icon: MessageCircle, label: 'מורה AI' },
                   { href: '/bagruyot', icon: ScrollText, label: 'בגרויות קודמות' },
                   { href: '/formulas', icon: Sigma, label: 'דף נוסחאות' },

@@ -144,5 +144,58 @@ export const AGENT_HOURLY_LIMIT = 20;
 export const FREE_DAILY_GRADE = 5;
 export const PRO_DAILY_GRADE = 40;
 
-/** `ai_generation_log.kind` values written by these routes. */
-export type AgentKind = 'tutor' | 'grade';
+/**
+ * Daily caps for "למד את הבוט" (/api/teach) — counted in CALLS, not sessions,
+ * because calls are what the guard can see. A session is 1 opening call plus up
+ * to TEACH_MAX_TURNS student turns, so FREE_DAILY_TEACH is sized to exactly one
+ * complete free session a day and PRO to six.
+ *
+ * MEASURED cost (live 3-turn run, 2026-08-02), not estimated:
+ *   ~4,500 input + ~120 output tokens PER TURN on Haiku 4.5 ($1/$5 per MTok)
+ *   → ~0.5¢ per turn, ~3¢ for a full 6-call session.
+ *
+ * That is ~2.5× the pre-build estimate. The input side is dominated by the
+ * system prompt plus the structured-output schema, both re-sent every turn, and
+ * prompt caching cannot amortise them: the stable prefix measures 2,588-3,094
+ * tokens across all 58 sub-topics, under Haiku 4.5's 4,096-token cache minimum,
+ * so a cache_control marker would be a silent no-op (see lib/teach/prompt.ts).
+ *
+ * ⚠️ This is the FIRST number to turn down if the bill climbs — the whole
+ * Anthropic budget is ~$5/month, and even at one free session a day, ~25 daily
+ * active students would exceed it. If it has to come down further, fold
+ * teaching into the existing FREE_DAILY_CHAT pool rather than keeping a
+ * separate budget line.
+ */
+export const FREE_DAILY_TEACH = 6;
+export const PRO_DAILY_TEACH = 36;
+
+/**
+ * TEACH → Haiku 4.5. Playing a confused classmate needs character, not depth,
+ * and Haiku 4.5 does support structured outputs — so one cheap call can both
+ * stay in character and judge rubric coverage.
+ *
+ * ⚠️ Same trap as the tutor: Haiku 4.5 REJECTS `output_config.effort` with a
+ * 400. Send `format` only, never `effort`.
+ */
+export const TEACH_MODEL = 'claude-haiku-4-5';
+
+/** A confused classmate is SHORT — in character and cheap at the same time. */
+export const TEACH_MAX_TOKENS = 350;
+
+/** Turns of transcript replayed to the classmate (student/assistant pairs). */
+export const TEACH_HISTORY_TURNS = 6;
+
+/** One explanation, not an essay. Also bounds how fast the replayed transcript
+ *  grows: the input side of a session is dominated by history, not by the
+ *  system prompt. */
+export const MAX_TEACH_MESSAGE_LEN = 1500;
+
+/** Hard ceiling on a session, in STUDENT turns. One session therefore costs at
+ *  most TEACH_MAX_TURNS + 1 calls (the opening line is a call too). Past this
+ *  the confusion arc stops feeling real and the cost stops being justified —
+ *  the client shows the coverage report instead. */
+export const TEACH_MAX_TURNS = 5;
+
+/** `ai_generation_log.kind` values written by these routes. `kind` is plain
+ *  text with no CHECK constraint, so adding a value needs no SQL migration. */
+export type AgentKind = 'tutor' | 'grade' | 'teach';

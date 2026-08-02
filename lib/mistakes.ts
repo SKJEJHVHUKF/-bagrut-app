@@ -39,7 +39,17 @@ export function toErrorCategory(raw: unknown): ErrorCategory {
     : 'אחר';
 }
 
-export type MistakeSource = 'quiz' | 'drill' | 'bagrut' | 'scan' | 'thinking' | 'review';
+/** 'teach' = a rubric point the student couldn't explain in "למד את הבוט".
+ *  Failing to explain something is a knowledge gap like any other, so it lands
+ *  in the same notebook rather than in a parallel store. */
+export type MistakeSource =
+  | 'quiz'
+  | 'drill'
+  | 'bagrut'
+  | 'scan'
+  | 'thinking'
+  | 'review'
+  | 'teach';
 
 export type MistakeRecord = {
   id: string;
