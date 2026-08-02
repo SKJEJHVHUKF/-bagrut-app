@@ -163,6 +163,7 @@ const ROOTS = [
   'content/advanced-courses',
   'content/past-bagruyot',
   'content/concept-quiz',
+  'content/cognition',
   'content/topics',
 ].filter((d) => {
   try {

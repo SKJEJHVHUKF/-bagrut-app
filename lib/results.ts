@@ -37,6 +37,25 @@ export type ResultEvent = {
    *  excluded from ACCURACY (per-topic stats → grade prediction), so raising
    *  stars by re-doing a rung can't inflate the predicted grade. */
   repeat?: boolean;
+
+  // ---- Diagnostic fields (lib/cognition) ----
+  // All optional and ignored by every aggregation above: an event written
+  // before these existed still reads correctly, and nothing here can change a
+  // grade prediction. They exist because `correct: false` alone throws away the
+  // most informative thing the student did — WHICH wrong answer they picked.
+  // Every MCQ distractor in the bank ships an authored note explaining the
+  // exact misconception that produces it, so the chosen index turns a click
+  // into a labelled observation. See content/cognition.
+
+  /** MCQ or open — lets the tracer pick the right guess parameter. */
+  kind?: 'mcq' | 'open';
+  /** MCQ only: the index into the ORIGINAL `answers` array — never the shuffled
+   *  display position. Callers that shuffle must map back before recording. */
+  chosenIndex?: number;
+  /** MCQ only: how many options were on offer (guess = 1/optionCount). */
+  optionCount?: number;
+  /** The hint was revealed before this (counted) attempt. */
+  hintUsed?: boolean;
 };
 
 export type Stats = {

@@ -14,7 +14,9 @@
     "verify:concept:strict": "tsx scripts/verify-concept.ts --strict",
     "verify:quiz": "tsx scripts/verify-concept.ts && tsx scripts/verify-mcq-distinct.ts --strict && tsx scripts/verify-distractors.ts",
     "verify:teach": "tsx scripts/verify-teach.ts",
-    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run build",
+    "verify:cognition": "tsx scripts/verify-cognition.ts",
+    "test:cognition": "tsx scripts/test-cognition.ts",
+    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run build",
     "generate-pool": "tsx scripts/generate-pool.ts"
   },
   "dependencies": {

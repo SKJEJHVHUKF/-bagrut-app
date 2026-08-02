@@ -77,8 +77,28 @@ export function QuestionRunnerCard({
 
   // Log the FIRST attempt exactly once (that's the measured one). Wrong first
   // attempts also seed the error notebook and give us a mistakeId to tag.
-  function logFirst(correct: boolean, userAnswer?: string) {
-    recordResult({ subject, topic, subTopicId: subId, questionId: q.id, source, difficulty: q.difficulty, correct });
+  //
+  // `chosenIndex` is the ORIGINAL option index, not the shuffled one — the
+  // whole diagnostic layer depends on that (lib/cognition reads it against the
+  // authored per-distractor notes). `pickMCQ` receives `origIdx` by design;
+  // don't "simplify" it to the display position.
+  function logFirst(correct: boolean, userAnswer?: string, chosenIndex?: number) {
+    recordResult({
+      subject,
+      topic,
+      subTopicId: subId,
+      questionId: q.id,
+      source,
+      difficulty: q.difficulty,
+      correct,
+      kind: q.kind,
+      ...(chosenIndex !== undefined ? { chosenIndex } : {}),
+      ...(q.kind === 'mcq' && q.answers ? { optionCount: q.answers.length } : {}),
+      // Always false on this surface today: the hint is only revealed AFTER a
+      // wrong first attempt. Wired anyway so a future pre-answer hint button
+      // (like the one on /quiz) can't silently poison the tracer.
+      ...(hintShown ? { hintUsed: true } : {}),
+    });
     // Spaced repetition: a review answer re-schedules the card; a fresh miss in
     // a practice rung drops the question into the review queue (box 1).
     if (source === 'review') gradeReview(q.id, correct);
@@ -119,7 +139,7 @@ export function QuestionRunnerCard({
     setSelected(origIdx);
     if (nextTries === 1) {
       setFirstTryCorrect(correct);
-      logFirst(correct, q.answers?.[origIdx]);
+      logFirst(correct, q.answers?.[origIdx], origIdx);
     }
     if (correct) gradeCorrect();
     else gradeWrong();
