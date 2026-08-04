@@ -20,6 +20,8 @@
  * twice, and it is the only way to re-check it.
  */
 
+import { readFileSync, readdirSync } from 'fs';
+import { join } from 'path';
 import { ghostEntries } from '../content/ghost-replay';
 import type { GhostReplay, TopicGhostReplays } from '../content/ghost-replay/types';
 import { getCognitionMap } from '../content/cognition';
@@ -32,6 +34,9 @@ const STRICT = process.argv.includes('--strict');
 const MIN_STEPS = 4;
 /** A fork with two options is a coin toss, not a decision. */
 const MIN_OPTIONS = 3;
+/** CommitPrompt's Hebrew letter table has five entries; past that a row ships
+ *  with a bare "." and no label. */
+const MAX_OPTIONS = 5;
 
 type Finding = { level: 'error' | 'warn'; rule: string; where: string; detail: string };
 const findings: Finding[] = [];
@@ -63,7 +68,30 @@ function verifyReplay(map: TopicGhostReplays, replay: GhostReplay, bankIds: Set<
     err('unknown-subtopic', where, replay.subTopicId);
   }
   if (!bankIds.has(replay.questionId)) {
-    err('unknown-question', where, `${replay.questionId} is not in the content bank`);
+    err('unknown-question', where, replay.questionId + ' is not in the content bank');
+  } else {
+    // Belonging to the TOPIC is not enough: a replay that walks a question from
+    // a different sub-topic would sit on the wrong rung entirely, and the flat
+    // id pool could never notice.
+    const own = getSubTopic(map.subject, map.topic, replay.subTopicId);
+    const inOwn =
+      !!own &&
+      ((own.questions ?? []).some((q) => q.id === replay.questionId) ||
+        (own.lesson ?? []).some((st) => st.drill?.id === replay.questionId));
+    if (!inOwn) {
+      err(
+        'question-outside-subtopic',
+        where,
+        replay.questionId + ' exists, but not inside ' + replay.subTopicId,
+      );
+    }
+  }
+  for (const [field, value] of [
+    ['title', replay.title],
+    ['prompt', replay.prompt],
+    ['closing', replay.closing],
+  ] as [string, string][]) {
+    if (!value || !value.trim()) err('empty-field', where, field + ' is blank');
   }
   if (replay.steps.length < MIN_STEPS) {
     err('too-few-steps', where, `${replay.steps.length} < ${MIN_STEPS}`);
@@ -81,10 +109,23 @@ function verifyReplay(map: TopicGhostReplays, replay: GhostReplay, bankIds: Set<
       err('too-few-options', at, `${options.length} < ${MIN_OPTIONS}`);
     }
 
+    // The renderer's letter table (CommitPrompt LETTERS) holds five entries; a
+    // sixth option would ship with a bare "." and no label.
+    if (options.length > MAX_OPTIONS) {
+      err('too-many-options', at, `${options.length} > ${MAX_OPTIONS} (the letter table runs out)`);
+    }
+
     const ids = new Set<string>();
+    const texts = new Set<string>();
     for (const o of options) {
       if (ids.has(o.id)) err('duplicate-option-id', at, o.id);
       ids.add(o.id);
+      // Two options reading identically — one right, one wrong — is
+      // unanswerable on screen, and id-deduplication does not catch it.
+      const t = o.text.trim();
+      if (!t) err('empty-option-text', at, `${o.id} has no text`);
+      else if (texts.has(t)) err('duplicate-option-text', at, `${o.id}: "${t.slice(0, 40)}"`);
+      texts.add(t);
       if (o.mistakeCategory && !knownMisconceptions.has(o.mistakeCategory)) {
         err('unknown-mistake-category', at, `${o.id} → ${o.mistakeCategory}`);
       }
@@ -126,8 +167,21 @@ function verifyReplay(map: TopicGhostReplays, replay: GhostReplay, bankIds: Set<
       }
     }
 
-    if (!step.reveal.trim()) err('empty-reveal', at, 'a step must resolve to something');
-    if (!step.coreLogic.trim()) err('empty-core-logic', at, 'a step must explain its own why');
+    // The gate used to check 4 of the ~11 authored text fields, so a step with
+    // a blank commit question shipped a gate that asks nothing, with 0 errors.
+    const required: [string, string][] = [
+      ['reveal', step.reveal],
+      ['coreLogic', step.coreLogic],
+      ['title', step.title],
+      ['commitPrompt.question', step.commitPrompt.question],
+    ];
+    if (step.examinerTrap) {
+      required.push(['examinerTrap.warning', step.examinerTrap.warning]);
+      required.push(['examinerTrap.description', step.examinerTrap.description]);
+    }
+    for (const [field, value] of required) {
+      if (!value || !value.trim()) err('empty-field', at, field + ' is blank');
+    }
   });
 
   const trapped = replay.steps.filter((s) => s.examinerTrap).length;
@@ -211,9 +265,88 @@ function shuffleBalance(maps: TopicGhostReplays[]) {
   }
 }
 
+/**
+ * SOFT BREAKS — two authored lines that markdown silently merges into one.
+ *
+ * MathText runs react-markdown with remarkMath + remarkGfm and nothing else.
+ * Neither turns a single newline into a line break, and no CSS sets
+ * `white-space: pre-wrap`, so per CommonMark a lone newline inside a paragraph
+ * is a SOFT break and renders as a space. Authoring
+ *
+ *     חלק ממשי: $x^2 - y^2 = x$
+ *     חלק מדומה: $2xy = -y$
+ *
+ * therefore ships as one run-on line, which is worst exactly where it matters
+ * most — a step whose teaching point is that there are two separate cases.
+ * Seven of these shipped in the first draft and none was visible in review.
+ *
+ * This parses the real source with the real parser rather than grepping: a
+ * paragraph whose mdast node spans more than one line and contains no explicit
+ * `break` child is a soft break. Fix by making the lines a `- ` list (remarkGfm
+ * is on) or by separating them with a blank line.
+ */
+function checkSoftBreaks() {
+  // Required lazily so the rest of the gate still runs if remark is unavailable.
+  /* eslint-disable @typescript-eslint/no-require-imports */
+  let unified: typeof import('unified').unified;
+  let remarkParse: unknown;
+  let remarkMath: unknown;
+  let remarkGfm: unknown;
+  try {
+    unified = (require('unified') as typeof import('unified')).unified;
+    remarkParse = require('remark-parse').default ?? require('remark-parse');
+    remarkMath = require('remark-math').default ?? require('remark-math');
+    remarkGfm = require('remark-gfm').default ?? require('remark-gfm');
+  } catch {
+    warn('softbreak-check-skipped', 'all topics', 'remark not resolvable from scripts/');
+    return;
+  }
+  /* eslint-enable @typescript-eslint/no-require-imports */
+
+  const proc = unified()
+    .use(remarkParse as never)
+    .use(remarkMath as never)
+    .use(remarkGfm as never);
+
+  for (const rel of readdirSync('content/ghost-replay/math5').map((f) =>
+    join('content/ghost-replay/math5', f),
+  )) {
+    if (!rel.endsWith('.ts')) continue;
+    const src = readFileSync(rel, 'utf8');
+    const re = /`(?:[^`\\]|\\[\s\S])*`/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(src)) !== null) {
+      const raw = m[0].slice(1, -1);
+      if (!raw.includes('\n')) continue;
+      const startLine = src.slice(0, m.index).split('\n').length;
+      const text = raw.replace(/\\`/g, '`').replace(/\\\\/g, '\\');
+      const tree = proc.parse(text) as { children?: unknown[] };
+      const authored = text.split('\n');
+      const visit = (node: Record<string, unknown>) => {
+        if (node.type === 'paragraph') {
+          const pos = node.position as { start: { line: number }; end: { line: number } };
+          const spans = pos.end.line > pos.start.line;
+          const hasBreak = JSON.stringify(node).includes('"type":"break"');
+          if (spans && !hasBreak) {
+            err(
+              'markdown-soft-break',
+              `${rel}:${startLine + pos.start.line - 1}`,
+              `these ${pos.end.line - pos.start.line + 1} authored lines render as ONE: ` +
+                `"${authored[pos.start.line - 1].slice(0, 40)}…" + "${authored[pos.start.line].slice(0, 40)}…"`,
+            );
+          }
+        }
+        for (const c of (node.children as Record<string, unknown>[]) ?? []) visit(c);
+      };
+      visit(tree as Record<string, unknown>);
+    }
+  }
+}
+
 function main() {
   const maps = ghostEntries();
   console.log(`verify-ghost — ${maps.length} topic(s)\n`);
+  checkSoftBreaks();
 
   const rows: string[][] = [['topic', 'sub-topic', 'replay', 'steps', 'forks', 'branches', 'traps']];
 

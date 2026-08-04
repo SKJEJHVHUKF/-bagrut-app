@@ -68,7 +68,10 @@ export function CommitPrompt({
           } else if (isChosen) {
             cls = 'bg-rose-500/15 border-rose-500/50 text-rose-900';
           } else if (locked) {
-            cls = 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-400';
+            // slate-400 here measured 2.48:1 — under the 4.5:1 floor for the
+            // options the student re-reads after committing. Dimmed must still
+            // be legible; slate-600 keeps the de-emphasis and clears AA.
+            cls = 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-600';
           }
 
           return (
@@ -79,7 +82,11 @@ export function CommitPrompt({
               disabled={locked}
               className={`flex w-full items-start gap-2 rounded-xl border px-4 py-3 text-right text-sm transition-colors disabled:cursor-default ${cls}`}
             >
-              <span className="mt-0.5 flex-shrink-0 font-bold opacity-60">{LETTERS[i]}.</span>
+              {/* No opacity: CSS opacity composites the glyph with whatever is
+                  behind it, which dropped the letter to 1.7-3.4:1 in three of
+                  the four option states. A fixed muted colour de-emphasises it
+                  without going under the floor. */}
+              <span className="mt-0.5 flex-shrink-0 font-bold text-slate-500">{LETTERS[i]}.</span>
               <span className="chat-md math-content min-w-0 flex-1">
                 <MathText inline>{option.text}</MathText>
               </span>
@@ -94,8 +101,11 @@ export function CommitPrompt({
         })}
       </div>
 
+      {/* slate-400 at 11px was ~2.6:1 against the ivory canvas — under the 4.5:1
+          AA floor, and this is the one line that explains the entire rule of the
+          feature. slate-600 at 12px clears it. */}
       {!locked && (
-        <p className="text-center text-[11px] text-slate-400">
+        <p className="text-center text-xs text-slate-600">
           אין נכון ולא נכון שאפשר לנחש — מה שחשוב זה שתחליט לפני שתראה.
         </p>
       )}

@@ -35,6 +35,7 @@ export function GhostStepCard({
   onCommit,
   onAcknowledgeBranch,
   onAdvance,
+  onBack,
 }: {
   step: GhostReplayStep;
   stepNumber: number;
@@ -49,10 +50,19 @@ export function GhostStepCard({
   onCommit: (optionId: string) => void;
   onAcknowledgeBranch: () => void;
   onAdvance: () => void;
+  /** Back to the ladder — the same escape every other rung offers. */
+  onBack: () => void;
 }) {
   return (
     <div className="space-y-3">
+      {/* The escape hatch. Every sibling rung (LearnLevel, BagrutLevel) offers
+          "→ לסולם" while in progress; without it a student who opens a Ghost
+          Replay by mistake, or wants to go back and re-read the lesson, is
+          trapped — the only way out is the browser's back button. */}
       <div className="flex items-center justify-between text-[11px] text-slate-500">
+        <button onClick={onBack} className="hover:text-slate-800">
+          → לסולם
+        </button>
         <span className="font-bold">
           צעד {stepNumber} מתוך {totalSteps}
         </span>

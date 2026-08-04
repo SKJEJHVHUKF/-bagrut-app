@@ -72,9 +72,17 @@ export function commit(state: GhostState, replay: GhostReplay, optionId: string)
   const option = optionById(step, optionId);
   if (!option) return state;
 
+  // A wrong option with no authored branch would land in `branching` with
+  // nothing to render and nothing to click — options locked, no acknowledge
+  // button, no advance. A hard dead end. verify-ghost makes that content
+  // impossible, but the machine should not depend on the gate to stay
+  // unstuck, so a missing branch simply skips straight to the reveal.
+  const hasBranch =
+    option.isCorrect || step.branches.some((b) => b.optionId === optionId);
+
   return {
     ...state,
-    phase: option.isCorrect ? 'revealed' : 'branching',
+    phase: hasBranch && !option.isCorrect ? 'branching' : 'revealed',
     commits: { ...state.commits, [state.stepIndex]: { optionId, correct: option.isCorrect } },
     firstTryCorrect: state.firstTryCorrect + (option.isCorrect ? 1 : 0),
   };

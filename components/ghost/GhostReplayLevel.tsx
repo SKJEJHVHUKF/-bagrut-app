@@ -19,7 +19,7 @@
 
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, CheckCircle2, Sparkles } from 'lucide-react';
+import { Brain, CheckCircle2, Sparkles, XCircle } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
 import type { AttemptResult } from '@/lib/roadmap-progress';
@@ -55,7 +55,12 @@ export function GhostReplayLevel({
   const replay = level.ghost[0];
   const [state, setState] = useState<GhostState>(initGhost);
   const [result, setResult] = useState<AttemptResult | null>(null);
-  const [isReplay, setIsReplay] = useState(false);
+  // How many times the walkthrough has been restarted. Feeds the option seed:
+  // without it a replay re-uses the SAME permutation, and since the correct
+  // option was already painted emerald on the first pass, the replay button
+  // turned any score into a free 3-star run on positional memory alone.
+  const [attempt, setAttempt] = useState(0);
+  const isReplay = attempt > 0;
 
   const step = replay ? currentStep(state, replay) : null;
   const branch = replay ? activeBranch(state, replay) : null;
@@ -66,13 +71,23 @@ export function GhostReplayLevel({
 
   if (!replay || !prog) {
     return (
-      <div className="surface-premium rounded-2xl p-6 text-center text-sm text-slate-600">
-        אין עדיין הליכת חשיבה לתת-הנושא הזה.
+      <div className="space-y-3">
+        <button onClick={onBack} className="text-[11px] text-slate-500 hover:text-slate-800">
+          → לסולם
+        </button>
+        <div className="surface-premium rounded-2xl p-6 text-center text-sm text-slate-600">
+          אין עדיין הליכת חשיבה לתת-הנושא הזה.
+        </div>
       </div>
     );
   }
 
   function handleAdvance() {
+    // `advance()` on an already-done state returns that same state, and
+    // `isComplete` is still true for it — so a second call would submit the
+    // rung a second time. Today only the button unmounting prevents that;
+    // this makes it structural instead of incidental.
+    if (isComplete(state)) return;
     const next = advance(state, replay);
     setState(next);
     if (isComplete(next)) {
@@ -83,11 +98,16 @@ export function GhostReplayLevel({
   function restart() {
     setState(initGhost());
     setResult(null);
-    setIsReplay(true);
+    setAttempt((n) => n + 1);
   }
 
   const done = isComplete(state);
-  const completedSteps = replay.steps.slice(0, state.stepIndex);
+  // `advance()` deliberately does NOT increment stepIndex on the last step — it
+  // only flips the phase to 'done' — so on completion stepIndex still points at
+  // the final step. Slicing to stepIndex would then drop the LAST reveal, which
+  // is the answer to the whole problem: the student finishes the walkthrough and
+  // the result they worked five steps for is not on the screen.
+  const completedSteps = done ? replay.steps : replay.steps.slice(0, state.stepIndex);
 
   return (
     <div className="space-y-4">
@@ -100,7 +120,10 @@ export function GhostReplayLevel({
         <div className="chat-md math-content mt-1.5 text-[15px] font-bold leading-relaxed text-slate-900">
           <MathText>{replay.prompt}</MathText>
         </div>
-        <p className="mt-2 text-[11px] leading-snug text-slate-500">
+        {/* slate-500 clears AA on bare ivory (4.68:1) but NOT on this
+            indigo/violet-tinted card, where it measured 4.20:1. The tint is
+            what pushes it under, so the text has to go darker here. */}
+        <p className="mt-2 text-xs leading-snug text-slate-600">
           לא מוצג כאן פתרון. בכל צעד תתחייב למה שאתה חושב שקורה, ורק אז תראה.
         </p>
       </div>
@@ -123,11 +146,15 @@ export function GhostReplayLevel({
               key={s.stepNumber}
               className="flex items-start gap-2 rounded-xl border border-slate-900/[0.07] bg-white/70 px-3 py-2"
             >
-              <CheckCircle2
-                className={`mt-0.5 h-3.5 w-3.5 flex-shrink-0 ${
-                  state.commits[i]?.correct ? 'text-emerald-600' : 'text-slate-300'
-                }`}
-              />
+              {/* Different GLYPH, not just a different colour: slate-300 on a
+                  white row is ~1.5:1, so a colour-only distinction between "I
+                  had this right" and "I fell into the trap here" is invisible
+                  to most eyes and to all colour-blind ones. */}
+              {state.commits[i]?.correct ? (
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />
+              ) : (
+                <XCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-rose-500" />
+              )}
               <div className="chat-md math-content min-w-0 flex-1 text-[12px] leading-snug text-slate-600">
                 <MathText>{s.reveal}</MathText>
               </div>
@@ -166,7 +193,7 @@ export function GhostReplayLevel({
             // replays 26/26/24/24 with identity at its expected ~4% and 0
             // collapsed replays. Editing a question re-shuffles that step,
             // which is the same trade the question bank makes with ids.
-            optionSeed={`${step.stepNumber}-${replay.id}-${step.commitPrompt.question}`}
+            optionSeed={`${attempt}-${step.stepNumber}-${replay.id}-${step.commitPrompt.question}`}
             committedOptionId={state.commits[state.stepIndex]?.optionId ?? null}
             branch={branch}
             revealed={isRevealed(state)}
@@ -174,6 +201,7 @@ export function GhostReplayLevel({
             onCommit={(id) => setState(commit(state, replay, id))}
             onAcknowledgeBranch={() => setState(acknowledgeBranch(state))}
             onAdvance={handleAdvance}
+            onBack={onBack}
           />
         </motion.div>
       )}
@@ -194,7 +222,7 @@ export function GhostReplayLevel({
             </div>
           </div>
 
-          {result && (
+          {result ? (
             <LevelClearedPanel
               level={level}
               result={result}
@@ -203,6 +231,18 @@ export function GhostReplayLevel({
               onBack={onBack}
               onReplay={restart}
             />
+          ) : (
+            // GhostStepCard — which owns the only "→ לסולם" — unmounts the moment
+            // `done` flips, so if onSubmit ever failed to produce a result the
+            // student would be left on the closing screen with nothing clickable
+            // at all. `result` is set synchronously today, but a screen with no
+            // way off it is not a state worth leaving to chance.
+            <button
+              onClick={onBack}
+              className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-black text-white transition-colors hover:bg-slate-800"
+            >
+              חזרה לסולם הרמות
+            </button>
           )}
         </div>
       )}

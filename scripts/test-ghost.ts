@@ -143,6 +143,35 @@ section('Committing');
 }
 
 // ============================================================
+section('Dead ends');
+// ============================================================
+
+{
+  // A wrong option with no authored branch used to land in `branching` with
+  // nothing rendered and nothing clickable: options locked, no acknowledge,
+  // no advance. verify-ghost makes that content impossible, but the machine
+  // must not depend on the gate to stay unstuck.
+  const ORPHAN: GhostReplay = {
+    ...FIXTURE,
+    id: 'gr-orphan',
+    steps: [
+      {
+        ...FIXTURE.steps[0],
+        branches: [{ optionId: 'b', whyItFails: 'x', backOnTrack: 'y' }], // none for 'c'
+      },
+      FIXTURE.steps[1],
+    ],
+  };
+  const stuck = commit(initGhost(), ORPHAN, 'c');
+  assert(activeBranch(stuck, ORPHAN) === null, 'the orphaned option genuinely has no branch');
+  assert(
+    stuck.phase === 'revealed',
+    `a wrong option with no branch goes straight to the reveal instead of hanging (phase = ${stuck.phase})`,
+  );
+  assert(advance(stuck, ORPHAN).stepIndex === 1, 'and the student can still move on');
+}
+
+// ============================================================
 section('Walking the whole thing');
 // ============================================================
 
