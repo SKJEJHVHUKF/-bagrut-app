@@ -154,6 +154,19 @@ export function GhostReplayLevel({
             step={step}
             stepNumber={prog.stepNumber}
             totalSteps={prog.totalSteps}
+            // The seed must carry REAL entropy, not just a counter. Seeds that
+            // differ by one character do not decorrelate here:
+            //   `<id>-<n>`  → all 5 steps got the SAME permutation; 12% of
+            //                 replays would put every correct answer in slot א
+            //   `<n>-<id>`  → better in aggregate, but 3 of 5 steps came out as
+            //                 the IDENTITY order (p ≈ 0.02% by chance), so the
+            //                 correct answer only ever landed on א or ב
+            // Folding in the question text — long and completely different per
+            // step — fixes it: all four slots used here, and over 600 synthetic
+            // replays 26/26/24/24 with identity at its expected ~4% and 0
+            // collapsed replays. Editing a question re-shuffles that step,
+            // which is the same trade the question bank makes with ids.
+            optionSeed={`${step.stepNumber}-${replay.id}-${step.commitPrompt.question}`}
             committedOptionId={state.commits[state.stepIndex]?.optionId ?? null}
             branch={branch}
             revealed={isRevealed(state)}

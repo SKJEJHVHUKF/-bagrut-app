@@ -27,6 +27,7 @@ export function GhostStepCard({
   step,
   stepNumber,
   totalSteps,
+  optionSeed,
   committedOptionId,
   branch,
   revealed,
@@ -38,6 +39,8 @@ export function GhostStepCard({
   step: GhostReplayStep;
   stepNumber: number;
   totalSteps: number;
+  /** Seeds the deterministic option order — unique per replay AND per step. */
+  optionSeed: string;
   committedOptionId: string | null;
   /** Non-null only while the student is reading their own wrong road. */
   branch: GhostBranch | null;
@@ -74,6 +77,7 @@ export function GhostStepCard({
       <CommitPrompt
         question={step.commitPrompt.question}
         options={step.commitPrompt.options}
+        seed={optionSeed}
         committedOptionId={committedOptionId}
         onCommit={onCommit}
       />

@@ -11,10 +11,12 @@
 // There is no retry. Committing is a position, not an attempt — a retry would
 // turn "what do you think happens next" into "guess until the green one".
 
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { buttonTap } from '@/lib/animations';
+import { seededOrder } from '@/lib/shuffle';
 import type { GhostOption } from '@/content/ghost-replay/types';
 
 const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה'];
@@ -22,15 +24,27 @@ const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה'];
 export function CommitPrompt({
   question,
   options,
+  seed,
   committedOptionId,
   onCommit,
 }: {
   question: string;
   options: GhostOption[];
+  /** Stable per step — drives the deterministic option order. */
+  seed: string;
   /** null while the student is still thinking. */
   committedOptionId: string | null;
   onCommit: (optionId: string) => void;
 }) {
+  // House convention (lib/shuffle.ts): the correct option is AUTHORED first for
+  // readability and scattered deterministically at render time. Skipping the
+  // second half of that is the "option א is always correct" bug the question
+  // bank already had once — 428 questions written `correct: 0`, and a student
+  // who always pressed א scored ~97%. Seeded, so the order is identical on the
+  // server and after hydration and does not reshuffle when they pick.
+  const order = useMemo(() => seededOrder(options.length, seed), [options.length, seed]);
+  const shown = useMemo(() => order.map((i) => options[i]), [order, options]);
+
   const locked = committedOptionId !== null;
 
   return (
@@ -45,7 +59,7 @@ export function CommitPrompt({
       </div>
 
       <div className="space-y-2">
-        {options.map((option, i) => {
+        {shown.map((option, i) => {
           const isChosen = committedOptionId === option.id;
           let cls =
             'bg-slate-900/[0.03] hover:bg-slate-900/[0.06] border-slate-900/10 text-slate-900';

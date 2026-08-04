@@ -19,7 +19,8 @@
     "test:sync": "tsx scripts/test-sync.ts",
     "verify:ghost": "tsx scripts/verify-ghost.ts",
     "test:ghost": "tsx scripts/test-ghost.ts",
-    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run test:sync && npm run verify:ghost && npm run test:ghost && npm run build",
+    "test:ladder": "tsx scripts/test-ladder-unlock.ts",
+    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run test:sync && npm run verify:ghost && npm run test:ghost && npm run test:ladder && npm run build",
     "generate-pool": "tsx scripts/generate-pool.ts"
   },
   "dependencies": {

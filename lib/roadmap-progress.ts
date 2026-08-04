@@ -162,6 +162,20 @@ export function levelStatus(
   if (level.index === 0) return 'UNLOCKED';
   const prev = levels[level.index - 1];
   if (prev && levelRec(rec, prev.kind)?.cleared) return 'UNLOCKED';
+
+  // Progress never regresses. Inserting a NEW rung into the middle of the
+  // ladder shifts everything after it down one place, and the plain
+  // sequential rule would re-lock a rung the student had already reached —
+  // adding the 🧠 rung before 🎓 did exactly that to anyone mid-way through
+  // the bagrut rung. A rung the student has already played, or one they
+  // already finished, stays open regardless of what got inserted above it.
+  const self = levelRec(rec, level.kind);
+  if ((self?.attempts ?? 0) > 0) return 'UNLOCKED';
+  for (let i = level.index + 1; i < levels.length; i++) {
+    const later = levelRec(rec, levels[i].kind);
+    if (later?.cleared || (later?.attempts ?? 0) > 0) return 'UNLOCKED';
+  }
+
   return 'LOCKED';
 }
 

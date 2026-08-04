@@ -24,6 +24,7 @@ import { ghostEntries } from '../content/ghost-replay';
 import type { GhostReplay, TopicGhostReplays } from '../content/ghost-replay/types';
 import { getCognitionMap } from '../content/cognition';
 import { getQuestions, getSubTopic, getSubTopics } from '../content/lessons';
+import { seededOrder } from '../lib/shuffle';
 
 const STRICT = process.argv.includes('--strict');
 
@@ -138,6 +139,78 @@ function verifyReplay(map: TopicGhostReplays, replay: GhostReplay, bankIds: Set<
   }
 }
 
+/**
+ * Where the correct option actually LANDS on screen.
+ *
+ * Options are authored correct-first for readability and scattered at render
+ * time with `seededOrder(n, '<replayId>-<stepNumber>')` — the same convention,
+ * and the same seed shape, as the question bank. That second half is easy to
+ * forget, and forgetting it is not a cosmetic bug: the bank once shipped 428
+ * questions written `correct: 0`, and a student who always pressed א scored
+ * ~97% without knowing any mathematics.
+ *
+ * So this replays the REAL seeds and reports where the correct answer ends up.
+ * With few steps a perfectly flat spread is not expected; a slot holding
+ * everything is the signal that the shuffle is gone.
+ */
+function shuffleBalance(maps: TopicGhostReplays[]) {
+  const slots = new Map<number, number>();
+  let total = 0;
+  for (const map of maps) {
+    for (const replay of map.replays) {
+      // Per-replay too, not just in aggregate: with several replays a single
+      // collapsed one would hide inside a healthy overall spread, and a
+      // student only ever sees one replay at a time.
+      const perReplay = new Set<number>();
+      let steps = 0;
+      for (const step of replay.steps) {
+        const opts = step.commitPrompt.options;
+        const correctIdx = opts.findIndex((o) => o.isCorrect);
+        if (correctIdx < 0) continue;
+        // MUST match the seed built in GhostReplayLevel.
+        const order = seededOrder(
+          opts.length,
+          `${step.stepNumber}-${replay.id}-${step.commitPrompt.question}`,
+        );
+        const slot = order.indexOf(correctIdx);
+        slots.set(slot, (slots.get(slot) ?? 0) + 1);
+        perReplay.add(slot);
+        steps += 1;
+        total += 1;
+      }
+      if (steps >= 3 && perReplay.size === 1) {
+        err(
+          'shuffle-collapsed',
+          `${map.subject}:${map.topic}/${replay.id}`,
+          `all ${steps} correct answers land in the same slot — a student would learn the position, not the maths`,
+        );
+      }
+    }
+  }
+  if (total === 0) return;
+
+  const letters = ['א', 'ב', 'ג', 'ד', 'ה'];
+  const parts = [...slots.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([slot, n]) => `${letters[slot] ?? slot}=${n} (${Math.round((n / total) * 100)}%)`);
+  console.log(`  correct answer lands on:  ${parts.join('  ')}   [${total} steps]\n`);
+
+  const worst = Math.max(...slots.values());
+  if (slots.size === 1 && total > 1) {
+    err(
+      'shuffle-missing',
+      'all topics',
+      `every correct answer lands in the SAME slot across ${total} steps — the render-time shuffle is not being applied`,
+    );
+  } else if (total >= 8 && worst / total > 0.5) {
+    warn(
+      'shuffle-skewed',
+      'all topics',
+      `one slot holds ${Math.round((worst / total) * 100)}% of correct answers`,
+    );
+  }
+}
+
 function main() {
   const maps = ghostEntries();
   console.log(`verify-ghost — ${maps.length} topic(s)\n`);
@@ -177,6 +250,7 @@ function main() {
     if (n === 0) console.log('  ' + widths.map((w) => '-'.repeat(w)).join('  '));
   }
   console.log('');
+  shuffleBalance(maps);
 
   const errors = findings.filter((f) => f.level === 'error');
   const warns = findings.filter((f) => f.level === 'warn');
