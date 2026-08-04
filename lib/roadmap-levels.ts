@@ -22,8 +22,10 @@ import type {
   SubTopic,
 } from '@/content/lessons/types';
 import { getBagrutQuestionsForSubTopic } from '@/content/lessons';
+import { getGhostReplaysForSubTopic } from '@/content/ghost-replay';
+import type { GhostReplay } from '@/content/ghost-replay/types';
 
-export type RoadmapLevelKind = 'learn' | 'easy' | 'mid' | 'hard' | 'bagrut';
+export type RoadmapLevelKind = 'learn' | 'easy' | 'mid' | 'hard' | 'ghost' | 'bagrut';
 
 export type RoadmapLevel = {
   kind: RoadmapLevelKind;
@@ -40,6 +42,8 @@ export type RoadmapLevel = {
   questions: PracticeQuestion[];
   /** Multi-part bagrut question(s) for the bagrut rung (empty otherwise). */
   bagrut: StaticBagrutQuestion[];
+  /** Guided thinking walkthrough(s) for the ghost rung (empty otherwise). */
+  ghost: GhostReplay[];
 };
 
 /** XP per rung — harder rungs are worth more, giving a real "progression". */
@@ -48,6 +52,7 @@ const XP: Record<RoadmapLevelKind, number> = {
   easy: 15,
   mid: 25,
   hard: 40,
+  ghost: 45,
   bagrut: 60,
 };
 
@@ -72,6 +77,7 @@ export function buildSubTopicLevels(
   const mid = qs.filter((q) => q.difficulty === 'mid');
   const hard = qs.filter((q) => q.difficulty === 'hard');
   const bag = getBagrutQuestionsForSubTopic(subject, topic, st.id);
+  const ghost = getGhostReplaysForSubTopic(subject, topic, st.id);
 
   const levels: RoadmapLevel[] = [];
   const add = (
@@ -79,26 +85,41 @@ export function buildSubTopicLevels(
     title: string,
     subtitle: string,
     emoji: string,
-    questions: PracticeQuestion[],
-    bagrut: StaticBagrutQuestion[],
+    payload: Partial<Pick<RoadmapLevel, 'questions' | 'bagrut' | 'ghost'>> = {},
   ) => {
-    levels.push({ kind, index: levels.length, title, subtitle, emoji, xp: XP[kind], questions, bagrut });
+    levels.push({
+      kind,
+      index: levels.length,
+      title,
+      subtitle,
+      emoji,
+      xp: XP[kind],
+      questions: payload.questions ?? [],
+      bagrut: payload.bagrut ?? [],
+      ghost: payload.ghost ?? [],
+    });
   };
 
   if (steps.length > 0) {
-    add('learn', 'לומדים', 'מבינים את הרעיון — שלב אחר שלב', '📖', [], []);
+    add('learn', 'לומדים', 'מבינים את הרעיון — שלב אחר שלב', '📖');
   }
   if (easy.length > 0) {
-    add('easy', 'חימום', `${easy.length} תרגילי פתיחה קלים`, '🌱', easy, []);
+    add('easy', 'חימום', `${easy.length} תרגילי פתיחה קלים`, '🌱', { questions: easy });
   }
   if (mid.length > 0) {
-    add('mid', 'ביסוס', `${mid.length} תרגילים ברמת בגרות`, '⚡', mid, []);
+    add('mid', 'ביסוס', `${mid.length} תרגילים ברמת בגרות`, '⚡', { questions: mid });
   }
   if (hard.length > 0) {
-    add('hard', 'אתגר', `${hard.length} תרגילים מאתגרים`, '🔥', hard, []);
+    add('hard', 'אתגר', `${hard.length} תרגילים מאתגרים`, '🔥', { questions: hard });
+  }
+  // AFTER the challenge rung on purpose: a ghost replay re-walks a question the
+  // student has already fought with. Placed earlier it would be a worked
+  // solution handed over in advance — precisely what it exists to replace.
+  if (ghost.length > 0) {
+    add('ghost', 'חשיבה', 'איך חושבים על השאלה — צעד אחר צעד, בלי פתרון מוכן', '🧠', { ghost });
   }
   if (bag.length > 0) {
-    add('bagrut', 'בגרות', 'שאלת בגרות אמיתית ורב-שלבית', '🎓', [], bag);
+    add('bagrut', 'בגרות', 'שאלת בגרות אמיתית ורב-שלבית', '🎓', { bagrut: bag });
   }
 
   return levels;

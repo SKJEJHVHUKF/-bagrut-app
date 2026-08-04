@@ -164,6 +164,7 @@ const ROOTS = [
   'content/past-bagruyot',
   'content/concept-quiz',
   'content/cognition',
+  'content/ghost-replay',
   'content/topics',
 ].filter((d) => {
   try {

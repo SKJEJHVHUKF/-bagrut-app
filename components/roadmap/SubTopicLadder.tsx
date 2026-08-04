@@ -27,6 +27,7 @@ import { StarRow } from './ladder-ui';
 import { LearnLevel } from './LearnLevel';
 import { RoadmapLevelRunner } from './RoadmapLevelRunner';
 import { BagrutLevel } from './BagrutLevel';
+import { GhostReplayLevel } from '@/components/ghost/GhostReplayLevel';
 
 export function SubTopicLadder({
   subject,
@@ -123,6 +124,14 @@ export function SubTopicLadder({
                 level={openLevel}
                 onSubmit={onSubmit}
                 nextTitle={nextTitleLevel}
+                onNext={onNext}
+                onBack={onBack}
+              />
+            ) : openLevel.kind === 'ghost' ? (
+              <GhostReplayLevel
+                level={openLevel}
+                nextTitle={nextTitleLevel}
+                onSubmit={onSubmit}
                 onNext={onNext}
                 onBack={onBack}
               />

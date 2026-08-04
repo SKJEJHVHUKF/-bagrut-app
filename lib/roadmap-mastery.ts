@@ -26,8 +26,21 @@ export const PASS_RATIO: Record<RoadmapLevelKind, number> = {
   easy: 0.6,
   mid: 0.6,
   hard: 0.5,
+  ghost: 0,
   bagrut: 0.5,
 };
+
+/**
+ * Rungs with no pass bar: finishing them IS the achievement, and the score
+ * only decides the stars.
+ *
+ * `ghost` belongs here for a reason worth stating. In a Ghost Replay a wrong
+ * commit opens the failure branch — the student is walked down their own
+ * mistaken road until it breaks. That branch is the most valuable screen in
+ * the feature. Gating the rung on a score would punish the student for
+ * reaching it, which is exactly backwards.
+ */
+export const GATEWAY_LEVELS: RoadmapLevelKind[] = ['learn', 'ghost'];
 
 /** Minimum number of correct answers needed to clear a rung of `total`. */
 export function requiredCorrect(kind: RoadmapLevelKind, total: number): number {
@@ -38,7 +51,7 @@ export function requiredCorrect(kind: RoadmapLevelKind, total: number): number {
 /** Did this attempt meet the rung's pass bar? The learn rung always passes
  *  (it's gated on answering drills, not on a score). */
 export function didPass(kind: RoadmapLevelKind, score: number, total: number): boolean {
-  if (kind === 'learn') return true;
+  if (GATEWAY_LEVELS.includes(kind)) return true;
   if (total <= 0) return true;
   return score >= requiredCorrect(kind, total);
 }
@@ -65,7 +78,7 @@ export function computeStars(
   opts: { viaRetry?: boolean; viaForce?: boolean } = {},
 ): StarCount {
   if (opts.viaForce) return 0;
-  if (kind === 'learn') {
+  if (GATEWAY_LEVELS.includes(kind)) {
     if (total <= 0) return 1;
     return score >= total ? 3 : 2;
   }

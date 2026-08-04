@@ -13,7 +13,6 @@ import { motion } from 'framer-motion';
 import { Lock, CheckCircle, PlayCircle, Crown, Star, Sparkles, ArrowLeft, CalendarClock, Gauge } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { MathText } from '@/components/practice/MathText';
-import { CognitiveInsightCard } from '@/components/roadmap/CognitiveInsightCard';
 import { buildRoadmapFromPlan, allRoadmapNodes, DEFAULT_PAPER } from '@/constants/roadmapData';
 import { getPaper, getPlan, type StudyPlan } from '@/lib/study-plan';
 import type { BagrutPaper } from '@/content/bagrut-curriculum';
@@ -106,12 +105,6 @@ export default function RoadmapPage() {
     [ready, roadmap, levelsBySub, plan, summaries],
   );
 
-  // Topics the cognitive layer may have a catalog for (it filters itself).
-  const cognitionTopics = useMemo(
-    () => [...new Set(allNodes.map((n) => n.topic))],
-    [allNodes],
-  );
-
   // Spaced-repetition: how many questions are due for review today.
   const reviewDue = useMemo(() => (ready ? dueCount() : 0), [ready, syncTick]);
   const dueBySub = useMemo(
@@ -185,16 +178,6 @@ export default function RoadmapPage() {
             </div>
           </div>
         </motion.div>
-
-        {/* What the answers say is actually broken. Renders nothing until the
-            evidence supports a claim, and defers its CTA to the review /
-            resume cards below when the arbiter picks one of those. */}
-        <CognitiveInsightCard
-          subject={SUBJECT}
-          topics={cognitionTopics}
-          ready={ready}
-          tick={syncTick}
-        />
 
         {/* Daily spaced-repetition review — the highest-priority thing today */}
         {reviewDue > 0 && (
