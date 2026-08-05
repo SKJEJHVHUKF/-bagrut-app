@@ -204,6 +204,7 @@ export async function runScanPipeline(
       meter,
       topic: null,
       blocked: fallbackBlocked,
+      inputMode: 'photo',
     });
   }
 
@@ -216,6 +217,7 @@ export async function runScanPipeline(
     stage,
     signal: options.signal,
     blocked: fallbackBlocked,
+    inputMode: options.transcriptionOverride ? 'typed' : 'photo',
   });
 }
 
@@ -260,6 +262,7 @@ export async function rerunFromTranscription(
     stage: options.onStage ?? (() => {}),
     signal: options.signal,
     blocked: null,
+    inputMode: 'typed',
   });
 }
 
@@ -272,8 +275,9 @@ async function solveFromTranscription(args: {
   stage: NonNullable<ScanPipelineOptions['onStage']>;
   signal?: AbortSignal;
   blocked: { message: string; status: number } | null;
+  inputMode: 'photo' | 'typed';
 }): Promise<ScanResult> {
-  const { transcription, validation, unitLevel, allowPaid, meter, stage, signal } = args;
+  const { transcription, validation, unitLevel, allowPaid, meter, stage, signal, inputMode } = args;
 
   const problem = classifyProblem({ text: transcription, expressions: validation.expressions });
   const topic = topicForDomain(problem.domain, unitLevel, problem.kind);
@@ -319,6 +323,7 @@ async function solveFromTranscription(args: {
       meter,
       topic,
       blocked: args.blocked,
+      inputMode,
     });
   }
 
@@ -355,6 +360,7 @@ async function solveFromTranscription(args: {
       topic: libraryHit.topic ?? topic,
       blocked: null,
       matchScore: libraryHit.matchScore,
+      inputMode,
     });
   }
   meter.end('library-match', 'miss');
@@ -381,6 +387,7 @@ async function solveFromTranscription(args: {
       stage,
       signal,
       localOutcome: null,
+      inputMode,
     });
   }
 
@@ -405,6 +412,7 @@ async function solveFromTranscription(args: {
       meter,
       topic,
       blocked: null,
+      inputMode,
     });
   }
 
@@ -430,6 +438,7 @@ async function solveFromTranscription(args: {
     stage,
     signal,
     localOutcome: outcome,
+    inputMode,
   });
 }
 
@@ -452,6 +461,7 @@ async function escalate(args: {
   stage: NonNullable<ScanPipelineOptions['onStage']>;
   signal?: AbortSignal;
   localOutcome: SolveOutcome | null;
+  inputMode: 'photo' | 'typed';
 }): Promise<ScanResult> {
   const {
     transcription,
@@ -464,6 +474,7 @@ async function escalate(args: {
     stage,
     signal,
     localOutcome,
+    inputMode,
   } = args;
   const outcome = localOutcome;
 
@@ -480,6 +491,7 @@ async function escalate(args: {
       meter,
       topic,
       blocked: null,
+      inputMode,
     });
   }
 
@@ -516,6 +528,7 @@ async function escalate(args: {
       meter,
       topic,
       blocked,
+      inputMode,
     });
   }
 
@@ -540,6 +553,7 @@ async function escalate(args: {
     meter,
     topic: solved.topic ?? topic,
     blocked: null,
+    inputMode,
   });
 }
 
@@ -630,6 +644,7 @@ function finalize(args: {
   topic: string | null;
   blocked: { message: string; status: number } | null;
   matchScore?: number;
+  inputMode: 'photo' | 'typed';
 }): ScanResult {
   const trace = args.meter.build(`scan_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
   recordTrace(trace);
@@ -645,6 +660,7 @@ function finalize(args: {
     outcome: args.outcome,
     explanations: args.explanations,
     source: args.source,
+    inputMode: args.inputMode,
     // Only meaningful when the match was fuzzy; an exact hit shows the
     // student's own wording and needs no caveat.
     matchScore: args.matchScore !== undefined && args.matchScore < 0.999 ? args.matchScore : undefined,

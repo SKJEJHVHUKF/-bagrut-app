@@ -386,7 +386,24 @@ export default function ScanPage() {
         {result && (
           <div className="space-y-5">
             <RecognisedQuestion result={result} />
-            <ConfidenceMeter confidence={result.confidence} issues={result.validation.issues} />
+
+            {/* The meter answers ONE question — "can you trust that we read
+                your photo correctly?" — so it is shown only when that question
+                applies. Two cases where it doesn't, and both used to produce
+                nonsense on screen:
+                  · TYPED text — there was no photo, yet the banner told the
+                    student to "צלם שוב באור טוב יותר".
+                  · a VERIFIED library match — the screen said "לא הצלחנו
+                    לקרוא את התמונה" directly above a correct, hand-authored
+                    solution. The match caveat above already explains what
+                    happened, and the student can read the matched question.
+                The issues themselves are still useful, so a typed question
+                keeps them — without the percentage or the camera advice. */}
+            {result.inputMode === 'photo' && result.source !== 'library' && result.source !== 'cache' ? (
+              <ConfidenceMeter confidence={result.confidence} issues={result.validation.issues} />
+            ) : (
+              <InputNotes issues={result.validation.issues} />
+            )}
 
             {needsLogin && (
               <UpsellCard
@@ -583,6 +600,31 @@ function RecognisedQuestion({ result }: { result: ScanResult }) {
           {result.question || 'לא זוהה טקסט'}
         </p>
       )}
+    </section>
+  );
+}
+
+/**
+ * The issues, without the recognition framing.
+ *
+ * Used when a confidence percentage would be meaningless — typed text, or a
+ * verified library match. A note like "the degree sign is probably an
+ * exponent" is still worth reading; "we couldn't read the photo, try again in
+ * better light" is not, when there was no photo.
+ */
+function InputNotes({ issues }: { issues: ScanResult['validation']['issues'] }) {
+  const notable = issues.filter((issue) => issue.penalty >= 0.15).slice(0, 2);
+  if (notable.length === 0) return null;
+  return (
+    <section className="scan-card-flat px-4 py-3">
+      <ul className="space-y-1">
+        {notable.map((issue) => (
+          <li key={issue.code} className="text-xs scan-muted flex gap-2 leading-relaxed">
+            <span aria-hidden>•</span>
+            <span>{issue.message}</span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

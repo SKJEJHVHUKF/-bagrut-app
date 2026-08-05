@@ -431,6 +431,15 @@ export type ScanResult = {
   explanations: Partial<Record<ExplanationDepth, Explanation>>;
   source: SolutionSource;
   /**
+   * Where the text came from.
+   *
+   * The recognition-confidence meter answers exactly one question — "can you
+   * trust that we read your PHOTO correctly?" — so it is meaningless for text
+   * the student typed, and telling them to "צלם שוב באור טוב יותר" when no
+   * camera was involved is nonsense. The UI keys off this.
+   */
+  inputMode: 'photo' | 'typed';
+  /**
    * Set only for a FUZZY library/cache hit (0..1, below 1).
    *
    * On a fuzzy match the question shown is the STORED wording, not what the
