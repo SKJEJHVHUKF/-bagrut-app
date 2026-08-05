@@ -10,9 +10,13 @@
 //   * MOBILE ONLY (`md:hidden`). On desktop the sticky top navs plus the side
 //     drawer already cover navigation, and a fixed bottom bar on a 1280px
 //     window reads as a mistake.
-//   * SIGNED-IN ONLY, mirroring AppChrome. Three of the five destinations sit
-//     behind PROTECTED_PREFIXES in lib/supabase/middleware.ts, so showing this
-//     to a logged-out visitor would be a row of buttons that bounce to /login.
+//   * SHOWN TO EVERYONE, signed in or not. It was gated on auth at first, by
+//     analogy with AppChrome, and that was wrong: /roadmap, /practice and
+//     /scan are deliberately public (see the middleware note in CLAUDE.md —
+//     an anonymous visitor following a link must not hit a login wall), so
+//     the gate deleted the primary navigation for exactly the visitors who
+//     have no other way around. /quiz and /chat still redirect to login for
+//     anonymous users, which is the app's normal, expected flow.
 //   * HIDDEN on focused flows (see HIDDEN_PREFIXES): /chat owns the bottom of
 //     the screen with its composer, and /quiz is a timed exam — nudging a
 //     student out of a question they are mid-way through is a UX bug, not a
@@ -26,7 +30,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Map as MapIcon, Target, ScanLine, MessageCircle, Menu } from 'lucide-react';
+import { Map as MapIcon, Target, ScanLine, MessageCircle, Menu, LogIn } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 // Routes where the bar must not appear at all.
@@ -60,26 +64,38 @@ export default function BottomNav() {
   const hidden = isHiddenPath(pathname);
   const [signedIn, setSignedIn] = useState(false);
 
-  // Same auth handshake AppChrome uses: cached session for an instant answer,
-  // getUser to confirm, and a subscription so the bar appears the moment a
-  // student finishes signing in rather than on the next navigation.
+  // Auth is read ONLY to decide what the fifth tab does — never whether the
+  // bar renders. `signedIn` starting false must therefore be a safe default:
+  // the worst case is that a signed-in student briefly sees "כניסה" instead of
+  // "עוד" for one tick, not that navigation disappears.
+  //
+  // Every call is defensive. getUser() rejects with AuthSessionMissingError for
+  // an anonymous visitor, and an unhandled rejection here previously had no
+  // catch at all.
   useEffect(() => {
     if (hidden) return;
     let cancelled = false;
-    const supabase = createClient();
     const apply = (user: unknown) => {
       if (!cancelled) setSignedIn(!!user);
     };
-    supabase.auth.getSession().then(({ data }) => apply(data.session?.user));
-    supabase.auth.getUser().then(({ data }) => apply(data.user));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => apply(session?.user));
+    let unsubscribe = () => {};
+    try {
+      const supabase = createClient();
+      supabase.auth.getSession().then(({ data }) => apply(data.session?.user)).catch(() => {});
+      supabase.auth.getUser().then(({ data }) => apply(data.user)).catch(() => apply(null));
+      const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => apply(session?.user));
+      unsubscribe = () => sub.subscription.unsubscribe();
+    } catch {
+      // Supabase misconfigured/unreachable — the bar still renders.
+      apply(null);
+    }
     return () => {
       cancelled = true;
-      sub.subscription.unsubscribe();
+      unsubscribe();
     };
   }, [hidden, pathname]);
 
-  const visible = !hidden && signedIn;
+  const visible = !hidden;
 
   // Reserve space for the bar only while it is actually mounted, so routes
   // without it (and desktop, via the media query on the class) keep their
@@ -141,21 +157,37 @@ export default function BottomNav() {
           );
         })}
 
-        {/* Fifth slot opens the existing profile drawer rather than duplicating
-            it — AppChrome listens for this event (same pattern as the Ctrl+K
-            'open-global-search' event it already handles). */}
+        {/* Fifth slot. Signed in, it opens the existing AppChrome drawer via an
+            event rather than duplicating the profile UI (same pattern as the
+            Ctrl+K 'open-global-search' event that drawer already handles).
+            Signed OUT it must be a link to /login instead: AppChrome renders
+            null without a user, so dispatching the event would do nothing at
+            all and leave a button that visibly does not work. */}
         <li className="flex-1">
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event('open-profile-drawer'))}
-            aria-label="תפריט ופרופיל"
-            className="w-full relative flex flex-col items-center gap-0.5 pt-2 pb-1.5"
-          >
-            <span className="relative inline-flex items-center justify-center w-11 h-7 rounded-full">
-              <Menu className="relative w-[18px] h-[18px] text-slate-600" strokeWidth={2} />
-            </span>
-            <span className="text-[10px] leading-none font-bold text-slate-600">עוד</span>
-          </button>
+          {signedIn ? (
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event('open-profile-drawer'))}
+              aria-label="תפריט ופרופיל"
+              className="w-full relative flex flex-col items-center gap-0.5 pt-2 pb-1.5"
+            >
+              <span className="relative inline-flex items-center justify-center w-11 h-7 rounded-full">
+                <Menu className="relative w-[18px] h-[18px] text-slate-600" strokeWidth={2} />
+              </span>
+              <span className="text-[10px] leading-none font-bold text-slate-600">עוד</span>
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              aria-label="כניסה לחשבון"
+              className="w-full relative flex flex-col items-center gap-0.5 pt-2 pb-1.5"
+            >
+              <span className="relative inline-flex items-center justify-center w-11 h-7 rounded-full">
+                <LogIn className="relative w-[18px] h-[18px] text-slate-600" strokeWidth={2} />
+              </span>
+              <span className="text-[10px] leading-none font-bold text-slate-600">כניסה</span>
+            </Link>
+          )}
         </li>
       </ul>
     </nav>
