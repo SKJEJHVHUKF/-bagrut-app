@@ -696,8 +696,12 @@ function CostFooter() {
   return (
     <footer className="mt-8 pt-5" style={{ borderTop: '1px solid var(--scan-line)' }}>
       <p className="text-[11px] scan-faint leading-relaxed">
+        {/* "ללא עלות", not "ללא קריאה לשרת" — `freeRatio` counts solves that
+            cost nothing, and the corpus/bank/cache paths all reach the server.
+            Now that the bank is the main free path, the old wording described
+            something that does not happen. */}
         סרקת {summary.scans} שאלות · {Math.round(summary.freeRatio * 100)}% מהן נפתרו ללא שום
-        קריאה לשרת · עלות ממוצעת לשאלה: {formatCostIls(summary.averageCostUsd)}
+        עלות · עלות ממוצעת לשאלה: {formatCostIls(summary.averageCostUsd)}
       </p>
     </footer>
   );

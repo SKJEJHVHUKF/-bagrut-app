@@ -97,9 +97,22 @@ const DEPTH_ORDER: ExplanationDepth[] = ['hint', 'partial', 'full'];
  * and a prominent control invites idle clicking.
  */
 function ReportWrong({ bankId }: { bankId?: string }) {
-  const [state, setState] = useState<'idle' | 'sending' | 'done'>('idle');
+  const [state, setState] = useState<'idle' | 'sending' | 'done' | 'authRequired' | 'failed'>('idle');
   if (!bankId) return null;
   if (state === 'done') return <span className="font-bold">תודה — נבדוק את זה.</span>;
+  // Reporting requires an account (an anonymous report is unattributable and
+  // would make the only human signal here trivially spammable), so anonymous
+  // students hit a 401. Saying "תודה" to a report that was rejected is worse
+  // than saying nothing: the student believes it was recorded and does not
+  // report it again from an account, so the signal is lost twice.
+  if (state === 'authRequired') {
+    return (
+      <a href="/login" className="underline underline-offset-2 font-bold">
+        כדי לדווח צריך להתחבר
+      </a>
+    );
+  }
+  if (state === 'failed') return <span className="font-bold">הדיווח לא נשלח. נסה שוב.</span>;
   return (
     <button
       type="button"
@@ -107,16 +120,19 @@ function ReportWrong({ bankId }: { bankId?: string }) {
       onClick={async () => {
         setState('sending');
         try {
-          await fetch('/api/scan-solve', {
+          const res = await fetch('/api/scan-solve', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ mode: 'report', bankId }),
           });
+          if (res.status === 401) setState('authRequired');
+          else if (!res.ok) setState('failed');
+          else setState('done');
         } catch {
           // A failed report must not become an error the student has to
           // handle — the solution is still on screen and still readable.
+          setState('failed');
         }
-        setState('done');
       }}
       className="underline underline-offset-2 hover:opacity-80 font-bold"
     >
