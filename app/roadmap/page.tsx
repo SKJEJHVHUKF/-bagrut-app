@@ -128,7 +128,7 @@ export default function RoadmapPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="surface-premium rounded-3xl p-5 space-y-4"
+          className="glass-card rounded-3xl p-5 space-y-4"
         >
           <div className="flex items-center gap-4">
             <div className="relative flex-shrink-0 w-16 h-16">
@@ -139,7 +139,7 @@ export default function RoadmapPage() {
                   cy="24"
                   r="20"
                   fill="none"
-                  stroke="#4F46E5"
+                  stroke="#6366F1"
                   strokeWidth="5"
                   strokeLinecap="round"
                   strokeDasharray={`${(overallPct / 100) * 125.7} 125.7`}
@@ -160,11 +160,11 @@ export default function RoadmapPage() {
           </div>
           {/* XP + mastery strip */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-indigo-500/[0.06] border border-indigo-500/20 rounded-2xl px-3 py-2.5 flex items-center gap-2">
+            <div className="bg-[var(--primary-container)]/60 border border-indigo-500/20 rounded-2xl px-3 py-2.5 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-indigo-700 flex-shrink-0" />
               <div className="min-w-0">
                 <div className="text-base font-black text-indigo-800 leading-none">{totalXp}</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">נקודות XP</div>
+                <div className="text-[10px] text-slate-600 mt-0.5">נקודות XP</div>
               </div>
             </div>
             <div className="bg-amber-500/[0.08] border border-amber-500/25 rounded-2xl px-3 py-2.5 flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function RoadmapPage() {
                 <div className="text-base font-black text-amber-700 leading-none">
                   {masteredCount}/{allNodes.length}
                 </div>
-                <div className="text-[10px] text-slate-500 mt-0.5">בשליטה מלאה</div>
+                <div className="text-[10px] text-slate-600 mt-0.5">בשליטה מלאה</div>
               </div>
             </div>
           </div>
@@ -223,9 +223,12 @@ export default function RoadmapPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
+            {/* indigo/violet-600, not -500: the labels on this card are white at
+                10-14px, and white on indigo-500 is 4.47:1 / on violet-500 4.23:1
+                — both under the 4.5:1 AA floor for small text. 600 gives 6.3:1. */}
             <Link
               href={resume.href}
-              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/25 hover:from-indigo-500 hover:to-violet-500 transition-colors"
+              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30 hover:from-indigo-500 hover:to-violet-500 transition-colors"
             >
               <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl">
                 {resume.levelEmoji}
@@ -304,7 +307,7 @@ export default function RoadmapPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="surface-premium rounded-3xl p-5 space-y-4"
+              className="glass-card rounded-3xl p-5 space-y-4"
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl flex-shrink-0">{mt.emoji}</span>
@@ -400,20 +403,20 @@ function RoadmapNodeCard({
   const inProgress = !locked && !done && cleared > 0;
 
   const accent = mastered
-    ? 'border-amber-400/50 bg-amber-500/[0.08]'
+    ? 'border-amber-400/50 bg-amber-100/70'
     : done
-      ? 'border-emerald-500/40 bg-emerald-500/10'
+      ? 'border-emerald-500/35 bg-emerald-100/60'
       : locked
-        ? 'border-slate-900/[0.06] bg-slate-900/[0.02] opacity-60'
-        : 'border-indigo-500/40 bg-gradient-to-br from-indigo-600/15 to-indigo-600/10 hover:border-indigo-500/60';
+        ? 'border-slate-900/[0.06] bg-white/40 opacity-60'
+        : 'border-indigo-500/35 bg-[var(--primary-container)]/70 hover:border-indigo-500/60';
 
   const iconBg = mastered
     ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white'
     : done
-      ? 'bg-emerald-500/30 text-emerald-800'
+      ? 'bg-emerald-500/25 text-emerald-800'
       : locked
         ? 'bg-slate-900/[0.03] text-slate-500'
-        : 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white';
+        : 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white';
 
   // One-line status under the title.
   const statusLine = locked

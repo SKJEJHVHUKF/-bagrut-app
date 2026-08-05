@@ -75,7 +75,7 @@ export default function FormulasPage() {
         </section>
 
         {/* Search */}
-        <section className="sticky top-16 z-30 -mx-2 px-2 py-2 bg-[#FDFDFB]/90 backdrop-blur-md rounded-2xl">
+        <section className="sticky top-16 z-30 -mx-2 px-2 py-2 bg-[var(--background)]/90 backdrop-blur-md rounded-2xl">
           <div className="relative">
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 pointer-events-none" />
             <input
@@ -187,7 +187,7 @@ function BackgroundOrbs() {
 
 function TopBar({ onPrint }: { onPrint: () => void }) {
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/10 print:hidden">
+    <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none print:hidden">
       <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/my-plan" className="flex items-center gap-3 group">
           <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10">

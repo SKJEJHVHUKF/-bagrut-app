@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Heebo, Frank_Ruhl_Libre } from "next/font/google";
+import { Geist, Geist_Mono, Heebo, Frank_Ruhl_Libre, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import ServiceWorkerRegistration from "./sw-register";
 import AppChrome from "@/components/AppChrome";
+import BottomNav from "@/components/BottomNav";
 import GlobalSearch from "@/components/GlobalSearch";
 import FormulaSheet from "@/components/FormulaSheet";
 
@@ -29,6 +30,18 @@ const frankRuhlLibre = Frank_Ruhl_Libre({
   weight: ["400", "700", "900"],
 });
 
+// Plus Jakarta Sans — the Lumina display/UI face. It has NO Hebrew glyphs,
+// so it is deliberately stacked *before* Heebo rather than replacing it:
+// the browser falls back per-glyph, so Latin letters, digits and punctuation
+// (every score, percentage, year and שאלון number in the app) render in
+// Jakarta while Hebrew renders in Heebo. Setting it as the sole sans would
+// silently hand all Hebrew to the system font.
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+
 export const metadata: Metadata = {
   title: "בגרות בכיס",
   description: "תרגול חכם של שאלות בגרות אמיתיות, נוצרות בזמן אמת ע״י בינה מלאכותית. הסבר מיידי לכל תשובה.",
@@ -50,10 +63,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FDFDFB",
+  themeColor: "#FCF8FF",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  // Required for env(safe-area-inset-bottom) to report a non-zero value —
+  // without it the mobile bottom bar sits under the iPhone home indicator.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -65,11 +81,12 @@ export default function RootLayout({
     <html
       lang="he"
       dir="rtl"
-      className={`${geistSans.variable} ${geistMono.variable} ${heebo.variable} ${frankRuhlLibre.variable} w-screen`}
+      className={`${geistSans.variable} ${geistMono.variable} ${heebo.variable} ${frankRuhlLibre.variable} ${plusJakarta.variable} w-screen`}
     >
       <body className="w-screen overflow-x-hidden m-0 p-0">
         <ServiceWorkerRegistration />
         <AppChrome />
+        <BottomNav />
         <GlobalSearch />
         <FormulaSheet />
         {children}
@@ -81,7 +98,7 @@ export default function RootLayout({
           closeButton
           toastOptions={{
             style: {
-              fontFamily: 'var(--font-heebo), sans-serif',
+              fontFamily: 'var(--font-jakarta), var(--font-heebo), sans-serif',
               fontWeight: 600,
             },
           }}

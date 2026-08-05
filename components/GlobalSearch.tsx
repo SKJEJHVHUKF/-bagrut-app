@@ -87,7 +87,7 @@ export default function GlobalSearch() {
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
             dir="rtl"
-            className="fixed top-[12vh] left-1/2 -translate-x-1/2 z-[81] w-[92vw] max-w-xl bg-[#FDFDFB] border border-slate-900/10 rounded-2xl shadow-2xl shadow-slate-900/20 overflow-hidden"
+            className="fixed top-[12vh] left-1/2 -translate-x-1/2 z-[81] w-[92vw] max-w-xl bg-[var(--background)] border border-slate-900/10 rounded-2xl shadow-2xl shadow-slate-900/20 overflow-hidden"
           >
             {/* Input */}
             <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-900/[0.08]">

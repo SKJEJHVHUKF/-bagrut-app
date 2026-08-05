@@ -103,17 +103,17 @@ export function ScanThemeStyles() {
   return (
     <style>{`
       [data-scan-theme] {
-        --scan-bg: #FDFDFB;
+        --scan-bg: #FCF8FF;
         --scan-card: #FFFFFF;
-        --scan-card-2: #F6F6F2;
+        --scan-card-2: #F0ECF9;
         --scan-ink: #0F172A;
         --scan-ink-soft: #475569;
         --scan-ink-faint: #64748B;
         --scan-line: rgba(15, 23, 42, 0.10);
         --scan-line-strong: rgba(15, 23, 42, 0.18);
-        --scan-primary: #4F46E5;
+        --scan-primary: #6366F1;
         --scan-primary-ink: #FFFFFF;
-        --scan-primary-soft: rgba(79, 70, 229, 0.10);
+        --scan-primary-soft: rgba(99, 102, 241, 0.10);
         --scan-success: #047857;
         --scan-success-soft: rgba(4, 120, 87, 0.10);
         --scan-warn: #B45309;

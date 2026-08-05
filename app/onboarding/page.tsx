@@ -274,7 +274,7 @@ function DateStep({
           value={value}
           min={today}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-[#FDFDFB]/80 border border-slate-900/10 focus:border-indigo-500/60 rounded-xl px-4 py-3 text-base text-slate-900 outline-none transition-colors"
+          className="w-full bg-[var(--background)]/80 border border-slate-900/10 focus:border-indigo-500/60 rounded-xl px-4 py-3 text-base text-slate-900 outline-none transition-colors"
         />
         {daysAway > 0 && (
           <div className="text-sm text-slate-700">
@@ -607,7 +607,7 @@ function BackgroundOrbs() {
 
 function TopBar() {
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/10">
+    <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10">

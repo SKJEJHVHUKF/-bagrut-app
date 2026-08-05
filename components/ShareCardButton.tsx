@@ -78,7 +78,7 @@ export default function ShareCardButton({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.97 }}
               dir="rtl"
-              className="fixed inset-x-4 top-[8vh] z-[81] max-w-sm mx-auto bg-[#FDFDFB] border border-slate-900/10 rounded-2xl shadow-2xl p-4 space-y-3"
+              className="fixed inset-x-4 top-[8vh] z-[81] max-w-sm mx-auto bg-[var(--background)] border border-slate-900/10 rounded-2xl shadow-2xl p-4 space-y-3"
             >
               <div className="flex items-center justify-between">
                 <div className="text-sm font-black text-slate-900">ככה זה ייראה</div>

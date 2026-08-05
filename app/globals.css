@@ -1,31 +1,74 @@
 @import "tailwindcss";
 
+/* ===================================================================
+   LUMINA MATH — the app's design language.
+
+   A light, lavender-tinted canvas with translucent "glass" cards, an
+   indigo-500 primary, and generous corner radii. Replaces the earlier
+   ivory "premium white" palette; the theme is still LIGHT-ONLY (no dark
+   mode, no toggle) and every SVG diagram in content/ still assumes
+   dark-ink-on-light, which this palette preserves.
+   =================================================================== */
 :root {
-  /* Surfaces — premium white: warm ivory canvas, pure-white cards */
-  --background: #FDFDFB;
-  --surface-1: #FFFFFF;
-  --surface-2: #F6F6F2;
+  /* Surfaces — lavender-white canvas, translucent white cards */
+  --background: #FCF8FF;         /* surface        — the page canvas */
+  --surface-1: #FFFFFF;          /* opaque card (drawers, modals) */
+  --surface-2: #F0ECF9;          /* surface-container — insets, wells */
   --foreground: #0F172A;
   --muted: #475569;
   --faint: #64748B;
   --border: rgba(15, 23, 42, 0.08);
   --border-strong: rgba(15, 23, 42, 0.16);
+  --outline: #79747E;            /* Material outline — dividers on tinted fills */
 
   /* Brand — indigo primary + a single, sparingly-used warm accent */
-  --primary: #4F46E5;        /* indigo-600 — filled surfaces */
-  --primary-bright: #6366F1; /* indigo-500 — text & icons on light */
-  --primary-deep: #4338CA;   /* indigo-700 — pressed/hover-deep */
-  --accent: #B8860B;         /* deep gold — achievements / "new" only */
+  --primary: #6366F1;            /* indigo-500 — filled surfaces (Lumina primary) */
+  --primary-bright: #818CF8;     /* indigo-400 — hover / glow */
+  --primary-deep: #4F46E5;       /* indigo-600 — pressed / hover-deep */
+  --primary-container: #E0E0FF;  /* the tinted chip/icon-tile fill */
+  --on-primary-container: #3730A3;
+  --accent: #B8860B;             /* deep gold — achievements / "new" only.
+                                    FILLS AND BORDERS ONLY: as text on the
+                                    light canvas it measures 2.79:1. */
+  --accent-ink: #7A5B08;         /* the same gold, dark enough to be TEXT
+                                    (5.42:1 on canvas) or to carry white
+                                    text on a filled chip (6.31:1). */
 
   /* Semantic states */
   --success: #059669;        /* emerald-600 */
   --danger: #DC2626;         /* red-600 */
+
+  /* Glass — one source of truth so every translucent surface matches */
+  --glass-fill: rgba(255, 255, 255, 0.70);
+  --glass-fill-solid: rgba(255, 255, 255, 0.92);  /* no-backdrop-filter fallback */
+  --glass-edge: rgba(255, 255, 255, 0.60);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --glass-hairline: 0 0 0 1px rgba(99, 102, 241, 0.07);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-heebo);
+
+  /* Lumina scale as Tailwind colors → bg-primary, text-primary-container, … */
+  --color-primary: var(--primary);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-surface: var(--background);
+  --color-surface-container: var(--surface-2);
+  --color-outline: var(--outline);
+
+  /* Corner radii per the Lumina spec — xl 1rem, 2xl 1.5rem. Everything
+     already written as rounded-xl / rounded-2xl / rounded-3xl rounds up
+     to the softer Lumina geometry with no JSX changes. */
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 1.75rem;
+
+  /* Jakarta first (Latin + digits), Heebo second (Hebrew) — per-glyph
+     fallback, see the comment in app/layout.tsx. */
+  --font-sans: var(--font-jakarta), var(--font-heebo);
   --font-serif: var(--font-frank-ruhl);
   --font-mono: var(--font-geist-mono);
 }
@@ -33,34 +76,86 @@
 html, body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-heebo), Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta), var(--font-heebo), Arial, Helvetica, sans-serif;
   min-height: 100vh;
 }
 
-/* Global premium canvas — a whisper of cool indigo wash at the top of the
-   ivory page, applied site-wide behind all page content. Pages use
-   transparent roots so this shows through. (The dark theme's film-grain
-   and vignette are gone — on white they read as dirt/smudge; clean IS
-   the premium move on light.) */
+/* viewport-fit=cover (needed so the bottom bar can clear the home indicator)
+   also lets content slide under the notch in landscape. These insets are 0 in
+   portrait and on every non-notched device, so this only pays out where it is
+   actually needed.
+
+   Physical left/right on purpose: the logical properties invert under
+   dir="rtl", which makes the mapping to the physical insets a puzzle nobody
+   should have to re-solve later. */
+body {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Global Lumina canvas — three soft, very low-opacity colour fields on the
+   lavender page. This is not decoration: a glass card is only legible as
+   GLASS when there is something behind it to blur. On a flat white page
+   `backdrop-filter` has nothing to work with and every .glass-card reads
+   as a plain grey rectangle. The blobs are what give the app depth.
+   Fixed, so they don't move on scroll, and pointer-events-none by virtue
+   of being a background image. Pages use transparent roots so this shows
+   through. */
 body {
   position: relative;
-  background-image: radial-gradient(1100px 600px at 50% -8%, #F2F2FA 0%, rgba(253, 253, 251, 0) 55%);
+  background-image:
+    radial-gradient(900px 620px at 82% -6%,  rgba(129, 140, 248, 0.16) 0%, rgba(129, 140, 248, 0) 62%),
+    radial-gradient(760px 560px at 8%  12%,  rgba(196, 181, 253, 0.14) 0%, rgba(196, 181, 253, 0) 60%),
+    radial-gradient(1000px 700px at 50% 104%, rgba(165, 180, 252, 0.13) 0%, rgba(165, 180, 252, 0) 58%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-/* Serif display face (Frank Ruhl Libre) — the editorial elevation move,
-   used for headings. Body text stays Heebo (sans). */
-.font-display {
-  font-family: var(--font-frank-ruhl), Georgia, "Times New Roman", serif;
+/* Space for the mobile bottom nav. The class is added to <body> by
+   components/BottomNav.tsx only while the bar is actually mounted, and the
+   media query matches the bar's own `md:hidden` — so desktop, logged-out
+   visitors, and the routes that hide the bar (/chat, /quiz, auth) all keep
+   their original spacing instead of a dead gap at the foot of the page.
+   4.25rem = the bar's height; the safe-area inset clears the iPhone home
+   indicator. */
+@media (max-width: 767px) {
+  body.has-bottom-nav {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* The floating formula-sheet trigger lives at bottom-4 left-4 and would sit
+     underneath the bar; lift it to rest just above. */
+  body.has-bottom-nav .formula-fab {
+    bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
-/* Gradient text utility — retuned to the indigo brand, reserved for the
-   hero headline only. */
+/* Display face — Lumina is a sans-only system, so headings use the same
+   Jakarta/Heebo stack as body text with tighter tracking, rather than the
+   previous Frank Ruhl Libre serif. The serif is still loaded under
+   --font-frank-ruhl; restoring it is a one-line change here, and every
+   `.font-display` call site (38 files) follows.
+
+   Sets family + tracking only, NOT font-weight: `.font-display` is
+   unlayered CSS and would therefore beat Tailwind's `font-bold` /
+   `font-black` utilities, silently flattening the weight that every
+   heading in the app already asks for. */
+.font-display {
+  font-family: var(--font-jakarta), var(--font-heebo), system-ui, sans-serif;
+  letter-spacing: -0.015em;
+}
+
+/* Gradient text utility — reserved for the hero headline.
+   The LIGHT end is capped at #6366F1 (4.24:1 on the #FCF8FF canvas).
+   Running it up to indigo-400 #818CF8 looks better in isolation but
+   measures 2.83:1 — under the 3:1 AA floor even at display size, and
+   this utility is used on h1s, so the lightest stop is the one that
+   decides legibility. */
 .gradient-text {
-  background: linear-gradient(135deg, #4338CA 0%, #4F46E5 45%, #6366F1 100%);
+  background: linear-gradient(135deg, #4338CA 0%, #4F46E5 50%, #6366F1 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -76,32 +171,94 @@ html {
   display: none;
 }
 
-/* Premium surface — pure white card with a hairline ink border and a
-   soft, layered ink shadow so it reads as paper lifted off the canvas. */
-.surface-premium {
-  background: #FFFFFF;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 30px -18px rgba(15, 23, 42, 0.10);
+/* ── The Lumina card system ─────────────────────────────────────────
+   TWO surfaces, deliberately. `backdrop-filter` forces the compositor to
+   re-sample and blur everything behind the element on every paint; it is
+   the single most expensive property here. A roadmap or archive screen
+   renders 20-40 cards at once, so making every card a real blur layer
+   drops frame rate on the mid-range Android phones most students use.
+
+     .glass-card       real blur. Use where there is genuinely something
+                       behind the surface and the count is small: sticky
+                       navs, overlays/drawers, hero and feature cards.
+     .surface-premium  the same Lumina LOOK — translucent white, lavender
+                       hairline, cool indigo shadow — with NO blur. This is
+                       the default card, and the 60 files already using it
+                       pick up the new design with no JSX change.
+   ------------------------------------------------------------------ */
+
+/* Write the UNPREFIXED property only. Authoring `-webkit-backdrop-filter`
+   alongside it makes Lightning CSS (Tailwind v4's compiler) collapse the
+   pair and emit *only* the -webkit- form, so the blur silently does
+   nothing in Chrome and Firefox and works solely in Safari. Lightning CSS
+   adds whatever prefixes the build targets need on its own — verified in
+   the compiled chunk, not assumed. */
+.glass-card {
+  background: var(--glass-fill);
+  backdrop-filter: blur(12px);
+  /* The spec's white inner edge is invisible against a white page, so it
+     is paired with an indigo hairline in the shadow — the card always has
+     a defined boundary, whatever happens to be behind it. */
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow), var(--glass-hairline);
 }
 
-/* Premium primary button — subtle vertical gradient, inset top highlight,
-   soft colored shadow (softened for the light canvas). */
+/* Browsers with backdrop-filter unavailable or disabled get an opaque card
+   instead of a nearly-invisible transparent one. */
+@supports not (backdrop-filter: blur(12px)) {
+  .glass-card {
+    background: var(--glass-fill-solid);
+  }
+}
+
+/* Premium surface — the default card. Translucent enough to let the
+   canvas' colour fields tint it, opaque enough to keep slate-800 body
+   text at full contrast. */
+.surface-premium {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.07),
+    0 8px 28px -12px rgba(31, 38, 135, 0.10);
+}
+
+/* Lumina primary button — flat fill with a soft same-hue shadow (the spec's
+   `shadow-lg shadow-indigo-200`), not the previous gradient.
+
+   The FILL is --primary-deep (#4F46E5), not --primary (#6366F1), even though
+   the Lumina spec says indigo-500. Every one of these buttons carries white
+   label text, and white on #6366F1 measures 4.47:1 — under the 4.5:1 AA floor
+   for text this size. #4F46E5 measures 5.99:1 and is visually all but
+   identical. --primary stays indigo-500 everywhere it is NOT behind white
+   text: chips, icons, rings, focus states, shadows. */
 .btn-primary {
-  background-image: linear-gradient(180deg, #6366F1 0%, #4F46E5 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.20), 0 10px 22px -10px rgba(79, 70, 229, 0.40);
-  transition: background-image 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  background-color: var(--primary-deep);
+  background-image: none;
+  box-shadow: 0 8px 20px -6px rgba(99, 102, 241, 0.45);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 .btn-primary:hover {
-  background-image: linear-gradient(180deg, #7779F7 0%, #5851E6 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 14px 28px -10px rgba(79, 70, 229, 0.50);
+  background-color: #4338CA;
+  box-shadow: 0 12px 26px -8px rgba(99, 102, 241, 0.55);
+}
+.btn-primary:active {
+  box-shadow: 0 4px 12px -4px rgba(99, 102, 241, 0.40);
+}
+
+/* Tonal chip / icon tile — the `bg-indigo-50` + `bg-orange-100` pills in
+   the Lumina subject card, as one reusable primary-container surface. */
+.chip-primary {
+  background-color: var(--primary-container);
+  color: var(--on-primary-container);
+  border: 1px solid rgba(99, 102, 241, 0.18);
 }
 
 /* Formula card surface — a whisper of indigo so a formula reads as a
    distinct "reference" block, not a flat tint. */
 .formula-surface {
-  background-image: linear-gradient(160deg, rgba(79, 70, 229, 0.07), rgba(79, 70, 229, 0.03) 55%, rgba(79, 70, 229, 0.015));
-  border: 1px solid rgba(79, 70, 229, 0.20);
-  box-shadow: 0 6px 18px -14px rgba(79, 70, 229, 0.25);
+  background-image: linear-gradient(160deg, rgba(99, 102, 241, 0.09), rgba(99, 102, 241, 0.04) 55%, rgba(99, 102, 241, 0.02));
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  box-shadow: 0 6px 18px -14px rgba(99, 102, 241, 0.28);
 }
 
 /* Result box — the payoff/answer of a worked example. Emerald-on-white
@@ -360,8 +517,8 @@ html {
 .card-3d:hover {
   transform: translateY(-4px);
   box-shadow:
-    0 18px 38px -16px rgba(15, 23, 42, 0.14),
-    0 0 0 1px rgba(15, 23, 42, 0.06);
+    0 18px 40px -14px rgba(31, 38, 135, 0.16),
+    0 0 0 1px rgba(99, 102, 241, 0.18);
 }
 
 /* Stronger variant — for the hero/feature cards on the landing page.
@@ -376,8 +533,8 @@ html {
 .card-3d-strong:hover {
   transform: translateY(-6px);
   box-shadow:
-    0 26px 52px -20px rgba(15, 23, 42, 0.18),
-    0 0 0 1px rgba(79, 70, 229, 0.15);
+    0 26px 56px -18px rgba(31, 38, 135, 0.20),
+    0 0 0 1px rgba(99, 102, 241, 0.28);
 }
 
 /* "Physical button" — depth on press.
@@ -389,16 +546,16 @@ html {
   transition:
     transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 8px 20px -8px rgba(79, 70, 229, 0.28);
+  box-shadow: 0 8px 20px -8px rgba(99, 102, 241, 0.32);
   will-change: transform;
 }
 .btn-3d:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 28px -10px rgba(79, 70, 229, 0.34);
+  box-shadow: 0 14px 28px -10px rgba(99, 102, 241, 0.40);
 }
 .btn-3d:active {
   transform: translateY(0);
-  box-shadow: 0 6px 14px -8px rgba(79, 70, 229, 0.22);
+  box-shadow: 0 6px 14px -8px rgba(99, 102, 241, 0.26);
   transition-duration: 0.05s;
 }
 
@@ -446,5 +603,17 @@ html {
   .card-3d:hover,
   .card-3d-strong:hover {
     transform: none;
+  }
+}
+
+/* Students who have asked the OS to reduce transparency (iOS "Reduce
+   Transparency", Windows "Transparency effects" off) get opaque cards —
+   translucency is exactly what those settings exist to turn off, and the
+   blur is also the most expensive thing on the page. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-card,
+  .surface-premium {
+    background: #FFFFFF;
+    backdrop-filter: none;
   }
 }

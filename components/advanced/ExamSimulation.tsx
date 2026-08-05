@@ -142,10 +142,10 @@ export function ExamSimulation({
       <div
         className={`sticky top-16 z-20 backdrop-blur-md border rounded-2xl px-4 py-2.5 flex items-center gap-3 ${
           phase === 'review'
-            ? 'bg-[#FDFDFB]/90 border-slate-900/10'
+            ? 'bg-[var(--background)]/90 border-slate-900/10'
             : lowTime
               ? 'bg-indigo-50/90 border-indigo-500/50'
-              : 'bg-[#FDFDFB]/90 border-slate-900/[0.12]'
+              : 'bg-[var(--background)]/90 border-slate-900/[0.12]'
         }`}
       >
         <Timer className={`w-4 h-4 ${lowTime && phase === 'running' ? 'text-indigo-700' : 'text-slate-700'}`} />

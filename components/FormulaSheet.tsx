@@ -124,7 +124,7 @@ export default function FormulaSheet() {
       <button
         onClick={() => setOpen(true)}
         aria-label="דף הנוסחאות"
-        className="fixed bottom-4 left-4 z-[55] inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur border border-indigo-500/25 shadow-lg shadow-indigo-500/15 px-3.5 py-2.5 text-indigo-800 font-bold text-sm hover:bg-indigo-500/5 hover:scale-[1.03] transition-all"
+        className="formula-fab fixed bottom-4 left-4 z-[55] inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur border border-indigo-500/25 shadow-lg shadow-indigo-500/15 px-3.5 py-2.5 text-indigo-800 font-bold text-sm hover:bg-indigo-500/5 hover:scale-[1.03] transition-all"
       >
         <Sigma className="w-4 h-4" />
         <span className="hidden sm:inline">נוסחאות</span>
@@ -195,12 +195,12 @@ function FormulaDrawer({
         exit={{ x: '100%' }}
         transition={{ type: 'tween', duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
         dir="rtl"
-        className="fixed top-0 bottom-0 right-0 z-[71] w-[380px] max-w-[92vw] bg-[#FDFDFB] border-r border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
+        className="fixed top-0 bottom-0 right-0 z-[71] w-[380px] max-w-[92vw] bg-[var(--background)] border-r border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
       >
         {/* Header */}
         <div className="p-4 border-b border-slate-900/[0.08] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
               <Sigma className="w-4.5 h-4.5" />
             </div>
             <div>

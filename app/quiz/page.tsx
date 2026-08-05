@@ -1036,9 +1036,9 @@ function Quiz() {
   return (
     <>
       <style>{`
-        :root { --bg: #FDFDFB; --surface: #FFFFFF; --surface2: #F6F6F2; --surface3: #EDEDF8; --border: rgba(15,23,42,0.10); --border2: rgba(15,23,42,0.20); --text: #0F172A; --text2: #475569; --text3: #64748B; --correct: #059669; --wrong: #DC2626; --accent: #4F46E5; --accent2: #DB2777; --radius: 24px; --radius-sm: 14px; }
+        :root { --bg: #FCF8FF; --surface: #FFFFFF; --surface2: #F0ECF9; --surface3: #E0E0FF; --border: rgba(15,23,42,0.10); --border2: rgba(15,23,42,0.20); --text: #0F172A; --text2: #475569; --text3: #64748B; --correct: #059669; --wrong: #DC2626; --accent: #6366F1; --accent2: #DB2777; --radius: 24px; --radius-sm: 14px; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: var(--font-heebo), sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; overflow-x: hidden; }
+        body { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; overflow-x: hidden; }
         .bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
         .bg-orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.10; }
         .bg-orb-1 { width: 600px; height: 600px; top: -250px; right: -150px; background: #6366f1; animation: orb1 15s ease-in-out infinite alternate; }
@@ -1048,8 +1048,8 @@ function Quiz() {
         @keyframes orb2 { to { transform: translate(10%,-10%) scale(0.95); } }
         @keyframes orb3 { to { transform: translate(-12%,12%) scale(1.25); } }
         .app { width: 100%; max-width: 520px; display: flex; flex-direction: column; position: relative; z-index: 1; box-shadow: 0 25px 60px -20px rgba(15,23,42,0.15); border-radius: 32px; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); margin: 20px; }
-        .header { padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); background: rgba(253,253,251,0.92); position: sticky; top: 0; z-index: 10; border-radius: 32px 32px 0 0; }
-        .logo { font-family: var(--font-frank-ruhl), serif; font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .header { padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); background: rgba(252,248,255,0.90); position: sticky; top: 0; z-index: 10; border-radius: 32px 32px 0 0; }
+        .logo { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .subject-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 24px; padding: 6px 16px; font-size: 12px; font-weight: 700; color: var(--text2); transition: all 0.3s; letter-spacing: 0.05em; }
         .screen { display: none; flex: 1; flex-direction: column; animation: fadeUp 0.4s cubic-bezier(.4,0,.2,1); }
         .screen.active { display: flex; }
@@ -1057,7 +1057,7 @@ function Quiz() {
         .home-inner { padding: 0 28px 40px; display: flex; flex-direction: column; flex: 1; }
         .hero { padding: 40px 0 32px; text-align: center; }
         .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.15)); border: 1.5px solid rgba(99,102,241,0.4); border-radius: 28px; padding: 8px 18px; font-size: 13px; font-weight: 700; color: #4F46E5; margin-bottom: 20px; }
-        .hero h1 { font-family: var(--font-frank-ruhl), serif; font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; background: linear-gradient(160deg, #0F172A 30%, #4338CA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero h1 { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; background: linear-gradient(160deg, #0F172A 30%, #4338CA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .hero p { color: var(--text2); font-size: 15px; line-height: 1.8; max-width: 320px; margin: 0 auto; font-weight: 500; }
         .section-label { font-size: 12px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; margin-top: 8px; }
         .subject-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 20px; scrollbar-width: none; }
@@ -1173,7 +1173,7 @@ function Quiz() {
         .result-hero { text-align: center; }
         .result-emoji { font-size: 60px; line-height: 1; margin-bottom: 16px; display: block; animation: bounce 0.8s ease; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        .result-title { font-family: var(--font-frank-ruhl), serif; font-size: 32px; font-weight: 900; margin-bottom: 8px; background: linear-gradient(135deg, #0F172A, #4338CA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .result-title { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 32px; font-weight: 900; margin-bottom: 8px; background: linear-gradient(135deg, #0F172A, #4338CA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .result-sub { font-size: 15px; color: var(--text2); line-height: 1.7; font-weight: 500; }
         .stats-row { display: flex; gap: 12px; width: 100%; }
         .stat-box { flex: 1; background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 18px; text-align: center; }

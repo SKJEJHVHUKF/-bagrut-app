@@ -168,6 +168,15 @@ export default function AppChrome() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
+  // The mobile bottom bar's "עוד" tab opens THIS drawer rather than shipping a
+  // second copy of the profile/links UI. Same event pattern the drawer already
+  // uses to hand off to GlobalSearch.
+  useEffect(() => {
+    const openDrawer = () => setOpen(true);
+    window.addEventListener('open-profile-drawer', openDrawer);
+    return () => window.removeEventListener('open-profile-drawer', openDrawer);
+  }, []);
+
   const saveName = useCallback(async () => {
     if (!profile) return;
     const next = draftName.trim();
@@ -193,7 +202,7 @@ export default function AppChrome() {
       <button
         onClick={() => setOpen(true)}
         aria-label="הפרופיל שלי"
-        className="fixed top-3 left-3 z-[60] w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-black text-sm flex items-center justify-center shadow-lg shadow-indigo-500/30 ring-2 ring-white hover:scale-105 transition-transform"
+        className="fixed top-3 left-3 z-[60] w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-black text-sm flex items-center justify-center shadow-lg shadow-indigo-500/30 ring-2 ring-white hover:scale-105 transition-transform"
       >
         {initials}
       </button>
@@ -217,12 +226,12 @@ export default function AppChrome() {
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
               dir="rtl"
-              className="fixed top-0 bottom-0 left-0 z-[71] w-[300px] max-w-[85vw] bg-[#FDFDFB] border-l border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
+              className="fixed top-0 bottom-0 left-0 z-[71] w-[300px] max-w-[85vw] bg-[var(--background)] border-l border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
             >
               {/* Header */}
               <div className="p-5 border-b border-slate-900/[0.08]">
                 <div className="flex items-start justify-between">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-black text-lg flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-black text-lg flex items-center justify-center shadow-lg shadow-indigo-500/30">
                     {initials}
                   </div>
                   <button

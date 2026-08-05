@@ -74,7 +74,7 @@ export default function PricingPage() {
         </div>
 
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 bg-[var(--accent)]/12 border border-[var(--accent)]/30 rounded-full px-4 py-1.5 text-xs font-bold text-[var(--accent)]">
+          <div className="inline-flex items-center gap-2 bg-[var(--accent)]/12 border border-[var(--accent)]/30 rounded-full px-4 py-1.5 text-xs font-bold text-[var(--accent-ink)]">
             <Crown className="w-3.5 h-3.5" />
             <span>בגרות בכיס Pro</span>
           </div>
@@ -103,14 +103,14 @@ export default function PricingPage() {
               }`}
             >
               {p.badge && (
-                <span className="absolute -top-2.5 right-4 bg-[var(--accent)] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                <span className="absolute -top-2.5 right-4 bg-[var(--accent-ink)] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full">
                   {p.badge}
                 </span>
               )}
               <div className="text-sm font-black text-slate-900">{p.name}</div>
               <div className="mt-1 flex items-baseline gap-1">
                 <span className="text-2xl font-black text-slate-900">{p.price}</span>
-                <span className="text-[11px] text-slate-500">{p.per}</span>
+                <span className="text-[11px] text-slate-600">{p.per}</span>
               </div>
               {p.sub && <div className="text-[11px] text-indigo-700 font-bold mt-1 leading-snug">{p.sub}</div>}
             </button>

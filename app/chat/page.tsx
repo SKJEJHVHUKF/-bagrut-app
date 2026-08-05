@@ -414,7 +414,7 @@ export default function ChatPage() {
       </div>
 
       {/* Top bar */}
-      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/10">
+      <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
         {/* pl-16 on mobile reserves room for the global profile avatar (fixed
             top-left); restored to px-4 from sm up where there's space. */}
         <div className="max-w-3xl mx-auto px-4 pl-16 sm:pl-4 py-3 flex items-center justify-between">
@@ -524,7 +524,7 @@ export default function ChatPage() {
       )}
 
       {/* Composer */}
-      <div className="fixed bottom-0 inset-x-0 z-20 bg-[#FDFDFB]/90 backdrop-blur-xl border-t border-slate-900/10">
+      <div className="fixed bottom-0 inset-x-0 z-20 bg-[var(--background)]/90 backdrop-blur-xl border-t border-slate-900/10">
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3">
           {error && (
             <div className="mb-2 text-sm text-indigo-700 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-3 py-2">
@@ -714,7 +714,7 @@ function ChatSidebar({
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
             dir="rtl"
-            className="fixed top-0 bottom-0 right-0 z-[71] w-[300px] max-w-[85vw] bg-[#FDFDFB] border-r border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
+            className="fixed top-0 bottom-0 right-0 z-[71] w-[300px] max-w-[85vw] bg-[var(--background)] border-r border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
           >
             <div className="p-4 border-b border-slate-900/[0.08] flex items-center justify-between">
               <div className="text-sm font-black text-slate-900 flex items-center gap-2">

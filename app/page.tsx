@@ -50,7 +50,7 @@ function BagrutLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const s = sizes[size];
 
   return (
-    <div className={`relative ${s.box} ${s.radius} bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-600/40 ring-1 ring-slate-900/10`}>
+    <div className={`relative ${s.box} ${s.radius} bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/40 ring-1 ring-slate-900/10`}>
       <svg viewBox="0 0 24 24" fill="none" className={`${s.icon} text-white`}>
         <path
           d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
@@ -79,10 +79,10 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Section heading — serif display face (Frank Ruhl Libre), solid near-white. */
+/** Section heading — Lumina display face (Jakarta/Heebo), near-black ink. */
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-display text-3xl sm:text-5xl font-bold mb-4 text-slate-800 leading-[1.2]">
+    <h2 className="font-display text-3xl sm:text-5xl font-bold mb-4 text-slate-900 leading-[1.2]">
       {children}
     </h2>
   );
@@ -123,39 +123,32 @@ export default function Landing() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   return (
-    <div
-      className="min-h-screen text-slate-800 relative overflow-x-hidden"
-      style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
-    >
-      {/* Hero glow accent — the global grain, vignette & depth come from body */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-12%] left-1/2 -translate-x-1/2 w-[860px] h-[520px] rounded-full bg-indigo-600/[0.08] blur-[160px]" />
-      </div>
-
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-[#FDFDFB]/80 border-b border-slate-900/[0.06]">
+    <div className="min-h-screen text-slate-800 relative overflow-x-hidden">
+      {/* Navbar — real glass: it sits over scrolling content, so the blur
+          has something to work on and the cost is one layer, not forty. */}
+      <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BagrutLogo size="md" />
-            <span className="font-display text-xl sm:text-2xl font-black text-slate-800">
+            <span className="font-display text-xl sm:text-2xl text-slate-900">
               בגרות בכיס
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Link
               href="/roadmap"
-              className="group flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-indigo-500/40 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition-all"
+              className="group flex items-center gap-1.5 chip-primary hover:bg-indigo-200/70 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all"
               title="מסלול הלמידה"
             >
-              <Target className="w-4 h-4 text-indigo-600" />
+              <Target className="w-4 h-4" />
               <span className="hidden sm:inline">מסלול הלמידה</span>
             </Link>
             <Link
               href="/chat"
-              className="group flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-indigo-500/40 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition-all"
+              className="group flex items-center gap-1.5 bg-white/70 hover:bg-white border border-white/60 hover:border-indigo-500/30 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition-all"
               title="צ'אט עם המורה הפרטי"
             >
-              <MessageSquare className="w-4 h-4 text-indigo-600" />
+              <MessageSquare className="w-4 h-4 text-indigo-500" />
               <span className="hidden sm:inline">המורה הפרטי</span>
             </Link>
           </div>
@@ -199,18 +192,18 @@ export default function Landing() {
         </div>
 
         <motion.div variants={fadeUp} className="mb-7">
-          <span className="inline-flex items-center gap-2 surface-premium rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium text-slate-700 tracking-wide">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-700" />
+          <span className="inline-flex items-center gap-2 glass-card rounded-full px-4 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 tracking-wide">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
             תרגול חכם לבגרות · בעברית · בחינם
           </span>
         </motion.div>
 
         <motion.h1
           variants={fadeUp}
-          className="font-display text-5xl sm:text-7xl md:text-8xl font-black leading-[1.05] mb-7 sm:mb-9 text-slate-900"
+          className="font-display text-5xl sm:text-7xl md:text-8xl leading-[1.05] mb-7 sm:mb-9 text-slate-900"
         >
           <span className="block">הבגרות שלך,</span>
-          <span className="block text-indigo-700">בכיס שלך</span>
+          <span className="block gradient-text">בכיס שלך</span>
         </motion.h1>
 
         <motion.p
@@ -230,10 +223,10 @@ export default function Landing() {
           <motion.a
             {...buttonTap}
             href="#how-it-works"
-            className="inline-flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-slate-900/20 px-6 py-4 rounded-2xl font-bold text-slate-800 transition-all"
+            className="inline-flex items-center gap-2 glass-card hover:bg-white px-6 py-4 rounded-2xl font-bold text-slate-800 transition-all"
           >
             <span>איך זה עובד?</span>
-            <ChevronDown className="w-5 h-5" />
+            <ChevronDown className="w-5 h-5 text-indigo-500" />
           </motion.a>
         </motion.div>
 
@@ -268,24 +261,27 @@ export default function Landing() {
         <motion.div variants={fadeUp} className="mb-8 sm:mb-10">
           <Link
             href="/roadmap"
-            className="card-3d-strong group relative block rounded-3xl p-6 sm:p-8 bg-gradient-to-l from-emerald-600/12 to-indigo-600/12 border border-emerald-500/30 hover:border-indigo-500/50 overflow-hidden"
+            className="card-3d-strong group relative block rounded-3xl p-6 sm:p-8 glass-card hover:border-indigo-500/40 overflow-hidden"
           >
-            <div className="flex items-center gap-4 sm:gap-5">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center text-2xl sm:text-3xl shadow-lg shadow-emerald-500/30 flex-shrink-0">
+            {/* Soft indigo bloom behind the glass — the banner is the primary
+                path, so it gets the one saturated moment on the page. */}
+            <div className="absolute -top-24 -left-16 w-72 h-72 rounded-full bg-indigo-400/25 blur-[90px] pointer-events-none" />
+            <div className="relative flex items-center gap-4 sm:gap-5">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl sm:text-3xl shadow-lg shadow-indigo-500/30 flex-shrink-0">
                 🗺️
               </div>
               <div className="flex-1 min-w-0">
-                <span className="inline-block text-[10px] font-black tracking-wide text-emerald-700 bg-emerald-400/15 border border-emerald-400/30 rounded-full px-2 py-0.5 mb-1.5">
+                <span className="inline-block text-[10px] font-black tracking-wide chip-primary rounded-full px-2 py-0.5 mb-1.5">
                   מומלץ · חדש
                 </span>
-                <h3 className="font-display text-xl sm:text-2xl font-bold text-slate-800">
+                <h3 className="font-display text-xl sm:text-2xl font-bold text-slate-900">
                   מסלול הלמידה שלי — לפי השאלון שלך
                 </h3>
                 <p className="text-sm sm:text-base text-slate-600 leading-relaxed mt-1">
                   לומדים ← חימום ← ביסוס ← אתגר ← בגרות. כל רמה פותחת את הבאה, עם כוכבים ומעקב התקדמות מלא.
                 </p>
               </div>
-              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
             </div>
           </Link>
         </motion.div>
@@ -419,10 +415,10 @@ export default function Landing() {
               variants={fadeUp}
               whileHover={{ y: -4 }}
               transition={{ duration: 0.2 }}
-              className="group surface-premium rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors"
+              className="group glass-card rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-indigo-500/12 border border-indigo-500/25 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-[var(--primary-container)] border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
                   <p.icon className="w-6 h-6 text-indigo-700" />
                 </div>
                 <div>
@@ -454,13 +450,13 @@ export default function Landing() {
               variants={fadeUp}
               whileHover={{ y: -5 }}
               transition={{ duration: 0.2 }}
-              className="group relative surface-premium rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors overflow-hidden"
+              className="group relative glass-card rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors overflow-hidden"
             >
               <div className="absolute top-2 left-4 font-display text-7xl sm:text-8xl font-black text-slate-900/[0.04] select-none">
                 {s.num}
               </div>
               <div className="relative z-10">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-500/12 border border-indigo-500/25 flex items-center justify-center mb-5">
+                <div className="w-14 h-14 rounded-2xl bg-[var(--primary-container)] border border-indigo-500/20 flex items-center justify-center mb-5">
                   <s.icon className="w-7 h-7 text-indigo-700" />
                 </div>
                 <h3 className="font-display text-xl font-bold mb-3 text-slate-800">{s.title}</h3>
@@ -493,7 +489,7 @@ export default function Landing() {
             <motion.div key={i} variants={scaleIn} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
               <Link
                 href="/quiz"
-                className="card-3d group relative surface-premium rounded-2xl p-5 sm:p-6 text-center hover:border-indigo-500/40 block h-full"
+                className="card-3d group relative glass-card rounded-2xl p-5 sm:p-6 text-center hover:border-indigo-500/40 block h-full"
               >
                 <div className="icon-3d text-4xl sm:text-5xl mb-3 inline-block">{s.emoji}</div>
                 <div className="font-bold text-sm sm:text-base mb-1 text-slate-800">{s.name}</div>
@@ -524,7 +520,7 @@ export default function Landing() {
             variants={fadeUp}
             whileHover={{ y: -4 }}
             transition={{ duration: 0.2 }}
-            className="relative surface-premium rounded-3xl p-8 hover:border-indigo-500/30 transition-colors"
+            className="relative glass-card rounded-3xl p-8 hover:border-indigo-500/30 transition-colors"
           >
             <div className="flex items-center gap-2 mb-2">
               <Gift className="w-5 h-5 text-indigo-600" />
@@ -563,18 +559,18 @@ export default function Landing() {
             variants={fadeUp}
             whileHover={{ y: -4 }}
             transition={{ duration: 0.2 }}
-            className="relative bg-indigo-600/[0.08] border-2 border-indigo-500/40 rounded-3xl p-8 shadow-xl shadow-indigo-600/15"
+            className="relative bg-[var(--primary-container)]/70 border-2 border-indigo-500/35 rounded-3xl p-8 shadow-xl shadow-indigo-500/15 backdrop-blur-[12px]"
           >
             <div className="absolute -top-3 right-6 bg-amber-400 px-3 py-1 rounded-full text-xs font-black tracking-wide text-amber-950 shadow-lg">
               למי שרוצה 100
             </div>
             <div className="flex items-center gap-2 mb-2">
-              <Rocket className="w-5 h-5 text-indigo-700" />
+              <Rocket className="w-5 h-5 text-indigo-600" />
               <span className="text-indigo-700 font-bold text-sm tracking-wide">Pro</span>
             </div>
             <div className="flex items-baseline gap-2 mb-6">
               <span className="font-display text-5xl font-black text-indigo-800">₪129</span>
-              <span className="text-sm text-slate-500">חצי שנה · כמו שיעור אחד</span>
+              <span className="text-sm text-slate-700">חצי שנה · כמו שיעור אחד</span>
             </div>
             <ul className="space-y-3 mb-8">
               {[
@@ -661,14 +657,14 @@ export default function Landing() {
       >
         <motion.div
           variants={scaleIn}
-          className="relative bg-indigo-600/[0.09] border border-indigo-500/25 rounded-3xl p-8 sm:p-16 text-center overflow-hidden"
+          className="relative glass-card rounded-3xl p-8 sm:p-16 text-center overflow-hidden"
         >
-          <div className="absolute top-[-30%] left-1/2 -translate-x-1/2 w-[400px] h-[260px] rounded-full bg-indigo-500/15 blur-[120px] pointer-events-none" />
+          <div className="absolute top-[-30%] left-1/2 -translate-x-1/2 w-[520px] h-[320px] rounded-full bg-indigo-400/30 blur-[110px] pointer-events-none" />
           <div className="relative z-10">
-            <div className="inline-flex w-14 h-14 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 items-center justify-center mb-6">
-              <Sparkles className="w-7 h-7 text-indigo-700" />
+            <div className="inline-flex w-14 h-14 rounded-2xl bg-[var(--primary-container)] border border-indigo-500/25 items-center justify-center mb-6">
+              <Sparkles className="w-7 h-7 text-indigo-600" />
             </div>
-            <motion.h2 variants={fadeUp} className="font-display text-3xl sm:text-5xl font-bold mb-4 text-slate-800 leading-[1.2]">
+            <motion.h2 variants={fadeUp} className="font-display text-3xl sm:text-5xl font-bold mb-4 text-slate-900 leading-[1.2]">
               מוכן להפוך את הבגרות לקלה?
             </motion.h2>
             <motion.p variants={fadeUp} className="text-slate-600 text-base sm:text-xl max-w-2xl mx-auto mb-8">
@@ -734,27 +730,30 @@ function ModeCard({
   cta: string;
   badge?: string;
 }) {
+  // Every `cta` colour must clear AA on a near-white card — the teal tone
+  // used to be text-teal-300, a light-on-dark leftover that was effectively
+  // invisible here.
   const tones = {
-    indigo: { chip: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-700', cta: 'text-indigo-700' },
-    amber: { chip: 'bg-amber-400/15 border-amber-400/30 text-amber-700', cta: 'text-amber-700' },
-    teal: { chip: 'bg-teal-500/15 border-teal-500/30 text-teal-300', cta: 'text-teal-300' },
+    indigo: { chip: 'bg-[var(--primary-container)] border-indigo-500/20 text-indigo-700', cta: 'text-indigo-600' },
+    amber: { chip: 'bg-amber-100 border-amber-400/30 text-amber-700', cta: 'text-amber-700' },
+    teal: { chip: 'bg-teal-100 border-teal-500/25 text-teal-700', cta: 'text-teal-700' },
   }[tone];
 
   return (
     <motion.div variants={fadeUp} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
       <Link
         href={href}
-        className="card-3d-strong group relative surface-premium hover:border-indigo-500/40 rounded-3xl p-6 block h-full"
+        className="card-3d-strong group relative glass-card hover:border-indigo-500/30 rounded-3xl p-6 block h-full"
       >
         {badge && (
-          <div className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-amber-400/15 border border-amber-400/35 text-[10px] font-black tracking-wide text-amber-700">
+          <div className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-amber-100 border border-amber-400/35 text-[10px] font-black tracking-wide text-amber-700">
             {badge}
           </div>
         )}
         <div className={`icon-3d w-12 h-12 rounded-2xl border flex items-center justify-center mb-4 ${tones.chip}`}>
           {icon}
         </div>
-        <h3 className="font-display text-xl font-bold mb-2 text-slate-800">{title}</h3>
+        <h3 className="font-display text-xl font-bold mb-2 text-slate-900">{title}</h3>
         <p className="text-sm text-slate-600 leading-relaxed mb-4">{desc}</p>
         <div className={`text-xs font-bold flex items-center gap-1.5 ${tones.cta}`}>
           {cta}
@@ -777,7 +776,7 @@ function BagruyotFeature({
 }) {
   return (
     <div className="surface-premium rounded-2xl p-4 text-center sm:text-right">
-      <div className="w-9 h-9 rounded-xl bg-indigo-500/12 border border-indigo-500/25 flex items-center justify-center text-indigo-700 mb-2 mx-auto sm:mx-0">
+      <div className="w-9 h-9 rounded-xl bg-[var(--primary-container)] border border-indigo-500/20 flex items-center justify-center text-indigo-700 mb-2 mx-auto sm:mx-0">
         {icon}
       </div>
       <div className="font-bold text-sm text-slate-800 mb-1">{title}</div>
