@@ -563,8 +563,17 @@ function RecognisedQuestion({ result }: { result: ScanResult }) {
   return (
     <section className="scan-card p-5">
       <h2 className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: 'var(--scan-primary)' }}>
-        השאלה שזיהינו
+        {result.matchScore === undefined ? 'השאלה שזיהינו' : 'השאלה שהתאמנו מהמאגר'}
       </h2>
+      {/* On a fuzzy match the wording below is OURS, not the student's. Saying
+          so is the difference between a helpful normalisation and a silent
+          substitution — and it is how a wrong match gets noticed. */}
+      {result.matchScore !== undefined && (
+        <p className="text-[11px] scan-faint leading-relaxed mb-2">
+          זיהינו שזו שאלה שכבר קיימת אצלנו במאגר, ולכן מוצג הנוסח המדויק שלה. אם זו לא השאלה
+          שצילמת — לחץ על &quot;נסח מחדש&quot;.
+        </p>
+      )}
       {safe ? (
         <div className="chat-md math-content text-sm sm:text-base leading-relaxed">
           <MathText>{display}</MathText>

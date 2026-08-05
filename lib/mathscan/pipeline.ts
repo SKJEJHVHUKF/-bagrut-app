@@ -57,6 +57,9 @@ type ServerSolution = {
   steps: { title: string; content: string }[];
   finalAnswer: string;
   costUsd?: number;
+  /** 1 = the transcription matched a stored question exactly; below that the
+   *  match was fuzzy and the wording shown is OURS, not the student's. */
+  matchScore?: number;
 };
 
 // ------------------------------------------------------------
@@ -351,6 +354,7 @@ async function solveFromTranscription(args: {
       meter,
       topic: libraryHit.topic ?? topic,
       blocked: null,
+      matchScore: libraryHit.matchScore,
     });
   }
   meter.end('library-match', 'miss');
@@ -594,6 +598,7 @@ async function lookupServer(
         .map((s) => ({ title: s.title as string, content: s.content as string })),
       finalAnswer: typeof data.finalAnswer === 'string' ? data.finalAnswer : '',
       costUsd: typeof data.costUsd === 'number' ? data.costUsd : 0,
+      matchScore: typeof data.matchScore === 'number' ? data.matchScore : undefined,
     };
   } catch (error) {
     if (request.mode === 'match') return null;
@@ -624,6 +629,7 @@ function finalize(args: {
   meter: CostMeter;
   topic: string | null;
   blocked: { message: string; status: number } | null;
+  matchScore?: number;
 }): ScanResult {
   const trace = args.meter.build(`scan_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
   recordTrace(trace);
@@ -639,6 +645,9 @@ function finalize(args: {
     outcome: args.outcome,
     explanations: args.explanations,
     source: args.source,
+    // Only meaningful when the match was fuzzy; an exact hit shows the
+    // student's own wording and needs no caveat.
+    matchScore: args.matchScore !== undefined && args.matchScore < 0.999 ? args.matchScore : undefined,
     trace,
   };
   if (args.blocked) blockedByStatus.set(result, args.blocked);

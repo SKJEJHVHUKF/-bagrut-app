@@ -430,6 +430,16 @@ export type ScanResult = {
   /** Ready-made explanations. `hint` is always present when we solved. */
   explanations: Partial<Record<ExplanationDepth, Explanation>>;
   source: SolutionSource;
+  /**
+   * Set only for a FUZZY library/cache hit (0..1, below 1).
+   *
+   * On a fuzzy match the question shown is the STORED wording, not what the
+   * student photographed — cleaner and correct, but no longer literally
+   * theirs. The UI says so, because silently swapping a student's question
+   * for a similar one is the kind of thing that is only fine while it is
+   * right.
+   */
+  matchScore?: number;
   trace: ScanTrace;
 };
 
