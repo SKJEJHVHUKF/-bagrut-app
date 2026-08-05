@@ -399,6 +399,27 @@ check(
   'page.tsx: SolutionPanel חייב לקבל את סיבת החסימה, אחרת המצב הריק שלו לא יכול להסביר כלום.'
 );
 
+/**
+ * Structured outputs enforce STRUCTURE, not effort. A schema whose properties
+ * are all optional makes `{}` a valid answer, and returning nothing is always
+ * the cheapest way to satisfy it. This repo has already paid for that once:
+ * SOLVE_SCHEMA without `required` produced 9 output tokens, `{}`, and a
+ * student billed 4.5 agorot for an empty screen.
+ */
+for (const schema of ['SOLVE_SCHEMA', 'TRANSCRIBE_SCHEMA']) {
+  const body = routeCode.match(new RegExp(`const\\s+${schema}\\s*=\\s*\\{[\\s\\S]*?\\n\\};`))?.[0] ?? '';
+  check(body.length > 0, `route.ts: לא מצאתי את ${schema} — הבדיקה הזאת כבר לא בודקת כלום.`);
+  check(
+    /required:\s*\[\s*'/.test(body),
+    `route.ts: ל-${schema} אין required. סכימה שכל שדותיה אופציונליים הופכת {} לתשובה חוקית — והמודל יחזיר בדיוק את זה בשאלות הקשות, אחרי שהתלמיד כבר חויב.`
+  );
+}
+
+check(
+  /!parsed\.error\s*&&\s*!parsed\.transcribedQuestion\?\.trim\(\)/.test(routeCode),
+  'route.ts: תמלול ריק בלי הודעת שגיאה חייב לחזור כשגיאה, לא כ-200 ריק — אחרת התלמיד חויב, לא קיבל כלום, ולא נאמר לו למה.'
+);
+
 // ------------------------------------------------------------
 
 console.log(`\nquestion-bank contract: ${checks} בדיקות`);

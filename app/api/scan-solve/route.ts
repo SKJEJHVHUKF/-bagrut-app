@@ -103,8 +103,9 @@ const TRANSCRIBE_SYSTEM = `אתה קורא צילום של שאלת בגרות �
 - תמלל בדיוק כפי שכתוב, כולל כל הסעיפים. ביטויים מתמטיים ב-LaTeX ($...$ בשורה).
 - אל תפתור. רק תמלל וסווג.
 - זהה את הנושא העיקרי מתוך: ${KNOWN_TOPICS.join(' • ')}. אם לא ברור — "אלגברה".
-- אם התמונה מטושטשת → {"error": "התמונה לא ברורה מספיק. נסה לצלם שוב באור טוב ובזווית ישרה."}
-- אם אין בתמונה שאלת מתמטיקה → {"error": "לא זיהיתי שאלת מתמטיקה בתמונה."}`;
+- **תמיד** החזר את השדה transcribedQuestion. אם אי אפשר לתמלל — החזר אותו כמחרוזת ריקה ומלא את error.
+- אם התמונה מטושטשת → {"transcribedQuestion": "", "topic": "", "error": "התמונה לא ברורה מספיק. נסה לצלם שוב באור טוב ובזווית ישרה."}
+- אם אין בתמונה שאלת מתמטיקה → {"transcribedQuestion": "", "topic": "", "error": "לא זיהיתי שאלת מתמטיקה בתמונה."}`;
 
 // The solve prompt is built once at module load and marked for prompt
 // caching, so its ~1.5k tokens are billed once per 5-minute window instead
@@ -132,6 +133,26 @@ const SOLVE_SYSTEM = [
 גם אם השאלה קשה, ארוכה או חלקית — **תמיד החזר צעדים ותשובה סופית**. אם חלק מהנתונים חסר או לא ברור, אמור זאת במפורש בתוך צעד וכתוב את הפתרון עבור מה שכן נתון. אין אפשרות להחזיר תשובה ריקה.`,
 ].join('\n\n');
 
+/**
+ * ⚠️ `required` is load-bearing here for the SAME reason it is on
+ * SOLVE_SCHEMA below. Do not remove it. This schema was missing it.
+ *
+ * With every property optional, `{}` is a valid response — and returning
+ * nothing is always the cheapest way to satisfy a schema, which is why the
+ * solve schema produced exactly that on the hardest questions (measured: 9
+ * output tokens, `{}`, and a student billed 4.5 agorot for an empty screen).
+ *
+ * The same hole was open here, on the path that a signed-in student reaches
+ * only when the local read ALREADY failed — so the failure lands at the worst
+ * possible moment: the fallback that was supposed to rescue the scan returns
+ * `{}`, the pipeline keeps the mangled local text because an empty read
+ * scores lower, and the student pays for a transcription that produced
+ * nothing and then gets a solution based on scrambled text.
+ *
+ * `transcribedQuestion` is required and the prompt now specifies an empty
+ * string plus `error` for the unreadable cases, so "I could not read it" is
+ * an explicit answer rather than an absent field.
+ */
 const TRANSCRIBE_SCHEMA = {
   type: 'object',
   properties: {
@@ -139,6 +160,7 @@ const TRANSCRIBE_SCHEMA = {
     topic: { type: 'string' },
     transcribedQuestion: { type: 'string' },
   },
+  required: ['transcribedQuestion'],
   additionalProperties: false,
 };
 
@@ -653,6 +675,17 @@ async function handleTranscribe(request: Request) {
   }
   try {
     const parsed = JSON.parse(content.text) as { error?: string; topic?: string; transcribedQuestion?: string };
+    // Belt as well as braces. The schema now requires `transcribedQuestion`,
+    // but a schema is a request to the model, not a guarantee from it — and
+    // this is the one call the student reaches only after the free read has
+    // already failed. Returning 200 with nothing in it would leave them
+    // billed, unhelped, and with no message explaining either.
+    if (!parsed.error && !parsed.transcribedQuestion?.trim()) {
+      return json(
+        { error: 'הזיהוי בענן לא הצליח לקרוא את השאלה. נסה לצלם שוב באור טוב ובזווית ישרה.', costUsd },
+        { status: 502 }
+      );
+    }
     return json({ ...parsed, costUsd, usage: message.usage });
   } catch {
     return json({ error: 'תשובה לא תקינה מהמודל', costUsd }, { status: 502 });
