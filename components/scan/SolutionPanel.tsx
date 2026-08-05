@@ -4,15 +4,21 @@
 // components/scan/SolutionPanel.tsx — the result screen.
 // ============================================================
 //
-// Three depths behind three buttons — רמז → פתרון חלקי → פתרון מלא — and the
-// order is the product, not decoration. A student who can be unstuck by one
-// sentence should not be handed the answer, because reading a full solution
-// feels exactly like learning and isn't. So the answer is never on screen
-// until it is explicitly asked for, and the cheapest help is the default.
+// The full worked solution, on screen the moment the scan finishes.
 //
-// All three depths are already in memory when this renders: the pipeline
-// generated them from templates in microseconds for $0 (see
-// `lib/mathscan/explain.ts`). Pressing "רמז" is a state change, not a fetch.
+// Nothing is gated. The student photographed a question from a מתכונת they
+// couldn't solve — they have already done the trying, and asking them to
+// choose a "help level" before showing anything is friction dressed up as
+// pedagogy. The optional extra is the tutor underneath (QuestionTutor), which
+// they open only if something still doesn't land.
+//
+// A "רוצה לנסות לבד?" link swaps to the hint for whoever wants one. It is a
+// secondary control and it hides nothing: the full solution is one press
+// away, and it was the default.
+//
+// Every depth is already in memory when this renders — the pipeline built
+// them from templates in microseconds for $0 (`lib/mathscan/explain.ts`), so
+// switching is a state change, never a fetch.
 //
 // Rendering rules inherited from the rest of the app:
 //   · every Hebrew+LaTeX string goes through `MathText` with `math-content`,
@@ -26,7 +32,6 @@ import {
   BookOpen,
   CheckCircle2,
   Lightbulb,
-  ListOrdered,
   ShieldCheck,
   Sparkles,
   Zap,
@@ -47,14 +52,6 @@ const SOURCE_BADGE: Record<
 
 const DEPTH_ORDER: ExplanationDepth[] = ['hint', 'partial', 'full'];
 
-const DEPTH_BUTTONS: Record<
-  ExplanationDepth,
-  { label: string; Icon: typeof Lightbulb; note: string }
-> = {
-  hint: { label: 'רמז', Icon: Lightbulb, note: 'כיוון בלבד — בלי התשובה' },
-  partial: { label: 'פתרון חלקי', Icon: ListOrdered, note: 'כל השלבים חוץ מהאחרון' },
-  full: { label: 'פתרון מלא', Icon: BookOpen, note: 'כולל התשובה הסופית' },
-};
 
 /** Render a Hebrew+LaTeX string, degrading to plain text when the delimiters
  *  are not safe to hand to KaTeX. */
@@ -75,12 +72,27 @@ function Rich({ children }: { children: string }) {
 
 export function SolutionPanel({ result }: { result: ScanResult }) {
   const available = DEPTH_ORDER.filter((depth) => result.explanations[depth]);
-  // A library or AI solution arrives as one finished piece — there is no
-  // structured hint to derive from someone else's prose, so the panel shows
-  // what exists rather than inventing intermediate depths.
-  const [depth, setDepth] = useState<ExplanationDepth | null>(
-    available.length === 1 ? available[0] : null
-  );
+
+  /**
+   * The FULL solution is the default, and it is on screen the moment the scan
+   * finishes. No selector, no "how much help do you want", nothing to press.
+   *
+   * An earlier version gated it behind a three-way choice and showed nothing
+   * until the student picked. That was a pedagogy argument — reading a
+   * solution feels like learning and isn't — applied to the wrong screen. A
+   * student photographs a question from a מתכונת *because they already tried
+   * and failed*; making them ask for the answer again is friction, not
+   * teaching. The place to make someone work is practice, not the moment
+   * they're stuck at 11pm with an exam paper in front of them.
+   *
+   * The hint stays reachable for whoever wants to try once more first, as a
+   * small secondary control that hides nothing.
+   */
+  const [depth, setDepth] = useState<ExplanationDepth>('full');
+  const shown: ExplanationDepth = result.explanations[depth]
+    ? depth
+    : (available[available.length - 1] ?? 'full');
+  const canHint = Boolean(result.explanations.hint) && Boolean(result.explanations.full);
 
   if (available.length === 0) {
     return (
@@ -94,7 +106,7 @@ export function SolutionPanel({ result }: { result: ScanResult }) {
   }
 
   const badge = SOURCE_BADGE[result.source];
-  const explanation = depth ? result.explanations[depth] : null;
+  const explanation = result.explanations[shown] ?? null;
 
   return (
     <div className="space-y-4">
@@ -117,44 +129,30 @@ export function SolutionPanel({ result }: { result: ScanResult }) {
         <span className="scan-chip">{result.unitLevel} יח״ל</span>
       </div>
 
-      {available.length > 1 && (
-        <section className="scan-card p-4 space-y-3">
-          <div>
-            <h3 className="text-sm font-black">כמה עזרה אתה רוצה?</h3>
-            <p className="text-xs scan-muted mt-0.5">
-              התחל מהרמז. אם עדיין לא הסתדר — תמיד אפשר לפתוח את הפתרון המלא.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {DEPTH_ORDER.map((option) => {
-              if (!result.explanations[option]) return null;
-              const config = DEPTH_BUTTONS[option];
-              const active = depth === option;
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => setDepth(active ? null : option)}
-                  aria-pressed={active}
-                  className={`scan-btn flex-col !items-start gap-0.5 !py-3 text-right ${
-                    active ? 'scan-btn-primary' : ''
-                  }`}
-                >
-                  <span className="flex items-center gap-2 font-black">
-                    <config.Icon className="w-4 h-4" aria-hidden />
-                    {config.label}
-                  </span>
-                  <span
-                    className="text-[11px] font-medium"
-                    style={{ opacity: active ? 0.85 : 0.7 }}
-                  >
-                    {config.note}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+      {/* Secondary, and only when a hint actually exists. One line, clearly
+          labelled, and it never hides the solution behind a decision. */}
+      {canHint && (
+        <div className="flex items-center gap-2 text-xs">
+          {shown === 'full' ? (
+            <button
+              type="button"
+              onClick={() => setDepth('hint')}
+              className="scan-muted underline underline-offset-2 hover:opacity-80"
+            >
+              <Lightbulb className="w-3.5 h-3.5 inline-block ms-1" aria-hidden />
+              רוצה לנסות לבד? הצג רמז בלבד
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setDepth('full')}
+              className="scan-btn scan-btn-primary !py-2 !px-4 !text-xs"
+            >
+              <BookOpen className="w-3.5 h-3.5" aria-hidden />
+              <span>חזור לפתרון המלא</span>
+            </button>
+          )}
+        </div>
       )}
 
       {explanation && (

@@ -129,9 +129,9 @@ export function QuestionTutor({ result }: { result: ScanResult }) {
           <MessageCircle className="w-5 h-5" style={{ color: 'var(--scan-primary)' }} />
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block font-black text-sm">משהו עדיין לא ברור?</span>
+          <span className="block font-black text-sm">משהו עדיין לא ברור? שאל את העוזר האישי</span>
           <span className="block text-xs scan-muted mt-0.5">
-            שאל את המורה על השאלה הזאת — הוא רואה אותה ואת הפתרון
+            הוא רואה את השאלה שצילמת ואת הפתרון שלמעלה — אפשר לשאול על כל שלב
           </span>
         </span>
       </button>
@@ -142,7 +142,7 @@ export function QuestionTutor({ result }: { result: ScanResult }) {
     <section className="scan-card p-4 space-y-3" aria-label="מורה לשאלה">
       <header className="flex items-center gap-2">
         <MessageCircle className="w-4 h-4" style={{ color: 'var(--scan-primary)' }} aria-hidden />
-        <h3 className="text-sm font-black flex-1">המורה לשאלה הזאת</h3>
+        <h3 className="text-sm font-black flex-1">עוזר אישי לשאלה הזאת</h3>
         {turnsLeft !== null && turnsLeft <= 2 && (
           <span className="scan-chip scan-chip-warn">נותרו {turnsLeft} תשובות</span>
         )}
