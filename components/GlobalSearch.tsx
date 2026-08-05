@@ -91,7 +91,7 @@ export default function GlobalSearch() {
           >
             {/* Input */}
             <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-900/[0.08]">
-              <Search className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+              <Search className="w-5 h-5 text-violet-600 flex-shrink-0" />
               <input
                 ref={inputRef}
                 value={query}
@@ -140,7 +140,7 @@ export default function GlobalSearch() {
                             onClick={() => go(item)}
                             onMouseEnter={() => setSelected(idx)}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-right transition-colors ${
-                              active ? 'bg-indigo-500/10 border border-indigo-500/25' : 'border border-transparent hover:bg-slate-900/[0.03]'
+                              active ? 'bg-violet-500/10 border border-violet-500/25' : 'border border-transparent hover:bg-slate-900/[0.03]'
                             }`}
                           >
                             <span className="text-lg flex-shrink-0">{item.emoji ?? '🔎'}</span>

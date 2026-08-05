@@ -25,7 +25,7 @@ export default function RoadmapLessonPage() {
         <div className="text-center py-16 space-y-3">
           <div className="text-4xl">🤔</div>
           <p className="text-slate-600">השלב הזה לא נמצא במסלול.</p>
-          <Link href="/roadmap" className="text-indigo-700 font-bold hover:text-indigo-900">
+          <Link href="/roadmap" className="text-violet-700 font-bold hover:text-violet-900">
             חזרה למפת הלמידה
           </Link>
         </div>

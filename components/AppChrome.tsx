@@ -202,7 +202,7 @@ export default function AppChrome() {
       <button
         onClick={() => setOpen(true)}
         aria-label="הפרופיל שלי"
-        className="fixed top-3 left-3 z-[60] w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-black text-sm flex items-center justify-center shadow-lg shadow-indigo-500/30 ring-2 ring-white hover:scale-105 transition-transform"
+        className="fixed top-3 left-3 z-[60] w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-violet-600 text-white font-black text-sm flex items-center justify-center shadow-lg shadow-violet-500/30 ring-2 ring-white hover:scale-105 transition-transform"
       >
         {initials}
       </button>
@@ -231,7 +231,7 @@ export default function AppChrome() {
               {/* Header */}
               <div className="p-5 border-b border-slate-900/[0.08]">
                 <div className="flex items-start justify-between">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-black text-lg flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 text-white font-black text-lg flex items-center justify-center shadow-lg shadow-violet-500/30">
                     {initials}
                   </div>
                   <button
@@ -253,7 +253,7 @@ export default function AppChrome() {
                         placeholder="השם שלך"
                         autoFocus
                         maxLength={40}
-                        className="flex-1 min-w-0 bg-white border border-slate-900/15 focus:border-indigo-500/60 rounded-lg px-2.5 py-1.5 text-sm text-slate-900 outline-none"
+                        className="flex-1 min-w-0 bg-white border border-slate-900/15 focus:border-violet-500/60 rounded-lg px-2.5 py-1.5 text-sm text-slate-900 outline-none"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') saveName();
                           if (e.key === 'Escape') setEditing(false);
@@ -263,7 +263,7 @@ export default function AppChrome() {
                         onClick={saveName}
                         disabled={saving}
                         aria-label="שמור"
-                        className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center disabled:opacity-60"
+                        className="w-8 h-8 rounded-lg bg-violet-600 text-white flex items-center justify-center disabled:opacity-60"
                       >
                         <Check className="w-4 h-4" />
                       </button>
@@ -277,7 +277,7 @@ export default function AppChrome() {
                       className="group flex items-center gap-1.5 text-right"
                     >
                       <span className="font-black text-lg text-slate-900">{displayName}</span>
-                      <Pencil className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                      <Pencil className="w-3.5 h-3.5 text-slate-400 group-hover:text-violet-600 transition-colors" />
                     </button>
                   )}
                   <div className="text-xs text-slate-500 mt-0.5 truncate">{profile.email}</div>
@@ -312,7 +312,7 @@ export default function AppChrome() {
                           onClick={() => changeUnits(u)}
                           className={
                             units === u
-                              ? 'rounded-lg py-1.5 text-xs font-black bg-indigo-600 text-white border border-indigo-600'
+                              ? 'rounded-lg py-1.5 text-xs font-black bg-violet-600 text-white border border-violet-600'
                               : 'rounded-lg py-1.5 text-xs font-bold bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-600'
                           }
                         >
@@ -336,7 +336,7 @@ export default function AppChrome() {
                           onClick={() => changePaper(p)}
                           className={
                             paper === p
-                              ? 'rounded-lg py-1.5 text-xs font-black bg-indigo-600 text-white border border-indigo-600'
+                              ? 'rounded-lg py-1.5 text-xs font-black bg-violet-600 text-white border border-violet-600'
                               : 'rounded-lg py-1.5 text-xs font-bold bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-600'
                           }
                         >
@@ -357,7 +357,7 @@ export default function AppChrome() {
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-900/[0.04] text-slate-700 hover:text-slate-900 transition-colors group"
                 >
-                  <SearchIcon className="w-4.5 h-4.5 text-indigo-600" />
+                  <SearchIcon className="w-4.5 h-4.5 text-violet-600" />
                   <span className="flex-1 text-right text-sm font-bold">חיפוש</span>
                   <span className="text-[10px] text-slate-400 font-mono">Ctrl+K</span>
                 </button>
@@ -380,7 +380,7 @@ export default function AppChrome() {
                     onClick={() => setOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-900/[0.04] text-slate-700 hover:text-slate-900 transition-colors group"
                   >
-                    <Icon className="w-4.5 h-4.5 text-indigo-600" />
+                    <Icon className="w-4.5 h-4.5 text-violet-600" />
                     <span className="flex-1 text-sm font-bold">{label}</span>
                     <ChevronLeft className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:-translate-x-0.5 transition-all" />
                   </Link>

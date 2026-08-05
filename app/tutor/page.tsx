@@ -154,7 +154,7 @@ export default function TutorWorkbenchPage() {
                 rows={2}
                 maxLength={2000}
                 placeholder="העתק את נוסח השאלה…"
-                className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-400"
+                className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-violet-400"
               />
             </label>
 
@@ -171,7 +171,7 @@ export default function TutorWorkbenchPage() {
 נגזור: f'(x) = 3x^2 - 12
 נאפס: 3x^2 - 12 = 0
 לכן x = 2`}
-                className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-400"
+                className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-violet-400"
               />
             </label>
 

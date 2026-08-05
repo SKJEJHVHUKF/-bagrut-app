@@ -69,7 +69,7 @@ export default function ReviewPage() {
             </p>
             <Link
               href="/roadmap"
-              className="inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 px-5 py-2.5 rounded-2xl font-bold text-white text-sm"
+              className="inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 px-5 py-2.5 rounded-2xl font-bold text-white text-sm"
             >
               חזרה למפה <ArrowLeft className="w-4 h-4" />
             </Link>
@@ -80,7 +80,7 @@ export default function ReviewPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="surface-premium rounded-3xl p-8 text-center space-y-3"
           >
-            <RotateCcw className="w-10 h-10 mx-auto text-indigo-500" />
+            <RotateCcw className="w-10 h-10 mx-auto text-violet-500" />
             <div className="font-display text-xl font-black text-slate-900">סיימת את החזרה היומית!</div>
             <p className="text-sm text-slate-600">
               חזרת על {queue.length} שאלות · {correct} נכונות בניסיון ראשון. השאלות שטעית בהן יחזרו

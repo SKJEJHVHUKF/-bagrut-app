@@ -8,7 +8,7 @@ import { MathText } from './MathText';
 const DIFFICULTY_META: Record<WorkedExample['difficulty'], { label: string; dot: string; color: string }> = {
   easy: { label: 'קל', dot: '🟢', color: 'text-emerald-700' },
   mid: { label: 'בינוני', dot: '🟡', color: 'text-amber-700' },
-  hard: { label: 'מאתגר', dot: '🔴', color: 'text-indigo-700' },
+  hard: { label: 'מאתגר', dot: '🔴', color: 'text-violet-700' },
 };
 
 export function WorkedExampleCard({ example, index }: { example: WorkedExample; index: number }) {
@@ -21,7 +21,7 @@ export function WorkedExampleCard({ example, index }: { example: WorkedExample; 
         onClick={() => setOpen((o) => !o)}
         className="w-full text-right px-4 py-3.5 flex items-start gap-3 hover:bg-slate-900/[0.04] active:bg-slate-900/[0.05] transition-colors"
       >
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-xs font-black text-indigo-800">
+        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-violet-500/30 border border-violet-400/50 flex items-center justify-center text-xs font-black text-violet-800">
           {index + 1}
         </div>
         <div className="flex-1 min-w-0">
@@ -35,7 +35,7 @@ export function WorkedExampleCard({ example, index }: { example: WorkedExample; 
             <MathText inline>{example.problem}</MathText>
           </div>
         </div>
-        <div className="flex-shrink-0 flex items-center gap-1 text-indigo-700 pt-0.5">
+        <div className="flex-shrink-0 flex items-center gap-1 text-violet-700 pt-0.5">
           <span className="text-[11px] font-semibold whitespace-nowrap">
             {open ? 'הסתר' : 'הצג פתרון'}
           </span>
@@ -55,7 +55,7 @@ export function WorkedExampleCard({ example, index }: { example: WorkedExample; 
           <ol className="space-y-2">
             {example.steps.map((step, i) => (
               <li key={i} className="flex gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-800">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-500/25 border border-violet-400/40 flex items-center justify-center text-[11px] font-black text-violet-800">
                   {i + 1}
                 </div>
                 <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5">

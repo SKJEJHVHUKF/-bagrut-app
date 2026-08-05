@@ -50,7 +50,7 @@ export default function MyPlanPage() {
   if (loading || !plan) {
     return (
       <div className="min-h-screen text-slate-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -153,17 +153,17 @@ export default function MyPlanPage() {
           <motion.div variants={fadeUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
             <Link
               href="/scan"
-              className="card-3d block bg-gradient-to-br from-indigo-600/15 to-indigo-600/15 border border-indigo-500/40 hover:border-indigo-500/70 rounded-2xl p-4"
+              className="card-3d block bg-gradient-to-br from-violet-600/15 to-violet-600/15 border border-violet-500/40 hover:border-violet-500/70 rounded-2xl p-4"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center shadow-lg shadow-violet-500/30 flex-shrink-0">
                   <Camera className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-sm sm:text-base text-slate-900">צלמי שאלה — קבלי פתרון מ-AI</div>
                   <div className="text-xs text-slate-600 mt-0.5">פתרון צעד-אחר-צעד, נשמר בספרייה לפי נושא</div>
                 </div>
-                <ArrowLeft className="w-4 h-4 text-indigo-700 flex-shrink-0" />
+                <ArrowLeft className="w-4 h-4 text-violet-700 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -174,7 +174,7 @@ export default function MyPlanPage() {
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center flex-shrink-0">
-                  <BookOpen className="w-5 h-5 text-indigo-800" />
+                  <BookOpen className="w-5 h-5 text-violet-800" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-sm sm:text-base text-slate-900">הספרייה שלי</div>
@@ -237,7 +237,7 @@ export default function MyPlanPage() {
           {!pro && (
             <Link
               href="/pricing"
-              className="block bg-gradient-to-br from-indigo-600/15 to-indigo-600/15 border border-indigo-500/40 rounded-2xl p-5 text-center space-y-3"
+              className="block bg-gradient-to-br from-violet-600/15 to-violet-600/15 border border-violet-500/40 rounded-2xl p-5 text-center space-y-3"
             >
               <Crown className="w-8 h-8 mx-auto text-amber-700" />
               <div>
@@ -288,7 +288,7 @@ function TopicCard({
     <div
       className={
         accessible
-          ? 'card-3d bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border-slate-900/10 hover:border-indigo-500/40 rounded-2xl p-4 border transition-all block'
+          ? 'card-3d bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border-slate-900/10 hover:border-violet-500/40 rounded-2xl p-4 border transition-all block'
           : 'bg-slate-900/[0.02] border-slate-900/[0.06] rounded-2xl p-4 border opacity-70'
       }
     >
@@ -296,7 +296,7 @@ function TopicCard({
         <div
           className={
             accessible
-              ? 'w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white flex-shrink-0'
+              ? 'w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center font-black text-white flex-shrink-0'
               : 'w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center font-black text-slate-500 flex-shrink-0'
           }
         >
@@ -311,7 +311,7 @@ function TopicCard({
           <div className="flex items-center gap-3 mt-1.5">
             <div className="flex-1 h-1.5 bg-slate-900/5 rounded-full overflow-hidden max-w-[120px]">
               <div
-                className="h-full bg-gradient-to-l from-indigo-500 to-indigo-500 transition-all"
+                className="h-full bg-gradient-to-l from-violet-500 to-violet-500 transition-all"
                 style={{ width: `${topic.completion}%` }}
               />
             </div>
@@ -326,7 +326,7 @@ function TopicCard({
             </div>
           )}
           {accessible && (
-            <ArrowLeft className="w-4 h-4 text-indigo-700" />
+            <ArrowLeft className="w-4 h-4 text-violet-700" />
           )}
         </div>
       </div>
@@ -354,7 +354,7 @@ function Stat({
 }) {
   const colors = {
     emerald: 'text-emerald-700',
-    purple: 'text-indigo-700',
+    purple: 'text-violet-700',
     amber: 'text-amber-700',
   };
   return (
@@ -378,11 +378,11 @@ function BackgroundOrbs() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       <div
-        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse"
+        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/30 blur-[120px] animate-pulse"
         style={{ animationDuration: '8s' }}
       />
       <div
-        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse"
+        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/25 blur-[120px] animate-pulse"
         style={{ animationDuration: '10s', animationDelay: '2s' }}
       />
     </div>
@@ -394,21 +394,21 @@ function TopBar() {
     <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 via-violet-500 to-amber-400 flex items-center justify-center shadow-xl shadow-violet-500/50 ring-1 ring-slate-900/10">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
               <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
             </svg>
           </div>
           <div>
             <div className="text-base font-black font-display text-slate-800">
-              בגרות בכיס
+              MathUp
             </div>
             <div className="text-[10px] text-slate-600 -mt-0.5">התוכנית שלי</div>
           </div>
         </Link>
         <Link
           href="/"
-          className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+          className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
           title="חזרה לדף הבית"
         >
           <Home className="w-3.5 h-3.5" />

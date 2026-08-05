@@ -106,7 +106,7 @@ export default function TeachPage() {
 
         {!topic ? (
           <div className="surface-premium rounded-3xl p-5 space-y-3">
-            <div className="text-xs font-black tracking-widest text-indigo-700 uppercase">
+            <div className="text-xs font-black tracking-widest text-violet-700 uppercase">
               1 · בחר נושא
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -116,7 +116,7 @@ export default function TeachPage() {
                   <button
                     key={t}
                     onClick={() => setTopic(t)}
-                    className="flex items-center gap-2 text-right px-4 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-indigo-500/40 transition-colors"
+                    className="flex items-center gap-2 text-right px-4 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-violet-500/40 transition-colors"
                   >
                     <span className="text-base flex-shrink-0">{m?.emoji ?? '📐'}</span>
                     <span className="font-bold text-sm text-slate-900">{t}</span>
@@ -129,12 +129,12 @@ export default function TeachPage() {
           <>
             <button
               onClick={() => setTopic(null)}
-              className="text-sm text-indigo-700 hover:text-indigo-900 font-bold transition-colors"
+              className="text-sm text-violet-700 hover:text-violet-900 font-bold transition-colors"
             >
               ← בחר נושא אחר
             </button>
             <div className="surface-premium rounded-3xl p-5 space-y-3">
-              <div className="text-xs font-black tracking-widest text-indigo-700 uppercase">
+              <div className="text-xs font-black tracking-widest text-violet-700 uppercase">
                 2 · מה תלמד אותה?
               </div>
               <div className="space-y-2">
@@ -142,7 +142,7 @@ export default function TeachPage() {
                   <button
                     key={s.id}
                     onClick={() => setSubId(s.id)}
-                    className="w-full flex items-start gap-3 text-right px-4 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-indigo-500/40 transition-colors"
+                    className="w-full flex items-start gap-3 text-right px-4 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-violet-500/40 transition-colors"
                   >
                     <span className="text-base flex-shrink-0 mt-0.5">{s.emoji ?? '📘'}</span>
                     {/* Titles and taglines carry LaTeX ("מציאת $z$ מתנאים",
@@ -167,7 +167,7 @@ export default function TeachPage() {
           <>
             <button
               onClick={() => setSubId(null)}
-              className="text-sm text-indigo-700 hover:text-indigo-900 font-bold transition-colors"
+              className="text-sm text-violet-700 hover:text-violet-900 font-bold transition-colors"
             >
               ← בחר תת-נושא אחר
             </button>

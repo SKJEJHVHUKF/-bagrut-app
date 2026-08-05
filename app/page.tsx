@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hasPlan } from '@/lib/study-plan';
+import MathUpLogo from '@/components/MathUpLogo';
 import {
   fadeUp,
   heroStagger,
@@ -40,41 +41,15 @@ import {
   availableTopics as bagruyotTopics,
 } from '@/content/past-bagruyot';
 
-// Custom Logo Component — single indigo brand mark (no rainbow gradient).
-function BagrutLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const sizes = {
-    sm: { box: 'w-8 h-8', icon: 'w-4 h-4', radius: 'rounded-xl' },
-    md: { box: 'w-10 h-10', icon: 'w-5 h-5', radius: 'rounded-2xl' },
-    lg: { box: 'w-16 h-16', icon: 'w-9 h-9', radius: 'rounded-3xl' },
-  };
-  const s = sizes[size];
-
-  return (
-    <div className={`relative ${s.box} ${s.radius} bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/40 ring-1 ring-slate-900/10`}>
-      <svg viewBox="0 0 24 24" fill="none" className={`${s.icon} text-white`}>
-        <path
-          d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-          fill="currentColor"
-        />
-        <path
-          d="M12 8L13 11L16 12L13 13L12 16L11 13L8 12L11 11L12 8Z"
-          fill="rgba(255,255,255,0.45)"
-        />
-      </svg>
-      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-indigo-300 rounded-full blur-[2px] opacity-70" />
-    </div>
-  );
-}
-
 /** Small section eyebrow label — muted indigo, calm. */
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-center gap-3 mb-4">
-      <span className="h-px w-7 bg-gradient-to-l from-indigo-400/50 to-transparent" />
-      <span className="text-[11px] sm:text-xs font-semibold text-indigo-800 tracking-[0.22em]">
+      <span className="h-px w-7 bg-gradient-to-l from-violet-400/50 to-transparent" />
+      <span className="text-[11px] sm:text-xs font-semibold text-violet-800 tracking-[0.22em]">
         {children}
       </span>
-      <span className="h-px w-7 bg-gradient-to-r from-indigo-400/50 to-transparent" />
+      <span className="h-px w-7 bg-gradient-to-r from-violet-400/50 to-transparent" />
     </div>
   );
 }
@@ -129,15 +104,15 @@ export default function Landing() {
       <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <BagrutLogo size="md" />
+            <MathUpLogo size="md" />
             <span className="font-display text-xl sm:text-2xl text-slate-900">
-              בגרות בכיס
+              MathUp
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Link
               href="/roadmap"
-              className="group flex items-center gap-1.5 chip-primary hover:bg-indigo-200/70 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all"
+              className="group flex items-center gap-1.5 chip-primary hover:bg-violet-200/70 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all"
               title="מסלול הלמידה"
             >
               <Target className="w-4 h-4" />
@@ -145,10 +120,10 @@ export default function Landing() {
             </Link>
             <Link
               href="/chat"
-              className="group flex items-center gap-1.5 bg-white/70 hover:bg-white border border-white/60 hover:border-indigo-500/30 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition-all"
+              className="group flex items-center gap-1.5 bg-white/70 hover:bg-white border border-white/60 hover:border-violet-500/30 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition-all"
               title="צ'אט עם המורה הפרטי"
             >
-              <MessageSquare className="w-4 h-4 text-indigo-500" />
+              <MessageSquare className="w-4 h-4 text-violet-500" />
               <span className="hidden sm:inline">המורה הפרטי</span>
             </Link>
           </div>
@@ -193,7 +168,7 @@ export default function Landing() {
 
         <motion.div variants={fadeUp} className="mb-7">
           <span className="inline-flex items-center gap-2 glass-card rounded-full px-4 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 tracking-wide">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+            <Sparkles className="w-3.5 h-3.5 text-violet-500" />
             תרגול חכם לבגרות · בעברית · בחינם
           </span>
         </motion.div>
@@ -202,8 +177,8 @@ export default function Landing() {
           variants={fadeUp}
           className="font-display text-5xl sm:text-7xl md:text-8xl leading-[1.05] mb-7 sm:mb-9 text-slate-900"
         >
-          <span className="block">הבגרות שלך,</span>
-          <span className="block gradient-text">בכיס שלך</span>
+          <span className="block">מתרגלים חכם,</span>
+          <span className="block gradient-text">מצליחים יותר</span>
         </motion.h1>
 
         <motion.p
@@ -226,7 +201,7 @@ export default function Landing() {
             className="inline-flex items-center gap-2 glass-card hover:bg-white px-6 py-4 rounded-2xl font-bold text-slate-800 transition-all"
           >
             <span>איך זה עובד?</span>
-            <ChevronDown className="w-5 h-5 text-indigo-500" />
+            <ChevronDown className="w-5 h-5 text-violet-500" />
           </motion.a>
         </motion.div>
 
@@ -261,13 +236,13 @@ export default function Landing() {
         <motion.div variants={fadeUp} className="mb-8 sm:mb-10">
           <Link
             href="/roadmap"
-            className="card-3d-strong group relative block rounded-3xl p-6 sm:p-8 glass-card hover:border-indigo-500/40 overflow-hidden"
+            className="card-3d-strong group relative block rounded-3xl p-6 sm:p-8 glass-card hover:border-violet-500/40 overflow-hidden"
           >
             {/* Soft indigo bloom behind the glass — the banner is the primary
                 path, so it gets the one saturated moment on the page. */}
-            <div className="absolute -top-24 -left-16 w-72 h-72 rounded-full bg-indigo-400/25 blur-[90px] pointer-events-none" />
+            <div className="absolute -top-24 -left-16 w-72 h-72 rounded-full bg-violet-400/25 blur-[90px] pointer-events-none" />
             <div className="relative flex items-center gap-4 sm:gap-5">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl sm:text-3xl shadow-lg shadow-indigo-500/30 flex-shrink-0">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center text-2xl sm:text-3xl shadow-lg shadow-violet-500/30 flex-shrink-0">
                 🗺️
               </div>
               <div className="flex-1 min-w-0">
@@ -281,7 +256,7 @@ export default function Landing() {
                   לומדים ← חימום ← ביסוס ← אתגר ← בגרות. כל רמה פותחת את הבאה, עם כוכבים ומעקב התקדמות מלא.
                 </p>
               </div>
-              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-violet-500 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
             </div>
           </Link>
         </motion.div>
@@ -415,11 +390,11 @@ export default function Landing() {
               variants={fadeUp}
               whileHover={{ y: -4 }}
               transition={{ duration: 0.2 }}
-              className="group glass-card rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors"
+              className="group glass-card rounded-2xl p-6 sm:p-8 hover:border-violet-500/40 transition-colors"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[var(--primary-container)] border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                  <p.icon className="w-6 h-6 text-indigo-700" />
+                <div className="w-12 h-12 rounded-xl bg-[var(--primary-container)] border border-violet-500/20 flex items-center justify-center flex-shrink-0">
+                  <p.icon className="w-6 h-6 text-violet-700" />
                 </div>
                 <div>
                   <h3 className="font-display text-lg sm:text-xl font-bold mb-2 text-slate-800">{p.title}</h3>
@@ -450,14 +425,14 @@ export default function Landing() {
               variants={fadeUp}
               whileHover={{ y: -5 }}
               transition={{ duration: 0.2 }}
-              className="group relative glass-card rounded-2xl p-6 sm:p-8 hover:border-indigo-500/40 transition-colors overflow-hidden"
+              className="group relative glass-card rounded-2xl p-6 sm:p-8 hover:border-violet-500/40 transition-colors overflow-hidden"
             >
               <div className="absolute top-2 left-4 font-display text-7xl sm:text-8xl font-black text-slate-900/[0.04] select-none">
                 {s.num}
               </div>
               <div className="relative z-10">
-                <div className="w-14 h-14 rounded-2xl bg-[var(--primary-container)] border border-indigo-500/20 flex items-center justify-center mb-5">
-                  <s.icon className="w-7 h-7 text-indigo-700" />
+                <div className="w-14 h-14 rounded-2xl bg-[var(--primary-container)] border border-violet-500/20 flex items-center justify-center mb-5">
+                  <s.icon className="w-7 h-7 text-violet-700" />
                 </div>
                 <h3 className="font-display text-xl font-bold mb-3 text-slate-800">{s.title}</h3>
                 <p className="text-slate-600 leading-relaxed">{s.desc}</p>
@@ -489,7 +464,7 @@ export default function Landing() {
             <motion.div key={i} variants={scaleIn} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
               <Link
                 href="/quiz"
-                className="card-3d group relative glass-card rounded-2xl p-5 sm:p-6 text-center hover:border-indigo-500/40 block h-full"
+                className="card-3d group relative glass-card rounded-2xl p-5 sm:p-6 text-center hover:border-violet-500/40 block h-full"
               >
                 <div className="icon-3d text-4xl sm:text-5xl mb-3 inline-block">{s.emoji}</div>
                 <div className="font-bold text-sm sm:text-base mb-1 text-slate-800">{s.name}</div>
@@ -520,11 +495,11 @@ export default function Landing() {
             variants={fadeUp}
             whileHover={{ y: -4 }}
             transition={{ duration: 0.2 }}
-            className="relative glass-card rounded-3xl p-8 hover:border-indigo-500/30 transition-colors"
+            className="relative glass-card rounded-3xl p-8 hover:border-violet-500/30 transition-colors"
           >
             <div className="flex items-center gap-2 mb-2">
-              <Gift className="w-5 h-5 text-indigo-600" />
-              <span className="text-indigo-700 font-bold text-sm tracking-wide">חינמי</span>
+              <Gift className="w-5 h-5 text-violet-600" />
+              <span className="text-violet-700 font-bold text-sm tracking-wide">חינמי</span>
             </div>
             <div className="flex items-baseline gap-2 mb-6">
               <span className="font-display text-5xl font-black text-slate-800">₪0</span>
@@ -539,8 +514,8 @@ export default function Landing() {
                 'גישה ממכל מכשיר',
               ].map((f, i) => (
                 <li key={i} className="flex items-center gap-3 text-slate-700">
-                  <div className="w-5 h-5 rounded-full bg-indigo-500/15 border border-indigo-500/35 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3 h-3 text-indigo-700" strokeWidth={3} />
+                  <div className="w-5 h-5 rounded-full bg-violet-500/15 border border-violet-500/35 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3 h-3 text-violet-700" strokeWidth={3} />
                   </div>
                   <span>{f}</span>
                 </li>
@@ -559,17 +534,17 @@ export default function Landing() {
             variants={fadeUp}
             whileHover={{ y: -4 }}
             transition={{ duration: 0.2 }}
-            className="relative bg-[var(--primary-container)]/70 border-2 border-indigo-500/35 rounded-3xl p-8 shadow-xl shadow-indigo-500/15 backdrop-blur-[12px]"
+            className="relative bg-[var(--primary-container)]/70 border-2 border-violet-500/35 rounded-3xl p-8 shadow-xl shadow-violet-500/15 backdrop-blur-[12px]"
           >
             <div className="absolute -top-3 right-6 bg-amber-400 px-3 py-1 rounded-full text-xs font-black tracking-wide text-amber-950 shadow-lg">
               למי שרוצה 100
             </div>
             <div className="flex items-center gap-2 mb-2">
-              <Rocket className="w-5 h-5 text-indigo-600" />
-              <span className="text-indigo-700 font-bold text-sm tracking-wide">Pro</span>
+              <Rocket className="w-5 h-5 text-violet-600" />
+              <span className="text-violet-700 font-bold text-sm tracking-wide">Pro</span>
             </div>
             <div className="flex items-baseline gap-2 mb-6">
-              <span className="font-display text-5xl font-black text-indigo-800">₪129</span>
+              <span className="font-display text-5xl font-black text-violet-800">₪129</span>
               <span className="text-sm text-slate-700">חצי שנה · כמו שיעור אחד</span>
             </div>
             <ul className="space-y-3 mb-8">
@@ -582,8 +557,8 @@ export default function Landing() {
                 'מחברת טעויות ואנליטיקה מתקדמת',
               ].map((f, i) => (
                 <li key={i} className="flex items-center gap-3 text-slate-800">
-                  <div className="w-5 h-5 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3 h-3 text-indigo-800" strokeWidth={3} />
+                  <div className="w-5 h-5 rounded-full bg-violet-500/30 border border-violet-400/50 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3 h-3 text-violet-800" strokeWidth={3} />
                   </div>
                   <span>{f}</span>
                 </li>
@@ -615,7 +590,7 @@ export default function Landing() {
             <motion.div
               key={i}
               variants={fadeUp}
-              className="surface-premium rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-colors"
+              className="surface-premium rounded-2xl overflow-hidden hover:border-violet-500/30 transition-colors"
             >
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -623,7 +598,7 @@ export default function Landing() {
               >
                 <span className="text-base sm:text-lg font-bold text-slate-800">{item.q}</span>
                 <ChevronDown
-                  className={`w-5 h-5 text-indigo-600 flex-shrink-0 transition-transform ${
+                  className={`w-5 h-5 text-violet-600 flex-shrink-0 transition-transform ${
                     openFaq === i ? 'rotate-180' : ''
                   }`}
                 />
@@ -659,10 +634,10 @@ export default function Landing() {
           variants={scaleIn}
           className="relative glass-card rounded-3xl p-8 sm:p-16 text-center overflow-hidden"
         >
-          <div className="absolute top-[-30%] left-1/2 -translate-x-1/2 w-[520px] h-[320px] rounded-full bg-indigo-400/30 blur-[110px] pointer-events-none" />
+          <div className="absolute top-[-30%] left-1/2 -translate-x-1/2 w-[520px] h-[320px] rounded-full bg-violet-400/30 blur-[110px] pointer-events-none" />
           <div className="relative z-10">
-            <div className="inline-flex w-14 h-14 rounded-2xl bg-[var(--primary-container)] border border-indigo-500/25 items-center justify-center mb-6">
-              <Sparkles className="w-7 h-7 text-indigo-600" />
+            <div className="inline-flex w-14 h-14 rounded-2xl bg-[var(--primary-container)] border border-violet-500/25 items-center justify-center mb-6">
+              <Sparkles className="w-7 h-7 text-violet-600" />
             </div>
             <motion.h2 variants={fadeUp} className="font-display text-3xl sm:text-5xl font-bold mb-4 text-slate-900 leading-[1.2]">
               מוכן להפוך את הבגרות לקלה?
@@ -690,8 +665,8 @@ export default function Landing() {
       <footer className="relative z-10 border-t border-slate-900/[0.06] mt-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <BagrutLogo size="sm" />
-            <span className="font-display text-sm font-bold text-slate-800">בגרות בכיס</span>
+            <MathUpLogo size="sm" />
+            <span className="font-display text-sm font-bold text-slate-800">MathUp</span>
           </div>
           <nav className="flex items-center gap-3 text-xs text-slate-600">
             <Link href="/privacy" className="hover:text-slate-800 underline-offset-2 hover:underline transition-colors">
@@ -703,7 +678,7 @@ export default function Landing() {
             </Link>
           </nav>
           <div className="text-xs text-slate-500 text-center sm:text-left">
-            © 2026 בגרות בכיס · נוצר עם Claude AI של Anthropic
+            © 2026 MathUp · נוצר עם Claude AI של Anthropic
           </div>
         </div>
       </footer>
@@ -734,7 +709,7 @@ function ModeCard({
   // used to be text-teal-300, a light-on-dark leftover that was effectively
   // invisible here.
   const tones = {
-    indigo: { chip: 'bg-[var(--primary-container)] border-indigo-500/20 text-indigo-700', cta: 'text-indigo-600' },
+    indigo: { chip: 'bg-[var(--primary-container)] border-violet-500/20 text-violet-700', cta: 'text-violet-600' },
     amber: { chip: 'bg-amber-100 border-amber-400/30 text-amber-700', cta: 'text-amber-700' },
     teal: { chip: 'bg-teal-100 border-teal-500/25 text-teal-700', cta: 'text-teal-700' },
   }[tone];
@@ -743,7 +718,7 @@ function ModeCard({
     <motion.div variants={fadeUp} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
       <Link
         href={href}
-        className="card-3d-strong group relative glass-card hover:border-indigo-500/30 rounded-3xl p-6 block h-full"
+        className="card-3d-strong group relative glass-card hover:border-violet-500/30 rounded-3xl p-6 block h-full"
       >
         {badge && (
           <div className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-amber-100 border border-amber-400/35 text-[10px] font-black tracking-wide text-amber-700">
@@ -776,7 +751,7 @@ function BagruyotFeature({
 }) {
   return (
     <div className="surface-premium rounded-2xl p-4 text-center sm:text-right">
-      <div className="w-9 h-9 rounded-xl bg-[var(--primary-container)] border border-indigo-500/20 flex items-center justify-center text-indigo-700 mb-2 mx-auto sm:mx-0">
+      <div className="w-9 h-9 rounded-xl bg-[var(--primary-container)] border border-violet-500/20 flex items-center justify-center text-violet-700 mb-2 mx-auto sm:mx-0">
         {icon}
       </div>
       <div className="font-bold text-sm text-slate-800 mb-1">{title}</div>

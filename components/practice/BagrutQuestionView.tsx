@@ -80,7 +80,7 @@ export function BagrutQuestionView({
   if (loading) {
     return (
       <div className="space-y-3 py-10 text-center">
-        <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600" />
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-600" />
         <div className="text-sm text-slate-600">מכין שאלת בגרות עבורך — לוקח 20-40 שניות…</div>
       </div>
     );
@@ -89,7 +89,7 @@ export function BagrutQuestionView({
   if (error) {
     return (
       <div className="space-y-3">
-        <div className="text-sm text-indigo-700 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-4 py-3">
+        <div className="text-sm text-violet-700 bg-violet-500/10 border border-violet-500/30 rounded-xl px-4 py-3">
           {error}
         </div>
         <button
@@ -109,7 +109,7 @@ export function BagrutQuestionView({
     <div className="space-y-4">
       {/* Meta strip */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-800 font-bold">
+        <span className="px-2.5 py-1 rounded-lg bg-violet-500/15 border border-violet-500/30 text-violet-800 font-bold">
           {subjectLabel}
         </span>
         <span className="text-slate-500">•</span>
@@ -125,7 +125,7 @@ export function BagrutQuestionView({
       {/* Context (if any) */}
       {question.context && question.context.trim().length > 0 && (
         <div className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-2xl p-5 chat-md">
-          <div className="text-[10px] font-black tracking-widest text-indigo-700 mb-2 uppercase">
+          <div className="text-[10px] font-black tracking-widest text-violet-700 mb-2 uppercase">
             נתוני השאלה
           </div>
           <div className="text-sm sm:text-base text-slate-900 leading-relaxed">
@@ -150,7 +150,7 @@ export function BagrutQuestionView({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
         <button
           onClick={() => load(difficulty)}
-          className="inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/30 transition-all text-sm"
+          className="inline-flex items-center justify-center gap-2 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 px-4 py-3 rounded-2xl font-bold text-white shadow-lg shadow-violet-500/30 transition-all text-sm"
         >
           <Sparkles className="w-4 h-4" />
           <span>שאלה חדשה</span>
@@ -163,7 +163,7 @@ export function BagrutQuestionView({
         </button>
         <button
           onClick={() => load('harder')}
-          className="inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/40 px-4 py-3 rounded-2xl font-bold text-indigo-800 text-sm transition-all"
+          className="inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/40 px-4 py-3 rounded-2xl font-bold text-violet-800 text-sm transition-all"
         >
           <span>🔴 מאתגר יותר</span>
         </button>

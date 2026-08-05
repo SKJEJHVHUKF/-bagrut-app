@@ -54,7 +54,7 @@ const COMPARISON: Row[] = [
 function Cell({ v }: { v: boolean | string }) {
   if (v === true) return <Check className="w-4 h-4 text-emerald-600 mx-auto" />;
   if (v === false) return <X className="w-4 h-4 text-slate-300 mx-auto" />;
-  return <span className="text-[11px] font-bold text-indigo-700">{v}</span>;
+  return <span className="text-[11px] font-bold text-violet-700">{v}</span>;
 }
 
 export default function PricingPage() {
@@ -76,7 +76,7 @@ export default function PricingPage() {
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 bg-[var(--accent)]/12 border border-[var(--accent)]/30 rounded-full px-4 py-1.5 text-xs font-bold text-[var(--accent-ink)]">
             <Crown className="w-3.5 h-3.5" />
-            <span>בגרות בכיס Pro</span>
+            <span>MathUp Pro</span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-black gradient-text">
             הלימוד תמיד חינם.
@@ -98,8 +98,8 @@ export default function PricingPage() {
               onClick={() => setSelected(p.id)}
               className={`relative text-right rounded-2xl p-5 border transition-all ${
                 selected === p.id
-                  ? 'border-indigo-500 bg-indigo-500/[0.06] shadow-lg shadow-indigo-500/10'
-                  : 'border-slate-900/10 bg-white hover:border-indigo-500/40'
+                  ? 'border-violet-500 bg-violet-500/[0.06] shadow-lg shadow-violet-500/10'
+                  : 'border-slate-900/10 bg-white hover:border-violet-500/40'
               }`}
             >
               {p.badge && (
@@ -112,7 +112,7 @@ export default function PricingPage() {
                 <span className="text-2xl font-black text-slate-900">{p.price}</span>
                 <span className="text-[11px] text-slate-600">{p.per}</span>
               </div>
-              {p.sub && <div className="text-[11px] text-indigo-700 font-bold mt-1 leading-snug">{p.sub}</div>}
+              {p.sub && <div className="text-[11px] text-violet-700 font-bold mt-1 leading-snug">{p.sub}</div>}
             </button>
           ))}
         </div>
@@ -134,7 +134,7 @@ export default function PricingPage() {
           <div className="grid grid-cols-[1fr_auto_auto] items-center px-4 py-3 border-b border-slate-900/[0.08] text-[11px] font-black text-slate-500">
             <div>מה מקבלים</div>
             <div className="w-16 text-center">חינם</div>
-            <div className="w-16 text-center text-indigo-700">Pro</div>
+            <div className="w-16 text-center text-violet-700">Pro</div>
           </div>
           {COMPARISON.map((row, i) => (
             <div
@@ -162,7 +162,7 @@ export default function PricingPage() {
           </p>
           <Link
             href="/quiz"
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-700 hover:text-indigo-800"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-violet-700 hover:text-violet-800"
           >
             <span>עדיין לא בטוח? התחל בחינם</span>
             <ArrowLeft className="w-4 h-4" />

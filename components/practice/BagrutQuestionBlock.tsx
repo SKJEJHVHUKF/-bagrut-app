@@ -34,7 +34,7 @@ export function BagrutQuestionBlock({
             onClick={() => setContextOpen((o) => !o)}
             className="w-full text-right px-5 py-3 flex items-center gap-3 hover:bg-slate-900/[0.02] transition-colors"
           >
-            <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase flex-1 text-right">
+            <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase flex-1 text-right">
               נתוני השאלה
             </div>
             <div className="flex-shrink-0 text-slate-600">

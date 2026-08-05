@@ -46,7 +46,7 @@ export default function BagruyotLandingPage() {
   if (auth.status === 'loading') {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+        <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
       </main>
     );
   }
@@ -175,7 +175,7 @@ export default function BagruyotLandingPage() {
               <span className="bg-emerald-500/15 border border-emerald-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-emerald-800">
                 שאלון {sampleQuestion.paper}
               </span>
-              <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-indigo-800">
+              <span className="bg-violet-500/15 border border-violet-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-violet-800">
                 {sampleQuestion.topic}
               </span>
               <span className="text-[10px] text-slate-600">
@@ -217,14 +217,14 @@ export default function BagruyotLandingPage() {
           <motion.div variants={scaleIn} whileHover={{ y: -4, scale: 1.01 }} whileTap={{ scale: 0.99 }} transition={{ duration: 0.2 }}>
             <Link
               href={`/login?next=${encodeURIComponent('/bagruyot/archive')}`}
-              className="card-3d block bg-gradient-to-br from-indigo-600/20 to-indigo-600/20 border border-indigo-500/50 hover:border-indigo-400 rounded-2xl p-5 transition-colors"
+              className="card-3d block bg-gradient-to-br from-violet-600/20 to-violet-600/20 border border-violet-500/50 hover:border-violet-400 rounded-2xl p-5 transition-colors"
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-base sm:text-lg font-black text-slate-900">התחבר כדי להיכנס</div>
                   <div className="text-xs text-slate-700 mt-0.5">דרושה התחברות כדי לתרגל מהמאגר</div>
                 </div>
-                <ArrowLeft className="w-5 h-5 text-indigo-700 flex-shrink-0" />
+                <ArrowLeft className="w-5 h-5 text-violet-700 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -318,7 +318,7 @@ function FeatureCard({
   body: string;
 }) {
   const colorClasses = {
-    purple: 'from-indigo-600/10 to-indigo-600/10 border-indigo-500/30 text-indigo-700',
+    purple: 'from-violet-600/10 to-violet-600/10 border-violet-500/30 text-violet-700',
     amber: 'from-amber-600/10 to-orange-600/10 border-amber-500/30 text-amber-700',
     emerald: 'from-emerald-600/10 to-teal-600/10 border-emerald-500/30 text-emerald-700',
   }[color];

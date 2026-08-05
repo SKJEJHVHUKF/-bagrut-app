@@ -145,12 +145,12 @@ export default function RoadmapPage() {
                   strokeDasharray={`${(overallPct / 100) * 125.7} 125.7`}
                 />
               </svg>
-              <div className="absolute inset-0 flex items-center justify-center text-sm font-black text-indigo-800">
+              <div className="absolute inset-0 flex items-center justify-center text-sm font-black text-violet-800">
                 {overallPct}%
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-black tracking-widest text-indigo-700 uppercase">
+              <div className="text-xs font-black tracking-widest text-violet-700 uppercase">
                 ההתקדמות שלך ב{roadmap.label}
               </div>
               <div className="text-sm text-slate-700 mt-1">
@@ -160,10 +160,10 @@ export default function RoadmapPage() {
           </div>
           {/* XP + mastery strip */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-[var(--primary-container)]/60 border border-indigo-500/20 rounded-2xl px-3 py-2.5 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-indigo-700 flex-shrink-0" />
+            <div className="bg-[var(--primary-container)]/60 border border-violet-500/20 rounded-2xl px-3 py-2.5 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-violet-700 flex-shrink-0" />
               <div className="min-w-0">
-                <div className="text-base font-black text-indigo-800 leading-none">{totalXp}</div>
+                <div className="text-base font-black text-violet-800 leading-none">{totalXp}</div>
                 <div className="text-[10px] text-slate-600 mt-0.5">נקודות XP</div>
               </div>
             </div>
@@ -228,7 +228,7 @@ export default function RoadmapPage() {
                 — both under the 4.5:1 AA floor for small text. 600 gives 6.3:1. */}
             <Link
               href={resume.href}
-              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30 hover:from-indigo-500 hover:to-violet-500 transition-colors"
+              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-cyan-700 to-violet-600 shadow-lg shadow-violet-500/30 hover:from-cyan-700 hover:to-violet-500 transition-colors"
             >
               <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl">
                 {resume.levelEmoji}
@@ -317,7 +317,7 @@ export default function RoadmapPage() {
                     {topicDone}/{mt.nodes.length} שלבים
                   </div>
                 </div>
-                <span className="text-sm font-black text-indigo-700">{topicPct}%</span>
+                <span className="text-sm font-black text-violet-700">{topicPct}%</span>
               </div>
               <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
                 <div
@@ -357,7 +357,7 @@ export default function RoadmapPage() {
                   examples, Pro course) — kept reachable from the spine. */}
               <Link
                 href={`/practice/${SUBJECT}/${encodeURIComponent(mt.topic)}`}
-                className="block text-center text-[11px] text-slate-500 hover:text-indigo-700 transition-colors pt-1"
+                className="block text-center text-[11px] text-slate-500 hover:text-violet-700 transition-colors pt-1"
               >
                 📚 חומרי עזר וקורס מתקדם בנושא
               </Link>
@@ -408,7 +408,7 @@ function RoadmapNodeCard({
       ? 'border-emerald-500/35 bg-emerald-100/60'
       : locked
         ? 'border-slate-900/[0.06] bg-white/40 opacity-60'
-        : 'border-indigo-500/35 bg-[var(--primary-container)]/70 hover:border-indigo-500/60';
+        : 'border-violet-500/35 bg-[var(--primary-container)]/70 hover:border-violet-500/60';
 
   const iconBg = mastered
     ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white'
@@ -416,7 +416,7 @@ function RoadmapNodeCard({
       ? 'bg-emerald-500/25 text-emerald-800'
       : locked
         ? 'bg-slate-900/[0.03] text-slate-500'
-        : 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white';
+        : 'bg-gradient-to-br from-violet-500 to-violet-600 text-white';
 
   // One-line status under the title.
   const statusLine = locked
@@ -434,7 +434,7 @@ function RoadmapNodeCard({
       <div className="flex items-start gap-3">
         <div
           className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg} ${
-            !locked && !done && !mastered ? 'ring-2 ring-indigo-400/40 animate-pulse' : ''
+            !locked && !done && !mastered ? 'ring-2 ring-violet-400/40 animate-pulse' : ''
           }`}
         >
           {mastered ? (
@@ -458,7 +458,7 @@ function RoadmapNodeCard({
                     <span
                       key={i}
                       className={`w-1.5 h-1.5 rounded-full ${
-                        i < cleared ? (mastered ? 'bg-amber-500' : 'bg-indigo-500') : 'bg-slate-900/15'
+                        i < cleared ? (mastered ? 'bg-amber-500' : 'bg-violet-500') : 'bg-slate-900/15'
                       }`}
                     />
                   ))}
@@ -484,7 +484,7 @@ function RoadmapNodeCard({
             <MathText inline>{statusLine}</MathText>
           </div>
         </div>
-        {!locked && !done && !mastered && <PlayCircle className="w-4 h-4 text-indigo-700 flex-shrink-0 mt-1" />}
+        {!locked && !done && !mastered && <PlayCircle className="w-4 h-4 text-violet-700 flex-shrink-0 mt-1" />}
       </div>
     </div>
   );

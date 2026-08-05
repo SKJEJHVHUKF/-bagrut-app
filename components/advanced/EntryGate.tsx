@@ -82,7 +82,7 @@ export function EntryGate({
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-2.5 surface-premium rounded-2xl px-4 py-3">
-        <Lock className="w-4 h-4 text-indigo-700 flex-shrink-0 mt-0.5" />
+        <Lock className="w-4 h-4 text-violet-700 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-slate-700 leading-relaxed flex-1">
           {questions.length} שאלות מקורס הבסיס. צריך לפחות {gate.passThreshold} נכונות כדי לפתוח את
           הקורס המתקדם — מי שלא עובר מקבל הפניה ממוקדת לחלק שצריך לחזור עליו.
@@ -102,7 +102,7 @@ export function EntryGate({
         return (
           <div key={`${q.id}-${attempt}`} className="surface-premium rounded-2xl p-4 space-y-2.5">
             <div className="flex items-start gap-2.5">
-              <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-800">
+              <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-violet-500/20 border border-violet-400/40 flex items-center justify-center text-[11px] font-black text-violet-800">
                 {qi + 1}
               </div>
               <div className="flex-1 chat-md text-sm sm:text-base text-slate-900 leading-relaxed pt-0.5">
@@ -124,7 +124,7 @@ export function EntryGate({
                       answered && isCorrect
                         ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900'
                         : answered && isPicked
-                          ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-900'
+                          ? 'bg-violet-500/15 border-violet-500/50 text-violet-900'
                           : answered
                             ? 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-600'
                             : 'bg-slate-900/[0.03] hover:bg-slate-900/5 border-slate-900/10 text-slate-900'
@@ -148,13 +148,13 @@ export function EntryGate({
                   className={`rounded-xl px-3 py-2 text-sm chat-md flex items-start gap-2 ${
                     picked === q.correct
                       ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-900'
-                      : 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-900'
+                      : 'bg-violet-500/10 border border-violet-500/30 text-violet-900'
                   }`}
                 >
                   {picked === q.correct ? (
                     <CheckCircle className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
                   ) : (
-                    <XCircle className="w-4 h-4 text-indigo-700 flex-shrink-0 mt-0.5" />
+                    <XCircle className="w-4 h-4 text-violet-700 flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1">
                     <MathText inline>{q.explanation}</MathText>

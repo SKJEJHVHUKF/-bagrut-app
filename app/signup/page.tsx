@@ -93,7 +93,7 @@ function SignupForm() {
 
   if (success) {
     return (
-      <div className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-indigo-500/10 text-center">
+      <div className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-violet-500/10 text-center">
         <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center mb-5">
           <CheckCircle className="w-8 h-8 text-emerald-700" />
         </div>
@@ -103,7 +103,7 @@ function SignupForm() {
           </span>
         </h1>
         <p className="text-slate-700 leading-relaxed mb-4">
-          שלחנו לך מייל אישור ל-<span className="text-indigo-700 font-bold" dir="ltr">{email}</span>
+          שלחנו לך מייל אישור ל-<span className="text-violet-700 font-bold" dir="ltr">{email}</span>
         </p>
         <p className="text-slate-600 text-sm leading-relaxed">
           לחץ על הקישור במייל כדי להפעיל את החשבון.<br />
@@ -111,7 +111,7 @@ function SignupForm() {
         </p>
         <Link
           href="/login"
-          className="mt-7 inline-flex items-center gap-2 text-indigo-700 hover:text-indigo-800 font-bold"
+          className="mt-7 inline-flex items-center gap-2 text-violet-700 hover:text-violet-800 font-bold"
         >
           <ArrowLeft className="w-4 h-4" />
           חזרה להתחברות
@@ -123,7 +123,7 @@ function SignupForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-indigo-500/10"
+      className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-violet-500/10"
     >
       <h1 className="font-display text-3xl sm:text-4xl font-black mb-2 text-center">
         <span className="font-display text-slate-800">
@@ -145,7 +145,7 @@ function SignupForm() {
             onChange={(e) => setName(e.target.value)}
             placeholder="איך קוראים לך?"
             maxLength={40}
-            className="w-full surface-premium rounded-xl pr-10 pl-3 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/[0.04] transition-all"
+            className="w-full surface-premium rounded-xl pr-10 pl-3 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:bg-slate-900/[0.04] transition-all"
             disabled={loading}
           />
         </div>
@@ -163,7 +163,7 @@ function SignupForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full surface-premium rounded-xl pr-10 pl-3 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/[0.04] transition-all"
+            className="w-full surface-premium rounded-xl pr-10 pl-3 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:bg-slate-900/[0.04] transition-all"
             disabled={loading}
             dir="ltr"
           />
@@ -182,7 +182,7 @@ function SignupForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="לפחות 8 תווים"
-            className="w-full surface-premium rounded-xl pr-10 pl-10 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/[0.04] transition-all"
+            className="w-full surface-premium rounded-xl pr-10 pl-10 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:bg-slate-900/[0.04] transition-all"
             disabled={loading}
             dir="ltr"
           />
@@ -222,7 +222,7 @@ function SignupForm() {
           checked={agreedToTerms}
           onChange={(e) => setAgreedToTerms(e.target.checked)}
           disabled={loading}
-          className="mt-1 w-4 h-4 rounded border-slate-900/15 bg-slate-900/[0.03] text-indigo-500 focus:ring-indigo-500/50 cursor-pointer flex-shrink-0"
+          className="mt-1 w-4 h-4 rounded border-slate-900/15 bg-slate-900/[0.03] text-violet-500 focus:ring-violet-500/50 cursor-pointer flex-shrink-0"
         />
         <span className="text-xs text-slate-600 leading-relaxed group-hover:text-slate-700 transition-colors">
           קראתי ואני מאשר את{' '}
@@ -230,7 +230,7 @@ function SignupForm() {
             href="/terms"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-700 hover:text-indigo-800 font-bold underline-offset-2 hover:underline"
+            className="text-violet-700 hover:text-violet-800 font-bold underline-offset-2 hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             תנאי השימוש
@@ -240,7 +240,7 @@ function SignupForm() {
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-700 hover:text-indigo-800 font-bold underline-offset-2 hover:underline"
+            className="text-violet-700 hover:text-violet-800 font-bold underline-offset-2 hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             מדיניות הפרטיות
@@ -258,7 +258,7 @@ function SignupForm() {
       <button
         type="submit"
         disabled={loading || !agreedToTerms}
-        className="group mt-5 w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3.5 rounded-xl font-bold text-white shadow-xl shadow-indigo-500/40 hover:shadow-indigo-500/60 hover:-translate-y-0.5 transition-all"
+        className="group mt-5 w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3.5 rounded-xl font-bold text-white shadow-xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:-translate-y-0.5 transition-all"
       >
         {loading ? (
           <Loader2 className="w-5 h-5 animate-spin" />
@@ -274,7 +274,7 @@ function SignupForm() {
         כבר יש לך חשבון?{' '}
         <Link
           href={`/login${next !== '/roadmap' ? `?next=${encodeURIComponent(next)}` : ''}`}
-          className="text-indigo-700 hover:text-indigo-800 font-bold underline-offset-2 hover:underline"
+          className="text-violet-700 hover:text-violet-800 font-bold underline-offset-2 hover:underline"
         >
           התחבר כאן
         </Link>
@@ -287,19 +287,19 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen text-slate-900 relative overflow-x-hidden" style={{ fontFamily: 'var(--font-heebo), sans-serif' }}>
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/30 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/25 blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
       </div>
 
       <nav className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10 group-hover:scale-105 transition-transform">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 via-violet-500 to-amber-400 flex items-center justify-center shadow-xl shadow-violet-500/50 ring-1 ring-slate-900/10 group-hover:scale-105 transition-transform">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
               <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
             </svg>
           </div>
           <span className="text-xl sm:text-2xl font-black font-display text-slate-800">
-            בגרות בכיס
+            MathUp
           </span>
         </Link>
       </nav>

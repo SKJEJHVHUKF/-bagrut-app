@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**בגרות בכיס** — a Hebrew (RTL) study platform for the Israeli bagrut, focused on **math 5-units** (שאלונים 581 + 582). Live production: <https://bagrut-app.vercel.app> (Vercel Hobby, auto-deploys on push to `main`).
+**MathUp** — a Hebrew (RTL) study platform for the Israeli bagrut, focused on **math 5-units** (שאלונים 581 + 582). Live production: <https://bagrut-app.vercel.app> (Vercel Hobby, auto-deploys on push to `main`).
 
 Owner / site admin: **meitalm1020@gmail.com** (Itay). Non-technical, operates in Hebrew, male forms. Treat his direction as authoritative on product decisions. Communicate with him in Hebrew; leave code/errors in their original language; state per-request Anthropic cost up front before spending budget.
 

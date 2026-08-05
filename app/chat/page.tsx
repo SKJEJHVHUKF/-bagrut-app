@@ -26,6 +26,7 @@ import {
   Camera,
 } from 'lucide-react';
 import { SolutionAudit } from '@/components/practice/SolutionAudit';
+import MathUpLogo from '@/components/MathUpLogo';
 
 const MAX_MESSAGE_LEN = 500;
 
@@ -54,22 +55,6 @@ function utcDayStartIso() {
   const d = new Date();
   d.setUTCHours(0, 0, 0, 0);
   return d.toISOString();
-}
-
-function BagrutLogo({ size = 'md' as 'sm' | 'md' }) {
-  const dim = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
-  return (
-    <div
-      className={`relative ${dim} rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10`}
-    >
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
-        <path
-          d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-          fill="currentColor"
-        />
-      </svg>
-    </div>
-  );
 }
 
 export default function ChatPage() {
@@ -404,11 +389,11 @@ export default function ChatPage() {
       {/* Animated background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div
-          className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse"
+          className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/30 blur-[120px] animate-pulse"
           style={{ animationDuration: '8s' }}
         />
         <div
-          className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse"
+          className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/25 blur-[120px] animate-pulse"
           style={{ animationDuration: '10s', animationDelay: '2s' }}
         />
       </div>
@@ -419,10 +404,10 @@ export default function ChatPage() {
             top-left); restored to px-4 from sm up where there's space. */}
         <div className="max-w-3xl mx-auto px-4 pl-16 sm:pl-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <BagrutLogo size="md" />
+            <MathUpLogo size="md" />
             <div>
               <div className="text-base font-black font-display text-slate-800">
-                בגרות בכיס
+                MathUp
               </div>
               <div className="text-[10px] text-slate-600 -mt-0.5">המורה הפרטי שלך</div>
             </div>
@@ -430,7 +415,7 @@ export default function ChatPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={newChat}
-              className="group flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm"
+              className="group flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">שיחה חדשה</span>
@@ -438,14 +423,14 @@ export default function ChatPage() {
             <button
               onClick={() => setSidebarOpen(true)}
               aria-label="היסטוריית שיחות"
-              className="flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+              className="flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
             >
               <History className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">היסטוריה</span>
             </button>
             <Link
               href="/quiz"
-              className="group hidden sm:flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+              className="group hidden sm:flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
             >
               <span>לתרגול</span>
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
@@ -469,7 +454,7 @@ export default function ChatPage() {
           student see the tutor is teaching from the verified content. */}
       {grounded && (
         <div className="relative z-10 max-w-3xl w-full mx-auto px-4 pt-3">
-          <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-800 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-3 py-1.5">
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-violet-800 bg-violet-500/10 border border-violet-500/30 rounded-full px-3 py-1.5">
             <Sparkles className="w-3 h-3 flex-shrink-0" />
             <span>מצב מורה מעוגן · {topic} — מלמד מהחומר המאומת, מכוון ולא נותן תשובות מוכנות</span>
           </div>
@@ -480,7 +465,7 @@ export default function ChatPage() {
       <main className="relative z-10 flex-1 max-w-3xl w-full mx-auto px-3 sm:px-4 pt-4 pb-40">
         {loadingHistory ? (
           <div className="flex justify-center py-16">
-            <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+            <Loader2 className="w-6 h-6 text-violet-600 animate-spin" />
           </div>
         ) : isEmpty ? (
           <EmptyState onPick={(t) => send(t)} />
@@ -527,7 +512,7 @@ export default function ChatPage() {
       <div className="fixed bottom-0 inset-x-0 z-20 bg-[var(--background)]/90 backdrop-blur-xl border-t border-slate-900/10">
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3">
           {error && (
-            <div className="mb-2 text-sm text-indigo-700 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-3 py-2">
+            <div className="mb-2 text-sm text-violet-700 bg-violet-500/10 border border-violet-500/30 rounded-xl px-3 py-2">
               {error}
             </div>
           )}
@@ -536,7 +521,7 @@ export default function ChatPage() {
               type="button"
               onClick={() => setShowAudit(true)}
               aria-label="בדוק פתרון מצילום"
-              className="flex-shrink-0 surface-premium hover:bg-slate-900/[0.04] text-indigo-700 p-3 rounded-2xl transition-all"
+              className="flex-shrink-0 surface-premium hover:bg-slate-900/[0.04] text-violet-700 p-3 rounded-2xl transition-all"
             >
               <Camera className="w-5 h-5" />
             </button>
@@ -549,13 +534,13 @@ export default function ChatPage() {
               rows={1}
               maxLength={MAX_MESSAGE_LEN}
               disabled={sending || remaining <= 0}
-              className="flex-1 surface-premium rounded-2xl px-4 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/[0.04] transition-all resize-none max-h-32"
+              className="flex-1 surface-premium rounded-2xl px-4 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:bg-slate-900/[0.04] transition-all resize-none max-h-32"
               style={{ unicodeBidi: 'plaintext', textAlign: 'start' }}
             />
             <button
               type="submit"
               disabled={!input.trim() || sending || remaining <= 0}
-              className="bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white p-3 rounded-2xl shadow-lg shadow-indigo-500/30 transition-all"
+              className="bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white p-3 rounded-2xl shadow-lg shadow-violet-500/30 transition-all"
               aria-label="שלח"
             >
               {sending ? (
@@ -586,7 +571,7 @@ function MessageBubble({ role, content }: { role: 'user' | 'assistant'; content:
     return (
       <div className="flex justify-start">
         <div
-          className="max-w-[85%] bg-gradient-to-l from-indigo-600 to-indigo-600 text-white px-4 py-3 rounded-2xl rounded-tl-md shadow-lg shadow-indigo-500/20"
+          className="max-w-[85%] bg-gradient-to-l from-violet-600 to-violet-600 text-white px-4 py-3 rounded-2xl rounded-tl-md shadow-lg shadow-violet-500/20"
           style={{
             unicodeBidi: 'plaintext',
             textAlign: 'start',
@@ -626,7 +611,7 @@ function TypingBubble() {
   return (
     <div className="flex justify-end">
       <div className="max-w-[85%] bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 text-slate-700 px-4 py-3 rounded-2xl rounded-tr-md inline-flex items-center gap-2">
-        <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+        <Loader2 className="w-4 h-4 animate-spin text-violet-600" />
         <span className="text-sm">המורה כותב…</span>
       </div>
     </div>
@@ -636,8 +621,8 @@ function TypingBubble() {
 function EmptyState({ onPick }: { onPick: (text: string) => void }) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-4">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mb-5">
-        <MessageCircle className="w-8 h-8 text-indigo-700" />
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-violet-500/20 border border-violet-500/30 flex items-center justify-center mb-5">
+        <MessageCircle className="w-8 h-8 text-violet-700" />
       </div>
       <h2 className="font-display text-2xl font-black mb-2">
         <span className="font-display text-slate-800">
@@ -652,11 +637,11 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
           <button
             key={i}
             onClick={() => onPick(s)}
-            className="group bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-indigo-500/40 rounded-xl px-4 py-3 text-right text-sm text-slate-800 transition-all flex items-center gap-2.5"
+            className="group bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/10 hover:border-violet-500/40 rounded-xl px-4 py-3 text-right text-sm text-slate-800 transition-all flex items-center gap-2.5"
           >
             <Lightbulb className="w-4 h-4 text-amber-700 group-hover:scale-110 transition-transform flex-shrink-0" />
             <span className="flex-1">{s}</span>
-            <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-700 group-hover:-translate-x-1 transition-all" />
+            <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:text-violet-700 group-hover:-translate-x-1 transition-all" />
           </button>
         ))}
       </div>
@@ -718,7 +703,7 @@ function ChatSidebar({
           >
             <div className="p-4 border-b border-slate-900/[0.08] flex items-center justify-between">
               <div className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <History className="w-4 h-4 text-indigo-600" />
+                <History className="w-4 h-4 text-violet-600" />
                 שיחות קודמות
               </div>
               <button
@@ -733,7 +718,7 @@ function ChatSidebar({
             <div className="p-3">
               <button
                 onClick={onNew}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2.5 rounded-xl text-sm font-bold transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-3 py-2.5 rounded-xl text-sm font-bold transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 שיחה חדשה
@@ -753,7 +738,7 @@ function ChatSidebar({
                     key={c.id}
                     className={`group flex items-center gap-1 rounded-xl transition-colors ${
                       c.id === activeId
-                        ? 'bg-indigo-500/10 border border-indigo-500/30'
+                        ? 'bg-violet-500/10 border border-violet-500/30'
                         : 'hover:bg-slate-900/[0.04] border border-transparent'
                     }`}
                   >

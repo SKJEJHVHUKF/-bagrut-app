@@ -82,7 +82,7 @@ export default async function AdvancedCoursePage({
 export function generateMetadata({ params }: { params: { topic?: string } }) {
   const topic = params.topic ? decodeURIComponent(params.topic) : '';
   return {
-    title: `${topic} — קורס מתקדם · בגרות בכיס`,
+    title: `${topic} — קורס מתקדם · MathUp`,
     description: `קורס מתקדם ברמת בגרות בנושא ${topic}: תבניות, טכניקות, מחוון וסימולציה`,
   };
 }

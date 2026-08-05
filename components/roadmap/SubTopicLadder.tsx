@@ -187,7 +187,7 @@ export function SubTopicLadder({
             className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
               mastered
                 ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white'
-                : 'bg-indigo-500/15 text-indigo-700'
+                : 'bg-violet-500/15 text-violet-700'
             }`}
           >
             {mastered ? <Crown className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
@@ -201,7 +201,7 @@ export function SubTopicLadder({
                 <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
                 {stars}/{maxStars}
               </span>
-              <span className="font-bold text-indigo-700">{xp} XP</span>
+              <span className="font-bold text-violet-700">{xp} XP</span>
               {coreDone && !mastered && <span className="text-emerald-700 font-bold">✓ הליבה הושלמה</span>}
             </div>
           </div>
@@ -214,7 +214,7 @@ export function SubTopicLadder({
             className={`h-full ${
               mastered
                 ? 'bg-gradient-to-l from-amber-400 to-amber-600'
-                : 'bg-gradient-to-l from-indigo-500 to-violet-500'
+                : 'bg-gradient-to-l from-violet-500 to-violet-500'
             }`}
           />
         </div>
@@ -248,7 +248,7 @@ export function SubTopicLadder({
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={() => setOpenIndex(current.index)}
-          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-3.5 rounded-2xl font-black text-white shadow-lg shadow-indigo-500/25 transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 px-5 py-3.5 rounded-2xl font-black text-white shadow-lg shadow-violet-500/25 transition-colors"
         >
           <Play className="w-4 h-4" />
           <span>
@@ -276,7 +276,7 @@ export function SubTopicLadder({
         </div>
       )}
 
-      <Link href="/roadmap" className="block text-center text-xs text-slate-500 hover:text-indigo-700 py-1">
+      <Link href="/roadmap" className="block text-center text-xs text-slate-500 hover:text-violet-700 py-1">
         חזרה למפת הלמידה
       </Link>
     </div>
@@ -326,8 +326,8 @@ function RungCard({
       : almost
         ? 'border-amber-500/50 bg-amber-500/[0.07]'
         : isCurrent
-          ? 'border-indigo-500/50 bg-gradient-to-br from-indigo-600/15 to-violet-600/10 shadow-md shadow-indigo-500/10'
-          : 'border-indigo-500/30 bg-indigo-500/[0.05] hover:border-indigo-500/50';
+          ? 'border-violet-500/50 bg-gradient-to-br from-violet-600/15 to-violet-600/10 shadow-md shadow-violet-500/10'
+          : 'border-violet-500/30 bg-violet-500/[0.05] hover:border-violet-500/50';
 
   const badge = done
     ? 'bg-emerald-500/25 text-emerald-800'
@@ -335,14 +335,14 @@ function RungCard({
       ? 'bg-slate-900/[0.03] text-slate-400'
       : almost
         ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white'
-        : 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white';
+        : 'bg-gradient-to-br from-violet-500 to-violet-600 text-white';
 
   const inner = (
     <div className={`relative rounded-2xl border p-3.5 transition-all ${shell}`}>
       <div className="flex items-center gap-3">
         <div
           className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-lg ${badge} ${
-            isCurrent ? 'ring-2 ring-indigo-400/50 animate-pulse' : ''
+            isCurrent ? 'ring-2 ring-violet-400/50 animate-pulse' : ''
           }`}
         >
           {done ? <Check className="w-5 h-5" /> : locked ? <Lock className="w-4 h-4" /> : <span>{level.emoji}</span>}
@@ -353,7 +353,7 @@ function RungCard({
               רמה {level.index + 1}
             </span>
             {isCurrent && (
-              <span className="text-[9px] font-black tracking-wide text-indigo-700 bg-indigo-500/15 rounded-full px-1.5 py-0.5">
+              <span className="text-[9px] font-black tracking-wide text-violet-700 bg-violet-500/15 rounded-full px-1.5 py-0.5">
                 עכשיו
               </span>
             )}
@@ -371,7 +371,7 @@ function RungCard({
           {done ? (
             <StarRow value={stars} size="w-3.5 h-3.5" />
           ) : !locked ? (
-            <Play className="w-4 h-4 text-indigo-700" />
+            <Play className="w-4 h-4 text-violet-700" />
           ) : null}
         </div>
       </div>

@@ -45,7 +45,7 @@ export function StaticBagrutExerciseView({
 
   if (questions.length === 0) {
     return (
-      <div className="text-sm text-indigo-700 bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-4 py-3">
+      <div className="text-sm text-violet-700 bg-violet-500/10 border border-violet-500/30 rounded-xl px-4 py-3">
         אין כרגע שאלות בגרות מוכנות לנושא זה.
       </div>
     );
@@ -95,7 +95,7 @@ export function StaticBagrutExerciseView({
     <div className="space-y-4">
       {/* Meta strip */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-800 font-bold">
+        <span className="px-2.5 py-1 rounded-lg bg-violet-500/15 border border-violet-500/30 text-violet-800 font-bold">
           {subjectLabel}
         </span>
         <span className="text-slate-500">•</span>
@@ -117,7 +117,7 @@ export function StaticBagrutExerciseView({
             onClick={() => setContextOpen((o) => !o)}
             className="w-full text-right px-5 py-3 flex items-center gap-3 hover:bg-slate-900/[0.02] transition-colors"
           >
-            <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase flex-1 text-right">
+            <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase flex-1 text-right">
               נתוני השאלה
             </div>
             <div className="flex-shrink-0 text-slate-600">
@@ -153,7 +153,7 @@ export function StaticBagrutExerciseView({
           onClick={newQuestion}
           className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-bold text-slate-900 shadow-lg transition-colors text-sm ${
             questions.length > 1
-              ? 'bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 shadow-indigo-500/30'
+              ? 'bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 shadow-violet-500/30'
               : 'bg-slate-900/5 hover:bg-slate-900/[0.06] border border-slate-900/15 shadow-white/5'
           }`}
         >

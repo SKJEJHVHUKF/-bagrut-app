@@ -21,6 +21,7 @@
     "test:ghost": "tsx scripts/test-ghost.ts",
     "test:ladder": "tsx scripts/test-ladder-unlock.ts",
     "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run test:sync && npm run verify:ghost && npm run test:ghost && npm run test:ladder && npm run verify:mathscan && npm run test:mathscan && npm run verify:bank && npm run test:bank && npm run build",
+    "build:brand": "node scripts/build-brand-assets.mjs",
     "generate-pool": "tsx scripts/generate-pool.ts",
     "verify:mathscan": "tsx scripts/verify-mathscan.ts",
     "test:mathscan": "tsx scripts/test-mathscan.ts",

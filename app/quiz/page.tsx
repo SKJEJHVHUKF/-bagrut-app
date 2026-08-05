@@ -1219,7 +1219,7 @@ function Quiz() {
 
       <div className="app">
         <div className="header">
-          <span className="logo">בגרות בכיס ✦</span>
+          <span className="logo">MathUp ✦</span>
           <form action="/auth/signout" method="post" style={{ margin: 0 }}>
             <button
               type="submit"

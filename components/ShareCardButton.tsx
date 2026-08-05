@@ -56,7 +56,7 @@ export default function ShareCardButton({
         disabled={busy}
         className={
           className ||
-          'inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-500/10 hover:bg-indigo-500/15 border border-indigo-500/25 rounded-full px-3 py-1.5 transition-colors disabled:opacity-60'
+          'inline-flex items-center gap-1.5 text-xs font-bold text-violet-700 bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/25 rounded-full px-3 py-1.5 transition-colors disabled:opacity-60'
         }
       >
         {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}

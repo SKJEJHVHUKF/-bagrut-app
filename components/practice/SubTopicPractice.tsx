@@ -249,7 +249,7 @@ export function SubTopicPractice({
 
         {bagrutQuestions.length > 0 && (
           <section className="space-y-3 pt-1">
-            <div className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2">
+            <div className="text-xs font-black tracking-widest text-violet-700 uppercase flex items-center gap-2">
               <Target className="w-3.5 h-3.5" />
               <span>שאלת בגרות על הנושא — רמת בגרות אמיתית</span>
             </div>
@@ -296,7 +296,7 @@ export function SubTopicPractice({
 
         <Link
           href="/insights"
-          className="block text-center text-xs text-slate-600 hover:text-indigo-700 transition-colors pt-1"
+          className="block text-center text-xs text-slate-600 hover:text-violet-700 transition-colors pt-1"
         >
           📈 התמונה שלי — איפה אתה חזק ומה כדאי לחזק
         </Link>
@@ -317,7 +317,7 @@ export function SubTopicPractice({
         </Link>
         <div className="flex items-center gap-2">
           {tier !== null && (
-            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-500/10 border border-indigo-500/25 rounded-full px-2 py-0.5">
+            <span className="text-[10px] font-bold text-violet-700 bg-violet-500/10 border border-violet-500/25 rounded-full px-2 py-0.5">
               {tierLabel(tier)}
             </span>
           )}

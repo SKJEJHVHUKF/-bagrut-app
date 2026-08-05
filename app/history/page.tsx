@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import MathUpLogo from '@/components/MathUpLogo';
 import {
   ArrowLeft,
   ArrowRight,
@@ -52,23 +53,10 @@ function scoreClass(pct: number): {
     };
   }
   return {
-    ringText: 'text-indigo-600',
-    ringBg: 'bg-indigo-500/10 border-indigo-500/40',
+    ringText: 'text-violet-600',
+    ringBg: 'bg-violet-500/10 border-violet-500/40',
     label: 'יש מה לשפר',
   };
-}
-
-function BagrutLogo() {
-  return (
-    <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10">
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
-        <path
-          d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-          fill="currentColor"
-        />
-      </svg>
-    </div>
-  );
 }
 
 type Session = {
@@ -118,11 +106,11 @@ export default async function HistoryPage() {
       {/* Background orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div
-          className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse"
+          className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/30 blur-[120px] animate-pulse"
           style={{ animationDuration: '8s' }}
         />
         <div
-          className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse"
+          className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/25 blur-[120px] animate-pulse"
           style={{ animationDuration: '10s', animationDelay: '2s' }}
         />
       </div>
@@ -131,17 +119,17 @@ export default async function HistoryPage() {
       <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <BagrutLogo />
+            <MathUpLogo size="md" />
             <div>
               <div className="text-base font-black font-display text-slate-800">
-                בגרות בכיס
+                MathUp
               </div>
               <div className="text-[10px] text-slate-600 -mt-0.5">ההיסטוריה שלי</div>
             </div>
           </Link>
           <Link
             href="/quiz"
-            className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
           >
             <span>לתרגול</span>
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
@@ -163,7 +151,7 @@ export default async function HistoryPage() {
         {/* Summary stats */}
         {totalSessions > 0 && (
           <div className="grid grid-cols-3 gap-3 mb-7">
-            <StatCard icon={Trophy} label="תרגולים" value={String(totalSessions)} accent="from-indigo-500/15 to-indigo-500/15 border-indigo-500/30" />
+            <StatCard icon={Trophy} label="תרגולים" value={String(totalSessions)} accent="from-violet-500/15 to-violet-500/15 border-violet-500/30" />
             <StatCard icon={Target} label="שאלות" value={String(totalQuestions)} accent="from-amber-500/15 to-orange-500/15 border-amber-500/30" />
             <StatCard icon={TrendingUp} label="ממוצע" value={`${overallPct}%`} accent="from-emerald-500/15 to-green-500/15 border-emerald-500/30" />
           </div>
@@ -219,8 +207,8 @@ function SessionRow({ session }: { session: Session }) {
   const pct = Math.round((session.score / session.total) * 100);
   const sc = scoreClass(pct);
   return (
-    <div className="bg-slate-900/[0.03] hover:bg-slate-900/[0.04] backdrop-blur-md border border-slate-900/10 hover:border-indigo-500/40 rounded-2xl p-4 flex items-center gap-4 transition-all">
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 text-2xl">
+    <div className="bg-slate-900/[0.03] hover:bg-slate-900/[0.04] backdrop-blur-md border border-slate-900/10 hover:border-violet-500/40 rounded-2xl p-4 flex items-center gap-4 transition-all">
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-500/20 border border-violet-500/30 flex items-center justify-center flex-shrink-0 text-2xl">
         {session.subject_emoji}
       </div>
       <div className="flex-1 min-w-0">
@@ -245,8 +233,8 @@ function SessionRow({ session }: { session: Session }) {
 function EmptyState() {
   return (
     <div className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-3xl p-10 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mb-5 mx-auto">
-        <BookOpen className="w-8 h-8 text-indigo-700" />
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-violet-500/20 border border-violet-500/30 flex items-center justify-center mb-5 mx-auto">
+        <BookOpen className="w-8 h-8 text-violet-700" />
       </div>
       <h2 className="font-display text-xl sm:text-2xl font-black mb-2">
         <span className="font-display text-slate-800">
@@ -258,7 +246,7 @@ function EmptyState() {
       </p>
       <Link
         href="/quiz"
-        className="group inline-flex items-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-3 rounded-xl font-bold text-white shadow-xl shadow-indigo-500/40 transition-all"
+        className="group inline-flex items-center gap-2 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 px-6 py-3 rounded-xl font-bold text-white shadow-xl shadow-violet-500/40 transition-all"
       >
         <Sparkles className="w-4 h-4" />
         <span>התחל לתרגל</span>

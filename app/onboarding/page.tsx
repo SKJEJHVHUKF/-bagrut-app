@@ -117,9 +117,9 @@ export default function OnboardingPage() {
               key={n}
               className={
                 n === step
-                  ? 'w-8 h-2 rounded-full bg-gradient-to-l from-indigo-500 to-indigo-500'
+                  ? 'w-8 h-2 rounded-full bg-gradient-to-l from-violet-500 to-violet-500'
                   : n < step
-                  ? 'w-2 h-2 rounded-full bg-indigo-500/60'
+                  ? 'w-2 h-2 rounded-full bg-violet-500/60'
                   : 'w-2 h-2 rounded-full bg-slate-900/5'
               }
             />
@@ -175,7 +175,7 @@ export default function OnboardingPage() {
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <div className="text-center space-y-6">
-      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-2xl shadow-indigo-500/40">
+      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-violet-500 via-violet-500 to-amber-400 flex items-center justify-center shadow-2xl shadow-violet-500/40">
         <GraduationCap className="w-10 h-10 text-white" />
       </div>
       <div>
@@ -191,19 +191,19 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 
       <div className="surface-premium rounded-2xl p-5 text-right space-y-3">
         <div className="flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-indigo-700 flex-shrink-0 mt-0.5" />
+          <CheckCircle className="w-5 h-5 text-violet-700 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-slate-800">
             <strong>סדר לימוד מסודר</strong> — נושא אחר נושא, מהקל לקשה.
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-indigo-700 flex-shrink-0 mt-0.5" />
+          <CheckCircle className="w-5 h-5 text-violet-700 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-slate-800">
             <strong>שלוש שלבים לכל נושא</strong> — קריאה → מבחן הבנה → תרגול בגרות.
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-indigo-700 flex-shrink-0 mt-0.5" />
+          <CheckCircle className="w-5 h-5 text-violet-700 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-slate-800">
             <strong>ספירה לאחור</strong> עד הבגרות — תמיד תדע איפה אתה.
           </div>
@@ -212,7 +212,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 
       <button
         onClick={onNext}
-        className="btn-3d w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-4 rounded-2xl font-bold text-white"
+        className="btn-3d w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 px-6 py-4 rounded-2xl font-bold text-white"
       >
         <Sparkles className="w-5 h-5" />
         <span>בוא נתחיל</span>
@@ -266,7 +266,7 @@ function DateStep({
       </div>
 
       <div className="surface-premium rounded-2xl p-5 space-y-3">
-        <label className="block text-xs font-black tracking-widest text-indigo-700 uppercase">
+        <label className="block text-xs font-black tracking-widest text-violet-700 uppercase">
           תאריך הבגרות
         </label>
         <input
@@ -274,7 +274,7 @@ function DateStep({
           value={value}
           min={today}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-[var(--background)]/80 border border-slate-900/10 focus:border-indigo-500/60 rounded-xl px-4 py-3 text-base text-slate-900 outline-none transition-colors"
+          className="w-full bg-[var(--background)]/80 border border-slate-900/10 focus:border-violet-500/60 rounded-xl px-4 py-3 text-base text-slate-900 outline-none transition-colors"
         />
         {daysAway > 0 && (
           <div className="text-sm text-slate-700">
@@ -285,7 +285,7 @@ function DateStep({
 
       {/* Unit level — drives question difficulty across the whole app */}
       <div className="surface-premium rounded-2xl p-5 space-y-3">
-        <label className="block text-xs font-black tracking-widest text-indigo-700 uppercase">
+        <label className="block text-xs font-black tracking-widest text-violet-700 uppercase">
           כמה יחידות אתה לומד?
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -295,12 +295,12 @@ function DateStep({
               onClick={() => onUnitLevel(u)}
               className={
                 unitLevel === u
-                  ? 'rounded-xl px-3 py-3.5 text-center bg-indigo-600 border border-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                  ? 'rounded-xl px-3 py-3.5 text-center bg-violet-600 border border-violet-600 text-white shadow-md shadow-violet-500/25'
                   : 'rounded-xl px-3 py-3.5 text-center bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-700'
               }
             >
               <div className="text-xl font-black">{u}</div>
-              <div className={`text-[10px] font-bold mt-0.5 ${unitLevel === u ? 'text-indigo-100' : 'text-slate-500'}`}>
+              <div className={`text-[10px] font-bold mt-0.5 ${unitLevel === u ? 'text-violet-100' : 'text-slate-500'}`}>
                 יחידות
               </div>
             </button>
@@ -313,7 +313,7 @@ function DateStep({
 
       {/* Active bagrut paper — filters which topics you see across the app */}
       <div className="surface-premium rounded-2xl p-5 space-y-3">
-        <label className="block text-xs font-black tracking-widest text-indigo-700 uppercase">
+        <label className="block text-xs font-black tracking-widest text-violet-700 uppercase">
           לאיזה שאלון אתה מתכונן עכשיו?
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -328,14 +328,14 @@ function DateStep({
               onClick={() => onPaper(p)}
               className={
                 paper === p
-                  ? 'rounded-xl px-3 py-3 text-right bg-indigo-600 border border-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                  ? 'rounded-xl px-3 py-3 text-right bg-violet-600 border border-violet-600 text-white shadow-md shadow-violet-500/25'
                   : 'rounded-xl px-3 py-3 text-right bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-700'
               }
             >
               <div className="text-base font-black">{paperLabel(p)}</div>
               <div
                 className={`text-[10px] font-bold mt-0.5 leading-tight ${
-                  paper === p ? 'text-indigo-100' : 'text-slate-500'
+                  paper === p ? 'text-violet-100' : 'text-slate-500'
                 }`}
               >
                 {desc}
@@ -398,7 +398,7 @@ function TopicsStep({
               key={`${subject}:${topic}`}
               className={
                 isSelected
-                  ? 'bg-indigo-500/10 border-indigo-500/40 rounded-2xl p-3 border transition-all'
+                  ? 'bg-violet-500/10 border-violet-500/40 rounded-2xl p-3 border transition-all'
                   : 'bg-slate-900/[0.02] border-slate-900/10 rounded-2xl p-3 border transition-all'
               }
             >
@@ -409,7 +409,7 @@ function TopicsStep({
                 <div
                   className={
                     isSelected
-                      ? 'w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center flex-shrink-0'
+                      ? 'w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center flex-shrink-0'
                       : 'w-5 h-5 rounded-md border-2 border-slate-900/20 flex-shrink-0'
                   }
                 >
@@ -435,7 +435,7 @@ function TopicsStep({
                         onClick={() => setLevel(subject, topic, lvl)}
                         className={
                           sel.level === lvl
-                            ? 'px-2 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 border border-indigo-600 text-white'
+                            ? 'px-2 py-1.5 rounded-lg text-xs font-bold bg-violet-600 border border-violet-600 text-white'
                             : 'px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-700'
                         }
                       >
@@ -508,7 +508,7 @@ function SummaryStep({
             key={`${t.subject}:${t.topic}`}
             className="surface-premium rounded-2xl p-3 flex items-center gap-3"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center font-black text-white flex-shrink-0">
               {i + 1}
             </div>
             <div className="flex-1 min-w-0">
@@ -546,7 +546,7 @@ function SummaryStep({
         </button>
         <button
           onClick={onFinish}
-          className="btn-3d flex-1 inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-3 rounded-2xl font-bold text-white"
+          className="btn-3d flex-1 inline-flex items-center justify-center gap-3 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 px-6 py-3 rounded-2xl font-bold text-white"
         >
           <Sparkles className="w-5 h-5" />
           <span>צור את התוכנית</span>
@@ -582,7 +582,7 @@ function NavButtons({
       <button
         onClick={onNext}
         disabled={nextDisabled}
-        className="btn-3d flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-3 rounded-2xl font-bold text-white text-sm"
+        className="btn-3d flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-3 rounded-2xl font-bold text-white text-sm"
       >
         {nextLabel}
       </button>
@@ -594,11 +594,11 @@ function BackgroundOrbs() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       <div
-        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse"
+        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/30 blur-[120px] animate-pulse"
         style={{ animationDuration: '8s' }}
       />
       <div
-        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse"
+        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/25 blur-[120px] animate-pulse"
         style={{ animationDuration: '10s', animationDelay: '2s' }}
       />
     </div>
@@ -610,13 +610,13 @@ function TopBar() {
     <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 via-violet-500 to-amber-400 flex items-center justify-center shadow-xl shadow-violet-500/50 ring-1 ring-slate-900/10">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
               <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
             </svg>
           </div>
           <div className="text-base font-black font-display text-slate-800">
-            בגרות בכיס
+            MathUp
           </div>
         </Link>
       </div>

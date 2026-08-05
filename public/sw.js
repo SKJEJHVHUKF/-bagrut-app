@@ -1,4 +1,4 @@
-// Service Worker for "בגרות בכיס" PWA
+// Service Worker for "MathUp" PWA
 // Strategy:
 //   - Network-first for everything (so users get fresh content when online)
 //   - Cache fallback when network fails (so app still loads offline)

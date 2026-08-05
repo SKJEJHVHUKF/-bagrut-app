@@ -129,7 +129,7 @@ export function SubTopicLesson({
       {/* Recap — formulas */}
       {subTopic.formulas.length > 0 && (
         <div>
-          <div className="text-xs font-black tracking-widest text-indigo-700 mb-2 uppercase">
+          <div className="text-xs font-black tracking-widest text-violet-700 mb-2 uppercase">
             נוסחאות לתת-נושא הזה
           </div>
           <div className="grid grid-cols-1 gap-3">

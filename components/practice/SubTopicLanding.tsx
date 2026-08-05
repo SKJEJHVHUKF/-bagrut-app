@@ -135,7 +135,7 @@ export function SubTopicLanding({ subject, topic, subTopic, nextSubTopic = null 
         <motion.section {...inViewProps} variants={staggerContainer}>
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase"
+            className="text-xs font-black tracking-widest text-violet-700 mb-3 uppercase"
           >
             נוסחאות לתת-נושא הזה
           </motion.div>

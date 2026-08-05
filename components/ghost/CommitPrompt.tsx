@@ -49,8 +49,8 @@ export function CommitPrompt({
 
   return (
     <div className="space-y-2.5">
-      <div className="rounded-2xl border border-indigo-500/25 bg-indigo-500/[0.05] p-4">
-        <div className="text-[10px] font-black uppercase tracking-widest text-indigo-700">
+      <div className="rounded-2xl border border-violet-500/25 bg-violet-500/[0.05] p-4">
+        <div className="text-[10px] font-black uppercase tracking-widest text-violet-700">
           עצור — תתחייב לפני שתראה
         </div>
         <div className="chat-md math-content mt-1 text-[15px] font-bold leading-relaxed text-slate-900">

@@ -33,7 +33,7 @@ export function MistakeTagger({
             }}
             className={
               cat === c
-                ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-600 text-white border border-indigo-600'
+                ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-violet-600 text-white border border-violet-600'
                 : 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-600 transition-colors'
             }
           >

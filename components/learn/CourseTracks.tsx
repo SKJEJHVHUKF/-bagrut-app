@@ -54,7 +54,7 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
       const advDone = getCompletedAdvancedSections(subject, topic).size;
       setAdvStatus(
         p.simulationPassed
-          ? { label: '🎓 הושלם', cls: 'bg-indigo-500/25 border-indigo-400/50 text-indigo-800' }
+          ? { label: '🎓 הושלם', cls: 'bg-violet-500/25 border-violet-400/50 text-violet-800' }
           : p.gatePassed
             ? {
                 label: `בתהליך · ${advDone}/${ADVANCED_SECTIONS.length}`,
@@ -100,14 +100,14 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
         {advanced && (
           <Link
             href={`/learn/${subject}/${topicHref}/advanced`}
-            className="group block rounded-2xl p-4 bg-gradient-to-br from-indigo-600/20 to-indigo-600/10 border border-indigo-500/40 hover:border-indigo-400 transition-colors shadow-lg shadow-indigo-500/10"
+            className="group block rounded-2xl p-4 bg-gradient-to-br from-violet-600/20 to-violet-600/10 border border-violet-500/40 hover:border-violet-400 transition-colors shadow-lg shadow-violet-500/10"
           >
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-indigo-500/25 border border-indigo-400/50 flex items-center justify-center">
+              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-violet-500/25 border border-violet-400/50 flex items-center justify-center">
                 {advStatus?.label === '🔒 שער כניסה' ? (
-                  <Lock className="w-5 h-5 text-indigo-800" />
+                  <Lock className="w-5 h-5 text-violet-800" />
                 ) : (
-                  <Rocket className="w-6 h-6 text-indigo-800" />
+                  <Rocket className="w-6 h-6 text-violet-800" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -125,11 +125,11 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
                     )
                   )}
                 </div>
-                <div className="text-xs text-indigo-800 leading-snug">
+                <div className="text-xs text-violet-800 leading-snug">
                   סיימת את הבסיס? תבניות, מחוון, בגרויות מפורקות וסימולציה עם טיימר.
                 </div>
               </div>
-              <ArrowLeft className="w-5 h-5 text-indigo-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+              <ArrowLeft className="w-5 h-5 text-violet-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
             </div>
           </Link>
         )}

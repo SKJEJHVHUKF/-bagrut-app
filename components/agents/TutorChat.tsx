@@ -95,7 +95,7 @@ export function TutorChat({
             // Student text is rendered as PLAIN TEXT, never markdown — it is
             // untrusted input and must not be able to inject markup.
             <div key={i} className="flex justify-start">
-              <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-indigo-600 px-4 py-2 text-sm text-white">
+              <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-violet-600 px-4 py-2 text-sm text-white">
                 {m.content}
               </div>
             </div>
@@ -151,7 +151,7 @@ export function TutorChat({
           rows={2}
           maxLength={800}
           placeholder={placeholder}
-          className="min-h-[2.75rem] flex-1 resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-400"
+          className="min-h-[2.75rem] flex-1 resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-violet-400"
         />
         {isLoading ? (
           <button

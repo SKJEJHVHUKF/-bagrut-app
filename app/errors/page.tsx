@@ -83,7 +83,7 @@ export default function ErrorsPage() {
           <Link href="/" className="text-sm text-slate-600 hover:text-slate-800 transition-colors">
             → חזרה הביתה
           </Link>
-          <Link href="/insights" className="text-sm text-indigo-700 hover:text-indigo-800 transition-colors">
+          <Link href="/insights" className="text-sm text-violet-700 hover:text-violet-800 transition-colors">
             📈 התמונה שלי
           </Link>
         </div>
@@ -110,7 +110,7 @@ export default function ErrorsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="surface-premium rounded-3xl p-8 text-center space-y-4"
           >
-            <Sparkles className="w-10 h-10 mx-auto text-indigo-700" />
+            <Sparkles className="w-10 h-10 mx-auto text-violet-700" />
             <h2 className="text-xl font-black text-slate-900">עדיין אין טעויות רשומות</h2>
             <p className="text-sm text-slate-600 leading-relaxed max-w-sm mx-auto">
               כשתטעה בתרגול או במבחן ותסמן את סוג הטעות — היא תופיע כאן, ותוכל
@@ -184,7 +184,7 @@ export default function ErrorsPage() {
             {/* Category profile — bars */}
             {cats.length > 0 && (
               <div className="surface-premium rounded-3xl p-5 space-y-4">
-                <div className="flex items-center gap-2 text-xs font-black tracking-widest text-indigo-700 uppercase">
+                <div className="flex items-center gap-2 text-xs font-black tracking-widest text-violet-700 uppercase">
                   <NotebookPen className="w-3.5 h-3.5" />
                   <span>פרופיל הטעויות שלך</span>
                 </div>
@@ -215,7 +215,7 @@ export default function ErrorsPage() {
             {/* Per-topic breakdown */}
             {topics.length > 0 && (
               <div className="surface-premium rounded-3xl p-5 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-black tracking-widest text-indigo-700 uppercase">
+                <div className="flex items-center gap-2 text-xs font-black tracking-widest text-violet-700 uppercase">
                   <Target className="w-3.5 h-3.5" />
                   <span>טעויות לפי נושא</span>
                 </div>
@@ -236,7 +236,7 @@ export default function ErrorsPage() {
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <span className="text-sm font-black text-rose-700">{t.count}</span>
-                      <span className="text-xs text-indigo-700 group-hover:text-indigo-800 font-bold">
+                      <span className="text-xs text-violet-700 group-hover:text-violet-800 font-bold">
                         תרגל ←
                       </span>
                     </div>
@@ -354,14 +354,14 @@ function ReviewCard({ mistake }: { mistake: MistakeRecord }) {
       ) : (
         <button
           onClick={() => setShowAnswer(true)}
-          className="text-xs font-bold text-indigo-700 hover:text-indigo-900 transition-colors"
+          className="text-xs font-bold text-violet-700 hover:text-violet-900 transition-colors"
         >
           הצג תשובה נכונה ▼
         </button>
       )}
       <Link
         href={practiceHref}
-        className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-700 hover:text-violet-900 transition-colors"
       >
         <span>תרגל את הנושא הזה</span>
         <ArrowRight className="w-3.5 h-3.5 rotate-180" />

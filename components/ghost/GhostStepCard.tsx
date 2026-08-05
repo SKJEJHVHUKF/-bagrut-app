@@ -106,8 +106,8 @@ export function GhostStepCard({
             style={{ overflow: 'hidden' }}
             className="space-y-3"
           >
-            <div className="rounded-2xl border border-indigo-500/25 bg-gradient-to-br from-indigo-600/[0.07] to-violet-600/[0.07] p-4">
-              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-700">
+            <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-600/[0.07] to-violet-600/[0.07] p-4">
+              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-violet-700">
                 <Lightbulb className="h-3 w-3 flex-shrink-0" />
                 <span>מה עובר לו בראש</span>
               </div>

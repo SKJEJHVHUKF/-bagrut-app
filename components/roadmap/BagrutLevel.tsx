@@ -97,11 +97,11 @@ export function BagrutLevel({
         <button onClick={onBack} className="text-slate-500 hover:text-slate-800">
           → לסולם
         </button>
-        <span className="font-black text-indigo-700">🎓 רמת בגרות</span>
+        <span className="font-black text-violet-700">🎓 רמת בגרות</span>
       </div>
 
-      <div className="bg-gradient-to-br from-indigo-600/10 to-violet-600/10 border border-indigo-500/25 rounded-2xl p-4 flex gap-2.5 items-start">
-        <Target className="w-4 h-4 text-indigo-700 flex-shrink-0 mt-0.5" />
+      <div className="bg-gradient-to-br from-violet-600/10 to-violet-600/10 border border-violet-500/25 rounded-2xl p-4 flex gap-2.5 items-start">
+        <Target className="w-4 h-4 text-violet-700 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-slate-700 leading-relaxed">
           זו הרמה הגבוהה ביותר — שאלת בגרות אמיתית, רב-שלבית. פתור כמו בבחינה. אפשר לבדוק כל סעיף,
           לקבל רמז מדורג, או לשאול &quot;למה טעיתי?&quot; — המורה מעוגן בחומר הנושא.

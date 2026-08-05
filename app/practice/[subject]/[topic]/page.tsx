@@ -29,7 +29,7 @@ export default async function LessonPage({
 export function generateMetadata({ params }: { params: { topic?: string } }) {
   const topic = params.topic ? decodeURIComponent(params.topic) : '';
   return {
-    title: `${topic} — בגרות בכיס`,
+    title: `${topic} — MathUp`,
     description: `סיכום ותרגול בנושא ${topic}`,
   };
 }

@@ -149,7 +149,7 @@ export function RoadmapLevelRunner({
         <button onClick={onBack} className="text-slate-500 hover:text-slate-800 inline-flex items-center gap-1">
           → לסולם
         </button>
-        <span className="font-black text-indigo-700">
+        <span className="font-black text-violet-700">
           {level.emoji} רמת {level.title}
           {isRetry ? ' · חזרה על הטעויות' : ''}
         </span>

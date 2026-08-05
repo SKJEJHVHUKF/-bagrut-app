@@ -254,7 +254,7 @@ export function QuestionRunnerCard({
             {...buttonTap}
             onClick={submitOpen}
             disabled={!input.trim()}
-            className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-40 px-4 py-2.5 rounded-xl font-bold text-white text-sm transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 disabled:opacity-40 px-4 py-2.5 rounded-xl font-bold text-white text-sm transition-colors"
           >
             <CheckCircle className="w-4 h-4" />
             <span>בדוק תשובה</span>
@@ -266,7 +266,7 @@ export function QuestionRunnerCard({
       {q.kind === 'open' && !autoGradable && !revealed && (
         <button
           onClick={() => { setRevealed(true); setHintShown(true); }}
-          className="w-full inline-flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/40 px-4 py-3 rounded-xl font-bold text-indigo-800 text-sm transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/40 px-4 py-3 rounded-xl font-bold text-violet-800 text-sm transition-colors"
         >
           <KeyRound className="w-4 h-4" />
           <span>פתרתי על דף — הצג פתרון להשוואה</span>
@@ -356,14 +356,14 @@ export function QuestionRunnerCard({
                 <XCircle className="w-4 h-4" /> לא נורא — ככה פותרים, שלב אחר שלב:
               </div>
             )}
-            <div className="bg-gradient-to-br from-indigo-600/[0.07] to-violet-600/[0.07] border border-indigo-500/25 rounded-2xl p-4">
-              <div className="text-[10px] font-black tracking-widest text-indigo-700 mb-2 uppercase flex items-center gap-1.5">
+            <div className="bg-gradient-to-br from-violet-600/[0.07] to-violet-600/[0.07] border border-violet-500/25 rounded-2xl p-4">
+              <div className="text-[10px] font-black tracking-widest text-violet-700 mb-2 uppercase flex items-center gap-1.5">
                 <KeyRound className="w-3 h-3" /> פתרון
               </div>
               <ol className="space-y-2">
                 {q.solution.steps.map((step, i) => (
                   <li key={i} className="flex gap-2.5">
-                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[10px] font-black text-indigo-800">
+                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-500/25 border border-violet-400/40 flex items-center justify-center text-[10px] font-black text-violet-800">
                       {i + 1}
                     </div>
                     <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5"><MathText>{step}</MathText></div>

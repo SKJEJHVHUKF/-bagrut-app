@@ -256,7 +256,7 @@ export function TeachSession({
       {/* ---- progress: count + locked slots, never the answers ---- */}
       <div className="surface-premium rounded-2xl p-4 space-y-2.5">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase">
+          <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase">
             מה נועה כבר הבינה ממך
           </div>
           <div className="text-xs font-black text-slate-700 tabular-nums">
@@ -265,7 +265,7 @@ export function TeachSession({
         </div>
         <div className="h-1.5 rounded-full bg-slate-900/10 overflow-hidden">
           <div
-            className="h-full bg-gradient-to-l from-indigo-500 to-emerald-500 transition-all duration-500"
+            className="h-full bg-gradient-to-l from-violet-500 to-emerald-500 transition-all duration-500"
             style={{ width: `${(covered.length / rubric.points.length) * 100}%` }}
           />
         </div>

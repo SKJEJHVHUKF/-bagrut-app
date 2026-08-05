@@ -78,7 +78,7 @@ export function ComprehensionCheck({
                       answered && isCorrect
                         ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900'
                         : answered && isPicked
-                          ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-900'
+                          ? 'bg-violet-500/15 border-violet-500/50 text-violet-900'
                           : answered
                             ? 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-600'
                             : 'bg-slate-900/[0.03] hover:bg-slate-900/5 border-slate-900/10 text-slate-900'
@@ -102,13 +102,13 @@ export function ComprehensionCheck({
                   className={`rounded-xl px-3 py-2 text-sm chat-md flex items-start gap-2 ${
                     picked === q.correct
                       ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-900'
-                      : 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-900'
+                      : 'bg-violet-500/10 border border-violet-500/30 text-violet-900'
                   }`}
                 >
                   {picked === q.correct ? (
                     <CheckCircle className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
                   ) : (
-                    <XCircle className="w-4 h-4 text-indigo-700 flex-shrink-0 mt-0.5" />
+                    <XCircle className="w-4 h-4 text-violet-700 flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1">
                     <MathText inline>{q.explanation}</MathText>

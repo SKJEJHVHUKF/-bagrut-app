@@ -43,19 +43,20 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "בגרות בכיס",
+  title: "MathUp — מתרגלים חכם, מצליחים יותר",
   description: "תרגול חכם של שאלות בגרות אמיתיות, נוצרות בזמן אמת ע״י בינה מלאכותית. הסבר מיידי לכל תשובה.",
-  applicationName: "בגרות בכיס",
+  applicationName: "MathUp",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "בגרות בכיס",
+    // Home-screen label — iOS truncates past ~12 chars, so no tagline here.
+    title: "MathUp",
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
-    title: "בגרות בכיס",
+    title: "MathUp — מתרגלים חכם, מצליחים יותר",
     description: "תרגול חכם של שאלות בגרות אמיתיות עם AI",
     locale: "he_IL",
     type: "website",

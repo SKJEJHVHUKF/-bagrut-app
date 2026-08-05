@@ -141,7 +141,7 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
     <div className="space-y-4">
       {loading && !question && (
         <div className="surface-premium rounded-3xl p-8 text-center text-slate-500 text-sm">
-          <Loader2 className="w-6 h-6 mx-auto animate-spin mb-2 text-indigo-600" />
+          <Loader2 className="w-6 h-6 mx-auto animate-spin mb-2 text-violet-600" />
           מכין לך שאלת חשיבה…
         </div>
       )}
@@ -149,7 +149,7 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
       {question && (
         <>
           <div className="surface-premium rounded-3xl p-5 space-y-3">
-            <div className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2">
+            <div className="text-xs font-black tracking-widest text-violet-700 uppercase flex items-center gap-2">
               <Brain className="w-3.5 h-3.5" />
               <span>סעיף חשיבה והבנה · {topic}</span>
             </div>
@@ -166,12 +166,12 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
                 placeholder="הסבר במילים שלך — כמו שהיית כותב בבגרות…"
                 rows={5}
                 dir="auto"
-                className="w-full surface-premium rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-indigo-500/50 transition-colors resize-y"
+                className="w-full surface-premium rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-violet-500/50 transition-colors resize-y"
               />
               <button
                 onClick={evaluate}
                 disabled={!answer.trim() || evaluating}
-                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 px-4 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/25 transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 disabled:opacity-50 px-4 py-3 rounded-2xl font-bold text-white shadow-lg shadow-violet-500/25 transition-colors"
               >
                 {evaluating ? (
                   <>
@@ -238,7 +238,7 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
 
               {/* Feedback */}
               {evaluation.feedback && (
-                <div className="bg-indigo-500/[0.06] border border-indigo-500/20 rounded-2xl p-4 text-sm text-slate-800 chat-md leading-relaxed">
+                <div className="bg-violet-500/[0.06] border border-violet-500/20 rounded-2xl p-4 text-sm text-slate-800 chat-md leading-relaxed">
                   <MathText>{evaluation.feedback}</MathText>
                 </div>
               )}
@@ -275,7 +275,7 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
           <div className="text-sm text-rose-700 mb-2">{error}</div>
           <button
             onClick={loadQuestion}
-            className="text-sm font-bold text-indigo-700 hover:text-indigo-900"
+            className="text-sm font-bold text-violet-700 hover:text-violet-900"
           >
             נסה שוב
           </button>

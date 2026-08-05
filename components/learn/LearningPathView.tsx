@@ -284,21 +284,21 @@ export function LearningPathView({ path }: { path: LearningPath }) {
           <motion.div variants={fadeUp}>
             <Link
               href={`/learn/${subject}/${encodeURIComponent(topic)}/advanced`}
-              className="group block rounded-2xl p-4 bg-gradient-to-br from-indigo-600/20 to-indigo-600/10 border border-indigo-500/40 hover:border-indigo-400 transition-colors shadow-lg shadow-indigo-500/10"
+              className="group block rounded-2xl p-4 bg-gradient-to-br from-violet-600/20 to-violet-600/10 border border-violet-500/40 hover:border-violet-400 transition-colors shadow-lg shadow-violet-500/10"
             >
               <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-indigo-500/25 border border-indigo-400/50 flex items-center justify-center">
-                  <Rocket className="w-6 h-6 text-indigo-800" />
+                <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-violet-500/25 border border-violet-400/50 flex items-center justify-center">
+                  <Rocket className="w-6 h-6 text-violet-800" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-sm sm:text-base text-slate-900 mb-0.5">
                     הצעד הבא: קורס מתקדם — רמת בגרות
                   </div>
-                  <div className="text-xs text-indigo-800 leading-snug">
+                  <div className="text-xs text-violet-800 leading-snug">
                     זיהוי תבניות, טכניקות, בגרויות מפורקות עם מחוון, וסימולציית סיום עם טיימר.
                   </div>
                 </div>
-                <ArrowLeft className="w-5 h-5 text-indigo-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+                <ArrowLeft className="w-5 h-5 text-violet-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -353,7 +353,7 @@ function PracticeLevel({
   const toneMap = {
     emerald: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-800',
     amber: 'bg-amber-500/15 border-amber-500/40 text-amber-800',
-    rose: 'bg-indigo-500/15 border-indigo-500/40 text-indigo-800',
+    rose: 'bg-violet-500/15 border-violet-500/40 text-violet-800',
   };
   return (
     <div className="space-y-2.5">

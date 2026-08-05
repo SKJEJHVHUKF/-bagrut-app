@@ -63,7 +63,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
     <div className="surface-premium rounded-2xl p-4 space-y-3">
       {/* Question */}
       <div className="flex items-start gap-2.5">
-        <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white text-xs shadow-lg shadow-indigo-500/30">
+        <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center font-black text-white text-xs shadow-lg shadow-violet-500/30">
           {index + 1}
         </div>
         <div className="flex-1 chat-md text-sm sm:text-base text-slate-900 leading-relaxed pt-0.5">
@@ -91,7 +91,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
                   show && isCorrect
                     ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900'
                     : show && isSelected
-                      ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-900'
+                      ? 'bg-violet-500/15 border-violet-500/50 text-violet-900'
                       : show
                         ? 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-600'
                         : 'bg-slate-900/[0.03] hover:bg-slate-900/5 border-slate-900/10 text-slate-900'
@@ -113,7 +113,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
           placeholder="כתוב כאן את התשובה שלך (נסה לבד לפני שאתה חושף את הפתרון)…"
           rows={2}
           dir="auto"
-          className="w-full bg-slate-900/[0.04] border border-slate-900/10 focus:border-indigo-500/60 rounded-xl px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y"
+          className="w-full bg-slate-900/[0.04] border border-slate-900/10 focus:border-violet-500/60 rounded-xl px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y"
         />
       )}
 
@@ -164,7 +164,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
           <motion.button
             {...buttonTap}
             onClick={showSolution}
-            className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-indigo-500/30 transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-violet-500/30 transition-colors"
           >
             <KeyRound className="w-4 h-4" />
             <span>{q.kind === 'open' ? 'הצג פתרון להשוואה' : 'הצג פתרון מלא'}</span>
@@ -182,9 +182,9 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
             style={{ overflow: 'hidden' }}
-            className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-xl p-4"
+            className="bg-gradient-to-br from-violet-600/10 to-violet-600/10 border border-violet-500/30 rounded-xl p-4"
           >
-            <div className="text-[10px] font-black tracking-widest text-indigo-700 mb-2 uppercase flex items-center gap-1.5">
+            <div className="text-[10px] font-black tracking-widest text-violet-700 mb-2 uppercase flex items-center gap-1.5">
               <KeyRound className="w-3 h-3" />
               <span>פתרון</span>
             </div>
@@ -197,7 +197,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
                   transition={{ duration: 0.25, delay: 0.05 + i * 0.06, ease: 'easeOut' }}
                   className="flex gap-3"
                 >
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-[11px] font-black text-indigo-800">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-500/30 border border-violet-400/50 flex items-center justify-center text-[11px] font-black text-violet-800">
                     {i + 1}
                   </div>
                   <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5">

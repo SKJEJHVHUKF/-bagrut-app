@@ -333,11 +333,11 @@ export function QuestionPartCard({
         onClick={() => setOpen((o) => !o)}
         className="w-full text-right px-4 py-3 flex items-center gap-3 hover:bg-slate-900/[0.02] transition-colors"
       >
-        <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-500 flex items-center justify-center font-black text-white shadow-lg shadow-indigo-500/30">
+        <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center font-black text-white shadow-lg shadow-violet-500/30">
           {part.label}
         </div>
         <div className="flex-1 text-right">
-          <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase">
+          <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase">
             סעיף {part.label}
           </div>
           <div className="text-sm text-slate-800 line-clamp-1 chat-md">
@@ -352,7 +352,7 @@ export function QuestionPartCard({
             <AlertCircle className="w-4 h-4 text-amber-400" />
           )}
           {checkResult?.verdict === 'wrong' && (
-            <XCircle className="w-4 h-4 text-indigo-600" />
+            <XCircle className="w-4 h-4 text-violet-600" />
           )}
           <div className="text-slate-600">
             {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -401,7 +401,7 @@ export function QuestionPartCard({
                 </button>
 
                 {checkError && (
-                  <div className="mt-2 text-xs text-indigo-700 bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-3 py-2">
+                  <div className="mt-2 text-xs text-violet-700 bg-violet-500/10 border border-violet-500/30 rounded-lg px-3 py-2">
                     {checkError}
                   </div>
                 )}
@@ -507,9 +507,9 @@ export function QuestionPartCard({
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
                 style={{ overflow: 'hidden' }}
-                className="bg-gradient-to-br from-indigo-600/10 to-indigo-600/10 border border-indigo-500/30 rounded-xl p-4"
+                className="bg-gradient-to-br from-violet-600/10 to-violet-600/10 border border-violet-500/30 rounded-xl p-4"
               >
-                <div className="text-[10px] font-black tracking-widest text-indigo-700 mb-2 uppercase flex items-center gap-1.5">
+                <div className="text-[10px] font-black tracking-widest text-violet-700 mb-2 uppercase flex items-center gap-1.5">
                   <KeyRound className="w-3 h-3" />
                   <span>פתרון</span>
                 </div>
@@ -522,7 +522,7 @@ export function QuestionPartCard({
                       transition={{ duration: 0.3, ease: 'easeOut' }}
                       className="flex gap-3"
                     >
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-[11px] font-black text-indigo-800">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-500/30 border border-violet-400/50 flex items-center justify-center text-[11px] font-black text-violet-800">
                         {i + 1}
                       </div>
                       <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5">
@@ -536,7 +536,7 @@ export function QuestionPartCard({
                   <motion.button
                     {...buttonTap}
                     onClick={nextStep}
-                    className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-lg font-bold text-indigo-800 text-sm transition-colors"
+                    className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/40 px-4 py-2 rounded-lg font-bold text-violet-800 text-sm transition-colors"
                   >
                     הצעד הבא ({stepsShown + 2}/{totalSteps})
                   </motion.button>
@@ -574,7 +574,7 @@ export function QuestionPartCard({
                     student grade their own draft against the solution instead
                     of fighting strict string-matching on messy expressions. */}
                 {onLastStep && checkResult?.verdict !== 'correct' && (
-                  <div className="mt-3 pt-3 border-t border-indigo-500/20">
+                  <div className="mt-3 pt-3 border-t border-violet-500/20">
                     {selfReport === null ? (
                       <>
                         <div className="text-[11px] font-bold text-slate-600 mb-2 text-center">
@@ -619,7 +619,7 @@ export function QuestionPartCard({
             <motion.button
               {...buttonTap}
               onClick={showFullSolution}
-              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-indigo-500/30 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-violet-500/30 transition-colors"
             >
               <KeyRound className="w-4 h-4" />
               <span>פתרתי על דף — הצג פתרון מלא</span>
@@ -670,9 +670,9 @@ function CheckResultPanel({ result }: { result: CheckResult }) {
           label: 'חלקית נכון',
         }
       : {
-          wrap: 'bg-indigo-500/10 border-indigo-500/40',
-          accent: 'text-indigo-700',
-          icon: <XCircle className="w-4 h-4 text-indigo-700" />,
+          wrap: 'bg-violet-500/10 border-violet-500/40',
+          accent: 'text-violet-700',
+          icon: <XCircle className="w-4 h-4 text-violet-700" />,
           label: 'לא נכון',
         };
 

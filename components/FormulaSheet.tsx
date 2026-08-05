@@ -124,7 +124,7 @@ export default function FormulaSheet() {
       <button
         onClick={() => setOpen(true)}
         aria-label="דף הנוסחאות"
-        className="formula-fab fixed bottom-4 left-4 z-[55] inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur border border-indigo-500/25 shadow-lg shadow-indigo-500/15 px-3.5 py-2.5 text-indigo-800 font-bold text-sm hover:bg-indigo-500/5 hover:scale-[1.03] transition-all"
+        className="formula-fab fixed bottom-4 left-4 z-[55] inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur border border-violet-500/25 shadow-lg shadow-violet-500/15 px-3.5 py-2.5 text-violet-800 font-bold text-sm hover:bg-violet-500/5 hover:scale-[1.03] transition-all"
       >
         <Sigma className="w-4 h-4" />
         <span className="hidden sm:inline">נוסחאות</span>
@@ -200,7 +200,7 @@ function FormulaDrawer({
         {/* Header */}
         <div className="p-4 border-b border-slate-900/[0.08] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-violet-500/30">
               <Sigma className="w-4.5 h-4.5" />
             </div>
             <div>
@@ -235,7 +235,7 @@ function FormulaDrawer({
                 ref={isCurrent ? currentRef : undefined}
                 className={
                   isCurrent
-                    ? 'rounded-2xl border border-indigo-500/40 bg-indigo-500/[0.05] overflow-hidden'
+                    ? 'rounded-2xl border border-violet-500/40 bg-violet-500/[0.05] overflow-hidden'
                     : 'rounded-2xl border border-slate-900/10 bg-white overflow-hidden'
                 }
               >
@@ -247,7 +247,7 @@ function FormulaDrawer({
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm text-slate-900">{t.topic}</div>
                     {isCurrent && (
-                      <div className="text-[10px] font-black text-indigo-700">הנושא הנוכחי שלך</div>
+                      <div className="text-[10px] font-black text-violet-700">הנושא הנוכחי שלך</div>
                     )}
                   </div>
                   <span className="text-[10px] text-slate-500 flex-shrink-0">
@@ -305,7 +305,7 @@ function DrawerFormula({ formula }: { formula: Formula }) {
 
   return (
     <div className="formula-surface rounded-xl p-3">
-      <div className="text-xs font-bold text-indigo-800 chat-md mb-2">
+      <div className="text-xs font-bold text-violet-800 chat-md mb-2">
         <MathText inline>{formula.name}</MathText>
       </div>
       <div className="bg-slate-900/[0.04] border border-slate-900/10 rounded-lg px-3 py-2.5 chat-md text-center">
@@ -316,7 +316,7 @@ function DrawerFormula({ formula }: { formula: Formula }) {
         <>
           <button
             onClick={() => setShowHow((v) => !v)}
-            className="mt-2 text-[11px] font-bold text-indigo-700 hover:text-indigo-900 transition-colors"
+            className="mt-2 text-[11px] font-bold text-violet-700 hover:text-violet-900 transition-colors"
           >
             {showHow ? 'הסתר ▲' : 'איך משתמשים? ▼'}
           </button>

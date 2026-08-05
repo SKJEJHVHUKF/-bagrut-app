@@ -70,7 +70,7 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
       <motion.header initial="hidden" animate="visible" variants={staggerContainer} className="space-y-3">
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-violet-700 uppercase flex items-center gap-2"
         >
           <Rocket className="w-3.5 h-3.5" />
           <span>קורס מתקדם · רמת בגרות</span>
@@ -108,19 +108,19 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
         className="surface-premium rounded-2xl p-4 space-y-3"
       >
         <div className="flex items-baseline justify-between">
-          <div className="text-sm font-bold text-indigo-800">
+          <div className="text-sm font-bold text-violet-800">
             {simPassed
               ? '🎓 הנושא הושלם ברמת בגרות!'
               : `${doneCount}/${totalSections} חלקים הושלמו`}
           </div>
-          <div className="text-xs text-indigo-800 font-mono">{percent}%</div>
+          <div className="text-xs text-violet-800 font-mono">{percent}%</div>
         </div>
         <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
           <motion.div
             initial={{ width: '0%' }}
             animate={{ width: `${percent}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="h-full bg-gradient-to-l from-indigo-500 to-indigo-500"
+            className="h-full bg-gradient-to-l from-violet-500 to-violet-500"
           />
         </div>
         <div className="flex flex-wrap gap-1.5 pt-1">
@@ -132,7 +132,7 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
                 href={locked ? '#section-gate' : `#section-${s.id}`}
                 className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-lg border transition-colors ${
                   done.has(s.id)
-                    ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-800'
+                    ? 'bg-violet-500/15 border-violet-500/40 text-violet-800'
                     : locked
                       ? 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-500'
                       : 'bg-slate-900/[0.03] border-slate-900/10 text-slate-700 hover:bg-slate-900/5'
@@ -249,10 +249,10 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
                   <AlertTriangle className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 space-y-1.5">
                     <div className="chat-md text-sm text-amber-900 leading-relaxed">
-                      <span className="font-bold text-indigo-700">המלכודת: </span>
+                      <span className="font-bold text-violet-700">המלכודת: </span>
                       <MathText inline>{t.trap}</MathText>
                     </div>
-                    <div className="chat-md text-xs text-indigo-800 leading-relaxed">
+                    <div className="chat-md text-xs text-violet-800 leading-relaxed">
                       <span className="font-bold">המחיר: </span>
                       <MathText inline>{t.consequence}</MathText>
                     </div>
@@ -263,7 +263,7 @@ export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
                     {t.relatedPatternId && (
                       <a
                         href={`#pattern-${t.relatedPatternId}`}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-800 hover:text-indigo-800 transition-colors"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-800 hover:text-violet-800 transition-colors"
                       >
                         <span>לתבנית הרלוונטית</span>
                         <ArrowLeft className="w-3 h-3" />
@@ -314,7 +314,7 @@ function LockedGroup({ locked, children }: { locked: boolean; children: ReactNod
       </p>
       <a
         href="#section-gate"
-        className="inline-flex items-center gap-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 px-4 py-2 rounded-xl font-bold text-indigo-800 text-sm transition-colors"
+        className="inline-flex items-center gap-2 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/40 px-4 py-2 rounded-xl font-bold text-violet-800 text-sm transition-colors"
       >
         <span>לשער הכניסה</span>
         <ArrowLeft className="w-4 h-4" />

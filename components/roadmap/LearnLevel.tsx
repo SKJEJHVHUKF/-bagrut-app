@@ -72,7 +72,7 @@ export function LearnLevel({
         <button onClick={onBack} className="text-slate-500 hover:text-slate-800">
           → לסולם
         </button>
-        <span className="font-black text-indigo-700">📖 רמת לומדים</span>
+        <span className="font-black text-violet-700">📖 רמת לומדים</span>
       </div>
 
       {/* Guided steps */}
@@ -87,7 +87,7 @@ export function LearnLevel({
               className="surface-premium rounded-2xl p-4"
             >
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center text-[11px] font-black text-indigo-800 flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-violet-500/25 border border-violet-400/40 flex items-center justify-center text-[11px] font-black text-violet-800 flex-shrink-0">
                   {i + 1}
                 </div>
                 <div className="text-sm font-black text-slate-900 chat-md">
@@ -121,7 +121,7 @@ export function LearnLevel({
       {/* Formulas the lesson steps did not already cover */}
       {extraFormulas.length > 0 && (
         <div className="space-y-2">
-          <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase">הנוסחאות של השלב</div>
+          <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase">הנוסחאות של השלב</div>
           {extraFormulas.map((f, i) => (
             <FormulaCard key={i} formula={f} />
           ))}
@@ -130,15 +130,15 @@ export function LearnLevel({
 
       {/* Recap */}
       {subTopic.keyPoints.length > 0 && (
-        <div className="bg-indigo-500/[0.06] border border-indigo-500/20 rounded-2xl p-4">
-          <div className="text-[10px] font-black tracking-widest text-indigo-700 uppercase mb-2">לזכור</div>
+        <div className="bg-violet-500/[0.06] border border-violet-500/20 rounded-2xl p-4">
+          <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase mb-2">לזכור</div>
           <ul className="space-y-1.5">
             {subTopic.keyPoints.map((k, i) => (
               // chat-md lives on the inner div, NOT the flex <li>: every
               // .chat-md rule is a descendant combinator, so on the <li>
               // itself none of them ever applied. Same shape as PathSections.
               <li key={i} className="flex gap-2 text-sm text-slate-800">
-                <span className="text-indigo-600 font-black flex-shrink-0">•</span>
+                <span className="text-violet-600 font-black flex-shrink-0">•</span>
                 <div className="chat-md flex-1 min-w-0">
                   <MathText inline>{k}</MathText>
                 </div>
@@ -157,7 +157,7 @@ export function LearnLevel({
         {...buttonTap}
         onClick={() => allDrillsDone && setResult(onSubmit(drillsCorrect, drillTotal))}
         disabled={!allDrillsDone}
-        className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/25 transition-colors"
+        className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-violet-500/25 transition-colors"
       >
         <GraduationCap className="w-4 h-4" />
         <span>{drillTotal === 0 ? 'הבנתי — קדימה לתרגול' : 'סיימתי ללמוד — קדימה לתרגול'}</span>

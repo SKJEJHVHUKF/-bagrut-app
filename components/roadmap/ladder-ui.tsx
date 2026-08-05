@@ -80,7 +80,7 @@ export function LevelClearedPanel({
         <StarRow value={stars} className="justify-center" size="w-7 h-7" />
         <h3 className="font-display text-xl font-black text-slate-900">{headline}</h3>
         {xpGained > 0 && (
-          <div className="inline-flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-3 py-1 text-sm font-black text-indigo-700">
+          <div className="inline-flex items-center gap-1.5 bg-violet-500/10 border border-violet-500/30 rounded-full px-3 py-1 text-sm font-black text-violet-700">
             +{xpGained} XP
           </div>
         )}
@@ -91,7 +91,7 @@ export function LevelClearedPanel({
           <motion.button
             {...buttonTap}
             onClick={onNext}
-            className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/25 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-violet-500/25 transition-colors"
           >
             <span>עלה לרמה הבאה: {nextTitle}</span>
             <ArrowLeft className="w-4 h-4" />
@@ -116,7 +116,7 @@ export function LevelClearedPanel({
         {onReplay && (
           <button
             onClick={onReplay}
-            className="w-full inline-flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-indigo-700 py-1 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-violet-700 py-1 transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>תרגל את הרמה הזו שוב</span>
@@ -179,7 +179,7 @@ export function LevelFailedPanel({
         <motion.button
           {...buttonTap}
           onClick={onRetry}
-          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/25 transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-violet-500/25 transition-colors"
         >
           <RotateCcw className="w-4 h-4" />
           <span>נסה שוב — רק ה-{missedCount} שטעית</span>

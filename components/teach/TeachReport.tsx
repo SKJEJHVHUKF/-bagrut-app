@@ -96,7 +96,7 @@ export function TeachReport({
           {clean ? 'לימדת את זה כמו שצריך!' : 'סיימת ללמד'}
         </h2>
         <p className="text-sm text-slate-600">
-          נועה הבינה ממך <strong className="text-indigo-700">{hit}</strong> מתוך{' '}
+          נועה הבינה ממך <strong className="text-violet-700">{hit}</strong> מתוך{' '}
           <strong>{rubric.points.length}</strong> הדברים ב&quot;{rubric.title}&quot;.
         </p>
       </div>
@@ -152,14 +152,14 @@ export function TeachReport({
           checklist is full but the maths was shaky that advice used to come
           with no link to follow. */}
       {!clean && (
-        <div className="bg-indigo-500/[0.06] border border-indigo-500/25 rounded-2xl px-4 py-3 space-y-2">
+        <div className="bg-violet-500/[0.06] border border-violet-500/25 rounded-2xl px-4 py-3 space-y-2">
           <p className="text-sm text-slate-800 leading-relaxed">
             <strong className="text-slate-900">אם אתה לא מצליח להסביר את זה — אתה עוד לא באמת יודע את זה.</strong>{' '}
             זה בדיוק מה שכדאי לחזור עליו.
           </p>
           <Link
             href={learnHref}
-            className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-indigo-50 border border-indigo-500/30 px-4 py-2.5 rounded-xl font-bold text-indigo-800 text-sm transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-violet-50 border border-violet-500/30 px-4 py-2.5 rounded-xl font-bold text-violet-800 text-sm transition-colors"
           >
             <BookOpen className="w-4 h-4" />
             חזור ללומדים בתת-הנושא הזה

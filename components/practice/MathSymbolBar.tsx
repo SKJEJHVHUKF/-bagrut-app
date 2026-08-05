@@ -69,7 +69,7 @@ export function MathSymbolBar({
           title={sym.title}
           tabIndex={-1}
           aria-label={sym.title ?? sym.label}
-          className="min-w-[2.25rem] px-2 py-1.5 rounded-lg bg-indigo-500/[0.06] hover:bg-indigo-500/[0.12] active:bg-indigo-500/20 border border-indigo-500/20 text-sm font-bold text-indigo-800 disabled:opacity-40 transition-colors"
+          className="min-w-[2.25rem] px-2 py-1.5 rounded-lg bg-violet-500/[0.06] hover:bg-violet-500/[0.12] active:bg-violet-500/20 border border-violet-500/20 text-sm font-bold text-violet-800 disabled:opacity-40 transition-colors"
         >
           {sym.label}
         </button>

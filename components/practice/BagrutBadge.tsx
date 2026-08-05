@@ -36,8 +36,8 @@ export function BagrutBadge({
 function InlineBadge({ mapping }: { mapping: TopicMapping }) {
   const paperColor =
     mapping.paper === '571'
-      ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-800'
-      : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-800';
+      ? 'bg-violet-500/15 border-violet-500/30 text-violet-800'
+      : 'bg-violet-500/15 border-violet-500/30 text-violet-800';
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-xs">
@@ -57,8 +57,8 @@ function BannerBadge({ mapping }: { mapping: TopicMapping }) {
   // Stripe color reflects which paper the topic belongs to.
   const paperGradient =
     mapping.paper === '571'
-      ? 'from-indigo-600/20 to-indigo-700/10 border-indigo-500/40'
-      : 'from-indigo-600/20 to-indigo-700/10 border-indigo-500/40';
+      ? 'from-violet-600/20 to-violet-700/10 border-violet-500/40'
+      : 'from-violet-600/20 to-violet-700/10 border-violet-500/40';
 
   const weightLabel =
     mapping.weight === 'core'

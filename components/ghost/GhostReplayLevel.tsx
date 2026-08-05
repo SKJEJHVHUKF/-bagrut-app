@@ -112,8 +112,8 @@ export function GhostReplayLevel({
   return (
     <div className="space-y-4">
       {/* The problem, always visible */}
-      <div className="rounded-3xl border border-indigo-500/25 bg-gradient-to-br from-indigo-600/[0.07] to-violet-600/[0.07] p-5">
-        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-700">
+      <div className="rounded-3xl border border-violet-500/25 bg-gradient-to-br from-violet-600/[0.07] to-violet-600/[0.07] p-5">
+        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-violet-700">
           <Brain className="h-3 w-3 flex-shrink-0" />
           <span>הליכת חשיבה</span>
         </div>
@@ -131,7 +131,7 @@ export function GhostReplayLevel({
       {/* Progress bar */}
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-900/[0.06]">
         <motion.div
-          className="h-full rounded-full bg-gradient-to-l from-indigo-600 to-violet-600"
+          className="h-full rounded-full bg-gradient-to-l from-cyan-700 to-violet-600"
           initial={false}
           animate={{ width: `${Math.round(prog.ratio * 100)}%` }}
           transition={{ duration: 0.35, ease: 'easeOut' }}

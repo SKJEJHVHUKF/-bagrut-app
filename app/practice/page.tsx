@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { hasLesson } from '@/content/lessons';
 import { getAllProgress } from '@/lib/progress';
+import MathUpLogo from '@/components/MathUpLogo';
 import {
   topicsByPaper,
   topicsForActivePaper,
@@ -120,28 +121,15 @@ const SUBJECTS = {
 
 type SubjectKey = keyof typeof SUBJECTS;
 
-function BagrutLogo() {
-  return (
-    <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-xl shadow-indigo-500/50 ring-1 ring-slate-900/10">
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
-        <path
-          d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-          fill="currentColor"
-        />
-      </svg>
-    </div>
-  );
-}
-
 function BackgroundOrbs() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       <div
-        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/30 blur-[120px] animate-pulse"
+        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/30 blur-[120px] animate-pulse"
         style={{ animationDuration: '8s' }}
       />
       <div
-        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/25 blur-[120px] animate-pulse"
+        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/25 blur-[120px] animate-pulse"
         style={{ animationDuration: '10s', animationDelay: '2s' }}
       />
     </div>
@@ -153,17 +141,17 @@ function TopBar() {
     <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <BagrutLogo />
+          <MathUpLogo size="md" />
           <div>
             <div className="text-base font-black font-display text-slate-800">
-              בגרות בכיס
+              MathUp
             </div>
             <div className="text-[10px] text-slate-600 -mt-0.5">תרגול מודרך</div>
           </div>
         </Link>
         <Link
           href="/quiz"
-          className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-indigo-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+          className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
         >
           <span>למבחן</span>
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
@@ -246,9 +234,9 @@ export default function PracticePage() {
         {/* Personalized roadmap — the structured, step-by-step learning path */}
         <Link
           href="/roadmap"
-          className="group flex items-center gap-3 mb-3 bg-gradient-to-l from-emerald-600/10 to-indigo-600/10 hover:from-emerald-600/[0.15] hover:to-indigo-600/[0.15] border border-emerald-500/25 rounded-2xl p-4 transition-colors"
+          className="group flex items-center gap-3 mb-3 bg-gradient-to-l from-emerald-600/10 to-violet-600/10 hover:from-emerald-600/[0.15] hover:to-violet-600/[0.15] border border-emerald-500/25 rounded-2xl p-4 transition-colors"
         >
-          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-violet-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
             <span className="text-xl">🗺️</span>
           </div>
           <div className="flex-1 min-w-0">
@@ -265,9 +253,9 @@ export default function PracticePage() {
         {/* למד את הבוט — the student explains, the model plays the classmate */}
         <Link
           href="/teach"
-          className="group flex items-center gap-3 mb-3 bg-gradient-to-l from-violet-600/10 to-indigo-600/10 hover:from-violet-600/[0.15] hover:to-indigo-600/[0.15] border border-violet-500/25 rounded-2xl p-4 transition-colors"
+          className="group flex items-center gap-3 mb-3 bg-gradient-to-l from-violet-600/10 to-violet-600/10 hover:from-violet-600/[0.15] hover:to-violet-600/[0.15] border border-violet-500/25 rounded-2xl p-4 transition-colors"
         >
-          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
             <span className="text-xl">🙋‍♀️</span>
           </div>
           <div className="flex-1 min-w-0">
@@ -282,9 +270,9 @@ export default function PracticePage() {
         {/* Unseen Buster — conceptual thinking mode */}
         <Link
           href="/thinking"
-          className="group flex items-center gap-3 mb-6 bg-gradient-to-l from-violet-600/10 to-indigo-600/10 hover:from-violet-600/[0.15] hover:to-indigo-600/[0.15] border border-violet-500/25 rounded-2xl p-4 transition-colors"
+          className="group flex items-center gap-3 mb-6 bg-gradient-to-l from-violet-600/10 to-violet-600/10 hover:from-violet-600/[0.15] hover:to-violet-600/[0.15] border border-violet-500/25 rounded-2xl p-4 transition-colors"
         >
-          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
             <span className="text-xl">🧠</span>
           </div>
           <div className="flex-1 min-w-0">
@@ -298,7 +286,7 @@ export default function PracticePage() {
 
         {/* Subject tabs */}
         <div className="mb-5">
-          <div className="text-xs font-black tracking-widest text-indigo-700 mb-2 uppercase">
+          <div className="text-xs font-black tracking-widest text-violet-700 mb-2 uppercase">
             מקצוע
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -311,7 +299,7 @@ export default function PracticePage() {
                 }}
                 className={
                   subject === key
-                    ? 'flex-shrink-0 px-4 py-2 rounded-xl bg-indigo-600 border border-indigo-600 text-white font-bold text-sm transition-all'
+                    ? 'flex-shrink-0 px-4 py-2 rounded-xl bg-violet-600 border border-violet-600 text-white font-bold text-sm transition-all'
                     : 'flex-shrink-0 px-4 py-2 rounded-xl bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 text-slate-700 font-bold text-sm transition-all'
                 }
               >
@@ -335,7 +323,7 @@ export default function PracticePage() {
           />
         ) : (
           <div className="mb-6">
-            <div className="text-xs font-black tracking-widest text-indigo-700 mb-2 uppercase">
+            <div className="text-xs font-black tracking-widest text-violet-700 mb-2 uppercase">
               נושא
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 perspective-1500">
@@ -349,8 +337,8 @@ export default function PracticePage() {
                     onClick={() => setTopic(t.name)}
                     className={
                       topic === t.name
-                        ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-indigo-600/30 to-indigo-600/30 border border-indigo-500/60'
-                        : 'card-3d text-right px-4 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border border-slate-900/10 hover:border-indigo-500/40'
+                        ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-violet-600/30 to-violet-600/30 border border-violet-500/60'
+                        : 'card-3d text-right px-4 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border border-slate-900/10 hover:border-violet-500/40'
                     }
                   >
                     <div className="flex items-start gap-2">
@@ -360,7 +348,7 @@ export default function PracticePage() {
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         {hasL && (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-800">
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/40 text-violet-800">
                             <BookOpen className="w-2.5 h-2.5" />
                             סיכום
                           </span>
@@ -383,7 +371,7 @@ export default function PracticePage() {
         <button
           onClick={start}
           disabled={!topic || navigating}
-          className="btn-3d group w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-bold text-white"
+          className="btn-3d group w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 disabled:opacity-40 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-bold text-white"
         >
           {navigating ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -433,13 +421,13 @@ function Math5TopicsByPaper({
   return (
     <div className="mb-6 space-y-5">
       {single && (
-        <div className="flex items-center justify-between rounded-2xl bg-indigo-500/[0.07] border border-indigo-500/20 px-4 py-2.5">
-          <div className="text-xs font-black text-indigo-800">
+        <div className="flex items-center justify-between rounded-2xl bg-violet-500/[0.07] border border-violet-500/20 px-4 py-2.5">
+          <div className="text-xs font-black text-violet-800">
             מציג את נושאי {paperLabel(activePaper)}
           </div>
           <button
             onClick={onSwitchPaper}
-            className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 underline underline-offset-2"
+            className="text-[11px] font-bold text-violet-700 hover:text-violet-900 underline underline-offset-2"
           >
             החלף ל{paperLabel(activePaper === '571' ? '572' : '571')}
           </button>
@@ -449,7 +437,7 @@ function Math5TopicsByPaper({
         <div key={paper}>
           {!single && (
             <div className="flex items-center justify-between mb-2">
-              <div className="text-xs font-black tracking-widest text-indigo-700 uppercase">
+              <div className="text-xs font-black tracking-widest text-violet-700 uppercase">
                 {paperLabel(paper)}
               </div>
               <div className="text-[10px] text-slate-500">
@@ -469,8 +457,8 @@ function Math5TopicsByPaper({
                   onClick={() => onSelect(t.key)}
                   className={
                     isSelected
-                      ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-indigo-600/30 to-indigo-600/30 border border-indigo-500/60'
-                      : 'card-3d text-right px-4 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border border-slate-900/10 hover:border-indigo-500/40'
+                      ? 'card-3d text-right px-4 py-3 rounded-2xl bg-gradient-to-l from-violet-600/30 to-violet-600/30 border border-violet-500/60'
+                      : 'card-3d text-right px-4 py-3 rounded-2xl bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border border-slate-900/10 hover:border-violet-500/40'
                   }
                 >
                   <div className="flex items-start gap-2 mb-1.5">
@@ -483,7 +471,7 @@ function Math5TopicsByPaper({
                     </div>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       {hasL && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-800">
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/40 text-violet-800">
                           <BookOpen className="w-2.5 h-2.5" />
                           סיכום
                         </span>

@@ -33,7 +33,7 @@ export default async function LearnPage({
 export function generateMetadata({ params }: { params: { topic?: string } }) {
   const topic = params.topic ? decodeURIComponent(params.topic) : '';
   return {
-    title: `${topic} — לימוד מ-0 · בגרות בכיס`,
+    title: `${topic} — לימוד מ-0 · MathUp`,
     description: `מסלול לימוד מלא בנושא ${topic}: מאפס ועד שאלת בגרות`,
   };
 }

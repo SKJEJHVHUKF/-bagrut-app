@@ -93,7 +93,7 @@ export function AnswerInput({
         rows={rows ?? 3}
         maxLength={maxLength}
         dir="auto"
-        className={`w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-indigo-500/60 focus:bg-white rounded-xl px-4 py-3 ${
+        className={`w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-violet-500/60 focus:bg-white rounded-xl px-4 py-3 ${
           largeText ? 'text-base' : 'text-sm'
         } text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y`}
       />
@@ -108,7 +108,7 @@ export function AnswerInput({
         placeholder={placeholder ?? PLACEHOLDER[type]}
         maxLength={maxLength}
         dir="auto"
-        className="w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-indigo-500/60 focus:bg-white rounded-xl px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 outline-none transition-colors"
+        className="w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-violet-500/60 focus:bg-white rounded-xl px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 outline-none transition-colors"
       />
     );
 

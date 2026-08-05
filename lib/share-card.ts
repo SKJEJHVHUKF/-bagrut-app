@@ -63,13 +63,13 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob> {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // ---- Logo: star + name (pure Hebrew → safe as one string) ----
+  // ---- Logo: star + name (pure Latin → single LTR run, bidi-safe) ----
   ctx.fillStyle = '#FDE68A';
   ctx.font = `90px ${family}`;
   ctx.fillText('✦', W / 2, 140);
   ctx.fillStyle = 'rgba(255,255,255,0.95)';
   ctx.font = `700 56px ${family}`;
-  ctx.fillText('בגרות בכיס', W / 2, 235);
+  ctx.fillText('MathUp', W / 2, 235);
 
   // ---- Headline (pure Hebrew) ----
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
@@ -110,9 +110,14 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob> {
   ctx.fillStyle = '#0F172A';
   ctx.font = `700 40px ${family}`;
   ctx.fillText('גם אתה לומד לבגרות?', W / 2, H * 0.72 + 110);
+  // Name and slogan are drawn as two calls, not one string: "MathUp —
+  // מתרגלים חכם" would put an LTR run, a neutral dash and an RTL run in a
+  // single fillText, and the dash lands on whichever side bidi decides.
   ctx.fillStyle = '#4F46E5';
   ctx.font = `900 44px ${family}`;
-  ctx.fillText('בגרות בכיס — תרגול חכם, בחינם', W / 2, H * 0.72 + 190);
+  ctx.fillText('MathUp', W / 2, H * 0.72 + 185);
+  ctx.font = `700 34px ${family}`;
+  ctx.fillText('מתרגלים חכם, מצליחים יותר', W / 2, H * 0.72 + 245);
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -126,12 +131,12 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob> {
  * Share the card via Web Share (files) when supported; otherwise download.
  * Returns 'shared' | 'downloaded'.
  */
-export async function shareOrDownload(blob: Blob, filename = 'bagrut-achievement.png'): Promise<'shared' | 'downloaded'> {
+export async function shareOrDownload(blob: Blob, filename = 'mathup-achievement.png'): Promise<'shared' | 'downloaded'> {
   const file = new File([blob], filename, { type: 'image/png' });
   const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean };
   if (nav.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: 'בגרות בכיס' });
+      await navigator.share({ files: [file], title: 'MathUp' });
       return 'shared';
     } catch {
       // user cancelled or share failed — fall through to download

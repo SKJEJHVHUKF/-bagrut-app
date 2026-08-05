@@ -73,7 +73,7 @@ export default async function ExercisePage({
     <PracticeShell subtitle={subtitle} backHref={backHref} backLabel={backLabel}>
       <div className="space-y-4">
         <header className="space-y-2">
-          <div className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2">
+          <div className="text-xs font-black tracking-widest text-violet-700 uppercase flex items-center gap-2">
             <span>{headerLabel}</span>
           </div>
           <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
@@ -84,7 +84,7 @@ export default async function ExercisePage({
           {lessonExists && (
             <Link
               href={`/practice/${subject}/${encodeURIComponent(topic)}`}
-              className="inline-flex items-center gap-1.5 text-xs text-indigo-700 hover:text-indigo-800 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-violet-700 hover:text-violet-800 transition-colors"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>חזור לסיכום הלימודי</span>
@@ -93,7 +93,7 @@ export default async function ExercisePage({
           <div>
             <Link
               href={`/chat?topic=${encodeURIComponent(topic)}`}
-              className="inline-flex items-center gap-1.5 text-xs text-indigo-700 hover:text-indigo-800 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-violet-700 hover:text-violet-800 transition-colors"
             >
               <MessageCircle className="w-3.5 h-3.5" />
               <span>שאל את המורה על הנושא</span>
@@ -121,6 +121,6 @@ export default async function ExercisePage({
 export function generateMetadata({ params }: { params: { topic?: string } }) {
   const topic = params.topic ? decodeURIComponent(params.topic) : '';
   return {
-    title: `תרגול ${topic} — בגרות בכיס`,
+    title: `תרגול ${topic} — MathUp`,
   };
 }

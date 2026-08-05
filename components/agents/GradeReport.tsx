@@ -13,7 +13,7 @@ import type { GradeResponse } from '@/lib/agents/schemas';
 
 function scoreTone(score: number): { ring: string; text: string; label: string } {
   if (score >= 90) return { ring: 'border-emerald-500', text: 'text-emerald-600', label: 'מצוין' };
-  if (score >= 75) return { ring: 'border-indigo-500', text: 'text-indigo-600', label: 'טוב' };
+  if (score >= 75) return { ring: 'border-violet-500', text: 'text-violet-600', label: 'טוב' };
   if (score >= 55) return { ring: 'border-amber-500', text: 'text-amber-600', label: 'חלקי' };
   return { ring: 'border-rose-500', text: 'text-rose-600', label: 'דורש עבודה' };
 }
@@ -94,8 +94,8 @@ export function GradeReport({
       )}
 
       {/* feedback */}
-      <div className="mt-5 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
-        <h3 className="mb-1 text-sm font-semibold text-indigo-900">הצעד הבא שלך</h3>
+      <div className="mt-5 rounded-xl border border-violet-100 bg-violet-50/60 p-4">
+        <h3 className="mb-1 text-sm font-semibold text-violet-900">הצעד הבא שלך</h3>
         <div className="chat-md min-w-0 text-sm text-slate-800">
           <MathText>{grade.feedback}</MathText>
         </div>

@@ -136,7 +136,7 @@ export default function InsightsPage() {
           <Link href="/" className="text-sm text-slate-600 hover:text-slate-800 transition-colors">
             → חזרה הביתה
           </Link>
-          <Link href="/quiz" className="text-sm text-indigo-700 hover:text-indigo-800 transition-colors">
+          <Link href="/quiz" className="text-sm text-violet-700 hover:text-violet-800 transition-colors">
             מבחן מהיר ⚡
           </Link>
         </div>
@@ -151,7 +151,7 @@ export default function InsightsPage() {
           </p>
           <Link
             href="/errors"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-700 hover:text-violet-900 transition-colors"
           >
             📓 מחברת הטעויות שלי ←
           </Link>
@@ -169,7 +169,7 @@ export default function InsightsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="surface-premium rounded-3xl p-8 text-center space-y-4"
           >
-            <Sparkles className="w-10 h-10 mx-auto text-indigo-700" />
+            <Sparkles className="w-10 h-10 mx-auto text-violet-700" />
             <h2 className="text-xl font-black text-slate-900">עדיין אין נתונים</h2>
             <p className="text-sm text-slate-600 leading-relaxed max-w-sm mx-auto">
               ענה על כמה שאלות — מבחן מהיר אחד מספיק — והעמוד הזה יתחיל להראות
@@ -192,7 +192,7 @@ export default function InsightsPage() {
             className="surface-premium rounded-3xl p-6 space-y-4"
           >
             <div className="flex items-center justify-between">
-              <div className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2">
+              <div className="text-xs font-black tracking-widest text-violet-700 uppercase flex items-center gap-2">
                 <Target className="w-3.5 h-3.5" />
                 <span>אם תיגש היום — הציון החזוי שלך</span>
               </div>
@@ -233,11 +233,11 @@ export default function InsightsPage() {
                     <Link
                       key={t.topic}
                       href={`/practice/math5/${encodeURIComponent(t.topic)}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/15 border border-indigo-500/25 text-indigo-800 rounded-full px-3 py-1.5 transition-colors"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/25 text-violet-800 rounded-full px-3 py-1.5 transition-colors"
                     >
                       <span>{t.emoji}</span>
                       <span>{t.topic}</span>
-                      <span className="text-[10px] text-indigo-600">+{t.gainPer10} נק׳ לכל 10% שיפור</span>
+                      <span className="text-[10px] text-violet-600">+{t.gainPer10} נק׳ לכל 10% שיפור</span>
                     </Link>
                   ))}
                 </div>
@@ -314,7 +314,7 @@ export default function InsightsPage() {
                     strokeDasharray={`${Math.min(1, habit.today / habit.goal) * 125.7} 125.7`}
                   />
                 </svg>
-                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-indigo-800">
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-violet-800">
                   {Math.min(100, Math.round((habit.today / habit.goal) * 100))}%
                 </div>
               </div>
@@ -340,7 +340,7 @@ export default function InsightsPage() {
                     <div
                       key={d.date}
                       title={`${d.date}: ${d.attempts} שאלות`}
-                      className={`flex-1 rounded-sm ${d.attempts > 0 ? 'bg-indigo-500/70' : 'bg-slate-900/[0.06]'}`}
+                      className={`flex-1 rounded-sm ${d.attempts > 0 ? 'bg-violet-500/70' : 'bg-slate-900/[0.06]'}`}
                       style={{ height: `${Math.max(8, (d.attempts / max) * 100)}%` }}
                     />
                   ));
@@ -361,7 +361,7 @@ export default function InsightsPage() {
               transition={{ duration: 0.35, ease: 'easeOut' }}
               className="space-y-4"
             >
-              <div className="flex items-center gap-2 text-xs font-black tracking-widest text-indigo-700 uppercase">
+              <div className="flex items-center gap-2 text-xs font-black tracking-widest text-violet-700 uppercase">
                 <BarChart3 className="w-3.5 h-3.5" />
                 <span>{SUBJECT_NAMES[subject] ?? subject}</span>
               </div>
@@ -389,14 +389,14 @@ export default function InsightsPage() {
                 <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     href={`/practice/${subject}/${encodeURIComponent(boostTarget.topic)}/sub/${boostTarget.subTopicId}/practice`}
-                    className="group flex items-center gap-4 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 rounded-3xl p-5 shadow-xl shadow-indigo-500/25 transition-colors"
+                    className="group flex items-center gap-4 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 rounded-3xl p-5 shadow-xl shadow-violet-500/25 transition-colors"
                   >
                     <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center">
                       <Flame className="w-6 h-6 text-amber-300" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-black text-white">תרגול חיזוק — הכי כדאי עכשיו</div>
-                      <div className="text-xs text-indigo-100/90 mt-0.5 truncate">
+                      <div className="text-xs text-violet-100/90 mt-0.5 truncate">
                         {boostTarget.topic} · {subTopicTitle(subject, boostTarget.topic, boostTarget.subTopicId)} ·{' '}
                         {Math.round(boostTarget.accuracy * 100)}% דיוק
                       </div>
@@ -431,7 +431,7 @@ export default function InsightsPage() {
                         <span className={`text-sm font-black ${pctColor(s.accuracy)}`}>
                           {Math.round(s.accuracy * 100)}%
                         </span>
-                        <span className="text-xs text-indigo-700 group-hover:text-indigo-800 font-bold">
+                        <span className="text-xs text-violet-700 group-hover:text-violet-800 font-bold">
                           תרגל ←
                         </span>
                       </div>
@@ -443,7 +443,7 @@ export default function InsightsPage() {
               {/* Per-topic accuracy bars */}
               {topics.length > 0 && (
                 <div className="surface-premium rounded-3xl p-5 space-y-4">
-                  <div className="flex items-center gap-2 text-xs font-black tracking-widest text-indigo-700 uppercase">
+                  <div className="flex items-center gap-2 text-xs font-black tracking-widest text-violet-700 uppercase">
                     <TrendingUp className="w-3.5 h-3.5" />
                     <span>דיוק לפי נושא — מהחלש לחזק</span>
                   </div>
@@ -452,7 +452,7 @@ export default function InsightsPage() {
                       <div className="flex items-center justify-between text-sm">
                         <Link
                           href={`/practice/${subject}/${encodeURIComponent(t.topic)}`}
-                          className="font-bold text-slate-800 hover:text-indigo-700 transition-colors"
+                          className="font-bold text-slate-800 hover:text-violet-700 transition-colors"
                         >
                           {t.topic}
                         </Link>

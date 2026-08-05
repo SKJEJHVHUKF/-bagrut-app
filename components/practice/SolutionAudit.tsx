@@ -102,7 +102,7 @@ export function SolutionAudit({
   return (
     <div className="surface-premium rounded-2xl p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-black text-indigo-800">
+        <div className="flex items-center gap-2 text-sm font-black text-violet-800">
           <ScanLine className="w-4 h-4" />
           <span>בדיקת הפתרון שלך מצילום</span>
         </div>
@@ -143,7 +143,7 @@ export function SolutionAudit({
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => cameraRef.current?.click()}
-              className="inline-flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 px-3 py-2.5 rounded-xl font-bold text-indigo-800 text-sm transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 px-3 py-2.5 rounded-xl font-bold text-violet-800 text-sm transition-colors"
             >
               <Camera className="w-4 h-4" />
               צלם
@@ -168,7 +168,7 @@ export function SolutionAudit({
               <button
                 onClick={analyze}
                 disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-indigo-500/25 transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 disabled:opacity-50 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-violet-500/25 transition-colors"
               >
                 {loading ? (
                   <>
@@ -335,7 +335,7 @@ function AuditResultView({
 
       {/* Encouragement */}
       {result.encouragement && (
-        <div className="text-sm text-indigo-800 font-bold text-center">{result.encouragement}</div>
+        <div className="text-sm text-violet-800 font-bold text-center">{result.encouragement}</div>
       )}
 
       {/* The audit used to end here — a verdict card and a dead end. This hands
@@ -343,7 +343,7 @@ function AuditResultView({
       {onContinueInChat && (
         <button
           onClick={() => onContinueInChat(auditBrief(result, questionText))}
-          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-indigo-500/30 transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 px-4 py-2.5 rounded-xl font-bold text-white text-sm shadow-lg shadow-violet-500/30 transition-colors"
         >
           <MessageCircle className="w-4 h-4" />
           <span>{correct ? 'שאל את המורה שאלה על זה' : 'תעזור לי להבין את הטעות'}</span>

@@ -45,8 +45,8 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
 
       {/* Level-aware guidance banner */}
       {planLevel === 'weak' && (
-        <div className="bg-indigo-500/[0.06] border border-indigo-500/25 rounded-2xl px-4 py-3 text-sm text-indigo-900 flex items-start gap-2.5">
-          <Lightbulb className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-violet-500/[0.06] border border-violet-500/25 rounded-2xl px-4 py-3 text-sm text-violet-900 flex items-start gap-2.5">
+          <Lightbulb className="w-4 h-4 text-violet-600 flex-shrink-0 mt-0.5" />
           <span>
             סימנת שהנושא הזה מרגיש לך חלש — מומלץ להתחיל מ<b>מודול 1</b> ולעבור
             שלב-אחר-שלב. התרגול יתאים את עצמו לרמה שלך.
@@ -73,7 +73,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       >
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-indigo-700 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-violet-700 uppercase flex items-center gap-2"
         >
           <BookOpen className="w-3.5 h-3.5" />
           <span>חומרי עזר לנושא</span>
@@ -111,7 +111,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
                 <span><b>שלבי המסלול</b> — כל שלב נפתח כסולם רמות (לומדים ← תרגול ← בגרות). זו דרך הלימוד הראשית.</span>
               </li>
               <li className="flex gap-2">
-                <span className="flex-shrink-0 w-5 h-5 rounded-md bg-indigo-500/15 border border-indigo-500/40 text-indigo-800 text-[11px] font-black flex items-center justify-center">2</span>
+                <span className="flex-shrink-0 w-5 h-5 rounded-md bg-violet-500/15 border border-violet-500/40 text-violet-800 text-[11px] font-black flex items-center justify-center">2</span>
                 <span><b>חומר עזר</b> — סיכום, נוסחאות ודוגמאות פתורות. לחזרה מהירה, לא חובה לפני התרגול.</span>
               </li>
               <li className="flex gap-2">
@@ -128,10 +128,10 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
           follows the private-tutor bar (diagnoses, hints, never just answers). */}
       <Link
         href={`/chat?topic=${encodeURIComponent(lesson.topic)}`}
-        className="group flex items-center gap-3 surface-premium rounded-2xl px-4 py-3 hover:border-indigo-500/50 transition-colors"
+        className="group flex items-center gap-3 surface-premium rounded-2xl px-4 py-3 hover:border-violet-500/50 transition-colors"
       >
-        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center">
-          <MessageCircle className="w-5 h-5 text-indigo-800" />
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-violet-500/20 border border-violet-500/40 flex items-center justify-center">
+          <MessageCircle className="w-5 h-5 text-violet-800" />
         </div>
         <div className="flex-1 text-right">
           <div className="text-sm font-bold text-slate-900">שאל את המורה הפרטי על הנושא</div>
@@ -139,7 +139,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
             מורה מעוגן בחומר — מסביר, מכוון, ולא נותן תשובות מוכנות
           </div>
         </div>
-        <ArrowLeft className="w-4 h-4 text-indigo-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+        <ArrowLeft className="w-4 h-4 text-violet-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
       </Link>
 
       {/* Reference-zone divider — everything below (until the capstone) is
@@ -147,7 +147,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
           guided step-by-step path above it. */}
       <motion.div {...inViewProps} variants={staggerContainer} className="order-2 pt-4">
         <motion.div variants={fadeUp} className="flex items-center gap-3">
-          <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-500/15 border border-indigo-500/40 text-indigo-800 text-xs font-black flex items-center justify-center">2</span>
+          <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-violet-500/15 border border-violet-500/40 text-violet-800 text-xs font-black flex items-center justify-center">2</span>
           <div>
             <div className="text-sm font-black text-slate-900">חומר עזר — סיכום מרוכז לחזרה</div>
             <div className="text-[11px] text-slate-600">מושגים, נוסחאות, דוגמאות וטעויות נפוצות. חוזרים לכאן בכל שלב שצריך.</div>
@@ -160,7 +160,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-violet-700 mb-3 uppercase flex items-center gap-2"
         >
           <Target className="w-3.5 h-3.5" />
           <span>מושגים מרכזיים</span>
@@ -174,7 +174,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
               transition={{ duration: 0.2 }}
               className="surface-premium rounded-2xl px-4 py-3"
             >
-              <div className="text-sm font-black text-indigo-800 mb-1.5 chat-md">
+              <div className="text-sm font-black text-violet-800 mb-1.5 chat-md">
                 <MathText inline>{c.title}</MathText>
               </div>
               <div className="chat-md text-sm text-slate-800 leading-relaxed">
@@ -193,7 +193,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase"
+            className="text-xs font-black tracking-widest text-violet-700 mb-3 uppercase"
           >
             נוסחאות
           </motion.div>
@@ -211,7 +211,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
       <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
         <motion.div
           variants={fadeUp}
-          className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase flex items-center gap-2"
+          className="text-xs font-black tracking-widest text-violet-700 mb-3 uppercase flex items-center gap-2"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>דוגמאות פתורות</span>
@@ -294,7 +294,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase"
+            className="text-xs font-black tracking-widest text-violet-700 mb-3 uppercase"
           >
             🚀 קורסים ייעודיים לנושא — למי שרוצה להעמיק
           </motion.div>
@@ -309,22 +309,22 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         <motion.section {...inViewProps} variants={staggerContainer} className="order-2">
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase flex items-center gap-2"
+            className="text-xs font-black tracking-widest text-violet-700 mb-3 uppercase flex items-center gap-2"
           >
             <Award className="w-3.5 h-3.5" />
             <span>טיפים לבחינה</span>
           </motion.div>
           <motion.ul
             variants={staggerContainer}
-            className="bg-indigo-500/5 border border-indigo-500/30 rounded-2xl px-4 py-3 space-y-2"
+            className="bg-violet-500/5 border border-violet-500/30 rounded-2xl px-4 py-3 space-y-2"
           >
             {lesson.examTips.map((t, i) => (
               <motion.li
                 key={i}
                 variants={fadeUp}
-                className="flex gap-2 text-sm text-indigo-900 leading-relaxed"
+                className="flex gap-2 text-sm text-violet-900 leading-relaxed"
               >
-                <span className="text-indigo-700 flex-shrink-0 mt-0.5">★</span>
+                <span className="text-violet-700 flex-shrink-0 mt-0.5">★</span>
                 <div className="chat-md flex-1">
                   <MathText>{t}</MathText>
                 </div>
@@ -491,7 +491,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         ) : (
           <motion.div
             variants={fadeUp}
-            className="text-xs font-black tracking-widest text-indigo-700 mb-3 uppercase"
+            className="text-xs font-black tracking-widest text-violet-700 mb-3 uppercase"
           >
             מוכן לתרגל?
           </motion.div>
@@ -504,7 +504,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
             <motion.div variants={fadeUp} whileHover={{ y: -3, scale: 1.01 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
               <Link
                 href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/exercise?mode=bagrut`}
-                className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-indigo-500/40 transition-colors w-full"
+                className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-violet-500/40 transition-colors w-full"
               >
                 <Target className="w-5 h-5" />
                 <div className="text-right">
@@ -518,7 +518,7 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
           <motion.div variants={fadeUp} whileHover={{ y: -3, scale: 1.01 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
             <Link
               href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/exercise?mode=quick`}
-              className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-indigo-500/40 transition-colors w-full"
+              className="group inline-flex items-center justify-center gap-3 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 px-6 py-4 rounded-2xl font-bold text-white shadow-xl shadow-violet-500/40 transition-colors w-full"
             >
               <Sparkles className="w-5 h-5" />
               <div className="text-right">
