@@ -20,8 +20,10 @@
     "verify:ghost": "tsx scripts/verify-ghost.ts",
     "test:ghost": "tsx scripts/test-ghost.ts",
     "test:ladder": "tsx scripts/test-ladder-unlock.ts",
-    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run test:sync && npm run verify:ghost && npm run test:ghost && npm run test:ladder && npm run build",
-    "generate-pool": "tsx scripts/generate-pool.ts"
+    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run test:sync && npm run verify:ghost && npm run test:ghost && npm run test:ladder && npm run verify:mathscan && npm run test:mathscan && npm run build",
+    "generate-pool": "tsx scripts/generate-pool.ts",
+    "verify:mathscan": "tsx scripts/verify-mathscan.ts",
+    "test:mathscan": "tsx scripts/test-mathscan.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
@@ -41,6 +43,7 @@
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "sonner": "^2.0.7",
+    "tesseract.js": "^7.0.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

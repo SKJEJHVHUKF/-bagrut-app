@@ -1,491 +1,626 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+// ============================================================
+// /scan — צילום שאלה → פתרון
+// ============================================================
+//
+// This page is a CONTROLLER, not an implementation. It owns capture, screen
+// state and the theme; every piece of maths, imaging and cost accounting sits
+// behind `@/lib/mathscan`. It never names Tesseract, mathjs or Claude — which
+// is what lets any of them be replaced without touching this file.
+//
+// Access policy, deliberately different from the old page: the free path
+// (preprocess → local OCR → verified library → on-device solve) needs NO
+// login, because it costs nothing to serve and matches the app's stated rule
+// that library and cache hits are free for everyone. A login is required only
+// at the first stage that spends money, and the screen says so at that exact
+// moment rather than as a wall on arrival.
+
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Camera, Upload, Loader2, AlertTriangle, CheckCircle, Sparkles, BookOpen, ArrowLeft, X, ShieldCheck, Zap, Crown } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  BookOpen,
+  Camera,
+  Crown,
+  Image as ImageIcon,
+  Loader2,
+  RefreshCw,
+  ShieldCheck,
+  Upload,
+  X,
+} from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
+import { getUnitLevel } from '@/lib/study-plan';
 import { MathText } from '@/components/practice/MathText';
-import { saveScan, compressToThumbnail, type Scan } from '@/lib/scans';
+import { saveScan, compressToThumbnail } from '@/lib/scans';
+import {
+  blockedReason,
+  disposeOcrEngines,
+  displayQuestion,
+  formatCostIls,
+  isSafeToRenderAsMath,
+  rerunFromTranscription,
+  runScanPipeline,
+  summarizeCost,
+  warmupLocalOcr,
+  type OcrProgress,
+  type ScanResult,
+  type ScanStageName,
+  type UnitLevel,
+} from '@/lib/mathscan';
+import { ConfidenceMeter } from '@/components/scan/ConfidenceMeter';
+import { QuestionEditor } from '@/components/scan/QuestionEditor';
+import { ScanStages, ScanTraceSummary, type LiveStage } from '@/components/scan/ScanStages';
+import { SolutionPanel } from '@/components/scan/SolutionPanel';
+import {
+  ScanThemeStyles,
+  ScanThemeToggle,
+  useScanTheme,
+} from '@/components/scan/ScanTheme';
 
-type SolveSource = 'library' | 'cache' | 'ai';
+type Access = 'loading' | 'anonymous' | 'free' | 'pro';
 
-type SolveResult = {
-  subject: string;
-  topic: string;
-  transcribedQuestion: string;
-  steps: { title: string; content: string }[];
-  finalAnswer: string;
-  source?: SolveSource;
+const OCR_STAGE_LABEL: Record<OcrProgress['stage'], string> = {
+  'loading-core': 'טוען את מנוע הזיהוי',
+  'loading-language': 'טוען את מאגר השפה',
+  recognizing: 'קורא את התמונה',
+  done: 'סיים',
 };
 
-// The upsell shown to free users when a scan needs a NEW AI solution (not
-// in the verified library or the shared cache). Carries the transcription so
-// they can see we read their question.
-type ProUpsell = { transcribedQuestion: string; topic: string };
-
-type AuthState =
-  | { status: 'loading' }
-  | { status: 'unauthenticated' }
-  | { status: 'free' }
-  | { status: 'pro' };
-
 export default function ScanPage() {
-  const [auth, setAuth] = useState<AuthState>({ status: 'loading' });
-  const [preview, setPreview] = useState<string | null>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [solving, setSolving] = useState(false);
-  const [result, setResult] = useState<SolveResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [upsell, setUpsell] = useState<ProUpsell | null>(null);
-  const [saved, setSaved] = useState<Scan | null>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [theme, toggleTheme] = useScanTheme();
+  const [access, setAccess] = useState<Access>('loading');
+  const [unitLevel, setUnitLevel] = useState<UnitLevel>(5);
 
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [stages, setStages] = useState<LiveStage[]>([]);
+  const [ocrProgress, setOcrProgress] = useState<OcrProgress | null>(null);
+  const [result, setResult] = useState<ScanResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
+
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const previewUrlRef = useRef<string | null>(null);
+
+  // ---------- session + level ----------
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        setAuth({ status: 'unauthenticated' });
-        return;
+    let cancelled = false;
+    createClient()
+      .auth.getUser()
+      .then(({ data: { user } }) => {
+        if (cancelled) return;
+        setAccess(!user ? 'anonymous' : isProUser(user) ? 'pro' : 'free');
+      })
+      .catch(() => {
+        // A Supabase outage must not take the free path down with it —
+        // an anonymous student can still scan and solve for $0.
+        if (!cancelled) setAccess('anonymous');
+      });
+    setUnitLevel(getUnitLevel());
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ---------- warm the wasm while the student frames the shot ----------
+  useEffect(() => {
+    void warmupLocalOcr();
+    return () => {
+      // ~40 MB of wasm heap; a student who opens the scanner and leaves
+      // shouldn't keep paying for it.
+      void disposeOcrEngines();
+    };
+  }, []);
+
+  // ---------- object URL lifetime ----------
+  useEffect(() => {
+    previewUrlRef.current = previewUrl;
+  }, [previewUrl]);
+  useEffect(
+    () => () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    },
+    []
+  );
+
+  const onStage = useCallback((name: ScanStageName, status: 'start' | 'done', detail?: string) => {
+    setStages((current) => {
+      if (status === 'start') return [...current, { name, status: 'running', detail }];
+      const next = [...current];
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (next[i].name === name) {
+          next[i] = { ...next[i], status: 'done', detail: detail ?? next[i].detail };
+          break;
+        }
       }
-      setAuth({ status: isProUser(user) ? 'pro' : 'free' });
+      return next;
     });
   }, []);
 
-  const handleFile = (f: File | null) => {
-    if (!f) return;
-    setFile(f);
+  const allowPaid = access === 'free' || access === 'pro';
+
+  const reset = useCallback(() => {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    setPreviewUrl(null);
+    setFile(null);
     setResult(null);
     setError(null);
-    setUpsell(null);
-    setSaved(null);
-    const url = URL.createObjectURL(f);
-    setPreview(url);
+    setStages([]);
+    setOcrProgress(null);
+    setSavedId(null);
+  }, []);
+
+  const pickFile = (picked: File | null) => {
+    if (!picked) return;
+    reset();
+    setFile(picked);
+    const url = URL.createObjectURL(picked);
+    previewUrlRef.current = url;
+    setPreviewUrl(url);
   };
 
-  const handleSolve = async () => {
+  const solve = async () => {
     if (!file) return;
-    setSolving(true);
+    setBusy(true);
     setError(null);
     setResult(null);
-    setUpsell(null);
+    setStages([]);
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-      const res = await fetch('/api/solve-photo', { method: 'POST', body: formData });
-      const data = await res.json();
-      // Free user hit a NEW question that needs an AI solve → soft upsell,
-      // not a hard error. We still show them the transcription we read.
-      if (res.status === 402 && data.proRequired) {
-        setUpsell({ transcribedQuestion: data.transcribedQuestion ?? '', topic: data.topic ?? '' });
-        return;
-      }
-      if (!res.ok) {
-        setError(data.error || 'שגיאה בפתרון השאלה');
-        return;
-      }
-      if (data.error) {
-        setError(data.error);
-        return;
-      }
-      setResult(data as SolveResult);
+      const scan = await runScanPipeline(file, {
+        unitLevel,
+        allowPaidFallback: allowPaid,
+        onStage,
+        onOcrProgress: setOcrProgress,
+      });
+      setResult(scan);
+      const blocked = blockedReason(scan);
+      if (blocked && Object.keys(scan.explanations).length === 0) setError(blocked.message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה לא צפויה');
+      setError(err instanceof Error ? err.message : 'שגיאה לא צפויה בעיבוד התמונה');
     } finally {
-      setSolving(false);
+      setBusy(false);
+      setOcrProgress(null);
     }
   };
 
-  const handleSave = async () => {
-    if (!result || !file) return;
+  const resolveEdited = async (next: string) => {
+    setBusy(true);
+    setError(null);
+    setStages([]);
     try {
-      const thumb = await compressToThumbnail(file);
-      const scan = saveScan({
-        subject: result.subject,
-        topic: result.topic,
-        transcribedQuestion: result.transcribedQuestion,
-        steps: result.steps,
-        finalAnswer: result.finalAnswer,
-        thumbnail: thumb.base64,
-        thumbnailMime: thumb.mime,
+      const scan = await rerunFromTranscription(next, {
+        unitLevel,
+        allowPaidFallback: allowPaid,
+        onStage,
       });
-      setSaved(scan);
+      setResult(scan);
+      setSavedId(null);
+      const blocked = blockedReason(scan);
+      if (blocked && Object.keys(scan.explanations).length === 0) setError(blocked.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'שגיאה לא צפויה');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const save = async () => {
+    if (!result) return;
+    const full = result.explanations.full ?? result.explanations.partial;
+    if (!full) return;
+    try {
+      const thumbnail = file
+        ? await compressToThumbnail(file)
+        : { base64: '', mime: 'image/jpeg' };
+      const scan = saveScan({
+        subject: 'math5',
+        topic: result.topic ?? 'כללי',
+        transcribedQuestion: result.question,
+        steps: full.steps.map((step) => ({ title: step.title, content: step.content })),
+        finalAnswer: full.finalAnswer ?? '',
+        thumbnail: thumbnail.base64,
+        thumbnailMime: thumbnail.mime,
+      });
+      setSavedId(scan.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה בשמירה');
     }
   };
 
-  const reset = () => {
-    if (preview) URL.revokeObjectURL(preview);
-    setPreview(null);
-    setFile(null);
-    setResult(null);
-    setError(null);
-    setUpsell(null);
-    setSaved(null);
-  };
-
-  // ----- Auth gates -----
-
-  if (auth.status === 'loading') {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-      </main>
-    );
-  }
-
-  if (auth.status === 'unauthenticated') {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="surface-premium rounded-2xl p-8 max-w-md text-center space-y-4">
-          <Camera className="w-12 h-12 text-indigo-600 mx-auto" />
-          <h1 className="font-display text-2xl font-black">צלמי שאלה וקבלי פתרון</h1>
-          <p className="text-slate-700">יש להתחבר כדי להשתמש בפיצ׳ר.</p>
-          <Link
-            href={`/login?next=${encodeURIComponent('/scan')}`}
-            className="inline-flex items-center gap-2 bg-gradient-to-l from-indigo-600 to-indigo-600 px-6 py-3 rounded-2xl font-bold"
-          >
-            התחברות
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
-  // ----- Main UI (any logged-in user; free users get library/cache hits
-  //       for free, and a soft upsell only when a NEW AI solve is needed) -----
-
-  const isPro = auth.status === 'pro';
+  const blocked = result ? blockedReason(result) : null;
+  const needsUpgrade = blocked?.status === 402;
+  const needsLogin = blocked?.status === 401;
 
   return (
-    <main className="min-h-screen px-4 sm:px-6 py-8 max-w-3xl mx-auto">
-      {/* ===== INTRO / LANDING — shown before a photo is picked ===== */}
-      {!preview && !result && (
-        <section className="mb-8 space-y-5">
-          <div className="text-center space-y-3">
-            <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/25 rounded-full px-4 py-1.5 text-xs font-bold text-indigo-800">
-              <Camera className="w-3.5 h-3.5" />
-              <span>צילום שאלה → פתרון מלא</span>
-            </div>
-            <h1 className="font-display text-3xl sm:text-4xl font-black leading-tight">
-              <span className="gradient-text">תקוע בשאלה? צלם אותה.</span>
-            </h1>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-lg mx-auto">
-              מצלמים כל שאלת מתמטיקה — מהמחברת, מספר הלימוד או ממבחן — ומקבלים
-              פתרון מלא צעד-אחר-שלב, בעברית, עם התשובה הסופית המדויקת.
-            </p>
-          </div>
+    // Two elements on purpose. The outer one only DEFINES the theme
+    // variables; the inner one PAINTS with them. Putting both on a single
+    // element leaves the root's own `background-color` stuck at the previous
+    // theme's colour when the attribute flips — the variables update (a child
+    // reading `var(--scan-bg)` gets the new value immediately) but the
+    // transitioned property on the defining element itself does not repaint.
+    // Every descendant was already dark while the page behind them stayed
+    // ivory. Splitting the two roles makes the swap ordinary inheritance.
+    <div data-scan-theme={theme}>
+      <ScanThemeStyles />
+      {/* `.scan-root` is full-bleed so the surface reaches the viewport
+          edges; the content column is constrained one level in. */}
+      <div className="scan-root">
+      <main className="px-4 sm:px-6 py-6 max-w-3xl mx-auto">
+        <Header theme={theme} onToggleTheme={toggleTheme} unitLevel={unitLevel} />
 
-          {/* Trust badge — the free verified-library corpus */}
-          <div className="surface-premium rounded-2xl px-4 py-3 flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-500/12 border border-emerald-500/30 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-emerald-700" />
-            </div>
-            <div className="text-sm text-slate-700 leading-snug">
-              <b className="text-slate-900">מאות שאלות בגרות כבר פתורות במערכת.</b> אם צילמת
-              שאלה מוכרת — מקבלים את הפתרון המאומת מיידית ו<b>בחינם</b>.
-            </div>
-          </div>
+        {!previewUrl && !result && <Intro />}
 
-          {/* How it works — 3 numbered steps */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {[
-              { n: 1, t: 'מצלמים', d: 'שאלה מהמחברת או מהספר' },
-              { n: 2, t: 'מזהים', d: 'המערכת קוראת ומחפשת במאגר' },
-              { n: 3, t: 'פותרים', d: 'פתרון מלא צעד-אחר-שלב' },
-            ].map((s) => (
-              <div key={s.n} className="surface-premium rounded-2xl p-4 text-center">
-                <div className="w-7 h-7 mx-auto rounded-lg bg-indigo-500/12 border border-indigo-500/30 text-indigo-800 text-sm font-black flex items-center justify-center mb-2">
-                  {s.n}
-                </div>
-                <div className="text-sm font-black text-slate-900">{s.t}</div>
-                <div className="text-[11px] text-slate-600 mt-0.5">{s.d}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Before → after mini-example */}
-          <div className="surface-premium rounded-2xl p-4">
-            <div className="text-[11px] font-black tracking-widest text-slate-500 uppercase mb-3">
-              דוגמה
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3">
-              <div className="rounded-xl bg-slate-900/[0.03] border border-slate-900/[0.08] p-3 text-center">
-                <div className="text-[10px] text-slate-500 mb-1">מה שצילמת</div>
-                <div className="chat-md text-slate-800">
-                  <MathText inline>{'$x^2 - 5x + 6 = 0$'}</MathText>
-                </div>
-              </div>
-              <ArrowLeft className="w-5 h-5 text-indigo-600 mx-auto rotate-180 sm:rotate-0" />
-              <div className="rounded-xl bg-emerald-500/[0.06] border border-emerald-500/25 p-3 text-center">
-                <div className="text-[10px] text-emerald-700 mb-1">מה שתקבל</div>
-                <div className="chat-md text-emerald-900 font-bold">
-                  <MathText inline>{'$x_1 = 2,\\ x_2 = 3$'}</MathText>
-                </div>
-                <div className="text-[10px] text-slate-500 mt-1">+ כל הצעדים בדרך</div>
-              </div>
-            </div>
-          </div>
-
-          {!isPro && (
-            <div className="text-center text-[11px] text-slate-500">
-              שאלה חדשה שלא במאגר ודורשת פתרון AI חדש — פיצ׳ר Pro.
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Upload area — visible only before the user picks a file */}
-      {!preview && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0] || null)}
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0] || null)}
-          />
-          <button
-            onClick={() => cameraInputRef.current?.click()}
-            className="group flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-indigo-600/20 to-indigo-600/20 border-2 border-dashed border-indigo-400/40 hover:border-indigo-400/80 rounded-2xl py-10 px-6 transition-all"
-          >
-            <Camera className="w-10 h-10 text-indigo-700 group-hover:scale-110 transition-transform" />
-            <div className="text-center">
-              <div className="font-black text-base">צלמי עכשיו</div>
-              <div className="text-xs text-slate-600 mt-1">פתיחת המצלמה</div>
-            </div>
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="group flex flex-col items-center justify-center gap-3 bg-slate-900/[0.02] border-2 border-dashed border-slate-900/[0.12] hover:border-slate-900/20 rounded-2xl py-10 px-6 transition-all"
-          >
-            <Upload className="w-10 h-10 text-slate-700 group-hover:scale-110 transition-transform" />
-            <div className="text-center">
-              <div className="font-black text-base">העלי מהגלריה</div>
-              <div className="text-xs text-slate-600 mt-1">בחירת קובץ</div>
-            </div>
-          </button>
-        </div>
-      )}
-
-      {/* Preview + solve button */}
-      {preview && !result && (
-        <div className="space-y-4 mb-6">
-          <div className="relative surface-premium rounded-2xl overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={preview} alt="שאלה שצולמה" className="w-full max-h-[400px] object-contain" />
-            <button
-              onClick={reset}
-              className="absolute top-2 left-2 bg-slate-900/60 hover:bg-slate-900/80 text-white rounded-full p-2"
-              aria-label="הסר"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <button
-            onClick={handleSolve}
-            disabled={solving}
-            className="w-full inline-flex items-center justify-center gap-3 bg-gradient-to-l from-indigo-600 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-500/40 transition-all"
-          >
-            {solving ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>פותר... (10-30 שניות)</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                <span>פתור את השאלה</span>
-              </>
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* Error display */}
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 mb-6 flex gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-red-800">{error}</div>
-        </div>
-      )}
-
-      {/* Pro upsell — free user scanned a NEW question needing an AI solve.
-          We show the transcription we read so they know the scan worked. */}
-      {upsell && (
-        <div className="space-y-4 mb-6">
-          <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/40 rounded-2xl p-5 space-y-3">
-            <div className="flex items-center gap-2">
-              <Crown className="w-5 h-5 text-amber-700" />
-              <div className="font-black text-slate-900">זו שאלה חדשה — פתרון AI הוא פיצ׳ר Pro</div>
-            </div>
-            <p className="text-sm text-slate-700 leading-relaxed">
-              קראנו את השאלה שלך, אבל היא עדיין לא במאגר הפתרונות המאומתים. פתרון חדש
-              נוצר על-ידי ה-AI וזמין למנויי Pro. שאלות שכבר במאגר — תמיד חינם.
-            </p>
-            {upsell.transcribedQuestion && (
-              <div className="rounded-xl bg-white/60 border border-slate-900/[0.08] p-3">
-                <div className="text-[10px] text-slate-500 mb-1">השאלה שזיהינו{upsell.topic ? ` · ${upsell.topic}` : ''}</div>
-                <div className="chat-md text-sm text-slate-800">
-                  <MathText>{upsell.transcribedQuestion}</MathText>
-                </div>
-              </div>
-            )}
-            <Link
-              href="/pricing"
-              className="btn-primary inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold text-white w-full sm:w-auto"
-            >
-              <Crown className="w-4 h-4" />
-              <span>שדרג ל-Pro</span>
-            </Link>
-          </div>
-          <button
-            onClick={reset}
-            className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800"
-          >
-            <Camera className="w-4 h-4" />
-            נסה שאלה אחרת
-          </button>
-        </div>
-      )}
-
-      {/* Result */}
-      {result && (
-        <div className="space-y-5">
-          {/* Source badge — shows WHERE the solution came from (trust + it
-              also makes the free caching visible). */}
-          {result.source === 'library' && (
-            <div className="inline-flex items-center gap-2 bg-emerald-500/12 border border-emerald-500/35 rounded-full px-3 py-1.5 text-xs font-bold text-emerald-800">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>פתרון מאומת מהמאגר — חינם</span>
-            </div>
-          )}
-          {result.source === 'cache' && (
-            <div className="inline-flex items-center gap-2 bg-indigo-500/12 border border-indigo-500/35 rounded-full px-3 py-1.5 text-xs font-bold text-indigo-800">
-              <Zap className="w-3.5 h-3.5" />
-              <span>נפתר כבר בעבר — חינם</span>
-            </div>
-          )}
-          {result.source === 'ai' && (
-            <div className="inline-flex items-center gap-2 bg-amber-500/12 border border-amber-500/35 rounded-full px-3 py-1.5 text-xs font-bold text-amber-800">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>נפתר עכשיו ע״י AI</span>
-            </div>
-          )}
-
-          {/* Topic + subject chips */}
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-3 py-1 text-xs font-bold text-indigo-800">
-              📐 {result.subject === 'math5' ? 'מתמטיקה 5 יח׳' : result.subject}
-            </span>
-            <span className="bg-indigo-500/15 border border-indigo-500/30 rounded-full px-3 py-1 text-xs font-bold text-indigo-800">
-              {result.topic}
-            </span>
-          </div>
-
-          {/* Transcribed question */}
-          <section className="surface-premium rounded-2xl p-5">
-            <div className="text-xs font-black tracking-widest text-indigo-700 uppercase mb-2 flex items-center gap-2">
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>השאלה</span>
-            </div>
-            <div className="chat-md text-sm sm:text-base leading-relaxed text-slate-800">
-              <MathText>{result.transcribedQuestion}</MathText>
-            </div>
-          </section>
-
-          {/* Steps */}
-          <section>
-            <div className="text-xs font-black tracking-widest text-emerald-700 uppercase mb-3 flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>פתרון צעד-אחר-צעד</span>
-            </div>
-            <ol className="space-y-2">
-              {result.steps.map((step, i) => (
-                <li
-                  key={i}
-                  className="surface-premium rounded-2xl p-4 flex gap-3"
-                >
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-xs font-black text-emerald-800">
-                    {i + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-black text-emerald-800 mb-1.5 chat-md">
-                      <MathText inline>{step.title}</MathText>
-                    </div>
-                    <div className="chat-md text-sm text-slate-800 leading-relaxed">
-                      <MathText>{step.content}</MathText>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          {/* Final answer */}
-          <section className="bg-emerald-500/10 border border-emerald-500/40 rounded-2xl p-5">
-            <div className="text-xs font-black tracking-widest text-emerald-700 uppercase mb-2 flex items-center gap-2">
-              <CheckCircle className="w-3.5 h-3.5" />
-              <span>תשובה סופית</span>
-            </div>
-            <div className="chat-md text-base sm:text-lg font-bold leading-relaxed text-emerald-900">
-              <MathText>{result.finalAnswer}</MathText>
-            </div>
-          </section>
-
-          {/* Actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            {saved ? (
-              <Link
-                href="/library"
-                className="inline-flex items-center justify-center gap-2 bg-emerald-600/30 border border-emerald-500/40 rounded-2xl px-6 py-4 font-bold"
-              >
-                <CheckCircle className="w-5 h-5" />
-                נשמר! לספרייה
-                <ArrowLeft className="w-4 h-4" />
-              </Link>
-            ) : (
+        {/* ---------- capture ---------- */}
+        {!previewUrl && (
+          <>
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(event) => pickFile(event.target.files?.[0] ?? null)}
+            />
+            <input
+              ref={galleryRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(event) => pickFile(event.target.files?.[0] ?? null)}
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
               <button
-                onClick={handleSave}
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-l from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-6 py-4 rounded-2xl font-bold transition-all"
+                type="button"
+                onClick={() => cameraRef.current?.click()}
+                className="scan-card flex flex-col items-center justify-center gap-3 py-10 px-6 transition-transform active:scale-[.99]"
               >
-                <BookOpen className="w-5 h-5" />
-                שמרי לספרייה
+                <Camera className="w-10 h-10" style={{ color: 'var(--scan-primary)' }} aria-hidden />
+                <span className="text-center">
+                  <span className="block font-black">צלם עכשיו</span>
+                  <span className="block text-xs scan-muted mt-1">פתיחת המצלמה</span>
+                </span>
               </button>
-            )}
-            <button
-              onClick={reset}
-              className="inline-flex items-center justify-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/[0.05] border border-slate-900/[0.12] px-6 py-4 rounded-2xl font-bold transition-all"
-            >
-              <Camera className="w-5 h-5" />
-              שאלה חדשה
-            </button>
-          </div>
-        </div>
-      )}
+              <button
+                type="button"
+                onClick={() => galleryRef.current?.click()}
+                className="scan-card flex flex-col items-center justify-center gap-3 py-10 px-6 transition-transform active:scale-[.99]"
+              >
+                <Upload className="w-10 h-10 scan-muted" aria-hidden />
+                <span className="text-center">
+                  <span className="block font-black">העלה מהגלריה</span>
+                  <span className="block text-xs scan-muted mt-1">בחירת קובץ</span>
+                </span>
+              </button>
+            </div>
+            <TypeItYourself onSubmit={resolveEdited} busy={busy} />
+          </>
+        )}
 
-      {/* Bottom nav helpers when no result yet */}
-      {!result && !solving && (
-        <div className="mt-8 pt-6 border-t border-slate-900/10 flex flex-wrap gap-3 text-sm">
-          <Link href="/library" className="text-indigo-700 hover:text-indigo-800 inline-flex items-center gap-1">
-            <BookOpen className="w-4 h-4" />
-            הספרייה שלי
-          </Link>
-          <Link href="/pricing" className="text-slate-600 hover:text-slate-800 inline-flex items-center gap-1">
-            חזרה לתוכנית
-          </Link>
+        {/* ---------- preview ---------- */}
+        {previewUrl && !result && (
+          <section className="space-y-4 mb-5">
+            <div className="scan-card overflow-hidden relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt="השאלה שצולמה"
+                className="w-full max-h-[380px] object-contain"
+                style={{ background: 'var(--scan-card-2)' }}
+              />
+              <button
+                type="button"
+                onClick={reset}
+                className="scan-icon-btn absolute top-2 left-2"
+                aria-label="הסר תמונה"
+                disabled={busy}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={solve}
+              disabled={busy}
+              className="scan-btn scan-btn-primary w-full !py-4"
+            >
+              {busy ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden />
+                  <span>{ocrProgress ? OCR_STAGE_LABEL[ocrProgress.stage] : 'מעבד…'}</span>
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="w-5 h-5" aria-hidden />
+                  <span>פתור את השאלה</span>
+                </>
+              )}
+            </button>
+
+            {busy && (
+              <div className="scan-card p-4">
+                <ScanStages stages={stages} />
+                {ocrProgress && ocrProgress.stage !== 'recognizing' && (
+                  <p className="mt-3 text-[11px] scan-faint leading-relaxed">
+                    מנוע הזיהוי נטען פעם אחת למכשיר ואז נשמר — הסריקות הבאות מתחילות מיד.
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ---------- errors ---------- */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="rounded-2xl p-4 mb-5 flex gap-3"
+              style={{
+                background: 'var(--scan-danger-soft)',
+                border: '1px solid var(--scan-danger)',
+              }}
+              role="alert"
+            >
+              <AlertTriangle
+                className="w-5 h-5 shrink-0 mt-0.5"
+                style={{ color: 'var(--scan-danger)' }}
+                aria-hidden
+              />
+              <p className="text-sm leading-relaxed">{error}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ---------- result ---------- */}
+        {result && (
+          <div className="space-y-5">
+            <RecognisedQuestion result={result} />
+            <ConfidenceMeter confidence={result.confidence} issues={result.validation.issues} />
+
+            {needsLogin && (
+              <UpsellCard
+                title="השאלה הזאת דורשת זיהוי מתקדם"
+                body="הזיהוי המקומי לא הצליח לקרוא את התמונה. התחברות פותחת את הזיהוי בענן — והשאלות שכבר במאגר נשארות חינם תמיד."
+                href={`/login?next=${encodeURIComponent('/scan')}`}
+                cta="התחברות"
+                Icon={ShieldCheck}
+              />
+            )}
+            {needsUpgrade && (
+              <UpsellCard
+                title="זו שאלה חדשה — פתרון AI הוא פיצ׳ר Pro"
+                body="קראנו את השאלה, אבל היא עדיין לא במאגר הפתרונות המאומתים. שאלות שכבר במאגר — תמיד חינם."
+                href="/pricing"
+                cta="שדרג ל-Pro"
+                Icon={Crown}
+              />
+            )}
+
+            {/* Keyed on the trace id so every new result REMOUNTS the panel.
+                Without it the panel kept the previous scan's depth state: a
+                rejected read left it at `null`, and the corrected re-solve
+                then rendered its badge with no solution underneath. */}
+            <SolutionPanel key={result.trace.id} result={result} />
+
+            <div className="flex flex-wrap gap-2">
+              <QuestionEditor question={result.question} onSubmit={resolveEdited} busy={busy} />
+              {(result.explanations.full || result.explanations.partial) &&
+                (savedId ? (
+                  <Link href="/library" className="scan-btn">
+                    <BookOpen className="w-4 h-4" aria-hidden />
+                    <span>נשמר · לספרייה</span>
+                    <ArrowLeft className="w-4 h-4" aria-hidden />
+                  </Link>
+                ) : (
+                  <button type="button" onClick={save} className="scan-btn">
+                    <BookOpen className="w-4 h-4" aria-hidden />
+                    <span>שמור לספרייה</span>
+                  </button>
+                ))}
+              <button type="button" onClick={reset} className="scan-btn" disabled={busy}>
+                <RefreshCw className="w-4 h-4" aria-hidden />
+                <span>שאלה חדשה</span>
+              </button>
+            </div>
+
+            <ScanTraceSummary trace={result.trace} />
+          </div>
+        )}
+
+        <CostFooter />
+      </main>
+      </div>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------
+// Pieces
+// ------------------------------------------------------------
+
+function Header({
+  theme,
+  onToggleTheme,
+  unitLevel,
+}: {
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
+  unitLevel: UnitLevel;
+}) {
+  return (
+    <header className="flex items-center justify-between gap-3 mb-6">
+      <div className="min-w-0">
+        <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
+          צלם שאלה, קבל פתרון
+        </h1>
+        <p className="text-xs scan-muted mt-1">מתמטיקה {unitLevel} יחידות</p>
+      </div>
+      <ScanThemeToggle theme={theme} onToggle={onToggleTheme} />
+    </header>
+  );
+}
+
+function Intro() {
+  return (
+    <section className="space-y-3 mb-5">
+      <div className="scan-card px-4 py-3 flex items-center gap-3">
+        <span
+          className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ background: 'var(--scan-success-soft)' }}
+          aria-hidden
+        >
+          <ShieldCheck className="w-5 h-5" style={{ color: 'var(--scan-success)' }} />
+        </span>
+        <p className="text-sm leading-snug scan-muted">
+          <b style={{ color: 'var(--scan-ink)' }}>הקריאה קורית על המכשיר שלך.</b> התמונה לא נשלחת
+          לשום מקום, וברוב המקרים גם הפתרון מחושב מקומית — בלי עלות ובלי חשבון.
+        </p>
+      </div>
+      <ol className="grid grid-cols-3 gap-2">
+        {[
+          { n: 1, t: 'מצלמים', d: 'שאלה מהמחברת או מהספר' },
+          { n: 2, t: 'קוראים', d: 'המכשיר מזהה את הנוסחה' },
+          { n: 3, t: 'פותרים', d: 'צעד-אחר-צעד בעברית' },
+        ].map((step) => (
+          <li key={step.n} className="scan-card-flat p-3 text-center">
+            <span
+              className="w-6 h-6 mx-auto rounded-lg text-xs font-black flex items-center justify-center mb-1.5"
+              style={{ background: 'var(--scan-primary-soft)', color: 'var(--scan-primary)' }}
+            >
+              {step.n}
+            </span>
+            <span className="block text-sm font-black">{step.t}</span>
+            <span className="block text-[11px] scan-faint mt-0.5">{step.d}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+/** The no-camera path. It is also the fastest and most accurate route to an
+ *  answer, so it is offered up front rather than hidden as a fallback. */
+function TypeItYourself({
+  onSubmit,
+  busy,
+}: {
+  onSubmit: (text: string) => void;
+  busy: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="text-sm scan-muted underline">
+        או הקלד את השאלה בעצמך
+      </button>
+    );
+  }
+
+  return (
+    <section className="scan-card p-4 space-y-3">
+      <h2 className="text-sm font-black">הקלד את השאלה</h2>
+      <textarea
+        value={text}
+        onChange={(event) => setText(event.target.value)}
+        rows={3}
+        dir="rtl"
+        className="scan-input"
+        placeholder="פתור את המשוואה x^2 - 5x + 6 = 0"
+        aria-label="טקסט השאלה"
+      />
+      <button
+        type="button"
+        onClick={() => onSubmit(text.trim())}
+        disabled={busy || text.trim().length < 3}
+        className="scan-btn scan-btn-primary w-full"
+      >
+        {busy ? 'פותר…' : 'פתור · חינם'}
+      </button>
+    </section>
+  );
+}
+
+function RecognisedQuestion({ result }: { result: ScanResult }) {
+  const display = displayQuestion(result);
+  const safe = isSafeToRenderAsMath(display);
+  return (
+    <section className="scan-card p-5">
+      <h2 className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: 'var(--scan-primary)' }}>
+        השאלה שזיהינו
+      </h2>
+      {safe ? (
+        <div className="chat-md math-content text-sm sm:text-base leading-relaxed">
+          <MathText>{display}</MathText>
         </div>
+      ) : (
+        <p dir="rtl" className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
+          {result.question || 'לא זוהה טקסט'}
+        </p>
       )}
-    </main>
+    </section>
+  );
+}
+
+function UpsellCard({
+  title,
+  body,
+  href,
+  cta,
+  Icon,
+}: {
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+  Icon: typeof Crown;
+}) {
+  return (
+    <section
+      className="rounded-2xl p-5 space-y-3"
+      style={{ background: 'var(--scan-warn-soft)', border: '1px solid var(--scan-warn)' }}
+    >
+      <div className="flex items-center gap-2">
+        <Icon className="w-5 h-5" style={{ color: 'var(--scan-warn)' }} aria-hidden />
+        <h3 className="font-black">{title}</h3>
+      </div>
+      <p className="text-sm leading-relaxed scan-muted">{body}</p>
+      <Link href={href} className="scan-btn scan-btn-primary w-full sm:w-auto">
+        <Icon className="w-4 h-4" aria-hidden />
+        <span>{cta}</span>
+      </Link>
+    </section>
+  );
+}
+
+/** The measured cost of the student's own scans. Reads the local trace log,
+ *  so it is their real history, not a marketing claim. */
+function CostFooter() {
+  const [summary, setSummary] = useState<ReturnType<typeof summarizeCost> | null>(null);
+
+  useEffect(() => {
+    setSummary(summarizeCost());
+  }, []);
+
+  if (!summary || summary.scans === 0) return null;
+
+  return (
+    <footer className="mt-8 pt-5" style={{ borderTop: '1px solid var(--scan-line)' }}>
+      <p className="text-[11px] scan-faint leading-relaxed">
+        סרקת {summary.scans} שאלות · {Math.round(summary.freeRatio * 100)}% מהן נפתרו ללא שום
+        קריאה לשרת · עלות ממוצעת לשאלה: {formatCostIls(summary.averageCostUsd)}
+      </p>
+    </footer>
   );
 }
