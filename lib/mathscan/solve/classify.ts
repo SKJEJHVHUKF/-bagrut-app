@@ -251,6 +251,9 @@ export function classifyProblem(input: ClassifyInput): ClassifiedProblem {
     .sort((a, b) => b[1] - a[1] || preferredVariableRank(a[0]) - preferredVariableRank(b[0]))
     .map(([name]) => name);
 
+  // --- multi-section detection ---
+  const parts = extractSectionLabels(text);
+
   // --- confidence ---
   // Verbal cue + matching structure → high. One or the other → medium.
   // Neither → we guessed, and the caller should treat it as a guess.
@@ -267,7 +270,40 @@ export function classifyProblem(input: ClassifyInput): ClassifiedProblem {
     bounds: bounds ?? undefined,
     cues,
     confidence,
+    multiPart: parts.length >= 2,
+    parts,
   };
+}
+
+/**
+ * Section labels of a bagrut-style question: "א.", "ב)", "ג ." at the start
+ * of a line or after whitespace.
+ *
+ * Requires TWO distinct labels in alphabetical sequence before calling it
+ * multi-part. A single "א." is just how many questions open, and one stray
+ * letter followed by a full stop is ordinary Hebrew punctuation — treating
+ * either as a section would push every simple question away from the local
+ * engine and onto the paid path.
+ */
+function extractSectionLabels(text: string): string[] {
+  const ORDER = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז'];
+  const found: string[] = [];
+  const pattern = /(?:^|[\s(])([א-ז])\s*[.)]/gm;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    const letter = match[1];
+    if (!ORDER.includes(letter)) continue;
+    if (found.includes(letter)) continue;
+    found.push(letter);
+  }
+  // Must start at א and run consecutively — "ג." alone, or "א." plus a "ד."
+  // from elsewhere on the page, is not a section list.
+  const sequential: string[] = [];
+  for (let i = 0; i < ORDER.length; i++) {
+    if (!found.includes(ORDER[i])) break;
+    sequential.push(ORDER[i]);
+  }
+  return sequential;
 }
 
 function classifyDomain(text: string, expressions: string[]): MathDomain {
@@ -313,4 +349,9 @@ function extractBounds(text: string): { lower: string; upper: string } | null {
   return null;
 }
 
-export const __testables = { classifyDomain, extractBounds, preferredVariableRank };
+export const __testables = {
+  classifyDomain,
+  extractBounds,
+  preferredVariableRank,
+  extractSectionLabels,
+};

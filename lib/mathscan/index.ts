@@ -44,6 +44,8 @@ export type {
   SolveStep,
   SymbolicEngine,
   SymbolicEngineId,
+  TutorGrounding,
+  TutorMessage,
   UnitLevel,
   Validation,
   ValidationIssue,
@@ -63,6 +65,13 @@ export { classifyProblem } from './solve/classify';
 export { solveProblem, isKindSupported } from './solve';
 export { explainSolution, explanationFromSteps, domainLabel } from './explain';
 export { toDisplayQuestion, repairOcrText, extractMathSegments } from './ocr/normalize';
+export {
+  askTutor,
+  groundingFromResult,
+  suggestedQuestions,
+  TutorError,
+  type TutorStreamHandlers,
+} from './tutor-client';
 export { buildOcrChain, getOcrEngine, disposeOcrEngines } from './ocr';
 export {
   CostMeter,

@@ -56,6 +56,7 @@ import { ConfidenceMeter } from '@/components/scan/ConfidenceMeter';
 import { QuestionEditor } from '@/components/scan/QuestionEditor';
 import { ScanStages, ScanTraceSummary, type LiveStage } from '@/components/scan/ScanStages';
 import { SolutionPanel } from '@/components/scan/SolutionPanel';
+import { QuestionTutor } from '@/components/scan/QuestionTutor';
 import {
   ScanThemeStyles,
   ScanThemeToggle,
@@ -412,6 +413,10 @@ export default function ScanPage() {
                 then rendered its badge with no solution underneath. */}
             <SolutionPanel key={result.trace.id} result={result} />
 
+            {/* The tutor is keyed to the result too: a new question must
+                start a new conversation, not inherit the previous one's. */}
+            <QuestionTutor key={`tutor-${result.trace.id}`} result={result} />
+
             <div className="flex flex-wrap gap-2">
               <QuestionEditor question={result.question} onSubmit={resolveEdited} busy={busy} />
               {(result.explanations.full || result.explanations.partial) &&
@@ -461,9 +466,9 @@ function Header({
     <header className="flex items-center justify-between gap-3 mb-6">
       <div className="min-w-0">
         <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
-          צלם שאלה, קבל פתרון
+          צלם שאלה, תבין אותה
         </h1>
-        <p className="text-xs scan-muted mt-1">מתמטיקה {unitLevel} יחידות</p>
+        <p className="text-xs scan-muted mt-1">מתמטיקה {unitLevel} יחידות · שאלות מודפסות</p>
       </div>
       <ScanThemeToggle theme={theme} onToggle={onToggleTheme} />
     </header>
@@ -482,15 +487,15 @@ function Intro() {
           <ShieldCheck className="w-5 h-5" style={{ color: 'var(--scan-success)' }} />
         </span>
         <p className="text-sm leading-snug scan-muted">
-          <b style={{ color: 'var(--scan-ink)' }}>הקריאה קורית על המכשיר שלך.</b> התמונה לא נשלחת
-          לשום מקום, וברוב המקרים גם הפתרון מחושב מקומית — בלי עלות ובלי חשבון.
+          <b style={{ color: 'var(--scan-ink)' }}>מצלמים שאלה מודפסת</b> — מבגרות, ממתכונת, מדף
+          תרגילים או מספר הלימוד. הקריאה קורית על המכשיר שלך, והתמונה לא נשלחת לשום מקום.
         </p>
       </div>
       <ol className="grid grid-cols-3 gap-2">
         {[
-          { n: 1, t: 'מצלמים', d: 'שאלה מהמחברת או מהספר' },
-          { n: 2, t: 'קוראים', d: 'המכשיר מזהה את הנוסחה' },
-          { n: 3, t: 'פותרים', d: 'צעד-אחר-צעד בעברית' },
+          { n: 1, t: 'מצלמים', d: 'בגרות, מתכונת או תרגיל' },
+          { n: 2, t: 'קוראים', d: 'המכשיר מזהה את השאלה' },
+          { n: 3, t: 'מבינים', d: 'פתרון מוסבר + מורה לשאול' },
         ].map((step) => (
           <li key={step.n} className="scan-card-flat p-3 text-center">
             <span

@@ -72,6 +72,8 @@ function problem(
     variables,
     cues: [],
     confidence: 0.9,
+    multiPart: false,
+    parts: [],
     ...extra,
   };
 }
@@ -298,6 +300,35 @@ eq(
   classifyProblem({ text: 'חשב את האינטגרל של f(x) = 2x', expressions: ['f(x) = 2x'] }).domain,
   'calculus'
 );
+// --- multi-section exam questions ---
+{
+  const sections = classifyProblem({
+    text: 'נתונה הפונקציה f(x)=x^2\nא. מצא את הנגזרת.\nב. מצא נקודות קיצון.\nג. שרטט את הגרף.',
+    expressions: ['f(x)=x^2'],
+  });
+  ok('a bagrut question with sections is flagged multi-part', sections.multiPart, JSON.stringify(sections.parts));
+  eq('the sections are listed in order', sections.parts.join(''), 'אבג');
+}
+{
+  const single = classifyProblem({
+    text: 'פתור את המשוואה x^2 - 5x + 6 = 0',
+    expressions: ['x^2 - 5x + 6 = 0'],
+  });
+  ok('an ordinary question is NOT multi-part', !single.multiPart, JSON.stringify(single.parts));
+}
+{
+  // A lone "א." is how many single questions open — treating it as a section
+  // list would push every one of them onto the paid path.
+  const opener = classifyProblem({ text: 'א. פתור את המשוואה x + 1 = 3', expressions: ['x + 1 = 3'] });
+  ok('a single opening label is not a section list', !opener.multiPart, JSON.stringify(opener.parts));
+}
+{
+  // Labels must run consecutively from א — a stray "ד." elsewhere on the page
+  // is not evidence of sections.
+  const gap = classifyProblem({ text: 'א. משהו\nד. משהו אחר', expressions: [] });
+  ok('non-consecutive labels are not sections', !gap.multiPart, JSON.stringify(gap.parts));
+}
+
 eq(
   'x is preferred over a parameter',
   classifyProblem({ text: 'פתור', expressions: ['a*x + 3 = 0'] }).variables[0],

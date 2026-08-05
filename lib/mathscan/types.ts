@@ -224,6 +224,19 @@ export type ClassifiedProblem = {
   cues: string[];
   /** 0..1 — how sure the classifier is. Low means "solve it, but flag it". */
   confidence: number;
+  /**
+   * True when the photo holds a multi-section question (סעיף א, ב, ג …) —
+   * the normal shape of a bagrut or מתכונת question.
+   *
+   * This is a routing flag, not a label. The local CAS solves ONE expression;
+   * handing it a five-section question means it answers section א and the
+   * screen presents that as "the solution". So a multi-part question skips
+   * the local engine entirely and goes to the verified library (which stores
+   * these questions section by section) or to the AI.
+   */
+  multiPart: boolean;
+  /** The section labels found, in order — 'א', 'ב', … */
+  parts: string[];
 };
 
 /** One move in a worked solution. `kind` drives the Hebrew templating, so
@@ -321,6 +334,36 @@ export type Explanation = {
   finalAnswer?: string;
   /** Where the Hebrew came from. `template` = $0. */
   source: 'template' | 'library' | 'ai';
+};
+
+// ------------------------------------------------------------
+// 5b. The tutor attached to a scanned question
+// ------------------------------------------------------------
+
+/** One turn of the conversation that sits under a scanned question. */
+export type TutorMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+/**
+ * Everything the tutor is allowed to know.
+ *
+ * Deliberately narrow: the question and the solution we ALREADY showed the
+ * student, and nothing else. The tutor's job is to explain what is on the
+ * screen, so grounding it in that exact text is both cheaper than the app's
+ * topic-grounding block and more accurate — it cannot contradict the steps
+ * the student is looking at.
+ */
+export type TutorGrounding = {
+  question: string;
+  steps: { title: string; content: string }[];
+  finalAnswer: string;
+  topic: string | null;
+  unitLevel: UnitLevel;
+  /** Where the solution came from — the tutor speaks differently about a
+   *  verified library solution than about one the AI just generated. */
+  source: SolutionSource;
 };
 
 // ------------------------------------------------------------

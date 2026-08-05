@@ -23,7 +23,8 @@
     "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run test:sync && npm run verify:ghost && npm run test:ghost && npm run test:ladder && npm run verify:mathscan && npm run test:mathscan && npm run build",
     "generate-pool": "tsx scripts/generate-pool.ts",
     "verify:mathscan": "tsx scripts/verify-mathscan.ts",
-    "test:mathscan": "tsx scripts/test-mathscan.ts"
+    "test:mathscan": "tsx scripts/test-mathscan.ts",
+    "measure:tutor": "tsx scripts/measure-tutor.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",

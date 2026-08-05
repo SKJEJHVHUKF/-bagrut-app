@@ -354,6 +354,29 @@ async function solveFromTranscription(args: {
   stage('library-match', 'done', 'לא נמצא במאגר');
 
   // ---------- 5. local CAS ----------
+  //
+  // Skipped outright for a multi-section question. The local engine solves a
+  // single expression, so on a five-section bagrut question it would answer
+  // section א and the result screen would present that as THE solution —
+  // complete with a "נפתר על המכשיר שלך" badge. A photographed exam question
+  // belongs to the library or to the AI, both of which handle it whole.
+  if (problem.multiPart) {
+    meter.skip('solve-local', `multi-part question (${problem.parts.join(', ')})`);
+    stage('solve-local', 'done', 'שאלה מרובת סעיפים');
+    return await escalate({
+      transcription,
+      validation,
+      problem,
+      topic,
+      unitLevel,
+      allowPaid,
+      meter,
+      stage,
+      signal,
+      localOutcome: null,
+    });
+  }
+
   stage('solve-local', 'start');
   meter.begin('solve-local');
   const { outcome, attempts } = await solveProblem(problem);
@@ -389,7 +412,54 @@ async function solveFromTranscription(args: {
     recoveredBy: allowPaid ? 'ai' : null,
   });
 
-  // ---------- 7. paid AI solve, last resort ----------
+  return await escalate({
+    transcription,
+    validation,
+    problem,
+    topic,
+    unitLevel,
+    allowPaid,
+    meter,
+    stage,
+    signal,
+    localOutcome: outcome,
+  });
+}
+
+/**
+ * The last stage: hand the question to the paid AI solve.
+ *
+ * Shared by the two routes that get here — a question the local CAS refused,
+ * and a multi-section exam question the local CAS was never offered. Keeping
+ * one implementation means the quota, the error mapping and the "you need
+ * Pro" branch can't drift between them.
+ */
+async function escalate(args: {
+  transcription: string;
+  validation: Validation;
+  problem: ClassifiedProblem;
+  topic: string | null;
+  unitLevel: UnitLevel;
+  allowPaid: boolean;
+  meter: CostMeter;
+  stage: NonNullable<ScanPipelineOptions['onStage']>;
+  signal?: AbortSignal;
+  localOutcome: SolveOutcome | null;
+}): Promise<ScanResult> {
+  const {
+    transcription,
+    validation,
+    problem,
+    topic,
+    unitLevel,
+    allowPaid,
+    meter,
+    stage,
+    signal,
+    localOutcome,
+  } = args;
+  const outcome = localOutcome;
+
   if (!allowPaid) {
     meter.skip('fallback-solve', 'paid path not allowed');
     return finalize({
