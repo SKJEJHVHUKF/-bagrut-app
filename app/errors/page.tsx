@@ -20,7 +20,9 @@ import {
   Crown,
   RefreshCw,
   ChevronDown,
+  Wrench,
 } from 'lucide-react';
+import { getTopWeakness, type Weakness } from '@/lib/remediation';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
 import { MathText } from '@/components/practice/MathText';
@@ -44,12 +46,16 @@ export default function ErrorsPage() {
   const [top, setTop] = useState<CategoryStat | null>(null);
   const [pro, setPro] = useState(true);
   const [reviewing, setReviewing] = useState(false);
+  // The notebook says WHAT goes wrong; this is the one control that does
+  // something about it. Null until there is enough evidence to name a weakness.
+  const [fixTarget, setFixTarget] = useState<Weakness | null>(null);
 
   function refresh() {
     setMistakes(getMistakes());
     setCats(mistakesByCategory());
     setTopics(mistakesByTopic());
     setTop(topCategory());
+    setFixTarget(getTopWeakness('math5'));
   }
 
   useEffect(() => {
@@ -149,8 +155,20 @@ export default function ErrorsPage() {
             {/* Practice my mistakes */}
             {reviewList.length > 0 && (
               <div className="space-y-3">
-                {/* Primary: the spaced-repetition daily review (schedules the
-                    hard ones to come back). */}
+                {/* Primary: repair one named weakness. The daily review below
+                    re-serves everything you missed; this fixes ONE thing on
+                    purpose, with questions chosen for it. */}
+                {fixTarget && (
+                  <Link
+                    href={`/fix/${encodeURIComponent(fixTarget.id)}`}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 px-5 py-3.5 rounded-2xl font-black text-white shadow-xl shadow-violet-500/25 transition-colors"
+                  >
+                    <Wrench className="w-4 h-4" />
+                    <span>{`מסלול תיקון: ${fixTarget.title}`}</span>
+                  </Link>
+                )}
+                {/* The spaced-repetition daily review (schedules the hard ones
+                    to come back). */}
                 <a
                   href="/roadmap/review"
                   className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-rose-500 to-orange-500 hover:from-rose-400 hover:to-orange-400 px-5 py-3.5 rounded-2xl font-black text-white shadow-xl shadow-rose-500/25 transition-colors"

@@ -22,7 +22,11 @@ const SEEN_KEY = 'bagrut-results-seen-v1';
 export const MAX_EVENTS = 1000;
 const MAX_SEEN = 5000;
 
-export type ResultSource = 'quiz' | 'drill' | 'bagrut' | 'review';
+/**
+ * `'fix'` = an answer inside a lib/remediation repair path. It is deliberately
+ * never a MEASUREMENT — see the `repeat` handling in `recordResult`.
+ */
+export type ResultSource = 'quiz' | 'drill' | 'bagrut' | 'review' | 'fix';
 
 export type ResultEvent = {
   ts: number;
@@ -145,8 +149,19 @@ function writeSeen(seen: Set<string>) {
  *  accuracy aggregations (and thus the grade prediction) count only the first
  *  answer. Questions with no stable id (AI-generated) never repeat. */
 export function recordResult(event: Omit<ResultEvent, 'ts'>) {
-  let repeat = false;
-  if (event.questionId) {
+  // A repair-path answer is ALWAYS a replay, whatever the question is.
+  //
+  // A fix path deliberately re-serves material around a weakness the student
+  // just failed, immediately after showing them the worked solution. Letting
+  // those answers into the accuracy aggregations would mean "practise your
+  // mistakes" reliably raises the predicted grade on /insights — a metric the
+  // student can game by doing the thing that helps least, and one that would
+  // stop reflecting exam readiness. They still count as ACTIVITY (streak, daily
+  // goal, the 14-day chart) because the student really did the work, and
+  // lib/cognition still reads them as weaker-but-real evidence via `isReplay`.
+  // Whether the repair worked is judged by lib/remediation's own store.
+  let repeat = event.source === 'fix';
+  if (!repeat && event.questionId) {
     const key = `${event.source}:${event.questionId}`;
     const seen = readSeen();
     if (seen.has(key)) {

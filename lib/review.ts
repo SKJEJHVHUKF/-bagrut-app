@@ -12,6 +12,7 @@
  */
 
 import { getSubTopic } from '@/content/lessons';
+import { findConceptQuestion } from '@/lib/concept-adapt';
 import { getMistakes } from '@/lib/mistakes';
 import type { PracticeQuestion } from '@/content/lessons/types';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
@@ -169,16 +170,24 @@ export function totalReviewItems(): number {
 }
 
 /** Resolve a stored pointer back to the authored question (sub-topic practice
- *  bank, then its lesson drills). Returns null if the content was renamed. */
+ *  bank, then its lesson drills, then the topic's concept-quiz bank). Returns
+ *  null if the content was renamed.
+ *
+ *  The concept-bank fallback exists because a fix path (lib/remediation) may
+ *  serve a topic-level concept question under a sub-topic's id when that
+ *  sub-topic's own bank is thin. Without it a miss on such a question would be
+ *  scheduled here and then never resolve — an item permanently due, silently
+ *  occupying a slot in a capped queue. */
 export function resolveQuestion(item: ReviewItem): PracticeQuestion | null {
   const st = getSubTopic(item.subject, item.topic, item.subTopicId);
-  if (!st) return null;
-  const inBank = (st.questions ?? []).find((q) => q.id === item.questionId);
-  if (inBank) return inBank;
-  for (const step of st.lesson ?? []) {
-    if (step.drill?.id === item.questionId) return step.drill;
+  if (st) {
+    const inBank = (st.questions ?? []).find((q) => q.id === item.questionId);
+    if (inBank) return inBank;
+    for (const step of st.lesson ?? []) {
+      if (step.drill?.id === item.questionId) return step.drill;
+    }
   }
-  return null;
+  return findConceptQuestion(item.subject, item.topic, item.questionId);
 }
 
 /** One-time backfill: seed the review queue from the existing mistake notebook

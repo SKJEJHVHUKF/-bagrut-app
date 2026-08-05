@@ -22,6 +22,7 @@ import { nodeStatus, countCompleted, nodeLevelSummary, type NodeLevelSummary } f
 import { getResumePoint } from '@/lib/roadmap-resume';
 import { computePacing } from '@/lib/pacing';
 import { dueCount, dueCountBySubTopic, backfillFromMistakes } from '@/lib/review';
+import { getTopWeakness } from '@/lib/remediation';
 import { createClient } from '@/lib/supabase/client';
 import { RotateCcw } from 'lucide-react';
 import type { StepStatus, RoadmapNode } from '@/types/roadmap';
@@ -107,6 +108,14 @@ export default function RoadmapPage() {
 
   // Spaced-repetition: how many questions are due for review today.
   const reviewDue = useMemo(() => (ready ? dueCount() : 0), [ready, syncTick]);
+
+  // The single most worthwhile repair, when there is enough evidence for one.
+  // Null is the normal state for a new student and renders nothing.
+  const fixTarget = useMemo(
+    () => (ready ? getTopWeakness(SUBJECT) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ready, syncTick, summaries],
+  );
   const dueBySub = useMemo(
     () => (ready ? dueCountBySubTopic() : {}),
     [ready, syncTick],
@@ -179,7 +188,42 @@ export default function RoadmapPage() {
           </div>
         </motion.div>
 
-        {/* Daily spaced-repetition review — the highest-priority thing today */}
+        {/* Repair first. A broken idea outranks retention: practising on top of
+            it spends the evening reinforcing the wrong thing — the same
+            ordering lib/cognition/next-step.ts uses (repair 100 > review 60).
+            Note the review card below drops its "הכי חשוב היום" label whenever
+            this one is showing: two cards claiming top priority is how a
+            student ends up arbitrating between them at 11pm. */}
+        {fixTarget && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
+            <Link
+              href={`/fix/${encodeURIComponent(fixTarget.id)}`}
+              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-rose-600 to-orange-500 shadow-lg shadow-rose-500/25 hover:from-rose-500 hover:to-orange-400 transition-colors"
+            >
+              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl">
+                🛠️
+              </div>
+              <div className="flex-1 min-w-0 text-white">
+                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
+                  הכי חשוב היום
+                </div>
+                <div className="text-sm font-black leading-tight mt-0.5 truncate">
+                  {`מסלול תיקון · ${fixTarget.title}`}
+                </div>
+                <div className="text-[11px] text-white/80 mt-0.5 truncate">
+                  {`${fixTarget.topic} — ${fixTarget.detail}`}
+                </div>
+              </div>
+              <ArrowLeft className="w-5 h-5 text-white group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+            </Link>
+          </motion.div>
+        )}
+
+        {/* Daily spaced-repetition review — retention, once nothing is broken */}
         {reviewDue > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -194,7 +238,9 @@ export default function RoadmapPage() {
                 🔁
               </div>
               <div className="flex-1 min-w-0 text-white">
-                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">הכי חשוב היום</div>
+                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
+                  {fixTarget ? 'ואחר כך' : 'הכי חשוב היום'}
+                </div>
                 <div className="text-sm font-black leading-tight mt-0.5">חזרה יומית · {reviewDue} שאלות</div>
                 <div className="text-[11px] text-white/80 mt-0.5">מחזק את מה שכבר למדת כדי שלא יישכח</div>
               </div>

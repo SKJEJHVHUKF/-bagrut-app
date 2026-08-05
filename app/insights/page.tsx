@@ -20,6 +20,7 @@ import {
   ArrowRight,
   BarChart3,
   Sparkles,
+  Wrench,
 } from 'lucide-react';
 import { getSubTopic } from '@/content/lessons';
 import { createClient } from '@/lib/supabase/client';
@@ -44,6 +45,7 @@ import {
   type OverallPrediction,
   type TopicImpact,
 } from '@/lib/prediction';
+import { getTopWeakness, type Weakness } from '@/lib/remediation';
 import ShareCardButton from '@/components/ShareCardButton';
 
 const SUBJECT_NAMES: Record<string, string> = {
@@ -92,6 +94,8 @@ export default function InsightsPage() {
   const [prediction, setPrediction] = useState<OverallPrediction | null>(null);
   const [impact, setImpact] = useState<TopicImpact[]>([]);
   const [pro, setPro] = useState(true); // assume pro until known → no upsell flash
+  /** subject → the top repairable weakness (absent when evidence is thin). */
+  const [fixTargets, setFixTargets] = useState<Record<string, Weakness>>({});
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setPro(isProUser(data.user)));
@@ -118,6 +122,12 @@ export default function InsightsPage() {
         weakSubs: weakestSubTopics(subject, { minAttempts: 3, limit: 4 }),
       }))
     );
+    const targets: Record<string, Weakness> = {};
+    for (const subject of subjects) {
+      const w = getTopWeakness(subject);
+      if (w) targets[subject] = w;
+    }
+    setFixTargets(targets);
     refreshHabit();
     setPrediction(predictOverall('math5'));
     setImpact(topImpactTopics('math5', 3));
@@ -353,6 +363,11 @@ export default function InsightsPage() {
         {/* Per-subject sections */}
         {data?.map(({ subject, totals, topics, weakSubs }) => {
           const boostTarget = weakSubs[0];
+          // A named repair, when the evidence supports one. It outranks the
+          // reinforcement CTA below — which is why that card's headline changes
+          // when this is showing. Two "most worthwhile now" cards on one screen
+          // hand the arbitration to the student.
+          const fixTarget = fixTargets[subject] ?? null;
           return (
             <motion.section
               key={subject}
@@ -384,7 +399,28 @@ export default function InsightsPage() {
                 </div>
               </div>
 
-              {/* Reinforcement CTA — the whole point of the page */}
+              {/* Repair CTA — the sharpest thing this page can offer. */}
+              {fixTarget && (
+                <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+                  <Link
+                    href={`/fix/${encodeURIComponent(fixTarget.id)}`}
+                    className="group flex items-center gap-4 bg-gradient-to-l from-rose-600 to-orange-500 hover:from-rose-500 hover:to-orange-400 rounded-3xl p-5 shadow-xl shadow-rose-500/25 transition-colors"
+                  >
+                    <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center">
+                      <Wrench className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-black text-white">מסלול תיקון — הכי כדאי עכשיו</div>
+                      <div className="text-xs text-rose-50/90 mt-0.5 truncate">
+                        {`${fixTarget.title} · ${fixTarget.detail}`}
+                      </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-white rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+                  </Link>
+                </motion.div>
+              )}
+
+              {/* Reinforcement CTA — broad practice on the weakest sub-topic */}
               {boostTarget && (
                 <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Link
@@ -395,7 +431,9 @@ export default function InsightsPage() {
                       <Flame className="w-6 h-6 text-amber-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-black text-white">תרגול חיזוק — הכי כדאי עכשיו</div>
+                      <div className="font-black text-white">
+                        {fixTarget ? 'תרגול חיזוק — רחב יותר' : 'תרגול חיזוק — הכי כדאי עכשיו'}
+                      </div>
                       <div className="text-xs text-violet-100/90 mt-0.5 truncate">
                         {boostTarget.topic} · {subTopicTitle(subject, boostTarget.topic, boostTarget.subTopicId)} ·{' '}
                         {Math.round(boostTarget.accuracy * 100)}% דיוק

@@ -10,10 +10,18 @@
 // mistake tagging → an optional AI "why did I get it wrong?". Open questions
 // with a machine-checkable `expected` spec are graded deterministically ($0)
 // via lib/answer-check; the rest fall back to reveal-and-self-report.
+//
+// The hint is ALSO available BEFORE committing (💡 רמז), same as /quiz and
+// SubTopicPractice. It used to be reachable only after a miss — and on the
+// un-gradable open path (proofs) the one button revealed the whole solution, so
+// the authored hint could never render at all and the only help was the answer.
+// Asking for it is not free: `hintUsed` reaches lib/cognition, which withholds
+// the base mastery credit for a correct-with-hint answer.
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, Lightbulb, KeyRound, LifeBuoy, ArrowLeft, RotateCcw } from 'lucide-react';
+import { CheckCircle, XCircle, Lightbulb, KeyRound, LifeBuoy, ArrowLeft, RotateCcw, Wrench } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { AnswerInput } from '@/components/practice/AnswerInput';
 import { MistakeTagger } from '@/components/practice/MistakeTagger';
@@ -26,6 +34,7 @@ import { recordResult, type ResultSource } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
 import type { ErrorCategory } from '@/lib/mistakes';
 import { seedFromMiss, gradeReview } from '@/lib/review';
+import { getWeaknesses } from '@/lib/remediation';
 import type { PracticeQuestion } from '@/content/lessons/types';
 
 const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה'];
@@ -100,16 +109,26 @@ export function QuestionRunnerCard({
       ...(selfReported !== undefined ? { selfReported } : {}),
       ...(chosenIndex !== undefined ? { chosenIndex } : {}),
       ...(q.kind === 'mcq' && q.answers ? { optionCount: q.answers.length } : {}),
-      // Always false on this surface today: the hint is only revealed AFTER a
-      // wrong first attempt. Wired anyway so a future pre-answer hint button
-      // (like the one on /quiz) can't silently poison the tracer.
+      // True only when the student ASKED for the hint before this attempt — the
+      // auto-reveal on a miss happens after `logFirst` has already run, so it
+      // can't retro-poison the measured attempt.
       ...(hintShown ? { hintUsed: true } : {}),
     });
     // Spaced repetition: a review answer re-schedules the card; a fresh miss in
     // a practice rung drops the question into the review queue (box 1).
     if (source === 'review') gradeReview(q.id, correct);
     else if (!correct) seedFromMiss({ subject, topic, subTopicId: subId, questionId: q.id });
-    if (!correct) {
+    // A miss inside a repair path is NOT written to the error notebook.
+    //
+    // The notebook is a profile ("your number-one mistake is X"), and a fix
+    // session by definition serves several questions around one weakness the
+    // student already got wrong. Logging each of those would make the profile
+    // shout louder about the very thing they are busy repairing — the same way
+    // `source: 'teach'` once made /errors report "100% of your mistakes are
+    // אחר" (see the MistakeSource note in lib/mistakes.ts). The misses are
+    // already counted by lib/remediation, and the question is still scheduled
+    // for tomorrow's review above.
+    if (!correct && source !== 'fix') {
       const id = recordMistake({
         subject,
         topic,
@@ -189,6 +208,24 @@ export function QuestionRunnerCard({
 
   const wrong = firstTryCorrect === false;
 
+  // The repair offer, at the only moment it is genuinely welcome: the student
+  // has just seen the worked solution for a question they got wrong.
+  //
+  // It appears only when lib/remediation can actually name a weakness in THIS
+  // sub-topic — which takes a few answers, by design. A single miss is not a
+  // weakness, and a button promising to "fix" one after one mistake would be
+  // offering a diagnosis nobody made. Never offered inside a repair session:
+  // that is where the student already is.
+  //
+  // Computed in a memo rather than an effect: the gating conditions can only
+  // become true after a click, so this never runs during the server render or
+  // hydration, and there is no state to cascade.
+  const fixTarget = useMemo(() => {
+    if (!wrong || !revealed || source === 'fix') return null;
+    const w = getWeaknesses(subject).find((x) => x.subTopicId === subId);
+    return w ? { id: w.id, title: w.title } : null;
+  }, [wrong, revealed, source, subject, subId]);
+
   return (
     <div className="space-y-3">
       {/* Progress header */}
@@ -262,10 +299,42 @@ export function QuestionRunnerCard({
         </div>
       )}
 
+      {/* Ask for a hint — BEFORE committing, on every question kind, and above
+          the reveal button so the gentler rung is the one you reach first. This
+          is the step between "no idea" and "show me the answer"; without it the
+          only way forward on a proof question was the full solution. */}
+      {q.hint && !hintShown && !revealed && (
+        <motion.button
+          {...buttonTap}
+          onClick={() => setHintShown(true)}
+          className="w-full inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-800 text-sm transition-colors"
+        >
+          <Lightbulb className="w-4 h-4" />
+          <span>רמז — בלי לחשוף את הפתרון</span>
+        </motion.button>
+      )}
+
+      {/* The hint itself — shown whether it was asked for or auto-revealed on a miss. */}
+      <AnimatePresence initial={false}>
+        {q.hint && hintShown && !revealed && (
+          <motion.div
+            key="hint"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-amber-500/5 border border-amber-500/30 rounded-xl px-3 py-2.5 chat-md"
+          >
+            <div className="text-[10px] font-black tracking-widest text-amber-700 mb-1 uppercase flex items-center gap-1.5">
+              <Lightbulb className="w-3 h-3" /> רמז
+            </div>
+            <div className="text-sm text-amber-900"><MathText>{q.hint}</MathText></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 2 · Open answer — no machine-checkable spec → solve on paper, self-report */}
       {q.kind === 'open' && !autoGradable && !revealed && (
         <button
-          onClick={() => { setRevealed(true); setHintShown(true); }}
+          onClick={() => setRevealed(true)}
           className="w-full inline-flex items-center justify-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/40 px-4 py-3 rounded-xl font-bold text-violet-800 text-sm transition-colors"
         >
           <KeyRound className="w-4 h-4" />
@@ -273,7 +342,7 @@ export function QuestionRunnerCard({
         </button>
       )}
 
-      {/* Wrong-first feedback: hint + one free retry (before the full solution) */}
+      {/* Wrong-first feedback: one free retry (before the full solution) */}
       <AnimatePresence initial={false}>
         {hintShown && !revealed && wrong && (
           <motion.div
@@ -282,14 +351,6 @@ export function QuestionRunnerCard({
             animate={{ opacity: 1, y: 0 }}
             className="space-y-2"
           >
-            {q.hint && (
-              <div className="bg-amber-500/5 border border-amber-500/30 rounded-xl px-3 py-2.5 chat-md">
-                <div className="text-[10px] font-black tracking-widest text-amber-700 mb-1 uppercase flex items-center gap-1.5">
-                  <Lightbulb className="w-3 h-3" /> רמז
-                </div>
-                <div className="text-sm text-amber-900"><MathText>{q.hint}</MathText></div>
-              </div>
-            )}
             <div className="flex items-center gap-2">
               <motion.button
                 {...buttonTap}
@@ -398,6 +459,17 @@ export function QuestionRunnerCard({
                   <XCircle className="w-4 h-4" /> עוד לא
                 </button>
               </div>
+            )}
+
+            {/* The repair path — the one CTA that leads somewhere new. */}
+            {wrong && fixTarget && (
+              <Link
+                href={`/fix/${encodeURIComponent(fixTarget.id)}`}
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-rose-600 to-orange-500 hover:from-rose-500 hover:to-orange-400 px-4 py-3.5 rounded-2xl font-black text-white text-sm shadow-lg shadow-rose-500/20 transition-colors"
+              >
+                <Wrench className="w-4 h-4" />
+                <span>תקן את זה עכשיו — תרגול ממוקד</span>
+              </Link>
             )}
 
             {/* When they got it wrong: tag the mistake + optional AI "why?" */}
