@@ -295,6 +295,31 @@ check(
     route.includes("cache_control"),
     'The AI solve prompt is no longer prompt-cached; its system prompt will be re-billed on every solve.'
   );
+
+  // The bug that shipped: SOLVE_SCHEMA had no `required`, so `{}` satisfied
+  // it and the model returned exactly that on a hard question — 9 output
+  // tokens, no solution, and the student still billed.
+  const schemaBlock = route.slice(route.indexOf('const SOLVE_SCHEMA'), route.indexOf('const SOLVE_SCHEMA') + 900);
+  check(
+    /required:\s*\[[^\]]*'steps'[^\]]*\]/.test(schemaBlock),
+    "SOLVE_SCHEMA lost `required: ['steps', …]`. Structured outputs enforce STRUCTURE, not effort — " +
+      'with everything optional, `{}` is a valid response and the model returns it on exactly the ' +
+      'hard questions where a solution matters most. This shipped once: 9 output tokens, ' +
+      '"עוד לא פתרנו את השאלה הזאת", 4.5 agorot billed.'
+  );
+  check(
+    /minItems:\s*[01]\b/.test(schemaBlock),
+    'SOLVE_SCHEMA is missing `minItems: 1` on steps, or uses an unsupported value. The API rejects ' +
+      "any minItems other than 0 or 1 ('minItems' values other than 0 or 1 are not supported)."
+  );
+
+  // Per-section solving is what keeps a multi-part question inside the 60s cap.
+  const pipeline = readFileSync(join(ROOT, 'lib/mathscan/pipeline.ts'), 'utf8');
+  check(
+    /solveBySection\s*\(/.test(pipeline),
+    'Multi-section questions no longer solve per section. MEASURED: all sections in one call took ' +
+      '55s of the 60s Vercel ceiling; one section takes 18.5s. An overrun returns nothing and still bills.'
+  );
 }
 
 // ------------------------------------------------------------

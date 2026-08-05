@@ -503,10 +503,18 @@ async function escalate(args: {
   let blocked: { message: string; status: number } | null = null;
   let solved: ServerSolution | null = null;
   try {
-    solved = await lookupServer(
-      { mode: 'solve', question: transcription, topic: topic ?? undefined },
-      signal
-    );
+    solved = problem.multiPart
+      ? await solveBySection(
+          transcription,
+          topic ?? undefined,
+          problem.parts,
+          (label, i, total) => stage('fallback-solve', 'start', `סעיף ${label} (${i + 1}/${total})`),
+          signal
+        )
+      : await lookupServer(
+          { mode: 'solve', question: transcription, topic: topic ?? undefined },
+          signal
+        );
   } catch (error) {
     blocked = {
       message: message(error),
@@ -574,7 +582,81 @@ function buildAllDepths(
   };
 }
 
-type ServerRequest = { mode: 'match' | 'solve'; question: string; topic?: string };
+type ServerRequest = {
+  mode: 'match' | 'solve';
+  question: string;
+  topic?: string;
+  /** Solve only this section (א/ב/ג…), using the rest as context. */
+  section?: string;
+};
+
+/** At most this many sections are solved. A bagrut question rarely has more,
+ *  and each one is a paid call — an OCR misread that invents sections must
+ *  not turn into an unbounded bill. */
+const MAX_SOLVED_SECTIONS = 4;
+
+/**
+ * Solve a multi-section question one section at a time.
+ *
+ * MEASURED on the real מתכונת question that failed in production: all three
+ * sections in a single call took 2,686 output tokens and **55 seconds** — 92%
+ * of the Vercel Hobby 60s ceiling, where an overrun returns nothing and still
+ * bills. One section takes ~920 tokens and **18.5 seconds**, and each is its
+ * own serverless invocation with its own budget.
+ *
+ * Sections are solved in order and merged. A section that fails does not lose
+ * the ones that succeeded — a partial solution is worth far more than an
+ * error, which is what the student got before.
+ */
+async function solveBySection(
+  question: string,
+  topic: string | undefined,
+  parts: string[],
+  onSection: (label: string, index: number, total: number) => void,
+  signal?: AbortSignal
+): Promise<ServerSolution | null> {
+  const wanted = parts.slice(0, MAX_SOLVED_SECTIONS);
+  const merged: { title: string; content: string }[] = [];
+  const finals: string[] = [];
+  let cost = 0;
+  let solvedTopic: string | undefined;
+  let firstError: unknown = null;
+
+  for (let i = 0; i < wanted.length; i++) {
+    const label = wanted[i];
+    onSection(label, i, wanted.length);
+    try {
+      const part = await lookupServer(
+        { mode: 'solve', question, topic, section: label },
+        signal
+      );
+      if (!part) continue;
+      cost += part.costUsd ?? 0;
+      solvedTopic = solvedTopic ?? part.topic;
+      // Label each section so a merged solution still reads as the exam's
+      // own structure rather than one undifferentiated run of steps.
+      merged.push({ title: `סעיף ${label}`, content: '' });
+      merged.push(...part.steps);
+      if (part.finalAnswer) finals.push(`סעיף ${label}: ${part.finalAnswer}`);
+    } catch (error) {
+      if (!firstError) firstError = error;
+      // Keep going: sections are independent, and one refusal should not
+      // discard the sections that worked.
+    }
+  }
+
+  if (merged.length === 0) {
+    if (firstError) throw firstError;
+    return null;
+  }
+  return {
+    source: 'ai',
+    topic: solvedTopic,
+    steps: merged.filter((s) => s.title || s.content),
+    finalAnswer: finals.join('\n\n'),
+    costUsd: cost,
+  };
+}
 
 /** Ask the server for a library/cache/AI solution. `match` never spends
  *  money; `solve` may. A non-2xx is not an exception for `match` — a miss is

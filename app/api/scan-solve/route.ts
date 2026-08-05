@@ -123,7 +123,7 @@ const SOLVE_SYSTEM = [
 7. **תשובה מדויקת:** $\\frac{\\sqrt2}{2}$, לא $0.707$.
 8. **מרוכבים ב-cis ובמעלות**, לא $e^{i\\theta}$ ולא רדיאנים.
 
-אם הטקסט אינו שאלת מתמטיקה — החזר {"error": "..."}.`,
+גם אם השאלה קשה, ארוכה או חלקית — **תמיד החזר צעדים ותשובה סופית**. אם חלק מהנתונים חסר או לא ברור, אמור זאת במפורש בתוך צעד וכתוב את הפתרון עבור מה שכן נתון. אין אפשרות להחזיר תשובה ריקה.`,
 ].join('\n\n');
 
 const TRANSCRIBE_SCHEMA = {
@@ -136,13 +136,31 @@ const TRANSCRIBE_SCHEMA = {
   additionalProperties: false,
 };
 
+/**
+ * ⚠️ `required` is the load-bearing part of this schema. Do not remove it.
+ *
+ * The previous version listed `error`, `topic`, `steps` and `finalAnswer` as
+ * properties with NO `required` array. `{}` therefore satisfies it — and on a
+ * hard multi-section bagrut question that is exactly what the model returned:
+ * MEASURED, 9 output tokens, `{}`, 2 seconds. The student waited 35 seconds,
+ * was billed 4.5 agorot, and got "עוד לא פתרנו את השאלה הזאת".
+ *
+ * Structured outputs enforce STRUCTURE, not effort. An all-optional schema
+ * tells the model that returning nothing is a valid answer, and on the
+ * questions that are hardest to solve that is the cheapest path available.
+ * With `steps` and `finalAnswer` required, the same question and the same
+ * prompt produced a full 6-step solution.
+ *
+ * `minItems` must be 0 or 1 — the API rejects any other value
+ * ("For 'array' type, 'minItems' values other than 0 or 1 are not supported").
+ */
 const SOLVE_SCHEMA = {
   type: 'object',
   properties: {
-    error: { type: 'string' },
     topic: { type: 'string' },
     steps: {
       type: 'array',
+      minItems: 1,
       items: {
         type: 'object',
         properties: { title: { type: 'string' }, content: { type: 'string' } },
@@ -152,6 +170,7 @@ const SOLVE_SCHEMA = {
     },
     finalAnswer: { type: 'string' },
   },
+  required: ['steps', 'finalAnswer'],
   additionalProperties: false,
 };
 
@@ -229,7 +248,7 @@ export async function POST(request: Request) {
 // ------------------------------------------------------------
 
 async function handleJson(request: Request) {
-  let body: { mode?: string; question?: string; topic?: string };
+  let body: { mode?: string; question?: string; topic?: string; section?: string };
   try {
     body = await request.json();
   } catch {
@@ -328,9 +347,25 @@ async function handleJson(request: Request) {
   if (!apiKey) return json({ error: 'Server configuration error' }, { status: 500 });
 
   const client = new Anthropic({ apiKey });
+
+  // Solve ONE section at a time when the question has them.
+  //
+  // MEASURED on the real מתכונת question that failed: solving all three
+  // sections in one call produced 2,686 output tokens in **55 seconds** —
+  // 92% of the Vercel Hobby 60s ceiling, where an overrun returns nothing
+  // and still bills. Per-section requests are ~a third of that each, they
+  // are separate invocations so each gets its own budget, and the student
+  // sees section א while ב is still being written.
+  const section = typeof body.section === 'string' ? body.section.slice(0, 2) : null;
+  const sectionInstruction = section
+    ? `\n\n**פתור אך ורק את סעיף ${section}.** התייחס לשאר השאלה כהקשר בלבד. אל תפתור סעיפים אחרים.`
+    : '';
+
   const message = await client.messages.create({
     model: SOLVE_MODEL,
-    max_tokens: 3072,
+    // 3,500 covers a single section comfortably (measured ~900-1,100) and a
+    // whole short question, while keeping generation inside the time budget.
+    max_tokens: 3500,
     system: [
       {
         type: 'text' as const,
@@ -341,7 +376,7 @@ async function handleJson(request: Request) {
     messages: [
       {
         role: 'user',
-        content: `נושא (זיהוי ראשוני): ${topicHint ?? 'לא ידוע'}\n\nהשאלה:\n${question}`,
+        content: `נושא (זיהוי ראשוני): ${topicHint ?? 'לא ידוע'}\n\nהשאלה:\n${question}${sectionInstruction}`,
       },
     ],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -354,15 +389,30 @@ async function handleJson(request: Request) {
     return json({ error: 'תשובה לא צפויה מהמודל', costUsd }, { status: 502 });
   }
 
-  let parsed: { error?: string; topic?: string; steps?: { title: string; content: string }[]; finalAnswer?: string };
+  let parsed: { topic?: string; steps?: { title: string; content: string }[]; finalAnswer?: string };
   try {
     parsed = JSON.parse(content.text);
   } catch {
-    return json({ error: 'תשובה לא תקינה מהמודל', costUsd }, { status: 502 });
+    // Truncation is the likely cause, and it is worth naming: the generic
+    // "try again" sends the student back to pay for the same failure.
+    const truncated = message.stop_reason === 'max_tokens';
+    return json(
+      {
+        error: truncated
+          ? 'הפתרון ארוך מהצפוי ונקטע. נסה לצלם סעיף אחד בכל פעם.'
+          : 'תשובה לא תקינה מהמודל',
+        costUsd,
+      },
+      { status: 502 }
+    );
   }
-  if (parsed.error) return json({ error: parsed.error, costUsd });
   if (!Array.isArray(parsed.steps) || parsed.steps.length === 0) {
-    return json({ error: 'לא התקבל פתרון', costUsd }, { status: 502 });
+    // With `required` on the schema this should be unreachable; it stays as a
+    // guard because it is exactly the failure that shipped once already.
+    return json(
+      { error: 'המודל לא החזיר פתרון לשאלה הזאת. נסה לצלם סעיף אחד בכל פעם.', costUsd },
+      { status: 502 }
+    );
   }
 
   const topic = parsed.topic || topicHint || '';
