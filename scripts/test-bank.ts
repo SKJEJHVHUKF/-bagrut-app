@@ -26,6 +26,7 @@
 // EXPLAIN ANALYZE on the candidate query).
 
 import { searchBank, upsertIntoBank } from '../lib/mathscan/bank';
+import { decideSolveQuota } from '../lib/mathscan/quota';
 import { buildMatchIndex, findMatch } from '../lib/mathscan/match';
 import { corpusIdf } from '../lib/solution-library';
 import { normalizeQuestionText, fingerprint } from '../lib/question-match';
@@ -386,6 +387,55 @@ async function main(): Promise<void> {
     console.log(`   מקור ה-IDF במאגר בן שורה אחת: קורפוס ${withCorpus}/${trials} · עצמי ${withOwn}/${trials}`);
     eq(withCorpus, trials, '11. עם IDF מהקורפוס — מאגר בן שורה אחת מוצא את השאלה שלו');
     eq(withOwn, 0, '11. עם IDF עצמי — הוא לא מוצא כלום. זה הבאג שהתיקון מונע.');
+  }
+
+  // ---- 12. the daily solve quota ----
+  //
+  // Unreachable from outside without a signed-in FREE account, and the only
+  // real account is Pro (isProUser is true for the owner's email only). So
+  // this is where the quota is actually verified.
+  {
+    const free = (usedToday: number) => decideSolveQuota({ pro: false, usedToday });
+    const pro = (usedToday: number) => decideSolveQuota({ pro: true, usedToday });
+
+    /** -1 when the decision was a refusal, so a wrong branch fails loudly
+     *  instead of quietly comparing undefined. */
+    const remaining = (d: ReturnType<typeof decideSolveQuota>) => (d.allowed ? d.remaining : -1);
+
+    eq(free(0).allowed, true, '12. תלמיד חינמי חדש רשאי לפתור');
+    eq(remaining(free(0)), 3, '12. ונשארו לו 3');
+    eq(free(2).allowed, true, '12. הפתרון השלישי עדיין מותר');
+    eq(remaining(free(2)), 1, '12. ונשאר לו 1');
+    eq(free(3).allowed, false, '12. הרביעי נחסם');
+    eq(free(99).allowed, false, '12. וגם הרבה מעבר לזה');
+
+    const blocked = free(3);
+    if (blocked.allowed) {
+      ok(false, '12. אמור להיחסם');
+    } else {
+      eq(blocked.status, 429, '12. הסטטוס הוא 429 (מכסה), לא 500 (שגיאה)');
+      eq(blocked.proRequired, true, '12. ומסומן שדרוג אפשרי');
+      // The wording is the product here: this is the one moment a student
+      // doing everything right is told "no".
+      ok(
+        blocked.message.includes('חינם') && blocked.message.includes('מאגר'),
+        '12. ההודעה אומרת במפורש שהמאגר נשאר חינם — לא מבוי סתום'
+      );
+      ok(
+        !/שגיאה|תקלה|נכשל/.test(blocked.message),
+        '12. וההודעה לא נשמעת כמו תקלה'
+      );
+    }
+
+    eq(pro(3).allowed, true, '12. ל-Pro יש תקרה גבוהה בהרבה');
+    eq(pro(149).allowed, true, '12. Pro עדיין רשאי ב-149');
+    eq(pro(150).allowed, false, '12. אבל Pro אינו בלתי מוגבל — לקוח משתולל שורף את התקציב');
+    const proBlocked = pro(150);
+    eq(proBlocked.allowed === false ? proBlocked.proRequired : true, false, '12. ל-Pro לא מוצע לשדרג');
+
+    // Defensive: a negative count (clock skew, a bad read) must not silently
+    // hand out extra solves beyond the cap.
+    eq(remaining(free(-5)), 3, '12. ספירה שלילית לא נותנת מכסה עודפת');
   }
 
   // ------------------------------------------------------------

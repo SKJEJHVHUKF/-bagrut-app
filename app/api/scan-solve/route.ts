@@ -29,6 +29,7 @@ import { matchScannedQuestion } from '@/lib/solution-library';
 import { normalizeQuestionText, fingerprint } from '@/lib/question-match';
 import { findSimilarCached, getCachedSolution, putCachedSolution } from '@/lib/solution-cache';
 import { bumpServed, reportWrong, searchBank, upsertIntoBank } from '@/lib/mathscan/bank';
+import { decideSolveQuota } from '@/lib/mathscan/quota';
 
 // Vercel Hobby caps a serverless function at 60s (CLAUDE.md #3). Both model
 // calls below carry a `max_tokens` that fits well inside it — a call that
@@ -38,17 +39,9 @@ export const maxDuration = 60;
 const FREE_DAILY_SCANS = 15;
 const PRO_DAILY_SCANS = 150;
 
-/**
- * New AI solutions a free, signed-in student may commission per day.
- *
- * Every one of them is written into `question_bank`, so it answers every
- * later student who photographs the same page for nothing. MEASURED cost of
- * a hard multi-section solve: ~6-16 agorot, so 3/day is roughly 20-50 agorot
- * per active student against a ~$5/month budget. This is the first number to
- * turn down if the bill climbs — and it should need turning DOWN less over
- * time, as repeats start hitting the bank instead.
- */
-const FREE_DAILY_SOLVE = 3;
+// The AI-solve quota lives in lib/mathscan/quota.ts, as a pure function: the
+// decision cannot be reached from outside without a signed-in free account,
+// so testing it in isolation is the only way it gets tested at all.
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -442,19 +435,17 @@ async function handleJson(request: Request) {
   if (!user) {
     return json({ error: 'יש להתחבר כדי לקבל פתרון חדש', authRequired: true }, { status: 401 });
   }
-  const pro = isProUser(user);
-  const cap = pro ? PRO_DAILY_SCANS : FREE_DAILY_SOLVE;
-  const usedToday = await scansToday(supabase, user.id, 'ai');
-  if (usedToday >= cap) {
+  // `'ai'` is load-bearing: the quota counts only solves that were BILLED.
+  // Counting every scan would let free library and bank hits eat the paid
+  // quota, punishing exactly the usage the whole design steers toward.
+  const quota = decideSolveQuota({
+    pro: isProUser(user),
+    usedToday: await scansToday(supabase, user.id, 'ai'),
+  });
+  if (!quota.allowed) {
     return json(
-      {
-        error: pro
-          ? `הגעת למכסת ${cap} הפתרונות היומית. חזור מחר.`
-          : `הגעת ל-${cap} הפתרונות החדשים שלך להיום. שאלות שכבר במאגר נשארות חינם וללא הגבלה.`,
-        quotaExceeded: true,
-        proRequired: !pro,
-      },
-      { status: 429 }
+      { error: quota.message, quotaExceeded: true, proRequired: quota.proRequired },
+      { status: quota.status }
     );
   }
 

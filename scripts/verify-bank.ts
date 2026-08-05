@@ -302,9 +302,28 @@ check(
   'route.ts: פגיעה מהמאגר חייבת לחזור כ-markdown, לא כצעד בודד ללא כותרת.'
 );
 
+const quotaCode = code(read('lib/mathscan/quota.ts'));
+
 check(
-  /const\s+FREE_DAILY_SOLVE\s*=\s*[1-9]\d*/.test(routeCode),
-  'route.ts: אין מכסה יומית חינמית — בלעדיה רק בעל האפליקציה יכול להזין את המאגר.'
+  /export\s+const\s+FREE_DAILY_SOLVE\s*=\s*[1-9]\d*\s*;/.test(quotaCode),
+  'quota.ts: אין מכסה יומית חינמית — בלעדיה רק בעל האפליקציה יכול להזין את המאגר.'
+);
+
+check(
+  /decideSolveQuota\s*\(/.test(routeCode),
+  'route.ts: הראוט חייב להשתמש ב-decideSolveQuota ולא בהחלטה מוטמעת — החלטה מוטמעת לא ניתנת לבדיקה בלי חשבון חינמי.'
+);
+
+/** The refusal must read as a limit on NEW solutions, not as a broken app.
+ *  It is the one moment a student doing everything right is told "no". */
+check(
+  /message[\s\S]{0,400}?חינם[\s\S]{0,200}?מאגר|message[\s\S]{0,400}?מאגר[\s\S]{0,200}?חינם/.test(quotaCode),
+  'quota.ts: הודעת החסימה חייבת לומר שהמאגר נשאר חינם — אחרת תלמיד חושב שננעל בפניו.'
+);
+
+check(
+  /Math\.max\(\s*0\s*,/.test(quotaCode),
+  'quota.ts: ספירה שלילית (שעון/קריאה שגויה) חייבת להיחסם, אחרת היא מחלקת מכסה עודפת.'
 );
 
 check(
