@@ -194,7 +194,35 @@ function repairDigitConfusions(input: string): string {
  * run — which is precisely why the Hebrew must never be inside `$…$` later:
  * the same boundary that lets us extract the math is the one KaTeX needs.
  */
+/** True when the text already carries LaTeX delimiters — i.e. it came from a
+ *  source that emits LaTeX (the vision transcription, or a student who typed
+ *  `$…$`), not from raw Tesseract output. */
+export function hasMathDelimiters(text: string): boolean {
+  return /\$[^$]*\$/.test(text);
+}
+
+/** Pull the contents of every `$…$` / `$$…$$` span, in order. */
+export function delimitedSegments(text: string): string[] {
+  const segments: string[] = [];
+  const pattern = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    const body = (match[1] ?? match[2] ?? '').trim();
+    if (isMeaningfulMath(body)) segments.push(body);
+  }
+  return dedupe(segments);
+}
+
 export function extractMathSegments(text: string): string[] {
+  // Already-delimited input: the author (or the model) has already told us
+  // exactly where the maths is. Re-detecting it by scanning character classes
+  // is strictly worse — `$` and `\` are not in MATH_CHAR, so a run like
+  // `$z + \bar{z} = 2$` gets torn into "z +" and "ar{z} = 2".
+  if (hasMathDelimiters(text)) return delimitedSegments(text);
+  // A lone stray `$` is noise, not a delimiter — strip it so it can't split a
+  // run in half, then scan normally.
+  if (text.includes('$')) text = text.replace(/\$/g, ' ');
+
   const segments: string[] = [];
 
   for (const line of text.split('\n')) {
@@ -295,6 +323,33 @@ function dedupe(items: string[]): string[] {
  * terminates at the first Hebrew glyph, before the `$` is closed.
  */
 export function toDisplayQuestion(text: string): string {
+  // ── The delimited case ────────────────────────────────────────────────
+  // The vision transcription is ASKED for LaTeX, so it returns Hebrew prose
+  // with `$…$` and `$$…$$` already in place. Running the run-wrapper over
+  // that inserted a SECOND set of delimiters inside the first:
+  //
+  //   $$z_1 = 4\sqrt{2}[\cos(150^\circ)]^2$$
+  //     →  $$$z_1 = 4\sqrt{2}$[$\cos(150^\circ)$]^2$$
+  //
+  // KaTeX cannot parse that, so remark left it as literal text — and raw
+  // LaTeX inside an RTL paragraph is reordered by the bidi algorithm, which
+  // is why a real מתכונת question rendered as scrambled `\cos`/`$$`/`]^5`
+  // fragments on screen. When the delimiters are already there, the only
+  // correct action is to leave them alone.
+  // Any `$` at all routes through the delimiter-preserving path, which also
+  // repairs an odd count. If nothing is left delimited afterwards the `$` was
+  // noise (a currency sign, an OCR speck), and the cleaned text falls back to
+  // run-wrapping — so a single stray delimiter can't disable maths rendering
+  // for the whole question.
+  if (text.includes('$')) {
+    const preserved = passThroughDelimited(text);
+    if (hasMathDelimiters(preserved)) return preserved;
+    return wrapMathRuns(preserved);
+  }
+  return wrapMathRuns(text);
+}
+
+function wrapMathRuns(text: string): string {
   const lines = text.split('\n').map((line) => {
     let out = '';
     let run = '';
@@ -344,6 +399,52 @@ export function toDisplayQuestion(text: string): string {
   });
 
   return lines.join('\n\n'); // blank line = a real paragraph break in remark
+}
+
+/**
+ * Render already-delimited LaTeX safely, without adding or moving a single
+ * delimiter.
+ *
+ * Three repairs, each for a failure the model actually produces:
+ *   1. An ODD number of `$` — one span never closed. Everything from the
+ *      stray delimiter on would otherwise be swallowed into math mode, so
+ *      the orphan is dropped and that fragment renders as prose.
+ *   2. HEBREW inside a span. KaTeX has no bidi and would render it reversed
+ *      (CLAUDE.md #5), so the delimiters around that span are removed and it
+ *      becomes ordinary text — readable, if unstyled.
+ *   3. `$$…$$` sitting mid-line. remark-math only treats it as display maths
+ *      at the start of a line, so it is lifted onto its own paragraph.
+ */
+function passThroughDelimited(text: string): string {
+  let s = text;
+
+  // (1) an unmatched trailing delimiter
+  if (((s.match(/\$/g) ?? []).length) % 2 === 1) {
+    const last = s.lastIndexOf('$');
+    s = `${s.slice(0, last)}${s.slice(last + 1)}`;
+  }
+
+  // (2) Hebrew inside a span → un-delimit that span only.
+  s = s.replace(/\$\$([\s\S]+?)\$\$/g, (whole, body: string) =>
+    HEBREW.test(body) ? body : whole
+  );
+  s = s.replace(/\$([^$\n]+?)\$/g, (whole, body: string) =>
+    HEBREW.test(body) ? body : whole
+  );
+
+  // (3) display maths onto its own paragraph
+  s = s.replace(/[ \t]*\$\$([\s\S]+?)\$\$[ \t]*/g, (_m, body: string) => `\n\n$$${body.trim()}$$\n\n`);
+
+  // Every source line becomes its own paragraph. A single newline is a SOFT
+  // break in markdown, so `א. …` and `ב. …` on consecutive lines merge into
+  // one run-on block — precisely the sections a student needs kept apart.
+  // The transcription already emits one logical line per line, so this is a
+  // faithful mapping rather than a guess.
+  return s
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join('\n\n');
 }
 
 /** Cosmetic pass applied only to what the STUDENT sees. `*` is a valid

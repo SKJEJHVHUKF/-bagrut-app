@@ -86,6 +86,13 @@ export function validateTranscription({ ocr, humanEdited = false }: ValidateInpu
     push('unbalanced-delimiters', 'יש סוגריים לא סגורים בטקסט שזוהה.', 0.25);
   }
 
+  // An odd number of `$` means a LaTeX span was never closed. Left alone it
+  // swallows the rest of the question into math mode and renders as raw
+  // backslash commands — which RTL then reorders into nonsense.
+  if (((normalized.match(/\$/g) ?? []).length) % 2 === 1) {
+    push('unbalanced-delimiters', 'נוסחה שלא נסגרה כראוי — כדאי לעבור על הטקסט.', 0.2);
+  }
+
   // ---- mathematical content ----
   const expressions = extractMathSegments(normalized);
   if (expressions.length === 0) {
@@ -157,6 +164,21 @@ export function validateTranscription({ ocr, humanEdited = false }: ValidateInpu
     push('multiple-questions', 'זוהו כמה סעיפים בתמונה אחת — נפתור את מה שזוהה במלואו.', 0.05);
   }
 
+  // ---- the maths, judged separately from the Hebrew ----
+  //
+  // THE failure this catches, measured on a real printed bagrut question:
+  // Tesseract read every Hebrew sentence perfectly and every FORMULA wrong —
+  // `z₁` became `21`, `√` became `N`, the conjugate bar and the exponent
+  // vanished — and the composite score came out 80% "זיהוי ברור". The prose
+  // is most of the characters, so it drowns the part that actually matters.
+  //
+  // Tesseract is a text engine: it has no model of two-dimensional maths
+  // layout, so it does not fail loudly on a subscript or a radical, it
+  // silently returns something plausible. These signals are how we notice.
+  for (const anomaly of mathAnomalies(expressions, ocr.lines)) {
+    push(anomaly.code, anomaly.message, anomaly.penalty);
+  }
+
   // ---- engine confidence ----
   if (!humanEdited && ocr.meanConfidence < 0.6) {
     push(
@@ -210,6 +232,71 @@ function composeConfidence(ocr: OcrResult, issues: ValidationIssue[], humanEdite
   }
   return Math.max(0, Math.min(1, score));
 }
+
+type MathAnomaly = {
+  code: ValidationIssue['code'];
+  message: string;
+  penalty: number;
+};
+
+/**
+ * Signals that the FORMULAS were misread, independent of how well the Hebrew
+ * came out. Each one was observed on a real scan, not imagined.
+ */
+function mathAnomalies(expressions: string[], lines: OcrResult['lines']): MathAnomaly[] {
+  const anomalies: MathAnomaly[] = [];
+
+  // (1) Fragmentation. A formula is ONE line. When Tesseract cannot resolve
+  // the 2-D layout it emits the pieces separately — the real scan produced
+  // `z+"`, `+`, `2`, `=`, `1` as five distinct lines. Several one- or
+  // two-character maths lines in a row is the strongest signal available,
+  // and it needs no assumption about what the formula should have been.
+  const mathLines = lines.filter((line) => {
+    const text = line.text.trim();
+    if (!text) return false;
+    const hebrew = [...text].filter((ch) => HEBREW_CHAR.test(ch)).length;
+    return hebrew / text.length < 0.3;
+  });
+  const fragments = mathLines.filter((line) => line.text.trim().length <= 2).length;
+  if (fragments >= 3) {
+    anomalies.push({
+      code: 'unparseable',
+      message: 'הנוסחאות נקראו בחלקים ולא כמכלול — סימן שהמבנה שלהן לא זוהה.',
+      penalty: 0.55,
+    });
+  }
+
+  // Patterns (2) and (3) scan the math-heavy LINES as well as the extracted
+  // expressions. On the real scan the mangled formula was so broken that
+  // `isMeaningfulMath` rejected it outright, so `expressions` was empty and a
+  // check that looked only there would have found nothing to complain about —
+  // exactly when complaining matters most.
+  const mathText = [...mathLines.map((line) => line.text), ...expressions].join(' \n ');
+
+  // (2) A letter wedged between digits with no operator: `4N2` is what
+  // `4√2` became. Real notation almost never writes that.
+  if (/\d[a-zA-Z]\d/.test(mathText.replace(/[ \t]/g, ''))) {
+    anomalies.push({
+      code: 'suspicious-characters',
+      message: 'זוהתה אות בין שתי ספרות — לרוב זה שורש או סימן שלא נקרא נכון.',
+      penalty: 0.45,
+    });
+  }
+
+  // (3) Quote marks inside maths — `z + z̄` came back as `z+"`, the
+  // conjugate bar read as a double quote.
+  if (/["'”“]/.test(mathText)) {
+    anomalies.push({
+      code: 'suspicious-characters',
+      message: 'זוהו גרשיים בתוך נוסחה — לרוב זה סימן (כמו צמוד) שלא נקרא.',
+      penalty: 0.4,
+    });
+  }
+
+  return anomalies;
+}
+
+const HEBREW_CHAR = /[֐-׿]/;
 
 function ratioOfUnexpectedCharacters(text: string): number {
   if (text.length === 0) return 1;

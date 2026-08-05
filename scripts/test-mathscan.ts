@@ -189,6 +189,57 @@ const mixed = toDisplayQuestion('נתון x + 1 = 3 וגם y - 2 = 5 מצא את
 ok('multi-run line keeps Hebrew outside the math', !hasHebrewInsideMath(mixed), mixed);
 eq('multi-run line stays balanced', unbalancedDollars(mixed), 0);
 
+// ---- REGRESSION: already-delimited LaTeX must pass through untouched ----
+//
+// A real מתכונת question rendered as scrambled `\cos` / `$$` / `]^5` on the
+// owner's phone. The vision transcription is ASKED for LaTeX, so it returns
+// `$…$` and `$$…$$`; the run-wrapper then inserted a SECOND set of delimiters
+// inside the first (`$$…$$` → `$$$…$[$…$]`), KaTeX gave up, and raw LaTeX in
+// an RTL paragraph was reordered into nonsense by the bidi algorithm.
+{
+  const vision = String.raw`ב. המספר $z_1$ מקיים: $$z_1 = 4\sqrt{2}[\cos(150^\circ)]^2$$ מצא את המספר.`;
+  const out = toDisplayQuestion(repairOcrText(vision));
+
+  ok('LaTeX commands survive the repair pass', out.includes('\\sqrt') && out.includes('\\cos'), out);
+  ok('no delimiter is inserted inside existing math', !out.includes('$$$') && !out.includes('$['), out);
+  eq('delimiters stay balanced', unbalancedDollars(out), 0);
+  ok('no Hebrew ends up inside the math', !hasHebrewInsideMath(out), out);
+  ok(
+    'the display block survives intact',
+    out.includes('$$z_1 = 4\\sqrt{2}[\\cos(150^\\circ)]^2$$'),
+    out
+  );
+  ok('the inline span survives intact', out.includes('$z_1$'), out);
+}
+{
+  // Sections must not merge: a single newline is a markdown SOFT break, and
+  // "א. …" + "ב. …" would render as one run-on paragraph.
+  const two = 'א. מצא את $z$.\nב. הראה ש-$w = 2$.';
+  const out = toDisplayQuestion(repairOcrText(two));
+  ok('consecutive sections become separate paragraphs', out.includes('\n\n'), JSON.stringify(out));
+}
+{
+  // An unclosed span from the model must not swallow the rest of the question.
+  const broken = 'מצא את $z_1 = 4 והראה שזה נכון';
+  const out = toDisplayQuestion(repairOcrText(broken));
+  eq('an orphan delimiter is dropped', unbalancedDollars(out), 0);
+}
+{
+  // Hebrew inside a span would render REVERSED; the span must be un-delimited.
+  const hebrewInside = 'נתון $z = 2$ ולכן $התשובה היא 5$ בסוף.';
+  const out = toDisplayQuestion(repairOcrText(hebrewInside));
+  ok('a Hebrew span is un-delimited rather than rendered reversed', !hasHebrewInsideMath(out), out);
+  ok('the genuine math span is kept', out.includes('$z = 2$'), out);
+}
+{
+  // Extraction must read the delimited spans, not re-scan character classes —
+  // `$` and `\` are not math characters, so `$z + \bar{z} = 2$` was being torn
+  // into "z +" and "ar{z} = 2", and the solver saw neither.
+  const segs = extractMathSegments(String.raw`נתון $z + \bar{z} = 2$ במישור.`);
+  eq('a delimited span extracts as ONE segment', segs.length, 1);
+  ok('and keeps its LaTeX intact', segs[0].includes('\\bar'), JSON.stringify(segs));
+}
+
 // Superscript reconstruction from Tesseract symbols.
 eq(
   'superscripted symbols rebuild as a power',
@@ -829,6 +880,76 @@ async function run(): Promise<void> {
       v.verdict !== 'accept',
       `verdict ${v.verdict}, confidence ${v.confidence}`
     );
+  }
+
+  {
+    // REGRESSION — measured on a real printed bagrut question. Tesseract read
+    // every Hebrew sentence perfectly and every formula wrong (`z₁`→`21`,
+    // `√`→`N`, the conjugate bar→`"`, the exponent lost) and the score came
+    // out 80% "זיהוי ברור", because the prose is most of the characters.
+    const v = validateTranscription({
+      ocr: {
+        engine: 'tesseract-local',
+        text: [
+          'שאלה 5 (מספרים מרוכבים)',
+          'א. מצא את מקום הנקודות במישור גאוס המקיימות:',
+          'z+"',
+          '+',
+          '2',
+          '=',
+          '1',
+          'ב. המספר 21 מקיים:',
+          '4N2 [cos150° + i sin150°] = ,2',
+          'מצא את המספר 21 והראה שהנקודה A נמצאת על הפרבולה.',
+        ].join('\n'),
+        lines: [
+          { text: 'שאלה 5 (מספרים מרוכבים)', confidence: 0.9 },
+          { text: 'א. מצא את מקום הנקודות במישור גאוס המקיימות:', confidence: 0.92 },
+          { text: 'z+"', confidence: 0.6 },
+          { text: '+', confidence: 0.7 },
+          { text: '2', confidence: 0.8 },
+          { text: '=', confidence: 0.8 },
+          { text: '1', confidence: 0.7 },
+          { text: 'ב. המספר 21 מקיים:', confidence: 0.88 },
+          { text: '4N2 [cos150° + i sin150°] = ,2', confidence: 0.7 },
+        ],
+        meanConfidence: 0.8,
+        durationMs: 900,
+        costUsd: 0,
+      },
+    });
+    ok(
+      'misread formulas are NOT accepted just because the Hebrew is clean',
+      v.verdict !== 'accept',
+      `verdict ${v.verdict}, confidence ${v.confidence}`
+    );
+    ok(
+      'the fragmented formula is called out',
+      v.issues.some((i) => i.message.includes('בחלקים')),
+      JSON.stringify(v.issues.map((i) => i.code))
+    );
+    ok(
+      'the letter-between-digits (√ read as N) is called out',
+      v.issues.some((i) => i.message.includes('אות בין שתי ספרות')),
+      JSON.stringify(v.issues.map((i) => i.message))
+    );
+  }
+  {
+    // …and the guard must NOT fire on a clean read, or every scan escalates.
+    const good = validateTranscription({
+      ocr: {
+        engine: 'tesseract-local',
+        text: 'פתור את המשוואה x^2 - 5x + 6 = 0',
+        lines: [
+          { text: 'פתור את המשוואה', confidence: 0.94 },
+          { text: 'x^2 - 5x + 6 = 0', confidence: 0.91 },
+        ],
+        meanConfidence: 0.92,
+        durationMs: 400,
+        costUsd: 0,
+      },
+    });
+    eq('a clean printed equation is still accepted', good.verdict, 'accept');
   }
 
   {
