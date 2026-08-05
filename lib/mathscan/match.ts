@@ -77,8 +77,42 @@ export const MATCH_THRESHOLD = 0.55;
  *  near-duplicate family problem described above. */
 export const MATCH_MARGIN = 0.08;
 
-/** Below this many shared characters the comparison is noise. */
-const MIN_NORMALIZED_LENGTH = 20;
+/**
+ * Minimum query length, in normalised characters.
+ *
+ * Raised from 20 after a real false positive: "פתור את המשוואה sin(x) = 0.5"
+ * (26 chars) matched a complex-numbers question and returned "z = ±4i" under
+ * a verified badge. On a short query the boilerplate — "פתור את המשוואה" —
+ * is most of the trigram set, so the match is carried by words that appear in
+ * hundreds of questions while the part that identifies it (`sin(x)=0.5`) is a
+ * rounding error. Measured: 26 chars false-matched, 38 chars correctly
+ * missed. A genuine bagrut or מתכונת question is far longer than 40, so this
+ * costs no recall — the bench confirms it.
+ */
+const MIN_QUERY_LENGTH = 40;
+
+/**
+ * Minimum length to be INDEXED — deliberately lower than the query floor.
+ *
+ * These are two different questions. "Is this query specific enough to search
+ * with?" is about evidence and needs 40. "Should this stored question be
+ * findable at all?" is about coverage: a short drill question still belongs
+ * in the corpus, both because a specific query can legitimately find it and
+ * because it contributes to the IDF statistics that make every other match
+ * work. Conflating them dropped recall from 90.2% to 70.2% by silently
+ * deleting a third of the library.
+ */
+const MIN_INDEX_LENGTH = 20;
+
+/**
+ * A match must be carried by DISTINCTIVE words, not by boilerplate.
+ *
+ * `idfOverlap` is a ratio, so a query made almost entirely of stopwords can
+ * score well by matching those stopwords. This is an absolute floor on the
+ * shared IDF mass: there has to be real evidence, not just a high proportion
+ * of weak evidence.
+ */
+const MIN_SHARED_IDF = 2.0;
 
 /** A query far shorter or longer than the entry is a different question even
  *  if the words overlap — e.g. one section of a five-section question. */
@@ -122,7 +156,7 @@ export function buildMatchIndex<T extends MatchEntry>(entries: T[]): MatchIndex<
 
   for (const entry of entries) {
     const normalized = normalizeQuestionText(entry.text);
-    if (normalized.length < MIN_NORMALIZED_LENGTH) continue;
+    if (normalized.length < MIN_INDEX_LENGTH) continue;
     const tokens = tokensOf(normalized);
     indexed.push({ entry, normalized, trigrams: trigramsOf(normalized), tokens });
     for (const token of tokens) {
@@ -154,12 +188,14 @@ function jaccardSets(a: Set<string>, b: Set<string>): number {
   return union === 0 ? 0 : intersection / union;
 }
 
-/** Overlap weighted by how distinctive each shared token is. */
+/** Overlap weighted by how distinctive each shared token is. Returns both
+ *  the ratio and the ABSOLUTE shared mass — the ratio alone lets a query made
+ *  of stopwords score well by matching stopwords. */
 function idfOverlap(
   queryTokens: Set<string>,
   entryTokens: Set<string>,
   idf: Map<string, number>
-): number {
+): { ratio: number; sharedMass: number } {
   let shared = 0;
   let totalQuery = 0;
   for (const token of queryTokens) {
@@ -170,8 +206,8 @@ function idfOverlap(
     totalQuery += weight;
     if (entryTokens.has(token)) shared += weight;
   }
-  if (totalQuery === 0) return 0;
-  return shared / totalQuery;
+  if (totalQuery === 0) return { ratio: 0, sharedMass: 0 };
+  return { ratio: shared / totalQuery, sharedMass: shared };
 }
 
 export type FindMatchOptions = {
@@ -199,7 +235,7 @@ export function findMatch<T extends MatchEntry>(
   const margin = options.margin ?? MATCH_MARGIN;
 
   const normalized = normalizeQuestionText(query);
-  if (normalized.length < MIN_NORMALIZED_LENGTH) return null;
+  if (normalized.length < MIN_QUERY_LENGTH) return null;
 
   const queryTrigrams = trigramsOf(normalized);
   const queryTokens = tokensOf(normalized);
@@ -219,7 +255,10 @@ export function findMatch<T extends MatchEntry>(
     if (trigram < 0.15) continue;
 
     const idf = idfOverlap(queryTokens, candidate.tokens, index.idf);
-    let score = W_TRIGRAM * trigram + W_IDF * idf;
+    // Not enough distinctive evidence — whatever overlap exists is
+    // boilerplate, and boilerplate must never decide a match.
+    if (idf.sharedMass < MIN_SHARED_IDF) continue;
+    let score = W_TRIGRAM * trigram + W_IDF * idf.ratio;
     if (options.topicHint && candidate.entry.topic === options.topicHint) {
       score += 0.03;
     }

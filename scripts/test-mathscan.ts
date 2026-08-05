@@ -1073,6 +1073,26 @@ async function run(): Promise<void> {
     // A single section must not match the whole multi-section question.
     ok('a short fragment does not match a long question', matchScannedQuestion('מצא את הארגומנט') === null);
   }
+  {
+    // REGRESSION — a REAL false positive caught by re-driving production.
+    // "פתור את המשוואה sin(x) = 0.5" returned "z = ±4i" from a complex-numbers
+    // question, under a "פתרון מאומת מהמאגר" badge. On a short query the
+    // boilerplate ("פתור את המשוואה") is most of the trigram set, so the match
+    // was carried entirely by words that appear in hundreds of questions.
+    for (const shortQuery of [
+      'פתור את המשוואה sin(x) = 0.5',
+      'פתור את המשוואה x + 1 = 3',
+      'פתור את המשוואה cos(x) = 0.3 בתחום הנתון',
+      'מצא את הנגזרת',
+      'חשב את השטח',
+    ]) {
+      ok(
+        `a short boilerplate-heavy query matches NOTHING: "${shortQuery.slice(0, 30)}"`,
+        matchScannedQuestion(shortQuery) === null,
+        JSON.stringify(matchScannedQuestion(shortQuery))
+      );
+    }
+  }
 
   // ============================================================
   // 13. unit levels

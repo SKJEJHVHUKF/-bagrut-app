@@ -16,6 +16,7 @@
 import { buildMatchIndex, findMatch, MATCH_THRESHOLD, MATCH_MARGIN } from '../lib/mathscan/match';
 import { ALL_PAST_BAGRUYOT } from '../content/past-bagruyot';
 import { allLessonKeys, getLesson } from '../content/lessons';
+import { normalizeQuestionText } from '../lib/question-match';
 
 type Entry = { id: string; topic: string; text: string };
 
@@ -88,13 +89,27 @@ for (const dropRate of [0, 4, 10]) {
     }
   }
   const pct = (n: number) => ((n / sample.length) * 100).toFixed(1);
+  const searchable = sample.filter((e) => normalizeQuestionText(e.text).length >= 40).length;
+  const pctSearchable = ((hit / Math.max(1, searchable)) * 100).toFixed(1);
   console.log(
-    `drop=${dropRate}%  n=${sample.length}  hit=${pct(hit)}%  miss=${pct(miss)}%  WRONG=${wrong}`
+    `drop=${dropRate}%  n=${sample.length}  hit=${pct(hit)}%  miss=${pct(miss)}%  WRONG=${wrong}` +
+      `   | of the ${searchable} long enough to search with: ${pctSearchable}%`
   );
 }
 
 // ---- precision: questions that are NOT in the library must find nothing ----
 const strangers = [
+  // SHORT queries — the class that produced a REAL false positive:
+  // "פתור את המשוואה sin(x) = 0.5" matched a complex-numbers question and
+  // returned z = ±4i under a verified badge. Boilerplate dominates a short
+  // trigram set, so these must be refused outright.
+  'פתור את המשוואה sin(x) = 0.5',
+  'פתור את המשוואה x + 1 = 3',
+  'מצא את הנגזרת',
+  'חשב את השטח',
+  'פתור את המשוואה cos(x) = 0.3 בתחום הנתון',
+  'פתור את המשוואה tan(x) = 1',
+
   'פתור את המשוואה הדיפרנציאלית y\'\' + 3y\' + 2y = 0 עם תנאי התחלה',
   'חשב את הנגזרת החלקית של הפונקציה f(x,y) = x^2*y + sin(xy) לפי y',
   'מצא את הדטרמיננטה של המטריצה בסדר 4 על 4 בשיטת הפיתוח לפי שורה',
