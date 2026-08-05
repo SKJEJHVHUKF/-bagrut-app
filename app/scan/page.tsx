@@ -443,8 +443,13 @@ export default function ScanPage() {
 
             {needsLogin && (
               <UpsellCard
-                title="השאלה הזאת דורשת זיהוי מתקדם"
-                body="הזיהוי המקומי לא הצליח לקרוא את התמונה. התחברות פותחת את הזיהוי בענן — והשאלות שכבר במאגר נשארות חינם תמיד."
+                // Not "הזיהוי המקומי לא הצליח לקרוא את התמונה" — that is one
+                // possible cause and often not the one. A 401 also arrives
+                // when the read was perfect and the question simply is not in
+                // the bank yet, and telling that student their photo was
+                // unreadable sends them off re-photographing a fine picture.
+                title="השאלה הזאת עוד לא במאגר — נפתור אותה עכשיו"
+                body="פתרון חדש דורש חשבון: התחברות פותחת גם את הזיהוי בענן וגם את הפתרון המלא. שאלות שכבר נמצאות במאגר נשארות חינם וללא הגבלה, גם בלי חשבון."
                 href={`/login?next=${encodeURIComponent('/scan')}`}
                 cta="התחברות"
                 Icon={ShieldCheck}

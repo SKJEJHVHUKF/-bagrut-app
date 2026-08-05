@@ -199,23 +199,12 @@ export function SolutionPanel({
      * so they edit, retry, fail, and conclude the app is broken. That is the
      * failure that was reported, reproduced on a real photograph.
      */
-    if (blocked?.status === 401) {
-      return (
-        <section
-          className="rounded-2xl p-5 space-y-3"
-          style={{ background: 'var(--scan-primary-soft)', border: '1px solid var(--scan-primary)' }}
-        >
-          <h3 className="font-black flex items-center gap-2">
-            <Sparkles className="w-4 h-4" style={{ color: 'var(--scan-primary)' }} aria-hidden />
-            השאלה הזאת עוד לא במאגר — נפתור אותה עכשיו
-          </h3>
-          <p className="text-sm scan-muted leading-relaxed">{blocked.message}</p>
-          <a href="/login" className="scan-btn scan-btn-primary inline-flex !py-2.5 !px-5 !text-sm">
-            התחבר וקבל את הפתרון
-          </a>
-        </section>
-      );
-    }
+    // 401 (no account) and 402 (Pro needed) are already on screen above, as an
+    // UpsellCard with a button — the page owns upsells so there is one place
+    // that decides how they look. Repeating them here produced two stacked
+    // sign-in boxes saying the same thing, so this renders nothing and lets
+    // that card be the whole message.
+    if (blocked?.status === 401 || blocked?.status === 402) return null;
 
     return (
       <section className="scan-card p-5 space-y-2">

@@ -367,9 +367,26 @@ check(
   'pipeline.ts: מסלול "אין חשבון" חייב לסמן 401, אחרת ה-UI לא יודע להציע התחברות במקום להציג שגיאה.'
 );
 
+/** Exactly ONE 401 message reaches the student. The page owns upsells (it
+ *  renders UpsellCard with a button), so the panel must stay silent on 401 —
+ *  showing both produced two stacked sign-in boxes. */
 check(
-  /blocked\?\.status\s*===\s*401/.test(panelCode),
-  'SolutionPanel.tsx: 401 חייב להיות מוצג ככפתור התחברות, לא כהודעת "עוד לא פתרנו".'
+  /blocked\?\.status\s*===\s*401[\s\S]{0,120}?return\s+null/.test(panelCode),
+  'SolutionPanel.tsx: על 401 הפאנל חייב להחזיר null — ה-UpsellCard בעמוד כבר אומר את זה עם כפתור, ושתי הודעות זהות זו על זו נראות שבורות.'
+);
+
+check(
+  /needsLogin\s*&&\s*\(\s*<UpsellCard/.test(panelUsage),
+  'page.tsx: חייב להיות UpsellCard אחד ל-401 עם כפתור התחברות.'
+);
+
+/** The 401 card must not blame the photo. A 401 also arrives when the read
+ *  was perfect and the question simply is not in the bank yet. */
+check(
+  !/הזיהוי המקומי לא הצליח לקרוא את התמונה/.test(
+    panelUsage.split('needsLogin')[1]?.slice(0, 600) ?? ''
+  ),
+  'page.tsx: הודעת ה-401 לא יכולה להאשים את התמונה — לרוב הקריאה הייתה תקינה והשאלה פשוט עוד לא במאגר.'
 );
 
 check(
