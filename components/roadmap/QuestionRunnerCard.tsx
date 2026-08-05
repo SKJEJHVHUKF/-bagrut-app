@@ -21,7 +21,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, Lightbulb, KeyRound, LifeBuoy, ArrowLeft, RotateCcw, Wrench } from 'lucide-react';
+import { CheckCircle, XCircle, KeyRound, LifeBuoy, ArrowLeft, RotateCcw, Wrench } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { AnswerInput } from '@/components/practice/AnswerInput';
 import { MistakeTagger } from '@/components/practice/MistakeTagger';
@@ -35,6 +35,9 @@ import { recordMistake } from '@/lib/mistakes';
 import type { ErrorCategory } from '@/lib/mistakes';
 import { seedFromMiss, gradeReview } from '@/lib/review';
 import { getWeaknesses } from '@/lib/remediation';
+import { getSubTopic } from '@/content/lessons';
+import { buildHelpLadder, type HelpTier } from '@/lib/help-ladder';
+import { HelpLadder } from '@/components/practice/HelpLadder';
 import type { PracticeQuestion } from '@/content/lessons/types';
 
 const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה'];
@@ -76,8 +79,17 @@ export function QuestionRunnerCard({
   const [input, setInput] = useState('');
   const [tries, setTries] = useState(0);
   const [firstTryCorrect, setFirstTryCorrect] = useState<boolean | null>(null);
-  const [hintShown, setHintShown] = useState(false);
   const [revealed, setRevealed] = useState(false);
+
+  // "למד אותי" — three graded rungs of help derived from what the question and
+  // its sub-topic already carry (lib/help-ladder). `openedLevels` is the whole
+  // help state: `hintShown` used to be a boolean, which could not express
+  // "took the hint AND the first step", and so could not price help honestly.
+  const subTopic = useMemo(() => getSubTopic(subject, topic, subId), [subject, topic, subId]);
+  const ladder = useMemo(() => buildHelpLadder(q, subTopic), [q, subTopic]);
+  const [openedLevels, setOpenedLevels] = useState<number[]>([]);
+  /** Any help taken at all — what `hintUsed` has always meant. */
+  const helpTaken = openedLevels.length > 0;
   const [check, setCheck] = useState<CheckResult | null>(null);
   const [mistakeId, setMistakeId] = useState<string | null>(null);
   const [aiCategory, setAiCategory] = useState<ErrorCategory | null>(null);
@@ -109,10 +121,10 @@ export function QuestionRunnerCard({
       ...(selfReported !== undefined ? { selfReported } : {}),
       ...(chosenIndex !== undefined ? { chosenIndex } : {}),
       ...(q.kind === 'mcq' && q.answers ? { optionCount: q.answers.length } : {}),
-      // True only when the student ASKED for the hint before this attempt — the
-      // auto-reveal on a miss happens after `logFirst` has already run, so it
-      // can't retro-poison the measured attempt.
-      ...(hintShown ? { hintUsed: true } : {}),
+      // True only when the student opened a rung of the help ladder BEFORE this
+      // attempt — the auto-open on a miss happens after `logFirst` has already
+      // run, so it can't retro-poison the measured attempt.
+      ...(helpTaken ? { hintUsed: true } : {}),
     });
     // Spaced repetition: a review answer re-schedules the card; a fresh miss in
     // a practice rung drops the question into the review queue (box 1).
@@ -149,11 +161,27 @@ export function QuestionRunnerCard({
     setRevealed(true);
   }
 
-  // Wrong: on the FIRST miss offer one free retry (with the hint); on the
-  // second, reveal the full solution.
+  // Wrong: on the FIRST miss open the gentlest unopened rung and offer one free
+  // retry; on the second, reveal the full solution.
   function gradeWrong() {
-    setHintShown(true);
+    openNextRungAutomatically();
     if (tries >= 2) setRevealed(true);
+  }
+
+  /** After a miss, give the next rung of help without being asked — but only
+   *  the NEXT one. Jumping straight to the solution is what the ladder exists
+   *  to avoid, and a student who already read the hint should get the step. */
+  function openNextRungAutomatically() {
+    const next = ladder.tiers.find((t) => t.kind !== 'full' && !openedLevels.includes(t.level));
+    if (next) setOpenedLevels((prev) => [...prev, next.level]);
+  }
+
+  function onOpenTier(tier: HelpTier) {
+    if (tier.kind === 'full') {
+      setRevealed(true);
+      return;
+    }
+    setOpenedLevels((prev) => (prev.includes(tier.level) ? prev : [...prev, tier.level]));
   }
 
   function pickMCQ(origIdx: number) {
@@ -299,37 +327,20 @@ export function QuestionRunnerCard({
         </div>
       )}
 
-      {/* Ask for a hint — BEFORE committing, on every question kind, and above
-          the reveal button so the gentler rung is the one you reach first. This
-          is the step between "no idea" and "show me the answer"; without it the
-          only way forward on a proof question was the full solution. */}
-      {q.hint && !hintShown && !revealed && (
-        <motion.button
-          {...buttonTap}
-          onClick={() => setHintShown(true)}
-          className="w-full inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-800 text-sm transition-colors"
-        >
-          <Lightbulb className="w-4 h-4" />
-          <span>רמז — בלי לחשוף את הפתרון</span>
-        </motion.button>
+      {/* "למד אותי" — the graded help ladder, available BEFORE committing on
+          every question kind. This is the step between "no idea" and "show me
+          the answer": without a middle rung, a proof question offered nothing
+          but the full solution, which ends the thinking instead of starting it.
+          The `full` rung is withheld until the attempt has been made — see
+          lib/help-ladder. */}
+      {!revealed && (
+        <HelpLadder
+          ladder={ladder}
+          allowFull={wrong}
+          openedLevels={openedLevels}
+          onOpen={onOpenTier}
+        />
       )}
-
-      {/* The hint itself — shown whether it was asked for or auto-revealed on a miss. */}
-      <AnimatePresence initial={false}>
-        {q.hint && hintShown && !revealed && (
-          <motion.div
-            key="hint"
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-amber-500/5 border border-amber-500/30 rounded-xl px-3 py-2.5 chat-md"
-          >
-            <div className="text-[10px] font-black tracking-widest text-amber-700 mb-1 uppercase flex items-center gap-1.5">
-              <Lightbulb className="w-3 h-3" /> רמז
-            </div>
-            <div className="text-sm text-amber-900"><MathText>{q.hint}</MathText></div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* 2 · Open answer — no machine-checkable spec → solve on paper, self-report */}
       {q.kind === 'open' && !autoGradable && !revealed && (
@@ -342,37 +353,30 @@ export function QuestionRunnerCard({
         </button>
       )}
 
-      {/* Wrong-first feedback: one free retry (before the full solution) */}
-      <AnimatePresence initial={false}>
-        {hintShown && !revealed && wrong && (
-          <motion.div
-            key="retry"
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-2"
+      {/* Wrong-first feedback: one free retry. "הצג פתרון" deliberately does NOT
+          live here — it is the last rung of the ladder above, so there is one
+          graded path to the answer instead of two competing buttons that reach
+          it at different depths. */}
+      {!revealed && wrong && (
+        <motion.div
+          key="retry"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          className="space-y-2"
+        >
+          <motion.button
+            {...buttonTap}
+            onClick={q.kind === 'mcq' ? retryMCQ : retryOpen}
+            className="w-full inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 px-4 py-3 rounded-xl font-black text-white text-sm transition-colors"
           >
-            <div className="flex items-center gap-2">
-              <motion.button
-                {...buttonTap}
-                onClick={q.kind === 'mcq' ? retryMCQ : retryOpen}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 px-4 py-2.5 rounded-xl font-bold text-amber-800 text-sm transition-colors"
-              >
-                <RotateCcw className="w-4 h-4" /> נסה שוב
-              </motion.button>
-              <motion.button
-                {...buttonTap}
-                onClick={() => setRevealed(true)}
-                className="inline-flex items-center justify-center gap-2 bg-slate-900/[0.04] hover:bg-slate-900/[0.07] border border-slate-900/10 px-4 py-2.5 rounded-xl font-bold text-slate-600 text-sm transition-colors"
-              >
-                הצג פתרון
-              </motion.button>
-            </div>
-            <div className="text-[10px] text-slate-400 text-center">
-              הניסיון הראשון כבר נספר — הניסיון הנוסף הוא בשבילך, ללמוד.
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <RotateCcw className="w-4 h-4" /> נסה שוב
+          </motion.button>
+          <div className="text-[10px] text-slate-400 text-center">
+            הניסיון הראשון כבר נספר — הניסיון הנוסף הוא בשבילך, ללמוד.
+          </div>
+        </motion.div>
+      )}
 
       {/* Correct banner */}
       {revealed && firstTryCorrect === true && (
