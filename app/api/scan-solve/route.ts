@@ -25,9 +25,9 @@ import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { isProUser } from '@/lib/access';
 import { MATH5 } from '@/content/bagrut-context';
-import { matchQuestion } from '@/lib/solution-library';
+import { matchScannedQuestion } from '@/lib/solution-library';
 import { normalizeQuestionText, fingerprint } from '@/lib/question-match';
-import { getCachedSolution, putCachedSolution } from '@/lib/solution-cache';
+import { findSimilarCached, getCachedSolution, putCachedSolution } from '@/lib/solution-cache';
 
 // Vercel Hobby caps a serverless function at 60s (CLAUDE.md #3). Both model
 // calls below carry a `max_tokens` that fits well inside it — a call that
@@ -249,12 +249,20 @@ async function handleJson(request: Request) {
   const hash = fingerprint(normalizeQuestionText(question));
 
   // ---- 1. verified library (free, no auth, no network beyond this call) ----
-  const libraryHit = matchQuestion(question, topicHint);
+  //
+  // `matchScannedQuestion`, not `matchQuestion`: the incoming text came off a
+  // photograph. The clean-string matcher scored 0/24 on realistic OCR noise
+  // over real bagrut questions; this one finds 90.2% of them with zero wrong
+  // matches (`npm run bench:match`).
+  const libraryHit = matchScannedQuestion(question, topicHint);
   if (libraryHit) {
     return json({
       source: 'library',
       topic: libraryHit.solution.topic,
-      transcribedQuestion: question,
+      // Show the STORED wording, not the OCR's. On a fuzzy match these differ,
+      // and the stored text is both correct and what the solution refers to —
+      // it is also how a student spots a wrong match instantly.
+      transcribedQuestion: libraryHit.score >= 0.999 ? question : libraryHit.solution.transcribedQuestion,
       steps: libraryHit.solution.steps,
       finalAnswer: libraryHit.solution.finalAnswer,
       matchScore: libraryHit.score,
@@ -266,7 +274,11 @@ async function handleJson(request: Request) {
   // Needs a Supabase client, which needs the request's cookies; an anonymous
   // visitor simply gets no rows back under RLS, which is a clean miss.
   const supabase = await createClient();
-  const cached = await getCachedSolution(supabase, hash);
+  // Exact hash first (free, indexed), then the same OCR-tolerant matcher —
+  // without it two students photographing the same page never share a
+  // solution, and the cache that is supposed to drive cost DOWN as usage
+  // rises would essentially never hit.
+  const cached = (await getCachedSolution(supabase, hash)) ?? (await findSimilarCached(supabase, question, topicHint));
   if (cached) {
     return json({
       source: 'cache',

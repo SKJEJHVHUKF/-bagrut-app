@@ -34,6 +34,8 @@ import { explainSolution } from '../lib/mathscan/explain';
 import { __testables as ocrInternals } from '../lib/mathscan/ocr/tesseract-engine';
 import { checkScope, topicForDomain } from '../lib/mathscan/levels';
 import { summarizeCost } from '../lib/mathscan/cost';
+import { matchScannedQuestion } from '../lib/solution-library';
+import { ALL_PAST_BAGRUYOT } from '../content/past-bagruyot';
 import type { ClassifiedProblem, ProblemKind, SolveOutcome } from '../lib/mathscan/types';
 
 let passed = 0;
@@ -1018,6 +1020,58 @@ async function run(): Promise<void> {
       ok('and keeps it outside the math', !hasHebrewInsideMath(full.finalAnswer ?? ''), full.finalAnswer);
       eq('two-branch delimiters balanced', unbalancedDollars(full.finalAnswer ?? ''), 0);
     }
+  }
+
+  // ============================================================
+  // 12b. the OCR-tolerant library matcher — tested on the REAL corpus
+  // ============================================================
+  //
+  // Deliberately not a synthetic mini-corpus: the matcher weights tokens by
+  // inverse document frequency, and IDF over four documents is meaningless.
+  // These assertions run against the same 855 solutions production serves.
+  {
+    const sample = ALL_PAST_BAGRUYOT.slice(0, 6);
+    let found = 0;
+    let wrong = 0;
+    for (const q of sample) {
+      const text = [q.context, ...q.parts.map((p) => p.prompt)].filter(Boolean).join(' ');
+      // The OCR damage MEASURED on a real printed bagrut question.
+      const noisy = text
+        .replace(/\sqrt/g, 'N')
+        .replace(/\^2/g, '°')
+        .replace(/_1/g, '1')
+        .replace(/_2/g, '2')
+        .replace(/\cdot/g, '.')
+        .replace(/\$/g, '');
+      const hit = matchScannedQuestion(noisy, q.topic);
+      if (!hit) continue;
+      if (hit.solution.matchId === q.id) found++;
+      else wrong++;
+    }
+    eq('a noisy scan never matches the WRONG stored question', wrong, 0);
+    ok(
+      'most noisy scans still find their own stored question',
+      found >= sample.length - 1,
+      `found ${found}/${sample.length}`
+    );
+  }
+  {
+    // PRECISION is the property that matters: a wrong match shows a student a
+    // fully-worked solution to somebody else's question under a verified badge.
+    for (const stranger of [
+      'פתור את המשוואה הדיפרנציאלית מסדר שני עם מקדמים קבועים ותנאי התחלה נתונים',
+      'מצא את הדטרמיננטה של המטריצה בסדר 4 על 4 בשיטת הפיתוח לפי שורה ראשונה',
+      'כמה דרכים יש לסדר 8 ספרים שונים על מדף כך ששני ספרים מסוימים צמודים',
+    ]) {
+      ok(
+        `an out-of-library question matches NOTHING: "${stranger.slice(0, 28)}…"`,
+        matchScannedQuestion(stranger) === null
+      );
+    }
+  }
+  {
+    // A single section must not match the whole multi-section question.
+    ok('a short fragment does not match a long question', matchScannedQuestion('מצא את הארגומנט') === null);
   }
 
   // ============================================================

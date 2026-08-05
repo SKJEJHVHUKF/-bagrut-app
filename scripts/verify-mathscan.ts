@@ -354,6 +354,40 @@ check(
 }
 
 // ------------------------------------------------------------
+// 8. The library matcher — the whole free path depends on it
+// ------------------------------------------------------------
+
+{
+  const route = readFileSync(join(ROOT, 'app/api/scan-solve/route.ts'), 'utf8');
+  // The CALL, not the identifier: an import line alone kept this green while
+  // the call site had been swapped back.
+  check(
+    /matchScannedQuestion\s*\(/.test(route),
+    'The scan route reverted to `matchQuestion`, which compares CLEAN strings. ' +
+      'Measured on real bagrut questions with OCR noise it matched 0 of 24, so the ' +
+      'entire 855-solution library becomes unreachable from a photo and every scan pays.'
+  );
+  check(
+    /findSimilarCached\s*\(/.test(route),
+    'The scan route no longer does a fuzzy cache lookup. Exact-hash only means two ' +
+      'students photographing the same page never share a solution, and the cache that ' +
+      'is supposed to drive cost DOWN as usage rises never hits.'
+  );
+
+  const matcher = readFileSync(join(ROOT, 'lib/mathscan/match.ts'), 'utf8');
+  check(
+    /MATCH_MARGIN\s*=\s*0\.0[5-9]|MATCH_MARGIN\s*=\s*0\.[1-9]/.test(matcher),
+    'MATCH_MARGIN is missing or ~0. Bagrut questions are near-duplicates by construction; ' +
+      'without a margin over the runner-up the matcher resolves ties by coin flip and shows ' +
+      "a student the worked solution to somebody else's question."
+  );
+  warn(
+    matcher.includes('MEASURED') || matcher.includes('bench-match'),
+    'lib/mathscan/match.ts lost its calibration note — re-run `npm run bench:match`.'
+  );
+}
+
+// ------------------------------------------------------------
 // Report
 // ------------------------------------------------------------
 

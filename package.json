@@ -24,7 +24,8 @@
     "generate-pool": "tsx scripts/generate-pool.ts",
     "verify:mathscan": "tsx scripts/verify-mathscan.ts",
     "test:mathscan": "tsx scripts/test-mathscan.ts",
-    "measure:tutor": "tsx scripts/measure-tutor.ts"
+    "measure:tutor": "tsx scripts/measure-tutor.ts",
+    "bench:match": "tsx scripts/bench-match.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",

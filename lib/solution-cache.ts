@@ -65,6 +65,78 @@ export async function getCachedSolution(
 }
 
 /**
+ * Find a cached solution for a NOISY transcription.
+ *
+ * The exact-hash lookup above is the right primary key, and it almost never
+ * fires for a photograph: two students who photograph the same page get
+ * different OCR noise, so different normalised text, so different hashes.
+ * That made the shared cache — the mechanism by which cost falls as usage
+ * rises — effectively dead for its main use case.
+ *
+ * This pulls a bounded window of recent rows and runs the same OCR-tolerant
+ * matcher the library uses. Bounded on purpose: the cache is unindexed for
+ * similarity, and scanning it without a limit would grow the latency of
+ * every scan as the table grows.
+ */
+export async function findSimilarCached(
+  supabase: SupabaseClient,
+  question: string,
+  topic?: string,
+): Promise<CachedSolution | null> {
+  try {
+    let query = supabase
+      .from('solution_cache')
+      .select('id, topic, transcribed_question, solution, served_count')
+      .order('served_count', { ascending: false })
+      .limit(CACHE_SCAN_WINDOW);
+    // Same-topic rows first when we have a hint — it shrinks the window to
+    // the only rows that could plausibly match.
+    if (topic) query = query.eq('topic', topic);
+
+    const { data, error } = await query;
+    if (error || !data || data.length === 0) return null;
+
+    const { buildMatchIndex, findMatch } = await import('./mathscan/match');
+    const rows = data.filter((row) => typeof row.transcribed_question === 'string');
+    const index = buildMatchIndex(
+      rows.map((row, i) => ({
+        id: String(i),
+        topic: (row.topic as string) ?? '',
+        text: row.transcribed_question as string,
+      })),
+    );
+    const found = findMatch(index, question, { topicHint: topic });
+    if (!found) return null;
+
+    const row = rows[Number(found.entry.id)];
+    const sol = row.solution as { steps?: unknown; finalAnswer?: unknown };
+    if (!sol || !Array.isArray(sol.steps) || sol.steps.length === 0) return null;
+
+    void supabase
+      .from('solution_cache')
+      .update({ served_count: (row.served_count ?? 0) + 1 })
+      .eq('id', row.id)
+      .then(({ error: e }) => {
+        if (e) console.error('[solution-cache] bump failed:', e.message);
+      });
+
+    return {
+      topic: (row.topic as string) ?? '',
+      transcribedQuestion: row.transcribed_question as string,
+      steps: sol.steps as { title: string; content: string }[],
+      finalAnswer: (sol.finalAnswer as string) ?? '',
+    };
+  } catch (e) {
+    console.error('[solution-cache] similar lookup error:', e);
+    return null;
+  }
+}
+
+/** How many cache rows a fuzzy lookup will consider. Ordered by served_count
+ *  so the questions students actually repeat are always in the window. */
+const CACHE_SCAN_WINDOW = 200;
+
+/**
  * Store a freshly AI-solved question so future scans of it are free.
  * Best-effort: swallows errors (incl. "table does not exist" and unique-
  * violation races where two students solved the same question at once).

@@ -35,6 +35,9 @@ export type LibrarySolution = {
 type IndexEntry = {
   id: string;
   topic: string;
+  /** The RAW stored question text. Needed by the OCR-tolerant matcher, which
+   *  does its own normalisation and character n-gramming. */
+  text: string;
   norm: string;
   hash: string;
   tokens: Set<string>;
@@ -110,7 +113,15 @@ function buildIndex(): IndexEntry[] {
   const add = (id: string, topic: string, text: string, sol: LibrarySolution) => {
     const norm = normalizeQuestionText(text);
     if (norm.length < 8) return; // too short to match reliably
-    entries.push({ id, topic, norm, hash: fingerprint(norm), tokens: tokenSet(norm), solution: sol });
+    entries.push({
+      id,
+      topic,
+      text,
+      norm,
+      hash: fingerprint(norm),
+      tokens: tokenSet(norm),
+      solution: sol,
+    });
   };
 
   // 1) Past bagruyot
@@ -201,4 +212,59 @@ export function matchQuestion(
     return { solution: best.solution, score: Math.min(1, bestScore) };
   }
   return null;
+}
+
+// ============================================================
+// OCR-tolerant matching — what the photo scanner uses
+// ============================================================
+//
+// `matchQuestion` above compares two CLEAN strings and is correct for that.
+// It is useless against a photograph: MEASURED over 24 real past-bagrut
+// questions with the OCR errors actually observed on a scan (subscripts
+// collapsing to digits, √ read as N, ² read as °, ~4% of characters
+// dropped), Jaccard came out 0.37-0.64 against a 0.82 threshold and **0 of
+// 24 matched** — every one of which matched perfectly when clean.
+//
+// So the whole 855-solution corpus, the entire reason a scan can be free,
+// was unreachable from a photo. `lib/mathscan/match.ts` fixes that with
+// character trigrams (which survive a corrupted glyph) plus IDF-weighted
+// token overlap (so "פרבולה" outvotes "את"), gated on a margin over the
+// runner-up. Same corpus, same noise: **90.2% found, 0 wrong matches, 0
+// false positives** (`npm run bench:match`).
+//
+// `matchQuestion` is left untouched — the legacy /api/solve-photo route
+// still uses it, and this is additive.
+
+import { buildMatchIndex, findMatch, type MatchIndex } from './mathscan/match';
+
+type ScanEntry = { id: string; topic: string; text: string; solution: LibrarySolution };
+
+let _scanIndex: MatchIndex<ScanEntry> | null = null;
+
+function scanIndex(): MatchIndex<ScanEntry> {
+  if (!_scanIndex) {
+    _scanIndex = buildMatchIndex(
+      index().map((e) => ({ id: e.id, topic: e.topic, text: e.text, solution: e.solution }))
+    );
+  }
+  return _scanIndex;
+}
+
+/**
+ * Match a TRANSCRIBED (i.e. noisy) question against the verified library.
+ * Returns null rather than a weak guess — see the margin rule in match.ts.
+ */
+export function matchScannedQuestion(
+  transcription: string,
+  topicHint?: string
+): { solution: LibrarySolution; score: number; margin: number } | null {
+  // An exact hit still short-circuits: it is free and unambiguous.
+  const norm = normalizeQuestionText(transcription);
+  index();
+  const exact = _byHash?.get(fingerprint(norm));
+  if (exact) return { solution: exact.solution, score: 1, margin: 1 };
+
+  const found = findMatch(scanIndex(), transcription, { topicHint });
+  if (!found) return null;
+  return { solution: found.entry.solution, score: found.score, margin: found.margin };
 }

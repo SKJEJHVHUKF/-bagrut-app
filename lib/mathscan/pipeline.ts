@@ -331,7 +331,10 @@ async function solveFromTranscription(args: {
     stage('library-match', 'done', libraryHit.source);
     meter.skip('solve-local', 'answered by the verified library');
     return finalize({
-      question: transcription,
+      // Prefer the STORED wording over the OCR's. On a fuzzy match the two
+      // differ — the stored text is clean, is what the solution actually
+      // refers to, and is how a student spots a wrong match at a glance.
+      question: libraryHit.transcribedQuestion || transcription,
       validation,
       problem,
       outcome: null,
