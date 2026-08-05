@@ -35,6 +35,7 @@ import { __testables as ocrInternals } from '../lib/mathscan/ocr/tesseract-engin
 import { checkScope, topicForDomain } from '../lib/mathscan/levels';
 import { summarizeCost } from '../lib/mathscan/cost';
 import { matchScannedQuestion } from '../lib/solution-library';
+import { buildMatchIndex, findMatch, __testables } from '../lib/mathscan/match';
 import { ALL_PAST_BAGRUYOT } from '../content/past-bagruyot';
 import type { ClassifiedProblem, ProblemKind, SolveOutcome } from '../lib/mathscan/types';
 
@@ -60,6 +61,27 @@ function near(label: string, actual: number, expected: number, tol = 1e-9): void
 // ------------------------------------------------------------
 // Helpers
 // ------------------------------------------------------------
+
+/** The OCR errors measured on a real printed bagrut page, plus a seeded
+ *  character drop. Same generator as `scripts/bench-match.ts` — two calls
+ *  with different seeds model two students photographing the same page. */
+function noise(s: string, seed: number, dropRate: number): string {
+  const substituted = s
+    .replace(/\\sqrt/g, 'N')
+    .replace(/\^2/g, '°')
+    .replace(/_1/g, '1')
+    .replace(/_2/g, '2')
+    .replace(/\\cdot/g, '.')
+    .replace(/\\frac/g, 'frac')
+    .replace(/\$/g, '');
+  let n = seed || 1;
+  return [...substituted]
+    .filter(() => {
+      n = (n * 1103515245 + 12345) & 0x7fffffff;
+      return n % 100 >= dropRate;
+    })
+    .join('');
+}
 
 function problem(
   kind: ProblemKind,
@@ -1072,6 +1094,107 @@ async function run(): Promise<void> {
   {
     // A single section must not match the whole multi-section question.
     ok('a short fragment does not match a long question', matchScannedQuestion('מצא את הארגומנט') === null);
+  }
+  {
+    // THE regression the growing bank depends on.
+    //
+    // Two students photograph one page: different OCR noise, different hash,
+    // so two rows exist. They score almost identically, the margin collapses,
+    // and retrieval refuses — meaning an auto-growing bank gets WORSE as it
+    // grows. Verified against the real corpus: with the cluster rule disabled
+    // this case returns MISS.
+    const entries = ALL_PAST_BAGRUYOT.map((q) => ({
+      id: q.id,
+      topic: q.topic,
+      text: [q.context, ...q.parts.map((p) => p.prompt)].filter(Boolean).join(' '),
+    }));
+    // The shortest entry over the query floor — long enough to be searchable,
+    // short enough that a one-character edit is a realistic OCR difference.
+    const target = entries
+      .filter((e) => e.text.length > 140 && e.text.includes('את'))
+      .sort((a, b) => a.text.length - b.text.length)[0];
+    if (!target) {
+      ok('found a target question for the duplicate test', false);
+    } else {
+      const query = target.text.replace(/\$/g, '');
+      const withoutDupe = findMatch(buildMatchIndex(entries), query, { topicHint: target.topic });
+      ok('the question matches when stored once', withoutDupe?.entry.id === target.id);
+
+      // The same question as a second scan would store it.
+      const dupe = { ...target, id: `${target.id}-dup`, text: target.text.replace('את', 'אתt') };
+      const withDupe = findMatch(buildMatchIndex([...entries, dupe]), query, {
+        topicHint: target.topic,
+      });
+      ok(
+        'a duplicate row does NOT break retrieval',
+        withDupe !== null,
+        'the margin rule collapsed — the growing bank would stop matching'
+      );
+      ok(
+        'and the winner is still the right question',
+        withDupe?.entry.id === target.id || withDupe?.entry.id === dupe.id,
+        JSON.stringify(withDupe?.entry.id)
+      );
+
+      // The case above differs by ONE character, which is not what a re-scan
+      // looks like: both copies carry their own OCR noise. Measured over the
+      // corpus, two independently-noised copies of one question overlap
+      // 0.478–0.71 — nowhere near the 0.9 an identical-ish pair reaches. The
+      // guard that catches THIS is the length-gated one, and it is the one
+      // that carries real usage.
+      const noisyA = { ...target, id: `${target.id}-a`, text: noise(target.text, 17, 4) };
+      const noisyB = { ...target, id: `${target.id}-b`, text: noise(target.text, 8191, 7) };
+      const realistic = findMatch(buildMatchIndex([...entries, noisyA, noisyB]), noise(target.text, 71, 5), {
+        topicHint: target.topic,
+      });
+      ok(
+        'two INDEPENDENTLY-noised copies still resolve',
+        realistic !== null,
+        'the realistic duplicate case collapsed — this is what the bank will actually contain'
+      );
+    }
+  }
+  {
+    // The other half of the duplicate guard, and the dangerous half: it must
+    // NOT decide that two DIFFERENT questions are one row. If it does, the
+    // rival that was protecting the student is ignored and the wrong worked
+    // solution is served — the failure this whole matcher exists to prevent.
+    //
+    // These pairs are the measured worst cases in the corpus: near-identical
+    // wording, different answers.
+    const { isSameQuestion } = __testables;
+    const asEntry = (text: string) => buildMatchIndex([{ id: 'x', topic: '', text }]).entries[0];
+
+    const confusable: [string, string][] = [
+      [
+        'מהו תחום ההגדרה של $f(x) = \\dfrac{1}{x - 5}$?',
+        'מהו תחום ההגדרה של $f(x) = \\dfrac{1}{x^2 - 9}$?',
+      ],
+      [
+        'נתונה הפונקציה $\\;f(x) = e^x - 1$. מצא את נקודות הקיצון של הפונקציה, קבע את סוגן, ומצא את תחומי העלייה והירידה שלה. שרטט סקיצה של גרף הפונקציה.',
+        'נתונה הפונקציה $\\;f(x) = e^{2x} - 1$. מצא את נקודות הקיצון של הפונקציה, קבע את סוגן, ומצא את תחומי העלייה והירידה שלה. שרטט סקיצה של גרף הפונקציה.',
+      ],
+    ];
+    for (const [a, b] of confusable) {
+      ok(
+        `different questions are NOT merged into one cluster: "${a.slice(0, 28)}…"`,
+        !isSameQuestion(asEntry(a), asEntry(b)),
+        'the duplicate guard would suppress the rival and serve the wrong solution'
+      );
+    }
+
+    // And the positive control, so the two assertions above cannot both pass
+    // by the guard simply never firing.
+    const long = ALL_PAST_BAGRUYOT.map((q) =>
+      [q.context, ...q.parts.map((p) => p.prompt)].filter(Boolean).join(' ')
+    ).find((t) => t.length > 400);
+    if (long) {
+      ok(
+        'but two noisy copies of ONE question are',
+        isSameQuestion(asEntry(noise(long, 17, 4)), asEntry(noise(long, 8191, 7))),
+        'the guard never fires — the growing bank would stop matching'
+      );
+    }
   }
   {
     // REGRESSION — a REAL false positive caught by re-driving production.

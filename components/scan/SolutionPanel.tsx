@@ -40,18 +40,90 @@ import { MathText } from '@/components/practice/MathText';
 import { domainLabel, isSafeToRenderAsMath } from '@/lib/mathscan';
 import type { Explanation, ExplanationDepth, ScanResult } from '@/lib/mathscan';
 
+/**
+ * "פתרון מאומת" is reserved.
+ *
+ * It belongs to the hand-authored corpus and to answers the local CAS proved
+ * by substitution — nothing else. A solution the AI wrote and nobody checked
+ * gets its own, plainly weaker wording, and no green: green means verified in
+ * this app, and a badge that overstates confidence is how a wrong answer
+ * becomes a wrong answer the student trusts. That has already happened twice
+ * here (`x²` read as `x°`; `sin(x)=0.5` matched to a complex-numbers answer).
+ */
 const SOURCE_BADGE: Record<
   ScanResult['source'],
   { label: string; chip: string; Icon: typeof ShieldCheck }
 > = {
   library: { label: 'פתרון מאומת מהמאגר · חינם', chip: 'scan-chip-success', Icon: ShieldCheck },
+  bank: { label: 'פתרון מהמאגר · חינם', chip: 'scan-chip-primary', Icon: Zap },
   cache: { label: 'נפתר כבר בעבר · חינם', chip: 'scan-chip-primary', Icon: Zap },
   'local-cas': { label: 'נפתר על המכשיר שלך · חינם', chip: 'scan-chip-success', Icon: Zap },
   ai: { label: 'נפתר עכשיו ע״י AI', chip: 'scan-chip-warn', Icon: Sparkles },
 };
 
+/** A bank hit's badge is decided by how checked it is, not by where it came
+ *  from — the tier is the honest signal and it overrides the source label. */
+const TIER_BADGE: Record<
+  NonNullable<ScanResult['qualityTier']>,
+  { label: string; chip: string; Icon: typeof ShieldCheck; caveat?: string }
+> = {
+  verified: {
+    label: 'פתרון שנבדק אוטומטית · חינם',
+    chip: 'scan-chip-success',
+    Icon: CheckCircle2,
+  },
+  corroborated: {
+    label: 'נפתר, ואומת מול סריקה נוספת · חינם',
+    chip: 'scan-chip-primary',
+    Icon: Zap,
+  },
+  new: {
+    label: 'פתרון מהמאגר · חינם',
+    chip: 'scan-chip',
+    Icon: Sparkles,
+    caveat: 'נפתר בעבר ע״י AI ועדיין לא אומת מול מקור נוסף.',
+  },
+};
+
 const DEPTH_ORDER: ExplanationDepth[] = ['hint', 'partial', 'full'];
 
+
+/**
+ * The only ground-truth signal that reaches the bank without a reviewer.
+ *
+ * Two reports demote the row's quality claim, three retire it from search —
+ * enforced in the SQL function, so a retired row cannot be served even by a
+ * stale client. Deliberately understated: it is a correction, not a rating,
+ * and a prominent control invites idle clicking.
+ */
+function ReportWrong({ bankId }: { bankId?: string }) {
+  const [state, setState] = useState<'idle' | 'sending' | 'done'>('idle');
+  if (!bankId) return null;
+  if (state === 'done') return <span className="font-bold">תודה — נבדוק את זה.</span>;
+  return (
+    <button
+      type="button"
+      disabled={state === 'sending'}
+      onClick={async () => {
+        setState('sending');
+        try {
+          await fetch('/api/scan-solve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: 'report', bankId }),
+          });
+        } catch {
+          // A failed report must not become an error the student has to
+          // handle — the solution is still on screen and still readable.
+        }
+        setState('done');
+      }}
+      className="underline underline-offset-2 hover:opacity-80 font-bold"
+    >
+      דווח שהפתרון שגוי
+    </button>
+  );
+}
 
 /** Render a Hebrew+LaTeX string, degrading to plain text when the delimiters
  *  are not safe to hand to KaTeX. */
@@ -105,7 +177,11 @@ export function SolutionPanel({ result }: { result: ScanResult }) {
     );
   }
 
-  const badge = SOURCE_BADGE[result.source];
+  // The tier wins when there is one: it says how CHECKED the solution is,
+  // which is what the student needs, where the source only says where it was
+  // stored.
+  const badge = result.qualityTier ? TIER_BADGE[result.qualityTier] : SOURCE_BADGE[result.source];
+  const caveat = result.qualityTier ? TIER_BADGE[result.qualityTier].caveat : undefined;
   const explanation = result.explanations[shown] ?? null;
 
   return (
@@ -128,6 +204,13 @@ export function SolutionPanel({ result }: { result: ScanResult }) {
         )}
         <span className="scan-chip">{result.unitLevel} יח״ל</span>
       </div>
+
+      {caveat && (
+        <p className="text-[11px] scan-faint leading-relaxed">
+          {caveat} משהו נראה לך שגוי?{' '}
+          <ReportWrong bankId={result.bankId} />
+        </p>
+      )}
 
       {/* Secondary, and only when a hint actually exists. One line, clearly
           labelled, and it never hides the solution behind a decision. */}

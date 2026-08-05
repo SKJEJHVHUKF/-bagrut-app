@@ -191,9 +191,10 @@ export function matchQuestion(
   const norm = normalizeQuestionText(transcription);
   if (norm.length < 8) return null;
 
-  // Exact hash first — instant.
+  // Exact hash first — instant. The text comparison guards against an FNV-1a
+  // 32-bit collision; see matchScannedQuestion for why that matters.
   const exact = _byHash!.get(fingerprint(norm));
-  if (exact) return { solution: exact.solution, score: 1 };
+  if (exact && exact.norm === norm) return { solution: exact.solution, score: 1 };
 
   // Fuzzy — Jaccard over token sets. Same-topic entries get a tiny
   // tie-break boost so a correct-topic match wins a near-tie.
@@ -251,6 +252,19 @@ function scanIndex(): MatchIndex<ScanEntry> {
 }
 
 /**
+ * The corpus's token→IDF map, for indexes too small to derive their own.
+ *
+ * The question bank and the fuzzy cache lookup both rank ~20 rows pulled per
+ * request. Deriving IDF from 20 rows makes it meaningless and, at the sizes
+ * those start out at, makes it ZERO — see the note on `buildMatchIndex`.
+ * These 855 hand-authored questions are the right sample for "how common is
+ * this word in a bagrut question", and they are already indexed.
+ */
+export function corpusIdf(): Map<string, number> {
+  return scanIndex().idf;
+}
+
+/**
  * Match a TRANSCRIBED (i.e. noisy) question against the verified library.
  * Returns null rather than a weak guess — see the margin rule in match.ts.
  */
@@ -258,11 +272,18 @@ export function matchScannedQuestion(
   transcription: string,
   topicHint?: string
 ): { solution: LibrarySolution; score: number; margin: number } | null {
-  // An exact hit still short-circuits: it is free and unambiguous.
+  // An exact hit still short-circuits — but the HASH is not the identity.
+  //
+  // `fingerprint` is FNV-1a 32-bit, so a hash hit alone means "same bucket",
+  // not "same question". At 855 static entries that is a 0.009% risk, but
+  // this same pattern is used against the growing bank where it reaches 4.6%
+  // at 20,000 rows — and the consequence is a student being handed an
+  // unrelated question's worked solution, past every guard. Comparing the
+  // normalized text costs nothing and removes the class outright.
   const norm = normalizeQuestionText(transcription);
   index();
   const exact = _byHash?.get(fingerprint(norm));
-  if (exact) return { solution: exact.solution, score: 1, margin: 1 };
+  if (exact && exact.norm === norm) return { solution: exact.solution, score: 1, margin: 1 };
 
   const found = findMatch(scanIndex(), transcription, { topicHint });
   if (!found) return null;

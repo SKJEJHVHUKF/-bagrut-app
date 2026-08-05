@@ -51,7 +51,7 @@ import { topicForDomain } from './levels';
 const DEFAULT_FALLBACK_THRESHOLD = 0.55;
 
 type ServerSolution = {
-  source: 'library' | 'cache' | 'ai';
+  source: 'library' | 'bank' | 'cache' | 'ai';
   topic?: string;
   transcribedQuestion?: string;
   steps: { title: string; content: string }[];
@@ -59,6 +59,8 @@ type ServerSolution = {
   costUsd?: number;
   /** A streamed solve returns ONE markdown document instead of steps[]. */
   markdown?: string;
+  qualityTier?: 'new' | 'corroborated' | 'verified';
+  bankId?: string;
   /** 1 = the transcription matched a stored question exactly; below that the
    *  match was fuzzy and the wording shown is OURS, not the student's. */
   matchScore?: number;
@@ -354,20 +356,31 @@ async function solveFromTranscription(args: {
       problem,
       outcome: null,
       explanations: {
-        full: explanationFromSteps(
-          libraryHit.steps,
-          libraryHit.finalAnswer,
-          problem,
-          libraryHit.source === 'library' ? 'library' : 'ai'
-        ),
+        // A bank hit is a markdown document; the corpus and the old cache are
+        // numbered steps. Same renderer either way — see `ExplanationView`.
+        full: libraryHit.markdown
+          ? explanationFromMarkdown(libraryHit.markdown, problem)
+          : explanationFromSteps(
+              libraryHit.steps,
+              libraryHit.finalAnswer,
+              problem,
+              libraryHit.source === 'library' ? 'library' : 'ai'
+            ),
       },
-      source: libraryHit.source === 'library' ? 'library' : 'cache',
+      source:
+        libraryHit.source === 'library'
+          ? 'library'
+          : libraryHit.source === 'bank'
+            ? 'bank'
+            : 'cache',
       unitLevel,
       meter,
       topic: libraryHit.topic ?? topic,
       blocked: null,
       matchScore: libraryHit.matchScore,
       inputMode,
+      qualityTier: libraryHit.qualityTier,
+      bankId: libraryHit.bankId,
     });
   }
   meter.end('library-match', 'miss');
@@ -708,19 +721,34 @@ async function lookupServer(
         data
       );
     }
-    if (!Array.isArray(data.steps) || data.steps.length === 0) return null;
+    // A solution arrives in ONE of two shapes: numbered `steps[]` (the
+    // hand-authored corpus and the old cache) or a `markdown` document (the
+    // bank, and every streamed solve that fills it). Requiring steps[] here
+    // silently dropped every bank hit — the miss looked exactly like an empty
+    // bank, which is the hardest version of this bug to notice.
+    const markdown = typeof data.markdown === 'string' ? data.markdown : undefined;
+    const hasSteps = Array.isArray(data.steps) && data.steps.length > 0;
+    if (!hasSteps && !markdown?.trim()) return null;
 
     return {
       source: (data.source as ServerSolution['source']) ?? 'ai',
+      markdown,
       topic: typeof data.topic === 'string' ? data.topic : undefined,
       transcribedQuestion:
         typeof data.transcribedQuestion === 'string' ? data.transcribedQuestion : undefined,
-      steps: (data.steps as { title?: unknown; content?: unknown }[])
-        .filter((s) => typeof s?.title === 'string' && typeof s?.content === 'string')
-        .map((s) => ({ title: s.title as string, content: s.content as string })),
+      steps: hasSteps
+        ? (data.steps as { title?: unknown; content?: unknown }[])
+            .filter((s) => typeof s?.title === 'string' && typeof s?.content === 'string')
+            .map((s) => ({ title: s.title as string, content: s.content as string }))
+        : [],
       finalAnswer: typeof data.finalAnswer === 'string' ? data.finalAnswer : '',
       costUsd: typeof data.costUsd === 'number' ? data.costUsd : 0,
       matchScore: typeof data.matchScore === 'number' ? data.matchScore : undefined,
+      qualityTier:
+        data.qualityTier === 'new' || data.qualityTier === 'corroborated' || data.qualityTier === 'verified'
+          ? data.qualityTier
+          : undefined,
+      bankId: typeof data.bankId === 'string' ? data.bankId : undefined,
     };
   } catch (error) {
     if (request.mode === 'match') return null;
@@ -753,6 +781,8 @@ function finalize(args: {
   blocked: { message: string; status: number } | null;
   matchScore?: number;
   inputMode: 'photo' | 'typed';
+  qualityTier?: 'new' | 'corroborated' | 'verified';
+  bankId?: string;
 }): ScanResult {
   const trace = args.meter.build(`scan_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
   recordTrace(trace);
@@ -769,6 +799,8 @@ function finalize(args: {
     explanations: args.explanations,
     source: args.source,
     inputMode: args.inputMode,
+    qualityTier: args.qualityTier,
+    bankId: args.bankId,
     // Only meaningful when the match was fuzzy; an exact hit shows the
     // student's own wording and needs no caveat.
     matchScore: args.matchScore !== undefined && args.matchScore < 0.999 ? args.matchScore : undefined,

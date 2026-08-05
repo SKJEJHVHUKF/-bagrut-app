@@ -105,6 +105,53 @@ const MIN_QUERY_LENGTH = 40;
 const MIN_INDEX_LENGTH = 20;
 
 /**
+ * When two candidates are the SAME question stored twice.
+ *
+ * These two constants were MEASURED, not chosen, because getting them wrong
+ * is not symmetric: treating two different questions as one duplicate makes
+ * the matcher ignore the rival that was protecting the student, and serve the
+ * wrong worked solution confidently. Treating one duplicate as two questions
+ * only costs a miss, and a miss costs an API call.
+ *
+ * Over the corpus, comparing every pair of DIFFERENT questions (clean text —
+ * OCR noise only pushes two different texts further apart, so measuring with
+ * noise flatters the guard) against the same question re-scanned:
+ *
+ *   length ≥ 40    DIFFERENT max 1.000, 1 pair ≥0.9   | SAME min 0.273
+ *   length ≥ 160   DIFFERENT max 0.671, 3 pairs ≥0.5  | SAME min 0.478
+ *   length ≥ 200   DIFFERENT max 0.464, 0 pairs ≥0.5  | SAME min 0.478
+ *
+ * The first line is the important one: at short lengths the two populations
+ * fully overlap, so NO threshold separates them — not 0.9, not 0.99. A first
+ * version of this guard used 0.9 with no length test on the reasoning that
+ * "different bagrut questions never get that close". They do:
+ * `f(x) = e^x - 1` and `f(x) = e^{2x} - 1`, identical for 140 characters,
+ * different answers. That version merged them, which suppresses the rival and
+ * serves the wrong worked solution — the one failure this file exists to
+ * prevent.
+ *
+ * Length is what separates the populations, so the guard is gated on it. At
+ * ≥200 characters the gap is 0.464 → 0.478 and the threshold sits above the
+ * worst different-question pair, not in the middle: a missed duplicate costs
+ * an API call, a false merge lies to a student.
+ *
+ * Below 200 characters the guard is OFF and merge-on-write is the only
+ * protection. That is the correct trade — a short question stored twice costs
+ * a solve. A real photographed bagrut or מתכונת question is far longer.
+ *
+ * Re-measure with `npm run bench:match` before touching either number.
+ */
+const DUPLICATE_TRIGRAM_OVERLAP = 0.5;
+const DUPLICATE_MIN_LENGTH = 200;
+
+function isSameQuestion(a: IndexedEntry<MatchEntry>, b: IndexedEntry<MatchEntry>): boolean {
+  if (a.normalized.length < DUPLICATE_MIN_LENGTH || b.normalized.length < DUPLICATE_MIN_LENGTH) {
+    return false;
+  }
+  return jaccardSets(a.trigrams, b.trigrams) >= DUPLICATE_TRIGRAM_OVERLAP;
+}
+
+/**
  * A match must be carried by DISTINCTIVE words, not by boilerplate.
  *
  * `idfOverlap` is a ratio, so a query made almost entirely of stopwords can
@@ -150,7 +197,28 @@ function tokensOf(normalized: string): Set<string> {
   return new Set(normalized.split(/\s+/).filter((t) => t.length >= 2));
 }
 
-export function buildMatchIndex<T extends MatchEntry>(entries: T[]): MatchIndex<T> {
+/**
+ * @param options.idf  Use THIS token→IDF map instead of deriving one from
+ *   `entries`. Required whenever the index is a small, dynamically-retrieved
+ *   set rather than a corpus.
+ *
+ *   IDF is smoothed as `log(N / (1 + df))` and floored at 0. Over 855 corpus
+ *   questions that is exactly right. Over a handful of rows it is degenerate:
+ *   at N=1 every token scores `log(1/2) → 0`, so `sharedMass` is 0, so
+ *   `MIN_SHARED_IDF` rejects every candidate and the index matches NOTHING.
+ *   That is not a rounding problem, it is a dead index — and it is silent,
+ *   because a matcher that finds nothing looks exactly like an empty table.
+ *
+ *   The bank and the fuzzy cache lookup both hand this function ~20 rows
+ *   fetched per request, and both would have been dead until the table grew
+ *   large enough to produce a diverse candidate set. They pass the corpus IDF
+ *   instead — which is also the more correct model: how distinctive the word
+ *   "משוואה" is, is a property of the subject, not of these 20 rows.
+ */
+export function buildMatchIndex<T extends MatchEntry>(
+  entries: T[],
+  options: { idf?: Map<string, number> } = {}
+): MatchIndex<T> {
   const indexed: IndexedEntry<T>[] = [];
   const documentFrequency = new Map<string, number>();
 
@@ -163,6 +231,8 @@ export function buildMatchIndex<T extends MatchEntry>(entries: T[]): MatchIndex<
       documentFrequency.set(token, (documentFrequency.get(token) ?? 0) + 1);
     }
   }
+
+  if (options.idf) return { entries: indexed, idf: options.idf };
 
   const total = Math.max(1, indexed.length);
   const idf = new Map<string, number>();
@@ -241,7 +311,10 @@ export function findMatch<T extends MatchEntry>(
   const queryTokens = tokensOf(normalized);
 
   let best: { entry: IndexedEntry<T>; score: number } | null = null;
-  let runnerUp = 0;
+  // Every scoring candidate is kept, not just the best runner-up, because the
+  // runner-up can only be judged once we know who won — see the cluster rule
+  // below. The list is bounded by the cheap rejects above.
+  const runners: { entry: IndexedEntry<T>; score: number }[] = [];
 
   for (const candidate of index.entries) {
     const ratio =
@@ -265,18 +338,43 @@ export function findMatch<T extends MatchEntry>(
     score = Math.min(1, score);
 
     if (!best || score > best.score) {
-      if (best) runnerUp = Math.max(runnerUp, best.score);
+      if (best) runners.push(best);
       best = { entry: candidate, score };
-    } else if (score > runnerUp) {
-      runnerUp = score;
+    } else {
+      runners.push({ entry: candidate, score });
     }
   }
 
   if (!best || best.score < threshold) return null;
+
+  /**
+   * The runner-up only counts if it is a DIFFERENT question.
+   *
+   * The margin rule exists to stop us serving question B's solution when the
+   * student photographed question A — bagrut questions are near-duplicates of
+   * each other by construction. But once the bank grows from real scans, the
+   * closest rival is usually the SAME question stored twice: two students
+   * photograph one page, OCR differs, the hashes differ, and two rows exist.
+   * Those two score almost identically, the gap collapses, and the match is
+   * refused — so an auto-growing bank would get WORSE as it grew.
+   *
+   * Near-identical candidates are therefore treated as one cluster and
+   * skipped when measuring the gap. Deduplication on write is the primary
+   * defence; this is the net under it, because that one only has to miss once
+   * (a race between two simultaneous scans) to break retrieval permanently.
+   */
+  const bestEntry = best;
+  let runnerUp = 0;
+  for (const rival of runners) {
+    if (rival.score <= runnerUp) continue;
+    if (isSameQuestion(rival.entry, bestEntry.entry)) continue;
+    runnerUp = rival.score;
+  }
+
   const gap = best.score - runnerUp;
   if (gap < margin) return null;
 
   return { entry: best.entry.entry, score: best.score, margin: gap };
 }
 
-export const __testables = { trigramsOf, tokensOf, jaccardSets, idfOverlap };
+export const __testables = { trigramsOf, tokensOf, jaccardSets, idfOverlap, isSameQuestion };

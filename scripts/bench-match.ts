@@ -17,6 +17,7 @@ import { buildMatchIndex, findMatch, MATCH_THRESHOLD, MATCH_MARGIN } from '../li
 import { ALL_PAST_BAGRUYOT } from '../content/past-bagruyot';
 import { allLessonKeys, getLesson } from '../content/lessons';
 import { normalizeQuestionText } from '../lib/question-match';
+import { corpusIdf } from '../lib/solution-library';
 
 type Entry = { id: string; topic: string; text: string };
 
@@ -126,3 +127,65 @@ for (const stranger of strangers) {
 }
 console.log(`\nout-of-library queries: ${strangers.length}, false positives: ${falsePositives}`);
 console.log(`thresholds in use: score >= ${MATCH_THRESHOLD}, margin >= ${MATCH_MARGIN}`);
+
+// ============================================================
+// The COMBINED source: what the numbers above become once the bank fills up.
+// ============================================================
+//
+// The two indexes are searched separately in production (static corpus first,
+// then `question_bank`), so this is not a merged index. What it measures is
+// the one property the bank changes: the corpus above has no duplicates, and
+// a bank that grows from real scans does — `upsertIntoBank` merges on write,
+// but two students scanning the same page at the same moment can both miss
+// and leave two rows behind.
+//
+// Duplicates are precisely what the margin rule refuses to choose between, so
+// this is the worst case for it: EVERY question stored twice, with different
+// OCR noise on each copy. If recall survives that, it survives anything a
+// real bank will do.
+//
+// Two things are also different from the pass above and both matter:
+//   · the index is small (~20 rows in production), so its IDF comes from the
+//     corpus — the same source `bank.ts` uses. Deriving IDF from the rows
+//     themselves scores 0 here, which is the bug `test:bank` pins down.
+//   · a hit on EITHER copy is correct. They are the same question, and the
+//     stored solution is the same solution.
+{
+  const bankSource = all.filter((e) => normalizeQuestionText(e.text).length >= 40).slice(0, 250);
+  const duplicated: Entry[] = [];
+  for (const entry of bankSource) {
+    duplicated.push({ ...entry, id: `${entry.id}#a`, text: ocrNoise(entry.text, 17, 4) });
+    duplicated.push({ ...entry, id: `${entry.id}#b`, text: ocrNoise(entry.text, 8191, 7) });
+  }
+  const bankIndex = buildMatchIndex(duplicated, { idf: corpusIdf() });
+
+  // Reported split by length, because the duplicate guard is deliberately
+  // length-gated: short questions are NOT separable from each other by text
+  // similarity (measured: different questions reach 0.613 overlap), so the
+  // guard is off below 200 chars and those duplicates stay unresolvable.
+  // Averaging the two hides exactly the trade-off that was chosen.
+  const buckets = { long: { hit: 0, miss: 0, wrong: 0, n: 0 }, short: { hit: 0, miss: 0, wrong: 0, n: 0 } };
+  let wrongShown = 0;
+  for (const entry of bankSource) {
+    const b = normalizeQuestionText(entry.text).length >= 200 ? buckets.long : buckets.short;
+    b.n++;
+    const noisy = ocrNoise(entry.text, entry.text.length * 3 + 1, 5);
+    const found = findMatch(bankIndex, noisy, { topicHint: entry.topic });
+    if (!found) b.miss++;
+    else if (found.entry.id === `${entry.id}#a` || found.entry.id === `${entry.id}#b`) b.hit++;
+    else {
+      b.wrong++;
+      if (++wrongShown <= 3) console.log(`  BANK WRONG: ${entry.id} → ${found.entry.id} (${found.score.toFixed(3)})`);
+    }
+  }
+  const totalWrong = buckets.long.wrong + buckets.short.wrong;
+  console.log(`\nbank simulation — every question stored TWICE (${duplicated.length} rows, ${bankSource.length} queries)`);
+  for (const [label, b] of [['≥200 chars (guard on) ', buckets.long], ['<200 chars (guard off)', buckets.short]] as const) {
+    if (b.n === 0) continue;
+    const p = (n: number) => ((n / b.n) * 100).toFixed(1);
+    console.log(`  ${label}  n=${String(b.n).padStart(3)}  hit=${p(b.hit)}%  miss=${p(b.miss)}%  WRONG=${b.wrong}`);
+  }
+  console.log(
+    `  WRONG total=${totalWrong} — this is the number that must stay 0; a miss costs an API call, a wrong match lies.`
+  );
+}

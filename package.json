@@ -20,10 +20,12 @@
     "verify:ghost": "tsx scripts/verify-ghost.ts",
     "test:ghost": "tsx scripts/test-ghost.ts",
     "test:ladder": "tsx scripts/test-ladder-unlock.ts",
-    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run test:sync && npm run verify:ghost && npm run test:ghost && npm run test:ladder && npm run verify:mathscan && npm run test:mathscan && npm run build",
+    "check": "npm run typecheck && npm run verify:content && npm run verify:concept && npm run verify:teach && npm run verify:cognition && npm run test:cognition && npm run test:sync && npm run verify:ghost && npm run test:ghost && npm run test:ladder && npm run verify:mathscan && npm run test:mathscan && npm run verify:bank && npm run test:bank && npm run build",
     "generate-pool": "tsx scripts/generate-pool.ts",
     "verify:mathscan": "tsx scripts/verify-mathscan.ts",
     "test:mathscan": "tsx scripts/test-mathscan.ts",
+    "verify:bank": "tsx scripts/verify-bank.ts",
+    "test:bank": "tsx scripts/test-bank.ts",
     "measure:tutor": "tsx scripts/measure-tutor.ts",
     "bench:match": "tsx scripts/bench-match.ts"
   },

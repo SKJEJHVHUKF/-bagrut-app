@@ -28,6 +28,7 @@ import { MATH5 } from '@/content/bagrut-context';
 import { matchScannedQuestion } from '@/lib/solution-library';
 import { normalizeQuestionText, fingerprint } from '@/lib/question-match';
 import { findSimilarCached, getCachedSolution, putCachedSolution } from '@/lib/solution-cache';
+import { bumpServed, reportWrong, searchBank, upsertIntoBank } from '@/lib/mathscan/bank';
 
 // Vercel Hobby caps a serverless function at 60s (CLAUDE.md #3). Both model
 // calls below carry a `max_tokens` that fits well inside it — a call that
@@ -36,6 +37,18 @@ export const maxDuration = 60;
 
 const FREE_DAILY_SCANS = 15;
 const PRO_DAILY_SCANS = 150;
+
+/**
+ * New AI solutions a free, signed-in student may commission per day.
+ *
+ * Every one of them is written into `question_bank`, so it answers every
+ * later student who photographs the same page for nothing. MEASURED cost of
+ * a hard multi-section solve: ~6-16 agorot, so 3/day is roughly 20-50 agorot
+ * per active student against a ~$5/month budget. This is the first number to
+ * turn down if the bill climbs — and it should need turning DOWN less over
+ * time, as repeats start hitting the bank instead.
+ */
+const FREE_DAILY_SOLVE = 3;
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -230,16 +243,21 @@ type SolutionPayload = {
 
 async function scansToday(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string
+  userId: string,
+  /** Count only one kind of entry. The solve quota must not be consumed by
+   *  transcriptions, which are a different (much cheaper) operation. */
+  source?: string
 ): Promise<number> {
   try {
     const midnight = new Date();
     midnight.setUTCHours(0, 0, 0, 0);
-    const { count, error } = await supabase
+    let query = supabase
       .from('scan_log')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .gte('created_at', midnight.toISOString());
+    if (source) query = query.eq('source', source);
+    const { count, error } = await query;
     if (error) return 0;
     return count ?? 0;
   } catch {
@@ -289,11 +307,27 @@ export async function POST(request: Request) {
 // ------------------------------------------------------------
 
 async function handleJson(request: Request) {
-  let body: { mode?: string; question?: string; topic?: string; section?: string };
+  let body: { mode?: string; question?: string; topic?: string; bankId?: string };
   try {
     body = await request.json();
   } catch {
     return json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  // A student reporting a wrong solution. Auth-required and free — an
+  // anonymous report is unattributable and would make the only human signal
+  // the bank has trivially spammable.
+  if (body.mode === 'report') {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return json({ error: 'יש להתחבר' }, { status: 401 });
+    if (typeof body.bankId !== 'string' || body.bankId.length < 10) {
+      return json({ error: 'Missing bankId' }, { status: 400 });
+    }
+    await reportWrong(supabase, body.bankId);
+    return json({ ok: true });
   }
 
   const mode = body.mode === 'solve' ? 'solve' : 'match';
@@ -330,6 +364,34 @@ async function handleJson(request: Request) {
     } satisfies SolutionPayload & { matchScore: number });
   }
 
+  // ---- 1b. the growing bank ----
+  //
+  // Between the hand-authored corpus and the exact-hash cache. Every AI solve
+  // lands here, so a question a previous student photographed is answered for
+  // nothing — this is the stage that makes cost fall as usage rises.
+  const supabaseForBank = await createClient();
+  const bankHit = await searchBank(supabaseForBank, question, topicHint);
+  if (bankHit) {
+    void bumpServed(supabaseForBank, bankHit.id);
+    return json({
+      source: 'bank',
+      topic: bankHit.topic ?? topicHint ?? '',
+      transcribedQuestion: bankHit.canonicalText,
+      // `markdown`, NOT a one-element steps[]. What is stored is a whole
+      // document with `## סעיף א` headings, and the step renderer would put
+      // it inside a single numbered card with a blank title — the exact
+      // layout the owner called מסורבל on a real scan. The client renders
+      // markdown as one flowing card, same as a fresh streamed solve.
+      markdown: bankHit.solutionMarkdown,
+      steps: [],
+      finalAnswer: '',
+      matchScore: bankHit.score,
+      qualityTier: bankHit.qualityTier,
+      bankId: bankHit.id,
+      costUsd: 0,
+    });
+  }
+
   // ---- 2. shared cache ----
   // Needs a Supabase client, which needs the request's cookies; an anonymous
   // visitor simply gets no rows back under RLS, which is a clean miss.
@@ -338,16 +400,23 @@ async function handleJson(request: Request) {
   // without it two students photographing the same page never share a
   // solution, and the cache that is supposed to drive cost DOWN as usage
   // rises would essentially never hit.
-  const cached = (await getCachedSolution(supabase, hash)) ?? (await findSimilarCached(supabase, question, topicHint));
+  const cached = (await getCachedSolution(supabase, hash, question)) ?? (await findSimilarCached(supabase, question, topicHint));
   if (cached) {
+    // A streamed solve is stored here as ONE title-less step holding the whole
+    // markdown document (the cache's schema predates markdown solutions).
+    // Handing that back as steps[] renders it inside a numbered card with a
+    // blank heading; unwrapping it back to markdown renders it as the flowing
+    // document it is.
+    const wrapped =
+      cached.steps.length === 1 && !cached.steps[0].title.trim() ? cached.steps[0].content : null;
     return json({
       source: 'cache',
       topic: cached.topic || topicHint || '',
       transcribedQuestion: cached.transcribedQuestion || question,
-      steps: cached.steps,
+      ...(wrapped ? { markdown: wrapped, steps: [] } : { steps: cached.steps }),
       finalAnswer: cached.finalAnswer,
       costUsd: 0,
-    } satisfies SolutionPayload);
+    });
   }
 
   if (mode === 'match') {
@@ -356,7 +425,17 @@ async function handleJson(request: Request) {
     return json({ source: 'miss', steps: [], finalAnswer: '', costUsd: 0 });
   }
 
-  // ---- 3. AI solve (auth + Pro) ----
+  // ---- 3. AI solve (auth + daily quota) ----
+  //
+  // A small free quota rather than a Pro wall, decided by the owner. The wall
+  // made the bank impossible: `isProUser` is true only for the admin email
+  // (there is no billing yet), so nobody but the owner could ever contribute,
+  // and "every student who scans feeds the library" would never happen.
+  //
+  // Each solve permanently adds a question, so a free solve is not a cost —
+  // it is the purchase of an asset that answers every later student for
+  // nothing. Watch `freeRatio` in summarizeCost() and lower FREE_DAILY_SOLVE
+  // if the bill climbs before the bank starts absorbing repeats.
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -364,22 +443,17 @@ async function handleJson(request: Request) {
     return json({ error: 'יש להתחבר כדי לקבל פתרון חדש', authRequired: true }, { status: 401 });
   }
   const pro = isProUser(user);
-  if (!pro) {
+  const cap = pro ? PRO_DAILY_SCANS : FREE_DAILY_SOLVE;
+  const usedToday = await scansToday(supabase, user.id, 'ai');
+  if (usedToday >= cap) {
     return json(
       {
-        error: 'זו שאלה חדשה שעדיין לא במאגר — פתרון AI חדש הוא פיצ׳ר Pro.',
-        proRequired: true,
-        transcribedQuestion: question,
-        topic: topicHint ?? '',
+        error: pro
+          ? `הגעת למכסת ${cap} הפתרונות היומית. חזור מחר.`
+          : `הגעת ל-${cap} הפתרונות החדשים שלך להיום. שאלות שכבר במאגר נשארות חינם וללא הגבלה.`,
+        quotaExceeded: true,
+        proRequired: !pro,
       },
-      { status: 402 }
-    );
-  }
-
-  const cap = PRO_DAILY_SCANS;
-  if ((await scansToday(supabase, user.id)) >= cap) {
-    return json(
-      { error: `הגעת למכסת ${cap} הפתרונות היומית. חזור מחר.`, quotaExceeded: true },
       { status: 429 }
     );
   }
@@ -463,18 +537,29 @@ ${question}`,
       // instant the response finishes, losing anything still in flight.
       if (markdown.trim().length > 40) {
         try {
+          // The bank is the durable store: it deduplicates by fuzzy match, so
+          // a question a previous student photographed MERGES instead of
+          // adding a second near-identical row. That matters more than it
+          // sounds — near-identical rows are exactly what the matcher's
+          // margin rule refuses to choose between, so an un-deduplicated
+          // bank would degrade retrieval as it grew.
+          await upsertIntoBank(supabase, {
+            question,
+            solutionMarkdown: markdown,
+            topic: topicHint,
+          });
+          // The exact-hash cache is kept alongside it: free, indexed, and it
+          // short-circuits a literal re-submission of the same text without
+          // touching the bank at all.
           await putCachedSolution(supabase, hash, {
             topic: topicHint ?? '',
             transcribedQuestion: question,
-            // The cache schema stores steps[]; a streamed solution is one
-            // markdown document, kept whole in a single entry so a later
-            // reader renders exactly what this student saw.
             steps: [{ title: '', content: markdown }],
             finalAnswer: '',
           });
           await supabase.from('scan_log').insert({ source: 'ai' });
         } catch {
-          // Cache/logging must never take the solution down with them.
+          // Storage and logging must never take the solution down with them.
         }
       }
       controller.close();

@@ -421,7 +421,21 @@ export type ScanTrace = {
 
 /** Where the final solution came from. Rendered as a badge; also the honest
  *  signal for trust (a verified library solution ≠ a fresh AI answer). */
-export type SolutionSource = 'library' | 'cache' | 'local-cas' | 'ai';
+export type SolutionSource = 'library' | 'bank' | 'cache' | 'local-cas' | 'ai';
+
+/**
+ * How much a stored solution has been checked — a SEPARATE axis from where it
+ * came from, deliberately.
+ *
+ * Folding quality into `source` would make the hand-authored corpus and an
+ * unreviewed AI answer indistinguishable at the type level, which is exactly
+ * the confusion the badge must never create.
+ *
+ *   'verified'     the local CAS confirmed the answer by substitution
+ *   'corroborated' >= 2 independent scans produced a matching answer
+ *   'new'          one AI solution, nothing has checked it
+ */
+export type QualityTier = 'new' | 'corroborated' | 'verified';
 
 export type ScanResult = {
   /** The question we believe was photographed. Editable by the student via
@@ -448,6 +462,10 @@ export type ScanResult = {
    * camera was involved is nonsense. The UI keys off this.
    */
   inputMode: 'photo' | 'typed';
+  /** Present for a bank hit. Drives the badge — see QualityTier. */
+  qualityTier?: QualityTier;
+  /** The bank row, so the student can report a wrong solution. */
+  bankId?: string;
   /**
    * Set only for a FUZZY library/cache hit (0..1, below 1).
    *

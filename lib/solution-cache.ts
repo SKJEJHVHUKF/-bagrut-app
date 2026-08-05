@@ -12,6 +12,7 @@
 // ============================================================
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { normalizeQuestionText } from './question-match';
 
 export type CachedSolution = {
   topic: string;
@@ -28,6 +29,9 @@ export type CachedSolution = {
 export async function getCachedSolution(
   supabase: SupabaseClient,
   hash: string,
+  /** The question the hash was computed from. Supplying it turns a hash hit
+   *  into a verified identity — see the collision note below. */
+  question?: string,
 ): Promise<CachedSolution | null> {
   try {
     const { data, error } = await supabase
@@ -38,6 +42,16 @@ export async function getCachedSolution(
 
     if (error || !data || data.length === 0) return null;
     const row = data[0];
+
+    // A hash hit means "same bucket", not "same question". `fingerprint` is
+    // FNV-1a 32-bit: the birthday bound is 0.009% at 855 rows but **4.6% at
+    // 20,000 and 25% at 50,000**, and this table now grows with every solve.
+    // A collision would serve an unrelated question's worked solution, so
+    // when the caller can supply the source text we compare it.
+    if (question !== undefined) {
+      const storedText = (row.transcribed_question as string | null) ?? '';
+      if (normalizeQuestionText(storedText) !== normalizeQuestionText(question)) return null;
+    }
 
     // Fire-and-forget usage bump — never block the response on it.
     void supabase
@@ -97,13 +111,19 @@ export async function findSimilarCached(
     if (error || !data || data.length === 0) return null;
 
     const { buildMatchIndex, findMatch } = await import('./mathscan/match');
+    const { corpusIdf } = await import('./solution-library');
     const rows = data.filter((row) => typeof row.transcribed_question === 'string');
+    // Corpus IDF, not per-window IDF. This index holds at most 200 rows and
+    // starts at zero; derived from that few, `log(N/(1+df))` floors to 0 for
+    // every token and the MIN_SHARED_IDF gate then rejects every candidate —
+    // a fuzzy lookup that can never hit, failing silently as a cache miss.
     const index = buildMatchIndex(
       rows.map((row, i) => ({
         id: String(i),
         topic: (row.topic as string) ?? '',
         text: row.transcribed_question as string,
       })),
+      { idf: corpusIdf() },
     );
     const found = findMatch(index, question, { topicHint: topic });
     if (!found) return null;
