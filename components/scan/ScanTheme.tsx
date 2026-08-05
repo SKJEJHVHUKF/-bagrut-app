@@ -220,6 +220,26 @@ export function ScanThemeStyles() {
          inherits dir=rtl from <html> and displays reversed. */
       [data-scan-theme] .katex { direction: ltr; unicode-bidi: isolate; }
 
+      /* A streamed, whole-document solution. Section headings need to read as
+         section headings — without this every markdown h2 is the same size as
+         the prose around it and the structure disappears.
+         (No backticks in this block: the whole stylesheet is a JS template
+         literal, and one would end it mid-file.) */
+      .scan-solution h2 {
+        font-size: 1.0625rem; font-weight: 900; margin: 1.5rem 0 .5rem;
+        padding-bottom: .35rem; border-bottom: 1px solid var(--scan-line);
+        color: var(--scan-primary);
+      }
+      .scan-solution h2:first-child { margin-top: 0; }
+      .scan-solution h3 { font-size: .9375rem; font-weight: 800; margin: 1rem 0 .35rem; }
+      .scan-solution p { margin: .55rem 0; }
+      .scan-solution strong { color: var(--scan-ink); font-weight: 800; }
+      .scan-solution ul, .scan-solution ol { margin: .5rem 0; padding-inline-start: 1.25rem; }
+      .scan-solution li { margin: .3rem 0; }
+      /* A long formula must scroll inside its own box, never widen the page. */
+      .scan-solution .katex-display,
+      .scan-solution .mathtext-block { overflow-x: auto; overflow-y: hidden; }
+
       /* Set for one frame while the theme flips — see useScanTheme. */
       .scan-no-transition [data-scan-theme],
       .scan-no-transition [data-scan-theme] * {

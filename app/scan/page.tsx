@@ -85,6 +85,8 @@ export default function ScanPage() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  /** The solution as it streams in, before the pipeline finishes. */
+  const [liveText, setLiveText] = useState<string>('');
 
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
@@ -156,6 +158,7 @@ export default function ScanPage() {
     setStages([]);
     setOcrProgress(null);
     setSavedId(null);
+    setLiveText('');
   }, []);
 
   const pickFile = (picked: File | null) => {
@@ -173,12 +176,14 @@ export default function ScanPage() {
     setError(null);
     setResult(null);
     setStages([]);
+    setLiveText('');
     try {
       const scan = await runScanPipeline(file, {
         unitLevel,
         allowPaidFallback: allowPaid,
         onStage,
         onOcrProgress: setOcrProgress,
+        onSolveText: setLiveText,
       });
       setResult(scan);
       const blocked = blockedReason(scan);
@@ -195,11 +200,13 @@ export default function ScanPage() {
     setBusy(true);
     setError(null);
     setStages([]);
+    setLiveText('');
     try {
       const scan = await rerunFromTranscription(next, {
         unitLevel,
         allowPaidFallback: allowPaid,
         onStage,
+        onSolveText: setLiveText,
       });
       setResult(scan);
       setSavedId(null);
@@ -345,7 +352,22 @@ export default function ScanPage() {
               )}
             </button>
 
-            {busy && (
+            {/* The solution as it is written. This is the difference between
+                a minute of blank spinner — which is what the owner hit — and
+                watching the answer appear. Same tokens, same cost. */}
+            {busy && liveText && (
+              <section className="scan-card p-5">
+                <div className="text-xs font-black tracking-widest uppercase mb-2 flex items-center gap-2" style={{ color: 'var(--scan-primary)' }}>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
+                  <span>כותב את הפתרון…</span>
+                </div>
+                <div className="chat-md math-content scan-solution text-sm leading-relaxed" aria-live="polite">
+                  <MathText>{liveText}</MathText>
+                </div>
+              </section>
+            )}
+
+            {busy && !liveText && (
               <div className="scan-card p-4">
                 <ScanStages stages={stages} />
                 {ocrProgress && ocrProgress.stage !== 'recognizing' && (

@@ -319,6 +319,26 @@ function containsHebrew(text: string): boolean {
   return /[֐-׿]/.test(text);
 }
 
+/**
+ * Wrap a streamed markdown solution.
+ *
+ * No parsing into steps: the model was asked for a readable document with
+ * `## סעיף א` headings, and chopping that back into numbered cards is what
+ * made a real multi-section solution read as an undifferentiated wall.
+ */
+export function explanationFromMarkdown(
+  markdown: string,
+  problem: ClassifiedProblem | null
+): Explanation {
+  return {
+    depth: 'full',
+    headline: problem ? (KIND_HEADLINE[problem.kind] ?? KIND_HEADLINE.unknown) : KIND_HEADLINE.unknown,
+    markdown,
+    steps: [],
+    source: 'ai',
+  };
+}
+
 /** Adapt a library/AI solution (already Hebrew prose) into the same shape,
  *  so the result screen renders one component regardless of source. */
 export function explanationFromSteps(

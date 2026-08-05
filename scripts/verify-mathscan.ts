@@ -313,12 +313,19 @@ check(
       "any minItems other than 0 or 1 ('minItems' values other than 0 or 1 are not supported)."
   );
 
-  // Per-section solving is what keeps a multi-part question inside the 60s cap.
+  // Streaming is what keeps a long solve from being a blank minute — and it
+  // replaced the per-section split, which fixed the server's time budget by
+  // tripling the student's wait and the bill.
   const pipeline = readFileSync(join(ROOT, 'lib/mathscan/pipeline.ts'), 'utf8');
   check(
-    /solveBySection\s*\(/.test(pipeline),
-    'Multi-section questions no longer solve per section. MEASURED: all sections in one call took ' +
-      '55s of the 60s Vercel ceiling; one section takes 18.5s. An overrun returns nothing and still bills.'
+    /streamSolve\s*\(/.test(pipeline),
+    'The AI solve is no longer streamed. A real מתכונת scan sat behind a blank spinner for ~55s; ' +
+      'streaming shows the first sentence in ~2s at identical cost, and a truncated markdown ' +
+      'solution is still most of a solution where truncated JSON is worth nothing.'
+  );
+  check(
+    route.includes('SOLVE_STREAM_SYSTEM') && route.includes('text/event-stream'),
+    'The scan route lost its streaming solve path.'
   );
 }
 

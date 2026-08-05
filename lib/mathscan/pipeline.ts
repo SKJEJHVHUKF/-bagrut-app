@@ -42,7 +42,7 @@ import { repairOcrText, toDisplayQuestion } from './ocr/normalize';
 import { validateTranscription } from './validate';
 import { classifyProblem } from './solve/classify';
 import { solveProblem } from './solve';
-import { explainSolution, explanationFromSteps } from './explain';
+import { explainSolution, explanationFromMarkdown, explanationFromSteps } from './explain';
 import { CostMeter, recordTrace } from './cost';
 import { issueCodes, logScanError } from './telemetry';
 import { topicForDomain } from './levels';
@@ -57,6 +57,8 @@ type ServerSolution = {
   steps: { title: string; content: string }[];
   finalAnswer: string;
   costUsd?: number;
+  /** A streamed solve returns ONE markdown document instead of steps[]. */
+  markdown?: string;
   /** 1 = the transcription matched a stored question exactly; below that the
    *  match was fuzzy and the wording shown is OURS, not the student's. */
   matchScore?: number;
@@ -218,6 +220,7 @@ export async function runScanPipeline(
     signal: options.signal,
     blocked: fallbackBlocked,
     inputMode: options.transcriptionOverride ? 'typed' : 'photo',
+    onSolveText: options.onSolveText,
   });
 }
 
@@ -229,6 +232,7 @@ export type RerunOptions = {
   unitLevel?: UnitLevel;
   allowPaidFallback?: boolean;
   onStage?: ScanPipelineOptions['onStage'];
+  onSolveText?: ScanPipelineOptions['onSolveText'];
   signal?: AbortSignal;
 };
 
@@ -263,6 +267,7 @@ export async function rerunFromTranscription(
     signal: options.signal,
     blocked: null,
     inputMode: 'typed',
+    onSolveText: options.onSolveText,
   });
 }
 
@@ -276,8 +281,10 @@ async function solveFromTranscription(args: {
   signal?: AbortSignal;
   blocked: { message: string; status: number } | null;
   inputMode: 'photo' | 'typed';
+  onSolveText?: (text: string) => void;
 }): Promise<ScanResult> {
   const { transcription, validation, unitLevel, allowPaid, meter, stage, signal, inputMode } = args;
+  const onSolveText = args.onSolveText;
 
   const problem = classifyProblem({ text: transcription, expressions: validation.expressions });
   const topic = topicForDomain(problem.domain, unitLevel, problem.kind);
@@ -388,6 +395,7 @@ async function solveFromTranscription(args: {
       signal,
       localOutcome: null,
       inputMode,
+      onSolveText,
     });
   }
 
@@ -439,6 +447,7 @@ async function solveFromTranscription(args: {
     signal,
     localOutcome: outcome,
     inputMode,
+    onSolveText,
   });
 }
 
@@ -462,6 +471,7 @@ async function escalate(args: {
   signal?: AbortSignal;
   localOutcome: SolveOutcome | null;
   inputMode: 'photo' | 'typed';
+  onSolveText?: (text: string) => void;
 }): Promise<ScanResult> {
   const {
     transcription,
@@ -476,6 +486,7 @@ async function escalate(args: {
     localOutcome,
     inputMode,
   } = args;
+  const onSolveText = args.onSolveText;
   const outcome = localOutcome;
 
   if (!allowPaid) {
@@ -503,18 +514,12 @@ async function escalate(args: {
   let blocked: { message: string; status: number } | null = null;
   let solved: ServerSolution | null = null;
   try {
-    solved = problem.multiPart
-      ? await solveBySection(
-          transcription,
-          topic ?? undefined,
-          problem.parts,
-          (label, i, total) => stage('fallback-solve', 'start', `סעיף ${label} (${i + 1}/${total})`),
-          signal
-        )
-      : await lookupServer(
-          { mode: 'solve', question: transcription, topic: topic ?? undefined },
-          signal
-        );
+    solved = await streamSolve(
+      transcription,
+      topic ?? undefined,
+      (text) => onSolveText?.(text),
+      signal
+    );
   } catch (error) {
     blocked = {
       message: message(error),
@@ -549,12 +554,14 @@ async function escalate(args: {
     problem,
     outcome,
     explanations: {
-      full: explanationFromSteps(
-        solved.steps,
-        solved.finalAnswer,
-        problem,
-        solved.source === 'library' ? 'library' : 'ai'
-      ),
+      full: solved.markdown
+        ? explanationFromMarkdown(solved.markdown, problem)
+        : explanationFromSteps(
+            solved.steps,
+            solved.finalAnswer,
+            problem,
+            solved.source === 'library' ? 'library' : 'ai'
+          ),
     },
     source: solved.source === 'library' ? 'library' : solved.source === 'cache' ? 'cache' : 'ai',
     unitLevel,
@@ -582,85 +589,104 @@ function buildAllDepths(
   };
 }
 
-type ServerRequest = {
-  mode: 'match' | 'solve';
-  question: string;
-  topic?: string;
-  /** Solve only this section (א/ב/ג…), using the rest as context. */
-  section?: string;
-};
-
-/** At most this many sections are solved. A bagrut question rarely has more,
- *  and each one is a paid call — an OCR misread that invents sections must
- *  not turn into an unbounded bill. */
-const MAX_SOLVED_SECTIONS = 4;
+type ServerRequest = { mode: 'match' | 'solve'; question: string; topic?: string };
 
 /**
- * Solve a multi-section question one section at a time.
+ * Stream the AI solve, one call, markdown out.
  *
- * MEASURED on the real מתכונת question that failed in production: all three
- * sections in a single call took 2,686 output tokens and **55 seconds** — 92%
- * of the Vercel Hobby 60s ceiling, where an overrun returns nothing and still
- * bills. One section takes ~920 tokens and **18.5 seconds**, and each is its
- * own serverless invocation with its own budget.
- *
- * Sections are solved in order and merged. A section that fails does not lose
- * the ones that succeeded — a partial solution is worth far more than an
- * error, which is what the student got before.
+ * The `onText` callback is what turns a minute of blank spinner into a
+ * solution the student watches being written. Everything else about this
+ * function exists to make a partial answer survive: a stream that dies
+ * mid-way still returns what arrived, because most of a solution is worth
+ * far more than an error message.
  */
-async function solveBySection(
+async function streamSolve(
   question: string,
   topic: string | undefined,
-  parts: string[],
-  onSection: (label: string, index: number, total: number) => void,
+  onText: (accumulated: string) => void,
   signal?: AbortSignal
 ): Promise<ServerSolution | null> {
-  const wanted = parts.slice(0, MAX_SOLVED_SECTIONS);
-  const merged: { title: string; content: string }[] = [];
-  const finals: string[] = [];
-  let cost = 0;
-  let solvedTopic: string | undefined;
-  let firstError: unknown = null;
+  const response = await fetch('/api/scan-solve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'solve', question, topic }),
+    signal,
+  });
 
-  for (let i = 0; i < wanted.length; i++) {
-    const label = wanted[i];
-    onSection(label, i, wanted.length);
-    try {
-      const part = await lookupServer(
-        { mode: 'solve', question, topic, section: label },
-        signal
-      );
-      if (!part) continue;
-      cost += part.costUsd ?? 0;
-      solvedTopic = solvedTopic ?? part.topic;
-      // Label each section so a merged solution still reads as the exam's
-      // own structure rather than one undifferentiated run of steps.
-      merged.push({ title: `סעיף ${label}`, content: '' });
-      merged.push(...part.steps);
-      if (part.finalAnswer) finals.push(`סעיף ${label}: ${part.finalAnswer}`);
-    } catch (error) {
-      if (!firstError) firstError = error;
-      // Keep going: sections are independent, and one refusal should not
-      // discard the sections that worked.
+  if (!response.ok) {
+    const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+    throw new VisionOcrError(
+      typeof data.error === 'string' ? data.error : 'הפתרון נכשל',
+      response.status,
+      data
+    );
+  }
+  const body = response.body;
+  if (!body) throw new VisionOcrError('לא התקבלה תשובה', 500, {});
+
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let markdown = '';
+  let costUsd = 0;
+  let streamError: string | null = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // SSE frames end with a blank line, and a read can land mid-frame — the
+    // tail stays buffered until its terminator arrives.
+    let boundary = buffer.indexOf('\n\n');
+    while (boundary !== -1) {
+      const frame = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+      boundary = buffer.indexOf('\n\n');
+
+      let event = 'message';
+      let data = '';
+      for (const line of frame.split('\n')) {
+        if (line.startsWith('event: ')) event = line.slice(7).trim();
+        else if (line.startsWith('data: ')) data += line.slice(6);
+      }
+      if (!data) continue;
+      let parsed: Record<string, unknown>;
+      try {
+        parsed = JSON.parse(data);
+      } catch {
+        continue;
+      }
+
+      if (event === 'delta' && typeof parsed.text === 'string') {
+        markdown += parsed.text;
+        onText(markdown);
+      } else if (event === 'done') {
+        costUsd = Number(parsed.costUsd ?? 0);
+      } else if (event === 'error') {
+        streamError = typeof parsed.error === 'string' ? parsed.error : 'שגיאה בפתרון';
+      }
     }
   }
 
-  if (merged.length === 0) {
-    if (firstError) throw firstError;
+  // Anything substantial that arrived is kept, even if the stream then failed.
+  if (markdown.trim().length < 40) {
+    if (streamError) throw new VisionOcrError(streamError, 500, {});
     return null;
   }
+
   return {
     source: 'ai',
-    topic: solvedTopic,
-    steps: merged.filter((s) => s.title || s.content),
-    finalAnswer: finals.join('\n\n'),
-    costUsd: cost,
+    topic,
+    steps: [],
+    markdown,
+    finalAnswer: '',
+    costUsd,
   };
 }
 
-/** Ask the server for a library/cache/AI solution. `match` never spends
- *  money; `solve` may. A non-2xx is not an exception for `match` — a miss is
- *  the expected case and must not interrupt the free path. */
+/** Ask the server for a library/cache solution. `match` never spends money,
+ *  and a miss is the expected case — it must not interrupt the free path. */
 async function lookupServer(
   request: ServerRequest,
   signal?: AbortSignal
@@ -675,7 +701,7 @@ async function lookupServer(
     const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 
     if (!res.ok) {
-      if (request.mode === 'match') return null; // a miss, not a failure
+      if (request.mode === 'match') return null;
       throw new VisionOcrError(
         typeof data.error === 'string' ? data.error : 'הפתרון נכשל',
         res.status,

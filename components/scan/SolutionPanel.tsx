@@ -180,6 +180,23 @@ export function SolutionPanel({ result }: { result: ScanResult }) {
 }
 
 function ExplanationView({ explanation }: { explanation: Explanation }) {
+  // A whole-document solution renders as ONE flowing card.
+  //
+  // The numbered-card layout is right for a short exact solve (5 steps, each
+  // a single move). Past that it becomes visual noise: a three-section bagrut
+  // question turned into forty bordered boxes with no sense of where one
+  // section ended and the next began, which is what the owner saw and called
+  // מסורבל. Prose with `## סעיף א` headings carries that structure natively.
+  if (explanation.markdown) {
+    return (
+      <section className="scan-card p-5">
+        <div className="chat-md math-content scan-solution text-sm sm:text-base leading-relaxed">
+          <MathText>{explanation.markdown}</MathText>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-sm font-bold scan-muted">{explanation.headline}</p>

@@ -154,6 +154,47 @@ const TRANSCRIBE_SCHEMA = {
  * `minItems` must be 0 or 1 — the API rejects any other value
  * ("For 'array' type, 'minItems' values other than 0 or 1 are not supported").
  */
+/**
+ * The STREAMING solve prompt — markdown, not JSON.
+ *
+ * Three problems with the JSON path, all reported from a real scan of a
+ * מתכונת question: it took ~55 seconds behind a blank spinner, it cost three
+ * separate calls once sections were split out, and the merged step-card
+ * output read as an undifferentiated wall.
+ *
+ * Streaming markdown fixes all three at once. The first sentence lands in
+ * about two seconds instead of a minute of nothing; it is ONE call rather
+ * than one per section; and a long multi-section bagrut question reads far
+ * better as a flowing document with `## סעיף א` headings than as forty
+ * numbered cards. It also removes the truncation cliff — a cut-off markdown
+ * solution is still most of a solution, where cut-off JSON is unparseable
+ * and worth nothing.
+ */
+const SOLVE_STREAM_SYSTEM = [
+  MATH5.identity,
+  MATH5.styleGuide,
+  `## המשימה
+
+תקבל שאלת בגרות במתמטיקה שתלמיד צילם ולא הצליח לפתור. כתוב פתרון מלא ומוסבר.
+
+**מבנה (מחייב):**
+- אם לשאלה יש סעיפים — כותרת \`## סעיף א\` לכל סעיף, לפי הסדר. אל תדלג על סעיף.
+- בתוך סעיף: פסקאות קצרות. כל מהלך מתמטי בשורה נפרדת בתוך \`$$...$$\`.
+- בסוף כל סעיף שורה אחת: \`**התשובה:** ...\`
+
+**כללי כתיבה (מחייבים):**
+1. **צעד = רעיון אחד.** אל תדחוס שני מהלכים למשפט אחד.
+2. **בלי דילוגים.** מ-$2x^2-8=0$ ל-$x=\\pm2$ יש בדרך $x^2=4$ — כתוב אותו.
+3. **עברית לעולם לא בתוך $...$.** הנוסחאות ב-LaTeX, ההסבר בעברית מחוץ להן. זה קריטי — עברית בתוך נוסחה מוצגת הפוכה.
+4. **"למה" לפני "מה".** לא "מעבירים אגף" אלא "כדי לבודד את $x$ נעביר אגף".
+5. **תחום הגדרה ראשון** כשיש שורש, מכנה, לוג או טנגנס.
+6. **תשובה מדויקת:** $\\frac{\\sqrt2}{2}$, לא $0.707$.
+7. **מרוכבים ב-cis ובמעלות**, לא $e^{i\\theta}$ ולא רדיאנים.
+
+**קצר וברור עדיף על ארוך ומלומד.** התלמיד תקוע — הוא צריך להבין, לא להתרשם.
+אם חסר נתון או שרטוט — אמור זאת במשפט אחד והמשך עם מה שכן נתון. אל תסרב לפתור.`,
+].join('\n\n');
+
 const SOLVE_SCHEMA = {
   type: 'object',
   properties: {
@@ -348,98 +389,105 @@ async function handleJson(request: Request) {
 
   const client = new Anthropic({ apiKey });
 
-  // Solve ONE section at a time when the question has them.
+  // ---- ONE streaming call, markdown out ----
   //
-  // MEASURED on the real מתכונת question that failed: solving all three
-  // sections in one call produced 2,686 output tokens in **55 seconds** —
-  // 92% of the Vercel Hobby 60s ceiling, where an overrun returns nothing
-  // and still bills. Per-section requests are ~a third of that each, they
-  // are separate invocations so each gets its own budget, and the student
-  // sees section א while ב is still being written.
-  const section = typeof body.section === 'string' ? body.section.slice(0, 2) : null;
-  const sectionInstruction = section
-    ? `\n\n**פתור אך ורק את סעיף ${section}.** התייחס לשאר השאלה כהקשר בלבד. אל תפתור סעיפים אחרים.`
-    : '';
+  // Replaces both the single JSON call (55s behind a blank spinner on a real
+  // מתכונת question) and the per-section split that fixed the server's time
+  // budget by tripling the student's wait and the bill. Streaming gives the
+  // first sentence in ~2s, costs one call, and degrades gracefully: a
+  // truncated markdown solution is still most of a solution.
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (event: string, data: unknown) => {
+        controller.enqueue(encoder.encode(`event: ${event}
+data: ${JSON.stringify(data)}
 
-  const message = await client.messages.create({
-    model: SOLVE_MODEL,
-    // 3,500 covers a single section comfortably (measured ~900-1,100) and a
-    // whole short question, while keeping generation inside the time budget.
-    max_tokens: 3500,
-    system: [
-      {
-        type: 'text' as const,
-        text: SOLVE_SYSTEM,
-        cache_control: { type: 'ephemeral' as const },
-      },
-    ],
-    messages: [
-      {
-        role: 'user',
-        content: `נושא (זיהוי ראשוני): ${topicHint ?? 'לא ידוע'}\n\nהשאלה:\n${question}${sectionInstruction}`,
-      },
-    ],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...({ output_config: { format: { type: 'json_schema', schema: SOLVE_SCHEMA } } } as any),
+`));
+      };
+      let markdown = '';
+      let usageIn = 0;
+      let usageOut = 0;
+      let cacheRead = 0;
+      let cacheWrite = 0;
+
+      try {
+        const modelStream = client.messages.stream({
+          model: SOLVE_MODEL,
+          max_tokens: 4000,
+          system: [
+            {
+              type: 'text' as const,
+              text: SOLVE_STREAM_SYSTEM,
+              cache_control: { type: 'ephemeral' as const },
+            },
+          ],
+          messages: [
+            {
+              role: 'user',
+              content: `נושא (זיהוי ראשוני): ${topicHint ?? 'לא ידוע'}
+
+השאלה:
+${question}`,
+            },
+          ],
+        });
+        modelStream.on('text', (delta: string) => {
+          markdown += delta;
+          send('delta', { text: delta });
+        });
+        const final = await modelStream.finalMessage();
+        usageIn = final.usage.input_tokens;
+        usageOut = final.usage.output_tokens;
+        cacheRead = final.usage.cache_read_input_tokens ?? 0;
+        cacheWrite = final.usage.cache_creation_input_tokens ?? 0;
+        if (final.stop_reason === 'max_tokens') {
+          send('warn', { message: 'הפתרון ארוך במיוחד ונקטע בסופו.' });
+        }
+      } catch (error) {
+        console.error('[scan-solve] stream error:', error);
+        send('error', { error: 'שגיאה בפתרון. נסה שוב.' });
+        controller.close();
+        return;
+      }
+
+      const costUsd = costOf(SOLVE_MODEL, {
+        input_tokens: usageIn,
+        output_tokens: usageOut,
+        cache_read_input_tokens: cacheRead,
+        cache_creation_input_tokens: cacheWrite,
+      });
+      send('done', { costUsd, topic: topicHint ?? '' });
+
+      // Awaited BEFORE close(): a serverless function may be frozen the
+      // instant the response finishes, losing anything still in flight.
+      if (markdown.trim().length > 40) {
+        try {
+          await putCachedSolution(supabase, hash, {
+            topic: topicHint ?? '',
+            transcribedQuestion: question,
+            // The cache schema stores steps[]; a streamed solution is one
+            // markdown document, kept whole in a single entry so a later
+            // reader renders exactly what this student saw.
+            steps: [{ title: '', content: markdown }],
+            finalAnswer: '',
+          });
+          await supabase.from('scan_log').insert({ source: 'ai' });
+        } catch {
+          // Cache/logging must never take the solution down with them.
+        }
+      }
+      controller.close();
+    },
   });
 
-  const costUsd = costOf(SOLVE_MODEL, message.usage as Usage);
-  const content = message.content[0];
-  if (content.type !== 'text') {
-    return json({ error: 'תשובה לא צפויה מהמודל', costUsd }, { status: 502 });
-  }
-
-  let parsed: { topic?: string; steps?: { title: string; content: string }[]; finalAnswer?: string };
-  try {
-    parsed = JSON.parse(content.text);
-  } catch {
-    // Truncation is the likely cause, and it is worth naming: the generic
-    // "try again" sends the student back to pay for the same failure.
-    const truncated = message.stop_reason === 'max_tokens';
-    return json(
-      {
-        error: truncated
-          ? 'הפתרון ארוך מהצפוי ונקטע. נסה לצלם סעיף אחד בכל פעם.'
-          : 'תשובה לא תקינה מהמודל',
-        costUsd,
-      },
-      { status: 502 }
-    );
-  }
-  if (!Array.isArray(parsed.steps) || parsed.steps.length === 0) {
-    // With `required` on the schema this should be unreachable; it stays as a
-    // guard because it is exactly the failure that shipped once already.
-    return json(
-      { error: 'המודל לא החזיר פתרון לשאלה הזאת. נסה לצלם סעיף אחד בכל פעם.', costUsd },
-      { status: 502 }
-    );
-  }
-
-  const topic = parsed.topic || topicHint || '';
-  // Warm the shared cache so the next student who scans this exact question
-  // pays nothing. This is the mechanism that makes cost fall as usage rises.
-  void putCachedSolution(supabase, hash, {
-    topic,
-    transcribedQuestion: question,
-    steps: parsed.steps,
-    finalAnswer: parsed.finalAnswer ?? '',
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+    },
   });
-  void supabase
-    .from('scan_log')
-    .insert({ source: 'ai' })
-    .then(({ error }) => {
-      if (error) console.error('[scan_log]', error.message);
-    });
-
-  return json({
-    source: 'ai',
-    topic,
-    transcribedQuestion: question,
-    steps: parsed.steps,
-    finalAnswer: parsed.finalAnswer ?? '',
-    costUsd,
-    usage: message.usage,
-  } satisfies SolutionPayload & { usage: unknown });
 }
 
 // ------------------------------------------------------------

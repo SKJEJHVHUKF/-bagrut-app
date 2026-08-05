@@ -329,6 +329,15 @@ export type Explanation = {
   depth: ExplanationDepth;
   /** One line of "what kind of question this is". */
   headline: string;
+  /**
+   * A whole-document solution, when the source produced one.
+   *
+   * A long multi-section bagrut question reads far better as flowing prose
+   * with `## סעיף א` headings than as forty numbered cards — the card format
+   * is right for a short exact solve and turns into visual noise past about
+   * eight steps. When this is set the renderer shows it INSTEAD of `steps`.
+   */
+  markdown?: string;
   steps: ExplainedStep[];
   /** Present for `partial` and `full` only. */
   finalAnswer?: string;
@@ -461,6 +470,10 @@ export type ScanPipelineOptions = {
   /** Confidence below which we escalate to the paid path. */
   fallbackThreshold?: number;
   onStage?: (stage: ScanStageName, status: 'start' | 'done', detail?: string) => void;
+  /** Called with the ACCUMULATED solution text as the AI writes it. This is
+   *  what replaces a minute of blank spinner with a solution the student
+   *  watches being written. */
+  onSolveText?: (text: string) => void;
   onOcrProgress?: (p: OcrProgress) => void;
   signal?: AbortSignal;
 };
