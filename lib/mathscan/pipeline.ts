@@ -207,7 +207,14 @@ export async function runScanPipeline(
       unitLevel,
       meter,
       topic: null,
-      blocked: fallbackBlocked,
+      // Here the "תקן את הטקסט" advice IS the right advice — nothing was
+      // read at all — but only if the student is told that is what happened.
+      // A null reason renders the same generic empty state whether we read
+      // nothing, were refused, or crashed, and those need different actions.
+      blocked: fallbackBlocked ?? {
+        status: 0,
+        message: 'לא הצלחנו לקרוא טקסט מהתמונה. צלם שוב באור טוב, ישר מלמעלה, כשהשאלה ממלאת את הפריים.',
+      },
       inputMode: 'photo',
     });
   }
@@ -514,7 +521,32 @@ async function escalate(args: {
       unitLevel,
       meter,
       topic,
-      blocked: null,
+      /**
+       * This used to be `blocked: null`, and that was the single worst bug in
+       * the whole scanner.
+       *
+       * REPRODUCED: a signed-out student photographs a printed bagrut
+       * question. Local OCR reads the Hebrew perfectly but mangles the
+       * formula line, the free paths miss, and the pipeline lands HERE — with
+       * no explanations and no reason. The result screen has nothing to show
+       * but its empty state: "עוד לא פתרנו את השאלה הזאת · תקן את הטקסט
+       * למעלה". Seven seconds of work, and the honest summary of what the
+       * student was told is "no, and we won't say why".
+       *
+       * Worse, the advice was wrong. Correcting the text changes nothing —
+       * without an account the solve path is closed no matter how clean the
+       * transcription is, so the student edits, retries, fails again, and
+       * concludes the app is broken. Which is exactly what was reported.
+       *
+       * A refusal must always carry its reason and its way out. 401 is what
+       * the UI keys on to render a sign-in call to action instead of a red
+       * error box: this is not a failure, it is a door.
+       */
+      blocked: {
+        status: 401,
+        message:
+          'פתרון חדש דורש חשבון. התחבר ונפתור את השאלה הזאת עכשיו — שאלות שכבר נמצאות במאגר נשארות חינם וללא הגבלה, גם בלי חשבון.',
+      },
       inputMode,
     });
   }
@@ -553,7 +585,15 @@ async function escalate(args: {
       unitLevel,
       meter,
       topic,
-      blocked,
+      // `streamSolve` returns null WITHOUT throwing when the stream arrives
+      // near-empty, so `blocked` can legitimately be null here — and a null
+      // reason renders as the generic "תקן את הטקסט" empty state, which is
+      // the same silent dead end as the signed-out case, only after the
+      // student has been billed for it. Every refusal states its reason.
+      blocked: blocked ?? {
+        status: 0,
+        message: 'הפתרון לא הצליח להיווצר הפעם. נסה שוב — ואם זה חוזר, תקן את הטקסט למעלה וצלם באור טוב יותר.',
+      },
       inputMode,
     });
   }

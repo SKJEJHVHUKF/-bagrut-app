@@ -187,7 +187,14 @@ export default function ScanPage() {
       });
       setResult(scan);
       const blocked = blockedReason(scan);
-      if (blocked && Object.keys(scan.explanations).length === 0) setError(blocked.message);
+      // A 401 is NOT an error — it is "sign in and we solve this now", and
+      // SolutionPanel renders it as a call to action with a login button.
+      // Duplicating it in the red danger box told the student the app had
+      // failed, which is both wrong and the reason the whole screen read as
+      // broken.
+      if (blocked && blocked.status !== 401 && Object.keys(scan.explanations).length === 0) {
+        setError(blocked.message);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה לא צפויה בעיבוד התמונה');
     } finally {
@@ -211,7 +218,14 @@ export default function ScanPage() {
       setResult(scan);
       setSavedId(null);
       const blocked = blockedReason(scan);
-      if (blocked && Object.keys(scan.explanations).length === 0) setError(blocked.message);
+      // A 401 is NOT an error — it is "sign in and we solve this now", and
+      // SolutionPanel renders it as a call to action with a login button.
+      // Duplicating it in the red danger box told the student the app had
+      // failed, which is both wrong and the reason the whole screen read as
+      // broken.
+      if (blocked && blocked.status !== 401 && Object.keys(scan.explanations).length === 0) {
+        setError(blocked.message);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה לא צפויה');
     } finally {
@@ -450,7 +464,7 @@ export default function ScanPage() {
                 Without it the panel kept the previous scan's depth state: a
                 rejected read left it at `null`, and the corrected re-solve
                 then rendered its badge with no solution underneath. */}
-            <SolutionPanel key={result.trace.id} result={result} />
+            <SolutionPanel key={result.trace.id} result={result} blocked={blockedReason(result)} />
 
             {/* The tutor is keyed to the result too: a new question must
                 start a new conversation, not inherit the previous one's. */}

@@ -158,7 +158,14 @@ function Rich({ children }: { children: string }) {
   );
 }
 
-export function SolutionPanel({ result }: { result: ScanResult }) {
+export function SolutionPanel({
+  result,
+  blocked,
+}: {
+  result: ScanResult;
+  /** Why there is no solution, when there is none. See the empty state. */
+  blocked?: { message: string; status: number } | null;
+}) {
   const available = DEPTH_ORDER.filter((depth) => result.explanations[depth]);
 
   /**
@@ -183,11 +190,39 @@ export function SolutionPanel({ result }: { result: ScanResult }) {
   const canHint = Boolean(result.explanations.hint) && Boolean(result.explanations.full);
 
   if (available.length === 0) {
+    /**
+     * The empty state must say WHY, and it must offer the actual next step.
+     *
+     * It used to say one thing always: "תקן את הטקסט למעלה אם משהו בו לא
+     * מדויק, או צלם שוב". For a signed-out student that advice is simply
+     * false — the solve path is closed regardless of how clean the text is,
+     * so they edit, retry, fail, and conclude the app is broken. That is the
+     * failure that was reported, reproduced on a real photograph.
+     */
+    if (blocked?.status === 401) {
+      return (
+        <section
+          className="rounded-2xl p-5 space-y-3"
+          style={{ background: 'var(--scan-primary-soft)', border: '1px solid var(--scan-primary)' }}
+        >
+          <h3 className="font-black flex items-center gap-2">
+            <Sparkles className="w-4 h-4" style={{ color: 'var(--scan-primary)' }} aria-hidden />
+            השאלה הזאת עוד לא במאגר — נפתור אותה עכשיו
+          </h3>
+          <p className="text-sm scan-muted leading-relaxed">{blocked.message}</p>
+          <a href="/login" className="scan-btn scan-btn-primary inline-flex !py-2.5 !px-5 !text-sm">
+            התחבר וקבל את הפתרון
+          </a>
+        </section>
+      );
+    }
+
     return (
       <section className="scan-card p-5 space-y-2">
         <h3 className="font-black">עוד לא פתרנו את השאלה הזאת</h3>
         <p className="text-sm scan-muted leading-relaxed">
-          תקן את הטקסט למעלה אם משהו בו לא מדויק, או צלם שוב באור טוב יותר.
+          {blocked?.message ??
+            'תקן את הטקסט למעלה אם משהו בו לא מדויק, או צלם שוב באור טוב יותר.'}
         </p>
       </section>
     );

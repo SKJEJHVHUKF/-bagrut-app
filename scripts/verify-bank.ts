@@ -76,6 +76,10 @@ const bankCode = code(bank);
 const matchCode = code(match);
 const routeCode = code(route);
 const panelCode = code(panel);
+/** JSX attributes survive the comment stripper, so the usage site is matched
+ *  against the raw file — `code()` would not remove them anyway, but reading
+ *  the raw text here makes the intent explicit. */
+const panelUsage = read('app/scan/page.tsx');
 // SQL comments are `--`; block comments are not used in the file.
 const sqlCode = sql.replace(/^\s*--[^\n]*$/gm, ' ');
 
@@ -329,6 +333,53 @@ check(
 check(
   /scansToday\s*\(\s*supabase\s*,\s*user\.id\s*,\s*'ai'\s*\)/.test(routeCode),
   "route.ts: המכסה חייבת לספור רק סריקות source='ai'. ספירת כל הסריקות תחסום תלמיד בגלל פגיעות חינמיות מהמאגר."
+);
+
+// ------------------------------------------------------------
+// 9. No dead ends
+// ------------------------------------------------------------
+//
+// THE bug that made the scanner feel broken, and the one hardest to see in
+// review: every `finalize({ ... explanations: {} ... })` is a refusal, and a
+// refusal carrying `blocked: null` renders as one generic empty state —
+// "עוד לא פתרנו את השאלה הזאת · תקן את הטקסט למעלה".
+//
+// For a signed-out student that advice is FALSE. The solve path is closed no
+// matter how clean the text is, so they edit, retry, fail, and conclude the
+// app is broken. Reproduced end-to-end on a real photograph: 7.3 seconds, a
+// perfectly legible question on screen, and no solution and no reason.
+//
+// So: no refusal may carry a null reason. Each must say what happened and
+// what to do about it — and a 401 in particular must reach the student as a
+// sign-in call to action, not as a red error box.
+const pipelineCode = code(read('lib/mathscan/pipeline.ts'));
+
+const refusals = [...pipelineCode.matchAll(/explanations:\s*\{\s*\}/g)].length;
+check(refusals >= 3, 'pipeline.ts: לא נמצאו מסלולי סירוב — הבדיקה הזאת כבר לא בודקת את מה שהיא חושבת.');
+
+check(
+  !/explanations:\s*\{\s*\}[\s\S]{0,400}?blocked:\s*null/.test(pipelineCode),
+  'pipeline.ts: יש מסלול שמחזיר "אין פתרון" בלי סיבה. זה בדיוק המבוי הסתום שגרם למערכת להיראות שבורה — כל סירוב חייב לומר למה ומה לעשות.'
+);
+
+check(
+  /blocked:\s*\{[\s\S]{0,200}?status:\s*401/.test(pipelineCode),
+  'pipeline.ts: מסלול "אין חשבון" חייב לסמן 401, אחרת ה-UI לא יודע להציע התחברות במקום להציג שגיאה.'
+);
+
+check(
+  /blocked\?\.status\s*===\s*401/.test(panelCode),
+  'SolutionPanel.tsx: 401 חייב להיות מוצג ככפתור התחברות, לא כהודעת "עוד לא פתרנו".'
+);
+
+check(
+  /blocked\.status\s*!==\s*401/.test(code(read('app/scan/page.tsx'))),
+  'page.tsx: אסור להציג 401 גם בתיבת השגיאה האדומה — זה אומר לתלמיד שהאפליקציה נכשלה במקום להזמין אותו להתחבר.'
+);
+
+check(
+  /<SolutionPanel[^>]*blocked=\{/.test(panelUsage),
+  'page.tsx: SolutionPanel חייב לקבל את סיבת החסימה, אחרת המצב הריק שלו לא יכול להסביר כלום.'
 );
 
 // ------------------------------------------------------------
