@@ -205,6 +205,101 @@ num('q013 b²=a²-c²=16', 5 ** 2 - 3 ** 2, 16);
 onCurve('q013 (0,4) on x²/25+y²/16=1', 'x^2/25 + y^2/16 = 1', 0, 4);
 onCurve('q013 (5,0) on 16x²+25y²=400', '16*x^2 + 25*y^2 = 400', 5, 0);
 
+// ============================================================
+// Ghost Replay (content/ghost-replay/math5/analytic-geometry.ts)
+// ============================================================
+// The five answers AND every number invented inside a failure branch. A wrong
+// number in a branch is worse than one in a question: there the app is the
+// authority correcting the student.
+
+// --- gr-ag-line-012: 3x+4y+c=0 at distance 2 from (1,2) ---
+num('ghost line-012: sqrt(9+16) = 5', Math.hypot(3, 4), 5);
+num('ghost line-012: 3*1+4*2 = 11', 3 * 1 + 4 * 2, 11);
+num('ghost line-012: c=-1 gives distance 2', distLine([1, 2], 3, 4, -1), 2);
+num('ghost line-012: c=-21 gives distance 2', distLine([1, 2], 3, 4, -21), 2);
+num('ghost line-012 branch: c=10 (forgot to move the 11) gives 4.2, not 2', distLine([1, 2], 3, 4, 10), 4.2);
+num('ghost line-012 branch: |9+16| read as 3+4=7 yields c=3 -> distance 2.8', distLine([1, 2], 3, 4, 3), 2.8);
+num('ghost line-012 branch: and c=-25 -> distance 2.8', distLine([1, 2], 3, 4, -25), 2.8);
+num('ghost line-012: the two lines sit on OPPOSITE sides — signed values are +10 and -10',
+  (3 * 1 + 4 * 2 + -1) + (3 * 1 + 4 * 2 + -21), 0);
+
+// --- gr-ag-circ-012: x²+y²-8x+t=0 tangent to y=x ---
+num('ghost circ-012: completing the square gives centre (4,0)', 8 / 2, 4);
+num('ghost circ-012: distance from (4,0) to x-y=0 is 2sqrt2', distLine([4, 0], 1, -1, 0), 2 * Math.SQRT2);
+num('ghost circ-012: 2sqrt2 = sqrt8', 2 * Math.SQRT2, Math.sqrt(8));
+num('ghost circ-012: 16 - t = 8 gives t = 8', 16 - 8, 8);
+num('ghost circ-012 cross-check: substituting y=x gives 2x^2-8x+t, discriminant 64-8t = 0 at t=8', 64 - 8 * 8, 0);
+num('ghost circ-012: at t=8 the touch point is (2,2)', 8 / (2 * 2), 2);
+onCurve('ghost circ-012: (2,2) is on the circle at t=8', 'x^2 + y^2 - 8*x + 8 = 0', 2, 2);
+num('ghost circ-012 branch: t=12 leaves radius 2 < 2.828, so the line MISSES', Math.sqrt(16 - 12) < distLine([4, 0], 1, -1, 0) ? 1 : 0, 1);
+num('ghost circ-012 branch: t=16 collapses the circle to the single point (4,0)', 16 - 16, 0);
+offCurve('ghost circ-012 branch: (4,0) is not on y=x, so t=16 cannot be tangent', 'y = x', 4, 0);
+num('ghost circ-012 branch: R=16-t unsquared gives t = 16-2sqrt2 ~= 13.17', 16 - 2 * Math.SQRT2, 13.171572875253809);
+
+// --- gr-ag-par-012: tangents to y²=4x through (-1,0) ---
+num('ghost par-012: discriminant (2m^2-4)^2 - 4m^4 = -16m^2+16', (2 * 9 - 4) ** 2 - 4 * 81, -16 * 9 + 16);
+num('ghost par-012: m^2 = 1', 16 / 16, 1);
+onCurve('ghost par-012: y=x+1 touches at (1,2)', 'y^2 = 4*x', 1, 2);
+onCurve('ghost par-012: y=-x-1 touches at (1,-2)', 'y^2 = 4*x', 1, -2);
+num('ghost par-012: (1,2) is on y=x+1', 1 + 1, 2);
+num('ghost par-012: the touch is a DOUBLE root — x^2-2x+1 has discriminant 0', 4 - 4, 0);
+// House convention (STYLE line 288): y^2 = 2px, focus (p/2,0), directrix x=-p/2.
+// Here 2p = 4 so p = 2, focus (1,0), directrix x = -1.
+num('ghost par-012: 2p=4 gives p=2', 4 / 2, 2);
+num('ghost par-012: focus p/2 = 1', 2 / 2, 1);
+num('ghost par-012: directrix -p/2 = -1', -2 / 2, -1);
+num('ghost par-012: the point sits ON the directrix, so the tangents are perpendicular', 1 * -1, -1);
+num('ghost par-012 branch: m=0 gives y=0, which meets the parabola only at the vertex', 0, 0);
+num('ghost par-012 branch: y=0 is the AXIS — the real tangent at the vertex is x=0', 0, 0);
+num('ghost par-012 branch: y=x-1 (through (1,0)) cuts twice, discriminant 32', 36 - 4, 32);
+num('ghost par-012 branch: m=2 misses entirely, discriminant -3', 1 - 4, -3);
+
+// --- gr-ag-ell-005: e=sqrt3/2 through (2,1) ---
+num('ghost ell-005: e^2 = 3/4', (Math.sqrt(3) / 2) ** 2, 0.75);
+num('ghost ell-005: b^2 = a^2/4', 8 / 4, 2);
+num('ghost ell-005: a^2 = 8 and b^2 = 2 pass through (2,1)', 4 / 8 + 1 / 2, 1);
+num('ghost ell-005: c^2 = 8-2 = 6 and e = sqrt6/sqrt8 = sqrt3/2', Math.sqrt(6) / Math.sqrt(8), Math.sqrt(3) / 2);
+// The three distractors were CHOSEN so that two of them also pass through (2,1) —
+// that is the whole point of step 5: the point check alone cannot separate them.
+num('ghost ell-005 branch: e=b/a gives a^2=16/3, b^2=4 — which DOES pass through (2,1)', 4 / (16 / 3) + 1 / 4, 1);
+num('ghost ell-005 branch: ...but its eccentricity is 1/2, not sqrt3/2',
+  Math.sqrt(16 / 3 - 4) / Math.sqrt(16 / 3), 0.5);
+num('ghost ell-005 branch: b^2=a^2+c^2 gives a^2=32/7, b^2=8 — also passes through (2,1)', 4 / (32 / 7) + 1 / 8, 1);
+num('ghost ell-005 branch: ...but there b^2 > a^2, impossible for a horizontal major axis',
+  8 > 32 / 7 ? 1 : 0, 1);
+num('ghost ell-005 branch: swapping to x^2/2 + y^2/8 does NOT even pass through (2,1)', 4 / 2 + 1 / 8, 2.125);
+
+// --- gr-ag-loci-005: midpoints of chords of x²+y²=25 through A(3,0) ---
+num('ghost loci-005: OM.AM = 0 expands to x^2-3x+y^2 = 0 at M=(1.5,1.5)', 1.5 ** 2 - 3 * 1.5 + 1.5 ** 2, 0);
+num('ghost loci-005: completing the square gives centre (1.5,0), r=1.5', 3 / 2, 1.5);
+onCurve('ghost loci-005: (1.5,1.5) is on the locus circle', '(x-1.5)^2 + y^2 = 2.25', 1.5, 1.5);
+onCurve('ghost loci-005: the origin O is on it (the chord through A that is a diameter)', '(x-1.5)^2 + y^2 = 2.25', 0, 0);
+onCurve('ghost loci-005: A(3,0) is on it (the chord perpendicular to OA at A)', '(x-1.5)^2 + y^2 = 2.25', 3, 0);
+num('ghost loci-005: the locus lies wholly inside the big circle — max |OM| = 3 < 5', 3 < 5 ? 1 : 0, 1);
+offCurve('ghost loci-005 branch: (1.5,1.5) is NOT on x^2+y^2=9', 'x^2 + y^2 = 9', 1.5, 1.5);
+offCurve('ghost loci-005 branch: (1.5,1.5) is NOT on (x-3)^2+y^2=9', '(x-3)^2 + y^2 = 9', 1.5, 1.5);
+// The origin is ON the locus (it is the midpoint of the diameter through A) but
+// its x is 0, so the locus cannot be the vertical line x = 1.5.
+num('ghost loci-005 branch: the locus is not the line x=1.5 — (0,0) is on the locus, and its x is not 1.5',
+  Math.abs(0 - 1.5) > 1e-9 ? 1 : 0, 1);
+// A brute-force sweep: every real chord through A really does have its midpoint on that circle.
+{
+  let good = 0, total = 0;
+  for (let deg = 0; deg < 180; deg += 1) {
+    const th = (deg * Math.PI) / 180;
+    const dx = Math.cos(th), dy = Math.sin(th);
+    // chord of x^2+y^2=25 along direction (dx,dy) through A(3,0): |A + s d| = 5
+    const b = 2 * (3 * dx), c0 = 9 - 25;
+    const disc = b * b - 4 * c0;
+    if (disc <= 0) continue;
+    const s1 = (-b + Math.sqrt(disc)) / 2, s2 = (-b - Math.sqrt(disc)) / 2;
+    const mx = 3 + ((s1 + s2) / 2) * dx, my = ((s1 + s2) / 2) * dy;
+    total++;
+    if (Math.abs((mx - 1.5) ** 2 + my ** 2 - 2.25) < 1e-9) good++;
+  }
+  num(`ghost loci-005: all ${total} swept chords have their midpoint on the locus`, good, total);
+}
+
 console.log(`\n${pass} passed, ${fail} failed.`);
 if (fail > 0) process.exit(1);
 
