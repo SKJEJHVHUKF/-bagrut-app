@@ -37,6 +37,7 @@ import { seedFromMiss, gradeReview } from '@/lib/review';
 import { getWeaknesses } from '@/lib/remediation';
 import { getSubTopic } from '@/content/lessons';
 import { buildHelpLadder, type HelpTier } from '@/lib/help-ladder';
+import { voiceCorrect, voiceWrong } from '@/lib/voice';
 import { HelpLadder } from '@/components/practice/HelpLadder';
 import type { PracticeQuestion } from '@/content/lessons/types';
 
@@ -381,7 +382,8 @@ export function QuestionRunnerCard({
       {/* Correct banner */}
       {revealed && firstTryCorrect === true && (
         <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-700">
-          <CheckCircle className="w-4 h-4" /> בדיוק! כל הכבוד.
+          <CheckCircle className="w-4 h-4" />
+          {voiceCorrect(q.id, { source, firstTry: tries <= 1 })}
         </div>
       )}
 
@@ -418,7 +420,7 @@ export function QuestionRunnerCard({
             )}
             {wrong && (
               <div className="flex items-center gap-1.5 text-sm font-bold text-rose-700">
-                <XCircle className="w-4 h-4" /> לא נורא — ככה פותרים, שלב אחר שלב:
+                <XCircle className="w-4 h-4" /> {voiceWrong(q.id)}
               </div>
             )}
             <div className="bg-gradient-to-br from-violet-600/[0.07] to-violet-600/[0.07] border border-violet-500/25 rounded-2xl p-4">

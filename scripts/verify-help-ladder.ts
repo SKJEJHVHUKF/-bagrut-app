@@ -24,6 +24,7 @@ import { MATH5_CURRICULUM } from '../content/bagrut-curriculum';
 import { getSubTopics, hasSubTopics } from '../content/lessons';
 import type { PracticeQuestion, SubTopic } from '../content/lessons/types';
 import { buildHelpLadder, leaksAnswer, MIN_STEPS_FOR_FIRST_STEP } from '../lib/help-ladder';
+import { voiceCorrect, VOICE_BANKS } from '../lib/voice';
 
 const SUBJECT = 'math5';
 
@@ -133,6 +134,52 @@ for (const t of MATH5_CURRICULUM) {
 }
 
 // ---------------------------------------------------------------------------
+// The reaction lines (lib/voice) — same domain: what the app says to a student.
+// ---------------------------------------------------------------------------
+
+{
+  const allIds: string[] = [];
+  for (const t of MATH5_CURRICULUM) {
+    if (!hasSubTopics(SUBJECT, t.key)) continue;
+    for (const st of getSubTopics(SUBJECT, t.key)) for (const q of st.questions ?? []) allIds.push(q.id);
+  }
+
+  for (const [name, bank] of Object.entries(VOICE_BANKS)) {
+    if (bank.length < 3) errors.push(`voice bank ${name} has ${bank.length} lines — too few to stop it reading canned`);
+    if (new Set(bank).size !== bank.length) errors.push(`voice bank ${name} contains a duplicate line`);
+    if (bank.some((l) => !l.trim())) errors.push(`voice bank ${name} contains an empty line`);
+  }
+
+  // Determinism: the same question must produce the same line on the server
+  // render and on the client, forever. A re-roll here is a hydration mismatch.
+  const sample = allIds[0];
+  if (sample && voiceCorrect(sample) !== voiceCorrect(sample)) {
+    errors.push('voiceCorrect is not deterministic — it would differ between SSR and hydration');
+  }
+
+  // Spread. Ids in this bank differ only in their LAST characters
+  // (alg-sub-quad-001 / -002), which is exactly the seed shape that collapsed a
+  // hash in this repo before. Measured over the real bank, never assumed.
+  const seen = new Map<string, number>();
+  for (const id of allIds) {
+    const line = voiceCorrect(id);
+    seen.set(line, (seen.get(line) ?? 0) + 1);
+  }
+  const ideal = allIds.length / VOICE_BANKS.CORRECT.length;
+  const worst = seen.size > 0 ? Math.max(...seen.values()) / ideal : 0;
+  if (seen.size < VOICE_BANKS.CORRECT.length) {
+    errors.push(
+      `voice lines collapse: only ${seen.size} of ${VOICE_BANKS.CORRECT.length} are ever used across ${allIds.length} questions`,
+    );
+  } else if (worst > 1.6) {
+    warnings.push(
+      `[voice-skew] one reaction line is ${worst.toFixed(2)}× over-represented across ${allIds.length} questions`,
+    );
+  }
+  console.log(
+    `\nvoice: ${allIds.length} question ids → ${seen.size}/${VOICE_BANKS.CORRECT.length} lines used, worst skew ${worst.toFixed(2)}×`,
+  );
+}
 
 console.log('\n── "למד אותי" ladder inventory ' + '─'.repeat(40));
 console.log(

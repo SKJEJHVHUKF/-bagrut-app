@@ -11,6 +11,7 @@ import { Pencil, CheckCircle, XCircle, KeyRound } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { celebrateCorrect } from '@/lib/confetti';
 import { seededOrder } from '@/lib/shuffle';
+import { voiceCorrect, voiceWrong } from '@/lib/voice';
 import type { PracticeQuestion } from '@/content/lessons/types';
 
 const LETTERS = ['א', 'ב', 'ג', 'ד'];
@@ -114,7 +115,7 @@ export function MicroDrill({
                 }`}
               >
                 {correct ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                <span>{correct ? 'בדיוק! ממשיכים לרעיון הבא.' : 'לא נורא — ראה איך פותרים:'}</span>
+                <span>{correct ? voiceCorrect(drill.id) : voiceWrong(drill.id)}</span>
               </div>
             )}
             <div className="mt-2 bg-white/80 border border-slate-900/[0.08] rounded-xl p-3 space-y-1.5">
