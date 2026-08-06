@@ -587,7 +587,7 @@ $$x = 8$$
     },
     {
       name: 'אינטגרל $u\'(x)/g(x)$',
-      latex: '\\int \\dfrac{u\'(x)}{g(x)} dx = \\ln|g(x)| + C',
+      latex: '\\int \\dfrac{g\'(x)}{g(x)} dx = \\ln|g(x)| + C',
       variables: [
         { sym: 'g(x)', meaning: 'הארגומנט (לא בהכרח חיובי — הערך מוחלט מאפשר)' },
       ],

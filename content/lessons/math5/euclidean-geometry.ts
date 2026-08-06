@@ -1022,7 +1022,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
           label: 'ג',
           prompt:
             'נתון בנוסף ש-$\\angle ABD = 35°$ ו-$\\angle ADB = 80°$. מצא את הזווית $\\angle BAD$ של המקבילית ואת הזווית $\\angle ABC$.',
-          answer_type: 'number',
+          answer_type: 'expression',
           hints: [
             'הזווית $\\angle BAD$ נמצאת ישירות מסכום הזוויות במשולש $\\triangle ABD$.',
             'במקבילית, זוויות סמוכות (על אותה צלע) משלימות ל-$180°$.',
@@ -1036,7 +1036,9 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
             ],
             final_answer: '$\\angle BAD = 65°$, $\\;\\angle ABC = 115°$',
           },
-          expected: { kind: 'value', value: '65' },
+          // The prompt asks for BOTH angles, so a `value` spec marked a student
+          // who correctly answered "65, 115" as WRONG — it only ever accepted 65.
+          expected: { kind: 'set', values: ['65', '115'] },
         },
       ],
     },
@@ -2075,13 +2077,13 @@ $$\\dfrac{BD}{DC} = \\dfrac{AB}{AC}.$$
           example: {
             difficulty: 'mid',
             problem:
-              'במשולש $\\triangle ABC$, $AD$ חוצה את $\\angle A$ ($D$ על $BC$). נתון $AB = 8$, $AC = 6$, $BC = 14$. מצא את $BD$ ואת $DC$.',
+              'במשולש $\\triangle ABC$, $AD$ חוצה את $\\angle A$ ($D$ על $BC$). נתון $AB = 8$, $AC = 6$, $BC = 7$. מצא את $BD$ ואת $DC$.',
             steps: [
               'חוצה זווית: $\\dfrac{BD}{DC} = \\dfrac{AB}{AC} = \\dfrac{8}{6} = \\dfrac{4}{3}$.',
-              'נסמן $BD = 4t$, $DC = 3t$. אז $BD + DC = 7t = BC = 14$, ולכן $t = 2$.',
-              '$BD = 4 \\cdot 2 = 8$ ו-$DC = 3 \\cdot 2 = 6$.',
+              'נסמן $BD = 4t$, $DC = 3t$. אז $BD + DC = 7t = BC = 7$, ולכן $t = 1$.',
+              '$BD = 4 \\cdot 1 = 4$ ו-$DC = 3 \\cdot 1 = 3$.',
             ],
-            answer: '$BD = 8$, $\\;DC = 6$',
+            answer: '$BD = 4$, $\\;DC = 3$',
           },
         },
       ],
