@@ -47,6 +47,34 @@ const SKIP_FIELDS = new Set([
 const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/u;
 const EMOJI_ALLOW = new Set(['✓', '✗', '∎', '→', '←', '⇒', '⇔']);
 
+/**
+ * The author thinking out loud, shipped to students.
+ *
+ * Found by a content audit in three places: a word problem whose steps read
+ * "אבל זה לא תרגיל יפה — נבדוק שוב" and never fixed the numbers, a part whose
+ * solution told the student "בניסוח המקורי של השאלה נפלה טעות סימן", and a
+ * "prove the circles are external" question whose own solution admitted they
+ * are tangent. Every existing gate passed all three: the LaTeX parses and the
+ * arithmetic is internally consistent — it is the PROSE that is broken.
+ *
+ * Patterns are narrow on purpose. Plain "בעצם" is ordinary Hebrew; only the
+ * self-correcting "בעצם:" is not. Negative-tested against 5 planted defects
+ * and 5 normal lines before being wired in.
+ */
+const AUTHOR_MONOLOGUE: { re: RegExp; why: string }[] = [
+  { re: /נבדוק שוב|נבדק שוב/, why: 'author re-checking their own work' },
+  // Must blame the QUESTION, not the student's working. A bare "נפלה טעות" is
+  // exactly what a good distractor note says about the mistake the student made
+  // ("בפתרון המשוואה נפלה טעות סימן…") — matching that flagged correct content.
+  { re: /בניסוח המקורי|טעות בניסוח|נפלה טעות בשאלה|יש טעות בשאלה/, why: 'admits the question is broken' },
+  { re: /לא ריבוע שלם|לא יוצא יפה|לא תרגיל יפה|לא נותן ערך יפה|ערך יפה/, why: 'complains the numbers are ugly' },
+  { re: /נסה ערכים|ננסה ערכים|נציב ערכים ונראה/, why: 'author guessing values' },
+  { re: /לא תרגיל סטנדרטי|לא סטנדרטי/, why: 'flags the question as odd' },
+  { re: /בעצם:|בעצם תשובה|למעשה תשובה/, why: 'self-correction mid-solution' },
+  { re: /לא .{0,12} ממש, אלא|בעצם נוגעים/, why: 'solution contradicts its own prompt' },
+  { re: /החסר .{0,20}ברשימה|חסרה אופציה|אין אופציה/, why: 'notes a missing option' },
+];
+
 type Sev = 'error' | 'warn';
 type Finding = { rule: string; sev: Sev; file: string; path: string; value: string };
 const findings: Finding[] = [];
@@ -122,6 +150,11 @@ function checkString(file: string, path: string, key: string, value: string) {
   // whole value IS the point. Only a bullet that is short outright is thin.
   if (key === 'keyPoints' && value.trim().length < 30) {
     add('terse-keypoint', 'warn', file, path, value);
+  }
+
+  for (const { re, why } of AUTHOR_MONOLOGUE) {
+    const m = value.match(re);
+    if (m) add(`author-monologue:${why}`, 'error', file, path, `"${m[0]}"  in: ${value.slice(0, 90)}`);
   }
 }
 
