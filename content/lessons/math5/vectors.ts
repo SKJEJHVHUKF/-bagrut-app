@@ -1112,6 +1112,142 @@ $$\\sin\\phi = \\dfrac{|\\vec{d} \\cdot \\vec{n}|}{|\\vec{d}|\\,|\\vec{n}|}$$
         },
       ],
     },
+
+    // =========================================================================
+    // vec-bag-007 — the shape שאלה 2 of שאלון 572 actually takes.
+    //
+    // Every one of the 13 solid-based questions in content/past-bagruyot is a
+    // VECTORS question numbered 2, set inside a pyramid or prism: express the
+    // vectors symbolically, prove something with the given perpendicularity,
+    // only THEN drop into coordinates, and finish with a plane, an angle and a
+    // volume. The bank taught all of those skills and posed none of them in a
+    // solid — every other vec-bag question opens "נתונות הנקודות A(2,0,0)…".
+    //
+    // Numbers chosen by search so the answers are exact, not decimal soup:
+    // |SC| = 17 (8-15-17), cos of the dihedral angle = 3/5 (3-4-5), plane
+    // 4x + 3z = 24, volume 144. Every value re-derived independently before
+    // this was written.
+    // =========================================================================
+    {
+      id: 'vec-bag-007',
+      difficulty: 'hard',
+      topic_tag: 'וקטורים בתוך גוף — פירמידה',
+      subTopicId: 'vec-line-plane',
+      context:
+        'נתונה פירמידה $SABCD$ שבסיסה $ABCD$ הוא מקבילית. המקצוע $SA$ מאונך למישור הבסיס. מסמנים $\\vec{AB} = \\vec{u}$, $\\;\\vec{AD} = \\vec{v}$, $\\;\\vec{AS} = \\vec{w}$.',
+      parts: [
+        {
+          label: 'א',
+          prompt:
+            'הבע באמצעות $\\vec{u}$, $\\vec{v}$ ו-$\\vec{w}$ את הווקטור $\\vec{AC}$, ואת הווקטור $\\vec{SM}$ כאשר $M$ היא נקודת מפגש אלכסוני הבסיס.',
+          answer_type: 'expression',
+          hints: [
+            'במקבילית $ABCD$ מתקיים $\\vec{AC} = \\vec{AB} + \\vec{AD}$.',
+            'אלכסוני מקבילית חוצים זה את זה, ולכן $M$ היא אמצע $AC$.',
+            'כדי להגיע מ-$S$ ל-$M$: $\\vec{SM} = \\vec{AM} - \\vec{AS}$.',
+          ],
+          solution: {
+            steps: [
+              'כלל המקבילית: $\\vec{AC} = \\vec{AB} + \\vec{AD} = \\vec{u} + \\vec{v}$.',
+              'אלכסוני מקבילית חוצים זה את זה, ולכן $M$ היא אמצע $AC$.',
+              '$\\vec{AM} = \\dfrac{1}{2}\\vec{AC} = \\dfrac{1}{2}(\\vec{u} + \\vec{v})$.',
+              'לפי חיסור וקטורים: $\\vec{SM} = \\vec{AM} - \\vec{AS}$.',
+              '$\\vec{SM} = \\dfrac{1}{2}(\\vec{u} + \\vec{v}) - \\vec{w}$.',
+            ],
+            final_answer: '$\\vec{AC} = \\vec{u} + \\vec{v}$, $\\;\\vec{SM} = \\dfrac{1}{2}(\\vec{u} + \\vec{v}) - \\vec{w}$',
+          },
+        },
+        {
+          label: 'ב',
+          prompt: 'הוכח כי $\\;SB^2 = SA^2 + AB^2$.',
+          answer_type: 'text',
+          hints: [
+            'המקצוע $SA$ מאונך לכל ישר במישור הבסיס — בפרט ל-$AB$.',
+            'תרגם את הניצבות לשפת מכפלה סקלרית: $\\vec{w} \\cdot \\vec{u} = 0$.',
+            'כתוב $\\vec{SB} = \\vec{u} - \\vec{w}$ והעלה בריבוע באמצעות מכפלה סקלרית.',
+          ],
+          solution: {
+            steps: [
+              '$SA$ מאונך למישור הבסיס, ולכן הוא מאונך לכל וקטור בבסיס: $\\vec{w} \\cdot \\vec{u} = 0$.',
+              'מסלול מ-$S$ ל-$B$ דרך $A$: $\\vec{SB} = \\vec{AB} - \\vec{AS} = \\vec{u} - \\vec{w}$.',
+              '$SB^2 = |\\vec{u} - \\vec{w}|^2 = (\\vec{u} - \\vec{w}) \\cdot (\\vec{u} - \\vec{w})$.',
+              'פיתוח: $\\;|\\vec{u}|^2 - 2\\,\\vec{u} \\cdot \\vec{w} + |\\vec{w}|^2$.',
+              'האיבר האמצעי מתאפס כי $\\vec{u} \\cdot \\vec{w} = 0$.',
+              'נשאר $SB^2 = |\\vec{u}|^2 + |\\vec{w}|^2 = AB^2 + SA^2$.',
+            ],
+            final_answer: 'מוכח: המכפלה הסקלרית $\\vec{u} \\cdot \\vec{w}$ מתאפסת, ולכן נשאר משפט פיתגורס במשולש $SAB$.',
+          },
+          expected: { kind: 'manual' },
+        },
+        {
+          label: 'ג',
+          prompt:
+            'נבחרה מערכת צירים שבה $A(0,0,0)$, $\\;B(6,0,0)$, $\\;D(6,9,0)$, ו-$SA = 8$ (שיעור ה-$z$ של $S$ חיובי). מצא את שיעורי $C$ ואת שיעורי $S$, וחשב את אורך המקצוע $SC$.',
+          answer_type: 'expression',
+          hints: [
+            'במקבילית: $\\vec{AC} = \\vec{AB} + \\vec{AD}$, ולכן $C = B + D - A$.',
+            '$SA$ מאונך לבסיס שנמצא במישור $z = 0$, ולכן $S$ יושב על ציר ה-$z$.',
+            'אורך: $|\\vec{SC}| = \\sqrt{x^2 + y^2 + z^2}$ של הווקטור $\\vec{SC} = C - S$.',
+          ],
+          solution: {
+            steps: [
+              'מכלל המקבילית: $\\;C = B + D - A = (6+6,\\; 0+9,\\; 0) = (12, 9, 0)$.',
+              'הבסיס נמצא במישור $z = 0$, ו-$SA$ מאונך לו, ולכן $S$ נמצא מעל $A$: $\\;S = (0, 0, 8)$.',
+              '$\\vec{SC} = C - S = (12 - 0,\\; 9 - 0,\\; 0 - 8) = (12, 9, -8)$.',
+              '$|\\vec{SC}| = \\sqrt{12^2 + 9^2 + 8^2} = \\sqrt{144 + 81 + 64} = \\sqrt{289}$.',
+              '$|\\vec{SC}| = 17$.',
+            ],
+            final_answer: '$C(12, 9, 0)$, $\\;S(0, 0, 8)$, $\\;SC = 17$',
+          },
+          expected: { kind: 'value', value: '17' },
+        },
+        {
+          label: 'ד',
+          prompt: 'מצא את משוואת המישור $SBD$.',
+          answer_type: 'expression',
+          hints: [
+            'המישור עובר דרך שלוש נקודות ידועות — $S$, $B$ ו-$D$.',
+            'וקטור נורמל: $\\vec{n} = \\vec{BD} \\times \\vec{BS}$.',
+            'אחרי שמצאת נורמל, הצב אחת מהנקודות כדי למצוא את המקדם החופשי.',
+          ],
+          solution: {
+            steps: [
+              '$\\vec{BD} = D - B = (0, 9, 0)$ ו-$\\vec{BS} = S - B = (-6, 0, 8)$.',
+              'מכפלה וקטורית: $\\;\\vec{n} = \\vec{BD} \\times \\vec{BS} = (9 \\cdot 8 - 0 \\cdot 0,\\;\\; 0 \\cdot (-6) - 0 \\cdot 8,\\;\\; 0 \\cdot 0 - 9 \\cdot (-6))$.',
+              '$\\vec{n} = (72, 0, 54)$.',
+              'מצמצמים ב-$18$: $\\;\\vec{n} = (4, 0, 3)$.',
+              'המשוואה: $\\;4x + 3z = d$. הצבת $B(6,0,0)$ נותנת $d = 24$.',
+              'בדיקה ב-$S(0,0,8)$: $\\;3 \\cdot 8 = 24$ ✓, וב-$D(6,9,0)$: $\\;4 \\cdot 6 = 24$ ✓.',
+            ],
+            final_answer: '$4x + 3z = 24$',
+          },
+          expected: { kind: 'manual' },
+        },
+        {
+          label: 'ה',
+          prompt: 'חשב את גודל הזווית בין המישור $SBD$ לבין מישור הבסיס, ואת נפח הפירמידה.',
+          answer_type: 'expression',
+          hints: [
+            'הזווית בין שני מישורים היא הזווית בין הנורמלים שלהם. נורמל הבסיס ($z=0$) הוא $(0,0,1)$.',
+            'נפח פירמידה: $V = \\dfrac{1}{3} \\cdot S_b \\cdot h$, כאשר $S_b$ הוא שטח הבסיס.',
+            'שטח מקבילית הבסיס הוא $|\\vec{u} \\times \\vec{v}|$, והגובה הוא $SA$.',
+          ],
+          solution: {
+            steps: [
+              'נורמל המישור $SBD$: $\\;\\vec{n_1} = (4, 0, 3)$, ונורמל הבסיס: $\\;\\vec{n_2} = (0, 0, 1)$.',
+              '$\\vec{n_1} \\cdot \\vec{n_2} = 3$, $\\;|\\vec{n_1}| = \\sqrt{16 + 9} = 5$, $\\;|\\vec{n_2}| = 1$.',
+              '$\\cos\\theta = \\dfrac{3}{5 \\cdot 1} = \\dfrac{3}{5}$.',
+              '$\\theta = \\arccos\\dfrac{3}{5} \\approx 53.13°$.',
+              'שטח הבסיס: $\\;\\vec{u} \\times \\vec{v} = (6,0,0) \\times (6,9,0) = (0, 0, 54)$, ולכן שטח המקבילית הוא $54$.',
+              'הגובה הוא $SA = 8$, ולכן $\\;V = \\dfrac{1}{3} \\cdot 54 \\cdot 8$.',
+              '$V = 144$.',
+            ],
+            final_answer: '$\\theta = \\arccos\\dfrac{3}{5} \\approx 53.13°$, $\\;V = 144$',
+          },
+          expected: { kind: 'value', value: '144' },
+        },
+      ],
+    },
   ],
 
   // ===========================================================================
