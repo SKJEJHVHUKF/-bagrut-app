@@ -35,17 +35,21 @@ import {
   lastNDays,
   getDailyGoal,
   setDailyGoal,
+  weeklyDelta,
+  MIN_PER_WEEK_WINDOW,
   type TopicStat,
   type SubTopicStat,
   type DayActivity,
+  type WeeklyDelta,
 } from '@/lib/results';
+import { topCategory, type CategoryStat } from '@/lib/mistakes';
 import {
   predictOverall,
   topImpactTopics,
   type OverallPrediction,
   type TopicImpact,
 } from '@/lib/prediction';
-import { getTopWeakness, type Weakness } from '@/lib/remediation';
+import { getTopWeakness, healedCountSince, type Weakness } from '@/lib/remediation';
 import ShareCardButton from '@/components/ShareCardButton';
 
 const SUBJECT_NAMES: Record<string, string> = {
@@ -96,6 +100,9 @@ export default function InsightsPage() {
   const [pro, setPro] = useState(true); // assume pro until known → no upsell flash
   /** subject → the top repairable weakness (absent when evidence is thin). */
   const [fixTargets, setFixTargets] = useState<Record<string, Weakness>>({});
+  const [week, setWeek] = useState<WeeklyDelta | null>(null);
+  const [healedThisWeek, setHealedThisWeek] = useState(0);
+  const [topMistake, setTopMistake] = useState<CategoryStat | null>(null);
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setPro(isProUser(data.user)));
@@ -108,6 +115,9 @@ export default function InsightsPage() {
       goal: getDailyGoal(),
       days: lastNDays(14),
     });
+    setWeek(weeklyDelta());
+    setHealedThisWeek(healedCountSince(Date.now() - 7 * 24 * 60 * 60 * 1000));
+    setTopMistake(topCategory());
   }
 
   useEffect(() => {
@@ -355,6 +365,55 @@ export default function InsightsPage() {
                     />
                   ));
                 })()}
+              </div>
+            </div>
+
+            {/* This week — the one thing this page could not answer before:
+                "am I actually getting better?". Accuracy alone can't say it;
+                a week-on-week comparison can, but only with enough volume in
+                BOTH windows, so the honest empty state is a first-class case
+                here rather than a fallback. */}
+            <div className="surface-premium rounded-2xl p-4 space-y-2.5">
+              <div className="text-[11px] text-slate-600 font-bold">השבוע שלך</div>
+
+              {week?.enough ? (
+                <div className="flex items-baseline gap-2">
+                  <span
+                    className={`text-3xl font-black leading-none ${
+                      week.deltaPoints > 0
+                        ? 'text-emerald-700'
+                        : week.deltaPoints < 0
+                          ? 'text-rose-700'
+                          : 'text-slate-700'
+                    }`}
+                  >
+                    {week.deltaPoints > 0 ? '+' : ''}
+                    {week.deltaPoints}
+                  </span>
+                  <span className="text-xs font-bold text-slate-600">
+                    {`נקודות דיוק מול שבוע שעבר (${Math.round(week.lastWeek.accuracy * 100)}% → ${Math.round(week.thisWeek.accuracy * 100)}%)`}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-xs text-slate-600 leading-relaxed">
+                  {`עוד אין מספיק נתונים להשוואה שבועית — צריך לפחות ${MIN_PER_WEEK_WINDOW} שאלות בכל שבוע. השבוע ענית ${week?.thisWeek.attempts ?? 0}, ובשבוע שעבר ${week?.lastWeek.attempts ?? 0}.`}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                {healedThisWeek > 0 && (
+                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-2.5 py-1">
+                    {`🛠️ ${healedThisWeek} חולשות שתיקנת`}
+                  </span>
+                )}
+                {topMistake && (
+                  <Link
+                    href="/errors"
+                    className="text-[11px] font-bold text-rose-800 bg-rose-500/10 border border-rose-500/30 rounded-full px-2.5 py-1 hover:bg-rose-500/20 transition-colors"
+                  >
+                    {`הטעות מס' 1 שלך: ${topMistake.category}`}
+                  </Link>
+                )}
               </div>
             </div>
           </motion.div>

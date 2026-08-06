@@ -343,6 +343,54 @@ export function lastNDays(n: number, subject?: string): DayActivity[] {
   return out;
 }
 
+/** Answers in each window before the comparison means anything. */
+export const MIN_PER_WEEK_WINDOW = 10;
+
+export type WeeklyDelta = {
+  thisWeek: Stats;
+  lastWeek: Stats;
+  /** Percentage POINTS, this week minus last. Only read it when `enough`. */
+  deltaPoints: number;
+  /** Both windows cleared MIN_PER_WEEK_WINDOW. */
+  enough: boolean;
+};
+
+/**
+ * Accuracy over the last 7 days vs the 7 before them.
+ *
+ * Gated on volume in BOTH windows on purpose: with four answers a week, one
+ * lucky question swings "accuracy" by 25 points and the app would report a
+ * dramatic improvement that is pure noise. When `enough` is false the UI must
+ * say there is not enough data — not print a number.
+ *
+ * Replays are excluded, like every other accuracy figure here, so a repair
+ * session cannot manufacture a week-on-week gain.
+ */
+export function weeklyDelta(subject?: string, now: number = Date.now()): WeeklyDelta {
+  const DAY = 24 * 60 * 60 * 1000;
+  const events = measured(getResults(subject));
+  const window = (fromDaysAgo: number, toDaysAgo: number): Stats => {
+    const from = now - fromDaysAgo * DAY;
+    const to = now - toDaysAgo * DAY;
+    const inWindow = events.filter((e) => e.ts >= from && e.ts < to);
+    const correct = inWindow.filter((e) => e.correct).length;
+    return {
+      attempts: inWindow.length,
+      correct,
+      accuracy: inWindow.length > 0 ? correct / inWindow.length : 0,
+    };
+  };
+  const thisWeek = window(7, 0);
+  const lastWeek = window(14, 7);
+  return {
+    thisWeek,
+    lastWeek,
+    deltaPoints: Math.round((thisWeek.accuracy - lastWeek.accuracy) * 100),
+    enough:
+      thisWeek.attempts >= MIN_PER_WEEK_WINDOW && lastWeek.attempts >= MIN_PER_WEEK_WINDOW,
+  };
+}
+
 // ---- Daily goal (questions per day) ----
 
 const GOAL_KEY = 'bagrut-goal-v1';

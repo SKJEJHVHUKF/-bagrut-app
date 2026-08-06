@@ -26,7 +26,7 @@ const store = new Map<string, string>();
 ).window.localStorage;
 
 import { mergeResults, mergeRoadmap, rebuildSeen } from '../lib/sync/roadmap-sync';
-import { MAX_EVENTS } from '../lib/results';
+import { MAX_EVENTS, MIN_PER_WEEK_WINDOW, weeklyDelta } from '../lib/results';
 
 const T0 = 1_700_000_000_000;
 const DAY = 24 * 60 * 60 * 1000;
@@ -185,6 +185,56 @@ section('Roadmap progress — max-wins (unchanged behaviour)');
   assert(m['אלגברה::quad'].levels.easy.stars === 3, 'best stars win');
   assert(m['אלגברה::quad'].levels.easy.attempts === 3, 'attempts take the max');
   assert(same(mergeRoadmap(a, b), mergeRoadmap(b, a)), 'roadmap merge is order-independent too');
+}
+
+// ============================================================
+section('weeklyDelta — "did I actually improve?"');
+// ============================================================
+{
+  const DAY = 24 * 60 * 60 * 1000;
+  const NOW = 1_700_000_000_000;
+  const ev = (daysAgo: number, correct: boolean, repeat = false) => ({
+    ts: NOW - daysAgo * DAY,
+    subject: 'math5',
+    topic: 'אלגברה',
+    source: 'drill' as const,
+    correct,
+    ...(repeat ? { repeat: true } : {}),
+  });
+  const put = (list: unknown[]) => store.set('bagrut-results-v1', JSON.stringify(list));
+
+  // Thin data must NOT produce a number — this is the whole reason for the gate.
+  put([...Array(4)].map(() => ev(1, true)));
+  assert(weeklyDelta('math5', NOW).enough === false, 'four answers is not enough to claim a weekly change');
+
+  // 10 this week at 80%, 10 last week at 40% → +40 points.
+  put([
+    ...[...Array(8)].map(() => ev(2, true)),
+    ...[...Array(2)].map(() => ev(2, false)),
+    ...[...Array(4)].map(() => ev(9, true)),
+    ...[...Array(6)].map(() => ev(9, false)),
+  ]);
+  const w = weeklyDelta('math5', NOW);
+  assert(w.enough === true, `both windows cleared MIN_PER_WEEK_WINDOW (${MIN_PER_WEEK_WINDOW})`);
+  assert(w.thisWeek.attempts === 10 && w.lastWeek.attempts === 10, 'answers land in the right window');
+  assert(w.deltaPoints === 40, `80% vs 40% is +40 points (got ${w.deltaPoints})`);
+
+  // A repair session is replays; it must not manufacture a weekly gain.
+  put([
+    ...[...Array(4)].map(() => ev(2, true)),
+    ...[...Array(6)].map(() => ev(2, false)),
+    ...[...Array(4)].map(() => ev(9, true)),
+    ...[...Array(6)].map(() => ev(9, false)),
+    ...[...Array(20)].map(() => ev(1, true, true)),
+  ]);
+  const w2 = weeklyDelta('math5', NOW);
+  assert(w2.deltaPoints === 0, `20 correct replays move the weekly delta by 0 (got ${w2.deltaPoints})`);
+  assert(w2.thisWeek.attempts === 10, 'replays are excluded from the window counts too');
+
+  // Events older than 14 days belong to neither window.
+  put([...[...Array(12)].map(() => ev(30, true)), ...[...Array(12)].map(() => ev(2, true))]);
+  assert(weeklyDelta('math5', NOW).enough === false, 'a month-old burst does not fill last week');
+  store.delete('bagrut-results-v1');
 }
 
 // ============================================================
