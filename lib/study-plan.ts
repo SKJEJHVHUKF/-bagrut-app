@@ -38,9 +38,37 @@ export type PlanTopic = {
 /** How many bagrut units (יחידות לימוד) the student is studying toward. */
 export type UnitLevel = 3 | 4 | 5;
 
+/**
+ * What the student is actually aiming for. Optional — every plan created before
+ * this existed keeps working and simply has no target.
+ *
+ * 'boost' is not a score, it is a shape: "raise my grade as much as possible in
+ * the time left", which orders work by points-per-hour rather than by a gap.
+ */
+export type TargetGrade = 'pass' | '80' | '90' | 'boost';
+
+/** The numeric bar for a target, or null for 'boost' which has no fixed bar. */
+export const TARGET_SCORE: Record<TargetGrade, number | null> = {
+  pass: 60,
+  '80': 80,
+  '90': 90,
+  boost: null,
+};
+
+export const TARGET_LABEL: Record<TargetGrade, string> = {
+  pass: 'לעבור',
+  '80': '80 ומעלה',
+  '90': '90 ומעלה',
+  boost: 'לשפר כמה שאפשר',
+};
+
 export type StudyPlan = {
   /** Bagrut exam date as ISO yyyy-mm-dd. */
   bagrutDate: string;
+  /** The grade the student is aiming for. Absent on plans made before this. */
+  targetGrade?: TargetGrade;
+  /** Minutes the student can realistically study on a study day. */
+  minutesPerDay?: number;
   /** Ordered list of topics (first = current). */
   topics: PlanTopic[];
   /** When the plan was created. */
@@ -156,6 +184,15 @@ export function setPaper(paper: BagrutPaper): void {
   const plan = getPlan();
   if (!plan) return;
   plan.paper = paper;
+  savePlan(plan);
+}
+
+/** Set the goal on an existing plan. No-op without a plan. */
+export function setTarget(targetGrade: TargetGrade, minutesPerDay?: number): void {
+  const plan = getPlan();
+  if (!plan) return;
+  plan.targetGrade = targetGrade;
+  if (minutesPerDay !== undefined) plan.minutesPerDay = minutesPerDay;
   savePlan(plan);
 }
 

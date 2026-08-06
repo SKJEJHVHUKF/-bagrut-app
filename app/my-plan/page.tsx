@@ -17,7 +17,25 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { getPlan, daysUntilBagrut, clearPlan, type StudyPlan } from '@/lib/study-plan';
+import {
+  getPlan,
+  daysUntilBagrut,
+  clearPlan,
+  getPaper,
+  setTarget,
+  TARGET_LABEL,
+  type StudyPlan,
+  type TargetGrade,
+} from '@/lib/study-plan';
+import { buildDailyPlan, DEFAULT_MINUTES_PER_DAY, type DailyPlan } from '@/lib/daily-plan';
+import { predictOverall, topImpactTopics } from '@/lib/prediction';
+import { getWeaknesses } from '@/lib/remediation';
+import { dueCount } from '@/lib/review';
+import { getResumePoint } from '@/lib/roadmap-resume';
+import { computePacing } from '@/lib/pacing';
+import { buildRoadmapFromPlan, allRoadmapNodes, DEFAULT_PAPER } from '@/constants/roadmapData';
+import { getSubTopic } from '@/content/lessons';
+import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
 import { topicLockReason, isProUser, isAdmin, type UserLike } from '@/lib/access';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 import { fadeUp, staggerContainer, scaleIn, inViewProps } from '@/lib/animations';
@@ -117,6 +135,10 @@ export default function MyPlanPage() {
             </motion.div>
           </motion.div>
         </motion.section>
+
+        {/* The goal, and today's work toward it. This is the only part of the
+            page that changes daily; everything below it is navigation. */}
+        <TodaySection plan={plan} onTargetSet={() => setPlan(getPlan())} />
 
         {/* Topics list */}
         <motion.section {...inViewProps} variants={staggerContainer}>
@@ -416,5 +438,149 @@ function TopBar() {
         </Link>
       </div>
     </nav>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Today — the goal, and the work that closes the gap to it.
+// ---------------------------------------------------------------------------
+
+const TARGETS: TargetGrade[] = ['pass', '80', '90', 'boost'];
+
+function TodaySection({ plan, onTargetSet }: { plan: StudyPlan; onTargetSet: () => void }) {
+  const [daily, setDaily] = useState<DailyPlan | null>(null);
+
+  // Everything here reads localStorage and static content, so it runs after
+  // mount. Rebuilt whenever the target changes — that is the whole point of the
+  // control below.
+  useEffect(() => {
+    const paper = getPaper() ?? DEFAULT_PAPER;
+    const roadmap = buildRoadmapFromPlan(plan, paper);
+    const levelsBySub: Record<string, RoadmapLevel[]> = {};
+    for (const n of allRoadmapNodes(paper)) {
+      const st = getSubTopic('math5', n.topic, n.subId);
+      levelsBySub[n.subId] = st ? buildSubTopicLevels('math5', n.topic, st) : [];
+    }
+    const resume = getResumePoint(roadmap.mainTopics, levelsBySub);
+    setDaily(
+      buildDailyPlan({
+        target: plan.targetGrade ?? null,
+        minutesPerDay: plan.minutesPerDay ?? null,
+        prediction: predictOverall('math5'),
+        // ALL topics, not the top 5: the list is used for two different jobs.
+        // Picking the best lever only needs the head, but looking up "how many
+        // points is the topic I'm weak in worth" needs the whole table — with a
+        // limit of 5 that lookup missed whenever the weakness ranked 6th or
+        // lower, and the task silently fell back to generic wording.
+        impact: topImpactTopics('math5', 100),
+        weaknesses: getWeaknesses('math5'),
+        dueCount: dueCount(),
+        resume: resume ? { href: resume.href, title: resume.title } : null,
+        pacing: computePacing(roadmap.mainTopics, levelsBySub, plan),
+      }),
+    );
+  }, [plan]);
+
+  return (
+    <motion.section {...inViewProps} variants={staggerContainer} className="space-y-3">
+      <h2 className="font-display text-lg font-black text-slate-900">היעד שלי</h2>
+
+      {/* The goal picker. Lives here rather than in onboarding so students who
+          already have a plan get it in the same place new ones do — no
+          migration prompt, no second flow to maintain. */}
+      <div className="surface-premium rounded-3xl p-5 space-y-3">
+        <div className="text-[11px] font-black tracking-widest text-violet-700 uppercase">
+          מה המטרה שלך בבגרות?
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {TARGETS.map((t) => {
+            const active = plan.targetGrade === t;
+            return (
+              <button
+                key={t}
+                onClick={() => {
+                  setTarget(t);
+                  onTargetSet();
+                }}
+                className={`px-3 py-2.5 rounded-xl border text-sm font-bold transition-colors ${
+                  active
+                    ? 'bg-violet-600 border-violet-600 text-white'
+                    : 'bg-slate-900/[0.03] border-slate-900/10 text-slate-700 hover:bg-slate-900/[0.06]'
+                }`}
+              >
+                {TARGET_LABEL[t]}
+              </button>
+            );
+          })}
+        </div>
+
+        {daily?.goal.headline && (
+          <p className="text-sm text-slate-700 leading-relaxed pt-1">{daily.goal.headline}</p>
+        )}
+
+        <div className="flex items-center gap-2 pt-1">
+          <span className="text-[11px] font-bold text-slate-600">כמה זמן ביום?</span>
+          {[15, 30, 60].map((m) => (
+            <button
+              key={m}
+              onClick={() => {
+                setTarget(plan.targetGrade ?? 'boost', m);
+                onTargetSet();
+              }}
+              className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-colors ${
+                (plan.minutesPerDay ?? DEFAULT_MINUTES_PER_DAY) === m
+                  ? 'bg-slate-900 border-slate-900 text-white'
+                  : 'bg-slate-900/[0.03] border-slate-900/10 text-slate-700 hover:bg-slate-900/[0.06]'
+              }`}
+            >
+              {`${m} דק׳`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Today's tasks, in priority order, each saying why it is on the list. */}
+      {daily && daily.tasks.length > 0 && (
+        <div className="surface-premium rounded-3xl p-5 space-y-3">
+          <div className="flex items-baseline justify-between">
+            <div className="text-[11px] font-black tracking-widest text-violet-700 uppercase">
+              המשימות של היום
+            </div>
+            <span className="text-[11px] font-bold text-slate-500">
+              {`כ-${daily.totalMinutes} דק׳`}
+            </span>
+          </div>
+
+          {daily.tasks.map((task, i) => (
+            <Link
+              key={task.href}
+              href={task.href}
+              className="flex items-start gap-3 rounded-2xl border border-slate-900/10 bg-slate-900/[0.02] hover:bg-slate-900/[0.05] px-3.5 py-3 transition-colors"
+            >
+              <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-violet-500/15 border border-violet-400/30 flex items-center justify-center text-[11px] font-black text-violet-800">
+                {i + 1}
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm font-black text-slate-900 leading-tight">
+                  {task.title}
+                </span>
+                <span className="block text-[11px] text-slate-600 leading-snug mt-0.5">
+                  {task.why}
+                </span>
+              </span>
+              <ArrowLeft className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+            </Link>
+          ))}
+
+          {daily.deferred > 0 && (
+            <p className="text-[11px] text-slate-500">
+              {daily.deferred === 1
+                ? 'עוד משימה אחת מחכה — היא תיכנס כשיתפנה זמן.'
+                : `עוד ${daily.deferred} משימות מחכות — הן ייכנסו כשיתפנה זמן.`}
+            </p>
+          )}
+        </div>
+      )}
+    </motion.section>
   );
 }
