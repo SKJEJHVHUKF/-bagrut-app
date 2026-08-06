@@ -11,9 +11,11 @@
 
 import type { GhostReplay, TopicGhostReplays } from './types';
 import { complexNumbersGhostReplays } from './math5/complex-numbers';
+import { vectorsGhostReplays } from './math5/vectors';
 
 const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:מספרים מרוכבים': complexNumbersGhostReplays,
+  'math5:וקטורים במרחב': vectorsGhostReplays,
 };
 
 function key(subject: string, topic: string): string {

@@ -45,6 +45,11 @@ const ROOTS = [
   'content/advanced-courses',
   'content/past-bagruyot',
   'content/topics',
+  // Added after a Hebrew \text{} inside $$...$$ shipped in a Ghost Replay and
+  // only verify-content caught it — this gate was blind to the directory.
+  'content/ghost-replay',
+  'content/concept-quiz',
+  'content/cognition',
 ].filter((d) => {
   try {
     return statSync(d).isDirectory();

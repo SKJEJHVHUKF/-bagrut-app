@@ -259,6 +259,109 @@ num('da-011 d=3.6', Math.abs(mDot([3, 4, 0], [3, 2.25, 13.5]) - 36) / mNorm([3, 
 // da-012: d(P(1,0,0), line through O dir (0,1,1)) = 1
 num('da-012 d=1', mNorm(mCross([1, 0, 0], [0, 1, 1])) / mNorm([0, 1, 1]), 1);
 
+// ============================================================
+// Ghost Replay (content/ghost-replay/math5/vectors.ts)
+// ============================================================
+// Not just the five answers — every number INVENTED inside a failure branch
+// too. That prose is where wrong numbers hide, because nothing else checks it
+// (see lessons_learned, 2026-08-05).
+
+// --- gr-vec-basic-012: SM and SC in a pyramid over a parallelogram ---
+// Symbolic identity, checked numerically over pseudo-random u, v, w.
+{
+  let good = 0;
+  for (let i = 0; i < 200; i++) {
+    const u: V = [(i % 7) - 3, ((i * 3) % 5) - 2, ((i * 5) % 9) - 4];
+    const v: V = [((i * 2) % 8) - 3, (i % 6) - 2, ((i * 7) % 5) - 1];
+    const w: V = [((i * 4) % 5) - 1, ((i * 9) % 7) - 3, (i % 4) - 2];
+    const A: V = [0, 0, 0];
+    const B = mAdd(A, u), D = mAdd(A, v), S = mAdd(A, w);
+    const C = mAdd(mAdd(A, u), v);                 // parallelogram base
+    const M = mScale(0.5, mAdd(A, C));             // diagonals bisect each other
+    const SM = mSub(M, S), SC = mSub(C, S), SA = mSub(A, S);
+    const ok =
+      mNorm(mSub(SM, mSub(mAdd(mScale(0.5, u), mScale(0.5, v)), w))) < 1e-9 &&
+      mNorm(mSub(SC, mSub(mAdd(u, v), w))) < 1e-9 &&
+      mNorm(mSub(mScale(0.5, mAdd(SA, SC)), SM)) < 1e-9 &&
+      mNorm(mSub(mSub(M, A), mScale(0.5, mAdd(u, v)))) < 1e-9 &&
+      mNorm(mSub(M, mScale(0.5, mAdd(B, D)))) < 1e-9;   // M is midpoint of BD too
+    if (ok) good++;
+  }
+  num('ghost basic-012: 200 random (u,v,w) satisfy SM, SC, the identity, AM and both diagonals', good, 200);
+}
+
+// --- gr-vec-dot-011: right angle at A ---
+{
+  const A: V = [1, 0, 2], B: V = [3, 2, 0];
+  const AC = (t: number): V => mSub([t, 1, 1], A);
+  vec('ghost dot-011: AB = (2,2,-2)', mSub(B, A), [2, 2, -2]);
+  num('ghost dot-011: AB.AC = 2t+2 at t=3.5', mDot(mSub(B, A), AC(3.5)), 9);
+  num('ghost dot-011: t=-1 gives 0', mDot(mSub(B, A), AC(-1)), 0);
+  vec('ghost dot-011: AC at t=-1 is (-2,1,-1)', AC(-1), [-2, 1, -1]);
+  num('ghost dot-011 branch: t=1 (sign slip) leaves 4, not 0', mDot(mSub(B, A), AC(1)), 4);
+  num('ghost dot-011 branch: t=0 (C used as AC) leaves 2, not 0', mDot(mSub(B, A), AC(0)), 2);
+  num('ghost dot-011 branch: t=3 leaves 8, not 0', mDot(mSub(B, A), AC(3)), 8);
+  num('ghost dot-011 branch: CA reversed still roots at t=-1 — branch says so', mDot(mSub(B, A), mSub(A, AC(-1) as V)) === 0 ? 0 : mDot(mSub(B, A), mScale(-1, AC(-1))), 0);
+  num('ghost dot-011 branch: |AB| = 2sqrt3 and |AC| = sqrt6, so NOT isosceles', mNorm(mSub(B, A)) - 2 * Math.sqrt(3), 0);
+  num('ghost dot-011 branch: |AC| at t=-1 is sqrt6', mNorm(AC(-1)), Math.sqrt(6));
+}
+
+// --- gr-vec-cross-011: parallelogram vertex + area ---
+{
+  const A: V = [2, 1, 0], B: V = [5, 1, 0], D: V = [2, 4, 3];
+  const AB = mSub(B, A), AD = mSub(D, A);
+  vec('ghost cross-011: C = B + AD = (5,4,3)', mAdd(B, AD), [5, 4, 3]);
+  vec('ghost cross-011: cross = (0,-9,9)', mCross(AB, AD), [0, -9, 9]);
+  num('ghost cross-011: area = 9sqrt2', mNorm(mCross(AB, AD)), 9 * Math.SQRT2);
+  num('ghost cross-011: AB.AD = 0 — it is secretly a RECTANGLE', mDot(AB, AD), 0);
+  num('ghost cross-011: |AB|*|AD| coincides with the area here', mNorm(AB) * mNorm(AD), 9 * Math.SQRT2);
+  num('ghost cross-011: on a NON-rectangle the shortcut overshoots (13.08 vs 12.73)',
+    Math.round((mNorm([3, 0, 0]) * mNorm([1, 3, 3]) - mNorm(mCross([3, 0, 0], [1, 3, 3]))) * 1e6) > 0 ? 1 : 0, 1);
+  vec('ghost cross-011 branch: A+B+D = (9,6,3)', mAdd(mAdd(A, B), D), [9, 6, 3]);
+  vec('ghost cross-011 branch: B + DA = (5,-2,-3)', mAdd(B, mSub(A, D)), [5, -2, -3]);
+  vec('ghost cross-011 branch: D + DA = A = (2,1,0)', mAdd(D, mSub(A, D)), [2, 1, 0]);
+  num('ghost cross-011 branch: (0,9,9) is a WRONG vector with the SAME magnitude', mNorm([0, 9, 9]), 9 * Math.SQRT2);
+  num('ghost cross-011 branch: half the cross is the triangle', mNorm(mCross(AB, AD)) / 2, 4.5 * Math.SQRT2);
+  num('ghost cross-011 branch: sum-of-lengths is not area, |AB|=3', mNorm(AB), 3);
+  num('ghost cross-011: |AD| = 3sqrt2', mNorm(AD), 3 * Math.SQRT2);
+}
+
+// --- gr-vec-lp-011: plane containing AC, parallel to SD ---
+{
+  const AC: V = [6, 18, 0], SD: V = [6, 8, -12], n: V = [18, -6, 5];
+  num('ghost lp-011: n.AC = 0', mDot(n, AC), 0);
+  num('ghost lp-011: n.SD = 0', mDot(n, SD), 0);
+  num('ghost lp-011: C(6,18,0) satisfies 18x-6y+5z=0', mDot(n, [6, 18, 0]), 0);
+  num('ghost lp-011: A(0,0,0) gives d=0', mDot(n, [0, 0, 0]), 0);
+  num('ghost lp-011 branch: (-18,6,5).SD = -120', mDot([-18, 6, 5], SD), -120);
+  num('ghost lp-011 branch: (1,3,0).SD = 30', mDot([1, 3, 0], SD), 30);
+  num('ghost lp-011 branch: (3,4,-6).AC = 90', mDot([3, 4, -6], AC), 90);
+  num('ghost lp-011 branch: 18-6+5 = 17, the traceable "plug something in" slip', 18 - 6 + 5, 17);
+  vec('ghost lp-011: AC reduces to (1,3,0)', mScale(1 / 6, AC), [1, 3, 0]);
+  vec('ghost lp-011: SD reduces to (3,4,-6)', mScale(1 / 2, SD), [3, 4, -6]);
+}
+
+// --- gr-vec-da-005: distance from a point to a line ---
+{
+  const QP: V = [1, 2, 3], v: V = [1, 1, 0];
+  vec('ghost da-005: cross = (-3,3,-1)', mCross(QP, v), [-3, 3, -1]);
+  num('ghost da-005: |cross| = sqrt19', mNorm(mCross(QP, v)), Math.sqrt(19));
+  num('ghost da-005: d = sqrt38/2', mNorm(mCross(QP, v)) / mNorm(v), Math.sqrt(38) / 2);
+  num('ghost da-005: d ~= 3.0822', mNorm(mCross(QP, v)) / mNorm(v), 3.0822070014844885);
+  num('ghost da-005: |QP| = sqrt14 ~= 3.7417', mNorm(QP), 3.7416573867739413);
+  num('ghost da-005: the projection along the line is 3/sqrt2 ~= 2.1213', mDot(QP, v) / mNorm(v), 2.1213203435596424);
+  num('ghost da-005: projection^2 + d^2 = |QP|^2 = 14',
+    (mDot(QP, v) / mNorm(v)) ** 2 + (mNorm(mCross(QP, v)) / mNorm(v)) ** 2, 14);
+  num('ghost da-005 branch: (-3,-3,-1) is WRONG with the SAME magnitude', mNorm([-3, -3, -1]), Math.sqrt(19));
+  num('ghost da-005 branch: component-wise (1,2,0) has magnitude sqrt5', mNorm([1, 2, 0]), Math.sqrt(5));
+  num('ghost da-005 branch: QP.v = 3 is the SCALAR product', mDot(QP, v), 3);
+  num('ghost da-005 branch: sqrt19/2 ~= 2.1794 (divided by 2, not sqrt2)', Math.sqrt(19) / 2, 2.179449471770337);
+  num('ghost da-005 branch: sqrt19 ~= 4.3589 EXCEEDS |QP| — the sanity check kills it',
+    Math.sqrt(19) > mNorm(QP) ? 1 : 0, 1);
+  num('ghost da-005 branch: sqrt19 - sqrt2 ~= 2.9448, plausible but from a wrong operation',
+    Math.sqrt(19) - Math.SQRT2, 2.944685381167579);
+}
+
 console.log(`\n${pass} passed, ${fail} failed.`);
 if (fail > 0) process.exit(1);
 
