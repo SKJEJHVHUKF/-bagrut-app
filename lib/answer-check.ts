@@ -55,11 +55,44 @@ export type AnswerSpec =
 
 export type Verdict = 'correct' | 'wrong' | 'manual' | 'unparseable';
 
+/**
+ * Why a wrong answer is wrong — when it is wrong in a recognisable way.
+ *
+ * This is the open-question equivalent of `distractorNotes`. An MCQ distractor
+ * comes with an authored explanation of the wrong idea behind it; a typed
+ * answer has nothing, so until now "wrong" was all the app could ever say
+ * about it — and the private tutor had to spend an API call to guess what the
+ * student had actually done.
+ *
+ * But `checkAnswer` already parses BOTH sides and then throws the comparison
+ * away. These are the cases where the shape of the difference names the mistake
+ * on its own, with no model and no guessing:
+ *
+ *   sign-flip   the student's value is exactly the negative of the answer
+ *   conjugate   exactly the complex conjugate — the classic מרוכבים slip
+ *   partial-set found k of n roots (`missing` says how many)
+ *   extra-root  every correct root PLUS at least one more — almost always a
+ *               solution that the domain should have rejected, which is the
+ *               single most common ln/√ mistake in the syllabus
+ *
+ * `null` when the answer is wrong in a way we cannot characterise. Saying
+ * nothing is correct there: a confident wrong diagnosis is worse than none.
+ */
+export type AnswerDiagnosis =
+  | { kind: 'sign-flip' }
+  | { kind: 'conjugate' }
+  | { kind: 'partial-set'; found: number; total: number }
+  | { kind: 'extra-root'; extra: number };
+
 export type CheckResult = {
   verdict: Verdict;
   /** The complex value(s) we parsed the student input into (for debugging
    *  / showing "we read your answer as …"). */
   readAs?: string;
+  /** Set only when `verdict` is 'wrong' AND the difference has a recognisable
+   *  shape. Consumed by lib/tutor-local to answer "why is my answer wrong"
+   *  with no API call. */
+  diagnosis?: AnswerDiagnosis;
 };
 
 const TOL = 1e-7;
@@ -210,6 +243,48 @@ function sameSet(student: Cx[], expected: Cx[]): boolean {
   return true;
 }
 
+const neg = (c: Cx): Cx => ({ re: -c.re, im: -c.im });
+const conj = (c: Cx): Cx => ({ re: c.re, im: -c.im });
+
+/** Every member of `sub` appears in `sup` (multiset containment). */
+function contains(sup: Cx[], sub: Cx[]): boolean {
+  const used = new Array(sup.length).fill(false);
+  for (const x of sub) {
+    const i = sup.findIndex((y, k) => !used[k] && eq(y, x));
+    if (i === -1) return false;
+    used[i] = true;
+  }
+  return true;
+}
+
+/**
+ * Name the mistake, when its shape names itself.
+ *
+ * Ordered most-specific first. `conjugate` is checked before `sign-flip`
+ * because for a purely imaginary value the two coincide, and "you flipped the
+ * sign of the imaginary part" is the more useful reading in a topic where the
+ * conjugate is an operation the student was probably reaching for.
+ */
+function diagnose(student: Cx[], expected: Cx[]): AnswerDiagnosis | undefined {
+  if (student.length === 1 && expected.length === 1) {
+    const [s] = student;
+    const [e] = expected;
+    if (e.im !== 0 && eq(s, conj(e))) return { kind: 'conjugate' };
+    if (eq(s, neg(e))) return { kind: 'sign-flip' };
+    return undefined;
+  }
+  // Found some of the roots but not all — and nothing invented.
+  if (student.length < expected.length && student.length > 0 && contains(expected, student)) {
+    return { kind: 'partial-set', found: student.length, total: expected.length };
+  }
+  // Everything correct, plus something extra. In this syllabus that is nearly
+  // always a root the domain should have rejected (ln, √, denominators).
+  if (student.length > expected.length && contains(student, expected)) {
+    return { kind: 'extra-root', extra: student.length - expected.length };
+  }
+  return undefined;
+}
+
 /**
  * Check a student's typed answer against the spec. Pure + deterministic.
  */
@@ -224,9 +299,11 @@ export function checkAnswer(studentRaw: string, spec: AnswerSpec): CheckResult {
     const expected = evalCx(spec.value);
     if (!student) return { verdict: 'unparseable' };
     if (!expected) return { verdict: 'manual' }; // bad spec — don't false-fail
+    const ok = eq(student, expected);
     return {
-      verdict: eq(student, expected) ? 'correct' : 'wrong',
+      verdict: ok ? 'correct' : 'wrong',
       readAs: fmt(student),
+      ...(ok ? {} : { diagnosis: diagnose([student], [expected]) }),
     };
   }
 
@@ -237,9 +314,11 @@ export function checkAnswer(studentRaw: string, spec: AnswerSpec): CheckResult {
   if (expectedItems.some((x) => x === null)) return { verdict: 'manual' };
   const s = studentItems as Cx[];
   const e = expectedItems as Cx[];
+  const ok = sameSet(s, e);
   return {
-    verdict: sameSet(s, e) ? 'correct' : 'wrong',
+    verdict: ok ? 'correct' : 'wrong',
     readAs: s.map(fmt).join(', '),
+    ...(ok ? {} : { diagnosis: diagnose(s, e) }),
   };
 }
 

@@ -35,6 +35,7 @@
  */
 
 import type { PracticeQuestion, SubTopic } from '@/content/lessons/types';
+import type { AnswerDiagnosis } from '@/lib/answer-check';
 
 const EVENT = 'tutor-focus';
 
@@ -62,6 +63,18 @@ export type TutorFocus = {
    *  wrong — the key into `question.distractorNotes`, where every distractor
    *  already has an authored explanation of the misconception behind it. */
   chosenIndex?: number;
+  /**
+   * For a TYPED answer: the shape of the mistake, when it has one.
+   *
+   * The open-question counterpart of `chosenIndex`. An MCQ hands the tutor a
+   * distractor with an authored note; a typed answer used to hand it nothing,
+   * so "why is my answer wrong" on an open question could only ever be
+   * answered by paying for a model to guess. `lib/answer-check` already
+   * compares both sides — this carries the comparison through instead of
+   * discarding it. Absent when the answer is wrong in no recognisable way,
+   * which is the honest outcome.
+   */
+  answerDiagnosis?: AnswerDiagnosis;
 };
 
 let current: TutorFocus | null = null;

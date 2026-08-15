@@ -30,6 +30,7 @@ import { AITutorActions } from '@/components/practice/AITutorActions';
 import { buttonTap } from '@/lib/animations';
 import { celebrateCorrect } from '@/lib/confetti';
 import { seededOrder } from '@/lib/shuffle';
+import { announce } from '@/lib/a11y/announce';
 import { checkAnswer, type CheckResult } from '@/lib/answer-check';
 import { recordResult, type ResultSource } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
@@ -129,7 +130,12 @@ export function QuestionRunnerCard({
       // lets lib/tutor-local answer the common asks with no API call at all.
       question: q,
       subTopic: subTopic ?? undefined,
-      ...(wrong && missedIndex !== null ? { chosenIndex: missedIndex } : {}),
+      // Decoupled from `wrong`: an MCQ pick and a typed answer are different
+      // evidence, and gating both on the same flag meant a typed answer with a
+      // perfectly good diagnosis reached the tutor as "he got it wrong" and
+      // nothing more.
+      ...(missedIndex !== null ? { chosenIndex: missedIndex } : {}),
+      ...(check?.diagnosis ? { answerDiagnosis: check.diagnosis } : {}),
       ...(wrong ? { wrongAnswer: wrong } : {}),
       // Only once the page itself has revealed it — the tutor must not be
       // handed the answer while the student is still working on it.
@@ -138,7 +144,7 @@ export function QuestionRunnerCard({
         : {}),
     });
     return () => setTutorFocus(null);
-  }, [q, subId, topic, subTopic, firstTryCorrect, missedWith, missedIndex, revealed]);
+  }, [q, subId, topic, subTopic, firstTryCorrect, missedWith, missedIndex, check, revealed]);
 
   // Log the FIRST attempt exactly once (that's the measured one). Wrong first
   // attempts also seed the error notebook and give us a mistakeId to tag.
@@ -207,8 +213,13 @@ export function QuestionRunnerCard({
     }
   }
 
+  // The verdict is conveyed by colour and by confetti — neither of which
+  // reaches a screen reader. gradeCorrect/gradeWrong are the two funnels every
+  // MCQ and open-answer path already flows through, so announcing here covers
+  // all of them without touching the callers.
   function gradeCorrect() {
     celebrateCorrect();
+    announce('תשובה נכונה');
     setRevealed(true);
   }
 
@@ -216,6 +227,14 @@ export function QuestionRunnerCard({
   // retry; on the second, reveal the full solution.
   function gradeWrong() {
     openNextRungAutomatically();
+    // Mirrors the reveal condition below so the announcement never promises a
+    // retry the card is not actually offering.
+    announce(
+      tries >= 2
+        ? 'תשובה שגויה. הפתרון המלא נחשף.'
+        : 'תשובה שגויה. נפתחה עזרה נוספת — אפשר לנסות שוב.',
+      'assertive',
+    );
     if (tries >= 2) setRevealed(true);
   }
 
@@ -229,9 +248,11 @@ export function QuestionRunnerCard({
 
   function onOpenTier(tier: HelpTier) {
     if (tier.kind === 'full') {
+      announce('הפתרון המלא נחשף');
       setRevealed(true);
       return;
     }
+    announce(`${tier.title} נפתח`);
     setOpenedLevels((prev) => (prev.includes(tier.level) ? prev : [...prev, tier.level]));
   }
 
