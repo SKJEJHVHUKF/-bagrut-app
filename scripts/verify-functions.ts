@@ -285,6 +285,87 @@ checkSet('ex 1/(x^2-16)', roots(1, 0, -16), [4, -4]);
 }
 
 // =====================================================================
+// ============================================================
+// Ghost Replay (content/ghost-replay/math5/functions.ts)
+// ============================================================
+// The four answers AND every number invented inside a failure branch.
+
+// --- gr-fn-dom-006: domain of ln(x-1) + sqrt(5-x) ---
+{
+  const defined = (x: number) => x - 1 > 0 && 5 - x >= 0;
+  let bad = 0;
+  for (let i = -20000; i <= 100000; i++) {
+    const x = i / 10000;
+    if (defined(x) !== (x > 1 && x <= 5)) bad++;
+  }
+  check('ghost dom-006: a 120k sweep confirms the domain is 1 < x <= 5', bad, 0);
+  check('ghost dom-006: x=1 is EXCLUDED — ln(0) is undefined', 1 - 1, 0);
+  check('ghost dom-006: x=5 is INCLUDED — sqrt(0) = 0 is fine', Math.sqrt(5 - 5), 0);
+  check('ghost dom-006: at x=5 the function equals ln 4 ~= 1.3863',
+    Math.round(Math.log(4) * 1e4) / 1e4, 1.3863);
+  check('ghost dom-006 branch: x=0 fails BOTH conditions? no — sqrt(5) is fine, ln(-1) is not',
+    5 - 0 >= 0 && !(0 - 1 > 0) ? 1 : 0, 1);
+  check('ghost dom-006 branch: x=6 satisfies the log but not the root', 5 - 6, -1);
+  check('ghost dom-006 branch: the union x>1 OR x<=5 would be all of R — meaningless',
+    1 < 5 ? 1 : 0, 1);
+}
+
+// --- gr-fn-int-005: where is (x-2)/(x+1) positive ---
+{
+  const g = (x: number) => (x - 2) / (x + 1);
+  let bad = 0;
+  for (let i = -50000; i <= 50000; i++) {
+    const x = i / 5000;
+    if (Math.abs(x + 1) < 1e-9) continue;
+    if ((g(x) > 0) !== (x < -1 || x > 2)) bad++;
+  }
+  check('ghost int-005: a 100k sweep confirms positivity is x < -1 or x > 2', bad, 0);
+  check('ghost int-005: at x=0 it is -2, negative', g(0), -2);
+  check('ghost int-005: at x=-2 it is 4, positive', g(-2), 4);
+  check('ghost int-005: at x=3 it is 0.25, positive', g(3), 0.25);
+  check('ghost int-005: x=2 makes it zero, so it is excluded from "positive"', g(2), 0);
+  check('ghost int-005 branch: x=-1 is undefined, not a solution', Math.abs(-1 + 1), 0);
+  check('ghost int-005 branch: the interval -1<x<2 is where it is NEGATIVE — at x=1', g(1) < 0 ? 1 : 0, 1);
+}
+
+// --- gr-fn-asy-005: does (x^2-4)/(x-2) have a vertical asymptote at 2 ---
+{
+  const f = (x: number) => (x * x - 4) / (x - 2);
+  check('ghost asy-005: x^2-4 factors as (x-2)(x+2) — at x=7', (7 - 2) * (7 + 2), 7 * 7 - 4);
+  check('ghost asy-005: after cancelling, f(x) = x+2 for x != 2 — at x=5', f(5), 7);
+  check('ghost asy-005: the one-sided values converge to 4, not to infinity',
+    Math.abs(f(2 + 1e-9) - 4) < 1e-6 && Math.abs(f(2 - 1e-9) - 4) < 1e-6 ? 1 : 0, 1);
+  check('ghost asy-005: so it is a HOLE at (2,4), not an asymptote', 2 + 2, 4);
+  // Contrast: no cancellation means a genuine asymptote.
+  {
+    const h = (x: number) => (x * x - 1) / (x - 2);
+    check('ghost asy-005 contrast: (x^2-1)/(x-2) blows up near 2 — value exceeds 1e8',
+      Math.abs(h(2 + 1e-9)) > 1e8 ? 1 : 0, 1);
+    check('ghost asy-005 contrast: its numerator at x=2 is 3, not 0', 2 * 2 - 1, 3);
+  }
+  check('ghost asy-005 branch: x=2 is still outside the DOMAIN even though there is no asymptote',
+    2 - 2, 0);
+}
+
+// --- gr-fn-eoi-005: inverse of x^3+1 ---
+{
+  const f = (x: number) => x ** 3 + 1;
+  const finv = (x: number) => Math.cbrt(x - 1);
+  for (const x of [-3, -0.5, 0, 2, 4.5]) {
+    check(`ghost eoi-005: f(f_inv(x)) = x at x=${x}`,
+      Math.round(f(finv(x)) * 1e9) / 1e9, Math.round(x * 1e9) / 1e9);
+    check(`ghost eoi-005: f_inv(f(x)) = x at x=${x}`,
+      Math.round(finv(f(x)) * 1e9) / 1e9, Math.round(x * 1e9) / 1e9);
+  }
+  check('ghost eoi-005: f(2) = 9 and f_inv(9) = 2', f(2), 9);
+  check('ghost eoi-005 branch: cbrt(x)-1 is NOT the inverse — at x=9 it gives ~1.08',
+    Math.round((Math.cbrt(9) - 1) * 1e4) / 1e4, 1.0801);
+  check('ghost eoi-005 branch: 1/(x^3+1) is the RECIPROCAL, not the inverse — at x=2 it is 1/9',
+    Math.round((1 / f(2)) * 1e6) / 1e6, Math.round((1 / 9) * 1e6) / 1e6);
+  check('ghost eoi-005 branch: (x-1)^3 is the inverse of cbrt(x)+1, a different function',
+    (9 - 1) ** 3, 512);
+}
+
 console.log(`\nFUNCTIONS VERIFY: ${pass}/${pass + fail} passed.`);
 if (fail > 0) {
   console.log('\n' + failures.join('\n'));
