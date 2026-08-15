@@ -478,17 +478,25 @@ import { getSubTopics as getSTs } from '../content/lessons';
 section('tutor-local — intent classification');
 
 // Must be recognised: these are the asks the content can genuinely answer.
+// ⚠️ 'רמז' and 'מאיפה מתחילים' both classify as `help`, NOT as a specific rung.
+// Which rung the student receives is the help-ladder's decision, taken against
+// the actual question — a 2-step question has no first-step rung at all, and a
+// reply headed "הצעד הראשון:" over a hint body is a lie. Classification names
+// the ASK; the ladder names the ANSWER.
 const RECOGNISED: [string, string][] = [
-  ['תן לי רמז', 'hint'],
-  ['אני תקוע', 'hint'],
-  ['לא הבנתי', 'hint'],
-  ['מאיפה מתחילים?', 'first-step'],
-  ['מה הצעד הראשון?', 'first-step'],
+  ['תן לי רמז', 'help'],
+  ['אני תקוע', 'help'],
+  ['לא הבנתי', 'help'],
+  ['מאיפה מתחילים?', 'help'],
+  ['מה הצעד הראשון?', 'help'],
   ['למה התשובה שלי שגויה?', 'why-wrong'],
   ['איפה טעיתי?', 'why-wrong'],
   ['תראה לי את הפתרון המלא', 'full'],
   ['איזו נוסחה צריך פה?', 'formulas'],
   ['מה חשוב לזכור פה?', 'key-points'],
+  // The app's own one-tap chip. It contains neither 'מה חשוב' nor 'מה לזכור',
+  // so before this it was the single button guaranteed to cost an API call.
+  ['מה הכי חשוב לדעת פה לבגרות?', 'key-points'],
 ];
 for (const [msg, want] of RECOGNISED) {
   assert(classifyAsk(msg) === want, `"${msg}" → ${want}`);
@@ -523,9 +531,25 @@ const mcq = mcqPair?.q;
 assert(!!mcq, 'fixture: the bank has an MCQ with authored distractor notes');
 
 assert(answerLocally('תן לי רמז', null) === null, 'no focus → no local answer');
+// A screen that shows a question we hold no object for (the bagrut view) used
+// to send all six asks to the API. It now answers honestly — it says it cannot
+// see the breakdown and asks for the student's last line — which is both
+// cheaper and truer than a model guessing at a question it was never given.
+const noObj = answerLocally('תן לי רמז', { where: 'שאלת בגרות', questionText: 'סעיף א' });
+assert(!!noObj, 'a question with no object still gets a local answer');
 assert(
-  answerLocally('תן לי רמז', { where: 'x' }) === null,
-  'focus with no question object → no local answer',
+  !!noObj && !noObj.text.includes('{'),
+  'and it is slotless, so it cannot break',
+);
+// With no question and no sub-topic there is nothing true to SAY about the
+// material — but there is still something true to say about the situation, and
+// that is cheaper and more useful than paying a model to discover it has no
+// context either. What it must never do is pretend to see something.
+const emptyScreen = answerLocally('תן לי רמז', { where: 'x' });
+assert(!!emptyScreen, 'an empty screen is answered honestly rather than sent to the API');
+assert(
+  !!emptyScreen && !emptyScreen.text.includes('{') && emptyScreen.text.includes('אין'),
+  'and the answer says outright that there is nothing on screen',
 );
 
 if (mcq) {
@@ -545,17 +569,37 @@ if (mcq) {
     'and the explanation is the AUTHORED note for that exact option, verbatim',
   );
 
-  // The correct option has no authored note — nothing to serve, so abstain
-  // rather than reach for a neighbouring note.
+  // An option with no authored note is state C. It used to `return null` — the
+  // one cell in the module that paid for an API call on a request that had
+  // written material behind it. It now says so plainly and hands over the rule
+  // instead, and it must NEVER borrow a neighbouring distractor's note.
   const noNote = answerLocally('למה התשובה שלי שגויה?', {
     ...focus,
     chosenIndex: mcq.correct,
   });
-  assert(noNote === null, 'no authored note for that option → falls through to the tutor');
-
+  assert(!!noNote, 'an option with no authored note is answered, not skipped');
+  const otherNotes = (mcq.distractorNotes ?? []).filter((n) => !!n && n.trim());
   assert(
-    answerLocally('למה התשובה שלי שגויה?', { ...focus, chosenIndex: undefined }) === null,
-    'without a recorded pick there is nothing to explain locally',
+    !!noNote && !otherNotes.some((n) => noNote.text.includes(n!.trim())),
+    'and it does not borrow a neighbouring option’s explanation',
+  );
+
+  // "Why is my answer wrong" BEFORE answering is a real thing students type —
+  // usually about an option they are considering. The old code fell through to
+  // the API; the danger now is the opposite one, so assert it explicitly: it
+  // must not describe a mistake that has not happened.
+  const preAnswer = answerLocally('למה התשובה שלי שגויה?', {
+    ...focus,
+    chosenIndex: undefined,
+  });
+  assert(!!preAnswer, 'asking before answering is handled locally');
+  assert(
+    !!preAnswer && !preAnswer.text.includes('בחרת'),
+    'and it does NOT claim the student chose anything',
+  );
+  assert(
+    !!preAnswer && (preAnswer.text.includes('לא אנחש') || preAnswer.text.includes('לא נרשמה')),
+    'it says plainly that there is nothing to compare against',
   );
 
   // Escalation: asking twice must not repeat the same rung.
