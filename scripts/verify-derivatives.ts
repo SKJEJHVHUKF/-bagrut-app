@@ -261,6 +261,87 @@ dcheck("bag008 a v=s'=3t^2-24t+36", 't^3 - 12t^2 + 36t + 5', '3t^2 - 24t + 36', 
 }
 
 // ============================================================
+// Ghost Replay (content/ghost-replay/math5/derivatives.ts)
+// ============================================================
+// The four answers AND every number invented inside a failure branch.
+
+// --- gr-der-rules-006: quotient rule on (x+1)/(x-1) ---
+{
+  const f = (x: number) => (x + 1) / (x - 1);
+  const fp = (x: number) => -2 / (x - 1) ** 2;
+  // Numeric derivative, independent of the authored algebra.
+  for (const x of [-3, -0.5, 0, 2, 4.5]) {
+    const h = 1e-6;
+    check(`ghost rules-006: f' matches a numeric derivative at x=${x}`,
+      Math.round(((f(x + h) - f(x - h)) / (2 * h)) * 1e5) / 1e5,
+      Math.round(fp(x) * 1e5) / 1e5);
+  }
+  check('ghost rules-006: the numerator collapses to -2', (x => 1 * (x - 1) - (x + 1) * 1)(7), -2);
+  check('ghost rules-006: f\' is negative everywhere it is defined', fp(5) < 0 && fp(-5) < 0 ? 1 : 0, 1);
+  // Branch: swapping the numerator order gives +2/(x-1)^2 — the wrong SIGN.
+  check('ghost rules-006 branch: uv\'-u\'v reverses the sign', (x => (x + 1) * 1 - 1 * (x - 1))(7), 2);
+  // Branch: "derivative of a quotient = quotient of derivatives" gives 1.
+  check('ghost rules-006 branch: u\'/v\' would give 1, a constant — clearly wrong', 1 / 1, 1);
+  // Branch: forgetting to square the denominator.
+  check('ghost rules-006 branch: -2/(x-1) at x=3 is -1, but the true value is -0.5', -2 / (3 - 1), -1);
+  check('ghost rules-006: the true f\'(3) = -0.5', fp(3), -0.5);
+}
+
+// --- gr-der-tan-004: where is the slope of y=x^2 equal to 4 ---
+check('ghost tan-004: f\'(x) = 2x, so 2x = 4 gives x = 2', 4 / 2, 2);
+check('ghost tan-004: the point is (2,4) — f(2) = 4', 2 ** 2, 4);
+check('ghost tan-004 branch: f(4) = 16 — plugging the SLOPE into f', 4 ** 2, 16);
+check('ghost tan-004 branch: at x=4 the slope is 8, not 4', 2 * 4, 8);
+check('ghost tan-004 branch: at x=1 the slope is 2, not 4', 2 * 1, 2);
+check('ghost tan-004: the tangent there is y = 4x - 4, and it does pass through (2,4)', 4 * 2 - 4, 4);
+
+// --- gr-der-ext-005: extrema of x^2-4x on the closed [0,3] ---
+{
+  const f = (x: number) => x * x - 4 * x;
+  check('ghost ext-005: f\'(x) = 2x-4 vanishes at x=2', 4 / 2, 2);
+  check('ghost ext-005: x=2 is inside [0,3]', 2 > 0 && 2 < 3 ? 1 : 0, 1);
+  check('ghost ext-005: f(2) = -4', f(2), -4);
+  check('ghost ext-005: f(0) = 0', f(0), 0);
+  check('ghost ext-005: f(3) = -3', f(3), -3);
+  check('ghost ext-005: the maximum is 0, AT THE ENDPOINT x=0', Math.max(f(0), f(2), f(3)), 0);
+  check('ghost ext-005: the minimum is -4', Math.min(f(0), f(2), f(3)), -4);
+  // A dense sweep confirms no interior value beats the endpoint.
+  {
+    let mx = -Infinity, mn = Infinity;
+    for (let i = 0; i <= 300000; i++) { const x = (i / 300000) * 3; mx = Math.max(mx, f(x)); mn = Math.min(mn, f(x)); }
+    check('ghost ext-005: a 300k-point sweep of [0,3] agrees on the max', Math.abs(mx - 0) < 1e-9 ? 1 : 0, 1);
+    check('ghost ext-005: ...and on the min', Math.abs(mn - -4) < 1e-9 ? 1 : 0, 1);
+  }
+  check('ghost ext-005 branch: -3 is f(3), the OTHER endpoint — not the maximum', f(3), -3);
+  check('ghost ext-005 branch: reporting only the critical point misses the max entirely', f(2) < f(0) ? 1 : 0, 1);
+}
+
+// --- gr-der-opt-003: three-sided fence, 40 m ---
+{
+  const A = (x: number) => x * (40 - 2 * x);
+  check('ghost opt-003: the constraint 2x+y=40 gives y = 40-2x', 40 - 2 * 10, 20);
+  check('ghost opt-003: A(x) = 40x - 2x^2, so A\'(x) = 40-4x vanishes at x=10', 40 / 4, 10);
+  check('ghost opt-003: y = 20 at the optimum', 40 - 2 * 10, 20);
+  check('ghost opt-003: the maximum area is 200', A(10), 200);
+  check('ghost opt-003: A\'\' = -4 < 0, so it really is a maximum', -4 < 0 ? 1 : 0, 1);
+  check('ghost opt-003: the fence is used exactly — 2(10)+20 = 40', 2 * 10 + 20, 40);
+  {
+    let mx = -Infinity;
+    for (let i = 0; i <= 200000; i++) { const x = (i / 200000) * 20; mx = Math.max(mx, A(x)); }
+    check('ghost opt-003: a 200k sweep over the feasible range confirms 200', Math.abs(mx - 200) < 1e-9 ? 1 : 0, 1);
+  }
+  // Branch: treating it as a FOUR-sided fence gives a 10x10 square, area 100.
+  check('ghost opt-003 branch: four sides would give a 10x10 square of area 100', 10 * 10, 100);
+  check('ghost opt-003 branch: ...and that square uses only 2(10)+2(10) = 40 of fence, but leaves the wall unused',
+    2 * 10 + 2 * 10, 40);
+  check('ghost opt-003 branch: the true optimum is NOT a square — y = 2x', 20 / 10, 2);
+  // Branch: x = 20 uses all the fence on the two perpendicular sides, area 0.
+  check('ghost opt-003 branch: x=20 leaves y=0 and area 0', A(20), 0);
+  check('ghost opt-003 branch: x=40/3 (splitting the fence in three) gives ~177.8, less than 200',
+    Math.round(A(40 / 3) * 10) / 10, 177.8);
+}
+
+// ============================================================
 // REPORT
 // ============================================================
 console.log(`\n${pass}/${pass + fail} passed`);
