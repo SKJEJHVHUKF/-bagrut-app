@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { setTutorFocus } from '@/lib/tutor-presence';
 import { GraduationCap, ArrowLeft, ArrowRight, Sparkles, CheckCircle } from 'lucide-react';
 import { MathText } from './MathText';
 import { FormulaCard } from './FormulaCard';
@@ -32,6 +34,21 @@ export function SubTopicLesson({
   subTopic: SubTopic;
   nextSubTopic?: NextSubTopicRef;
 }) {
+  // ===== publish to the floating tutor =====
+  // A lesson has no question, so this publishes topic context only. That is
+  // still the difference between "תסביר לי את זה" landing on the right module
+  // and the tutor asking which "זה" the student means — and it is what routes
+  // the request to the grounded (verified-content) prompt instead of the
+  // generic one.
+  useEffect(() => {
+    setTutorFocus({
+      where: `שיעור · ${subTopic.title}`,
+      topic,
+      subTopicId: subTopic.id,
+    });
+    return () => setTutorFocus(null);
+  }, [topic, subTopic.id, subTopic.title]);
+
   const steps = subTopic.lesson ?? [];
   const backHref = `/practice/${subject}/${encodeURIComponent(topic)}`;
   const practiceHref = `/practice/${subject}/${encodeURIComponent(topic)}/sub/${subTopic.id}/practice`;

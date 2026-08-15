@@ -1,0 +1,502 @@
+'use client';
+
+/**
+ * TutorBubble — the tutor that stays beside the student instead of living on a
+ * page they have to go to.
+ *
+ * Mounted ONCE in the root layout, so it is present on every screen (see
+ * HIDDEN_PREFIXES for the handful of exceptions). Two things make it more than
+ * /chat in a corner:
+ *
+ *   1. IT SEES THE SCREEN. lib/tutor-presence lets the page publish the
+ *      question currently displayed; the bubble ships that as this turn's
+ *      context. "אני תקוע" is a complete sentence here — the student never
+ *      re-types the question.
+ *   2. IT SPEAKS FIRST WHEN IT MATTERS. A wrong answer lights a dot on the
+ *      bubble. That nudge is template-built from state the page already
+ *      published: $0, instant, and incapable of inventing a mistake.
+ *
+ * Deliberately EPHEMERAL in the UI: no conversation list, no history sidebar,
+ * no titles. Those belong to /chat, which stays exactly as it was. This is the
+ * quick "wait, why?" that happens without leaving the exercise — the server
+ * still persists the transcript, so nothing is lost.
+ *
+ * ponytail: the SSE read loop is a compact copy of the one in app/chat/page.tsx
+ * rather than a shared helper. Extracting it would mean refactoring a working
+ * 800-line page for a 25-line saving. Pull it into lib/sse.ts the next time
+ * either side needs to change.
+ */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+import { X, Send, Loader2, Sparkles, ArrowLeft, GraduationCap, ShieldCheck } from 'lucide-react';
+import { buildStudentSnapshot } from '@/lib/tutor-context';
+import { getUnitLevel, getPaper } from '@/lib/study-plan';
+import {
+  getTutorFocus,
+  subscribeTutorFocus,
+  renderFocusContext,
+  focusPrompts,
+  type TutorFocus,
+} from '@/lib/tutor-presence';
+import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
+import type { ResolvedSuggestion } from '@/lib/agents/tools';
+
+const MAX_LEN = 500;
+
+/**
+ * Where the bubble must NOT appear.
+ *
+ * Mounted in the root layout with its OWN gate rather than inside AppChrome,
+ * even though AppChrome is also global. AppChrome returns null without a signed-in
+ * profile, so hanging the bubble off it would make the whole feature invisible
+ * to anyone who is not logged in — including during development, where it means
+ * the UI can never be looked at in a browser at all. `/teach` was deliberately
+ * left out of the protected prefixes for exactly this reason.
+ *
+ * So the bubble renders for anonymous visitors too; /api/chat answers 401 and
+ * the drawer says "צריך להתחבר כדי לשאול". Nothing leaks — the server is the
+ * gate, not the button.
+ *
+ * `/chat` and `/scan` are excluded because each already owns a better tutor for
+ * its own screen: /chat IS the full tutor, and /scan's QuestionTutor is grounded
+ * in the question AND the solution actually displayed — cheaper and more precise
+ * there than this bubble's topic grounding could be. Two tutors on one screen is
+ * not twice the help.
+ */
+const HIDDEN_PREFIXES = ['/login', '/signup', '/auth', '/onboarding', '/chat', '/scan'];
+
+type Msg = {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  action?: ResolvedSuggestion;
+  /** Set when the reply came from authored content instead of the API. Shown
+   *  to the student as "מהחומר המאומת" — which is a stronger claim than an AI
+   *  answer, not a weaker one: a human wrote and checked it. */
+  local?: boolean;
+};
+
+/** Fallbacks for screens that publish no focus — still better than a blank box. */
+const IDLE_PROMPTS = ['על מה כדאי לי לעבוד עכשיו?', 'תסביר לי משהו מהחומר'];
+
+export default function TutorBubble() {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const [focus, setFocus] = useState<TutorFocus | null>(null);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Kept for the life of the visit so the whole side-conversation lands in ONE
+  // server conversation. Sending null every turn would mint a new conversation
+  // per message and flood the student's history list.
+  const convIdRef = useRef<string | null>(null);
+  // The nudge is dismissed per question, not globally — otherwise the first
+  // dismissal silences the tutor for the rest of the session.
+  const [nudgeDismissed, setNudgeDismissed] = useState<string | null>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  // Which rungs of authored help were already served for the CURRENT question,
+  // so a second "אני תקוע" walks down the ladder instead of repeating itself.
+  // Keyed by question text so moving to the next question resets it.
+  const servedRef = useRef<{ key: string; kinds: LocalAnswerKind[] }>({ key: '', kinds: [] });
+
+  const hidden = HIDDEN_PREFIXES.some(
+    (p) => pathname === p || pathname?.startsWith(p + '/'),
+  );
+
+  // Track what the page is showing.
+  useEffect(() => {
+    const sync = () => setFocus(getTutorFocus());
+    sync();
+    return subscribeTutorFocus(sync);
+  }, []);
+
+  useEffect(() => {
+    if (open) endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [msgs, open]);
+
+  const nudgeKey = focus?.wrongAnswer ? `${focus.where}::${focus.wrongAnswer}` : null;
+  const showNudge = !!nudgeKey && nudgeKey !== nudgeDismissed && !open;
+
+  const prompts = useMemo(() => {
+    const p = focusPrompts(focus);
+    return p.length ? p : IDLE_PROMPTS;
+  }, [focus]);
+
+  const send = useCallback(
+    async (raw: string) => {
+      const text = raw.trim();
+      if (!text || sending) return;
+      if (text.length > MAX_LEN) {
+        setError(`הודעה ארוכה מדי (מקסימום ${MAX_LEN} תווים)`);
+        return;
+      }
+
+      setError(null);
+      setInput('');
+      const userId = `u-${Date.now()}`;
+      setMsgs((m) => [...m, { id: userId, role: 'user', text }]);
+
+      // ===== try the authored content FIRST — no API call, no quota =====
+      // Most of what a student asks mid-exercise ("רמז", "למה טעיתי",
+      // "מאיפה מתחילים", "תראה לי") already has a written, verified answer in
+      // the question object. Paying an API call to paraphrase it costs money on
+      // every turn and can only make it worse. answerLocally abstains on
+      // anything ambiguous, so the real tutor still handles the novel question.
+      const focusNow = getTutorFocus();
+      const qKey = focusNow?.question?.id ?? focusNow?.questionText ?? '';
+      if (servedRef.current.key !== qKey) servedRef.current = { key: qKey, kinds: [] };
+      const local = answerLocally(text, focusNow, servedRef.current.kinds);
+      if (local) {
+        servedRef.current.kinds.push(local.kind);
+        setMsgs((m) => [
+          ...m,
+          { id: `a-${Date.now()}`, role: 'assistant', text: local.text, local: true },
+        ]);
+        return;
+      }
+
+      setSending(true);
+
+      // Focus FIRST, student snapshot second. The server truncates `context`
+      // from the end at 2000 chars, and the snapshot alone can reach 1800 —
+      // focus-last would silently drop the question the student is asking about.
+      const f = getTutorFocus();
+      let context = renderFocusContext(f);
+      try {
+        const snap = buildStudentSnapshot('math5', f?.topic ?? '');
+        context = [context, snap].filter(Boolean).join('\n\n').slice(0, 2000);
+      } catch {
+        /* snapshot is best-effort — never block the question */
+      }
+
+      let unitLevel: 3 | 4 | 5 | undefined;
+      let formNumber: string | undefined;
+      try {
+        unitLevel = getUnitLevel();
+        formNumber = getPaper() ?? undefined;
+      } catch {
+        /* server defaults to 5 units / 572 */
+      }
+
+      const assistantId = `a-${Date.now()}`;
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            topic: f?.topic ?? '',
+            conversationId: convIdRef.current,
+            ...(context ? { context } : {}),
+            ...(unitLevel ? { unitLevel } : {}),
+            ...(formNumber ? { formNumber } : {}),
+          }),
+        });
+
+        if (!res.ok) {
+          let msg = '';
+          try {
+            msg = (await res.json())?.error ?? '';
+          } catch {
+            msg = '';
+          }
+          throw new Error(msg || (res.status === 401 ? 'צריך להתחבר כדי לשאול' : 'שגיאה זמנית'));
+        }
+
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error('אין תשובה מהשרת');
+        const decoder = new TextDecoder();
+        let buf = '';
+        let acc = '';
+        let created = false;
+
+        const apply = (ev: string, raw: string) => {
+          let d: {
+            text?: string;
+            reply?: string;
+            error?: string;
+            conversationId?: string | null;
+          } & Partial<ResolvedSuggestion>;
+          try {
+            d = JSON.parse(raw);
+          } catch {
+            return;
+          }
+          if (ev === 'meta') {
+            if (d.conversationId) convIdRef.current = d.conversationId;
+          } else if (ev === 'delta') {
+            acc += d.text ?? '';
+            if (!created) {
+              created = true;
+              setMsgs((m) => [...m, { id: assistantId, role: 'assistant', text: acc }]);
+            } else {
+              setMsgs((m) => m.map((x) => (x.id === assistantId ? { ...x, text: acc } : x)));
+            }
+          } else if (ev === 'action' && d.href && d.label) {
+            const action = d as ResolvedSuggestion;
+            setMsgs((m) => m.map((x) => (x.id === assistantId ? { ...x, action } : x)));
+          } else if (ev === 'error') {
+            setError(d.error || 'שגיאה. נסה שוב.');
+          } else if (ev === 'done' && typeof d.reply === 'string' && d.reply.trim()) {
+            acc = d.reply;
+            setMsgs((m) => m.map((x) => (x.id === assistantId ? { ...x, text: acc } : x)));
+          }
+        };
+
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const chunks = buf.split('\n\n');
+          buf = chunks.pop() ?? '';
+          for (const chunk of chunks) {
+            let ev = 'message';
+            let data = '';
+            for (const line of chunk.split('\n')) {
+              if (line.startsWith('event:')) ev = line.slice(6).trim();
+              else if (line.startsWith('data:')) data += line.slice(5).trim();
+            }
+            if (data) apply(ev, data);
+          }
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'שגיאה. נסה שוב.');
+      } finally {
+        setSending(false);
+      }
+    },
+    [sending],
+  );
+
+  function openWithNudge() {
+    if (nudgeKey) setNudgeDismissed(nudgeKey);
+    // Clear a stale error here rather than in an effect on `pathname`: the
+    // error is per-send, so the only moment it can mislead is the next time
+    // the drawer is opened — and an event handler is the right place for it.
+    setError(null);
+    setOpen(true);
+  }
+
+  // After the hooks, never before — bailing early would change the hook order
+  // between routes and crash on navigation.
+  if (hidden) return null;
+
+  return (
+    <>
+      {/* ===== the bubble ===== */}
+      {/* bottom-left, and lifted above the mobile BottomNav (z-55, bottom-0) so
+          it never sits on top of the navigation. The profile avatar owns
+          top-left; these two never meet. */}
+      <button
+        onClick={openWithNudge}
+        aria-label="המורה הפרטי"
+        className="fixed left-4 bottom-20 md:bottom-6 z-[58] w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-xl shadow-violet-500/30 ring-2 ring-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+      >
+        <GraduationCap className="w-6 h-6" />
+        {showNudge && (
+          <>
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 ring-2 ring-white" />
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 animate-ping opacity-75" />
+          </>
+        )}
+      </button>
+
+      {/* A single line of why, so the dot is never a mystery. Shown only while
+          the student is still on the question they got wrong. */}
+      <AnimatePresence>
+        {showNudge && (
+          <motion.button
+            // 🔴 The key is load-bearing, not cosmetic. Without it
+            // AnimatePresence cannot track this child across the flip and the
+            // exiting node is STRANDED IN THE DOM at opacity 0 — an invisible
+            // `fixed` button parked over the page, swallowing every click that
+            // lands on it. Verified in the browser: it never unmounted.
+            // SubTopicLadder documents the same trap for a different reason.
+            key="tutor-nudge"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            onClick={openWithNudge}
+            className="fixed left-20 bottom-[5.5rem] md:bottom-8 z-[58] max-w-[220px] text-right bg-white border border-violet-500/30 shadow-lg shadow-violet-500/10 rounded-2xl rounded-bl-md px-3 py-2 text-xs text-slate-700"
+          >
+            ראיתי מה קרה כאן. רוצה שנבין את זה יחד?
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* ===== the drawer ===== */}
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-[72] bg-slate-900/20 backdrop-blur-[2px]"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 34 }}
+              className="fixed z-[73] left-3 right-3 bottom-3 md:right-auto md:left-5 md:bottom-5 md:w-[400px] h-[70vh] md:h-[600px] max-h-[calc(100vh-2rem)] bg-[var(--background)] border border-slate-900/10 rounded-3xl shadow-2xl shadow-slate-900/25 flex flex-col overflow-hidden"
+            >
+              {/* header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-900/[0.08] flex-shrink-0">
+                <div className="min-w-0">
+                  <div className="text-sm font-black text-slate-900">המורה הפרטי שלך</div>
+                  {/* Proof it can see the screen. Without this line the student
+                      has no reason to believe it and re-types the question. */}
+                  {focus?.where && (
+                    <div className="text-[11px] text-slate-500 truncate">רואה: {focus.where}</div>
+                  )}
+                </div>
+                <button
+                  onClick={() => setOpen(false)}
+                  aria-label="סגור"
+                  className="w-8 h-8 rounded-lg hover:bg-slate-900/5 flex items-center justify-center text-slate-500 flex-shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* messages */}
+              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                {msgs.length === 0 && (
+                  <div className="pt-2">
+                    <p className="text-sm text-slate-600 mb-3">
+                      {focus?.wrongAnswer
+                        ? 'בוא נבין מה קרה בשאלה הזאת — בלי שאתן לך את התשובה.'
+                        : focus?.questionText
+                          ? 'אני רואה את השאלה שלפניך. במה נתחיל?'
+                          : 'שאל אותי כל דבר. אני זוכר על מה עבדת.'}
+                    </p>
+                    <div className="space-y-2">
+                      {prompts.map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => send(p)}
+                          className="w-full text-right bg-slate-900/[0.03] hover:bg-violet-500/10 border border-slate-900/10 hover:border-violet-500/40 rounded-xl px-3 py-2.5 text-sm text-slate-800 transition-all flex items-center gap-2"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-violet-600 flex-shrink-0" />
+                          <span className="flex-1">{p}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {msgs.map((m) =>
+                  m.role === 'user' ? (
+                    <div key={m.id} className="flex justify-start">
+                      <div
+                        className="max-w-[85%] bg-violet-600 text-white px-3.5 py-2 rounded-2xl rounded-tl-md text-sm"
+                        style={{ unicodeBidi: 'plaintext', textAlign: 'start', whiteSpace: 'pre-wrap' }}
+                      >
+                        {m.text}
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={m.id} className="flex justify-end">
+                      <div className="max-w-[90%]">
+                        <div
+                          className="chat-md bg-slate-900/[0.03] border border-slate-900/10 text-slate-800 px-3.5 py-2 rounded-2xl rounded-tr-md text-sm"
+                          style={{ unicodeBidi: 'plaintext', textAlign: 'start' }}
+                        >
+                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                            {m.text}
+                          </ReactMarkdown>
+                        </div>
+                        {m.local && (
+                          <div className="mt-1 text-[10px] text-slate-500 flex items-center gap-1">
+                            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                            <span>מהחומר המאומת — נכתב ונבדק, לא נוצר עכשיו</span>
+                          </div>
+                        )}
+                        {m.action && (
+                          <Link
+                            href={m.action.href}
+                            onClick={() => setOpen(false)}
+                            className="group mt-2 flex items-center gap-2 bg-violet-500/[0.07] hover:bg-violet-500/[0.12] border border-violet-500/25 rounded-xl px-3 py-2 transition-all"
+                          >
+                            <span className="flex-1 min-w-0">
+                              <span className="block text-xs font-bold text-slate-800">
+                                {m.action.label}
+                              </span>
+                              <span className="block text-[11px] text-slate-600 leading-snug">
+                                {m.action.reason}
+                              </span>
+                            </span>
+                            <ArrowLeft className="w-3.5 h-3.5 text-violet-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  ),
+                )}
+
+                {sending && msgs[msgs.length - 1]?.role !== 'assistant' && (
+                  <div className="flex justify-end">
+                    <div className="bg-slate-900/[0.03] border border-slate-900/10 px-3.5 py-2 rounded-2xl rounded-tr-md inline-flex items-center gap-2 text-sm text-slate-600">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-600" />
+                      חושב…
+                    </div>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="text-xs text-red-600 bg-red-500/5 border border-red-500/20 rounded-xl px-3 py-2">
+                    {error}
+                  </div>
+                )}
+                <div ref={endRef} />
+              </div>
+
+              {/* composer */}
+              <div className="p-3 border-t border-slate-900/[0.08] flex-shrink-0">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void send(input);
+                  }}
+                  className="flex items-end gap-2"
+                >
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value.slice(0, MAX_LEN))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        void send(input);
+                      }
+                    }}
+                    rows={1}
+                    placeholder="שאל אותי…"
+                    className="flex-1 resize-none bg-slate-900/[0.03] border border-slate-900/10 focus:border-violet-500/50 rounded-xl px-3 py-2.5 text-sm text-slate-800 outline-none max-h-28"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending || !input.trim()}
+                    aria-label="שלח"
+                    className="w-10 h-10 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white flex items-center justify-center flex-shrink-0 transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}

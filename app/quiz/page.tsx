@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { setTutorFocus } from '@/lib/tutor-presence';
 import { MathText } from '@/components/practice/MathText';
 import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
@@ -237,6 +238,39 @@ function Quiz() {
         : [],
     [activeQuestion, currentQ],
   );
+
+  // ===== publish the question to the floating tutor =====
+  // Same contract as QuestionRunnerCard: one effect, keyed on render state, so
+  // no answer path can forget to update it, and cleared on unmount so the tutor
+  // never discusses a question the student already left.
+  //
+  // `selectedAnswer` is safe to read here (unlike in the practice runner, which
+  // clears it for a retry) because /quiz has no retry — one commit per question.
+  // The correct answer is published only once the verdict banner is on screen,
+  // so the tutor can never hand over an answer the student can't yet see.
+  useEffect(() => {
+    if (!activeQuestion) {
+      setTutorFocus(null);
+      return;
+    }
+    const wrong =
+      isCorrect === false && selectedAnswer !== null
+        ? activeQuestion.answers?.[selectedAnswer]
+        : undefined;
+    setTutorFocus({
+      where: `בוחן · ${activeQuestion.topic ?? selectedTopic ?? ''}`.trim(),
+      topic: activeQuestion.topic ?? selectedTopic ?? undefined,
+      questionText: activeQuestion.question,
+      // The question object itself, so lib/tutor-local can serve the authored
+      // hint / first step / distractor note with no API call at all.
+      question: activeQuestion,
+      ...(wrong ? { wrongAnswer: wrong, chosenIndex: selectedAnswer ?? undefined } : {}),
+      ...(isCorrect !== null && typeof activeQuestion.correct === 'number'
+        ? { correctAnswer: activeQuestion.answers?.[activeQuestion.correct] }
+        : {}),
+    });
+    return () => setTutorFocus(null);
+  }, [activeQuestion, isCorrect, selectedAnswer, selectedTopic]);
 
   // math5 topic list filtered to the student's active paper (571/572);
   // other subjects / no chosen paper → the full list.

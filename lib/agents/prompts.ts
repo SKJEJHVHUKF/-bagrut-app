@@ -16,23 +16,38 @@
  *   [2] level + שאלון       varies per request           ← NOT cached
  *
  * Result: all students share entry [0], all students on a topic share [1], and
- * only the ~40-token level line is re-read at full price.
+ * only the ~100-token level line is re-read at full price.
  *
- * ⚠️ A cache entry only forms once the prefix crosses the model's minimum —
- * 4096 tokens on Haiku 4.5, 2048 on Sonnet 5. Below that the `cache_control`
- * marker is a silent no-op: no error, no extra charge, no saving either.
+ * ⚠️ A cache entry only forms once the prefix crosses the model's minimum, and
+ * the minimums differ 4x between the two models this route can pick:
+ *   claude-haiku-4-5   4096   (ungrounded chat)
+ *   claude-sonnet-4-6  1024   (every grounded topic, unless TUTOR_SONNET_TOPICS
+ *                              narrows it)
+ * Below the minimum the `cache_control` marker is a silent no-op: no error, no
+ * extra charge, no saving either. So a breakpoint can be live on one path and
+ * inert on the other — that is fine, and it is why block [0] is marked.
  *
- * MEASURED on live calls (scripts/smoke-agents.ts):
- *   tutor,  grounded topic → writes 4,669 tokens, then reads 4,669 of 4,801
- *                            on the next turn (~97% of input served at 10%).
- *   tutor,  no topic       → core alone is under 4096, so no cache. Ungrounded
- *                            chat is the cheap path anyway.
- *   grader                 → 5,301-token core, cached once and shared by EVERY
- *                            grading request (no per-topic block — see below).
+ * MEASURED — token counting, free (scripts/measure-cache.ts):
+ *   TUTOR_CORE alone         2,206 tokens → caches on Sonnet, no-op on Haiku
+ *   core + grounding         4,293 (סטטיסטיקה) … 7,335 (טריגונומטריה), avg 5,146
+ *   level tail               ~100 tokens, never cached
+ *   6-turn session, prefix only: 70.8% cheaper cached than not.
  *
- * If you edit these strings, re-run the smoke script: shrinking the tutor core
- * back under ~4.1k tokens silently switches caching off and roughly 10×'s the
- * input cost per turn.
+ * MEASURED — live calls (scripts/measure-cache-live.ts, claude-sonnet-4-6).
+ * Opening a SECOND topic while the first is still warm:
+ *   one breakpoint  (אלגברה)  → read=0     write=6,005  fresh=105  7,611 tok-eq
+ *   two breakpoints (פונקציות) → read=2,207 write=3,478  fresh=105  4,673 tok-eq
+ * Those are different topics, so compare like for like on פונקציות itself
+ * (P=5,684 cached prefix, F=105 tail): one breakpoint would bill
+ * 1.25·P + F = 7,210 tok-eq, two breakpoints billed 4,673 — 35% cheaper.
+ * Cold start is NOT penalised: the first call of the after-run billed 9,279
+ * tok-eq against 9,268 for the same topic under one breakpoint. Marking an
+ * extra breakpoint does not re-bill bytes that are already counted.
+ *
+ * If you edit these strings, re-run BOTH scripts. Shrinking core+grounding back
+ * under 4,096 silently switches caching off on the Haiku path and roughly 10×'s
+ * the input cost per turn; shrinking the core under 1,024 does the same on
+ * Sonnet's cross-topic entry.
  */
 
 import type { TextBlockParam } from '@anthropic-ai/sdk/resources/messages';
@@ -44,6 +59,17 @@ export type PromptContext = {
   formNumber: string;
   /** Optional math topic — unlocks the verified-content grounding block. */
   topic?: string;
+  /**
+   * Optional per-student memory (lib/tutor-memory), pre-rendered.
+   *
+   * ⚠️ Emitted LAST and deliberately UNCACHED. It is unique to one student, so
+   * a cache_control marker on it would write a private entry that only that
+   * student can ever read — paying the 1.25× write premium for a hit rate of
+   * one, and fragmenting the shared prefix for everyone else. Capped at
+   * ~1200 chars upstream precisely because this block is re-read at full price
+   * on every single turn.
+   */
+  memory?: string;
 };
 
 // ============================================================
@@ -125,13 +151,20 @@ ${LEVEL_GUIDE}`;
 export function buildTutorSystem(ctx: PromptContext): TextBlockParam[] {
   const grounding = buildPilotGrounding(ctx.topic);
 
-  // One breakpoint, on the LAST static block. A second breakpoint on the core
-  // alone would sit under the 4096-token Haiku minimum — a wasted marker that
-  // only fragments the prefix.
+  // TWO breakpoints, because the two static blocks are shared by different
+  // populations: the core by every student on every topic, the grounding only
+  // by students on THIS topic. With a single breakpoint on the grounding, a
+  // student opening a second topic re-writes the whole prefix — measured
+  // read=0 / write=6005 on `claude-sonnet-4-6` (scripts/measure-cache-live.ts).
+  //
+  // The core alone is 2,206 tokens (scripts/measure-cache.ts), which clears the
+  // 1024 minimum on Sonnet — the model /api/chat actually uses for a grounded
+  // topic — but not the 4096 on Haiku, where the marker is a silent no-op.
+  // Marking it is therefore free on Haiku and a real cross-topic saving on
+  // Sonnet. Breakpoints cost nothing; only cached bytes are billed, and we use
+  // 2 of the 4 available slots.
   const blocks: TextBlockParam[] = [
-    grounding
-      ? { type: 'text', text: TUTOR_CORE }
-      : { type: 'text', text: TUTOR_CORE, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: TUTOR_CORE, cache_control: { type: 'ephemeral' } },
   ];
 
   if (grounding) {
@@ -143,6 +176,7 @@ export function buildTutorSystem(ctx: PromptContext): TextBlockParam[] {
   }
 
   blocks.push({ type: 'text', text: levelBlock(ctx) });
+  if (ctx.memory) blocks.push({ type: 'text', text: ctx.memory });
   return blocks;
 }
 

@@ -21,8 +21,36 @@ import { topCategory, getMistakes } from '@/lib/mistakes';
 import { studentTier, tierLabel } from '@/lib/adaptive';
 import { getPlan, getUnitLevel, daysUntilBagrut } from '@/lib/study-plan';
 import { dueCount } from '@/lib/review';
+import { getCognitiveState, type CognitiveState } from '@/lib/cognition';
+import { cognitionEntries } from '@/content/cognition';
 
 const MAX_LEN = 1800; // server hard-caps context at 2000; stay safely under
+
+/** Below this the state is noise, not a diagnosis. Same reasoning as
+ *  MIN_CONFIDENCE in lib/cognition: telling a tutor "he's weak at X" off two
+ *  answers turns "we haven't measured" into "you're bad at this". */
+const MIN_OBSERVATIONS = 3;
+
+/**
+ * The cognitive state to brief the tutor on.
+ *
+ * Prefers the topic the student is actually looking at. On the generic /chat
+ * entry there is no topic, and without this fallback the richest signal the app
+ * owns would reach the tutor ONLY from inside a lesson — so we pick whichever
+ * mapped topic the student has the most evidence in. `getCognitiveState`
+ * returns null for unmapped topics, so this is a no-op until a topic has a
+ * catalog in content/cognition (today: complex numbers only).
+ */
+export function resolveCognitive(subject: string, topic: string): CognitiveState | null {
+  if (topic) return getCognitiveState(subject, topic);
+  let best: CognitiveState | null = null;
+  for (const map of cognitionEntries()) {
+    if (map.subject !== subject) continue;
+    const st = getCognitiveState(subject, map.topic);
+    if (st && (!best || st.totalObservations > best.totalObservations)) best = st;
+  }
+  return best;
+}
 
 /** Trim a possibly-long answer string for the brief. */
 function short(s: string | undefined, n = 60): string {
@@ -53,6 +81,44 @@ export function buildStudentSnapshot(subject: string, topic: string): string {
     if (plan?.bagrutDate) {
       const d = daysUntilBagrut(plan);
       if (d >= 0) lines.push(`נשארו ${d} ימים לבגרות.`);
+    }
+  } catch {
+    /* skip */
+  }
+
+  // --- cognitive state: the strongest signal the app owns -----------------
+  // lib/cognition already derives skills, active misconceptions, the broken
+  // prerequisite and the next step — and none of it reached the tutor, which
+  // re-diagnosed from scratch every conversation while the answer sat one
+  // import away. Free: same pure function /roadmap renders from, no API call.
+  // Placed BEFORE the mistake list on purpose — the brief is truncated at
+  // MAX_LEN from the tail, and a long mistake list must not push this out.
+  try {
+    const cog = resolveCognitive(subject, topic);
+    if (cog && cog.totalObservations >= MIN_OBSERVATIONS) {
+      // On the generic entry the state may describe a topic the student didn't
+      // name. Say so, or the tutor reads it as being about whatever comes up.
+      if (!topic) lines.push(`המידע הבא הוא על הנושא "${cog.topic}":`);
+      if (cog.insight) lines.push(cog.insight);
+
+      const wl = cog.weakestLink;
+      if (wl) {
+        lines.push(
+          `החוליה השבורה: "${wl.childTitle}" נשען על "${wl.rootTitle}", והבסיס חלש יותר. אם הוא נתקע — התחל משם ולא מלמעלה.`
+        );
+      }
+
+      const live = cog.misconceptions
+        .filter((m) => m.status === 'active' || m.status === 'suspected')
+        .slice(0, 2);
+      if (live.length) {
+        const items = live
+          .map((m) => `"${m.title}" (${m.hits} מתוך ${m.opportunities} הזדמנויות)`)
+          .join(' · ');
+        lines.push(`תפיסות שגויות שחוזרות אצלו: ${items}. אל תאשים אותו בהן — בדוק אם הן עדיין שם.`);
+      }
+
+      lines.push(`הצעד שהמערכת ממליצה עליו: ${cog.nextStep.title} — ${cog.nextStep.reason}`);
     }
   } catch {
     /* skip */

@@ -7,6 +7,11 @@ import { createClient } from '@/lib/supabase/client';
 import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
 import { hasLesson } from '@/content/lessons';
 import { buildStudentSnapshot } from '@/lib/tutor-context';
+import {
+  buildTutorGreeting,
+  GENERIC_PROMPTS,
+  type TutorGreeting,
+} from '@/lib/tutor-greeting';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -24,9 +29,14 @@ import {
   Trash2,
   X,
   Camera,
+  Target,
+  RotateCcw,
+  Brain,
 } from 'lucide-react';
 import { SolutionAudit } from '@/components/practice/SolutionAudit';
 import MathUpLogo from '@/components/MathUpLogo';
+import type { ResolvedSuggestion } from '@/lib/agents/tools';
+import type { TutorFact } from '@/lib/tutor-memory';
 
 const MAX_MESSAGE_LEN = 500;
 
@@ -35,6 +45,14 @@ type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
   created_at: string;
+  /**
+   * A suggestion the tutor made on this turn. Deliberately NOT persisted —
+   * chat_messages stores text, so reloading an old conversation shows the
+   * words without the button. That is the honest behaviour: the suggestion was
+   * about the moment ("you just got this wrong twice — practice it"), and a
+   * button resurrected from last Tuesday is a worse thing than no button.
+   */
+  action?: ResolvedSuggestion;
 };
 
 type Conversation = {
@@ -42,14 +60,6 @@ type Conversation = {
   title: string;
   updated_at: string;
 };
-
-// Suggested prompts shown on the empty state for fresh chats.
-const SUGGESTIONS = [
-  'הסבר לי על מספרים מרוכבים',
-  'תפתור איתי בעיה בנגזרות',
-  'מה ההבדל בין סדרה חשבונית להנדסית?',
-  'תעזור לי להבין אינטגרלים',
-];
 
 function utcDayStartIso() {
   const d = new Date();
@@ -75,6 +85,11 @@ export default function ChatPage() {
   // and follows the private-tutor bar; otherwise it's the normal chat.
   const [topic, setTopic] = useState('');
   const [showAudit, setShowAudit] = useState(false);
+  // What the tutor remembers about this student, and the panel that shows it.
+  // Loaded once per visit; /api/chat pushes an updated list whenever the tutor
+  // writes, so the panel never shows a fact the student hasn't been told about.
+  const [facts, setFacts] = useState<TutorFact[]>([]);
+  const [showMemory, setShowMemory] = useState(false);
 
   const listEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -183,6 +198,29 @@ export default function ChatPage() {
     const t = new URLSearchParams(window.location.search).get('topic');
     if (t) setTopic(t);
   }, []);
+
+  // What the tutor already remembers. Silent on failure: an unreachable memory
+  // endpoint should cost the panel, never the chat.
+  useEffect(() => {
+    fetch('/api/chat/memory')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (Array.isArray(d?.facts)) setFacts(d.facts);
+      })
+      .catch(() => {});
+  }, []);
+
+  /** Delete one remembered fact, or all of them. Server returns the new list. */
+  async function forgetFact(text?: string) {
+    const url = text ? `/api/chat/memory?text=${encodeURIComponent(text)}` : '/api/chat/memory';
+    try {
+      const res = await fetch(url, { method: 'DELETE' });
+      const d = await res.json();
+      if (Array.isArray(d?.facts)) setFacts(d.facts);
+    } catch {
+      /* the panel keeps showing the old list — better than a silent lie */
+    }
+  }
 
   /**
    * @param extraContext Call-only context for THIS turn — e.g. the photo-audit
@@ -293,7 +331,8 @@ export default function ChatPage() {
           error?: string;
           remaining?: number;
           conversationId?: string | null;
-        };
+          facts?: TutorFact[];
+        } & Partial<ResolvedSuggestion>;
         try {
           data = JSON.parse(dataStr);
         } catch {
@@ -317,6 +356,15 @@ export default function ChatPage() {
           } else {
             setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, content: acc } : x)));
           }
+        } else if (event === 'action') {
+          // The server already resolved this to a real route and dropped it if
+          // it couldn't — so anything that arrives here is safe to render.
+          if (data.href && data.label) {
+            const action = data as ResolvedSuggestion;
+            setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, action } : x)));
+          }
+        } else if (event === 'memory') {
+          if (Array.isArray(data.facts)) setFacts(data.facts);
         } else if (event === 'error') {
           streamErr = data.error || "שגיאת צ'אט. נסה שוב.";
         } else if (event === 'done') {
@@ -428,6 +476,20 @@ export default function ChatPage() {
               <History className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">היסטוריה</span>
             </button>
+            {/* Only shown once there is something to show. A student with no
+                remembered facts should not be handed a mystery button. */}
+            {facts.length > 0 && (
+              <button
+                onClick={() => setShowMemory((v) => !v)}
+                aria-label="מה המורה זוכר עליי"
+                aria-expanded={showMemory}
+                className="flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+              >
+                <Brain className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">מה אני זוכר</span>
+                <span className="text-violet-700">{facts.length}</span>
+              </button>
+            )}
             <Link
               href="/quiz"
               className="group hidden sm:flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
@@ -461,6 +523,50 @@ export default function ChatPage() {
         </div>
       )}
 
+      {/* What the tutor remembers — visible and deletable, which is the whole
+          justification for writing it in the first place. */}
+      {showMemory && facts.length > 0 && (
+        <div className="relative z-10 max-w-3xl w-full mx-auto px-3 sm:px-4 pt-3">
+          <div className="bg-slate-900/[0.03] border border-slate-900/10 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <Brain className="w-4 h-4 text-violet-600" />
+                מה שסיפרת לי
+              </div>
+              <button
+                onClick={() => forgetFact()}
+                className="text-xs font-bold text-slate-500 hover:text-red-600 transition-colors"
+              >
+                שכח הכל
+              </button>
+            </div>
+            <ul className="space-y-1.5">
+              {facts.map((f) => (
+                <li
+                  key={f.text}
+                  className="flex items-start gap-2 text-sm text-slate-700 bg-slate-900/[0.02] border border-slate-900/[0.06] rounded-lg px-3 py-2"
+                >
+                  <span className="flex-1" style={{ unicodeBidi: 'plaintext', textAlign: 'start' }}>
+                    {f.text}
+                  </span>
+                  <button
+                    onClick={() => forgetFact(f.text)}
+                    aria-label={`שכח: ${f.text}`}
+                    className="text-slate-400 hover:text-red-600 transition-colors flex-shrink-0 mt-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs text-slate-500">
+              אלה דברים שאמרת לי בשיחות קודמות, ואני משתמש בהם כדי להתאים את ההסבר. הציונים
+              והטעויות שלך נשמרים בנפרד ולא מופיעים כאן.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
       <main className="relative z-10 flex-1 max-w-3xl w-full mx-auto px-3 sm:px-4 pt-4 pb-40">
         {loadingHistory ? (
@@ -468,11 +574,11 @@ export default function ChatPage() {
             <Loader2 className="w-6 h-6 text-violet-600 animate-spin" />
           </div>
         ) : isEmpty ? (
-          <EmptyState onPick={(t) => send(t)} />
+          <EmptyState topic={topic} onPick={(t) => send(t)} />
         ) : (
           <div className="space-y-3">
             {messages.map((m) => (
-              <MessageBubble key={m.id} role={m.role} content={m.content} />
+              <MessageBubble key={m.id} role={m.role} content={m.content} action={m.action} />
             ))}
             {/* Typing dots only until the streamed reply's first token lands
                 (while the last bubble is still the user's). */}
@@ -562,7 +668,47 @@ export default function ChatPage() {
 
 // ===== sub-components =====
 
-function MessageBubble({ role, content }: { role: 'user' | 'assistant'; content: string }) {
+/** Icons per suggestion kind — the tutor's intent, at a glance. */
+const ACTION_ICON: Record<ResolvedSuggestion['kind'], typeof Target> = {
+  practice: Target,
+  review: RotateCcw,
+  replay: Brain,
+};
+
+/**
+ * The tutor's suggestion, rendered as a button the student may ignore.
+ *
+ * It sits UNDER the reply, never instead of it: the model is told to answer
+ * first and suggest second, and this placement is the other half of that rule.
+ */
+function ActionCard({ action }: { action: ResolvedSuggestion }) {
+  const Icon = ACTION_ICON[action.kind] ?? Target;
+  return (
+    <Link
+      href={action.href}
+      className="group mt-3 flex items-center gap-3 bg-violet-500/[0.07] hover:bg-violet-500/[0.12] border border-violet-500/25 hover:border-violet-500/50 rounded-xl px-3.5 py-3 transition-all"
+    >
+      <span className="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4 text-violet-700" />
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm font-bold text-slate-800">{action.label}</span>
+        <span className="block text-xs text-slate-600 leading-snug">{action.reason}</span>
+      </span>
+      <ArrowLeft className="w-4 h-4 text-violet-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+    </Link>
+  );
+}
+
+function MessageBubble({
+  role,
+  content,
+  action,
+}: {
+  role: 'user' | 'assistant';
+  content: string;
+  action?: ResolvedSuggestion;
+}) {
   const isUser = role === 'user';
 
   // User messages: plain text. Their input is treated as data, never rendered
@@ -592,16 +738,19 @@ function MessageBubble({ role, content }: { role: 'user' | 'assistant'; content:
   // - react-markdown renders headings, bold, lists, etc.
   return (
     <div className="flex justify-end">
-      <div
-        className="chat-md max-w-[85%] bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 text-slate-800 px-4 py-3 rounded-2xl rounded-tr-md"
-        style={{ unicodeBidi: 'plaintext', textAlign: 'start' }}
-      >
-        <ReactMarkdown
-          remarkPlugins={[remarkMath]}
-          rehypePlugins={[rehypeKatex]}
+      <div className="max-w-[85%]">
+        <div
+          className="chat-md bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 text-slate-800 px-4 py-3 rounded-2xl rounded-tr-md"
+          style={{ unicodeBidi: 'plaintext', textAlign: 'start' }}
         >
-          {content}
-        </ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkMath]}
+            rehypePlugins={[rehypeKatex]}
+          >
+            {content}
+          </ReactMarkdown>
+        </div>
+        {action && <ActionCard action={action} />}
       </div>
     </div>
   );
@@ -618,7 +767,24 @@ function TypingBubble() {
   );
 }
 
-function EmptyState({ onPick }: { onPick: (text: string) => void }) {
+/**
+ * The tutor speaks first.
+ *
+ * The greeting is built from localStorage, so it CANNOT be computed during
+ * render — this component is server-rendered like any client component, and
+ * reading localStorage there crashes the build. Same mount-effect pattern the
+ * page already uses for `?topic=`. Until the effect runs we show the generic
+ * prompts, so the first paint is a working screen and not an empty grid.
+ */
+function EmptyState({ topic, onPick }: { topic: string; onPick: (text: string) => void }) {
+  const [greeting, setGreeting] = useState<TutorGreeting | null>(null);
+
+  useEffect(() => {
+    setGreeting(buildTutorGreeting('math5', topic));
+  }, [topic]);
+
+  const prompts = greeting?.prompts ?? GENERIC_PROMPTS;
+
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-4">
       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-violet-500/20 border border-violet-500/30 flex items-center justify-center mb-5">
@@ -626,14 +792,44 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
       </div>
       <h2 className="font-display text-2xl font-black mb-2">
         <span className="font-display text-slate-800">
-          המורה הפרטי שלך
+          {greeting?.headline ?? 'המורה הפרטי שלך'}
         </span>
       </h2>
-      <p className="text-slate-600 max-w-md mb-8">
-        שאל אותי כל דבר על חומרי הבגרות. אענה בקצרה וברור. נסה אחת מהשאלות:
+
+      {/* Factual chips — each one is a number the app already tracks. */}
+      {!!greeting?.chips.length && (
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+          {greeting.chips.map((c) => (
+            <span
+              key={c}
+              className="text-xs text-slate-700 bg-slate-900/[0.04] border border-slate-900/10 rounded-full px-3 py-1"
+            >
+              {c}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <p className="text-slate-600 max-w-md mb-6">
+        {greeting?.insight ?? 'שאל אותי כל דבר על חומרי הבגרות. אענה בקצרה וברור.'}
       </p>
+
+      {/* The next step lib/cognition already picked, with the route it chose.
+          Safe as the only CTA here — unlike /roadmap, this screen has none. */}
+      {greeting?.action && (
+        <Link
+          href={greeting.action.href}
+          title={greeting.action.reason}
+          className="mb-8 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl px-5 py-3 transition-colors"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>{greeting.action.label}</span>
+          <ArrowLeft className="w-4 h-4" />
+        </Link>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full max-w-xl">
-        {SUGGESTIONS.map((s, i) => (
+        {prompts.map((s, i) => (
           <button
             key={i}
             onClick={() => onPick(s)}

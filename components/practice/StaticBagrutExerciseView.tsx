@@ -1,5 +1,6 @@
 'use client';
 
+import { setTutorFocus } from '@/lib/tutor-presence';
 import { useEffect, useState } from 'react';
 import { Sparkles, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -42,6 +43,28 @@ export function StaticBagrutExerciseView({
     setPartsDone(new Set());
     setContextOpen(true);
   }, [pickedIndex]);
+
+  // ===== publish to the floating tutor =====
+  // Published from the CONTAINER, not from QuestionPartCard. A bagrut question
+  // renders every part at once, so a per-part publisher would have N components
+  // writing one slot — last mount wins, and the first unmount clears it for all
+  // of them. The whole question is the more useful context anyway: the tutor
+  // needs the shared "given" to make sense of part ג.
+  //
+  // No wrongAnswer here on purpose. Bagrut parts are self-assessed against a
+  // revealed solution, so "he answered X and it's wrong" is not a fact the
+  // screen actually knows — claiming it would be the tutor inventing a mistake.
+  const currentQ = questions[pickedIndex];
+  useEffect(() => {
+    if (!currentQ) return;
+    const parts = currentQ.parts.map((p) => `${p.label}. ${p.prompt}`).join('\n');
+    setTutorFocus({
+      where: `שאלת בגרות · ${topic}`,
+      topic,
+      questionText: [currentQ.context, parts].filter(Boolean).join('\n\n'),
+    });
+    return () => setTutorFocus(null);
+  }, [currentQ, topic]);
 
   if (questions.length === 0) {
     return (

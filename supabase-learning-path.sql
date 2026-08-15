@@ -63,3 +63,26 @@ drop trigger if exists learning_state_touch on public.learning_state;
 create trigger learning_state_touch
   before update on public.learning_state
   for each row execute function public.learning_state_touch();
+
+-- ============================================================
+-- tutor_memory — durable facts the chat tutor was told by the student.
+--
+-- Added after the table shipped, so it is a separate idempotent statement
+-- rather than a column in the create above: existing databases must pick it up
+-- by re-running this file, without dropping anything.
+--
+-- Shape: jsonb array of { text: string, ts: number }, newest first, capped at
+-- 12 facts / 1200 chars by lib/tutor-memory (the cap is enforced on write, so
+-- a hand-edited row is re-capped the next time the tutor writes).
+--
+-- ⚠️ Written by the SERVER (/api/chat) and deliberately NOT part of the client
+-- sync payload in lib/sync/roadmap-sync.ts. That upsert names its columns
+-- explicitly, so ON CONFLICT DO UPDATE never touches this one. Adding
+-- tutor_memory to that payload would let a stale client wipe it.
+--
+-- The existing RLS policies already cover it — they are row-level, not
+-- column-level, so a student can read and delete his own memory and no one
+-- else's without any new policy.
+-- ============================================================
+alter table public.learning_state
+  add column if not exists tutor_memory jsonb;

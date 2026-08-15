@@ -5,6 +5,12 @@ import { isGroundedTopic } from '@/lib/tutor-grounding';
 import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
 import { buildTutorSystem } from '@/lib/agents/prompts';
 import { normalizeUnitLevel, normalizeFormNumber } from '@/lib/agents/config';
+import { TUTOR_TOOLS, resolveSuggestion } from '@/lib/agents/tools';
+import { readFacts, writeFacts, mergeFact, renderMemoryBlock } from '@/lib/tutor-memory';
+// One copy of the injection guard, in one place. This file used to keep its
+// own literal of the same regex — which is exactly how a fix in one copy
+// leaves the other one broken.
+import { BLACKLIST } from '@/lib/agents/guard';
 
 // Hobby plan needs an explicit ceiling. Haiku 4.5 with a tight 6-message
 // context + max_tokens=800 typically finishes in 5-15s, well under 60s.
@@ -20,7 +26,6 @@ const CONTEXT_MESSAGE_COUNT = 6; // last 3 user/assistant pairs
 
 // Block obvious prompt-injection / abuse markers — same lightweight check
 // we run on the quiz topic input.
-const BLACKLIST = /[\x00-\x1f]|ignore\s+(all\s+)?(previous|prior|above)\s+instructions?|disregard\s+(all\s+)?(previous|prior|above)|<\s*\/?\s*(script|iframe|object|embed)/i;
 
 function isAllowedOrigin(request: Request): boolean {
   const origin = request.headers.get('origin');
@@ -244,7 +249,18 @@ export async function POST(request: Request) {
     // level/שאלון line → not cached), which is what lets every student share
     // one cache entry instead of one per level.
     const grounded = isGroundedTopic(topic);
-    const system = buildTutorSystem({ unitLevel, formNumber, topic: topic || undefined });
+
+    // Cross-conversation memory. Read before the prompt is built, awaited
+    // because it IS part of the prompt — but it degrades to [] on any failure
+    // (missing column, RLS, network), so a database problem costs the tutor a
+    // remembered fact and never the reply.
+    const facts = await readFacts(supabase, user.id);
+    const system = buildTutorSystem({
+      unitLevel,
+      formNumber,
+      topic: topic || undefined,
+      memory: renderMemoryBlock(facts),
+    });
     const sonnetAllowlist = (process.env.TUTOR_SONNET_TOPICS ?? '').trim();
     const useSonnet =
       grounded &&
@@ -300,6 +316,14 @@ export async function POST(request: Request) {
             max_tokens: 800,
             system,
             messages: claudeMessages,
+            // The tutor may suggest an in-app action and may remember a fact.
+            // Neither executes anything here: `suggest_action` becomes a button
+            // the student chooses to press, and that is why there is no
+            // tool_result round-trip and no agent loop — the turn ends when the
+            // text ends. ⚠️ Tools serialise ahead of `system` in the cached
+            // prefix; editing lib/agents/tools.ts invalidates every tutor cache
+            // entry once (see the note there).
+            tools: TUTOR_TOOLS,
             // Cost valve: effort:'low' only on the Sonnet path. ⚠️ Haiku 4.5
             // (ungrounded) 400s on effort ("This model does not support the
             // effort parameter"), so gate on useSonnet. Haiku is cheap anyway.
@@ -313,12 +337,49 @@ export async function POST(request: Request) {
           });
 
           const final = await stream.finalMessage();
-          const block = final.content[0];
-          if (block && block.type === 'text' && block.text.trim()) {
-            fullText = block.text; // authoritative
-          }
+
+          // ⚠️ This used to read content[0] and assume it was the text block.
+          // With tools in play the model can put a tool_use block first, and
+          // that assumption silently discarded the authoritative text — so join
+          // every text block instead of trusting a position.
+          const authoritative = final.content
+            .filter((b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text')
+            .map((b) => b.text)
+            .join('');
+          if (authoritative.trim()) fullText = authoritative;
+
           usageIn = final.usage.input_tokens;
           usageOut = final.usage.output_tokens;
+
+          // ===== tool calls: suggestion + memory =====
+          // Both are best-effort and deliberately AFTER the text is settled.
+          // Nothing here may throw past its own guard: a malformed tool input
+          // must not cost the student the answer that already streamed.
+          for (const b of final.content) {
+            if (b.type !== 'tool_use') continue;
+
+            if (b.name === 'suggest_action') {
+              // resolveSuggestion drops anything it cannot map to a real route.
+              const action = resolveSuggestion(b.input, 'math5', topic);
+              if (action) send('action', action);
+              continue;
+            }
+
+            if (b.name === 'remember') {
+              const fact = (b.input as { fact?: unknown })?.fact;
+              if (typeof fact !== 'string' || !fact.trim()) continue;
+              // Reject anything the student could have injected into his own
+              // profile: the fact is model-authored, but the model was reading
+              // the student's message when it wrote it.
+              if (BLACKLIST.test(fact)) continue;
+              const merged = mergeFact(facts, fact, Date.now());
+              if (await writeFacts(supabase, user.id, merged)) {
+                // The client shows what was saved — memory the student can't
+                // see isn't memory, it's a file on him.
+                send('memory', { facts: merged });
+              }
+            }
+          }
         } catch (streamErr) {
           console.error('Chat stream error:', streamErr);
           send('error', { error: "שגיאת צ'אט. נסה שוב." });

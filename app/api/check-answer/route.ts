@@ -2,6 +2,10 @@ import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { buildPilotGrounding } from '@/lib/tutor-grounding';
+// One copy of the injection guard, in one place. This file used to keep its
+// own literal of the same regex — which is exactly how a fix in one copy
+// leaves the other one broken.
+import { BLACKLIST } from '@/lib/agents/guard';
 
 // Answer-checking is short input/short output. Haiku 4.5 with max_tokens=400
 // runs in 2-5s and costs roughly $0.003 per check.
@@ -14,7 +18,6 @@ const MAX_ANSWER_LEN = 800;      // user's typed answer
 const MAX_CORRECT_LEN = 1000;    // the reference answer (final_answer field)
 const MAX_CONTEXT_LEN = 1500;    // optional surrounding context
 
-const BLACKLIST = /[\x00-\x1f]|ignore\s+(all\s+)?(previous|prior|above)\s+instructions?|disregard\s+(all\s+)?(previous|prior|above)|<\s*\/?\s*(script|iframe|object|embed)/i;
 
 function isAllowedOrigin(request: Request): boolean {
   const origin = request.headers.get('origin');

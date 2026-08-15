@@ -52,8 +52,25 @@ export type GuardOptions = {
 // Prompt-injection / control-character screen
 // ============================================================
 
+/**
+ * ⚠️ The control-character class deliberately EXCLUDES tab (\x09), newline
+ * (\x0a) and carriage return (\x0d).
+ *
+ * It used to be a flat `[\x00-\x1f]`, which matches a newline — so ANY
+ * multi-line payload was rejected. That silently killed every multi-line brief
+ * the app sends: `buildStudentSnapshot` joins its lines with "\n", so the
+ * student snapshot was dropped on 100% of chat turns from the day it shipped,
+ * and the tutor kept being told to "diagnose before explaining" with no data to
+ * diagnose from. It also rejects a student who presses shift+enter mid-question.
+ *
+ * Found by server log, not by reading: a 431-char Hebrew context that the
+ * client had provably sent reported `blocked=true`.
+ *
+ * The bytes that actually matter for injection — NUL, the escape byte, and the
+ * rest of the C0 set — are still rejected. Whitespace is not an attack.
+ */
 export const BLACKLIST =
-  /[\x00-\x1f]|ignore\s+(all\s+)?(previous|prior|above)\s+instructions?|disregard\s+(all\s+)?(previous|prior|above)|<\s*\/?\s*(script|iframe|object|embed)/i;
+  /[\x00-\x08\x0b\x0c\x0e-\x1f]|ignore\s+(all\s+|the\s+)?(previous|prior|above)\s+instructions?|disregard\s+(all\s+|the\s+)?(previous|prior|above)|<\s*\/?\s*(script|iframe|object|embed)/i;
 
 /** Trim + hard-truncate. Returns '' for anything that isn't a string. */
 export function sanitizeText(raw: unknown, maxLen: number): string {

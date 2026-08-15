@@ -24,6 +24,7 @@ import type { SubTopic } from '@/content/lessons/types';
 import type { StepStatus } from '@/types/roadmap';
 import { seedFromClear } from '@/lib/review';
 import { StarRow } from './ladder-ui';
+import { setTutorFocus } from '@/lib/tutor-presence';
 import { LearnLevel } from './LearnLevel';
 import { RoadmapLevelRunner } from './RoadmapLevelRunner';
 import { BagrutLevel } from './BagrutLevel';
@@ -90,6 +91,29 @@ export function SubTopicLadder({
   }
 
   const openLevel = openIndex !== null ? levels[openIndex] : null;
+
+  // ===== publish sub-topic context to the floating tutor =====
+  // The ladder owns this screen, EXCEPT while a question rung is open — there
+  // QuestionRunnerCard publishes the actual question, which is strictly better.
+  // So this effect YIELDS (does nothing, and clears nothing) on those rungs
+  // rather than fighting for the slot.
+  //
+  // The ordering this relies on: on a commit React runs cleanups first, then
+  // child effects, then parent effects. Opening a rung therefore goes
+  // ladder-cleanup → runner-publishes → ladder-yields, and the question
+  // survives; closing it goes runner-clears → ladder-republishes. Clearing
+  // unconditionally here would wipe the question one render after it appeared —
+  // the same class of bug as deriving the missed answer from `selected`.
+  const yieldsToQuestion = !!openLevel && openLevel.kind !== 'learn';
+  useEffect(() => {
+    if (yieldsToQuestion) return;
+    setTutorFocus({
+      where: openLevel ? `שיעור · ${subTopic.title}` : `מסלול · ${subTopic.title}`,
+      topic,
+      subTopicId: subTopic.id,
+    });
+    return () => setTutorFocus(null);
+  }, [yieldsToQuestion, openLevel, topic, subTopic.id, subTopic.title]);
   const nextOf = (i: number) => (i + 1 < levels.length ? levels[i + 1] : null);
   const learnIndex = levels.findIndex((l) => l.kind === 'learn');
 

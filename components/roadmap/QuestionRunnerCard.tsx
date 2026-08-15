@@ -18,7 +18,8 @@
 // Asking for it is not free: `hintUsed` reaches lib/cognition, which withholds
 // the base mastery credit for a correct-with-hint answer.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { setTutorFocus } from '@/lib/tutor-presence';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, KeyRound, LifeBuoy, ArrowLeft, RotateCcw, Wrench } from 'lucide-react';
@@ -81,6 +82,13 @@ export function QuestionRunnerCard({
   const [tries, setTries] = useState(0);
   const [firstTryCorrect, setFirstTryCorrect] = useState<boolean | null>(null);
   const [revealed, setRevealed] = useState(false);
+  /** The answer the student actually gave on a wrong FIRST attempt, captured at
+   *  the moment it happened. The render state it used to be derived from is
+   *  cleared by retryMCQ, so it could not survive to the tutor. */
+  const [missedWith, setMissedWith] = useState<string | null>(null);
+  /** ORIGINAL index of the wrong first pick — the key into distractorNotes,
+   *  which is what lets the tutor answer "why is my answer wrong" for $0. */
+  const [missedIndex, setMissedIndex] = useState<number | null>(null);
 
   // "למד אותי" — three graded rungs of help derived from what the question and
   // its sub-topic already carry (lib/help-ladder). `openedLevels` is the whole
@@ -97,6 +105,41 @@ export function QuestionRunnerCard({
 
   const resolved = revealed || firstTryCorrect === true;
 
+  // ===== tell the floating tutor what is on this screen =====
+  // Without this the bubble is just a smaller chat box: the student would have
+  // to re-type a question that is already in front of both of them. Published
+  // from ONE effect keyed on the render state, rather than from each of the
+  // answer handlers, so no path can forget to update it — and cleared on
+  // unmount, because a stale focus makes the tutor confidently discuss a
+  // question the student already left.
+  useEffect(() => {
+    // `missedWith` and NOT `selected`/`input`: retryMCQ clears the selection a
+    // beat after a wrong first answer ("let them pick again"), so deriving the
+    // missed answer from render state produced a tutor that announced "ראיתי
+    // מה קרה" and then, one render later, had no idea what had happened.
+    // Captured at the moment of the miss instead — see logFirst.
+    const wrong = firstTryCorrect === false ? (missedWith ?? undefined) : undefined;
+    setTutorFocus({
+      where: `תרגול · ${subTopic?.title ?? topic}`,
+      topic,
+      subTopicId: subId,
+      questionText: q.question,
+      // The authored content behind this screen — hint, solution and the
+      // per-distractor notes. Carrying the objects (not just the text) is what
+      // lets lib/tutor-local answer the common asks with no API call at all.
+      question: q,
+      subTopic: subTopic ?? undefined,
+      ...(wrong && missedIndex !== null ? { chosenIndex: missedIndex } : {}),
+      ...(wrong ? { wrongAnswer: wrong } : {}),
+      // Only once the page itself has revealed it — the tutor must not be
+      // handed the answer while the student is still working on it.
+      ...(revealed && q.kind === 'mcq' && typeof q.correct === 'number'
+        ? { correctAnswer: q.answers?.[q.correct] }
+        : {}),
+    });
+    return () => setTutorFocus(null);
+  }, [q, subId, topic, subTopic, firstTryCorrect, missedWith, missedIndex, revealed]);
+
   // Log the FIRST attempt exactly once (that's the measured one). Wrong first
   // attempts also seed the error notebook and give us a mistakeId to tag.
   //
@@ -110,6 +153,13 @@ export function QuestionRunnerCard({
     chosenIndex?: number,
     selfReported?: boolean,
   ) {
+    // Every path that can register a wrong first attempt funnels through here
+    // — MCQ, machine-graded open, and self-report — so this is the one place
+    // the missed answer can be captured without a caller forgetting to.
+    if (!correct) {
+      setMissedWith(userAnswer ?? null);
+      setMissedIndex(chosenIndex ?? null);
+    }
     recordResult({
       subject,
       topic,

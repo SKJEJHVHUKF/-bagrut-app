@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import ServiceWorkerRegistration from "./sw-register";
 import AppChrome from "@/components/AppChrome";
+import TutorBubble from "@/components/tutor/TutorBubble";
 import BottomNav from "@/components/BottomNav";
 import GlobalSearch from "@/components/GlobalSearch";
 import FormulaSheet from "@/components/FormulaSheet";
@@ -87,6 +88,7 @@ export default function RootLayout({
       <body className="w-screen overflow-x-hidden m-0 p-0">
         <ServiceWorkerRegistration />
         <AppChrome />
+        <TutorBubble />
         <BottomNav />
         <GlobalSearch />
         <FormulaSheet />
