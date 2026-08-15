@@ -267,6 +267,70 @@ acheck('bag012 b F=x^3/3+x^2+x', 'x^3/3 + x^2 + x', 'x^2 + 2*x + 1');
 // ============================================================
 // REPORT
 // ============================================================
+// ============================================================
+// Ghost Replay (content/ghost-replay/math5/integrals.ts)
+// ============================================================
+// The four answers AND every number invented inside a failure branch.
+
+// --- gr-int-basic-006: ∫(2x+1)^4 dx ---
+acheck('ghost basic-006: (2x+1)^5/10 differentiates back to (2x+1)^4', '(2*x+1)^5/10', '(2*x+1)^4');
+check('ghost basic-006: the inner derivative is 2, hence the 10 = 5*2', 5 * 2, 10);
+check('ghost basic-006 branch: (2x+1)^5/5 differentiates to 2(2x+1)^4 — twice too big',
+  (math.derivative('(2*x+1)^5/5', 'x').evaluate({ x: 1 }) as number) /
+    (math.parse('(2*x+1)^4').evaluate({ x: 1 }) as number), 2);
+check('ghost basic-006 branch: 4(2x+1)^3*2 is the DERIVATIVE, not the integral',
+  math.derivative('(2*x+1)^4', 'x').evaluate({ x: 1 }) as number, 8 * 27);
+
+// --- gr-int-def-005: f' = 3x^2-4, f(1) = 2 ---
+{
+  const f = (x: number) => x ** 3 - 4 * x + 5;
+  acheck('ghost def-005: x^3-4x+5 differentiates back to 3x^2-4', 'x^3-4*x+5', '3*x^2-4');
+  check('ghost def-005: f(1) = 2', f(1), 2);
+  check('ghost def-005: C = 5, from 1-4+C = 2', 2 - (1 - 4), 5);
+  check('ghost def-005 branch: dropping C gives f(1) = -3, not 2', 1 - 4, -3);
+  check('ghost def-005 branch: C = -5 gives f(1) = -8', 1 - 4 - 5, -8);
+  check('ghost def-005 branch: differentiating instead gives 6x, which at x=1 is 6', 6 * 1, 6);
+}
+
+// --- gr-int-area-005: area between x^2-1 and the x-axis ---
+{
+  const F = (x: number) => x ** 3 / 3 - x;
+  check('ghost area-005: the curve meets the axis at -1 and 1', (-1) ** 2 - 1, 0);
+  check('ghost area-005: the signed integral is -4/3', F(1) - F(-1), -4 / 3);
+  check('ghost area-005: the AREA is 4/3', Math.abs(F(1) - F(-1)), 4 / 3);
+  check('ghost area-005: the curve really is negative inside — f(0) = -1', 0 ** 2 - 1, -1);
+  // Independent: a Riemann sum of |f| over [-1,1].
+  {
+    const N = 400000; let s = 0;
+    for (let i = 0; i < N; i++) { const x = -1 + ((i + 0.5) * 2) / N; s += Math.abs(x * x - 1); }
+    check('ghost area-005: a 400k Riemann sum of |f| agrees with 4/3',
+      Math.abs((s * 2) / N - 4 / 3) < 1e-9 ? 1 : 0, 1);
+  }
+  check('ghost area-005 branch: -4/3 is the signed integral, and area cannot be negative',
+    F(1) - F(-1) < 0 ? 1 : 0, 1);
+  check('ghost area-005 branch: integrating 0 to 1 only gives -2/3, half the region', F(1) - F(0), -2 / 3);
+  check('ghost area-005 branch: ...so its absolute value 2/3 is half the area', 2 / 3, 2 / 3);
+}
+
+// --- gr-int-vol-004: volume of y=x^2 about the x-axis, 0 to 1 ---
+{
+  check('ghost vol-004: the integrand is x^4, not x^2', 2 * 2, 4);
+  check('ghost vol-004: ∫x^4 from 0 to 1 is 1/5', 1 / 5, 0.2);
+  check('ghost vol-004: V = pi/5', Math.PI / 5, 0.6283185307179586);
+  {
+    const N = 400000; let s = 0;
+    for (let i = 0; i < N; i++) { const x = (i + 0.5) / N; s += (x * x) ** 2; }
+    check('ghost vol-004: a 400k Riemann sum of (x^2)^2 agrees with 1/5',
+      Math.abs(s / N - 0.2) < 1e-9 ? 1 : 0, 1);
+  }
+  check('ghost vol-004 branch: forgetting to square gives pi/3, not pi/5', Math.PI / 3, 1.0471975511965976);
+  check('ghost vol-004 branch: forgetting pi leaves the bare 1/5', 0.2, 0.2);
+  check('ghost vol-004 branch: 1/5 < 1/3, so the wrong answer is LARGER', 1 / 5 < 1 / 3 ? 1 : 0, 1);
+  // The cylinder that contains the solid: radius f(1)=1, height 1.
+  check('ghost vol-004: the containing cylinder has volume pi, and pi/5 sits under it',
+    Math.PI / 5 < Math.PI ? 1 : 0, 1);
+}
+
 console.log(`\n${pass}/${pass + fail} passed`);
 if (fail > 0) {
   console.log(failures.join('\n'));
