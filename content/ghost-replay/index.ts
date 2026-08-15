@@ -18,6 +18,7 @@ import { derivativesGhostReplays } from './math5/derivatives';
 import { sequencesGhostReplays } from './math5/sequences';
 import { lnFunctionGhostReplays } from './math5/ln-function';
 import { integralsGhostReplays } from './math5/integrals';
+import { expFunctionsGhostReplays } from './math5/exp-functions';
 
 const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:מספרים מרוכבים': complexNumbersGhostReplays,
@@ -28,6 +29,7 @@ const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:סדרות': sequencesGhostReplays,
   'math5:פונקציית ln': lnFunctionGhostReplays,
   'math5:חשבון אינטגרלי': integralsGhostReplays,
+  'math5:פונקציה מעריכית': expFunctionsGhostReplays,
 };
 
 function key(subject: string, topic: string): string {

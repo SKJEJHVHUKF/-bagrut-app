@@ -299,6 +299,101 @@ check('int-013 value = (1/2)(e-1)', 0.5 * Math.exp(1) - 0.5 * Math.exp(0), 0.5 *
 // ============================================================
 // REPORT
 // ============================================================
+// ============================================================
+// Ghost Replay (content/ghost-replay/math5/exp-functions.ts)
+// ============================================================
+// The four answers AND every number invented inside a failure branch.
+
+// --- gr-exp-deriv-011: f = x^2 e^{-x} ---
+{
+  dcheck('ghost deriv-011: f\' = e^{-x}(2x - x^2)', 'x^2*e^(-x)', 'e^(-x)*(2*x - x^2)');
+  const fp = (x: number) => Math.exp(-x) * (2 * x - x * x);
+  const f = (x: number) => x * x * Math.exp(-x);
+  check('ghost deriv-011: f\' vanishes at x=0', fp(0), 0);
+  check('ghost deriv-011: f\' vanishes at x=2', fp(2), 0);
+  check('ghost deriv-011: e^{-x} is positive, so the sign comes from x(2-x) — at x=-1',
+    fp(-1) < 0 ? 1 : 0, 1);
+  check('ghost deriv-011: f\' > 0 between 0 and 2', fp(1) > 0 ? 1 : 0, 1);
+  check('ghost deriv-011: f\' < 0 beyond 2', fp(3) < 0 ? 1 : 0, 1);
+  check('ghost deriv-011: minimum value f(0) = 0', f(0), 0);
+  check('ghost deriv-011: maximum value f(2) = 4e^{-2} ~= 0.5413', Math.round(f(2) * 1e4) / 1e4, 0.5413);
+  check('ghost deriv-011 branch: e^{-x} never vanishes, so it contributes no root',
+    Math.exp(-50) > 0 ? 1 : 0, 1);
+  check('ghost deriv-011 branch: the derivative of e^{-x} is -e^{-x}, not e^{-x}',
+    Math.round((Math.exp(-1) * -1) * 1e6) / 1e6, Math.round(-Math.exp(-1) * 1e6) / 1e6);
+  check('ghost deriv-011 branch: forgetting the minus gives e^{-x}(2x + x^2), whose roots are 0 and -2',
+    2 * -2 + 4, 0);
+}
+
+// --- gr-exp-eq-005: e^{2x} - 5e^x + 4 < 0 ---
+{
+  const g = (x: number) => Math.exp(2 * x) - 5 * Math.exp(x) + 4;
+  check('ghost eq-005: t^2-5t+4 factors as (t-1)(t-4)', (1 - 1) * (1 - 4), 0);
+  check('ghost eq-005: the roots in t are 1 and 4', 1 * 4, 4);
+  check('ghost eq-005: e^x = 1 gives x = 0', Math.log(1), 0);
+  check('ghost eq-005: e^x = 4 gives x = ln4 ~= 1.3863', Math.round(Math.log(4) * 1e4) / 1e4, 1.3863);
+  let bad = 0;
+  for (let i = -30000; i <= 30000; i++) {
+    const x = i / 10000;
+    if ((g(x) < 0) !== (x > 0 && x < Math.log(4))) bad++;
+  }
+  check('ghost eq-005: a 60k sweep confirms the solution set is exactly 0 < x < ln4', bad, 0);
+  check('ghost eq-005 branch: at x=0 the expression is 0, not negative', g(0), 0);
+  check('ghost eq-005 branch: at x=2 it is positive again', g(2) > 0 ? 1 : 0, 1);
+  check('ghost eq-005 branch: t < 0 is impossible — e^x is always positive',
+    Math.exp(-100) > 0 ? 1 : 0, 1);
+}
+
+// --- gr-exp-inv-012: f = e^x/(e^x+1) ---
+{
+  const f = (x: number) => Math.exp(x) / (Math.exp(x) + 1);
+  dcheck('ghost inv-012: f\' = e^x/(e^x+1)^2', 'e^x/(e^x+1)', 'e^x/(e^x+1)^2');
+  // e^x > 0 for every real x, so e^x+1 > 1 — stated on e^x itself, because
+  // 1 + e^{-100} rounds to exactly 1 in double precision and would fail here
+  // for a floating-point reason rather than a mathematical one.
+  check('ghost inv-012: the denominator never vanishes — e^x > 0 even far out',
+    Math.exp(-100) > 0 ? 1 : 0, 1);
+  check('ghost inv-012: f -> 1 as x -> +inf', Math.round(f(40) * 1e9) / 1e9, 1);
+  check('ghost inv-012: f -> 0 as x -> -inf', Math.round(f(-40) * 1e9) / 1e9, 0);
+  check('ghost inv-012: f is strictly increasing — sampled 200 points',
+    (() => { let ok = 1; for (let i = -100; i < 100; i++) if (!(f(i / 10) < f((i + 1) / 10))) ok = 0; return ok; })(), 1);
+  check('ghost inv-012: f(0) = 1/2', f(0), 0.5);
+  check('ghost inv-012: 0 < f < 1 everywhere — at x=5 and x=-5',
+    f(5) < 1 && f(-5) > 0 ? 1 : 0, 1);
+  check('ghost inv-012 branch: there is NO vertical asymptote, unlike e^x/(e^x-1)',
+    Math.exp(0) - 1, 0);
+  check('ghost inv-012 branch: TWO horizontal asymptotes, not one',
+    Math.abs(1 - 0) > 0 ? 2 : 1, 2);
+}
+
+// --- gr-exp-int-012: area of e^x-1 over [-2,1], sign change at 0 ---
+{
+  const F = (x: number) => Math.exp(x) - x;
+  const left = Math.abs(F(0) - F(-2));
+  const right = F(1) - F(0);
+  check('ghost int-012: e^x-1 vanishes at x=0', Math.exp(0) - 1, 0);
+  check('ghost int-012: it is negative on [-2,0) — at x=-1', Math.exp(-1) - 1 < 0 ? 1 : 0, 1);
+  check('ghost int-012: it is positive on (0,1] — at x=0.5', Math.exp(0.5) - 1 > 0 ? 1 : 0, 1);
+  check('ghost int-012: the left piece has area 1 + e^{-2} ~= 1.1353',
+    Math.round(left * 1e4) / 1e4, 1.1353);
+  check('ghost int-012: the right piece has area e - 2 ~= 0.7183',
+    Math.round(right * 1e4) / 1e4, 0.7183);
+  check('ghost int-012: total area = e + e^{-2} - 1 ~= 1.8536',
+    Math.round((left + right) * 1e4) / 1e4, 1.8536);
+  check('ghost int-012: the closed form matches',
+    Math.round((Math.E + Math.exp(-2) - 1) * 1e9) / 1e9, Math.round((left + right) * 1e9) / 1e9);
+  {
+    const N = 600000; let s = 0;
+    for (let i = 0; i < N; i++) { const x = -2 + ((i + 0.5) * 3) / N; s += Math.abs(Math.exp(x) - 1); }
+    check('ghost int-012: a 600k Riemann sum of |f| agrees to 1e-8',
+      Math.abs((s * 3) / N - (left + right)) < 1e-8 ? 1 : 0, 1);
+  }
+  check('ghost int-012 branch: integrating straight through gives -0.4171, not the area',
+    Math.round((F(1) - F(-2)) * 1e4) / 1e4, -0.4171);
+  check('ghost int-012 branch: |−0.4170| is far below the true 1.8536 — the pieces cancelled',
+    Math.abs(F(1) - F(-2)) < left + right ? 1 : 0, 1);
+}
+
 console.log(`\n${pass}/${pass + fail} passed`);
 if (fail > 0) {
   console.log(failures.join('\n'));
