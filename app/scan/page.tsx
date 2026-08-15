@@ -53,6 +53,7 @@ import {
   type UnitLevel,
 } from '@/lib/mathscan';
 import { ConfidenceMeter } from '@/components/scan/ConfidenceMeter';
+import { RepairSuggestion } from '@/components/scan/RepairSuggestion';
 import { QuestionEditor } from '@/components/scan/QuestionEditor';
 import { ScanStages, ScanTraceSummary, type LiveStage } from '@/components/scan/ScanStages';
 import { SolutionPanel } from '@/components/scan/SolutionPanel';
@@ -440,6 +441,21 @@ export default function ScanPage() {
             ) : (
               <InputNotes issues={result.validation.issues} />
             )}
+
+            {/* The one-tap way out of a rejected read.
+                The pipeline is right to refuse to solve a misread question,
+                but a refusal on its own is a dead end: the only cure is
+                retyping the equation, which is precisely what a student who
+                photographed it will not do. For the failure that actually
+                happens — a `²` read as `°` — we already know what went wrong,
+                so we offer the correction instead of only naming it.
+                Placed directly under the confidence meter that reports the
+                problem, and ABOVE the solution area, because on a rejected
+                read there is no solution below it to compete with.
+                proposeRepair abstains unless the original text is
+                mathematically impossible, and the student sees the corrected
+                question before it is solved — we never swap it silently. */}
+            <RepairSuggestion question={result.question} onApply={resolveEdited} busy={busy} />
 
             {needsLogin && (
               <UpsellCard
