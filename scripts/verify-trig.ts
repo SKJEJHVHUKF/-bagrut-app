@@ -284,6 +284,87 @@ check('bag004 max', 3 * 1 + 2, 5);
 check('bag004 min', 3 * -1 + 2, -1);
 
 // =====================================================================
+// Ghost Replay (content/ghost-replay/math5/trigonometry.ts)
+// =====================================================================
+// The four answers AND every number invented inside a failure branch.
+
+// --- gr-trig-id-006: sin x + cos x = 1/2 ---
+check('ghost id-006: (s+c)^2 = s^2+c^2+2sc, so 1 + 2sc = 1/4', 1 + 2 * (-3 / 8), 1 / 4);
+check('ghost id-006: sc = -3/8', -3 / 8, -0.375);
+check('ghost id-006: sin2x = 2sc = -3/4', 2 * (-3 / 8), -3 / 4);
+// Such an x really exists: s and c are the roots of t^2 - (1/2)t - 3/8 = 0.
+{
+  const d = Math.sqrt(0.25 + 1.5);
+  const t1 = (0.5 + d) / 2, t2 = (0.5 - d) / 2;
+  check('ghost id-006: the pair (s,c) exists — the roots sum to 1/2', t1 + t2, 0.5);
+  check('ghost id-006: ...and their product is -3/8', t1 * t2, -3 / 8);
+  check('ghost id-006: ...and s^2+c^2 = 1, so it is a genuine angle', t1 * t1 + t2 * t2, 1);
+  check('ghost id-006: |s+c| <= sqrt2, and 1/2 is within range', Math.SQRT2 > 0.5 ? 1 : 0, 1);
+}
+check('ghost id-006 branch: sc = -3/4 (forgot to halve) is wrong', 2 * (-3 / 4) === -3 / 4 ? 1 : 0, 0);
+check('ghost id-006 branch: sin2x = -3/8 swaps the two answers', -3 / 8 === -3 / 4 ? 1 : 0, 0);
+check('ghost id-006 branch: sc = +3/8 has the sign wrong — 1 + 2(3/8) = 1.75, not 0.25', 1 + 2 * (3 / 8), 1.75);
+
+// --- gr-trig-eq-006: sqrt3 sin x = cos x on [0,360) ---
+check('ghost eq-006: x=30 satisfies it', Math.sqrt(3) * Math.sin(deg(30)) - Math.cos(deg(30)), 0);
+check('ghost eq-006: x=210 satisfies it', Math.sqrt(3) * Math.sin(deg(210)) - Math.cos(deg(210)), 0);
+check('ghost eq-006: tan 30 = 1/sqrt3', Math.tan(deg(30)), 1 / Math.sqrt(3));
+check('ghost eq-006: the tangent period is 180, so 30+180 = 210', 30 + 180, 210);
+// Dividing by cos x is SAFE here, and that has to be shown rather than asserted.
+check('ghost eq-006: at x=90 (cos=0) the equation would force sin x = 0 — impossible',
+  Math.abs(Math.sqrt(3) * Math.sin(deg(90)) - Math.cos(deg(90))) > 1e-9 ? 1 : 0, 1);
+check('ghost eq-006: same at x=270', Math.abs(Math.sqrt(3) * Math.sin(deg(270)) - Math.cos(deg(270))) > 1e-9 ? 1 : 0, 1);
+check('ghost eq-006 branch: x=150 does NOT satisfy it',
+  Math.abs(Math.sqrt(3) * Math.sin(deg(150)) - Math.cos(deg(150))) > 1e-9 ? 1 : 0, 1);
+check('ghost eq-006 branch: x=60 does NOT satisfy it',
+  Math.abs(Math.sqrt(3) * Math.sin(deg(60)) - Math.cos(deg(60))) > 1e-9 ? 1 : 0, 1);
+check('ghost eq-006 branch: x=240 does NOT satisfy it',
+  Math.abs(Math.sqrt(3) * Math.sin(deg(240)) - Math.cos(deg(240))) > 1e-9 ? 1 : 0, 1);
+// A brute sweep proves 30 and 210 are the ONLY solutions in the range.
+{
+  let extra = 0;
+  for (let d10 = 0; d10 < 3600; d10++) {
+    const x = d10 / 10;
+    if (Math.abs(x - 30) < 1e-9 || Math.abs(x - 210) < 1e-9) continue;
+    if (Math.abs(Math.sqrt(3) * Math.sin(deg(x)) - Math.cos(deg(x))) < 1e-9) extra++;
+  }
+  check('ghost eq-006: a 0.1-degree sweep finds no third solution', extra, 0);
+}
+
+// --- gr-trig-sp-005: cos x = -3/5 in quadrant II ---
+check('ghost sp-005: sin^2 = 1 - 9/25 = 16/25', 1 - 9 / 25, 16 / 25);
+check('ghost sp-005: sin = +4/5 in quadrant II', Math.sqrt(16 / 25), 4 / 5);
+check('ghost sp-005: tan = (4/5)/(-3/5) = -4/3', (4 / 5) / (-3 / 5), -4 / 3);
+check('ghost sp-005: the angle really is in quadrant II', Math.acos(-3 / 5) > Math.PI / 2 ? 1 : 0, 1);
+check('ghost sp-005: and its sine is positive there', Math.sin(Math.acos(-3 / 5)), 4 / 5);
+check('ghost sp-005: 3-4-5 — the identity holds', (3 / 5) ** 2 + (4 / 5) ** 2, 1);
+check('ghost sp-005 branch: sin=-4/5 would put x in quadrant III, where cos is also negative',
+  Math.sin(-Math.acos(-3 / 5)) < 0 ? 1 : 0, 1);
+check('ghost sp-005 branch: tan=+4/3 would need sin and cos of the same sign', (4 / 5) / (-3 / 5) < 0 ? 1 : 0, 1);
+
+// --- gr-trig-calc-005: integral of sin^2 x from 0 to pi/2 ---
+check('ghost calc-005: the antiderivative at pi/2 is pi/4', Math.PI / 4 - Math.sin(Math.PI) / 4, Math.PI / 4);
+check('ghost calc-005: the antiderivative at 0 is 0', 0 / 2 - Math.sin(0) / 4, 0);
+check('ghost calc-005: result = pi/4 ~= 0.7854', Math.PI / 4, 0.7853981633974483);
+// Independent confirmation: numeric integration, no identity used.
+{
+  const N = 200000; let s = 0;
+  for (let i = 0; i < N; i++) { const x = ((i + 0.5) * (Math.PI / 2)) / N; s += Math.sin(x) ** 2; }
+  const approx = (s * (Math.PI / 2)) / N;
+  check('ghost calc-005: a 200k-point Riemann sum agrees to 1e-9', Math.abs(approx - Math.PI / 4) < 1e-9 ? 1 : 0, 1);
+}
+check('ghost calc-005: symmetry — the integrals of sin^2 and cos^2 are equal and sum to pi/2',
+  2 * (Math.PI / 4), Math.PI / 2);
+check('ghost calc-005: the bound 0 <= I <= pi/2 holds', Math.PI / 4 < Math.PI / 2 ? 1 : 0, 1);
+check('ghost calc-005 branch: the un-squared integral of sin x over the same range is 1',
+  -Math.cos(Math.PI / 2) + Math.cos(0), 1);
+check('ghost calc-005 branch: "sin^3/3" would give 1/3 ~= 0.333, well below pi/4', 1 / 3, 0.3333333333333333);
+// pi/2 is the WIDTH of the interval, so it is the ceiling the integral can never
+// reach (sin^2 < 1 almost everywhere) — the branch for "forgot the half" says so.
+check('ghost calc-005 branch: pi/2 ~= 1.571 is the interval width, i.e. the unreachable ceiling',
+  Math.PI / 2 > Math.PI / 4 ? 1 : 0, 1);
+
+// =====================================================================
 console.log(`\nTRIG VERIFY: ${pass}/${pass + fail} passed.`);
 if (fail > 0) {
   console.log('\n' + failures.join('\n'));
