@@ -15,6 +15,7 @@ import { vectorsGhostReplays } from './math5/vectors';
 import { analyticGeometryGhostReplays } from './math5/analytic-geometry';
 import { trigonometryGhostReplays } from './math5/trigonometry';
 import { derivativesGhostReplays } from './math5/derivatives';
+import { sequencesGhostReplays } from './math5/sequences';
 
 const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:מספרים מרוכבים': complexNumbersGhostReplays,
@@ -22,6 +23,7 @@ const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:גאומטריה אנליטית': analyticGeometryGhostReplays,
   'math5:טריגונומטריה': trigonometryGhostReplays,
   'math5:חשבון דיפרנציאלי': derivativesGhostReplays,
+  'math5:סדרות': sequencesGhostReplays,
 };
 
 function key(subject: string, topic: string): string {

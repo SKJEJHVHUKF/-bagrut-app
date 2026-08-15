@@ -191,9 +191,112 @@ check('app-l5 r', Math.cbrt(1.331) - 1, 0.1);
 if (failures.length) {
   for (const f of failures) console.error(f);
 }
+// ============================================================
+// Ghost Replay (content/ghost-replay/math5/sequences.ts)
+// ============================================================
+// The five answers AND every number invented inside a failure branch.
+
+// --- gr-seq-ar-005: a1=40, d=-3, which n maximises S_n ---
+{
+  const a = (n: number) => arithTerm(40, -3, n);
+  const S = (n: number) => arithSum(40, a(n), n);
+  check('ghost ar-005: a_n = 43 - 3n', a(10), 43 - 30);
+  check('ghost ar-005: a_14 = 1, still positive', a(14), 1);
+  check('ghost ar-005: a_15 = -2, the first negative term', a(15), -2);
+  check('ghost ar-005: the sign flips between 14 and 15 (43/3 = 14.33)', 43 / 3, 14.333333333333334);
+  check('ghost ar-005: S_14 = 287', S(14), 287);
+  check('ghost ar-005: S_13 = 286, smaller', S(13), 286);
+  check('ghost ar-005: S_15 = 285, smaller', S(15), 285);
+  // Independent: brute-force the maximum over a wide range.
+  {
+    let best = -Infinity, bestN = 0;
+    for (let n = 1; n <= 200; n++) if (S(n) > best) { best = S(n); bestN = n; }
+    check('ghost ar-005: a 200-term brute force agrees the max is at n=14', bestN, 14);
+    check('ghost ar-005: ...with value 287', best, 287);
+  }
+  // The parabola-vertex route must agree.
+  check('ghost ar-005: S(n) = (83n - 3n^2)/2, vertex at 83/6 = 13.83', 83 / 6, 13.833333333333334);
+  check('ghost ar-005: rounding the vertex to 14 gives the same answer', Math.round(83 / 6), 14);
+  check('ghost ar-005 branch: stopping at the last positive term is right; n=15 adds -2', S(15) - S(14), -2);
+}
+
+// --- gr-seq-ge-006: a1+a2=12, a2+a3=24 ---
+{
+  check('ghost ge-006: dividing the equations gives q = 2', 24 / 12, 2);
+  check('ghost ge-006: a1(1+q) = 12 with q=2 gives a1 = 4', 12 / 3, 4);
+  check('ghost ge-006: the sequence is 4, 8, 16', geoTerm(4, 2, 3), 16);
+  check('ghost ge-006: a1+a2 = 12', geoTerm(4, 2, 1) + geoTerm(4, 2, 2), 12);
+  check('ghost ge-006: a2+a3 = 24', geoTerm(4, 2, 2) + geoTerm(4, 2, 3), 24);
+  // Dividing requires 1+q != 0; q = -1 is excluded because it would make a1+a2 = 0.
+  check('ghost ge-006: q=-1 would force a1+a2 = 0, not 12', 4 * (1 + -1), 0);
+  check('ghost ge-006 branch: q=1/2 gives a1=8 and a2+a3 = 6, not 24',
+    geoTerm(8, 0.5, 2) + geoTerm(8, 0.5, 3), 6);
+  check('ghost ge-006 branch: q=-2 gives a1(1+q) = -a1, so a1 = -12 and a2+a3 = 24 fails',
+    geoTerm(-12, -2, 2) + geoTerm(-12, -2, 3), -24);
+}
+
+// --- gr-seq-inf-005: S_inf = 12, a1 = 8 ---
+{
+  check('ghost inf-005: 1-q = 8/12 = 2/3', 8 / 12, 2 / 3);
+  check('ghost inf-005: q = 1/3', 1 - 2 / 3, 1 / 3);
+  check('ghost inf-005: |q| < 1, so the series really converges', Math.abs(1 / 3) < 1 ? 1 : 0, 1);
+  check('ghost inf-005: S_inf = a1/(1-q) = 12', 8 / (1 - 1 / 3), 12);
+  check('ghost inf-005: a3 = 8/9', geoTerm(8, 1 / 3, 3), 8 / 9);
+  // Independent: a long partial sum must approach 12.
+  {
+    let s = 0;
+    for (let n = 1; n <= 400; n++) s += geoTerm(8, 1 / 3, n);
+    check('ghost inf-005: 400 partial terms land on 12', Math.abs(s - 12) < 1e-9 ? 1 : 0, 1);
+  }
+  check('ghost inf-005 branch: q=2/3 would give S_inf = 24, not 12', 8 / (1 - 2 / 3), 24);
+  check('ghost inf-005 branch: q=-1/3 would give S_inf = 6, not 12', 8 / (1 + 1 / 3), 6);
+  check('ghost inf-005 branch: a3 with q=2/3 would be 32/9, not 8/9', geoTerm(8, 2 / 3, 3), 32 / 9);
+}
+
+// --- gr-seq-app-005: 5000 -> 6655 in 3 years ---
+{
+  check('ghost app-005: the growth factor is 6655/5000 = 1.331', 6655 / 5000, 1.331);
+  check('ghost app-005: 1.1^3 = 1.331', Math.pow(1.1, 3), 1.331);
+  check('ghost app-005: the annual rate is 10%', Math.round((Math.pow(1.331, 1 / 3) - 1) * 1e9) / 1e9, 0.1);
+  check('ghost app-005: 5000 * 1.1^3 = 6655', 5000 * Math.pow(1.1, 3), 6655);
+  // Branch: simple interest reads 11% per year, and compounding at 11% overshoots.
+  // NOT a clean 11% — it is 11.03%, and the content must say so.
+  check('ghost app-005 branch: simple interest gives 0.331/3 = 11.033%',
+    Math.round(((6655 - 5000) / 5000 / 3) * 1e6) / 1e6, 0.110333);
+  check('ghost app-005 branch: 11.033% compounded overshoots to ~6844',
+    Math.round(5000 * Math.pow(1 + 0.331 / 3, 3)), 6844);
+  check('ghost app-005 branch: 33.1% total is the 3-year growth, not the annual rate',
+    Math.round((1.331 - 1) * 1000) / 1000, 0.331);
+}
+
+// --- gr-seq-ind-006: n^3 - n divisible by 6 ---
+{
+  const f = (n: number) => n ** 3 - n;
+  check('ghost ind-006: base n=1 gives 0, divisible by 6', f(1) % 6, 0);
+  check('ghost ind-006: n=2 gives 6', f(2), 6);
+  check('ghost ind-006: n=3 gives 24', f(3), 24);
+  // The induction step: f(n+1) - f(n) = 3n(n+1).
+  for (const n of [1, 2, 5, 9, 40]) {
+    check(`ghost ind-006: f(n+1)-f(n) = 3n(n+1) at n=${n}`, f(n + 1) - f(n), 3 * n * (n + 1));
+  }
+  check('ghost ind-006: n(n+1) is even, so 3n(n+1) is divisible by 6 — at n=7', (7 * 8) % 2, 0);
+  check('ghost ind-006: 3*7*8 = 168 is divisible by 6', (3 * 7 * 8) % 6, 0);
+  {
+    let bad = 0;
+    for (let n = 1; n <= 5000; n++) if (f(n) % 6 !== 0) bad++;
+    check('ghost ind-006: n^3-n is divisible by 6 for the first 5000 naturals', bad, 0);
+  }
+  // Branch: the difference is NOT 3n^2, and NOT n^3.
+  check('ghost ind-006 branch: 3n^2 alone at n=5 is 75, but the true difference is 90', 3 * 25, 75);
+  check('ghost ind-006: the true difference at n=5 is 90', f(6) - f(5), 90);
+  check('ghost ind-006 branch: divisibility by 3 alone is weaker — 3 divides 3n(n+1) trivially', (3 * 5 * 6) % 3, 0);
+}
+
 console.log(`\nverify-sequences: ${pass}/${pass + fail} checks passed.`);
 if (fail > 0) {
-  console.error(`${fail} FAILURES — fix content.`);
+  // The list was collected and then thrown away, which made a red run useless.
+  console.error(failures.join('\n'));
+  console.error(`\n${fail} FAILURES — fix content.`);
   process.exit(1);
 }
 
