@@ -229,6 +229,19 @@ assert(
   'the topic prompt survives the 4-item cap',
 );
 
+// --- today's plan -------------------------------------------------------
+// The greeting now carries lib/daily-plan's answer to "what do I do today".
+// The path that matters most here is the DEGRADED one: a visitor with no study
+// plan has no target, no paper and no pacing, and inventing a day's work for
+// them would be a guess. Most visitors are in exactly that state, so it must
+// return null rather than throw — a greeting that throws takes down the first
+// screen the student ever sees.
+assert(greeting.today === null, 'no study plan → no invented plan for the day');
+assert(
+  buildTutorGreeting(SUBJECT, '', NOW).today === null,
+  'and the same with no topic in scope',
+);
+
 // ============================================================
 // PART 2 — what the tutor may DO, and what it may REMEMBER.
 //

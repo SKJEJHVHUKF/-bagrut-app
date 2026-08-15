@@ -35,7 +35,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { X, Send, Loader2, Sparkles, ArrowLeft, GraduationCap, ShieldCheck } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, ArrowLeft, GraduationCap, ShieldCheck, CalendarCheck } from 'lucide-react';
 import { buildStudentSnapshot } from '@/lib/tutor-context';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
 import {
@@ -46,6 +46,7 @@ import {
   type TutorFocus,
 } from '@/lib/tutor-presence';
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
+import { buildTutorGreeting, type TutorGreeting } from '@/lib/tutor-greeting';
 import type { ResolvedSuggestion } from '@/lib/agents/tools';
 
 const MAX_LEN = 500;
@@ -106,6 +107,20 @@ export default function TutorBubble() {
   // so a second "אני תקוע" walks down the ladder instead of repeating itself.
   // Keyed by question text so moving to the next question resets it.
   const servedRef = useRef<{ key: string; kinds: LocalAnswerKind[] }>({ key: '', kinds: [] });
+  /**
+   * Today's plan, in the tutor's voice.
+   *
+   * Computed when the drawer is OPENED, not on mount. Building it reads
+   * localStorage and walks every sub-topic of the roadmap — real work, and
+   * pointless on a page load where the student never touches the bubble. It is
+   * also fresher this way: open it after finishing a rung and the plan already
+   * reflects that, which an on-mount read would not.
+   *
+   * Only rendered on a screen with no question of its own. Mid-exercise the
+   * question in front of the student outranks the day's agenda, and a teacher
+   * who interrupts your work to read out the schedule is not being helpful.
+   */
+  const [greeting, setGreeting] = useState<TutorGreeting | null>(null);
 
   const hidden = HIDDEN_PREFIXES.some(
     (p) => pathname === p || pathname?.startsWith(p + '/'),
@@ -282,6 +297,10 @@ export default function TutorBubble() {
     // error is per-send, so the only moment it can mislead is the next time
     // the drawer is opened — and an event handler is the right place for it.
     setError(null);
+    // Rebuilt on every open so the plan reflects work finished since the last
+    // one. Cheap enough to redo: pure arithmetic over the local event log, no
+    // network and no model.
+    setGreeting(buildTutorGreeting('math5', ''));
     setOpen(true);
   }
 
@@ -371,6 +390,43 @@ export default function TutorBubble() {
 
               {/* messages */}
               <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                {msgs.length === 0 && !focus?.questionText && greeting?.today && (
+                  <div className="mb-4 rounded-2xl border border-violet-500/25 bg-violet-500/[0.06] p-3.5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CalendarCheck className="w-4 h-4 text-violet-700 flex-shrink-0" aria-hidden />
+                      <span className="text-xs font-black text-slate-900">התוכנית להיום</span>
+                      <span className="text-[11px] text-slate-500">{greeting.today.summary}</span>
+                    </div>
+                    {greeting.today.goalLine && (
+                      <p className="text-[11px] text-slate-600 mb-2 leading-snug">
+                        {greeting.today.goalLine}
+                      </p>
+                    )}
+                    <Link
+                      href={greeting.today.first.href}
+                      onClick={() => setOpen(false)}
+                      className="group block rounded-xl bg-white/70 border border-violet-500/25 hover:border-violet-500/50 px-3 py-2.5 transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm font-bold text-slate-800">
+                            {greeting.today.first.title}
+                          </span>
+                          <span className="block text-[11px] text-slate-600 leading-snug">
+                            {greeting.today.first.why}
+                          </span>
+                        </span>
+                        <ArrowLeft className="w-4 h-4 text-violet-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
+                      </span>
+                    </Link>
+                    {greeting.today.more > 0 && (
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        ואחר כך עוד {greeting.today.more} — נעבור אחת-אחת.
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {msgs.length === 0 && (
                   <div className="pt-2">
                     <p className="text-sm text-slate-600 mb-3">

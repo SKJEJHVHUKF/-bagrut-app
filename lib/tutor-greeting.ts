@@ -21,9 +21,22 @@ import { totalStats } from '@/lib/results';
 import { dueCount } from '@/lib/review';
 import { getPlan, daysUntilBagrut } from '@/lib/study-plan';
 import { resolveCognitive } from '@/lib/tutor-context';
+import { buildTodayPlan } from '@/lib/daily-plan-client';
 
 /** A destination lib/cognition already chose. We never invent one here. */
 export type GreetingAction = { label: string; href: string; reason: string };
+
+/** Today's work, in the tutor's voice. Null until the student has a study plan. */
+export type TodayBrief = {
+  /** "12 דקות · 2 משימות" — the commitment, stated before it is asked for. */
+  summary: string;
+  /** The ONE thing to start with. A teacher names a first move, not a menu. */
+  first: { title: string; why: string; href: string; minutes: number };
+  /** How far the predicted grade is from the target, when both are known. */
+  goalLine: string | null;
+  /** Tasks beyond the first — counted, not listed. */
+  more: number;
+};
 
 export type TutorGreeting = {
   headline: string;
@@ -34,6 +47,14 @@ export type TutorGreeting = {
   /** 2–4 opening lines, the personal ones first. */
   prompts: string[];
   action: GreetingAction | null;
+  /**
+   * What a real teacher opens with: "today we're doing X, it takes 12 minutes,
+   * and here is why it matters for your grade."
+   *
+   * Built from lib/daily-plan — the same engine /my-plan renders — so the tutor
+   * cannot give a second opinion that contradicts the plan page. $0.
+   */
+  today: TodayBrief | null;
 };
 
 /** Fallbacks, used to top the list up to MAX_PROMPTS — and exported so the
@@ -61,6 +82,7 @@ export function buildTutorGreeting(
   const personal: string[] = [];
   let insight: string | null = null;
   let action: GreetingAction | null = null;
+  let today: TodayBrief | null = null;
 
   // --- how long has he been gone -----------------------------------------
   let attempts = 0;
@@ -130,9 +152,31 @@ export function buildTutorGreeting(
     /* skip */
   }
 
+  // --- today's work, in one sentence and one button ------------------------
+  // Placed after the cognitive block so a plan failure cannot cost the insight.
+  try {
+    const plan = buildTodayPlan();
+    const first = plan?.tasks[0];
+    if (plan && first) {
+      const count = plan.tasks.length;
+      today = {
+        summary: `${plan.totalMinutes} דקות · ${count === 1 ? 'משימה אחת' : `${count} משימות`}`,
+        first: { title: first.title, why: first.why, href: first.href, minutes: first.minutes },
+        goalLine: plan.goal.headline,
+        more: Math.max(0, count - 1),
+      };
+      // The day's first task outranks the topic-level next step: it already
+      // weighed reviews, weaknesses and pacing against the exam date, which
+      // `nextStep` — scoped to one topic — cannot see.
+      action = { label: first.title, href: first.href, reason: first.why };
+    }
+  } catch {
+    /* skip */
+  }
+
   if (topic) personal.push(`תעזור לי עם ${topic}`);
 
   const prompts = [...new Set([...personal, ...GENERIC_PROMPTS])].slice(0, MAX_PROMPTS);
 
-  return { headline, chips, insight, prompts, action };
+  return { headline, chips, insight, prompts, action, today };
 }
