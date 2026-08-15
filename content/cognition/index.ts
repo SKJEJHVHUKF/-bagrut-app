@@ -12,9 +12,11 @@
 
 import type { Misconception, Skill, SkillId, TopicCognitionMap } from './types';
 import { complexNumbersCognition } from './math5/complex-numbers';
+import { lnFunctionCognition } from './math5/ln-function';
 
 const REGISTRY: Record<string, TopicCognitionMap> = {
   'math5:מספרים מרוכבים': complexNumbersCognition,
+  'math5:פונקציית ln': lnFunctionCognition,
 };
 
 function key(subject: string, topic: string): string {

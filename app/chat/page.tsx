@@ -34,6 +34,7 @@ import {
   Brain,
 } from 'lucide-react';
 import { SolutionAudit } from '@/components/practice/SolutionAudit';
+import { MathText } from '@/components/practice/MathText';
 import MathUpLogo from '@/components/MathUpLogo';
 import type { ResolvedSuggestion } from '@/lib/agents/tools';
 import type { TutorFact } from '@/lib/tutor-memory';
@@ -810,9 +811,16 @@ function EmptyState({ topic, onPick }: { topic: string; onPick: (text: string) =
         </div>
       )}
 
-      <p className="text-slate-600 max-w-md mb-6">
-        {greeting?.insight ?? 'שאל אותי כל דבר על חומרי הבגרות. אענה בקצרה וברור.'}
-      </p>
+      {/* MathText, not a bare string: the catalog writes maths inside insights
+          as LaTeX (`$i$`, `$4$`) exactly like the rest of the content, so
+          rendering it as plain text shows the student raw dollar signs. */}
+      <div className="text-slate-600 max-w-md mb-6" style={{ unicodeBidi: 'plaintext' }}>
+        {greeting?.insight ? (
+          <MathText>{greeting.insight}</MathText>
+        ) : (
+          'שאל אותי כל דבר על חומרי הבגרות. אענה בקצרה וברור.'
+        )}
+      </div>
 
       {/* The next step lib/cognition already picked, with the route it chose.
           Safe as the only CTA here — unlike /roadmap, this screen has none. */}
