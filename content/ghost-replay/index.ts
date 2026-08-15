@@ -16,6 +16,7 @@ import { analyticGeometryGhostReplays } from './math5/analytic-geometry';
 import { trigonometryGhostReplays } from './math5/trigonometry';
 import { derivativesGhostReplays } from './math5/derivatives';
 import { sequencesGhostReplays } from './math5/sequences';
+import { lnFunctionGhostReplays } from './math5/ln-function';
 
 const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:מספרים מרוכבים': complexNumbersGhostReplays,
@@ -24,6 +25,7 @@ const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:טריגונומטריה': trigonometryGhostReplays,
   'math5:חשבון דיפרנציאלי': derivativesGhostReplays,
   'math5:סדרות': sequencesGhostReplays,
+  'math5:פונקציית ln': lnFunctionGhostReplays,
 };
 
 function key(subject: string, topic: string): string {

@@ -338,6 +338,114 @@ num('int012 (ln e)^2/2 - 0 =1/2', ln(E) ** 2 / 2 - ln(1) ** 2 / 2, 1 / 2);
 num('int013 (ln e)^3/3 - 0 =1/3', ln(E) ** 3 / 3 - ln(1) ** 3 / 3, 1 / 3);
 
 // ============================================================
+// Ghost Replay (content/ghost-replay/math5/ln-function.ts)
+// ============================================================
+// The five answers AND every number invented inside a failure branch.
+
+// --- gr-ln-prop-012: domain of ln((x+2)/(x-1)) ---
+{
+  const arg = (x: number) => (x + 2) / (x - 1);
+  const inDomain = (x: number) => x < -2 || x > 1;
+  let bad = 0;
+  for (let i = -20000; i <= 20000; i++) {
+    const x = i / 1000;
+    if (Math.abs(x - 1) < 1e-9) continue;
+    if ((arg(x) > 0) !== inDomain(x)) bad++;
+  }
+  num('ghost prop-012: a 40k-point sweep confirms the domain is x<-2 or x>1', bad, 0);
+  num('ghost prop-012: at x=0 the argument is -2, outside', arg(0), -2);
+  num('ghost prop-012: at x=-3 the argument is 0.25, inside', arg(-3), 0.25);
+  num('ghost prop-012: at x=2 the argument is 4, inside', arg(2), 4);
+  num('ghost prop-012 branch: "both positive" alone would drop the whole x<-2 branch',
+    arg(-3) > 0 && !(-3 + 2 > 0) ? 1 : 0, 1);
+  num('ghost prop-012 branch: -2 itself gives argument 0, and ln(0) is undefined', arg(-2), 0);
+  num('ghost prop-012 branch: the interval -2<x<1 is excluded — x=-1 gives -0.5', arg(-1), -0.5);
+}
+
+// --- gr-ln-deriv-012: f = x^2 ln x - x^2/2 ---
+{
+  const f = (x: number) => x * x * Math.log(x) - (x * x) / 2;
+  const fp = (x: number) => 2 * x * Math.log(x);
+  for (const x of [0.3, 1, 2.5, 7]) {
+    const h = 1e-6;
+    num(`ghost deriv-012: f' matches a numeric derivative at x=${x}`,
+      Math.round(((f(x + h) - f(x - h)) / (2 * h)) * 1e5) / 1e5,
+      Math.round(fp(x) * 1e5) / 1e5);
+  }
+  num('ghost deriv-012: the +x and -x cancel — at x=4 the product rule gives 2x lnx + x', 4 * 4 * (1 / 4), 4);
+  num('ghost deriv-012: f\' vanishes at x=1', fp(1), 0);
+  num('ghost deriv-012: f\' is the ONLY zero on x>0 — a 100k sweep finds no other',
+    (() => { let z = 0; for (let i = 1; i <= 100000; i++) { const x = i / 1000; if (Math.abs(fp(x)) < 1e-12) z++; } return z; })(), 1);
+  num('ghost deriv-012 branch: forgetting to cancel leaves 2x lnx + x, which vanishes at x=e^-0.5',
+    Math.round((2 * Math.exp(-0.5) * -0.5 + Math.exp(-0.5)) * 1e9) / 1e9, 0);
+  num('ghost deriv-012 branch: ...and e^-0.5 = 0.6065, not 1', Math.round(Math.exp(-0.5) * 1e4) / 1e4, 0.6065);
+}
+
+// --- gr-ln-eq-005: ln(x-1) < ln(2x-5) ---
+{
+  const ok = (x: number) => x - 1 > 0 && 2 * x - 5 > 0 && Math.log(x - 1) < Math.log(2 * x - 5);
+  let bad = 0;
+  for (let i = 1; i <= 200000; i++) {
+    const x = i / 1000;
+    if (ok(x) !== x > 4) bad++;
+  }
+  num('ghost eq-005: a 200k sweep confirms the solution set is exactly x>4', bad, 0);
+  num('ghost eq-005: the domain is x > 5/2', 5 / 2, 2.5);
+  num('ghost eq-005: the algebra alone gives x > 4', 5 - 1, 4);
+  num('ghost eq-005: the intersection of x>2.5 and x>4 is x>4', Math.max(2.5, 4), 4);
+  num('ghost eq-005 branch: x=3 satisfies the algebra? no — 3-1=2 and 2*3-5=1, so ln2 > ln1',
+    Math.log(2) > Math.log(1) ? 1 : 0, 1);
+  num('ghost eq-005 branch: at x=2 the argument 2x-5 = -1 is negative — undefined', 2 * 2 - 5, -1);
+  num('ghost eq-005 branch: ln is INCREASING, so the inequality sign does not flip',
+    Math.log(9) > Math.log(4) ? 1 : 0, 1);
+}
+
+// --- gr-ln-inv-013: inflection of f = x((lnx)^2 - 2lnx + 2) ---
+{
+  const f = (x: number) => x * (Math.log(x) ** 2 - 2 * Math.log(x) + 2);
+  const fp = (x: number) => Math.log(x) ** 2;
+  const fpp = (x: number) => (2 * Math.log(x)) / x;
+  for (const x of [0.4, 1, 3, 6]) {
+    const h = 1e-6;
+    num(`ghost inv-013: the given f' is correct at x=${x}`,
+      Math.round(((f(x + h) - f(x - h)) / (2 * h)) * 1e5) / 1e5,
+      Math.round(fp(x) * 1e5) / 1e5);
+  }
+  num('ghost inv-013: f\'\' = 2lnx/x vanishes at x=1', fpp(1), 0);
+  num('ghost inv-013: f\'\' < 0 just below 1', fpp(0.5) < 0 ? 1 : 0, 1);
+  num('ghost inv-013: f\'\' > 0 just above 1', fpp(2) > 0 ? 1 : 0, 1);
+  num('ghost inv-013: f(1) = 2', f(1), 2);
+  num('ghost inv-013: f\'(1) = 0 too — a horizontal tangent AT the inflection', fp(1), 0);
+  num('ghost inv-013 branch: it is NOT an extremum — f\' = (lnx)^2 >= 0 on both sides',
+    fp(0.5) > 0 && fp(2) > 0 ? 1 : 0, 1);
+  num('ghost inv-013 branch: f is increasing on both sides of x=1', f(2) > f(1) && f(1) > f(0.5) ? 1 : 0, 1);
+}
+
+// --- gr-ln-int-012: integral of lnx/x from 1 to e ---
+{
+  num('ghost int-012: the substitution bounds are 0 and 1', Math.log(1), 0);
+  num('ghost int-012: and ln(e) = 1', Math.log(Math.E), 1);
+  {
+    const N = 400000; let s = 0;
+    for (let i = 0; i < N; i++) { const x = 1 + ((i + 0.5) * (Math.E - 1)) / N; s += Math.log(x) / x; }
+    const approx = (s * (Math.E - 1)) / N;
+    num('ghost int-012: a 400k-point Riemann sum agrees to 1e-9', Math.abs(approx - 0.5) < 1e-9 ? 1 : 0, 1);
+  }
+  // The antiderivative really is (lnx)^2/2 — check by differentiating it numerically.
+  {
+    const F = (x: number) => Math.log(x) ** 2 / 2;
+    const h = 1e-6, x = 2;
+    num('ghost int-012: d/dx[(lnx)^2/2] = lnx/x at x=2',
+      Math.round(((F(x + h) - F(x - h)) / (2 * h)) * 1e6) / 1e6,
+      Math.round((Math.log(2) / 2) * 1e6) / 1e6);
+  }
+  num('ghost int-012 branch: treating it as ln(lnx) fails — ln(ln 1) is undefined', Math.log(1), 0);
+  num('ghost int-012 branch: the integral of 1/x alone over [1,e] is 1, not 1/2', Math.log(Math.E) - Math.log(1), 1);
+  num('ghost int-012 branch: forgetting the half leaves [(lnx)^2] = 1',
+    Math.log(Math.E) ** 2 - Math.log(1) ** 2, 1);
+}
+
+// ============================================================
 console.log(`\n${pass}/${pass + fail} passed` + (fail ? `  (${fail} FAILED)` : ''));
 if (fail) process.exit(1);
 
