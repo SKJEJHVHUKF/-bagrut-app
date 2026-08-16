@@ -6,6 +6,7 @@
 // model answer) from /api/thinking/evaluate. Pro-only server-side.
 
 import { useCallback, useEffect, useState } from 'react';
+import { publishTutorFocus, FOCUS_PRIORITY } from '@/lib/tutor-presence';
 import Link from 'next/link';
 import { Loader2, Brain, CheckCircle, XCircle, Crown, ArrowLeft, Sparkles } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
@@ -40,6 +41,21 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
   const [error, setError] = useState<string | null>(null);
   const [proUpsell, setProUpsell] = useState(false);
   const [showModel, setShowModel] = useState(false);
+
+  // ===== publish the generated question =====
+  // Not a PracticeQuestion — it is produced at runtime and has no authored
+  // hint or worked solution — so only the text is published. That is enough
+  // for the tutor to stop asking "which question?" and is honest about what
+  // we actually hold.
+  useEffect(() => {
+    if (!question?.question) return;
+    publishTutorFocus(
+      'thinking-practice',
+      { where: `חשיבה · ${topic}`, topic, questionText: question.question },
+      FOCUS_PRIORITY.question,
+    );
+    return () => publishTutorFocus('thinking-practice', null);
+  }, [question, topic]);
 
   const loadQuestion = useCallback(async () => {
     setLoading(true);

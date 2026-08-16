@@ -37,6 +37,12 @@ const store = new Map<string, string>();
     setItem: (k: string, v: string) => void store.set(k, v),
     removeItem: (k: string) => void store.delete(k),
   },
+  // The focus registry notifies subscribers through a CustomEvent. A stub with
+  // only localStorage passes `typeof window !== 'undefined'` and then throws on
+  // the notify — so the stub has to be complete, not merely present.
+  dispatchEvent: () => true,
+  addEventListener: () => {},
+  removeEventListener: () => {},
 };
 (globalThis as unknown as { localStorage: unknown }).localStorage = (
   globalThis as unknown as { window: { localStorage: unknown } }
@@ -695,6 +701,41 @@ assert(BLACKLIST.test('<script>alert(1)</script>'), 'a script tag is still rejec
 
 // The regex used to be copy-pasted into the route files, which is how one copy
 // can be fixed while another stays broken. There must be exactly one.
+// ============================================================
+// PART 6 — the focus registry: specificity, not mount order.
+//
+// The single-slot version handed the win to whichever component happened to
+// mount last, and React runs child effects BEFORE parent effects — so a drill
+// nested in a lesson published the question and the lesson immediately
+// overwrote it with "you are in a lesson". The workaround was to make every
+// parent yield by hand, which is choreography each new surface has to remember
+// and which the bagrut view had already got wrong.
+//
+// Ordering by specificity removes the coupling entirely. These four assertions
+// are the exact sequence that used to fail.
+// ============================================================
+
+import { publishTutorFocus, getTutorFocus, FOCUS_PRIORITY } from '../lib/tutor-presence';
+
+section('focus registry — a nested question outranks its lesson');
+
+publishTutorFocus('drill', { where: 'תרגול קצר', questionText: 'שאלה' }, FOCUS_PRIORITY.question);
+publishTutorFocus('lesson', { where: 'שיעור' }, FOCUS_PRIORITY.lesson);
+assert(
+  getTutorFocus()?.where === 'תרגול קצר',
+  'the parent publishing LAST does not overwrite the child',
+);
+
+publishTutorFocus('lesson', null);
+assert(getTutorFocus()?.where === 'תרגול קצר', 'withdrawing one publisher leaves the other standing');
+
+publishTutorFocus('lesson', { where: 'שיעור' }, FOCUS_PRIORITY.lesson);
+publishTutorFocus('drill', null);
+assert(getTutorFocus()?.where === 'שיעור', 'withdrawing the question falls back to the lesson');
+
+publishTutorFocus('lesson', null);
+assert(getTutorFocus() === null, 'with nothing published the focus is null');
+
 // ============================================================
 console.log(`\n${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
 process.exit(failures === 0 ? 0 : 1);

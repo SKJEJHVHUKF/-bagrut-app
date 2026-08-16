@@ -17,7 +17,8 @@
 // attempt and quietly corrupt both the accuracy stats and the grade
 // prediction. Only the rung's stars are persisted, through submitLevelResult.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { publishTutorFocus, FOCUS_PRIORITY } from '@/lib/tutor-presence';
 import { motion } from 'framer-motion';
 import { Brain, CheckCircle2, Sparkles, XCircle } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
@@ -68,6 +69,25 @@ export function GhostReplayLevel({
     () => (replay ? progress(state, replay) : null),
     [state, replay],
   );
+
+  // ===== publish the replay's prompt =====
+  // A walkthrough is a question the student is reasoning through, even though
+  // they never type an answer. Without this the tutor could not tell the 🧠
+  // rung is on screen at all.
+  //
+  // ⚠️ ABOVE the early return. Hooks must run in the same order on every
+  // render, and this effect first landed inside the `!replay` branch — where
+  // it would be skipped whenever a replay DID exist, which is every case that
+  // matters.
+  useEffect(() => {
+    if (!replay?.prompt) return;
+    publishTutorFocus(
+      'ghost-replay',
+      { where: 'הליכה בתוך החשיבה', questionText: replay.prompt },
+      FOCUS_PRIORITY.question,
+    );
+    return () => publishTutorFocus('ghost-replay', null);
+  }, [replay]);
 
   if (!replay || !prog) {
     return (

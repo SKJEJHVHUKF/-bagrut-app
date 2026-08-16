@@ -24,11 +24,13 @@ import type { SubTopic } from '@/content/lessons/types';
 import type { StepStatus } from '@/types/roadmap';
 import { seedFromClear } from '@/lib/review';
 import { StarRow } from './ladder-ui';
-import { setTutorFocus } from '@/lib/tutor-presence';
+import { publishTutorFocus, FOCUS_PRIORITY } from '@/lib/tutor-presence';
 import { LearnLevel } from './LearnLevel';
 import { RoadmapLevelRunner } from './RoadmapLevelRunner';
 import { BagrutLevel } from './BagrutLevel';
 import { GhostReplayLevel } from '@/components/ghost/GhostReplayLevel';
+
+
 
 export function SubTopicLadder({
   subject,
@@ -93,27 +95,27 @@ export function SubTopicLadder({
   const openLevel = openIndex !== null ? levels[openIndex] : null;
 
   // ===== publish sub-topic context to the floating tutor =====
-  // The ladder owns this screen, EXCEPT while a question rung is open — there
-  // QuestionRunnerCard publishes the actual question, which is strictly better.
-  // So this effect YIELDS (does nothing, and clears nothing) on those rungs
-  // rather than fighting for the slot.
+  // Stated at `lesson` priority: "the student is reading this sub-topic". While
+  // a question rung is open QuestionRunnerCard states `question`, which is more
+  // specific and therefore wins. The ladder never has to know it is there.
   //
-  // The ordering this relies on: on a commit React runs cleanups first, then
-  // child effects, then parent effects. Opening a rung therefore goes
-  // ladder-cleanup → runner-publishes → ladder-yields, and the question
-  // survives; closing it goes runner-clears → ladder-republishes. Clearing
-  // unconditionally here would wipe the question one render after it appeared —
-  // the same class of bug as deriving the missed answer from `selected`.
-  const yieldsToQuestion = !!openLevel && openLevel.kind !== 'learn';
+  // This replaced a hand-written yield (`if (yieldsToQuestion) return`) that
+  // skipped publishing on question rungs and leaned on React committing child
+  // effects before parent ones. It worked, but it was choreography every new
+  // surface had to remember — and both halves shared one registry key, so
+  // whichever unmounted first deleted the other's focus too.
   useEffect(() => {
-    if (yieldsToQuestion) return;
-    setTutorFocus({
-      where: openLevel ? `שיעור · ${subTopic.title}` : `מסלול · ${subTopic.title}`,
-      topic,
-      subTopicId: subTopic.id,
-    });
-    return () => setTutorFocus(null);
-  }, [yieldsToQuestion, openLevel, topic, subTopic.id, subTopic.title]);
+    publishTutorFocus(
+      'subtopic-ladder',
+      {
+        where: openLevel ? `שיעור · ${subTopic.title}` : `מסלול · ${subTopic.title}`,
+        topic,
+        subTopicId: subTopic.id,
+      },
+      FOCUS_PRIORITY.lesson,
+    );
+    return () => publishTutorFocus('subtopic-ladder', null);
+  }, [openLevel, topic, subTopic.id, subTopic.title]);
   const nextOf = (i: number) => (i + 1 < levels.length ? levels[i + 1] : null);
   const learnIndex = levels.findIndex((l) => l.kind === 'learn');
 

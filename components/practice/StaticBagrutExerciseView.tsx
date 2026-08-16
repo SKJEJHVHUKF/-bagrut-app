@@ -1,6 +1,6 @@
 'use client';
 
-import { setTutorFocus } from '@/lib/tutor-presence';
+import { publishTutorFocus, FOCUS_PRIORITY } from '@/lib/tutor-presence';
 import { useEffect, useState } from 'react';
 import { Sparkles, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -11,6 +11,8 @@ import { markExerciseDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
 import { buttonTap } from '@/lib/animations';
 import type { StaticBagrutQuestion } from '@/content/lessons/types';
+
+
 
 type Props = {
   subject: string;
@@ -58,12 +60,16 @@ export function StaticBagrutExerciseView({
   useEffect(() => {
     if (!currentQ) return;
     const parts = currentQ.parts.map((p) => `${p.label}. ${p.prompt}`).join('\n');
-    setTutorFocus({
-      where: `שאלת בגרות · ${topic}`,
-      topic,
-      questionText: [currentQ.context, parts].filter(Boolean).join('\n\n'),
-    });
-    return () => setTutorFocus(null);
+    publishTutorFocus(
+      'bagrut-exercise',
+      {
+        where: `שאלת בגרות · ${topic}`,
+        topic,
+        questionText: [currentQ.context, parts].filter(Boolean).join('\n\n'),
+      },
+      FOCUS_PRIORITY.lesson,
+    );
+    return () => publishTutorFocus('bagrut-exercise', null);
   }, [currentQ, topic]);
 
   if (questions.length === 0) {

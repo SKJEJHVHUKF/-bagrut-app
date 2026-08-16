@@ -25,13 +25,20 @@
  * Pages that publish nothing are not broken — the bubble falls back to the
  * route name, which is still better than nothing.
  *
- * ⚠️ ONE PUBLISHER PER SCREEN. There is a single slot, so two mounted
- * components that both publish will fight: the last to mount wins, and the
- * FIRST to unmount clears the focus for both. A bagrut question renders all of
- * its parts at once, which is exactly this trap — so it publishes from the
- * container (StaticBagrutExerciseView) with the whole question, never from
- * QuestionPartCard. Publish from whatever owns the screen, not from the repeated
- * child.
+ * ⚠️ ONE ENTRY PER PUBLISHER, AND SPECIFICITY DECIDES.
+ * Publishers are keyed by id, so a drill nested inside a lesson does not fight
+ * the lesson — both publish, and `FOCUS_PRIORITY` picks the more specific one.
+ * This replaced a single slot where React's effect order (children before
+ * parents) silently handed the win to whichever component happened to be the
+ * outer one.
+ *
+ * ⚠️ A SCREEN SHOWING SEVERAL QUESTIONS AT ONCE PUBLISHES AT LESSON LEVEL.
+ * A bagrut question renders every part together, and a comprehension check
+ * renders its whole set; there is no "the question" on those screens, so
+ * naming one would be a guess. They publish the container's context instead
+ * (`FOCUS_PRIORITY.lesson`), which is the honest resolution — and the tutor's
+ * state-I template says outright that it can see a question but not its
+ * breakdown, rather than pretending.
  */
 
 import type { PracticeQuestion, SubTopic } from '@/content/lessons/types';
@@ -77,18 +84,87 @@ export type TutorFocus = {
   answerDiagnosis?: AnswerDiagnosis;
 };
 
+/**
+ * How specific a publisher's claim is. The most specific wins, regardless of
+ * which component happened to mount first.
+ *
+ * This replaced a single slot that the last writer owned. With one slot the
+ * winner was decided by React's effect order — children run before parents —
+ * so a drill nested inside a lesson published the question and the lesson then
+ * overwrote it with "you are in a lesson". The workaround was to make each
+ * parent yield by hand, which is choreography that every new surface has to
+ * remember and that the bagrut view had already got wrong.
+ *
+ * Ordering by specificity removes the coupling: a screen states what it knows
+ * and how precisely it knows it, and never has to know what else is mounted.
+ */
+export const FOCUS_PRIORITY = {
+  /** "the student is somewhere in this topic" — a roadmap or plan screen. */
+  topic: 10,
+  /** "the student is reading this sub-topic" — a lesson, a ladder. */
+  lesson: 20,
+  /** "this exact question is on the screen right now." */
+  question: 30,
+} as const;
+
+/** Each publisher owns its own entry, so unmounting one cannot clear another. */
+const registry = new Map<string, { focus: TutorFocus; priority: number }>();
 let current: TutorFocus | null = null;
 
-/**
- * Publish what this screen is showing. Call it when the question changes and
- * call it with `null` on unmount — a stale focus is worse than none, because
- * the tutor will confidently discuss a question the student already left.
- */
-export function setTutorFocus(focus: TutorFocus | null) {
-  current = focus;
-  if (typeof window !== 'undefined') {
+function recompute() {
+  let best: { focus: TutorFocus; priority: number } | null = null;
+  for (const entry of registry.values()) {
+    if (!best || entry.priority > best.priority) best = entry;
+  }
+  current = best?.focus ?? null;
+  // Guarded on the METHOD, not on `window`. `typeof window !== 'undefined'` is
+  // true in a node harness that stubs only localStorage, and the notify then
+  // throws — taking down a test of pure, browser-free logic.
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
     window.dispatchEvent(new CustomEvent(EVENT));
   }
+}
+
+/**
+ * Publish what this screen is showing.
+ *
+ * @param id     stable per publisher — the same component always uses the same
+ *               id, so re-publishing replaces rather than accumulates.
+ * @param focus  null to withdraw. ALWAYS withdraw on unmount: a stale focus is
+ *               worse than none, because the tutor will confidently discuss a
+ *               question the student has already left.
+ * @param priority how specific this claim is. Defaults to `question`, since a
+ *               caller that does not think about it is nearly always a question
+ *               card.
+ */
+export function publishTutorFocus(
+  id: string,
+  focus: TutorFocus | null,
+  priority: number = FOCUS_PRIORITY.question,
+) {
+  if (focus) registry.set(id, { focus, priority });
+  else registry.delete(id);
+  recompute();
+}
+
+/**
+ * Bind an id and a priority once, and get back the one-argument publisher a
+ * component actually wants.
+ *
+ * This exists so a screen declares WHO it is exactly once, at the top of the
+ * file, instead of repeating an id at every call site — where the copy that
+ * gets forgotten is the one that makes two screens share an entry and clobber
+ * each other, which is precisely the failure the registry was built to end.
+ *
+ *   const setTutorFocus = focusPublisher('question-runner');
+ *   setTutorFocus({ ... });          // unchanged at every call site
+ *   setTutorFocus(null);             // withdraws only THIS publisher
+ */
+export function focusPublisher(
+  id: string,
+  priority: number = FOCUS_PRIORITY.question,
+) {
+  return (focus: TutorFocus | null) => publishTutorFocus(id, focus, priority);
 }
 
 export function getTutorFocus(): TutorFocus | null {

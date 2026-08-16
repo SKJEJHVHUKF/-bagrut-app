@@ -5,7 +5,8 @@
 // spot, with instant feedback + the full solution. Formative only — it is
 // NOT scored into the ladder stars and not logged as a measurement.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { publishTutorFocus, FOCUS_PRIORITY } from '@/lib/tutor-presence';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Pencil, CheckCircle, XCircle, KeyRound } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
@@ -29,6 +30,27 @@ export function MicroDrill({
   const [selected, setSelected] = useState<number | null>(null); // original index
   const [revealed, setRevealed] = useState(false);
   const answered = selected !== null || revealed;
+
+  // ===== the drill IS the question on screen =====
+  // This sits inside the learn rung, which publishes its own sub-topic context
+  // at `lesson` priority. Both publish; `question` is more specific and wins,
+  // so the tutor sees the drill rather than "you are in a lesson" — and neither
+  // component has to know the other exists.
+  useEffect(() => {
+    publishTutorFocus(
+      'micro-drill',
+      {
+        where: 'תרגול קצר',
+        questionText: drill.question,
+        question: drill,
+        ...(selected !== null && selected !== drill.correct
+          ? { chosenIndex: selected, wrongAnswer: drill.answers?.[selected] }
+          : {}),
+      },
+      FOCUS_PRIORITY.question,
+    );
+    return () => publishTutorFocus('micro-drill', null);
+  }, [drill, selected]);
 
   // Deterministic per-drill option order (seeded by id) so the correct answer
   // isn't always first. Stable across renders and SSR-safe.

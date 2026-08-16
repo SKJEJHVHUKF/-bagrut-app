@@ -22,6 +22,7 @@ import { sparkle, celebrateCorrect, celebrateCompletion } from '@/lib/confetti';
 import { markExerciseDone, markSubTopicDone } from '@/lib/progress';
 import { markStep } from '@/lib/study-plan';
 import { recordResult } from '@/lib/results';
+import { publishTutorFocus, FOCUS_PRIORITY } from '@/lib/tutor-presence';
 import { recordMistake } from '@/lib/mistakes';
 import { MistakeTagger } from './MistakeTagger';
 import { studentTier, orderQuestions, tierLabel, type Tier } from '@/lib/adaptive';
@@ -79,6 +80,30 @@ export function SubTopicPractice({
 
   const total = questions.length;
   const current = questions[idx];
+
+  // ===== tell the floating tutor which question is on screen =====
+  // This is the main /practice flow, and until now the tutor was blind here:
+  // a student mid-question who asked "אני תקוע" got a generic reply because
+  // nothing had published what they were looking at.
+  useEffect(() => {
+    if (!current) return;
+    publishTutorFocus(
+      'subtopic-practice',
+      {
+        where: `תרגול · ${subTopic.title}`,
+        topic,
+        subTopicId: subTopic.id,
+        questionText: current.question,
+        question: current,
+        subTopic,
+        ...(selected !== null && selected !== current.correct
+          ? { chosenIndex: selected, wrongAnswer: current.answers?.[selected] }
+          : {}),
+      },
+      FOCUS_PRIORITY.question,
+    );
+    return () => publishTutorFocus('subtopic-practice', null);
+  }, [current, selected, topic, subTopic]);
   const isLast = idx === total - 1;
 
   function resetCardState() {

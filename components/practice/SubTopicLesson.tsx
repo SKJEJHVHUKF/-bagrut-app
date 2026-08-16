@@ -3,13 +3,15 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { setTutorFocus } from '@/lib/tutor-presence';
+import { publishTutorFocus, FOCUS_PRIORITY } from '@/lib/tutor-presence';
 import { GraduationCap, ArrowLeft, ArrowRight, Sparkles, CheckCircle } from 'lucide-react';
 import { MathText } from './MathText';
 import { FormulaCard } from './FormulaCard';
 import { WorkedExampleCard } from './WorkedExampleCard';
 import { DiagramRenderer } from './DiagramRenderer';
 import type { SubTopic } from '@/content/lessons/types';
+
+
 
 export type NextSubTopicRef = { id: string; title: string } | null;
 
@@ -40,13 +42,20 @@ export function SubTopicLesson({
   // and the tutor asking which "זה" the student means — and it is what routes
   // the request to the grounded (verified-content) prompt instead of the
   // generic one.
+  // Lesson priority, not question: a drill or exercise mounted inside this
+  // lesson must outrank "you are reading a lesson", and priority — not mount
+  // order — is what decides that now.
   useEffect(() => {
-    setTutorFocus({
-      where: `שיעור · ${subTopic.title}`,
-      topic,
-      subTopicId: subTopic.id,
-    });
-    return () => setTutorFocus(null);
+    publishTutorFocus(
+      'subtopic-lesson',
+      {
+        where: `שיעור · ${subTopic.title}`,
+        topic,
+        subTopicId: subTopic.id,
+      },
+      FOCUS_PRIORITY.lesson,
+    );
+    return () => publishTutorFocus('subtopic-lesson', null);
   }, [topic, subTopic.id, subTopic.title]);
 
   const steps = subTopic.lesson ?? [];

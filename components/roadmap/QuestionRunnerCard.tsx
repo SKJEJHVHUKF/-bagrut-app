@@ -19,7 +19,7 @@
 // the base mastery credit for a correct-with-hint answer.
 
 import { useEffect, useMemo, useState } from 'react';
-import { setTutorFocus } from '@/lib/tutor-presence';
+import { publishTutorFocus, FOCUS_PRIORITY } from '@/lib/tutor-presence';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, KeyRound, LifeBuoy, ArrowLeft, RotateCcw, Wrench } from 'lucide-react';
@@ -42,6 +42,8 @@ import { buildHelpLadder, type HelpTier } from '@/lib/help-ladder';
 import { voiceCorrect, voiceWrong } from '@/lib/voice';
 import { HelpLadder } from '@/components/practice/HelpLadder';
 import type { PracticeQuestion } from '@/content/lessons/types';
+
+
 
 const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה'];
 
@@ -120,7 +122,9 @@ export function QuestionRunnerCard({
     // מה קרה" and then, one render later, had no idea what had happened.
     // Captured at the moment of the miss instead — see logFirst.
     const wrong = firstTryCorrect === false ? (missedWith ?? undefined) : undefined;
-    setTutorFocus({
+    publishTutorFocus(
+      'question-runner',
+      {
       where: `תרגול · ${subTopic?.title ?? topic}`,
       topic,
       subTopicId: subId,
@@ -142,8 +146,10 @@ export function QuestionRunnerCard({
       ...(revealed && q.kind === 'mcq' && typeof q.correct === 'number'
         ? { correctAnswer: q.answers?.[q.correct] }
         : {}),
-    });
-    return () => setTutorFocus(null);
+      },
+      FOCUS_PRIORITY.question,
+    );
+    return () => publishTutorFocus('question-runner', null);
   }, [q, subId, topic, subTopic, firstTryCorrect, missedWith, missedIndex, check, revealed]);
 
   // Log the FIRST attempt exactly once (that's the measured one). Wrong first
