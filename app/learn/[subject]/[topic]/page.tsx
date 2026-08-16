@@ -30,8 +30,18 @@ export default async function LearnPage({
   );
 }
 
-export function generateMetadata({ params }: { params: { topic?: string } }) {
-  const topic = params.topic ? decodeURIComponent(params.topic) : '';
+// `params` is a PROMISE in Next 16 — awaiting it is not optional.
+//
+// This was typed as a plain object and read synchronously, so `params.topic`
+// was `undefined` and every lesson and practice page shipped a title of just
+// " — MathUp": in the browser tab, in history, in a WhatsApp preview, and in
+// Google. It passed `tsc` because Next's generated page contract ends in
+// `& any` (see .next/types/validator.ts), which swallows a narrower hand-written
+// annotation. The type below is the framework's real shape, so the next person
+// to touch it gets a compile error instead of a silent blank.
+export async function generateMetadata({ params }: { params: Promise<{ topic?: string }> }) {
+  const { topic: raw } = await params;
+  const topic = raw ? decodeURIComponent(raw) : '';
   return {
     title: `${topic} — לימוד מ-0 · MathUp`,
     description: `מסלול לימוד מלא בנושא ${topic}: מאפס ועד שאלת בגרות`,
