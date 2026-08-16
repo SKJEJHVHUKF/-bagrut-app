@@ -96,6 +96,23 @@ html, body {
   min-height: 100vh;
 }
 
+/* Global keyboard focus ring.
+
+   `:focus-visible`, never `:focus` — the browser only matches it for keyboard
+   and other non-pointer focus, so a mouse or touch user never sees an outline
+   and NOTHING about the look changes for them. That is the whole reason this
+   can be global in a design this deliberate.
+
+   It has to be global because the app is full of `focus:outline-none`, each of
+   which is only safe while some ring exists underneath. Without this rule a
+   student navigating by keyboard has no idea where they are. Enforced by
+   scripts/verify-a11y.ts, which fails the build if it disappears. */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* viewport-fit=cover (needed so the bottom bar can clear the home indicator)
    also lets content slide under the notch in landscape. These insets are 0 in
    portrait and on every non-notched device, so this only pays out where it is

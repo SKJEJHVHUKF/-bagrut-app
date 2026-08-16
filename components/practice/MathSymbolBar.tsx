@@ -67,7 +67,11 @@ export function MathSymbolBar({
           }}
           disabled={disabled}
           title={sym.title}
-          tabIndex={-1}
+          // No tabIndex={-1}: onMouseDown already keeps the caret in the input,
+          // and a roving-tabindex toolbar would need arrow-key handling this
+          // bar doesn't have — so -1 on every button meant a keyboard user
+          // could not reach the symbol bar at all. A <button> fires onClick on
+          // Enter/Space, so it works from the keyboard as-is.
           aria-label={sym.title ?? sym.label}
           className="min-w-[2.25rem] px-2 py-1.5 rounded-lg bg-violet-500/[0.06] hover:bg-violet-500/[0.12] active:bg-violet-500/20 border border-violet-500/20 text-sm font-bold text-violet-800 disabled:opacity-40 transition-colors"
         >

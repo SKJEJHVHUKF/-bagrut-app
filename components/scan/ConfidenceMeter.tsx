@@ -96,7 +96,7 @@ export function ConfidenceMeter({
       <div
         className="h-1.5 rounded-full overflow-hidden"
         style={{ background: 'var(--scan-line)' }}
-        role="meter"
+        role="progressbar"
         aria-valuenow={percent}
         aria-valuemin={0}
         aria-valuemax={100}
