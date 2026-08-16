@@ -1,11 +1,9 @@
 import Link from 'next/link';
 import { BookOpen, MessageCircle } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
-import { BagrutQuestionView } from '@/components/practice/BagrutQuestionView';
 import { QuickExerciseView } from '@/components/practice/QuickExerciseView';
 import { StaticBagrutExerciseView } from '@/components/practice/StaticBagrutExerciseView';
 import { hasLesson, getBagrutQuestions, hasBagrutBank } from '@/content/lessons';
-import { poolHas } from '@/lib/pool-availability';
 
 // Subject labels — duplicated minimally from the picker to keep this
 // route self-contained. If the subject key isn't recognised we still
@@ -28,33 +26,28 @@ export default async function ExercisePage({
   searchParams: Promise<{ mode?: string }>;
 }) {
   const { subject, topic: rawTopic } = await params;
-  const { mode: rawMode } = await searchParams;
   const topic = decodeURIComponent(rawTopic);
 
   // ===== STATIC-FIRST MODE SELECTION =====
   //
-  // Priority order:
   //  1) Static bagrut bank exists → render it (zero API call, multi-part,
   //     hints + solutions per part). Works for BOTH ?mode=quick and
   //     ?mode=bagrut because the static experience IS the bagrut-style
   //     practice the owner wants — no separate "quick" path needed.
-  //  2) Old pool in Supabase for bagrut mode → keep existing fallback.
-  //  3) Quick API fallback for everything else.
-  const requestedMode = rawMode === 'quick' ? 'quick' : 'bagrut';
+  //  2) Otherwise the quick API fallback.
+  //
+  // There used to be a third mode: an AI-generated bagrut question served when
+  // a Supabase pool existed for the topic. Its gate (`poolHas(…, 'bagrut')`)
+  // read a hand-maintained table that never had a single `bagrut: true` entry,
+  // so the branch could not fire. `?mode` no longer selects anything — the
+  // links that carry it still work, they just land on the static bank.
 
   const hasStaticBagrut = hasBagrutBank(subject, topic);
   const staticBagrutQuestions = hasStaticBagrut ? getBagrutQuestions(subject, topic) : [];
 
   // Effective mode: if we have a static bank, always serve it.
   //                 Otherwise, downgrade bagrut→quick when no pool exists.
-  let effectiveMode: 'static-bagrut' | 'bagrut' | 'quick';
-  if (hasStaticBagrut) {
-    effectiveMode = 'static-bagrut';
-  } else if (requestedMode === 'bagrut' && poolHas(subject, topic, 'bagrut')) {
-    effectiveMode = 'bagrut';
-  } else {
-    effectiveMode = 'quick';
-  }
+  const effectiveMode: 'static-bagrut' | 'quick' = hasStaticBagrut ? 'static-bagrut' : 'quick';
 
   const subjectLabel = SUBJECT_LABELS[subject] ?? subject;
   const lessonExists = hasLesson(subject, topic);
@@ -65,7 +58,7 @@ export default async function ExercisePage({
   const backLabel = lessonExists ? 'חזרה לסיכום' : 'בחר נושא אחר';
 
   // Subtitle + header reflect what the student is actually getting.
-  const isBagrutLike = effectiveMode === 'static-bagrut' || effectiveMode === 'bagrut';
+  const isBagrutLike = effectiveMode === 'static-bagrut';
   const subtitle = isBagrutLike ? 'תרגול בגרות' : 'תרגול מהיר';
   const headerLabel = isBagrutLike ? '🎯 בגרות מלאה' : '⚡ תרגול מהיר';
 
@@ -108,8 +101,6 @@ export default async function ExercisePage({
             subjectLabel={subjectLabel}
             questions={staticBagrutQuestions}
           />
-        ) : effectiveMode === 'bagrut' ? (
-          <BagrutQuestionView subject={subject} topic={topic} subjectLabel={subjectLabel} />
         ) : (
           <QuickExerciseView subject={subject} topic={topic} subjectLabel={subjectLabel} />
         )}

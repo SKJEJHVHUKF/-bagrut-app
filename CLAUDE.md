@@ -78,7 +78,7 @@ content/
   past-bagruyot/*.ts          61 real past-exam questions (582 only), full worked solutions.
 ```
 
-**Photo-scan caching ("answer library first, AI last"):** `/api/solve-photo` → cheap Sonnet-vision transcription → `lib/solution-library.ts` `matchQuestion` (exact hash + Jaccard fuzzy ≥0.82 over all static questions, FREE) → Supabase `solution_cache` (FREE) → only a true miss calls the AI text-solve (Pro), whose result is written back to the cache. `lib/question-match.ts` = normalize/fingerprint/jaccard.
+**Photo-scan ("answer library first, AI last"):** `/scan` → `lib/mathscan/pipeline.ts` → preprocess → local OCR → validate → verified bank (`lib/mathscan/match.ts`, character trigrams + IDF-weighted token overlap) → local CAS → and only then `/api/scan-solve` (vision/AI). The first five stages cost $0. `/api/solve-photo` was the PREVIOUS route and is **deleted** — do not resurrect it; `lib/solution-library.ts` `matchQuestion` and `lib/question-match.ts` survive only because `scripts/verify-match.ts` still exercises them.
 
 **Client state is localStorage** (works without login, $0): `lib/results.ts` (answer log → insights, streak, prediction), `lib/study-plan.ts` (plan + `unitLevel` 3/4/5), `lib/progress.ts`, `lib/adaptive.ts` (difficulty by unit-level + self-level + live accuracy), `lib/scans.ts`.
 
@@ -94,7 +94,7 @@ content/
 |---|---|---|
 | Landing | `/` (`app/page.tsx`) | Light theme, hero, 3 modes, pricing card → `/pricing` |
 | Quick quiz | `/quiz` | Static bank first (adaptive by tier); mixed-exam mode; records to `lib/results` |
-| Guided practice | `/practice/[subject]/[topic]` + `/sub/[subId]` | LessonView + SubTopicPractice; adaptive ordering |
+| Guided practice | `/practice/[subject]/[topic]` | LessonView. The `/sub/[subId]` routes are 13-line `redirect()`s into `/roadmap/[subId]` — the ladder is the single guided spine. |
 | Base + advanced course | `/learn/[subject]/[topic]` + `/advanced` | CourseTracks card; advanced route is **Pro-gated** |
 | AI tutor chat | `/chat` | Opens fresh each time; conversations sidebar; grounded per-topic; tier-capped |
 | Photo solve | `/scan` | Intro screen + library/cache/AI flow with source badge |
@@ -104,7 +104,7 @@ content/
 | Global profile | `components/AppChrome.tsx` | Floating avatar (initials) on every authed page → side drawer (name/email/plan/streak/unit-level/links/signout). Mounted once in `app/layout.tsx`. |
 | Global search | `components/GlobalSearch.tsx` | Ctrl+K palette over topics/formulas/bagruyot |
 
-Middleware (`lib/supabase/middleware.ts`): `PROTECTED_PREFIXES` = `/quiz /chat /history /learn /tutor`. Add a prefix there to protect a new route. `/pricing`, `/roadmap` and `/practice` are intentionally public — `/practice` only redirects into `/roadmap`, so an anonymous visitor following an old link must not hit a login wall. That also makes `/roadmap` and `/practice` the surfaces to use when verifying shared rendering without a login; `/quiz` cannot be checked that way.
+Middleware (`lib/supabase/middleware.ts`): `PROTECTED_PREFIXES` = `/quiz /chat /history /learn`. Add a prefix there to protect a new route. `/pricing`, `/roadmap` and `/practice` are intentionally public — `/practice` only redirects into `/roadmap`, so an anonymous visitor following an old link must not hit a login wall. That also makes `/roadmap` and `/practice` the surfaces to use when verifying shared rendering without a login; `/quiz` cannot be checked that way.
 
 ---
 
@@ -121,7 +121,8 @@ Clients: `lib/supabase/client.ts` (browser), `lib/supabase/server.ts` (async —
 ## Models (deliberate — don't swap without reason)
 
 - `/api/chat` → grounded topics `claude-sonnet-4-6` (prompt-cached) + generic `claude-haiku-4-5`. Grounding from `lib/tutor-grounding.ts` (all 14 math5 topics). Env `TUTOR_SONNET_TOPICS` demotes to Haiku per-topic if cost climbs.
-- `/api/solve-photo` → `claude-sonnet-4-5` vision (Hebrew+LaTeX transcription needs Sonnet); text-solve uses the full prompt with `cache_control: ephemeral`.
+- `/api/scan-solve` → `claude-sonnet-4-5` vision (Hebrew+LaTeX transcription needs Sonnet); text-solve uses the full prompt with `cache_control: ephemeral`. Tutor chat on a scan: `/api/scan-tutor` (Haiku 4.5, SSE).
+- `/api/practice` → `claude-sonnet-4-6`, the quick-exercise fallback for a topic with no static bank. Gated by `guardAgentRequest` (`kind: 'practice'`, 5/day free, 30 Pro) plus the GLOBAL daily ceiling in `lib/agents/guard.ts` — the only cap that makes the ~$5/month budget enforced rather than hoped for. Raise it with `AI_DAILY_GLOBAL_LIMIT`.
 - Micro-endpoints (`why-wrong`/`hint-help`/`explain-simpler`) → Haiku + grounding, Pro-gated via `lib/ai-tutor.ts requireProUser`.
 - Question-generation routes exist as a legacy fallback for topics without a static bank (math4/other subjects); math5 serves static.
 

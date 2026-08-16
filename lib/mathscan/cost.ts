@@ -27,20 +27,10 @@ export const RATES = {
 
 export type ModelId = keyof typeof RATES;
 
-/** Cost of one call from its ACTUAL usage block. Never call this with
- *  guessed token counts — that is the mistake this module exists to end. */
-export function costOfCall(
-  model: ModelId,
-  usage: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number }
-): number {
-  const rate = RATES[model];
-  if (!rate) return 0;
-  // Cache reads bill at 10% of the input rate. They arrive as a SEPARATE
-  // field, already excluded from `input_tokens`, so these are added, not
-  // subtracted — treating them as a discount on input would double-count.
-  const cached = (usage.cache_read_input_tokens ?? 0) * rate.input * 0.1;
-  return (usage.input_tokens ?? 0) * rate.input + (usage.output_tokens ?? 0) * rate.output + cached;
-}
+// `costOfCall` used to live here and had ZERO call sites repo-wide.
+// /api/scan-solve computes its own cost inline and correctly accounts for
+// cache_creation_input_tokens, which this one omitted — so the dead copy was
+// also the wrong one, and wiring it up would have under-reported spend.
 
 // ------------------------------------------------------------
 // The per-scan meter

@@ -24,7 +24,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 // login wall on the redirect). Chat/history/learn stay gated (cost/server/Pro).
 // /tutor is the agent workbench — every turn costs Anthropic money, so it is
 // gated like /chat rather than left public like /roadmap.
-const PROTECTED_PREFIXES = ['/quiz', '/chat', '/history', '/learn', '/tutor'];
+const PROTECTED_PREFIXES = ['/quiz', '/chat', '/history', '/learn'];
 
 const PUBLIC_PREFIXES = [
   '/login',

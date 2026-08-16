@@ -75,7 +75,6 @@ export {
 export { buildOcrChain, getOcrEngine, disposeOcrEngines } from './ocr';
 export {
   CostMeter,
-  costOfCall,
   formatCostIls,
   readTraces,
   recordTrace,

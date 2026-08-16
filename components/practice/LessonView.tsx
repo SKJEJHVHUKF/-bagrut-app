@@ -11,7 +11,6 @@ import { WorkedExampleCard } from './WorkedExampleCard';
 import { BagrutBadge } from './BagrutBadge';
 import { DiagramRenderer } from './DiagramRenderer';
 import { markLessonViewed, getCompletedSubTopics } from '@/lib/progress';
-import { poolHas } from '@/lib/pool-availability';
 import { hasBagrutBank } from '@/content/lessons';
 import { hasLearningPath } from '@/content/learning-paths';
 import { CourseTracks } from '@/components/learn/CourseTracks';
@@ -498,9 +497,9 @@ export function LessonView({ lesson }: { lesson: Lesson }) {
         )}
         <motion.div
           variants={staggerContainer}
-          className={`grid grid-cols-1 ${(hasBagrutBank(lesson.subject, lesson.topic) || poolHas(lesson.subject, lesson.topic, 'bagrut')) ? 'sm:grid-cols-2' : ''} gap-3`}
+          className={`grid grid-cols-1 ${hasBagrutBank(lesson.subject, lesson.topic) ? 'sm:grid-cols-2' : ''} gap-3`}
         >
-          {(hasBagrutBank(lesson.subject, lesson.topic) || poolHas(lesson.subject, lesson.topic, 'bagrut')) && (
+          {hasBagrutBank(lesson.subject, lesson.topic) && (
             <motion.div variants={fadeUp} whileHover={{ y: -3, scale: 1.01 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
               <Link
                 href={`/practice/${lesson.subject}/${encodeURIComponent(lesson.topic)}/exercise?mode=bagrut`}
