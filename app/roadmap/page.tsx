@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Lock, CheckCircle, PlayCircle, Crown, Star, Sparkles, ArrowLeft, CalendarClock, Gauge } from 'lucide-react';
+import { Lock, CheckCircle, PlayCircle, Crown, Star, Sparkles, ArrowLeft, CalendarClock, Gauge, ChevronDown } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { MathText } from '@/components/practice/MathText';
 import { buildRoadmapFromPlan, allRoadmapNodes, DEFAULT_PAPER } from '@/constants/roadmapData';
@@ -116,6 +116,30 @@ export default function RoadmapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ready, syncTick, summaries],
   );
+  // ===== which topic section is open =====
+  //
+  // Every topic used to render every one of its steps, always. With 10 topics
+  // of 4-5 steps that is ~44 step cards in one scroll, of which ~40 are LOCKED
+  // — a student opened the product's main screen and scrolled past dozens of
+  // rows reading "🔒 נפתח אחרי שתסיים את…" before finding the one thing they
+  // could actually do. The map showed everything and pointed at nothing.
+  //
+  // Now exactly one topic is open: the one the student is actually in. The
+  // rest collapse to a titled progress row they can open on purpose.
+  //
+  // `undefined` means "the student has not chosen yet", which is different
+  // from `null` ("they closed everything"). Keeping them distinct is what lets
+  // the auto-open follow their progress without an effect that would fight
+  // their clicks — and without setState-in-effect, which this repo's lint bans.
+  const [openOverride, setOpenOverride] = useState<string | null | undefined>(undefined);
+  const autoOpenTopic = resume?.topic ?? roadmap.mainTopics[0]?.topic ?? null;
+  const openTopic = openOverride === undefined ? autoOpenTopic : openOverride;
+  const toggleTopic = (topic: string) =>
+    setOpenOverride((prev) => {
+      const current = prev === undefined ? autoOpenTopic : prev;
+      return current === topic ? null : topic;
+    });
+
   const dueBySub = useMemo(
     () => (ready ? dueCountBySubTopic() : {}),
     [ready, syncTick],
@@ -124,69 +148,19 @@ export default function RoadmapPage() {
   return (
     <PracticeShell subtitle="מסלול הלמידה" backHref="/" backLabel="בית">
       <div className="space-y-6">
-        {/* Title */}
-        <div className="text-center space-y-1">
-          <h1 className="font-display text-3xl sm:text-4xl font-black gradient-text">
-            🗺️ מסלול הלמידה שלי
-          </h1>
-          <p className="text-sm text-slate-600">{roadmap.label}</p>
-        </div>
+        {/* The screen used to open with a decorative title and then a 60-line
+            progress panel — a circular gauge, an XP tile and a mastery tile —
+            before the student reached the one button that starts the work. Up
+            to five cards stood between landing here and doing anything.
 
-        {/* Overall progress */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="glass-card rounded-3xl p-5 space-y-4"
-        >
-          <div className="flex items-center gap-4">
-            <div className="relative flex-shrink-0 w-16 h-16">
-              <svg viewBox="0 0 48 48" className="w-16 h-16 -rotate-90">
-                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(15,23,42,0.08)" strokeWidth="5" />
-                <circle
-                  cx="24"
-                  cy="24"
-                  r="20"
-                  fill="none"
-                  stroke="#6366F1"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                  strokeDasharray={`${(overallPct / 100) * 125.7} 125.7`}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center text-sm font-black text-violet-800">
-                {overallPct}%
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-black tracking-widest text-violet-700 uppercase">
-                ההתקדמות שלך ב{roadmap.label}
-              </div>
-              <div className="text-sm text-slate-700 mt-1">
-                {overallDone} מתוך {allNodes.length} שלבים הושלמו — המשך במסלול המסומן.
-              </div>
-            </div>
-          </div>
-          {/* XP + mastery strip */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-[var(--primary-container)]/60 border border-violet-500/20 rounded-2xl px-3 py-2.5 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-violet-700 flex-shrink-0" />
-              <div className="min-w-0">
-                <div className="text-base font-black text-violet-800 leading-none">{totalXp}</div>
-                <div className="text-[10px] text-slate-600 mt-0.5">נקודות XP</div>
-              </div>
-            </div>
-            <div className="bg-amber-500/[0.08] border border-amber-500/25 rounded-2xl px-3 py-2.5 flex items-center gap-2">
-              <Crown className="w-4 h-4 text-amber-600 flex-shrink-0" />
-              <div className="min-w-0">
-                <div className="text-base font-black text-amber-700 leading-none">
-                  {masteredCount}/{allNodes.length}
-                </div>
-                <div className="text-[10px] text-slate-600 mt-0.5">בשליטה מלאה</div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+            The question a student opens this page with is "what do I do now",
+            so the answer goes first and the scoreboard moves below it. The
+            numbers did not get deleted; they got demoted to one strip, which
+            is the weight a status readout should carry next to an action. */}
+        <h1 className="font-display text-xl font-black text-slate-900">
+          מסלול הלמידה שלי
+          <span className="font-normal text-sm text-slate-600"> · {roadmap.label}</span>
+        </h1>
 
         {/* Repair first. A broken idea outranks retention: practising on top of
             it spends the evening reinforcing the wrong thing — the same
@@ -299,35 +273,57 @@ export default function RoadmapPage() {
           </motion.div>
         )}
 
-        {/* Exam-date pacing */}
-        {pacing && pacing.status !== 'no-date' && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-            className={`rounded-2xl p-4 border flex items-start gap-3 ${
-              pacing.status === 'behind'
-                ? 'bg-amber-500/[0.08] border-amber-500/30'
-                : pacing.status === 'done'
-                  ? 'bg-emerald-500/[0.08] border-emerald-500/30'
-                  : 'bg-sky-500/[0.06] border-sky-500/25'
-            }`}
-          >
-            {pacing.status === 'behind' ? (
-              <Gauge className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            ) : (
-              <CalendarClock className="w-5 h-5 text-sky-600 flex-shrink-0 mt-0.5" />
-            )}
-            <div className="flex-1 min-w-0">
-              {pacing.daysLeft > 0 && pacing.status !== 'done' && (
-                <div className="text-xs font-black text-slate-800">
-                  {pacing.daysLeft} ימים לבגרות · יעד היום: {pacing.todayTarget} שאלות
-                </div>
+        {/* ===== Status strip =====
+            Progress, XP, mastery and exam pacing used to be two separate
+            panels above the action. They are all answers to "how am I doing",
+            which is a question a student asks AFTER deciding what to do — so
+            they sit here, under the action, as one quiet row instead of two
+            loud cards. */}
+        <div className="surface-premium rounded-2xl p-4 space-y-2.5">
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="font-black text-slate-900">
+              {overallPct}%
+              <span className="font-normal text-slate-600">
+                {' '}· {overallDone} מתוך {allNodes.length} שלבים
+              </span>
+            </span>
+            <span className="flex items-center gap-3 text-xs text-slate-600 shrink-0">
+              <span className="flex items-center gap-1">
+                <Sparkles aria-hidden="true" className="w-3.5 h-3.5 text-violet-700" />
+                {totalXp} XP
+              </span>
+              <span className="flex items-center gap-1">
+                <Crown aria-hidden="true" className="w-3.5 h-3.5 text-amber-600" />
+                {masteredCount}/{allNodes.length}
+              </span>
+            </span>
+          </div>
+
+          <div className="h-1.5 bg-slate-900/[0.06] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-l from-cyan-700 to-violet-600 transition-all duration-500"
+              style={{ width: `${overallPct}%` }}
+            />
+          </div>
+
+          {pacing && pacing.status !== 'no-date' && (
+            <div className="flex items-start gap-2 pt-0.5">
+              {pacing.status === 'behind' ? (
+                <Gauge aria-hidden="true" className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+              ) : (
+                <CalendarClock aria-hidden="true" className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
               )}
-              <div className="text-[12px] text-slate-600 mt-0.5 leading-relaxed">{pacing.message}</div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {pacing.daysLeft > 0 && pacing.status !== 'done' && (
+                  <span className="font-bold text-slate-800">
+                    {pacing.daysLeft} ימים לבגרות · יעד היום: {pacing.todayTarget} שאלות.{' '}
+                  </span>
+                )}
+                {pacing.message}
+              </p>
             </div>
-          </motion.div>
-        )}
+          )}
+        </div>
 
         {/* Main-topic sections */}
         {roadmap.mainTopics.map((mt, mtIdx) => {
@@ -347,6 +343,7 @@ export default function RoadmapPage() {
           {(() => {
           const topicDone = ready ? countCompleted(mt.nodes) : 0;
           const topicPct = mt.nodes.length ? Math.round((topicDone / mt.nodes.length) * 100) : 0;
+          const isOpen = openTopic === mt.topic;
           return (
             <motion.section
               key={mt.topic}
@@ -355,25 +352,40 @@ export default function RoadmapPage() {
               transition={{ duration: 0.4, ease: 'easeOut' }}
               className="glass-card rounded-3xl p-5 space-y-4"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl flex-shrink-0">{mt.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="font-black text-slate-900">{mt.displayName}</div>
-                  <div className="text-[11px] text-slate-500">
-                    {topicDone}/{mt.nodes.length} שלבים
+              {/* The whole header is the disclosure control, so the tap target
+                  is the row a student would aim at anyway. */}
+              <button
+                onClick={() => toggleTopic(mt.topic)}
+                aria-expanded={isOpen}
+                aria-controls={`topic-steps-${mt.topic}`}
+                className="w-full text-right space-y-4 rounded-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <span aria-hidden="true" className="text-2xl flex-shrink-0">{mt.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-black text-slate-900">{mt.displayName}</div>
+                    <div className="text-[11px] text-slate-500">
+                      {topicDone}/{mt.nodes.length} שלבים
+                    </div>
                   </div>
+                  <span className="text-sm font-black text-violet-700">{topicPct}%</span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  />
                 </div>
-                <span className="text-sm font-black text-violet-700">{topicPct}%</span>
-              </div>
-              <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-l from-emerald-500 to-teal-500 transition-all duration-500"
-                  style={{ width: `${topicPct}%` }}
-                />
-              </div>
+                <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-l from-emerald-500 to-teal-500 transition-all duration-500"
+                    style={{ width: `${topicPct}%` }}
+                  />
+                </div>
+              </button>
 
+              {isOpen && (
+              <>
               {/* Vertical timeline of sub-topic nodes */}
-              <div className="relative pr-5">
+              <div id={`topic-steps-${mt.topic}`} className="relative pr-5">
                 <div className="absolute right-[7px] top-3 bottom-3 w-0.5 bg-slate-900/10" />
                 <div className="space-y-2">
                   {mt.nodes.map((node, i) => {
@@ -407,6 +419,8 @@ export default function RoadmapPage() {
               >
                 📚 חומרי עזר וקורס מתקדם בנושא
               </Link>
+              </>
+              )}
             </motion.section>
           );
           })()}

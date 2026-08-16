@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import MathUpLogo from '@/components/MathUpLogo';
+import { PageHeader } from '@/components/PageHeader';
 import {
   ArrowLeft,
   ArrowRight,
@@ -139,14 +140,10 @@ export default async function HistoryPage() {
 
       <main className="relative z-10 max-w-3xl mx-auto px-4 py-8">
         {/* Heading */}
-        <div className="mb-7">
-          <h1 className="font-display text-3xl sm:text-4xl font-black mb-2">
-            <span className="font-display text-slate-800">
-              ההיסטוריה שלי 📊
-            </span>
-          </h1>
-          <p className="text-slate-600 text-sm">כל התרגולים שעשית, מסודרים מהחדש לישן.</p>
-        </div>
+        <PageHeader
+          title="ההיסטוריה שלי"
+          description="כל התרגולים שעשית, מסודרים מהחדש לישן."
+        />
 
         {/* Summary stats */}
         {totalSessions > 0 && (

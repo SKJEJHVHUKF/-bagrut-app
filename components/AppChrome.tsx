@@ -34,6 +34,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { NAV_GROUPS, isActive } from '@/lib/nav';
 import { isProUser } from '@/lib/access';
 import { currentStreak } from '@/lib/results';
 import { initSync, syncNow } from '@/lib/sync/roadmap-sync';
@@ -202,7 +203,9 @@ export default function AppChrome() {
       <button
         onClick={() => setOpen(true)}
         aria-label="הפרופיל שלי"
-        className="fixed top-3 left-3 z-[60] w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-violet-600 text-white font-black text-sm flex items-center justify-center shadow-lg shadow-violet-500/30 ring-2 ring-white hover:scale-105 transition-transform"
+        // z-[95] sits ABOVE AppHeader (z-[90]); the header reserves the corner
+        // for it with pl-16 on desktop.
+        className="fixed top-3 left-3 z-[95] w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-violet-600 text-white font-black text-sm flex items-center justify-center shadow-lg shadow-violet-500/30 ring-2 ring-white hover:scale-105 transition-transform"
       >
         {initials}
       </button>
@@ -361,29 +364,41 @@ export default function AppChrome() {
                   <span className="flex-1 text-right text-sm font-bold">חיפוש</span>
                   <span className="text-[10px] text-slate-400 font-mono">Ctrl+K</span>
                 </button>
-                {[
-                  { href: '/roadmap', icon: MapIcon, label: 'מסלול הלמידה' },
-                  { href: '/quiz', icon: Target, label: 'בוחן מהיר' },
-                  { href: '/teach', icon: GraduationCap, label: 'למד את הבוט' },
-                  { href: '/chat', icon: MessageCircle, label: 'מורה AI' },
-                  { href: '/bagruyot', icon: ScrollText, label: 'בגרויות קודמות' },
-                  { href: '/formulas', icon: Sigma, label: 'דף נוסחאות' },
-                  { href: '/my-plan', icon: BookOpen, label: 'התוכנית שלי' },
-                  { href: '/insights', icon: BarChart3, label: 'התמונה שלי' },
-                  { href: '/errors', icon: NotebookPen, label: 'מחברת הטעויות' },
-                  { href: '/library', icon: Library, label: 'הספרייה שלי' },
-                  { href: '/history', icon: History, label: 'ההיסטוריה שלי' },
-                ].map(({ href, icon: Icon, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-900/[0.04] text-slate-700 hover:text-slate-900 transition-colors group"
-                  >
-                    <Icon className="w-4.5 h-4.5 text-violet-600" />
-                    <span className="flex-1 text-sm font-bold">{label}</span>
-                    <ChevronLeft className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:-translate-x-0.5 transition-all" />
-                  </Link>
+                {/* Grouped, not a flat list. Eleven equally-weighted links gave
+                    a student no way to tell the product (מסלול הלמידה) from a
+                    log (ההיסטוריה שלי). The groups come from lib/nav.ts, the
+                    same source AppHeader and BottomNav read, so the phone and
+                    the desktop can never describe the app differently. */}
+                {NAV_GROUPS.map((group) => (
+                  <div key={group.id} className="pt-3 first:pt-0">
+                    <div className="px-3 pb-1 text-[11px] font-black tracking-wide text-slate-500">
+                      {group.label}
+                    </div>
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const here = isActive(item, pathname);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          aria-current={here ? 'page' : undefined}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors group ${
+                            here
+                              ? 'bg-violet-500/10 text-violet-900'
+                              : 'hover:bg-slate-900/[0.04] text-slate-700 hover:text-slate-900'
+                          }`}
+                        >
+                          <Icon aria-hidden="true" className="w-4.5 h-4.5 text-violet-600" />
+                          <span className="flex-1 text-sm font-bold">{item.label}</span>
+                          <ChevronLeft
+                            aria-hidden="true"
+                            className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:-translate-x-0.5 transition-all"
+                          />
+                        </Link>
+                      );
+                    })}
+                  </div>
                 ))}
 
                 {!profile.pro && (

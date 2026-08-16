@@ -1076,28 +1076,61 @@ function Quiz() {
   return (
     <>
       <style>{`
-        :root { --bg: #FCF8FF; --surface: #FFFFFF; --surface2: #F0ECF9; --surface3: #E0E0FF; --border: rgba(15,23,42,0.10); --border2: rgba(15,23,42,0.20); --text: #0F172A; --text2: #475569; --text3: #64748B; --correct: #059669; --wrong: #DC2626; --accent: #6366F1; --accent2: #DB2777; --radius: 24px; --radius-sm: 14px; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; overflow-x: hidden; }
+        /* ===== Scoped to .quiz-root — was :root, *, and body =====
+           This block used to hijack GLOBAL names. Three separate problems:
+
+           1. It redefined --accent on :root as indigo #6366F1. globals.css
+              defines --accent as the achievement gold #B8860B, so every shared
+              component rendered on this page silently changed colour — and the
+              whole screen stayed on the PRE-REBRAND indigo/pink palette while
+              the rest of the app moved to violet/cyan. /quiz looked like a
+              different product. The values below now MAP to the app's tokens
+              instead of competing with them.
+           2. The universal selector rule was a second CSS reset applied to the
+              entire document (margin, padding, box-sizing). Tailwind's
+              preflight already does all three, so it was redundant as well
+              as global.
+           3. The body rule restyled the document body from inside a page
+              component, fighting globals.css and flattening anything else
+              mounted in the layout. The centring it provided moves to the
+              .quiz-root wrapper, where it belongs.
+
+           NOTE: no backticks in this comment — the whole block lives inside a
+           JS template literal, and one backtick here terminates the string. */
+        .quiz-root { display: flex; align-items: flex-start; justify-content: center; }
+        .quiz-root {
+          --bg: var(--background); --surface: var(--surface-1); --surface2: var(--surface-2); --surface3: #E9E2FB;
+          --border: rgba(15,23,42,0.10); --border2: rgba(15,23,42,0.20);
+          --text: var(--foreground); --text2: var(--muted); --text3: var(--faint);
+          --correct: var(--success); --wrong: var(--danger);
+          --accent: var(--primary-deep); --accent2: var(--accent-cyan-ink);
+          --radius: 24px; --radius-sm: 14px;
+        }
         .bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
         .bg-orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.10; }
-        .bg-orb-1 { width: 600px; height: 600px; top: -250px; right: -150px; background: #6366f1; animation: orb1 15s ease-in-out infinite alternate; }
-        .bg-orb-2 { width: 500px; height: 500px; bottom: -200px; left: -150px; background: #ec4899; animation: orb2 18s ease-in-out infinite alternate; }
-        .bg-orb-3 { width: 400px; height: 400px; top: 30%; left: 20%; background: #10b981; animation: orb3 12s ease-in-out infinite alternate; opacity: 0.06; }
+        /* Brand orbs. Were indigo/pink/emerald — the pre-rebrand palette, and
+           the reason this screen read as a different app. Now the same
+           violet-with-a-cyan-glow field globals.css paints everywhere else. */
+        .bg-orb-1 { width: 600px; height: 600px; top: -250px; right: -150px; background: #A78BFA; animation: orb1 15s ease-in-out infinite alternate; }
+        .bg-orb-2 { width: 500px; height: 500px; bottom: -200px; left: -150px; background: #C4B5FD; animation: orb2 18s ease-in-out infinite alternate; }
+        .bg-orb-3 { width: 400px; height: 400px; top: 30%; left: 20%; background: #67E8F9; animation: orb3 12s ease-in-out infinite alternate; opacity: 0.06; }
         @keyframes orb1 { to { transform: translate(-10%,15%) scale(1.15); } }
         @keyframes orb2 { to { transform: translate(10%,-10%) scale(0.95); } }
         @keyframes orb3 { to { transform: translate(-12%,12%) scale(1.25); } }
         .app { width: 100%; max-width: 520px; display: flex; flex-direction: column; position: relative; z-index: 1; box-shadow: 0 25px 60px -20px rgba(15,23,42,0.15); border-radius: 32px; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); margin: 20px; }
         .header { padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); background: rgba(252,248,255,0.90); position: sticky; top: 0; z-index: 10; border-radius: 32px 32px 0 0; }
-        .logo { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        /* cyan-700 → violet-600, the logo's own direction and the same ramp
+           .gradient-text uses in globals.css. cyan-600 under a label is
+           3.68:1, so cyan-700 is the lightest stop that stays legible. */
+        .logo { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #0E7490, #7C3AED); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .subject-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 24px; padding: 6px 16px; font-size: 12px; font-weight: 700; color: var(--text2); transition: all 0.3s; letter-spacing: 0.05em; }
         .screen { display: none; flex: 1; flex-direction: column; animation: fadeUp 0.4s cubic-bezier(.4,0,.2,1); }
         .screen.active { display: flex; }
         @keyframes fadeUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
         .home-inner { padding: 0 28px 40px; display: flex; flex-direction: column; flex: 1; }
         .hero { padding: 40px 0 32px; text-align: center; }
-        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.15)); border: 1.5px solid rgba(99,102,241,0.4); border-radius: 28px; padding: 8px 18px; font-size: 13px; font-weight: 700; color: #4F46E5; margin-bottom: 20px; }
-        .hero h1 { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; background: linear-gradient(160deg, #0F172A 30%, #4338CA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(103,232,249,0.15)); border: 1.5px solid rgba(139,92,246,0.4); border-radius: 28px; padding: 8px 18px; font-size: 13px; font-weight: 700; color: #5B21B6; margin-bottom: 20px; }
+        .hero h1 { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; background: linear-gradient(160deg, #0F172A 30%, #5B21B6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .hero p { color: var(--text2); font-size: 15px; line-height: 1.8; max-width: 320px; margin: 0 auto; font-weight: 500; }
         .section-label { font-size: 12px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; margin-top: 8px; }
         .subject-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 20px; scrollbar-width: none; }
@@ -1144,7 +1177,7 @@ function Quiz() {
         .hint-text { font-size: 14px; line-height: 1.85; color: var(--text); font-weight: 500; unicode-bidi: plaintext; text-align: start; }
         .meta-level-badge { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 800; color: var(--accent); background: rgba(79,70,229,0.09); border: 1.5px solid rgba(79,70,229,0.28); white-space: nowrap; }
         .review-hint-flag { display: inline-block; margin-inline-start: 8px; font-size: 11px; font-weight: 700; color: #92400E; background: rgba(180,83,9,0.08); border-radius: 8px; padding: 2px 7px; }
-        .start-btn { width: 100%; padding: 16px; border: none; border-radius: var(--radius); font-family: var(--font-heebo), sans-serif; font-size: 16px; font-weight: 800; color: #fff; cursor: pointer; background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%); box-shadow: 0 8px 24px -6px rgba(79,70,229,0.35); transition: all 0.25s cubic-bezier(.4,0,.2,1); margin-top: auto; letter-spacing: 0.05em; }
+        .start-btn { width: 100%; padding: 16px; border: none; border-radius: var(--radius); font-family: var(--font-heebo), sans-serif; font-size: 16px; font-weight: 800; color: #fff; cursor: pointer; background: linear-gradient(135deg, #0E7490 0%, #7C3AED 100%); box-shadow: 0 8px 24px -6px rgba(124,58,237,0.35); transition: all 0.25s cubic-bezier(.4,0,.2,1); margin-top: auto; letter-spacing: 0.05em; }
         .start-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 12px 32px -8px rgba(79,70,229,0.40); }
         .start-btn:active:not(:disabled) { transform: translateY(-1px); }
         .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
@@ -1156,7 +1189,7 @@ function Quiz() {
         .back-icon-btn:hover { border-color: var(--accent); color: var(--text); background: var(--surface2); }
         .progress-track { flex: 1; }
         .progress-bar { height: 6px; background: var(--surface2); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #ec4899); border-radius: 3px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #0E7490, #7C3AED); border-radius: 3px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
         .progress-labels { display: flex; justify-content: space-between; margin-top: 8px; }
         .progress-step { font-size: 12px; color: var(--text3); font-weight: 600; }
         .progress-score { font-size: 12px; font-weight: 800; color: var(--correct); }
@@ -1191,7 +1224,7 @@ function Quiz() {
         .lesson-correct:hover { border-color: rgba(16,185,129,0.4); }
         .lesson-wrong { border-right: 4px solid #ef4444; }
         .lesson-wrong:hover { border-color: rgba(239,68,68,0.4); }
-        .lesson-concept { border-right: 4px solid #6366f1; }
+        .lesson-concept { border-right: 4px solid var(--accent); }
         .lesson-concept:hover { border-color: rgba(99,102,241,0.4); }
         .lesson-tip { border-right: 4px solid #B45309; background: linear-gradient(135deg, rgba(180,83,9,0.05) 0%, var(--surface3) 100%); }
         .lesson-tip:hover { border-color: rgba(245,158,11,0.4); }
@@ -1204,8 +1237,8 @@ function Quiz() {
         .loading-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 50px 40px; }
         .loader-ring { width: 64px; height: 64px; position: relative; }
         .loader-ring::before, .loader-ring::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 3px solid transparent; }
-        .loader-ring::before { border-top-color: #6366f1; animation: spin 0.9s linear infinite; }
-        .loader-ring::after { border-bottom-color: #DB2777; animation: spin 1.3s linear infinite reverse; inset: 8px; }
+        .loader-ring::before { border-top-color: var(--accent); animation: spin 0.9s linear infinite; }
+        .loader-ring::after { border-bottom-color: var(--accent2); animation: spin 1.3s linear infinite reverse; inset: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading-tip { text-align: center; font-size: 15px; color: var(--text2); line-height: 1.8; max-width: 280px; font-weight: 500; }
         .loading-tip strong { color: var(--text); display: block; margin-bottom: 6px; font-size: 16px; font-weight: 800; }
@@ -1213,7 +1246,7 @@ function Quiz() {
         .result-hero { text-align: center; }
         .result-emoji { font-size: 60px; line-height: 1; margin-bottom: 16px; display: block; animation: bounce 0.8s ease; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        .result-title { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 32px; font-weight: 900; margin-bottom: 8px; background: linear-gradient(135deg, #0F172A, #4338CA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .result-title { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 32px; font-weight: 900; margin-bottom: 8px; background: linear-gradient(135deg, #0F172A, #5B21B6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .result-sub { font-size: 15px; color: var(--text2); line-height: 1.7; font-weight: 500; }
         .stats-row { display: flex; gap: 12px; width: 100%; }
         .stat-box { flex: 1; background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 18px; text-align: center; }
@@ -1251,37 +1284,41 @@ function Quiz() {
         .btn-outline:hover { color: var(--text); background: var(--surface); border-color: var(--accent); }
       `}</style>
 
-      <div className="bg-layer">
-        <div className="bg-orb bg-orb-1"></div>
-        <div className="bg-orb bg-orb-2"></div>
-        <div className="bg-orb bg-orb-3"></div>
-      </div>
-
-      <div className="app">
-        <div className="header">
-          <span className="logo">MathUp ✦</span>
-          <form action="/auth/signout" method="post" style={{ margin: 0 }}>
-            <button
-              type="submit"
-              className="subject-pill"
-              style={{ cursor: 'pointer', background: 'transparent', fontFamily: 'inherit' }}
-              title="התנתק"
-            >
-              ← התנתק
-            </button>
-          </form>
+      <div className="quiz-root">
+        <div className="bg-layer">
+          <div className="bg-orb bg-orb-1"></div>
+          <div className="bg-orb bg-orb-2"></div>
+          <div className="bg-orb bg-orb-3"></div>
         </div>
 
-        <div className={`screen ${screen === 'home' ? 'active' : ''}`}>
-          {renderHome()}
-        </div>
+        <div className="app">
+          {/* The in-card bar used to carry a second "MathUp ✦" wordmark. The
+              app now has one persistent header; a page that draws its own logo
+              underneath it is the clearest possible signal of a screen built
+              in isolation. Only the sign-out control was doing real work. */}
+          <div className="header">
+            <span className="section-label" style={{ margin: 0 }}>בוחן מהיר</span>
+            <form action="/auth/signout" method="post" style={{ margin: 0 }}>
+              <button
+                type="submit"
+                className="subject-pill"
+                style={{ cursor: 'pointer', background: 'transparent', fontFamily: 'inherit' }}
+                title="התנתק"
+              >
+                ← התנתק
+              </button>
+            </form>
+          </div>
 
-        <div className={`screen ${screen === 'quiz' ? 'active' : ''}`}>
-          {renderQuiz()}
-        </div>
-
-        <div className={`screen ${screen === 'results' ? 'active' : ''}`}>
-          {renderResults()}
+          {/* One screen at a time. All three used to sit in the DOM together,
+              hidden with display:none — so the home screen shipped the entire
+              quiz and results markup, and every question the student had not
+              reached yet was already in the page. */}
+          <div className="screen active">
+            {screen === 'home' && renderHome()}
+            {screen === 'quiz' && renderQuiz()}
+            {screen === 'results' && renderResults()}
+          </div>
         </div>
       </div>
     </>

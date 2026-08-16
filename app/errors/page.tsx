@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Wrench,
 } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
 import { getTopWeakness, type Weakness } from '@/lib/remediation';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
@@ -94,15 +95,10 @@ export default function ErrorsPage() {
           </Link>
         </div>
 
-        <div className="text-center space-y-2 pt-2">
-          <h1 className="font-display text-3xl sm:text-4xl font-black gradient-text">
-            📓 מחברת הטעויות שלי
-          </h1>
-          <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
-            כל טעות שאתה מסמן נאספת לכאן. כך תראה את הדפוסים החוזרים — ותתקן אותם
-            לפני הבגרות, במקום לחזור עליהם שוב ושוב.
-          </p>
-        </div>
+        <PageHeader
+          title="מחברת הטעויות שלי"
+          description="כל טעות שאתה מסמן נאספת לכאן. כך תראה את הדפוסים החוזרים — ותתקן אותם לפני הבגרות, במקום לחזור עליהם שוב ושוב."
+        />
 
         {/* Loading */}
         {mistakes === null && (

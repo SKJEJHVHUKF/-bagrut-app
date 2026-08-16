@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { fadeUp, staggerContainer, scaleIn, inViewProps, heroStagger } from '@/lib/animations';
+import { PageHeader } from '@/components/PageHeader';
 import {
-  BookOpen,
   Loader2,
   Crown,
   Lightbulb,
@@ -79,23 +79,10 @@ export default function BagruyotLandingPage() {
         animate="visible"
         className="space-y-3 mb-8 text-center sm:text-right"
       >
-        <motion.div
-          variants={fadeUp}
-          className="text-xs font-black tracking-widest text-emerald-700 uppercase flex items-center gap-2 justify-center sm:justify-start"
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>מאגר בגרויות</span>
-        </motion.div>
-        <motion.h1 variants={fadeUp} className="text-3xl sm:text-4xl font-black leading-tight">
-          <span className="font-display text-slate-800">
-            תרגל מבגרויות אמיתיות
-          </span>
-        </motion.h1>
-        <motion.p variants={fadeUp} className="text-base text-slate-700 leading-relaxed max-w-2xl">
-          שאלות מבגרויות עבר — מתועתקות מילה במילה מהשאלון של משרד החינוך. תפתור לבד,
-          תקבל רמזים מדורגים כשתיתקע, ותראה את הפתרון המלא רק כשאתה מוכן.{' '}
-          <strong className="text-slate-900">ללא AI.</strong>
-        </motion.p>
+        <PageHeader
+          title="תרגל מבגרויות אמיתיות"
+          description="שאלות מבגרויות עבר — מתועתקות מילה במילה מהשאלון של משרד החינוך. תפתור לבד, תקבל רמזים מדורגים כשתיתקע, ותראה את הפתרון המלא רק כשאתה מוכן. ללא AI."
+        />
       </motion.header>
 
       {/* Stats strip */}

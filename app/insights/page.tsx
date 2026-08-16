@@ -22,6 +22,7 @@ import {
   Sparkles,
   Wrench,
 } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
 import { getSubTopic } from '@/content/lessons';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
@@ -161,14 +162,11 @@ export default function InsightsPage() {
           </Link>
         </div>
 
-        <div className="text-center space-y-2 pt-2">
-          <h1 className="font-display text-3xl sm:text-4xl font-black gradient-text">
-            📈 התמונה שלי
-          </h1>
-          <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
-            כל שאלה שאתה עונה — במבחן המהיר ובתרגול המודרך — נצברת לתמונה אחת:
-            איפה אתה חזק, ומה שווה לחזק לפני הבגרות.
-          </p>
+        <div className="space-y-2 pt-2">
+          <PageHeader
+            title="התמונה שלי"
+            description="כל שאלה שאתה עונה — במבחן המהיר ובתרגול המודרך — נצברת לתמונה אחת: איפה אתה חזק, ומה שווה לחזק לפני הבגרות."
+          />
           <Link
             href="/errors"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-700 hover:text-violet-900 transition-colors"
@@ -280,6 +278,41 @@ export default function InsightsPage() {
                 <ArrowRight className="w-4 h-4 text-amber-600 rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
               </Link>
             )}
+          </motion.div>
+        )}
+
+        {/* ===== The action, directly under the number =====
+            The sharpest thing this page offers — a named repair — used to sit
+            around line 460, below the habit strip and INSIDE the per-subject
+            loop. A student read their predicted grade, then scrolled past a
+            streak counter, a daily-goal control and a fourteen-day activity
+            grid before being told what to actually do about it.
+            Same rule as /roadmap: the answer goes next to the number. */}
+        {fixTargets['math5'] && data !== null && data.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <Link
+              href={`/fix/${encodeURIComponent(fixTargets['math5'].id)}`}
+              className="group flex items-center gap-4 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 rounded-3xl p-5 shadow-lg shadow-violet-500/25 transition-colors"
+            >
+              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center">
+                <Wrench aria-hidden="true" className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1 min-w-0 text-white">
+                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
+                  הכי משתלם לתקן עכשיו
+                </div>
+                <div className="text-sm font-black leading-tight mt-0.5 truncate">
+                  {fixTargets['math5'].title}
+                </div>
+                <div className="text-[11px] text-white/80 mt-0.5 truncate">
+                  {fixTargets['math5'].detail}
+                </div>
+              </div>
+              <ArrowRight
+                aria-hidden="true"
+                className="w-5 h-5 text-white rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0"
+              />
+            </Link>
           </motion.div>
         )}
 
@@ -458,8 +491,11 @@ export default function InsightsPage() {
                 </div>
               </div>
 
-              {/* Repair CTA — the sharpest thing this page can offer. */}
-              {fixTarget && (
+              {/* Repair CTA. math5 is skipped here because it is already the
+                  headline action at the top of the page — rendering it twice
+                  is the duplication this reorder exists to remove. Other
+                  subjects still get theirs in their own section. */}
+              {fixTarget && subject !== 'math5' && (
                 <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     href={`/fix/${encodeURIComponent(fixTarget.id)}`}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { PageHeader } from '@/components/PageHeader';
 import {
   ArrowLeft,
   Lock,
@@ -38,7 +39,7 @@ import { getSubTopic } from '@/content/lessons';
 import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
 import { topicLockReason, isProUser, isAdmin, type UserLike } from '@/lib/access';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
-import { fadeUp, staggerContainer, scaleIn, inViewProps } from '@/lib/animations';
+import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
 
 export default function MyPlanPage() {
   const router = useRouter();
@@ -96,49 +97,48 @@ export default function MyPlanPage() {
       <TopBar />
 
       <main className="relative z-10 max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Hero — countdown */}
+        {/* The page opened straight into the countdown with no title at all —
+            a student landing here had no statement of what the screen is. */}
+        <PageHeader
+          title="התוכנית שלי"
+          description="מה ללמוד היום, ולמה דווקא את זה — נגזר מהתאריך שקבעת ומההתקדמות שלך."
+        />
+
+        {/* The goal, and today's work toward it. This is the only part of the
+            page that changes daily; everything below it is navigation — which
+            is exactly why it is now FIRST. It used to sit under a full-bleed
+            amber countdown panel with a 60px number and three stat tiles, so
+            the one thing a student came here to act on was below the fold and
+            the thing above it was a fact they could not do anything about. */}
+        <TodaySection plan={plan} onTargetSet={() => setPlan(getPlan())} />
+
+        {/* Countdown + totals, as one quiet strip. Same demotion as the
+            progress panel on /roadmap: still here, no longer shouting. */}
         <motion.section
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
-          className="bg-gradient-to-br from-amber-500/15 to-orange-500/15 backdrop-blur-md border border-amber-500/30 rounded-3xl p-6 sm:p-8 text-center"
+          className="surface-premium rounded-2xl p-4 flex flex-wrap items-center gap-x-5 gap-y-2"
         >
-          <motion.div
-            variants={fadeUp}
-            className="text-xs font-black tracking-widest text-amber-700 mb-2 uppercase"
-          >
-            הבגרות שלך
+          <motion.div variants={fadeUp} className="flex items-baseline gap-1.5">
+            <span className="text-2xl font-black text-amber-800 leading-none">{days}</span>
+            <span className="text-xs text-slate-600">
+              ימים עד {formatHebrewDate(plan.bagrutDate)}
+            </span>
           </motion.div>
-          <motion.div
-            variants={scaleIn}
-            className="text-5xl sm:text-6xl font-black text-amber-800 mb-1"
-          >
-            {days}
-          </motion.div>
-          <motion.div variants={fadeUp} className="text-sm text-amber-800">
-            ימים עד {formatHebrewDate(plan.bagrutDate)}
-          </motion.div>
-
-          <motion.div variants={staggerContainer} className="mt-6 grid grid-cols-3 gap-3 text-center">
-            <motion.div variants={scaleIn}>
-              <Stat label="הושלמו" value={`${completedCount}/${plan.topics.length}`} accent="emerald" />
-            </motion.div>
-            <motion.div variants={scaleIn}>
-              <Stat label="התקדמות" value={`${overallProgress}%`} accent="purple" />
-            </motion.div>
-            <motion.div variants={scaleIn}>
-              <Stat
-                label="מצב"
-                value={pro ? (admin ? '👑 אדמין' : '✨ Pro') : '🆓 חינם'}
-                accent="amber"
-              />
-            </motion.div>
+          <motion.div variants={fadeUp} className="flex items-center gap-4 text-xs text-slate-600 mr-auto">
+            <span>
+              <span className="font-black text-slate-900">
+                {completedCount}/{plan.topics.length}
+              </span>{' '}
+              הושלמו
+            </span>
+            <span>
+              <span className="font-black text-slate-900">{overallProgress}%</span> התקדמות
+            </span>
+            <span>{pro ? (admin ? 'אדמין' : 'Pro') : 'חינם'}</span>
           </motion.div>
         </motion.section>
-
-        {/* The goal, and today's work toward it. This is the only part of the
-            page that changes daily; everything below it is navigation. */}
-        <TodaySection plan={plan} onTargetSet={() => setPlan(getPlan())} />
 
         {/* Topics list */}
         <motion.section {...inViewProps} variants={staggerContainer}>
@@ -364,28 +364,6 @@ function TopicCard({
 // ============================================================
 // Helpers
 // ============================================================
-
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent: 'emerald' | 'purple' | 'amber';
-}) {
-  const colors = {
-    emerald: 'text-emerald-700',
-    purple: 'text-violet-700',
-    amber: 'text-amber-700',
-  };
-  return (
-    <div>
-      <div className={`text-base sm:text-lg font-black ${colors[accent]}`}>{value}</div>
-      <div className="text-[10px] text-slate-600 tracking-wide mt-0.5">{label}</div>
-    </div>
-  );
-}
 
 function formatHebrewDate(iso: string): string {
   try {

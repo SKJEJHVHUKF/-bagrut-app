@@ -360,7 +360,13 @@ export default function TutorBubble() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setOpen(false)}
-              className="fixed inset-0 z-[72] bg-slate-900/20 backdrop-blur-[2px]"
+              // Transparent on purpose. A tinted/blurred scrim is the standard
+              // modal move, but here the thing behind the drawer is THE QUESTION
+              // the tutor is talking about — washing it out means the student
+              // reads "בחרת ½(u+v)" with no way to look at the options. The
+              // drawer's own border and shadow already separate it. Click-outside
+              // still closes.
+              className="fixed inset-0 z-[72]"
             />
             <motion.div
               initial={{ opacity: 0, y: 24 }}

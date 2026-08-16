@@ -143,7 +143,7 @@ export default function Landing() {
             className="absolute inset-0"
             style={{
               backgroundImage:
-                'linear-gradient(rgba(129,140,248,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(129,140,248,0.07) 1px, transparent 1px)',
+                'linear-gradient(rgba(167,139,250,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(167,139,250,0.07) 1px, transparent 1px)',
               backgroundSize: '46px 46px',
               maskImage: 'radial-gradient(ellipse 78% 62% at 50% 30%, #000 22%, transparent 70%)',
               WebkitMaskImage: 'radial-gradient(ellipse 78% 62% at 50% 30%, #000 22%, transparent 70%)',
@@ -158,9 +158,12 @@ export default function Landing() {
             <path d="M0 210 C 160 210, 200 50, 360 50 S 560 210, 720 50" stroke="url(#heroCurve)" strokeWidth="1.5" />
             <defs>
               <linearGradient id="heroCurve" x1="0" y1="0" x2="720" y2="0" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#818CF8" stopOpacity="0" />
-                <stop offset="0.5" stopColor="#A5B4FC" />
-                <stop offset="1" stopColor="#818CF8" stopOpacity="0" />
+                {/* violet-400/300, not indigo — the hero curve and the graph
+                    paper behind it were the last of the pre-rebrand palette
+                    left on the landing page. */}
+                <stop stopColor="#A78BFA" stopOpacity="0" />
+                <stop offset="0.5" stopColor="#C4B5FD" />
+                <stop offset="1" stopColor="#A78BFA" stopOpacity="0" />
               </linearGradient>
             </defs>
           </svg>

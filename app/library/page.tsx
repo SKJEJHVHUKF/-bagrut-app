@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Camera, BookOpen, Trash2, ChevronDown, ChevronUp, Calendar, Sparkles } from 'lucide-react';
+import { Camera, Trash2, ChevronDown, ChevronUp, Calendar, Sparkles } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
+import { PageHeader } from '@/components/PageHeader';
 import { scansByTopic, deleteScan, type Scan } from '@/lib/scans';
 
 export default function LibraryPage() {
@@ -40,23 +41,16 @@ export default function LibraryPage() {
 
   return (
     <main className="min-h-screen px-4 sm:px-6 py-8 max-w-3xl mx-auto">
-      {/* Header */}
-      <header className="space-y-2 mb-6">
-        <div className="text-xs font-black tracking-widest text-violet-700 uppercase flex items-center gap-2">
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>הספרייה שלי</span>
-        </div>
-        <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
-          <span className="font-display text-slate-800">
-            השאלות שצילמת
-          </span>
-        </h1>
-        <p className="text-sm text-slate-600">
-          {totalCount === 0
-            ? 'עדיין לא שמרת שאלות. צלמי שאלת בגרות ראשונה.'
-            : `${totalCount} שאלות שמורות, מקובצות לפי נושא`}
-        </p>
-      </header>
+      {/* The hand-rolled eyebrow said "הספרייה שלי" — the same thing the
+          breadcrumb now derives from lib/nav.ts, so it went. */}
+      <PageHeader
+        title="השאלות שצילמת"
+        description={
+          totalCount === 0
+            ? 'עדיין לא שמרת שאלות. צלם שאלת בגרות ראשונה.'
+            : `${totalCount} שאלות שמורות, מקובצות לפי נושא.`
+        }
+      />
 
       {/* CTA to scan more */}
       <div className="mb-6">

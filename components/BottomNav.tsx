@@ -30,8 +30,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Map as MapIcon, Target, ScanLine, MessageCircle, Menu, LogIn } from 'lucide-react';
+import { Menu, LogIn } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { PRIMARY_ITEMS, isActive } from '@/lib/nav';
 
 // Routes where the bar must not appear at all.
 //   /login,/signup,/auth,/onboarding — pre-app flows, same as AppChrome.
@@ -44,20 +45,21 @@ function isHiddenPath(path: string): boolean {
   return HIDDEN_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
 }
 
-type Item = {
-  href: string;
-  icon: typeof MapIcon;
-  label: string;
-  /** Prefixes that should light this tab up, beyond `href` itself. */
-  match?: string[];
+// The four tabs are a SUBSET of lib/nav.ts, not a fourth hand-written list.
+// They used to be declared here with their own labels, which is how the app
+// ended up calling the same destination "מורה" on a phone and "מורה AI" in the
+// drawer. Short tab labels are derived below rather than re-authored.
+const TAB_LABELS: Record<string, string> = {
+  '/roadmap': 'מסלול',
+  '/quiz': 'בוחן',
+  '/scan': 'סריקה',
+  '/chat': 'מורה',
 };
 
-const ITEMS: Item[] = [
-  { href: '/roadmap', icon: MapIcon, label: 'מסלול', match: ['/roadmap', '/practice', '/learn'] },
-  { href: '/quiz', icon: Target, label: 'בוחן' },
-  { href: '/scan', icon: ScanLine, label: 'סריקה' },
-  { href: '/chat', icon: MessageCircle, label: 'מורה' },
-];
+const ITEMS = PRIMARY_ITEMS.map((item) => ({
+  ...item,
+  label: TAB_LABELS[item.href] ?? item.label,
+}));
 
 export default function BottomNav() {
   const pathname = usePathname() ?? '/';
@@ -109,9 +111,6 @@ export default function BottomNav() {
 
   if (!visible) return null;
 
-  const isActive = (it: Item) =>
-    (it.match ?? [it.href]).some((p) => pathname === p || pathname.startsWith(p + '/'));
-
   return (
     <nav
       dir="rtl"
@@ -121,7 +120,7 @@ export default function BottomNav() {
     >
       <ul className="flex items-stretch justify-around px-1">
         {ITEMS.map((it) => {
-          const active = isActive(it);
+          const active = isActive(it, pathname);
           const Icon = it.icon;
           return (
             <li key={it.href} className="flex-1">

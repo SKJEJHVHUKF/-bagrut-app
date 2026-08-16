@@ -17,6 +17,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { PageHeader } from '@/components/PageHeader';
 import { TeachSession } from '@/components/teach/TeachSession';
 import { MathText } from '@/components/practice/MathText';
 import { allLessonKeys, getSubTopics } from '@/content/lessons';
@@ -89,15 +90,10 @@ export default function TeachPage() {
             259px of explanation the student has already read, pushing the
             actual conversation below the fold on a phone. */}
         {!subId ? (
-          <div className="text-center space-y-2">
-            <h1 className="font-display text-3xl sm:text-4xl font-black gradient-text">
-              🙋‍♀️ למד את הבוט
-            </h1>
-            <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-              נועה היא תלמידה בכיתה שלך שלא הבינה את הנושא. <strong>אתה מלמד אותה.</strong>{' '}
-              היא תשאל בדיוק את השאלות שיחשפו מה עוד לא ברור לך — ובסוף תראה מה כיסית ומה פספסת.
-            </p>
-          </div>
+          <PageHeader
+            title="למד את הבוט"
+            description="נועה היא תלמידה בכיתה שלך שלא הבינה את הנושא. אתה מלמד אותה. היא תשאל בדיוק את השאלות שיחשפו מה עוד לא ברור לך — ובסוף תראה מה כיסית ומה פספסת."
+          />
         ) : (
           <h1 className="font-display text-xl font-black text-slate-900 text-center">
             🙋‍♀️ אתה מלמד את נועה

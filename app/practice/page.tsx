@@ -13,6 +13,7 @@ import {
 import { hasLesson } from '@/content/lessons';
 import { getAllProgress } from '@/lib/progress';
 import MathUpLogo from '@/components/MathUpLogo';
+import { PageHeader } from '@/components/PageHeader';
 import {
   topicsByPaper,
   topicsForActivePaper,
@@ -220,69 +221,32 @@ export default function PracticePage() {
       <TopBar />
 
       <main className="relative z-10 max-w-2xl mx-auto px-4 py-8">
-        <div className="mb-7">
-          <h1 className="font-display text-3xl sm:text-4xl font-black mb-2">
-            <span className="font-display text-slate-800">
-              תרגול מודרך 🎯
-            </span>
-          </h1>
-          <p className="text-slate-600 text-sm leading-relaxed">
-            סיכום לימודי בנושא + שאלת בגרות עם רמזים ופתרון. כמו מורה פרטי שיושב לידך.
-          </p>
+        <PageHeader
+          title="תרגול מודרך"
+          description="סיכום לימודי בנושא + שאלת בגרות עם רמזים ופתרון. כמו מורה פרטי שיושב לידך."
+        />
+
+        {/* These three were full-width cards with icon tiles, subtitles and
+            arrows — three identical-weight promos a student had to scroll past
+            before reaching the topic picker, which is what they opened this
+            page to use. They are links to OTHER modes, not the work of this
+            screen, so they compress to one row and the picker moves up. */}
+        <div className="grid grid-cols-3 gap-2 mb-6">
+          {[
+            { href: '/roadmap', label: 'מסלול הלמידה', hint: 'שלב אחר שלב' },
+            { href: '/teach', label: 'למד את הבוט', hint: 'אתה מסביר' },
+            { href: '/thinking', label: 'סעיפי חשיבה', hint: 'Pro' },
+          ].map((m) => (
+            <Link
+              key={m.href}
+              href={m.href}
+              className="surface-premium rounded-2xl px-3 py-2.5 text-center hover:border-violet-500/30 transition-colors"
+            >
+              <span className="block text-xs font-black text-slate-900 truncate">{m.label}</span>
+              <span className="block text-[10px] text-slate-600 mt-0.5 truncate">{m.hint}</span>
+            </Link>
+          ))}
         </div>
-
-        {/* Personalized roadmap — the structured, step-by-step learning path */}
-        <Link
-          href="/roadmap"
-          className="group flex items-center gap-3 mb-3 bg-gradient-to-l from-emerald-600/10 to-violet-600/10 hover:from-emerald-600/[0.15] hover:to-violet-600/[0.15] border border-emerald-500/25 rounded-2xl p-4 transition-colors"
-        >
-          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-violet-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-            <span className="text-xl">🗺️</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-black text-slate-900 text-sm">
-              מסלול הלמידה שלי{activePaper ? ` — ${paperLabel(activePaper)}` : ''}
-            </div>
-            <div className="text-[11px] text-slate-600 mt-0.5">
-              מפה מסודרת שלב-אחר-שלב, עם מעקב התקדמות ופתיחת שלבים
-            </div>
-          </div>
-          <ArrowLeft className="w-4 h-4 text-emerald-600 rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
-        </Link>
-
-        {/* למד את הבוט — the student explains, the model plays the classmate */}
-        <Link
-          href="/teach"
-          className="group flex items-center gap-3 mb-3 bg-gradient-to-l from-violet-600/10 to-violet-600/10 hover:from-violet-600/[0.15] hover:to-violet-600/[0.15] border border-violet-500/25 rounded-2xl p-4 transition-colors"
-        >
-          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
-            <span className="text-xl">🙋‍♀️</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-black text-slate-900 text-sm">למד את הבוט</div>
-            <div className="text-[11px] text-slate-600 mt-0.5">
-              אתה מסביר, היא שואלת — ואתה מגלה מה באמת לא ברור לך · חינם
-            </div>
-          </div>
-          <ArrowLeft className="w-4 h-4 text-fuchsia-600 rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
-        </Link>
-
-        {/* Unseen Buster — conceptual thinking mode */}
-        <Link
-          href="/thinking"
-          className="group flex items-center gap-3 mb-6 bg-gradient-to-l from-violet-600/10 to-violet-600/10 hover:from-violet-600/[0.15] hover:to-violet-600/[0.15] border border-violet-500/25 rounded-2xl p-4 transition-colors"
-        >
-          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
-            <span className="text-xl">🧠</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-black text-slate-900 text-sm">סעיפי חשיבה והבנה</div>
-            <div className="text-[11px] text-slate-600 mt-0.5">
-              אימון לשאלות ה&quot;לא מוכר&quot; — ניתוח גרפים ונימוקים מילוליים · Pro
-            </div>
-          </div>
-          <ArrowLeft className="w-4 h-4 text-violet-600 rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
-        </Link>
 
         {/* Subject tabs */}
         <div className="mb-5">

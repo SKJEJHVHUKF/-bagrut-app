@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, BookOpen, FileText, Printer } from 'lucide-react';
+import { ArrowLeft, Search, BookOpen, Printer } from 'lucide-react';
 import { allLessonKeys, getLesson } from '@/content/lessons';
 import { MathText } from '@/components/practice/MathText';
+import { PageHeader } from '@/components/PageHeader';
 
 /**
  * /formulas — single page that aggregates every formula from every
@@ -56,23 +57,16 @@ export default function FormulasPage() {
       <TopBar onPrint={printPage} />
 
       <main className="relative z-10 max-w-3xl mx-auto px-4 py-6 space-y-6">
-        {/* Hero */}
-        <section className="bg-gradient-to-br from-violet-600/15 to-violet-600/15 backdrop-blur-md border border-violet-500/30 rounded-3xl p-6 text-center">
-          <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center shadow-lg shadow-violet-500/40">
-            <FileText className="w-7 h-7 text-slate-900" />
-          </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-black mb-2">
-            <span className="font-display text-slate-800">
-              דף נוסחאות
-            </span>
-          </h1>
-          <p className="text-sm text-slate-700">
-            כל הנוסחאות של מתמטיקה 5 יח׳ במקום אחד.{' '}
-            {totalFormulas > 0 && (
-              <span className="text-violet-700 font-bold">{totalFormulas} נוסחאות</span>
-            )}
-          </p>
-        </section>
+        {/* The hero panel was a decorated restatement of the page title. The
+            count is the only fact it carried, so it moves into the header. */}
+        <PageHeader
+          title="דף נוסחאות"
+          description={
+            totalFormulas > 0
+              ? `כל הנוסחאות של מתמטיקה 5 יח׳ במקום אחד — ${totalFormulas} נוסחאות.`
+              : 'כל הנוסחאות של מתמטיקה 5 יח׳ במקום אחד.'
+          }
+        />
 
         {/* Search */}
         <section className="sticky top-16 z-30 -mx-2 px-2 py-2 bg-[var(--background)]/90 backdrop-blur-md rounded-2xl">
