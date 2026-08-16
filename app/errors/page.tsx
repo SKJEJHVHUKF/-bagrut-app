@@ -85,16 +85,10 @@ export default function ErrorsPage() {
   return (
     <div className="min-h-screen bg-[var(--background)] text-slate-800 px-4 py-8">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <Link href="/" className="text-sm text-slate-600 hover:text-slate-800 transition-colors">
-            → חזרה הביתה
-          </Link>
-          <Link href="/insights" className="text-sm text-violet-700 hover:text-violet-800 transition-colors">
-            📈 התמונה שלי
-          </Link>
-        </div>
-
+        {/* The hand-rolled top bar here linked home and to /insights — while
+            /insights linked back to here. Two pages pointing at each other,
+            on top of a global header, a bottom bar and a drawer that already
+            reach both. PageHeader's breadcrumb states the area instead. */}
         <PageHeader
           title="מחברת הטעויות שלי"
           description="כל טעות שאתה מסמן נאספת לכאן. כך תראה את הדפוסים החוזרים — ותתקן אותם לפני הבגרות, במקום לחזור עליהם שוב ושוב."

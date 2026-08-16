@@ -154,28 +154,21 @@ export default function InsightsPage() {
   return (
     <div className="min-h-screen bg-[var(--background)] text-slate-800 px-4 py-8">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <Link href="/" className="text-sm text-slate-600 hover:text-slate-800 transition-colors">
-            → חזרה הביתה
-          </Link>
-          <Link href="/quiz" className="text-sm text-violet-700 hover:text-violet-800 transition-colors">
-            מבחן מהיר ⚡
-          </Link>
-        </div>
+        {/* Two things went from here.
 
-        <div className="space-y-2 pt-2">
-          <PageHeader
-            title="התמונה שלי"
-            description="כל שאלה שאתה עונה — במבחן המהיר ובתרגול המודרך — נצברת לתמונה אחת: איפה אתה חזק, ומה שווה לחזק לפני הבגרות."
-          />
-          <Link
-            href="/errors"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-700 hover:text-violet-900 transition-colors"
-          >
-            📓 מחברת הטעויות שלי ←
-          </Link>
-        </div>
+            A hand-rolled top bar ("חזרה הביתה" + "מבחן מהיר") — every page in
+            the app was drawing its own little nav row on top of the global
+            header, the bottom bar and the drawer. Four navigations on one
+            screen is why the app felt repetitive.
+
+            And a bare "מחברת הטעויות שלי ←" link, which was the SECOND link to
+            /errors on this page: the other one, further down, carries the
+            actual top-mistake category. A link that says only where it goes is
+            redundant next to one that also tells you what you will find. */}
+        <PageHeader
+          title="התמונה שלי"
+          description="כל שאלה שאתה עונה — במבחן המהיר ובתרגול המודרך — נצברת לתמונה אחת: איפה אתה חזק, ומה שווה לחזק לפני הבגרות."
+        />
 
         {/* Loading (first client render) */}
         {data === null && (
