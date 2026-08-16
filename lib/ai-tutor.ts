@@ -15,6 +15,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from './rate-limit';
 import { createClient } from './supabase/server';
 import { isProUser, type UserLike } from './access';
+import { BLACKLIST } from './agents/guard';
 
 // ============================================================
 // Same-origin guard — request must come from our own site.
@@ -162,12 +163,16 @@ export async function callTutor<T = string>(
 // Shared guards on user-supplied text input.
 // ============================================================
 
-/** Same regex as /api/check-answer — rejects control characters,
- *  prompt-injection attempts ("ignore previous instructions"), and
- *  HTML tag fragments. */
-export const PROMPT_BLACKLIST =
-  // eslint-disable-next-line no-control-regex
-  /[\x00-\x1f]|ignore\s+(all\s+)?(previous|prior|above)\s+instructions?|disregard\s+(all\s+)?(previous|prior|above)|<\s*\/?\s*(script|iframe|object|embed)/i;
+/**
+ * Rejects control characters, prompt-injection attempts and HTML tag fragments.
+ *
+ * ONE definition, in lib/agents/guard.ts. This used to be a second copy with a
+ * flat `[\x00-\x1f]` class, which matches a newline — so every multi-line
+ * payload was rejected and all four tutor endpoints returned 400. The copy in
+ * guard.ts was fixed; this one was not, because nothing tied them together.
+ * Re-exported rather than re-declared so the next fix cannot miss a caller.
+ */
+export const PROMPT_BLACKLIST = BLACKLIST;
 
 /** Default max length for any single tutor input field. */
 export const MAX_INPUT_LEN = 1500;
