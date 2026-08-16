@@ -125,6 +125,42 @@ function memoryRecord(userId: string, kind: AgentKind): void {
 // Durable counters
 // ============================================================
 
+/**
+ * Hard ceiling on billable agent calls across ALL users, per UTC day.
+ *
+ * Every per-user cap in this app was sized honestly in its own file, and nobody
+ * summed them: the free daily caps together are worth more than a month of the
+ * Anthropic budget if a handful of students use all of them. This is the only
+ * number that makes "budget" an enforced limit rather than a hope. When it
+ * trips, the static content — which is the product — is untouched.
+ *
+ * Raise it with AI_DAILY_GLOBAL_LIMIT once there is revenue.
+ */
+const GLOBAL_DAILY_LIMIT = Number(process.env.AI_DAILY_GLOBAL_LIMIT ?? '250');
+
+/** COUNT is one round trip; at this cap a 60s memo is accurate enough. */
+let globalDayMemo: { day: string; count: number; at: number } | null = null;
+
+async function globalDayCount(supabase: SupabaseServerClient): Promise<number | null> {
+  const day = dayStartIso();
+  const now = Date.now();
+  if (globalDayMemo && globalDayMemo.day === day && now - globalDayMemo.at < 60_000) {
+    return globalDayMemo.count;
+  }
+  try {
+    const { count, error } = await supabase
+      .from('ai_generation_log')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', day);
+    if (error) return null; // table missing → per-user caps still apply
+    const total = count ?? 0;
+    globalDayMemo = { day, count: total, at: now };
+    return total;
+  } catch {
+    return null;
+  }
+}
+
 /** Rows for this user + kind since `sinceIso`. `null` = table unavailable. */
 async function countSince(
   supabase: SupabaseServerClient,
@@ -238,6 +274,19 @@ export async function guardAgentRequest(
         `הגעת ל-${AGENT_HOURLY_LIMIT} בקשות בשעה האחרונה. נסה שוב בעוד קצת.`,
         { retryAfterSeconds: 600 }
       ),
+    };
+  }
+
+  // 6b. GLOBAL daily ceiling — the budget brake. Checked after the per-user
+  // hourly one so an individual abuser is still named by the specific message.
+  const spentToday = await globalDayCount(supabase);
+  if (spentToday !== null && spentToday >= GLOBAL_DAILY_LIMIT) {
+    return {
+      ok: false,
+      response: tooMany('התכונות החכמות בהפסקה עד מחר — כל שאר האפליקציה פתוחה.', {
+        globalLimit: true,
+        retryAfterSeconds: 3600,
+      }),
     };
   }
 

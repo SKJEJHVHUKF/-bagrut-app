@@ -1,8 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
-import { createClient } from '@/lib/supabase/server';
+import { guardAgentRequest, logAgentUsage } from '@/lib/agents/guard';
 import { serveFromPool } from '@/lib/question-pool';
-import { buildBagrutContext } from '@/content/bagrut-context';
 import { generateJSON } from '@/lib/anthropic-json';
 
 // Vercel Hobby caps serverless functions at 60s. A full bagrut question
@@ -60,16 +58,6 @@ const MIN_TOPIC_LENGTH = 2;
 // every multi-word topic like "חשבון דיפרנציאלי".
 const TOPIC_BLACKLIST = /[<>{}[\]\\]|ignore\s+(all\s+)?(previous|prior|above)\s+instructions?|disregard\s+(all\s+)?(previous|prior|above)|system\s*:|assistant\s*:|user\s*:|<\s*\/?\s*(script|iframe|object|embed)/i;
 
-function isAllowedOrigin(request: Request): boolean {
-  const origin = request.headers.get('origin');
-  const host = request.headers.get('host');
-  if (!origin || !host) return false;
-  try {
-    return new URL(origin).host.toLowerCase() === host.toLowerCase();
-  } catch {
-    return false;
-  }
-}
 
 type Difficulty = 'easier' | 'normal' | 'harder';
 const DIFFICULTY_HINT: Record<Difficulty, string> = {
@@ -80,41 +68,16 @@ const DIFFICULTY_HINT: Record<Difficulty, string> = {
 
 export async function POST(request: Request) {
   try {
-    if (!isAllowedOrigin(request)) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    if (looksLikeBot(request)) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const fingerprint = getFingerprint(request);
-    const limit = checkRateLimit(fingerprint);
-    if (!limit.allowed) {
-      const msg =
-        limit.reason === 'minute'
-          ? 'יותר מדי בקשות. נסה שוב בעוד דקה.'
-          : limit.reason === 'hour'
-          ? 'הגעת למכסת השעה. נסה שוב בעוד שעה.'
-          : 'המערכת עמוסה כרגע. נסה שוב בעוד דקה.';
-      return Response.json(
-        { error: msg },
-        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
-      );
-    }
-
-    const contentType = request.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      return Response.json({ error: 'Invalid content type' }, { status: 415 });
-    }
-
-    // Auth: full-bagrut generation is heavier than quick-practice, login required.
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return Response.json({ error: 'יש להתחבר' }, { status: 401 });
-    }
+    // origin · bot · burst · content-type · auth, plus the durable per-user
+    // quotas and the GLOBAL daily budget brake. Full-bagrut generation is the
+    // heaviest of the two practice routes, so it gets the smaller free cap.
+    const guard = await guardAgentRequest(request, {
+      kind: 'practice',
+      freeDaily: 5,
+      proDaily: 30,
+    });
+    if (!guard.ok) return guard.response;
+    const { supabase, user } = guard;
 
     let body: { subject?: unknown; topic?: unknown; difficulty?: unknown };
     try {
@@ -259,6 +222,10 @@ ${DIFFICULTY_HINT[difficulty]}
       },
       'practice-bagrut'
     );
+
+    // Billed on return — logged before the shape check, or a malformed
+    // response would be a free retry against the quota.
+    await logAgentUsage(supabase, user.id, 'practice');
 
     if (
       typeof parsed.context !== 'string' ||

@@ -1,7 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
-import { createClient } from '@/lib/supabase/server';
-import { buildBagrutContext } from '@/content/bagrut-context';
+import { guardAgentRequest, logAgentUsage } from '@/lib/agents/guard';
 import { generateJSON } from '@/lib/anthropic-json';
 
 // Vercel Hobby caps serverless functions at 60s. A single deep problem
@@ -60,17 +58,6 @@ const MIN_TOPIC_LENGTH = 2;
 // every multi-word topic like "חשבון דיפרנציאלי".
 const TOPIC_BLACKLIST = /[<>{}[\]\\]|ignore\s+(all\s+)?(previous|prior|above)\s+instructions?|disregard\s+(all\s+)?(previous|prior|above)|system\s*:|assistant\s*:|user\s*:|<\s*\/?\s*(script|iframe|object|embed)/i;
 
-function isAllowedOrigin(request: Request): boolean {
-  const origin = request.headers.get('origin');
-  const host = request.headers.get('host');
-  if (!origin || !host) return false;
-  try {
-    return new URL(origin).host.toLowerCase() === host.toLowerCase();
-  } catch {
-    return false;
-  }
-}
-
 // Optional difficulty enum the client can request: 'easier' | 'normal' | 'harder'
 type Difficulty = 'easier' | 'normal' | 'harder';
 const DIFFICULTY_HINT: Record<Difficulty, string> = {
@@ -81,46 +68,18 @@ const DIFFICULTY_HINT: Record<Difficulty, string> = {
 
 export async function POST(request: Request) {
   try {
-    // ===== 1. ORIGIN =====
-    if (!isAllowedOrigin(request)) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // ===== 2. BOT =====
-    if (looksLikeBot(request)) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // ===== 3. RATE LIMIT =====
-    const fingerprint = getFingerprint(request);
-    const limit = checkRateLimit(fingerprint);
-    if (!limit.allowed) {
-      const msg =
-        limit.reason === 'minute'
-          ? 'יותר מדי בקשות. נסה שוב בעוד דקה.'
-          : limit.reason === 'hour'
-          ? 'הגעת למכסת השעה. נסה שוב בעוד שעה.'
-          : 'המערכת עמוסה כרגע. נסה שוב בעוד דקה.';
-      return Response.json(
-        { error: msg },
-        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
-      );
-    }
-
-    // ===== 4. CONTENT TYPE =====
-    const contentType = request.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      return Response.json({ error: 'Invalid content type' }, { status: 415 });
-    }
-
-    // ===== 5. AUTH — practice is a Pro-ish feature, require login =====
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return Response.json({ error: 'יש להתחבר' }, { status: 401 });
-    }
+    // ===== 1-5. origin · bot · burst · content-type · auth =====
+    // Plus the durable per-user hourly/daily quotas and the GLOBAL daily budget
+    // brake. The hand-rolled block this replaced stopped at the in-memory
+    // limiter, which is per-lambda-instance and resets on every cold start — so
+    // this billable Sonnet route had no cap that survived a deploy.
+    const guard = await guardAgentRequest(request, {
+      kind: 'practice',
+      freeDaily: 5,
+      proDaily: 30,
+    });
+    if (!guard.ok) return guard.response;
+    const { supabase, user } = guard;
 
     // ===== 6. BODY =====
     let body: { subject?: unknown; topic?: unknown; difficulty?: unknown };
@@ -246,6 +205,10 @@ ${DIFFICULTY_HINT[difficulty]}
       },
       'practice'
     );
+
+    // Billed the moment the call returns — log before validating the shape, or
+    // a malformed response would be a free retry.
+    await logAgentUsage(supabase, user.id, 'practice');
 
     // Sanity checks on the shape we promised the client
     if (!parsed.problem || !Array.isArray(parsed.hints) || !Array.isArray(parsed.solution?.steps)) {

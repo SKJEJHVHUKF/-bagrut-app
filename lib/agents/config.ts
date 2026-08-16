@@ -198,4 +198,4 @@ export const TEACH_MAX_TURNS = 5;
 
 /** `ai_generation_log.kind` values written by these routes. `kind` is plain
  *  text with no CHECK constraint, so adding a value needs no SQL migration. */
-export type AgentKind = 'tutor' | 'grade' | 'teach';
+export type AgentKind = 'tutor' | 'grade' | 'teach' | 'practice';
