@@ -10,6 +10,8 @@
 //    runtime from the CSS variable, after document.fonts.ready.
 // ============================================================
 
+import { SITE_HOST } from '@/lib/site';
+
 export type ShareCardInput = {
   /** e.g. "רצף למידה" */
   headline: string;
@@ -118,6 +120,13 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob> {
   ctx.fillText('MathUp', W / 2, H * 0.72 + 185);
   ctx.font = `700 34px ${family}`;
   ctx.fillText('מתרגלים חכם, מצליחים יותר', W / 2, H * 0.72 + 245);
+  // The address. A story card fires at the two moments a student most
+  // wants to show off, and until now it said nothing about where to find
+  // this. Pure Latin, so it is a single LTR run with no bidi ambiguity —
+  // unlike the name+slogan above, which is why those are two fillText calls.
+  ctx.fillStyle = '#64748B';
+  ctx.font = `600 30px ${family}`;
+  ctx.fillText(SITE_HOST, W / 2, H * 0.72 + 300);
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {

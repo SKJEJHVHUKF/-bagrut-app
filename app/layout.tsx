@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Heebo, Frank_Ruhl_Libre, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { SITE_URL } from "@/lib/site";
 import ServiceWorkerRegistration from "./sw-register";
 import AppChrome from "@/components/AppChrome";
 import AppHeader from "@/components/AppHeader";
@@ -45,8 +46,19 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  // Absolute base for every relative URL below. Without it `openGraph.images`
+  // stays relative, and WhatsApp, Telegram and Google all drop an OG image they
+  // cannot resolve — the share card renders as a bare link.
+  metadataBase: new URL(SITE_URL),
   title: "MathUp — מתרגלים חכם, מצליחים יותר",
-  description: "תרגול חכם של שאלות בגרות אמיתיות, נוצרות בזמן אמת ע״י בינה מלאכותית. הסבר מיידי לכל תשובה.",
+  // This used to say the questions are "נוצרות בזמן אמת ע״י בינה מלאכותית".
+  // That has not been true since the product became static-first: there are
+  // ~829 hand-authored, mathematically verified questions and AI is the
+  // fallback. It was the description on EVERY page and in every share, and it
+  // sold the one thing every competitor also claims while hiding the one thing
+  // that is rare and true.
+  description:
+    "מתמטיקה 5 יחידות, שאלוני 571 ו-572: מאות שאלות בגרות פתורות שלב-אחר-שלב, מסלול לימוד מלא וללא הרשמה.",
   applicationName: "MathUp",
   appleWebApp: {
     capable: true,
@@ -59,9 +71,11 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "MathUp — מתרגלים חכם, מצליחים יותר",
-    description: "תרגול חכם של שאלות בגרות אמיתיות עם AI",
+    description: "מתמטיקה 5 יחידות: מאות שאלות בגרות פתורות שלב-אחר-שלב, בלי הרשמה.",
     locale: "he_IL",
     type: "website",
+    siteName: "MathUp",
+    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "MathUp" }],
   },
 };
 
