@@ -188,7 +188,6 @@ export function rebuildSeen(events: LoggedEvent[]): string[] {
  *  Declared here, above its only reader, because `syncNow` depends on it. */
 let lastPushed: string | null = null;
 
-/** Pull → merge → push. Returns true if a real sync happened. */
 /**
  * Make the local stores belong to `uid`, wiping them first if they belong to
  * SOMEONE ELSE.
@@ -234,13 +233,38 @@ function claimForUser(uid: string): void {
   }
 }
 
+/**
+ * Why this returns a REASON and not just false.
+ *
+ * Every failure path here used to be a bare `return false` with no log, no
+ * toast and no state. If the `learning_state` table was never created in the
+ * Supabase dashboard — and CLAUDE.md's expected-tables list did not mention it,
+ * so there was nothing telling anyone to create it — then every student was
+ * silently single-device, and the only symptom was "my progress disappeared
+ * when I opened it on my phone". Degrading quietly is right; degrading
+ * INVISIBLY is what makes it unfixable.
+ */
+export type SyncStatus = 'ok' | 'anon' | 'no-table' | 'offline' | 'unavailable';
+
+/** Last known outcome, for the profile drawer to show one quiet line. */
+let lastStatus: SyncStatus = 'ok';
+export function syncStatus(): SyncStatus {
+  return lastStatus;
+}
+
+function finish(status: SyncStatus): boolean {
+  lastStatus = status;
+  return status === 'ok';
+}
+
 export async function syncNow(): Promise<boolean> {
-  if (!isBrowser()) return false;
+  if (!isBrowser()) return finish('unavailable');
   try {
     const supabase = createClient();
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
-    if (!uid) return false;
+    // Not signed in is not a failure — local-first is the whole design.
+    if (!uid) return finish('anon');
 
     // BEFORE any read of the local stores.
     claimForUser(uid);
@@ -255,7 +279,15 @@ export async function syncNow(): Promise<boolean> {
       .select('*')
       .eq('user_id', uid)
       .maybeSingle();
-    if (error) return false; // table missing / RLS / offline → degrade
+    if (error) {
+      // The single most likely cause is that supabase-learning-path.sql was
+      // never run. Name it, rather than leaving a silent no-op.
+      console.warn(
+        '[sync] cannot read learning_state — progress stays on this device only.',
+        error.message ?? error,
+      );
+      return finish('no-table');
+    }
 
     const localRoadmap = readJSON<RoadmapStore>(ROADMAP_KEY, {});
     const remoteRoadmap = (remote?.roadmap as RoadmapStore) ?? {};
@@ -287,7 +319,7 @@ export async function syncNow(): Promise<boolean> {
     const signature = JSON.stringify(body);
     if (signature === lastPushed) {
       window.dispatchEvent(new Event('bagrut-state-synced'));
-      return true;
+      return finish('ok');
     }
 
     const payload = { user_id: uid, ...body, updated_at: new Date().toISOString() };
@@ -297,17 +329,25 @@ export async function syncNow(): Promise<boolean> {
     if (upsertError) {
       // Same defence as the star select, on the write side: rather than let a
       // missing `results` column break roadmap sync, drop it and push the rest.
+      console.warn('[sync] full upsert failed, retrying without results', upsertError.message);
       const { results: _omit, ...legacy } = payload;
       void _omit;
-      await supabase.from('learning_state').upsert(legacy, { onConflict: 'user_id' });
+      const { error: legacyError } = await supabase
+        .from('learning_state')
+        .upsert(legacy, { onConflict: 'user_id' });
+      if (legacyError) {
+        console.warn('[sync] fallback upsert failed too', legacyError.message);
+        return finish('no-table');
+      }
     } else {
       lastPushed = signature;
     }
 
     window.dispatchEvent(new Event('bagrut-state-synced'));
-    return true;
-  } catch {
-    return false;
+    return finish('ok');
+  } catch (err) {
+    console.warn('[sync] failed', err);
+    return finish('offline');
   }
 }
 

@@ -112,7 +112,7 @@ Middleware (`lib/supabase/middleware.ts`): `PROTECTED_PREFIXES` = `/quiz /chat /
 
 Tables are created via SQL in the **dashboard** (not git migrations). Repo ships the SQL as reference: `supabase-conversations.sql`, and comment blocks in `lib/solution-cache.ts`. **All app code degrades gracefully if a table is missing** (try/catch → feature just no-ops). RLS enforced on everything.
 
-Existing/expected tables: `chat_messages` (+ `conversation_id`), `conversations`, `practice_sessions`, `question_pool`, `solution_cache`, `scan_log`. ⚠️ Itay must run the SQL for a new table before its feature works live.
+Existing/expected tables: `chat_messages` (+ `conversation_id`), `conversations`, `practice_sessions`, `question_pool`, `solution_cache`, `scan_log`, **`learning_state`** (cross-device sync — SQL in `supabase-learning-path.sql`; this list omitted it, so nothing ever told anyone to create it and every student may have been silently single-device), `ai_generation_log` (durable AI quotas + the global daily budget brake in `lib/agents/guard.ts`). ⚠️ Itay must run the SQL for a new table before its feature works live.
 
 Clients: `lib/supabase/client.ts` (browser), `lib/supabase/server.ts` (async — `cookies()` is async in Next.js 16).
 

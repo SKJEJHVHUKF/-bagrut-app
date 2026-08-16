@@ -39,7 +39,7 @@ import { STORAGE_FULL_EVENT } from '@/lib/storage';
 import { NAV_GROUPS, isActive } from '@/lib/nav';
 import { isProUser } from '@/lib/access';
 import { currentStreak } from '@/lib/results';
-import { initSync, syncNow } from '@/lib/sync/roadmap-sync';
+import { initSync, syncNow, syncStatus, type SyncStatus } from '@/lib/sync/roadmap-sync';
 import {
   getUnitLevel,
   setUnitLevel,
@@ -132,9 +132,18 @@ export default function AppChrome() {
   // progress + pull remote) whenever the signed-in user changes — this is the
   // moment an anonymous student who just signed up keeps everything they did.
   useEffect(() => initSync(), []);
+  const [sync, setSync] = useState<SyncStatus>('ok');
   useEffect(() => {
-    if (profile?.email) void syncNow();
+    if (!profile?.email) return;
+    void syncNow().then(() => setSync(syncStatus()));
   }, [profile?.email]);
+  // Re-read on every successful push too, so a table that starts failing
+  // mid-session surfaces instead of staying stuck on the first result.
+  useEffect(() => {
+    const onSynced = () => setSync(syncStatus());
+    window.addEventListener('bagrut-state-synced', onSynced);
+    return () => window.removeEventListener('bagrut-state-synced', onSynced);
+  }, []);
 
   // Streak + unit level + active paper are client-only (localStorage) —
   // read on drawer open.
@@ -301,6 +310,15 @@ export default function AppChrome() {
                     </button>
                   )}
                   <div className="text-xs text-slate-500 mt-0.5 truncate">{profile.email}</div>
+                  {/* One quiet line when sync is not working. It is the only
+                      place a student can learn that their progress is staying
+                      on this device — the alternative is finding out by opening
+                      the app on their phone and seeing nothing. */}
+                  {sync !== 'ok' && sync !== 'anon' && (
+                    <div className="text-[11px] text-amber-700 mt-1">
+                      ההתקדמות נשמרת במכשיר הזה בלבד כרגע
+                    </div>
+                  )}
                 </div>
 
                 {/* Plan + streak chips */}
