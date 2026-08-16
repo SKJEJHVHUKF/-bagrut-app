@@ -51,7 +51,7 @@ Decided 2026-07. **Learning is free; depth is Pro.** Guided lessons + drills are
 - **PRO (`isFeaturePro` / `canUseFeature`):** the **advanced course** (bagrut-mastery, the premium anchor), past-bagrut **archive**, **simulation** (when built), **unlimited chat + AI-tutor buttons**, **new AI photo-solve**, advanced **analytics**. Chat Pro cap `PRO_DAILY_CHAT` (200).
 - **`canAccessTopic` no longer paywalls topics** — the old "free = first topic only" was removed. `topicLockReason` is now purely pedagogical (`'open'`/`'locked-progress'`).
 - Pricing page `/pricing` (public): 3 plans, comparison table, anchor "חצי-שנתי = כמו שיעור פרטי אחד". All "שדרג" CTAs link there.
-- **⚠️ There is NO real billing.** `isProUser` = admin email (`ADMIN_EMAIL`) or `user_metadata.pro` (never set). To sell, a payment provider is needed — recommend **Lemon Squeezy / Paddle** (merchant-of-record: handles Israeli VAT/invoicing, no עוסק needed at first, ₪ pricing). That's the owner's business decision; the gating structure is ready to wire.
+- **⚠️ There is NO real billing.** `isProUser` = admin email (`NEXT_PUBLIC_ADMIN_EMAIL`) or `user_metadata.pro` (never set). To sell, a payment provider is needed — recommend **Lemon Squeezy / Paddle** (merchant-of-record: handles Israeli VAT/invoicing, no עוסק needed at first, ₪ pricing). That's the owner's business decision; the gating structure is ready to wire.
 
 ---
 
@@ -176,7 +176,12 @@ Automated checks validate that LaTeX *parses*, NOT that math is *right* — alwa
 ANTHROPIC_API_KEY=<console.anthropic.com>
 NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-ADMIN_EMAIL=meitalm1020@gmail.com   # comma-separated; grants Pro/admin
+NEXT_PUBLIC_ADMIN_EMAIL=meitalm1020@gmail.com   # comma-separated; grants Pro/admin.
+                                    # MUST be NEXT_PUBLIC_ — lib/access.ts runs on BOTH sides,
+                                    # and without it every client-side Pro gate reads false for
+                                    # everyone, the owner included. The address is already public
+                                    # in /accessibility, /privacy and /terms. `ADMIN_EMAIL` is
+                                    # still read as a fallback; drop it once Vercel has the new one.
 TUTOR_SONNET_TOPICS=                 # optional cost valve (comma-separated topic names)
 ```
 

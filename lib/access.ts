@@ -4,11 +4,23 @@
  * Free students get the FIRST topic in their plan only. Subsequent topics
  * are locked behind a Pro paywall.
  *
- * Admin override: the site owner always has full access. Admin emails come
- * from `ADMIN_EMAIL` (server-side env var, comma-separated for multiple).
- * Reading from env keeps the address out of the client JS bundle — `isAdmin`
- * therefore returns false on the client and admin status must be derived
- * server-side (e.g. in server components / route handlers).
+ * Admin override: the site owner always has full access. Admin emails come from
+ * `NEXT_PUBLIC_ADMIN_EMAIL` (comma-separated for multiple).
+ *
+ * ⚠️ It has to be `NEXT_PUBLIC_`, and the reason is worth keeping. This module
+ * is imported from BOTH sides. Next inlines only `NEXT_PUBLIC_*` into the
+ * client bundle, so while the variable was `ADMIN_EMAIL` the set was empty in
+ * every browser: `isProUser` returned false for EVERYONE — including the owner —
+ * in `app/scan`, `app/insights`, `app/errors`, `app/bagruyot/archive`,
+ * `CourseTracks` and `AppChrome`, while the server path let him straight in.
+ * The visible symptom was a Pro account that looked free on half the app, and
+ * no way to see what a paying customer actually gets — the one thing you most
+ * need working before wiring a payment provider.
+ *
+ * Publishing the address costs nothing: it is already hard-coded in
+ * app/accessibility, app/privacy and app/terms. And it grants nothing — this
+ * only decides which UI to draw. Every paid route re-checks server-side against
+ * the Supabase session, which an email string cannot forge.
  *
  * Pro status is currently a stub — there's no payment integration yet.
  * When that ships, we'll switch from email-equality to a Supabase column
@@ -18,8 +30,14 @@
 import type { StudyPlan } from './study-plan';
 import { isTopicUnlockedByProgress } from './study-plan';
 
+// Both names are read, and the old one is the FALLBACK rather than a straight
+// rename, because the deploy env is edited by hand in the Vercel dashboard. A
+// hard rename would take the owner's admin access away on the server too — the
+// half that works today — for however long it took him to add the new variable.
+// Once `NEXT_PUBLIC_ADMIN_EMAIL` is set in Vercel, `ADMIN_EMAIL` can be dropped
+// from both this line and the dashboard.
 const ADMIN_EMAILS = new Set(
-  (process.env.ADMIN_EMAIL ?? '')
+  (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? process.env.ADMIN_EMAIL ?? '')
     .toLowerCase()
     .split(',')
     .map((s) => s.trim())
