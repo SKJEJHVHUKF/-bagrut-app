@@ -20,6 +20,7 @@ import { lnFunctionGhostReplays } from './math5/ln-function';
 import { integralsGhostReplays } from './math5/integrals';
 import { expFunctionsGhostReplays } from './math5/exp-functions';
 import { functionsGhostReplays } from './math5/functions';
+import { euclideanGeometryGhostReplays } from './math5/euclidean-geometry';
 
 const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:מספרים מרוכבים': complexNumbersGhostReplays,
@@ -32,6 +33,7 @@ const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:חשבון אינטגרלי': integralsGhostReplays,
   'math5:פונקציה מעריכית': expFunctionsGhostReplays,
   'math5:פונקציות': functionsGhostReplays,
+  'math5:גיאומטריה אוקלידית': euclideanGeometryGhostReplays,
 };
 
 function key(subject: string, topic: string): string {
