@@ -156,6 +156,21 @@ function checkString(file: string, path: string, key: string, value: string) {
     const m = value.match(re);
     if (m) add(`author-monologue:${why}`, 'error', file, path, `"${m[0]}"  in: ${value.slice(0, 90)}`);
   }
+
+  // The American parabola, taught as if it were ours.
+  //
+  // CLAUDE.md rule 6: the 5-unit convention is y²=2px, focus (p/2,0), directrix
+  // x=-p/2. A past paper's worked solution stated y²=4px, focus (p,0) — and the
+  // final numbers still came out right (the question hands you the focus), so
+  // every existing gate passed it. The student learned 2px, was marked wrong for
+  // 4px in the quiz, then met 4px again in the Pro archive as "canonical".
+  //
+  // Scoped to past-bagruyot ON PURPOSE: lessons/ and concept-quiz/ name 4px five
+  // times as the foreign convention to avoid, and a blanket rule would flag
+  // exactly the passages that teach the distinction.
+  if (file.includes('past-bagruyot') && /4px/.test(value)) {
+    add('foreign-parabola-convention', 'error', file, path, value.slice(0, 120));
+  }
 }
 
 function walkValue(file: string, path: string, key: string, v: unknown) {
