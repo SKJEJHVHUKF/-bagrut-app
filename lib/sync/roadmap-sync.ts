@@ -20,6 +20,8 @@ const PLAN_KEY = 'bagrut-study-plan-v1';
 const RESULTS_KEY = 'bagrut-results-v1';
 /** Derived from the log, never synced — rebuilt after every merge. */
 const RESULTS_SEEN_KEY = 'bagrut-results-seen-v1';
+/** Whose work the local stores hold. See `claimForUser`. */
+const OWNER_KEY = 'bagrut-owner-v1';
 
 function isBrowser() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -187,6 +189,51 @@ export function rebuildSeen(events: LoggedEvent[]): string[] {
 let lastPushed: string | null = null;
 
 /** Pull → merge → push. Returns true if a real sync happened. */
+/**
+ * Make the local stores belong to `uid`, wiping them first if they belong to
+ * SOMEONE ELSE.
+ *
+ * Signing out is a server-only route (a form POST → `supabase.auth.signOut()` →
+ * redirect), so no client code runs and nothing clears localStorage. Without
+ * this check the next student to sign in on the same browser — a family laptop,
+ * a school computer — has the previous student's answers merged into their row
+ * and pushed to Supabase, where it is irreversible. It poisons the streak, the
+ * weakest-topic ranking and the predicted grade.
+ *
+ * Adoption stays intact where it is wanted: a student who worked anonymously
+ * and THEN signed up has no stored owner, so their work is claimed, not wiped.
+ */
+function claimForUser(uid: string): void {
+  let owner: string | null = null;
+  try {
+    owner = window.localStorage.getItem(OWNER_KEY);
+  } catch {
+    return; // storage disabled — nothing to protect
+  }
+  if (owner === uid) return;
+  if (owner) {
+    // A different signed-in student left this browser. Their work is already on
+    // the server under their own user_id; drop the local copy.
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const k = window.localStorage.key(i);
+        if (k && (k.startsWith('bagrut-') || k.startsWith('bagrut.')) && k !== OWNER_KEY) keys.push(k);
+      }
+      for (const k of keys) window.localStorage.removeItem(k);
+    } catch {
+      /* ignore */
+    }
+    // A push from the previous student may have been deduped against this.
+    lastPushed = null;
+  }
+  try {
+    window.localStorage.setItem(OWNER_KEY, uid);
+  } catch {
+    /* ignore */
+  }
+}
+
 export async function syncNow(): Promise<boolean> {
   if (!isBrowser()) return false;
   try {
@@ -194,6 +241,9 @@ export async function syncNow(): Promise<boolean> {
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
     if (!uid) return false;
+
+    // BEFORE any read of the local stores.
+    claimForUser(uid);
 
     // `select('*')` on purpose, not a column list: a table created from an
     // older copy of supabase-learning-path.sql might not have `results`, and
