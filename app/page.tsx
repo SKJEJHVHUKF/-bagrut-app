@@ -63,14 +63,18 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+// `key` matches the SUBJECTS keys in app/quiz/page.tsx, which reads
+// ?subject= off the URL. Without it all seven tiles pointed at a bare /quiz:
+// seven links to one destination, and a student who tapped פיזיקה landed on
+// a maths quiz. The tiles now deliver what their label promises.
 const SUBJECTS = [
-  { name: 'מתמטיקה 5 יח׳', emoji: '📐', topics: 12 },
-  { name: 'מתמטיקה 4 יח׳', emoji: '🔢', topics: 11 },
-  { name: 'פיזיקה', emoji: '⚛️', topics: 6 },
-  { name: 'אנגלית', emoji: '🇬🇧', topics: 4 },
-  { name: 'היסטוריה', emoji: '📜', topics: 5 },
-  { name: 'תנ"ך', emoji: '📕', topics: 5 },
-  { name: 'כימיה', emoji: '🧪', topics: 5 },
+  { key: 'math5', name: 'מתמטיקה 5 יח׳', emoji: '📐', topics: 12 },
+  { key: 'math4', name: 'מתמטיקה 4 יח׳', emoji: '🔢', topics: 11 },
+  { key: 'physics', name: 'פיזיקה', emoji: '⚛️', topics: 6 },
+  { key: 'english', name: 'אנגלית', emoji: '🇬🇧', topics: 4 },
+  { key: 'history', name: 'היסטוריה', emoji: '📜', topics: 5 },
+  { key: 'bible', name: 'תנ"ך', emoji: '📕', topics: 5 },
+  { key: 'chem', name: 'כימיה', emoji: '🧪', topics: 5 },
 ];
 
 const PAIN_POINTS = [
@@ -277,14 +281,21 @@ export default function Landing() {
             desc="5 שאלות רב-ברירה עם הסבר מלא לכל תשובה. מצב אידיאלי לבדיקה מהירה של ידע ולסקירה לפני מבחן."
             cta="התחל בחינה"
           />
+          {/* This slot used to be a second /roadmap card, forty lines under the
+              featured banner above it — same destination, and the same
+              "לומדים ← חימום ← ביסוס ← אתגר ← בגרות" sentence word for word.
+              The banner already carries the learning path; a row headed
+              "או בחר דרך ספציפית" should offer the OTHER ways, not repeat it.
+              /teach was the one mode the homepage never mentioned, and it is
+              the thing this app has that nothing else does. */}
           <ModeCard
-            href="/roadmap"
+            href="/teach"
             tone="amber"
             badge="חדש"
-            icon={<Target className="w-6 h-6" />}
-            title="מסלול הלמידה"
-            desc="לומדים ← חימום ← ביסוס ← אתגר ← בגרות. כל תת-נושא הוא סולם רמות מטפס, עם כוכבים ומעקב התקדמות מלא."
-            cta="למסלול שלי"
+            icon={<Brain className="w-6 h-6" />}
+            title="למד את הבוט"
+            desc="נועה לא הבינה את הנושא ואתה מסביר לה. היא שואלת בדיוק את מה שחסר — ומי שלא מצליח להסביר, עוד לא באמת יודע."
+            cta="נסה ללמד"
           />
           <ModeCard
             href="/chat"
@@ -463,7 +474,7 @@ export default function Landing() {
           {SUBJECTS.map((s, i) => (
             <motion.div key={i} variants={scaleIn} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
               <Link
-                href="/quiz"
+                href={`/quiz?subject=${s.key}`}
                 className="card-3d group relative glass-card rounded-2xl p-5 sm:p-6 text-center hover:border-violet-500/40 block h-full"
               >
                 <div className="icon-3d text-4xl sm:text-5xl mb-3 inline-block">{s.emoji}</div>
