@@ -5,11 +5,18 @@
  * (base64 JPEG, ~50 KB). We keep the storage in localStorage for the MVP
  * and migrate to Supabase Storage later if usage justifies the cost.
  *
- * Limits:
- *  - Max 50 scans per user (oldest pruned on insert).
- *  - Each thumbnail capped at 60 KB to stay within typical 5 MB
- *    localStorage budgets even with the full quota filled.
+ * Limits — ENFORCED, not just documented:
+ *  - Max 20 scans per user (oldest pruned on insert).
+ *  - Each thumbnail re-encoded until it is under 60 KB.
+ *
+ * Both numbers exist because this store shares a ~5 MB localStorage budget with
+ * everything that actually matters — the answer log, the roadmap, the review
+ * queue. It used to promise the 60 KB cap in this comment and never check it,
+ * and 50 uncapped phone photos are the entire budget on their own. When it
+ * overflowed, the writes that failed were the other stores', silently.
  */
+
+import { safeSetJSON } from '@/lib/storage';
 
 export type ScanStep = {
   title: string;
@@ -31,7 +38,17 @@ export type Scan = {
 };
 
 const STORAGE_KEY = 'bagrut.scans.v1';
-const MAX_SCANS = 50;
+const MAX_SCANS = 20;
+/** Hard ceiling per thumbnail, in bytes of decoded JPEG. */
+const MAX_THUMB_BYTES = 60_000;
+
+/** Decoded size of a `data:` URL's base64 payload (4 chars → 3 bytes). */
+function base64Bytes(dataUrl: string): number {
+  const comma = dataUrl.indexOf(',');
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  const padding = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
+  return Math.max(0, (b64.length * 3) / 4 - padding);
+}
 
 function readAll(): Scan[] {
   if (typeof window === 'undefined') return [];
@@ -47,19 +64,12 @@ function readAll(): Scan[] {
 }
 
 function writeAll(scans: Scan[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(scans));
-  } catch (err) {
-    // QuotaExceededError — prune more aggressively and retry once.
-    console.warn('scans: storage write failed, pruning to 10 most recent', err);
-    const pruned = scans.slice(0, 10);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(pruned));
-    } catch {
-      // Give up; the user will have a stale list this session.
-    }
-  }
+  if (safeSetJSON(STORAGE_KEY, scans)) return;
+  // Out of space. This store is the disposable one — thumbnails of photos the
+  // student already got an answer for — so it gives ground first, and giving it
+  // back here also frees room for the stores that matter.
+  console.warn('scans: storage write failed, pruning to 5 most recent');
+  safeSetJSON(STORAGE_KEY, scans.slice(0, 5));
 }
 
 /** All scans, newest first. */
@@ -152,7 +162,28 @@ export async function compressToThumbnail(file: File): Promise<{ base64: string;
         }
         ctx.drawImage(img, 0, 0, w, h);
         // toDataURL returns "data:image/jpeg;base64,XXX" — slice off the prefix.
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        //
+        // Encode DOWN until the result actually fits MAX_THUMB_BYTES. The header
+        // of this file has always promised "each thumbnail capped at 60 KB",
+        // but the code encoded once at quality 0.7 and stored whatever came
+        // out — a detailed phone photo of a worksheet lands well above that, and
+        // 50 of them is the whole 5 MB localStorage budget. Everything else the
+        // app stores (answers, roadmap, review queue) then fails to write.
+        let dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        for (const q of [0.5, 0.35]) {
+          if (base64Bytes(dataUrl) <= MAX_THUMB_BYTES) break;
+          dataUrl = canvas.toDataURL('image/jpeg', q);
+        }
+        if (base64Bytes(dataUrl) > MAX_THUMB_BYTES) {
+          // Still over at the lowest quality: the image is dense rather than
+          // large. Halve the pixels once — a thumbnail only has to be
+          // recognisable in a list, and an unbounded one costs the student
+          // their progress.
+          canvas.width = Math.max(1, Math.round(w / 2));
+          canvas.height = Math.max(1, Math.round(h / 2));
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+        }
         const commaIdx = dataUrl.indexOf(',');
         URL.revokeObjectURL(url);
         resolve({

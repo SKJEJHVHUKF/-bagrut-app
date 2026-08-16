@@ -4,6 +4,8 @@
 // and low-stakes ("which lessons did I open?"). If a user clears their browser
 // state they lose the badges, which is fine.
 
+import { safeSetJSON } from '@/lib/storage';
+
 const STORAGE_KEY = 'bagrut-progress-v1';
 
 type TopicProgress = {
@@ -38,11 +40,7 @@ function readAll(): ProgressMap {
 
 function writeAll(map: ProgressMap) {
   if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
-  } catch {
-    // quota exceeded or storage disabled — silently ignore
-  }
+  safeSetJSON(STORAGE_KEY, map);
 }
 
 export function getProgress(subject: string, topic: string): TopicProgress {

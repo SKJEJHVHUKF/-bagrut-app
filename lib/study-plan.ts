@@ -16,6 +16,7 @@
  */
 
 import type { BagrutPaper } from '../content/bagrut-curriculum';
+import { safeSetJSON } from '@/lib/storage';
 
 const STORAGE_KEY = 'bagrut-study-plan-v1';
 const UNLOCK_THRESHOLD = 80; // % completion required to unlock next topic
@@ -111,12 +112,8 @@ export function hasPlan(): boolean {
 
 export function savePlan(plan: StudyPlan): void {
   if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(plan));
-    window.dispatchEvent(new Event('bagrut-state-dirty'));
-  } catch {
-    // quota or disabled — silently ignore
-  }
+  if (!safeSetJSON(STORAGE_KEY, plan)) return;
+  window.dispatchEvent(new Event('bagrut-state-dirty'));
 }
 
 export function clearPlan(): void {

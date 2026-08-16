@@ -8,6 +8,8 @@
  * manual picker (free).
  */
 
+import { safeSetJSON } from '@/lib/storage';
+
 const STORAGE_KEY = 'bagrut-mistakes-v1';
 const MAX_MISTAKES = 300;
 
@@ -91,11 +93,7 @@ function readAll(): MistakeRecord[] {
 
 function writeAll(list: MistakeRecord[]) {
   if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-  } catch {
-    // quota / disabled — ignore
-  }
+  safeSetJSON(STORAGE_KEY, list);
 }
 
 function genId(): string {

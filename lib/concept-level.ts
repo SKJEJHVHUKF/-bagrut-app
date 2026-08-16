@@ -19,6 +19,7 @@ import type { ConceptLevel } from '@/content/concept-quiz/types';
 import { CONCEPT_LEVELS } from '@/content/concept-quiz/types';
 import { studentTier } from '@/lib/adaptive';
 import { topicStats } from '@/lib/results';
+import { safeSetJSON } from '@/lib/storage';
 
 const STORAGE_KEY = 'bagrut-concept-level-v1';
 
@@ -53,11 +54,7 @@ export function getConceptLevel(subject: string): ConceptLevel | null {
 
 export function setConceptLevel(subject: string, level: ConceptLevel): void {
   if (!isBrowser() || !isLevel(level)) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...readAll(), [subject]: level }));
-  } catch {
-    // quota or disabled — the picker still works for this session
-  }
+  safeSetJSON(STORAGE_KEY, { ...readAll(), [subject]: level });
 }
 
 /**

@@ -13,6 +13,7 @@
 // lib/review.ts is a pure localStorage store with no runtime imports of its
 // own — safe to pull in from here, which almost every page imports.
 import { seedFromMiss, gradeReview } from '@/lib/review';
+import { safeSetJSON } from '@/lib/storage';
 
 const STORAGE_KEY = 'bagrut-results-v1';
 // Companion set of already-counted `${source}:${questionId}` keys. The insights
@@ -113,15 +114,12 @@ function readAll(): ResultEvent[] {
 
 function writeAll(events: ResultEvent[]) {
   if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-    // Tell the sync layer (if mounted) there is something to push, exactly as
-    // roadmap-progress does. Without this an answered question would only ever
-    // reach the server on the next unrelated write.
-    window.dispatchEvent(new Event('bagrut-state-dirty'));
-  } catch {
-    // quota exceeded or storage disabled — silently ignore
-  }
+  if (!safeSetJSON(STORAGE_KEY, events)) return;
+  // Tell the sync layer (if mounted) there is something to push, exactly as
+  // roadmap-progress does. Without this an answered question would only ever
+  // reach the server on the next unrelated write. Only on a write that landed:
+  // a dirty flag raised over a dropped write pushes the old log up as current.
+  window.dispatchEvent(new Event('bagrut-state-dirty'));
 }
 
 function readSeen(): Set<string> {
@@ -137,14 +135,10 @@ function readSeen(): Set<string> {
 
 function writeSeen(seen: Set<string>) {
   if (!isBrowser()) return;
-  try {
-    // Keep only the most-recent keys if the set grows huge.
-    const arr = [...seen];
-    const trimmed = arr.length > MAX_SEEN ? arr.slice(arr.length - MAX_SEEN) : arr;
-    window.localStorage.setItem(SEEN_KEY, JSON.stringify(trimmed));
-  } catch {
-    // quota exceeded or storage disabled — silently ignore
-  }
+  // Keep only the most-recent keys if the set grows huge.
+  const arr = [...seen];
+  const trimmed = arr.length > MAX_SEEN ? arr.slice(arr.length - MAX_SEEN) : arr;
+  safeSetJSON(SEEN_KEY, trimmed);
 }
 
 /** Record a single answered question. Fire-and-forget.

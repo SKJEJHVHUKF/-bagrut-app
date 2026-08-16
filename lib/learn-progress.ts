@@ -4,6 +4,8 @@
 // and checkmarks. Device-local and low-stakes — same philosophy as
 // lib/progress.ts (clearing browser state just resets the badges).
 
+import { safeSetJSON } from '@/lib/storage';
+
 const STORAGE_KEY = 'bagrut-learn-progress-v1';
 
 type PathProgress = {
@@ -36,11 +38,7 @@ function readAll(): ProgressMap {
 
 function writeAll(map: ProgressMap) {
   if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
-  } catch {
-    // quota exceeded or storage disabled — silently ignore
-  }
+  safeSetJSON(STORAGE_KEY, map);
 }
 
 /** Set of section ids the student has completed for this topic. */

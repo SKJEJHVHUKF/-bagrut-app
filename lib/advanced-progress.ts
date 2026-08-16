@@ -6,6 +6,7 @@
 
 import { PATH_SECTIONS } from '@/content/learning-paths/types';
 import { getCompletedSections } from '@/lib/learn-progress';
+import { safeSetJSON } from '@/lib/storage';
 
 const STORAGE_KEY = 'bagrut-advanced-progress-v1';
 
@@ -45,11 +46,7 @@ function readAll(): ProgressMap {
 
 function writeAll(map: ProgressMap) {
   if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
-  } catch {
-    // quota exceeded or storage disabled — silently ignore
-  }
+  safeSetJSON(STORAGE_KEY, map);
 }
 
 function patch(subject: string, topic: string, p: Partial<AdvancedTopicProgress>) {

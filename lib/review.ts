@@ -15,6 +15,7 @@
 // imported by almost every page — a `@/content/lessons` import here would ship
 // the whole lesson corpus with all of them. The two helpers that DO need the
 // corpus live in lib/review-resolve.ts.
+import { safeSetJSON } from '@/lib/storage';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
 
 const STORAGE_KEY = 'bagrut-review-v1';
@@ -53,17 +54,13 @@ function readAll(): ReviewItem[] {
 
 function writeAll(items: ReviewItem[]) {
   if (!isBrowser()) return;
-  try {
-    // Evict when over capacity: keep the most useful — lowest box (least
-    // learned) and soonest due — drop the rest.
-    let out = items;
-    if (out.length > MAX_ITEMS) {
-      out = [...out].sort((a, b) => a.box - b.box || a.dueAt - b.dueAt).slice(0, MAX_ITEMS);
-    }
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(out));
-  } catch {
-    /* quota / disabled — ignore */
+  // Evict when over capacity: keep the most useful — lowest box (least
+  // learned) and soonest due — drop the rest.
+  let out = items;
+  if (out.length > MAX_ITEMS) {
+    out = [...out].sort((a, b) => a.box - b.box || a.dueAt - b.dueAt).slice(0, MAX_ITEMS);
   }
+  safeSetJSON(STORAGE_KEY, out);
 }
 
 function dueAtForBox(box: number, now: number): number {

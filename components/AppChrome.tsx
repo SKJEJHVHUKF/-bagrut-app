@@ -33,7 +33,9 @@ import {
   Sigma,
   GraduationCap,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
+import { STORAGE_FULL_EVENT } from '@/lib/storage';
 import { NAV_GROUPS, isActive } from '@/lib/nav';
 import { isProUser } from '@/lib/access';
 import { currentStreak } from '@/lib/results';
@@ -176,6 +178,21 @@ export default function AppChrome() {
     const openDrawer = () => setOpen(true);
     window.addEventListener('open-profile-drawer', openDrawer);
     return () => window.removeEventListener('open-profile-drawer', openDrawer);
+  }, []);
+
+  // The browser is out of storage — lib/storage fired this on the first write
+  // it had to drop. Until now that failure was completely silent: the score on
+  // screen still updated and the answer simply vanished, so the app looked like
+  // it had started forgetting the student. Mounted here because this component
+  // is already global and already client-side.
+  useEffect(() => {
+    const onFull = () =>
+      toast.error('אין מקום פנוי בדפדפן — ההתקדמות האחרונה לא נשמרה', {
+        description: 'מחיקת סריקות ישנות מהספרייה תפנה מקום. אם אתה מחובר, מה שכבר הסתנכרן שמור.',
+        duration: 12000,
+      });
+    window.addEventListener(STORAGE_FULL_EVENT, onFull);
+    return () => window.removeEventListener(STORAGE_FULL_EVENT, onFull);
   }, []);
 
   const saveName = useCallback(async () => {

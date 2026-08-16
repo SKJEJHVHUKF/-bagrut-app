@@ -27,6 +27,7 @@ import { getSubTopics } from '@/content/lessons';
 import { CORE_LEVELS, type RoadmapLevel, type RoadmapLevelKind } from '@/lib/roadmap-levels';
 import { didPass, computeStars, requiredCorrect } from '@/lib/roadmap-mastery';
 import type { StepStatus } from '@/types/roadmap';
+import { safeSetJSON } from '@/lib/storage';
 
 const STORAGE_KEY = 'bagrut-roadmap-v1';
 const SUBJECT = 'math5';
@@ -77,13 +78,11 @@ function readAll(): RoadmapStore {
 }
 function writeAll(store: RoadmapStore) {
   if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-    // Nudge the sync layer (if mounted) to push this change to the server.
-    window.dispatchEvent(new Event('bagrut-state-dirty'));
-  } catch {
-    // quota / disabled — ignore
-  }
+  if (!safeSetJSON(STORAGE_KEY, store)) return;
+  // Nudge the sync layer (if mounted) to push this change to the server. Only
+  // after a write that landed — announcing a change that was dropped would push
+  // the OLD state up and call it current.
+  window.dispatchEvent(new Event('bagrut-state-dirty'));
 }
 
 // ============================================================

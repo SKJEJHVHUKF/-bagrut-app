@@ -18,6 +18,7 @@
  */
 
 import type { FixPath, FixProgress, HealedRecord } from './types';
+import { safeSetJSON } from '@/lib/storage';
 
 const STORAGE_KEY = 'bagrut-fix-v1';
 const MAX_HISTORY = 50;
@@ -58,12 +59,8 @@ function readStore(): FixStore {
 
 function writeStore(store: FixStore) {
   if (!isBrowser()) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-    window.dispatchEvent(new Event('bagrut-state-dirty'));
-  } catch {
-    /* quota / disabled — the feature degrades to "no resume", not to broken */
-  }
+  if (!safeSetJSON(STORAGE_KEY, store)) return;
+  window.dispatchEvent(new Event('bagrut-state-dirty'));
 }
 
 export type ActiveFix = { path: FixPath; progress: FixProgress };
