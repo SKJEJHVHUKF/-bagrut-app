@@ -329,43 +329,53 @@ if (withReplay) {
   assert(r?.href.includes('level=ghost') === true, 'replay resolves on an authored sub-topic');
 }
 
-// The negative case has to be searched for ACROSS topics: every sub-topic of
-// the pilot topic has an authored replay, so scoping this to TOPIC made the
-// assertion skip itself silently — a guard that never runs is a guard that
-// isn't there. Today most topics have no replays at all, so this finds one
-// immediately; the day that stops being true, the fixture fails loudly.
-let uncovered: { topic: string; title: string } | null = null;
+// This used to hunt for one sub-topic with no authored replay and assert the
+// suggestion was dropped for it. The comment here predicted its own end — "the
+// day that stops being true, the fixture fails loudly" — and that day arrived
+// when the last topic got its walkthrough: with 100% coverage there is no
+// uncovered sub-topic left to point at, so a green test became a red one while
+// the code under test never changed.
+//
+// Asserting the INVARIANT instead of hunting for an example survives full
+// coverage: a replay suggestion resolves for exactly the sub-topics that have a
+// walkthrough. At 100% it proves every one of them resolves; the moment a new
+// topic ships without replays it starts exercising the rejection branch again,
+// with no edit here.
+let replayChecked = 0;
+let replayMismatch: string | null = null;
+let practiceMissing: string | null = null;
 for (const key of allLessonKeys()) {
   if (key.subject !== SUBJECT) continue;
-  const st = getSubTopics(key.subject, key.topic).find(
-    (s) => !hasGhostReplay(key.subject, key.topic, s.id),
-  );
-  if (st) {
-    uncovered = { topic: key.topic, title: st.title };
-    break;
+  for (const st of getSubTopics(key.subject, key.topic)) {
+    const covered = hasGhostReplay(key.subject, key.topic, st.id);
+    const replay = resolveSuggestion(
+      { kind: 'replay', subTopicTitle: st.title, label: 'נחשוב יחד', reason: 'סיבה' },
+      SUBJECT,
+      key.topic,
+    );
+    if ((replay !== null) !== covered && !replayMismatch) {
+      replayMismatch = `${key.topic} / ${st.title} — hasGhostReplay=${covered}, resolved=${replay !== null}`;
+    }
+    // …and ordinary practice always resolves, proving a dropped replay is about
+    // the missing walkthrough and not about the sub-topic itself.
+    const practice = resolveSuggestion(
+      { kind: 'practice', subTopicTitle: st.title, label: 'נתרגל', reason: 'סיבה' },
+      SUBJECT,
+      key.topic,
+    );
+    if (practice === null && !practiceMissing) practiceMissing = `${key.topic} / ${st.title}`;
+    replayChecked++;
   }
 }
-assert(uncovered !== null, 'fixture: found a sub-topic with no authored replay to test against');
-if (uncovered) {
-  assert(
-    resolveSuggestion(
-      { kind: 'replay', subTopicTitle: uncovered.title, label: 'נחשוב יחד', reason: 'סיבה' },
-      SUBJECT,
-      uncovered.topic,
-    ) === null,
-    'replay is dropped on a sub-topic with no authored walkthrough',
-  );
-  // …while ordinary practice on that same sub-topic still works, proving the
-  // rejection is about the missing replay and not about the sub-topic itself.
-  assert(
-    resolveSuggestion(
-      { kind: 'practice', subTopicTitle: uncovered.title, label: 'נתרגל', reason: 'סיבה' },
-      SUBJECT,
-      uncovered.topic,
-    ) !== null,
-    'practice on that same sub-topic still resolves',
-  );
-}
+assert(replayChecked > 20, `fixture: walked the real sub-topic inventory (${replayChecked})`);
+assert(
+  replayMismatch === null,
+  `a replay suggestion resolves for exactly the sub-topics that have one${replayMismatch ? ` — ${replayMismatch}` : ''}`,
+);
+assert(
+  practiceMissing === null,
+  `practice resolves on every sub-topic${practiceMissing ? ` — ${practiceMissing}` : ''}`,
+);
 
 // No model-authored URL may ever reach the client.
 const injected = resolveSuggestion(
@@ -603,8 +613,12 @@ if (mcq) {
     !!preAnswer && !preAnswer.text.includes('בחרת'),
     'and it does NOT claim the student chose anything',
   );
+  // Matched as a FAMILY of phrasings, not one string. The property under test
+  // is "it states plainly that no answer was recorded and it will not guess" —
+  // that survives a copy edit; `text.includes('לא אנחש')` does not, and broke
+  // the moment the tutor voice was rewritten while the behaviour stayed right.
   assert(
-    !!preAnswer && (preAnswer.text.includes('לא אנחש') || preAnswer.text.includes('לא נרשמה')),
+    !!preAnswer && /לא אנחש|לא רוצה לנחש|לא נרשמה|עוד לא סימנת|אין לי מה להשוות/.test(preAnswer.text),
     'it says plainly that there is nothing to compare against',
   );
 
