@@ -10,6 +10,10 @@
 // costs nothing. If we later want cross-device sync, the same events can be
 // mirrored to a Supabase table without changing the callers.
 
+// lib/review.ts is a pure localStorage store with no runtime imports of its
+// own — safe to pull in from here, which almost every page imports.
+import { seedFromMiss, gradeReview } from '@/lib/review';
+
 const STORAGE_KEY = 'bagrut-results-v1';
 // Companion set of already-counted `${source}:${questionId}` keys. The insights
 // page and the grade prediction must count only the FIRST answer to each
@@ -175,6 +179,21 @@ export function recordResult(event: Omit<ResultEvent, 'ts'>) {
   events.push({ ...event, ts: Date.now(), ...(repeat ? { repeat: true } : {}) });
   // Cap the log so localStorage never bloats — oldest events fall off.
   writeAll(events.length > MAX_EVENTS ? events.slice(events.length - MAX_EVENTS) : events);
+
+  // Spaced repetition, wired HERE and not at the call sites.
+  //
+  // lib/review.ts documents "every wrong first attempt anywhere drops the
+  // question into box 1". It was true of exactly one of the five surfaces that
+  // record results: /quiz, the bagrut rung, ThinkingPractice and SolutionAudit
+  // all recorded the miss and dropped it, so a student who failed eight quiz
+  // questions and pressed "התחל חזרה על הטעויות שלי" was told there was nothing
+  // to review. Every future surface gets the loop for free by calling
+  // recordResult, which it must do anyway.
+  if (event.source === 'review') {
+    if (event.questionId) gradeReview(event.questionId, event.correct);
+  } else if (!event.correct) {
+    seedFromMiss(event);
+  }
 }
 
 /** First-attempt events only — the measurement subset (excludes replays). */

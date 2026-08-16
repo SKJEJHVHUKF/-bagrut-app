@@ -35,7 +35,6 @@ import { checkAnswer, type CheckResult } from '@/lib/answer-check';
 import { recordResult, type ResultSource } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
 import type { ErrorCategory } from '@/lib/mistakes';
-import { seedFromMiss, gradeReview } from '@/lib/review';
 import { getWeaknesses } from '@/lib/remediation';
 import { getSubTopic } from '@/content/lessons';
 import { buildHelpLadder, type HelpTier } from '@/lib/help-ladder';
@@ -189,10 +188,9 @@ export function QuestionRunnerCard({
       // run, so it can't retro-poison the measured attempt.
       ...(helpTaken ? { hintUsed: true } : {}),
     });
-    // Spaced repetition: a review answer re-schedules the card; a fresh miss in
-    // a practice rung drops the question into the review queue (box 1).
-    if (source === 'review') gradeReview(q.id, correct);
-    else if (!correct) seedFromMiss({ subject, topic, subTopicId: subId, questionId: q.id });
+    // Spaced repetition is handled inside recordResult (lib/results.ts) for
+    // every surface, so it can't be forgotten by a new caller.
+    //
     // A miss inside a repair path is NOT written to the error notebook.
     //
     // The notebook is a profile ("your number-one mistake is X"), and a fix

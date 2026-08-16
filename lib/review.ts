@@ -11,14 +11,13 @@
  * localStorage only (bagrut-review-v1). Pure, client-side.
  */
 
-import { getSubTopic } from '@/content/lessons';
-import { findConceptQuestion } from '@/lib/concept-adapt';
-import { getMistakes } from '@/lib/mistakes';
-import type { PracticeQuestion } from '@/content/lessons/types';
+// NO runtime imports. lib/results.ts calls seedFromMiss on every miss, and it is
+// imported by almost every page — a `@/content/lessons` import here would ship
+// the whole lesson corpus with all of them. The two helpers that DO need the
+// corpus live in lib/review-resolve.ts.
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
 
 const STORAGE_KEY = 'bagrut-review-v1';
-const BACKFILL_FLAG = 'bagrut-review-backfilled-v1';
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Days until a card in box N is due again (box 1 → tomorrow, up to box 5 → 35d). */
@@ -73,18 +72,23 @@ function dueAtForBox(box: number, now: number): number {
 }
 
 /** A wrong first attempt in a drill/quiz → schedule the question for review
- *  (box 1, due tomorrow). No-op if it's already scheduled. */
+ *  (box 1, due tomorrow). No-op if it's already scheduled.
+ *
+ *  A missing `subTopicId` is NOT a reason to drop the miss: /quiz and the
+ *  concept bank record topic-level questions, and requiring a sub-topic here
+ *  silently discarded every one of them. `resolveQuestion` falls back to the
+ *  concept bank when the sub-topic is empty. */
 export function seedFromMiss(
   e: { subject: string; topic: string; subTopicId?: string; questionId?: string },
   now: number = Date.now(),
 ): void {
-  if (!e.questionId || !e.subTopicId) return;
+  if (!e.questionId) return;
   const items = readAll();
   if (items.some((it) => it.questionId === e.questionId)) return; // already tracked
   items.push({
     subject: e.subject,
     topic: e.topic,
-    subTopicId: e.subTopicId,
+    subTopicId: e.subTopicId ?? '',
     questionId: e.questionId,
     box: 1,
     dueAt: dueAtForBox(1, now),
@@ -150,13 +154,19 @@ export function dueCount(now: number = Date.now()): number {
   return readAll().filter((it) => it.dueAt <= now).length;
 }
 
-/** How many due items each sub-topic has (for the map badges). */
+/** How many due items each sub-topic has (for the map badges). Items with no
+ *  sub-topic (a /quiz miss) are counted by `dueCount` but badge no node. */
 export function dueCountBySubTopic(now: number = Date.now()): Record<string, number> {
   const out: Record<string, number> = {};
   for (const it of readAll()) {
-    if (it.dueAt <= now) out[it.subTopicId] = (out[it.subTopicId] ?? 0) + 1;
+    if (it.dueAt <= now && it.subTopicId) out[it.subTopicId] = (out[it.subTopicId] ?? 0) + 1;
   }
   return out;
+}
+
+/** Every stored item. Exposed for lib/review-resolve's prune pass. */
+export function readAllItems(): ReviewItem[] {
+  return readAll();
 }
 
 export function nextDueAt(): number | null {
@@ -169,41 +179,19 @@ export function totalReviewItems(): number {
   return readAll().length;
 }
 
-/** Resolve a stored pointer back to the authored question (sub-topic practice
- *  bank, then its lesson drills, then the topic's concept-quiz bank). Returns
- *  null if the content was renamed.
- *
- *  The concept-bank fallback exists because a fix path (lib/remediation) may
- *  serve a topic-level concept question under a sub-topic's id when that
- *  sub-topic's own bank is thin. Without it a miss on such a question would be
- *  scheduled here and then never resolve — an item permanently due, silently
- *  occupying a slot in a capped queue. */
-export function resolveQuestion(item: ReviewItem): PracticeQuestion | null {
-  const st = getSubTopic(item.subject, item.topic, item.subTopicId);
-  if (st) {
-    const inBank = (st.questions ?? []).find((q) => q.id === item.questionId);
-    if (inBank) return inBank;
-    for (const step of st.lesson ?? []) {
-      if (step.drill?.id === item.questionId) return step.drill;
-    }
-  }
-  return findConceptQuestion(item.subject, item.topic, item.questionId);
+/** Drop items by question id. Used by lib/review-resolve `pruneUnresolvable` to
+ *  evict pointers that no longer resolve to any authored question — a bagrut
+ *  PART id (`cx-bag-001-א`) is not in any bank, and content gets renamed. An
+ *  unresolvable item is invisible on the review screen (it is filtered out) but
+ *  still counts toward the due badge and still occupies a slot in a capped
+ *  queue, so it has to be removed, not skipped. */
+export function dropItems(questionIds: string[]): void {
+  if (questionIds.length === 0) return;
+  const drop = new Set(questionIds);
+  const items = readAll();
+  const kept = items.filter((it) => !drop.has(it.questionId));
+  if (kept.length !== items.length) writeAll(kept);
 }
 
-/** One-time backfill: seed the review queue from the existing mistake notebook
- *  so a returning student's queue isn't empty on the day this ships. */
-export function backfillFromMistakes(now: number = Date.now()): void {
-  if (!isBrowser()) return;
-  if (window.localStorage.getItem(BACKFILL_FLAG)) return;
-  try {
-    for (const m of getMistakes('math5')) {
-      seedFromMiss(
-        { subject: m.subject, topic: m.topic, subTopicId: m.subTopicId, questionId: m.questionId },
-        now,
-      );
-    }
-    window.localStorage.setItem(BACKFILL_FLAG, '1');
-  } catch {
-    /* ignore */
-  }
-}
+// `resolveQuestion` and `backfillFromMistakes` moved to lib/review-resolve.ts —
+// they need the content corpus, and this module must not (see the header).

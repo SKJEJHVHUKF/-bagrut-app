@@ -12,7 +12,8 @@ import { motion } from 'framer-motion';
 import { RotateCcw, ArrowLeft, PartyPopper } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { QuestionRunnerCard } from '@/components/roadmap/QuestionRunnerCard';
-import { dueItems, resolveQuestion, backfillFromMistakes, type ReviewItem } from '@/lib/review';
+import { dueItems, type ReviewItem } from '@/lib/review';
+import { resolveQuestion, backfillFromMistakes, pruneUnresolvable } from '@/lib/review-resolve';
 import { celebrateCompletion } from '@/lib/confetti';
 import type { PracticeQuestion } from '@/content/lessons/types';
 
@@ -27,6 +28,7 @@ export default function ReviewPage() {
 
   useEffect(() => {
     backfillFromMistakes();
+    pruneUnresolvable();
     const resolved = dueItems(Date.now(), 15)
       .map((item) => ({ item, q: resolveQuestion(item) }))
       .filter((c): c is Card => c.q !== null);
