@@ -93,11 +93,9 @@ const SUBJECTS = {
       { name: 'סטטיסטיקה', emoji: '📉', sub: 'שכיחות, ממוצע, סטיית תקן' },
     ],
   },
-  physics: { name: 'פיזיקה', emoji: '⚛️', tabCls: 'tab-physics', gridCls: 's-physics', badge: { color: '#0284C7', bg: 'rgba(2,132,199,0.08)', border: 'rgba(2,132,199,0.25)' }, topics: [{ name: 'מכניקה', emoji: '🔧', sub: 'כוחות, תנועה' }, { name: 'חשמל', emoji: '⚡', sub: 'מעגלים, שדות' }, { name: 'גלים', emoji: '🌊', sub: 'גלים, עדשות' }, { name: 'תרמודינמיקה', emoji: '🌡️', sub: 'חוקי החום' }, { name: 'קוונטים', emoji: '🔬', sub: 'פוטון, אפקט פוטואלקטרי' }, { name: 'כבידה', emoji: '🪐', sub: 'כוח כבידה, מסלולים' }] },
-  english: { name: 'אנגלית', emoji: '🇬🇧', tabCls: 'tab-english', gridCls: 's-english', badge: { color: '#C2410C', bg: 'rgba(194,65,12,0.08)', border: 'rgba(194,65,12,0.25)' }, topics: [{ name: 'Reading', emoji: '📖', sub: 'הבנת הנקרא' }, { name: 'Grammar', emoji: '📝', sub: 'דקדוק ותחביר' }, { name: 'Vocabulary', emoji: '💬', sub: 'אוצר מילים' }, { name: 'Writing', emoji: '✍️', sub: 'כתיבה' }] },
-  history: { name: 'היסטוריה', emoji: '📜', tabCls: 'tab-history', gridCls: 's-history', badge: { color: '#B45309', bg: 'rgba(180,83,9,0.08)', border: 'rgba(180,83,9,0.25)' }, topics: [{ name: 'השואה', emoji: '✡️', sub: 'מדיניות נאצית' }, { name: 'מלחמת עולם א׳', emoji: '🗺️', sub: 'סיבות, מהלך' }, { name: 'מלחמת עולם ב׳', emoji: '⚔️', sub: 'חזיתות ותוצאות' }, { name: 'הקמת המדינה', emoji: '🇮🇱', sub: 'ציונות, הכרזה' }, { name: 'המהפכה הצרפתית', emoji: '🗼', sub: 'סיבות ומורשת' }] },
-  bible: { name: 'תנ"ך', emoji: '📕', tabCls: 'tab-bible', gridCls: 's-bible', badge: { color: '#047857', bg: 'rgba(4,120,87,0.08)', border: 'rgba(4,120,87,0.25)' }, topics: [{ name: 'בראשית', emoji: '🌿', sub: 'בריאה, אבות' }, { name: 'שמות', emoji: '🔥', sub: 'יציאת מצרים' }, { name: 'שמואל', emoji: '👑', sub: 'שאול ודוד' }, { name: 'מלכים', emoji: '🏛️', sub: 'שלמה, פיצול' }, { name: 'נביאים', emoji: '📣', sub: 'ישעיהו, ירמיהו' }] },
-  chem: { name: 'כימיה', emoji: '🧪', tabCls: 'tab-chem', gridCls: 's-chem', badge: { color: '#BE185D', bg: 'rgba(190,24,93,0.08)', border: 'rgba(190,24,93,0.25)' }, topics: [{ name: 'מבנה האטום', emoji: '⚛️', sub: 'מודלים, קשרים' }, { name: 'כימיה אורגנית', emoji: '🧬', sub: 'פחמימנים' }, { name: 'שיווי משקל', emoji: '⚖️', sub: 'לה-שטליה' }, { name: 'חומצות ובסיסים', emoji: '🔬', sub: 'pH, טיטרציה' }, { name: 'אלקטרוכימיה', emoji: '🔋', sub: 'תאים, אלקטרוליזה' }] }
+  // פיזיקה, אנגלית, היסטוריה, תנ"ך וכימיה הוסרו: הם היו רשימות נושאים בלבד,
+  // בלי מאגר שאלות מאומת ובלי תוכן — כלומר שבעה מקצועות שהובטחו ורק שניים
+  // נמסרו. המוצר הוא מתמטיקה 4 ו-5 יחידות, וזה מה שהוא אומר עכשיו.
 };
 
 // Sentinel "topic" for the mixed quiz — questions drawn from EVERY topic of

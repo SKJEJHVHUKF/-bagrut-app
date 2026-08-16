@@ -70,11 +70,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 const SUBJECTS = [
   { key: 'math5', name: 'מתמטיקה 5 יח׳', emoji: '📐', topics: 12 },
   { key: 'math4', name: 'מתמטיקה 4 יח׳', emoji: '🔢', topics: 11 },
-  { key: 'physics', name: 'פיזיקה', emoji: '⚛️', topics: 6 },
-  { key: 'english', name: 'אנגלית', emoji: '🇬🇧', topics: 4 },
-  { key: 'history', name: 'היסטוריה', emoji: '📜', topics: 5 },
-  { key: 'bible', name: 'תנ"ך', emoji: '📕', topics: 5 },
-  { key: 'chem', name: 'כימיה', emoji: '🧪', topics: 5 },
 ];
 
 const PAIN_POINTS = [
@@ -85,7 +80,7 @@ const PAIN_POINTS = [
 ];
 
 const STEPS = [
-  { num: '01', icon: BookOpen, title: 'בחר מקצוע ונושא', desc: '7 מקצועות בגרות, עשרות נושאים. בחר את מה שצריך לתרגל עכשיו.' },
+  { num: '01', icon: BookOpen, title: 'בחר נושא', desc: 'מתמטיקה 4 ו-5 יחידות, עשרות נושאים. בחר את מה שצריך לתרגל עכשיו.' },
   { num: '02', icon: Brain, title: 'ה-AI יוצר שאלות במיוחד בשבילך', desc: 'מנוע Claude של Anthropic מייצר שאלות ברמת בגרות אמיתית.' },
   { num: '03', icon: Trophy, title: 'תרגל, קבל הסברים ושפר את הציון', desc: 'תשובה מיידית, הסבר מפורט, וסטטיסטיקות התקדמות.' },
 ];
@@ -217,7 +212,7 @@ export default function Landing() {
           variants={fadeUp}
           className="flex items-center justify-center gap-3 sm:gap-5 mt-12 sm:mt-14 text-sm text-slate-500"
         >
-          <span><strong className="text-slate-700 font-bold">7</strong> מקצועות</span>
+          <span><strong className="text-slate-700 font-bold">4-5</strong> יחידות</span>
           <span className="w-1 h-1 rounded-full bg-slate-600" />
           <span><strong className="text-slate-700 font-bold">∞</strong> שאלות</span>
           <span className="w-1 h-1 rounded-full bg-slate-600" />
@@ -461,9 +456,10 @@ export default function Landing() {
       >
         <motion.div variants={fadeUp} className="text-center mb-12 sm:mb-16">
           <Eyebrow>מקצועות</Eyebrow>
-          <SectionTitle>7 מקצועות בגרות, מקום אחד</SectionTitle>
+          <SectionTitle>מתמטיקה, לעומק</SectionTitle>
           <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto">
-            מכל המקצועות העיקריים, ברמת 5 יחידות. בקרוב יתווספו עוד.
+            4 ו-5 יחידות, לפי השאלון שלך. מקצוע אחד שנעשה כמו שצריך — מאגר בגרויות
+            מתועתק, פתרונות מלאים ומורה שמלווה, במקום שבעה מקצועות עם רשימת נושאים.
           </p>
         </motion.div>
 
@@ -518,7 +514,7 @@ export default function Landing() {
             </div>
             <ul className="space-y-3 mb-8">
               {[
-                'כל 7 המקצועות',
+                'מתמטיקה 4 ו-5 יחידות',
                 'שאלות AI אינסופיות',
                 'הסברים מפורטים בעברית',
                 'תוצאות וסטטיסטיקות',

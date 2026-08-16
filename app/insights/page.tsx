@@ -56,6 +56,8 @@ import ShareCardButton from '@/components/ShareCardButton';
 const SUBJECT_NAMES: Record<string, string> = {
   math5: 'מתמטיקה 5 יח׳',
   math4: 'מתמטיקה 4 יח׳',
+  // חמשת המקצועות האחרים הוסרו מהמוצר. הרשומות נשארות כאן בלבד כדי שתלמיד
+  // עם תוצאות ישנות יראה שם מקצוע ולא מפתח גולמי — הן לא יוצרות מסלול חדש.
   physics: 'פיזיקה',
   english: 'אנגלית',
   history: 'היסטוריה',
