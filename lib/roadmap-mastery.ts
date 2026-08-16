@@ -42,10 +42,22 @@ export const PASS_RATIO: Record<RoadmapLevelKind, number> = {
  */
 export const GATEWAY_LEVELS: RoadmapLevelKind[] = ['learn', 'ghost'];
 
-/** Minimum number of correct answers needed to clear a rung of `total`. */
+/**
+ * Minimum number of correct answers needed to clear a rung of `total`.
+ *
+ * Never a perfect score on a rung of 2 or more. `Math.ceil(2 * 0.6)` is 2, so
+ * on every two-question rung a single slip failed the rung — including 🌱 חימום,
+ * whose whole job is to build confidence, and easy/mid are CORE, so it also
+ * blocked the next sub-topic. That was 68 of the 223 scored rungs in the
+ * current content: a pass bar the author never chose, produced by rounding.
+ *
+ * A one-question rung still needs its one answer — there is no gentler bar
+ * available, and "0 of 1" is not a pass in any reading.
+ */
 export function requiredCorrect(kind: RoadmapLevelKind, total: number): number {
   if (total <= 0) return 0;
-  return Math.ceil(total * PASS_RATIO[kind]);
+  const req = Math.ceil(total * PASS_RATIO[kind]);
+  return total >= 2 ? Math.min(req, total - 1) : req;
 }
 
 /** Did this attempt meet the rung's pass bar? The learn rung always passes

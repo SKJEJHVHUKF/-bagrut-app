@@ -29,6 +29,7 @@ const store = new Map<string, string>();
 };
 
 import { levelStatus } from '../lib/roadmap-progress';
+import { requiredCorrect, didPass } from '../lib/roadmap-mastery';
 import type { RoadmapLevel, RoadmapLevelKind } from '../lib/roadmap-levels';
 
 let failures = 0;
@@ -121,6 +122,35 @@ section('The gate still holds for everyone else');
   assert(at(AFTER, 'learn') === 'UNLOCKED', 'a new student starts with the first rung open');
   assert(at(AFTER, 'easy') === 'LOCKED', 'and nothing else');
   assert(at(AFTER, 'bagrut') === 'LOCKED', 'least of all bagrut');
+}
+
+// ============================================================
+// The pass bar may never demand a perfect score on a rung of 2+.
+//
+// `Math.ceil(2 * 0.6)` is 2, so a two-question rung silently required both —
+// on 🌱 חימום, whose job is to build confidence, and on CORE rungs, which gate
+// the next sub-topic. Rounding, not a decision anyone made.
+// ============================================================
+console.log('\n── pass bar — one slip never fails a rung of 2+ ──────────────');
+{
+  const scored: RoadmapLevelKind[] = ['easy', 'mid', 'hard', 'bagrut'];
+  for (const kind of scored) {
+    for (let total = 2; total <= 12; total++) {
+      const req = requiredCorrect(kind, total);
+      assert(req <= total - 1, `${kind}/${total}: a perfect score is never required (needs ${req})`);
+      assert(req >= 1, `${kind}/${total}: but at least one right answer is (needs ${req})`);
+      assert(
+        didPass(kind, total - 1, total),
+        `${kind}/${total}: one wrong answer still passes`,
+      );
+    }
+    // A single-question rung is the one place the bar cannot be gentler.
+    assert(requiredCorrect(kind, 1) === 1, `${kind}: a 1-question rung still needs its answer`);
+    assert(!didPass(kind, 0, 1), `${kind}: zero of one does not pass`);
+  }
+  // Gateway rungs are unaffected — they carry no bar at all.
+  assert(didPass('learn', 0, 5), 'learn passes with no correct answers (it is a gateway)');
+  assert(didPass('ghost', 0, 5), 'ghost passes with no correct answers (falling IS the lesson)');
 }
 
 // ============================================================
