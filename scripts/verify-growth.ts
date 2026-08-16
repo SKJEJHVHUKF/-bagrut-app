@@ -129,6 +129,137 @@ num('bag004c A(12)=5000*1.5^2=11250', 5000 * Math.pow(1.5, 2), 11250);
 num('bag004c verify e^{12r}=2.25', exp(12 * (ln(1.5) / 6)), 2.25);
 
 // ============================================================
+// ============================================================
+// Ghost Replay (content/ghost-replay/math5/growth-decay.ts)
+// ============================================================
+// The three answers AND every number invented inside a failure branch.
+
+// --- gr-gd-model-005: N(2)=300, N(6)=2700 ---
+{
+  const k = Math.log(3) / 2;
+  const N0 = 100;
+  const N = (t: number) => N0 * Math.exp(k * t);
+  num('ghost model-005: dividing the equations gives e^{4k} = 9', 2700 / 300, 9);
+  num('ghost model-005: k = ln9/4 = ln3/2 ~= 0.5493', Math.round(k * 1e4) / 1e4, 0.5493);
+  num('ghost model-005: ln9/4 equals ln3/2', Math.round((Math.log(9) / 4) * 1e12) / 1e12, Math.round(k * 1e12) / 1e12);
+  num('ghost model-005: N0 = 100', Math.round(N0), 100);
+  num('ghost model-005: N(2) = 300', Math.round(N(2) * 1e6) / 1e6, 300);
+  num('ghost model-005: N(6) = 2700', Math.round(N(6) * 1e6) / 1e6, 2700);
+  num('ghost model-005: e^{2k} = 3, so the population triples every 2 hours',
+    Math.round(Math.exp(2 * k) * 1e12) / 1e12, 3);
+  num('ghost model-005 branch: subtracting instead of dividing gives 2400, which is not a ratio',
+    2700 - 300, 2400);
+  num('ghost model-005 branch: k = ln9/6 ~= 0.3662 uses the wrong time gap',
+    Math.round((Math.log(9) / 6) * 1e4) / 1e4, 0.3662);
+  num('ghost model-005 branch: ...and that k gives N(2) = 300/e^{...} != 100 for N0',
+    Math.round((300 / Math.exp(2 * Math.log(9) / 6)) * 1e2) / 1e2, 144.22);
+  num('ghost model-005 branch: taking N0 = 300 ignores that t=2 is not the start',
+    Math.round((300 * Math.exp(k * 2)) * 1e2) / 1e2, 900);
+  num('ghost model-005 branch: ln(9/4) ~= 0.8109 is NOT ln(9)/4 — a notation slip, not an arithmetic one',
+    Math.round(Math.log(9 / 4) * 1e4) / 1e4, 0.8109);
+  num('ghost model-005 branch: dividing 300 by e^{4k} = 9 uses the gap where t=2 belongs',
+    Math.round((300 / Math.exp(4 * k)) * 1e2) / 1e2, 33.33);
+
+  // Step 4: the midpoint in TIME gives the geometric mean, never the arithmetic one.
+  // This is the whole difference between exponential and linear, in one number.
+  num('ghost model-005: N(4) = 900', Math.round(N(4) * 1e6) / 1e6, 900);
+  num('ghost model-005: 900 is the GEOMETRIC mean of 300 and 2700',
+    Math.round(Math.sqrt(300 * 2700) * 1e9) / 1e9, 900);
+  num('ghost model-005 branch: the arithmetic mean is 1500, and it is wrong', (300 + 2700) / 2, 1500);
+  num('ghost model-005 branch: 1500 would require a linear model, which misses N(2)',
+    Math.abs(1500 - N(4)) > 1 ? 1 : 0, 1);
+  // Equal time gaps multiply by equal factors — the defining property, checked at 500 random gaps.
+  {
+    let bad = 0;
+    for (let i = 0; i < 500; i++) {
+      const t = (i / 500) * 10;
+      const gap = 1 + (i % 7) * 0.3;
+      const ratio = N(t + gap) / N(t);
+      if (Math.abs(ratio - Math.exp(k * gap)) > 1e-9) bad++;
+    }
+    num('ghost model-005: equal time gaps give equal ratios (500 samples)', bad, 0);
+  }
+}
+
+// --- gd-sub-time-004: 80% remains after 10 years, find the half-life ---
+{
+  const k = Math.log(0.8) / 10;
+  num('ghost time-004: k = ln(0.8)/10 ~= -0.02231', Math.round(k * 1e5) / 1e5, -0.02231);
+  num('ghost time-004: k is negative, as decay requires', k < 0 ? 1 : 0, 1);
+  const half = Math.log(0.5) / k;
+  num('ghost time-004: half-life = 10*ln(0.5)/ln(0.8) ~= 31.06 years',
+    Math.round(half * 1e2) / 1e2, 31.06);
+  num('ghost time-004: check — after 31.06 years about half remains',
+    Math.round(Math.exp(k * half) * 1e9) / 1e9, 0.5);
+  num('ghost time-004: after 10 years exactly 0.8 remains',
+    Math.round(Math.exp(k * 10) * 1e9) / 1e9, 0.8);
+  num('ghost time-004 branch: 25 years is wrong — 0.8 lost per decade does NOT extrapolate linearly',
+    Math.round(Math.exp(k * 25) * 1e4) / 1e4, 0.5724);
+  num('ghost time-004 branch: ...at 25 years 57.2% remains, still above half',
+    Math.exp(k * 25) > 0.5 ? 1 : 0, 1);
+  num('ghost time-004 branch: 20 years leaves 0.64, not 0.5', Math.round(Math.exp(k * 20) * 1e4) / 1e4, 0.64);
+  num('ghost time-004 branch: 0.64 is 0.8 squared — two decades, not half',
+    Math.round(0.8 ** 2 * 1e9) / 1e9, 0.64);
+  num('ghost time-004 branch: the linear guess "0.2 lost per decade" predicts 0.6 after 20 years',
+    Math.round((1 - 2 * 0.2) * 1e9) / 1e9, 0.6);
+  num('ghost time-004 branch: ...but the true value is 0.64, so linear UNDERSTATES what survives',
+    Math.exp(k * 20) > 0.6 ? 1 : 0, 1);
+
+  // Bracketing without a calculator: 0.8^3 is just above half, 0.8^4 just below.
+  num('ghost time-004: 0.8^3 = 0.512 > 0.5, so the half-life is past 30 years',
+    Math.round(0.8 ** 3 * 1e9) / 1e9, 0.512);
+  num('ghost time-004: 0.8^4 = 0.4096 < 0.5, so it is before 40 years',
+    Math.round(0.8 ** 4 * 1e9) / 1e9, 0.4096);
+  num('ghost time-004: the exact half-life lands inside that bracket',
+    half > 30 && half < 40 ? 1 : 0, 1);
+  num('ghost time-004: the answer does not depend on N0 — it cancels (checked over 200 values)',
+    (() => { let bad = 0; for (let i = 1; i <= 200; i++) { const N0 = i * 13.7; if (Math.abs(N0 * Math.exp(k * half) - N0 / 2) > 1e-6) bad++; } return bad; })(), 0);
+}
+
+// --- gd-sub-app-005: Newton cooling, 100 deg in a 20 deg room, 60 after 10 min ---
+{
+  // T(t) = 20 + 80 e^{kt}
+  const k = Math.log(0.5) / 10;
+  const T = (t: number) => 20 + 80 * Math.exp(k * t);
+  num('ghost app-005: the initial DIFFERENCE is 100-20 = 80', 100 - 20, 80);
+  num('ghost app-005: at t=10 the difference is 60-20 = 40, i.e. halved', 60 - 20, 40);
+  num('ghost app-005: so e^{10k} = 0.5 and k = ln(0.5)/10 ~= -0.06931',
+    Math.round(k * 1e5) / 1e5, -0.06931);
+  num('ghost app-005: T(10) = 60', Math.round(T(10) * 1e9) / 1e9, 60);
+  num('ghost app-005: T(20) = 40 — the difference halves again', Math.round(T(20) * 1e9) / 1e9, 40);
+  num('ghost app-005: reaching 30 needs the difference to be 10, i.e. 1/8 of 80', 80 / 8, 10);
+  num('ghost app-005: 1/8 is three halvings, so t = 30 minutes', 3 * 10, 30);
+  num('ghost app-005: T(30) = 30 exactly', Math.round(T(30) * 1e9) / 1e9, 30);
+  num('ghost app-005 branch: the temperature itself does NOT halve — 100 to 60 is not a halving',
+    Math.abs(60 - 50) > 1e-9 ? 1 : 0, 1);
+  num('ghost app-005 branch: modelling T = 100 e^{kt} would predict T(10) = 60 only with k = ln0.6/10',
+    Math.round((Math.log(0.6) / 10) * 1e5) / 1e5, -0.05108);
+  num('ghost app-005 branch: ...and that model reaches 30 at ~23.6 min, and 20 never — it ignores the room',
+    Math.round((Math.log(0.3) / (Math.log(0.6) / 10)) * 10) / 10, 23.6);
+  num('ghost app-005 branch: the body can never cool below the room, so T -> 20 as t grows',
+    Math.round(T(1000) * 1e9) / 1e9, 20);
+
+  // Step 4: 20 deg is an asymptote, not a time. T(t) > 20 for every finite t.
+  // Test the DIFFERENCE, not T itself: past ~9 hours the gap drops below the
+  // resolution of a double next to 20, so `T(t) > 20` reads false for a
+  // floating-point reason and not a mathematical one.
+  {
+    let bad = 0;
+    for (let i = 0; i <= 5000; i++) {
+      const t = i * 2; // 0 .. 10000 minutes
+      if (!(80 * Math.exp(k * t) > 0)) bad++;
+    }
+    num('ghost app-005: the gap above the room stays positive at all 5001 sampled times', bad, 0);
+  }
+  num('ghost app-005 branch: 40 minutes gives 25, not 20', Math.round(T(40) * 1e9) / 1e9, 25);
+  num('ghost app-005 branch: 60 minutes gives 21.25, still not 20',
+    Math.round(T(60) * 1e4) / 1e4, 21.25);
+  num('ghost app-005 branch: every extra 10 minutes only halves what is left above the room',
+    Math.round(((T(60) - 20) / (T(50) - 20)) * 1e9) / 1e9, 0.5);
+  num('ghost app-005: the cooling is monotone — it approaches 20 from above, never crosses',
+    T(100) > 20 && T(100) < T(50) ? 1 : 0, 1);
+}
+
 console.log(`\nRESULT: ${pass}/${pass + fail} passed${fail ? `  (${fail} FAILED)` : ''}`);
 if (fail) process.exit(1);
 
