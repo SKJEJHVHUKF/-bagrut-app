@@ -12,10 +12,34 @@
 
 import type { Misconception, Skill, SkillId, TopicCognitionMap } from './types';
 import { complexNumbersCognition } from './math5/complex-numbers';
+import { vectorsCognition } from './math5/vectors';
+import { analyticGeometryCognition } from './math5/analytic-geometry';
+import { exponentialCognition } from './math5/exponential';
+import { algebraCognition } from './math5/algebra';
+import { functionsCognition } from './math5/functions';
+import { euclideanGeometryCognition } from './math5/euclidean-geometry';
+import { sequencesCognition } from './math5/sequences';
+import { differentialCalculusCognition } from './math5/differential-calculus';
+import { integralCalculusCognition } from './math5/integral-calculus';
+import { trigonometryCognition } from './math5/trigonometry';
+import { probabilityCognition } from './math5/probability';
+import { growthDecayCognition } from './math5/growth-decay';
 import { lnFunctionCognition } from './math5/ln-function';
 
 const REGISTRY: Record<string, TopicCognitionMap> = {
   'math5:מספרים מרוכבים': complexNumbersCognition,
+  'math5:וקטורים במרחב': vectorsCognition,
+  'math5:גאומטריה אנליטית': analyticGeometryCognition,
+  'math5:פונקציה מעריכית': exponentialCognition,
+  'math5:אלגברה': algebraCognition,
+  'math5:פונקציות': functionsCognition,
+  'math5:גיאומטריה אוקלידית': euclideanGeometryCognition,
+  'math5:סדרות': sequencesCognition,
+  'math5:חשבון דיפרנציאלי': differentialCalculusCognition,
+  'math5:חשבון אינטגרלי': integralCalculusCognition,
+  'math5:טריגונומטריה': trigonometryCognition,
+  'math5:הסתברות': probabilityCognition,
+  'math5:גדילה ודעיכה': growthDecayCognition,
   'math5:פונקציית ln': lnFunctionCognition,
 };
 
