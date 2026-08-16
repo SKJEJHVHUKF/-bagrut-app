@@ -22,6 +22,7 @@ import { expFunctionsGhostReplays } from './math5/exp-functions';
 import { functionsGhostReplays } from './math5/functions';
 import { euclideanGeometryGhostReplays } from './math5/euclidean-geometry';
 import { algebraGhostReplays } from './math5/algebra';
+import { probabilityGhostReplays } from './math5/probability';
 
 const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:מספרים מרוכבים': complexNumbersGhostReplays,
@@ -36,6 +37,7 @@ const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:פונקציות': functionsGhostReplays,
   'math5:גיאומטריה אוקלידית': euclideanGeometryGhostReplays,
   'math5:אלגברה': algebraGhostReplays,
+  'math5:הסתברות': probabilityGhostReplays,
 };
 
 function key(subject: string, topic: string): string {

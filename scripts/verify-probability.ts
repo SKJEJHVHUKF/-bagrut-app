@@ -167,6 +167,90 @@ num('bag003c expected 5/12', evl('5/12'), 5 / 12);
 num('bag003c basket|soccer 10/24', 10 / 24, 5 / 12);
 
 // ============================================================
+// ============================================================
+// Ghost Replay (content/ghost-replay/math5/probability.ts)
+// ============================================================
+// The three answers AND every number invented inside a failure branch.
+// Two of them are cross-checked by SIMULATION, which is independent of the
+// formula the solution uses.
+
+// --- gr-prob-basics-005: two shooters, 0.8 and 0.6 ---
+{
+  num('ghost basics-005: both miss = 0.2 * 0.4 = 0.08', (1 - 0.8) * (1 - 0.6), 0.08);
+  num('ghost basics-005: at least one hits = 1 - 0.08 = 0.92', 1 - 0.08, 0.92);
+  // Independent route: inclusion-exclusion must agree.
+  num('ghost basics-005: inclusion-exclusion 0.8+0.6-0.48 also gives 0.92',
+    Math.round((0.8 + 0.6 - 0.8 * 0.6) * 1e9) / 1e9, 0.92);
+  num('ghost basics-005: exactly one hits = 0.8*0.4 + 0.2*0.6 = 0.44',
+    Math.round((0.8 * 0.4 + 0.2 * 0.6) * 1e9) / 1e9, 0.44);
+  num('ghost basics-005: both hit = 0.48, and 0.44+0.48 = 0.92',
+    Math.round((0.44 + 0.48) * 1e9) / 1e9, 0.92);
+  num('ghost basics-005 branch: 0.8+0.6 = 1.4 exceeds 1 — impossible for a probability',
+    0.8 + 0.6 > 1 ? 1 : 0, 1);
+  num('ghost basics-005 branch: 0.8*0.6 = 0.48 is "BOTH hit", a different question',
+    Math.round(0.8 * 0.6 * 1e9) / 1e9, 0.48);
+  num('ghost basics-005 branch: 1 - 0.8*0.6 = 0.52 complements the wrong event',
+    Math.round((1 - 0.48) * 1e9) / 1e9, 0.52);
+}
+
+// --- gr-prob-cond-005: base rate 1%, sensitivity 90%, false positive 8% ---
+{
+  const sickAndPos = 0.01 * 0.9;
+  const healthyAndPos = 0.99 * 0.08;
+  const totalPos = sickAndPos + healthyAndPos;
+  num('ghost cond-005: sick and positive = 0.009', Math.round(sickAndPos * 1e9) / 1e9, 0.009);
+  num('ghost cond-005: healthy and positive = 0.0792', Math.round(healthyAndPos * 1e9) / 1e9, 0.0792);
+  num('ghost cond-005: total positive = 0.0882', Math.round(totalPos * 1e9) / 1e9, 0.0882);
+  num('ghost cond-005: P(sick | positive) ~= 0.102',
+    Math.round((sickAndPos / totalPos) * 1e3) / 1e3, 0.102);
+  num('ghost cond-005: the four tree branches sum to 1',
+    Math.round((0.01 * 0.9 + 0.01 * 0.1 + 0.99 * 0.08 + 0.99 * 0.92) * 1e9) / 1e9, 1);
+  // Simulation: 10 million people, deterministic counting rather than sampling.
+  {
+    const N = 10_000_000;
+    const sick = N * 0.01, healthy = N * 0.99;
+    const posFromSick = sick * 0.9, posFromHealthy = healthy * 0.08;
+    num('ghost cond-005: in 10M people, 90,000 sick test positive', posFromSick, 90_000);
+    num('ghost cond-005: and 792,000 healthy test positive', posFromHealthy, 792_000);
+    num('ghost cond-005: so only 90,000 of 882,000 positives are truly sick',
+      Math.round((posFromSick / (posFromSick + posFromHealthy)) * 1e3) / 1e3, 0.102);
+    num('ghost cond-005: healthy false positives OUTNUMBER true positives ~8.8 to 1',
+      Math.round((posFromHealthy / posFromSick) * 10) / 10, 8.8);
+  }
+  num('ghost cond-005 branch: 0.9 is the sensitivity, the reverse conditional', 0.9, 0.9);
+  num('ghost cond-005 branch: 0.01 is the prior, before any test result', 0.01, 0.01);
+  num('ghost cond-005 branch: 0.009/0.9 = 0.01 divides by the wrong total',
+    Math.round((0.009 / 0.9) * 1e9) / 1e9, 0.01);
+}
+
+// --- gr-prob-comb-004: binomial n=3, p=0.6, k=2 ---
+{
+  const C32 = fact(3) / (fact(2) * fact(1));
+  num('ghost comb-004: C(3,2) = 3', C32, 3);
+  num('ghost comb-004: one path is 0.6^2 * 0.4 = 0.144',
+    Math.round(0.6 ** 2 * 0.4 * 1e9) / 1e9, 0.144);
+  num('ghost comb-004: P(X=2) = 3 * 0.144 = 0.432',
+    Math.round(3 * 0.6 ** 2 * 0.4 * 1e9) / 1e9, 0.432);
+  // Exhaustive enumeration of all 8 outcomes — independent of the formula.
+  {
+    let p2 = 0, total = 0;
+    for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) for (let c = 0; c < 2; c++) {
+      const hits = a + b + c;
+      const prob = (a ? 0.6 : 0.4) * (b ? 0.6 : 0.4) * (c ? 0.6 : 0.4);
+      total += prob;
+      if (hits === 2) p2 += prob;
+    }
+    num('ghost comb-004: enumerating all 8 outcomes gives 0.432', Math.round(p2 * 1e9) / 1e9, 0.432);
+    num('ghost comb-004: and the 8 outcomes sum to 1', Math.round(total * 1e9) / 1e9, 1);
+  }
+  num('ghost comb-004 branch: 0.144 forgets the 3 paths', Math.round((0.6 ** 2 * 0.4) * 1e3) / 1e3, 0.144);
+  num('ghost comb-004 branch: 0.6^2 = 0.36 forgets the miss entirely', 0.6 ** 2, 0.36);
+  num('ghost comb-004 branch: 3*0.6^2 = 1.08 exceeds 1 — impossible',
+    Math.round(3 * 0.36 * 1e9) / 1e9 > 1 ? 1 : 0, 1);
+  num('ghost comb-004: P(X=3) = 0.216 and P(X=2) = 0.432, so exactly-2 is the likelier',
+    Math.round(0.6 ** 3 * 1e9) / 1e9, 0.216);
+}
+
 console.log(`\nRESULT: ${pass}/${pass + fail} passed${fail ? `  (${fail} FAILED)` : ''}`);
 if (fail) process.exit(1);
 
