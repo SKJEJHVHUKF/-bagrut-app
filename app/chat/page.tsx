@@ -448,7 +448,7 @@ export default function ChatPage() {
       </div>
 
       {/* Top bar */}
-      <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
+      <nav className="md:hidden sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
         {/* pl-16 on mobile reserves room for the global profile avatar (fixed
             top-left); restored to px-4 from sm up where there's space. */}
         <div className="max-w-3xl mx-auto px-4 pl-16 sm:pl-4 py-3 flex items-center justify-between">

@@ -85,7 +85,11 @@ function BackgroundOrbs() {
 
 function TopBar() {
   return (
-    <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
+    // md:hidden — AppHeader takes over from 768px up. Without this the page
+    // draws a SECOND sticky bar, with a second MathUp logo and wordmark,
+    // directly under the global one. On a phone there is no AppHeader, so this
+    // bar is the only one and stays.
+    <nav className="md:hidden sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <MathUpLogo size="md" />

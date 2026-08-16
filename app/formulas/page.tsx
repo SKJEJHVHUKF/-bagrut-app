@@ -181,7 +181,8 @@ function BackgroundOrbs() {
 
 function TopBar({ onPrint }: { onPrint: () => void }) {
   return (
-    <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none print:hidden">
+    // md:hidden — see the note in app/practice/page.tsx.
+    <nav className="md:hidden sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none print:hidden">
       <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/my-plan" className="flex items-center gap-3 group">
           <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 via-violet-500 to-amber-400 flex items-center justify-center shadow-xl shadow-violet-500/50 ring-1 ring-slate-900/10">

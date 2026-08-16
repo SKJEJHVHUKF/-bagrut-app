@@ -206,7 +206,7 @@ function BackgroundOrbs() {
 
 function TopBar() {
   return (
-    <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
+    <nav className="md:hidden sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
       <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <MathUpLogo size="md" />
