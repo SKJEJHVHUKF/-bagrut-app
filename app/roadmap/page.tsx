@@ -24,6 +24,8 @@ import { computePacing } from '@/lib/pacing';
 import { dueCount, dueCountBySubTopic } from '@/lib/review';
 import { backfillFromMistakes } from '@/lib/review-resolve';
 import { getTopWeakness } from '@/lib/remediation';
+import { getCognitiveState } from '@/lib/cognition';
+import { NextStepCard } from '@/components/roadmap/NextStepCard';
 import { createClient } from '@/lib/supabase/client';
 import { RotateCcw } from 'lucide-react';
 import type { StepStatus, RoadmapNode } from '@/types/roadmap';
@@ -109,6 +111,28 @@ export default function RoadmapPage() {
 
   // Spaced-repetition: how many questions are due for review today.
   const reviewDue = useMemo(() => (ready ? dueCount() : 0), [ready, syncTick]);
+
+  // The diagnostic engine's single recommendation, for the topic the student is
+  // actually in. It already weighs resume, review and weakness against each
+  // other, so when it speaks it REPLACES those two cards rather than adding a
+  // third — the whole reason lib/cognition/next-step.ts exists.
+  //
+  // It speaks only when it has something the plain cards CANNOT say:
+  //   • 'start'          — the engine's own word for "no evidence yet".
+  //   • 'continue-ladder' — the resume card already says this, and says it
+  //     better: a brand-new student's step here is titled just "המשך", while
+  //     the resume card carries the sub-topic, the rung and its emoji.
+  // Everything else — a prerequisite to repair, a misconception to drill, a
+  // review that outranks continuing — is a measured judgement no other card on
+  // this page can make, and only then is it worth taking their place.
+  const guidance = useMemo(() => {
+    if (!ready || !resume?.topic) return null;
+    const state = getCognitiveState(SUBJECT, resume.topic);
+    if (!state) return null;
+    const kind = state.nextStep.kind;
+    return kind !== 'start' && kind !== 'continue-ladder' ? state : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, resume?.topic, syncTick, summaries]);
 
   // The single most worthwhile repair, when there is enough evidence for one.
   // Null is the normal state for a new student and renders nothing.
@@ -198,8 +222,15 @@ export default function RoadmapPage() {
           </motion.div>
         )}
 
+        {/* The diagnostic engine's single recommendation. It scores the resume
+            point, the review queue and the measured weaknesses on one scale, so
+            it REPLACES the two cards below rather than joining them. The fix
+            card above stays: it is scoped to a possibly different topic and
+            comes from a store the engine is not given. */}
+        {guidance && <NextStepCard state={guidance} />}
+
         {/* Daily spaced-repetition review — retention, once nothing is broken */}
-        {reviewDue > 0 && (
+        {!guidance && reviewDue > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -237,8 +268,8 @@ export default function RoadmapPage() {
           </Link>
         )}
 
-        {/* Continue where you left off */}
-        {resume && (
+        {/* Continue where you left off — only when the engine stayed silent */}
+        {!guidance && resume && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}

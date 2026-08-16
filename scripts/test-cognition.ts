@@ -594,6 +594,66 @@ section('Replay — three archetype students');
 }
 
 // ============================================================
+// The gate that decides whether /roadmap shows the engine's recommendation
+// at all (components/roadmap/NextStepCard).
+//
+// The page renders the card only when `nextStep.kind !== 'start'`, and falls
+// back to the plain resume + review cards otherwise. Both halves matter and
+// both are easy to break silently: a gate that never opens hides 1,251 lines
+// of tested engine behind a condition, and a gate that always opens tells a
+// student who has answered nothing that they have a diagnosed weakness.
+// ============================================================
+console.log('\n── the /roadmap gate — speak only with something to say ─────');
+{
+  const cold = buildCognitiveState({
+    subject: SUBJECT,
+    topic: TOPIC,
+    events: [],
+    now: NOW,
+    ...CTX,
+  });
+  // The page's real rule: hide the card for BOTH 'start' and 'continue-ladder'.
+  // A brand-new student with a resume point gets 'continue-ladder' titled just
+  // "המשך" — replacing the resume card (sub-topic + rung + emoji) with that is
+  // strictly worse, which is what this assertion exists to stop.
+  const HIDDEN: string[] = ['start', 'continue-ladder'];
+  assert(
+    cold === null || HIDDEN.includes(cold.nextStep.kind),
+    `a student with no answers keeps the plain cards (got ${cold?.nextStep.kind})`,
+  );
+
+  // The same struggling student the weakest-link section above replays.
+  const events = [
+    mcq('polar-de-moivre-drill-003', false, 1, 4),
+    mcq('cx-sub-polar-002', false, 1, 5),
+    mcq('cx-006', false, 1, 6),
+    mcq('polar-de-moivre-drill-001', true, correctIndexOf('polar-de-moivre-drill-001'), 7),
+    mcq('polar-de-moivre-drill-004', true, correctIndexOf('polar-de-moivre-drill-004'), 8),
+    mcq('cx-sub-polar-006', false, 1, 9),
+  ];
+  const warm = buildCognitiveState({ subject: SUBJECT, topic: TOPIC, events, now: NOW, ...CTX })!;
+  assert(
+    !HIDDEN.includes(warm.nextStep.kind),
+    `a student with a measured weakness gets a real step (got ${warm.nextStep.kind})`,
+  );
+  assert(
+    warm.nextStep.title.trim().length > 0 && warm.nextStep.reason.trim().length > 0,
+    'and it carries both a label and a why — the card renders both',
+  );
+  assert(
+    warm.nextStep.href.startsWith('/roadmap'),
+    `the destination is a route that exists (got ${warm.nextStep.href})`,
+  );
+  assert(warm.alternates.length <= 2, 'at most two runners-up, so the chips row cannot grow');
+  for (const alt of warm.alternates) {
+    assert(
+      alt.href.startsWith('/roadmap') && alt.title.trim().length > 0,
+      `each alternate is renderable and points somewhere real (${alt.kind})`,
+    );
+  }
+}
+
+// ============================================================
 console.log(`\n${checks - failures}/${checks} checks passed`);
 if (failures > 0) {
   console.log(`${failures} FAILURE(S)`);
