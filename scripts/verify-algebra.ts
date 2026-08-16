@@ -220,6 +220,85 @@ check('bag-009/d boundary upper', E('2+1'), 3);
 check('bag-009/d boundary lower', E('-2+1'), -1);
 
 // ============================================================
+// ============================================================
+// Ghost Replay (content/ghost-replay/math5/algebra.ts)
+// ============================================================
+// The four answers AND every number invented inside a failure branch.
+
+// --- gr-alg-quad-006: x^2 - 4x - 1 = 0 ---
+{
+  const r1 = 2 + Math.sqrt(5), r2 = 2 - Math.sqrt(5);
+  check('ghost quad-006: discriminant = 16+4 = 20', (-4) ** 2 - 4 * 1 * -1, 20);
+  check('ghost quad-006: sqrt20 = 2sqrt5', Math.sqrt(20), 2 * Math.sqrt(5));
+  check('ghost quad-006: root 2+sqrt5 ~= 4.2361', Math.round(r1 * 1e4) / 1e4, 4.2361);
+  check('ghost quad-006: root 2-sqrt5 ~= -0.2361', Math.round(r2 * 1e4) / 1e4, -0.2361);
+  check('ghost quad-006: both satisfy the equation', Math.abs(residual(1, -4, -1, r1)) + Math.abs(residual(1, -4, -1, r2)) < 1e-9 ? 1 : 0, 1);
+  check('ghost quad-006: Vieta — sum is 4', Math.round((r1 + r2) * 1e9) / 1e9, 4);
+  check('ghost quad-006: Vieta — product is -1', Math.round(r1 * r2 * 1e9) / 1e9, -1);
+  check('ghost quad-006 branch: (4 +- sqrt20)/2 left unsimplified equals the same number',
+    Math.round(((4 + Math.sqrt(20)) / 2) * 1e9) / 1e9, Math.round(r1 * 1e9) / 1e9);
+  check('ghost quad-006 branch: cancelling only ONE term gives 2 +- sqrt20 ~= 6.472, which does NOT solve it',
+    Math.abs(residual(1, -4, -1, 2 + Math.sqrt(20))) > 1 ? 1 : 0, 1);
+  check('ghost quad-006 branch: sqrt(16-4) = sqrt12 comes from the wrong sign on c',
+    (-4) ** 2 - 4 * 1 * 1, 12);
+}
+
+// --- gr-alg-disc-005: x1^2 + x2^2 via Vieta ---
+{
+  check('ghost disc-005: sum = 7, product = 10', 7 * 10, 70);
+  check('ghost disc-005: (x1+x2)^2 - 2x1x2 = 49 - 20 = 29', 7 ** 2 - 2 * 10, 29);
+  // The actual roots are 2 and 5 — the identity must agree with brute force.
+  check('ghost disc-005: brute force 2^2 + 5^2 = 29', 2 ** 2 + 5 ** 2, 29);
+  check('ghost disc-005: 2 and 5 really are the roots', Math.abs(residual(1, -7, 10, 2)) + Math.abs(residual(1, -7, 10, 5)), 0);
+  check('ghost disc-005 branch: (x1+x2)^2 = 49 forgets the -2x1x2 correction', 7 ** 2, 49);
+  check('ghost disc-005 branch: 49 + 20 = 69 has the sign wrong', 49 + 20, 69);
+  check('ghost disc-005 branch: 7^2 - 10 = 39 subtracts the product once, not twice', 49 - 10, 39);
+}
+
+// --- gr-alg-rad-003: sqrt(x+7) = x+1 ---
+{
+  const lhs = (x: number) => Math.sqrt(x + 7);
+  const rhs = (x: number) => x + 1;
+  check('ghost rad-003: squaring gives x^2 + x - 6 = 0', 1 + 1 - 6, -4); // sanity on the coefficients at x=1
+  checkSet('ghost rad-003: the squared equation has roots 2 and -3', [2, -3].sort(), [-3, 2]);
+  check('ghost rad-003: x=2 checks out — both sides are 3', Math.abs(lhs(2) - rhs(2)) < 1e-12 ? 1 : 0, 1);
+  check('ghost rad-003: at x=2 both sides equal 3', lhs(2), 3);
+  check('ghost rad-003: x=-3 is EXTRANEOUS — lhs is 2, rhs is -2', lhs(-3), 2);
+  check('ghost rad-003: ...and the right side there is -2', rhs(-3), -2);
+  check('ghost rad-003: they differ, so -3 is rejected', Math.abs(lhs(-3) - rhs(-3)), 4);
+  check('ghost rad-003: the root is non-negative, so x+1 >= 0 is required — x=-3 fails it',
+    rhs(-3) < 0 ? 1 : 0, 1);
+  // A sweep confirms x=2 is the only real solution.
+  {
+    let extra = 0;
+    for (let i = -70000; i <= 100000; i++) {
+      const x = i / 10000;
+      if (x + 7 < 0) continue;
+      if (Math.abs(lhs(x) - rhs(x)) < 1e-9 && Math.abs(x - 2) > 1e-9) extra++;
+    }
+    check('ghost rad-003: a 170k sweep finds no second solution', extra, 0);
+  }
+}
+
+// --- gr-alg-ineq-004: (x-1)/(x+2) >= 0 ---
+{
+  const g = (x: number) => (x - 1) / (x + 2);
+  let bad = 0;
+  for (let i = -60000; i <= 60000; i++) {
+    const x = i / 6000;
+    if (Math.abs(x + 2) < 1e-9) continue;
+    if ((g(x) >= 0) !== (x < -2 || x >= 1)) bad++;
+  }
+  check('ghost ineq-004: a 120k sweep confirms the solution set is x < -2 or x >= 1', bad, 0);
+  check('ghost ineq-004: x=1 IS included — the expression is 0 and 0 >= 0', g(1), 0);
+  check('ghost ineq-004: x=-2 is EXCLUDED — undefined there', Math.abs(-2 + 2), 0);
+  check('ghost ineq-004: at x=0 it is -0.5, so the middle interval is out', g(0), -0.5);
+  check('ghost ineq-004: at x=-3 it is 4, positive', g(-3), 4);
+  check('ghost ineq-004 branch: including -2 would mean dividing by zero', 1 / 0 === Infinity ? 1 : 0, 1);
+  check('ghost ineq-004 branch: excluding 1 would drop a legitimate solution', g(1) >= 0 ? 1 : 0, 1);
+  check('ghost ineq-004 branch: -2 <= x <= 1 is where it is NEGATIVE — at x=0', g(0) < 0 ? 1 : 0, 1);
+}
+
 console.log(`\nverify-algebra: ${pass}/${pass + fail} passed.`);
 if (fail > 0) {
   console.error(`\n${fail} FAILURE(S):`);

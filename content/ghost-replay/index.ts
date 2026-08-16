@@ -21,6 +21,7 @@ import { integralsGhostReplays } from './math5/integrals';
 import { expFunctionsGhostReplays } from './math5/exp-functions';
 import { functionsGhostReplays } from './math5/functions';
 import { euclideanGeometryGhostReplays } from './math5/euclidean-geometry';
+import { algebraGhostReplays } from './math5/algebra';
 
 const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:מספרים מרוכבים': complexNumbersGhostReplays,
@@ -34,6 +35,7 @@ const REGISTRY: Record<string, TopicGhostReplays> = {
   'math5:פונקציה מעריכית': expFunctionsGhostReplays,
   'math5:פונקציות': functionsGhostReplays,
   'math5:גיאומטריה אוקלידית': euclideanGeometryGhostReplays,
+  'math5:אלגברה': algebraGhostReplays,
 };
 
 function key(subject: string, topic: string): string {
