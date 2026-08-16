@@ -353,13 +353,10 @@ export default function Landing() {
               <span>כניסה למאגר</span>
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
             </Link>
-            <Link
-              href="/bagruyot"
-              className="text-sm text-slate-600 hover:text-slate-800 inline-flex items-center gap-1.5 transition-colors"
-            >
-              <span>איך זה עובד?</span>
-              <ChevronDown className="w-4 h-4 -rotate-90" />
-            </Link>
+            {/* A second link to /bagruyot sat here labelled "איך זה עובד?" —
+                same destination as the button beside it, so the label promised
+                an explanation and delivered the same page. Two buttons to one
+                place is not a choice, it is noise. */}
           </div>
 
           {/* Trust line */}
