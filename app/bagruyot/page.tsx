@@ -21,6 +21,7 @@ import {
   availableYears,
   availableTopics,
   totalQuestions,
+  paperFamilyCounts,
 } from '@/content/past-bagruyot';
 
 type AuthState =
@@ -226,6 +227,20 @@ export default function BagruyotLandingPage() {
                 <div className="text-base sm:text-lg font-black text-slate-900">מאגר בגרויות — פיצ׳ר Pro</div>
                 <div className="text-xs text-slate-700 mt-0.5">
                   תרגול מהבגרויות עם רמזים ופתרונות הוא חלק מהמנוי Pro.
+                </div>
+                {/* What the archive actually holds, stated BEFORE the money
+                    screen. Derived from the content (paperFamilyCounts), never
+                    typed by hand — a student revising for 571 must not discover
+                    only after paying that their paper is barely covered, and
+                    the day 571 sessions are transcribed this line corrects
+                    itself. */}
+                <div className="text-[11px] font-bold text-amber-800 mt-1.5">
+                  {(() => {
+                    const c = paperFamilyCounts();
+                    return c.p571 >= 5
+                      ? `במאגר כרגע: ${c.p572} שאלות משאלון 572 (לשעבר 582) ו-${c.p571} משאלון 571.`
+                      : `במאגר כרגע ${c.p572 + c.p571} שאלות פתורות — כמעט כולן משאלון 572 (לשעבר 582); שאלון 571 עדיין כמעט לא מכוסה.`;
+                  })()}
                 </div>
               </div>
             </div>

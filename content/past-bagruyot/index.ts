@@ -101,6 +101,28 @@ export function totalQuestions(): number {
   return ALL_PAST_BAGRUYOT.length;
 }
 
+/**
+ * How many archive questions belong to each שאלון FAMILY. 581/582 are the old
+ * numbers of 571/572 — same exams, renamed — so a 2023 paper honestly labeled
+ * '582' counts toward the 572 family.
+ *
+ * This exists because the archive is sold flat ("מאגר בגרויות אמיתיות") while
+ * its coverage is lopsided — at the time of writing, every core 571 topic has
+ * ZERO questions here. A student who upgrades to Pro while revising for 571
+ * finds that out only after paying. The surfaces that sell the archive derive
+ * their coverage line from THIS function, so the day 571 papers are
+ * transcribed the labels correct themselves.
+ */
+export function paperFamilyCounts(): { p571: number; p572: number } {
+  let p571 = 0;
+  let p572 = 0;
+  for (const q of ALL_PAST_BAGRUYOT) {
+    if (q.paper === '571' || q.paper === '581') p571 += 1;
+    else p572 += 1;
+  }
+  return { p571, p572 };
+}
+
 export function search(query: string): PastBagrutQuestion[] {
   const q = query.trim().toLowerCase();
   if (!q) return ALL_PAST_BAGRUYOT;

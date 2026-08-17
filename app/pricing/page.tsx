@@ -44,9 +44,15 @@ const COMPARISON: Row[] = [
   { label: 'תחזית ציון בגרות + "התמונה שלי"', free: true, pro: true },
   { label: 'צילום שאלה → פתרון מהמאגר', free: true, pro: true },
   { label: 'צ׳אט עם המורה הפרטי', free: '10 ביום', pro: 'ללא הגבלה' },
-  { label: 'הקורס המתקדם ברמת בגרות', free: false, pro: true },
-  { label: 'מאגר בגרויות אמיתיות + פתרונות', free: false, pro: true },
-  { label: 'סימולציית בגרות מלאה בזמן אמת', free: false, pro: true },
+  // The three Pro rows below name their real coverage on purpose. The archive
+  // is 68/71 שאלון-572 questions and all four advanced courses are 572 topics —
+  // a student revising for 571 must learn that HERE, not after paying. These
+  // strings are hand-maintained (importing the corpus just for a count would
+  // put ~400KB back on a page A20 just slimmed): when 571 content lands,
+  // update them — /bagruyot's coverage line is derived and will already agree.
+  { label: 'הקורס המתקדם ברמת בגרות (כרגע בנושאי שאלון 572)', free: false, pro: true },
+  { label: 'מאגר בגרויות אמיתיות + פתרונות (כרגע שאלון 572)', free: false, pro: true },
+  { label: 'סימולציית בגרות בסוף כל קורס מתקדם', free: false, pro: true },
   { label: 'עזרת-AI: "למה טעיתי", הסבר פשוט יותר', free: false, pro: true },
   { label: 'פתרון-AI לשאלה חדשה בצילום', free: false, pro: true },
 ];
