@@ -1,590 +1,203 @@
 'use client';
 
-// /roadmap — the personalized learning roadmap dashboard for questionnaire
-// 582. A vertical timeline of 6 open main-topic sections; inside each, the
-// sub-topic milestones unlock sequentially. Each milestone is now a LEVEL
-// LADDER (see lib/roadmap-levels.ts) — the card shows how many rungs are
-// cleared, the stars earned, and a crown when the sub-topic is mastered.
+// /roadmap — the learning-path HUB: two tiles, שאלון 571 and שאלון 572. Each
+// shows the track's topics, the student's progress on it and a one-line
+// "continue" so a returning student is one tap from where they stopped.
+// Tapping a tile makes that paper the active one (the profile switcher, quiz
+// filter and formula sheet follow it) and opens /roadmap/track/[paper].
+//
+// The dashboard that used to live here (action cards, status strip, the topic
+// list) moved one level down to the track page — the hub stays a clean choice.
 // All progress is client-side (localStorage) → render after mount.
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Lock, CheckCircle, PlayCircle, Crown, Star, Sparkles, ArrowLeft, CalendarClock, Gauge, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Crown, Play } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { MathText } from '@/components/practice/MathText';
-import { buildRoadmapFromPlan, allRoadmapNodes, DEFAULT_PAPER } from '@/constants/roadmapData';
-import { getPaper, getPlan, type StudyPlan } from '@/lib/study-plan';
-import type { BagrutPaper } from '@/content/bagrut-curriculum';
-import { getSubTopic } from '@/content/lessons';
-import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
-import { nodeStatus, countCompleted, nodeLevelSummary, type NodeLevelSummary } from '@/lib/roadmap-progress';
+import { getTrack, TRACK_PAPERS } from '@/content/tracks';
+import { paperLabel, type BagrutPaper } from '@/content/bagrut-curriculum';
+import { levelsForNodes, trackMainTopics, trackNodes } from '@/lib/track';
+import { getPaper, setPaper } from '@/lib/study-plan';
+import { countCompleted, nodeLevelSummary } from '@/lib/roadmap-progress';
 import { getResumePoint } from '@/lib/roadmap-resume';
-import { computePacing } from '@/lib/pacing';
-import { dueCount, dueCountBySubTopic } from '@/lib/review';
-import { backfillFromMistakes } from '@/lib/review-resolve';
-import { getTopWeakness } from '@/lib/remediation';
-import { getCognitiveState } from '@/lib/cognition';
-import { NextStepCard } from '@/components/roadmap/NextStepCard';
-import { createClient } from '@/lib/supabase/client';
-import { RotateCcw } from 'lucide-react';
-import type { StepStatus, RoadmapNode } from '@/types/roadmap';
 
-const SUBJECT = 'math5';
+const PAPER_BLURB: Record<BagrutPaper, string> = {
+  '571': 'סדרות, הסתברות, גאומטריה, טריגונומטריה, חקירת פונקציות ובעיות קיצון',
+  '572': 'מעריכית, ln, גאומטריה אנליטית, וקטורים ומספרים מרוכבים — עם יסודות החדו"א',
+};
 
-export default function RoadmapPage() {
-  // Active paper (581/582) + plan — read after mount to avoid hydration mismatch.
-  const [paper, setPaperState] = useState<BagrutPaper>(DEFAULT_PAPER);
-  const [plan, setPlan] = useState<StudyPlan | null>(null);
-  const roadmap = useMemo(() => buildRoadmapFromPlan(plan, paper), [plan, paper]);
-  const allNodes = useMemo(() => allRoadmapNodes(paper), [paper]);
+export default function RoadmapHubPage() {
+  // Everything content-derived is pure → build once.
+  const tracks = useMemo(
+    () =>
+      TRACK_PAPERS.map((paper) => {
+        const tree = getTrack(paper);
+        return { paper, tree, groups: trackMainTopics(tree), nodes: trackNodes(tree) };
+      }),
+    [],
+  );
+  const levelsBySub = useMemo(() => levelsForNodes(tracks.flatMap((t) => t.nodes)), [tracks]);
 
-  // Levels per node are pure (content-derived) → build once.
-  const levelsBySub = useMemo(() => {
-    const map: Record<string, RoadmapLevel[]> = {};
-    for (const n of allNodes) {
-      const st = getSubTopic(SUBJECT, n.topic, n.subId);
-      map[n.subId] = st ? buildSubTopicLevels(SUBJECT, n.topic, st) : [];
-    }
-    return map;
-  }, [allNodes]);
-
-  // localStorage read only after mount (avoids hydration mismatch).
   const [ready, setReady] = useState(false);
+  const [active, setActive] = useState<BagrutPaper | null>(null);
   const [syncTick, setSyncTick] = useState(0);
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   useEffect(() => {
-    backfillFromMistakes(); // seed the review queue from past mistakes (once)
     setReady(true);
-    setPaperState(getPaper() ?? DEFAULT_PAPER);
-    setPlan(getPlan());
-    // The AppChrome paper switcher dispatches this so the map re-renders live.
-    const onPaperChange = () => {
-      setPaperState(getPaper() ?? DEFAULT_PAPER);
-      setPlan(getPlan());
-    };
-    // A cross-device pull just merged new progress into localStorage → re-read.
+    setActive(getPaper());
+    const onPaperChange = () => setActive(getPaper());
     const onSynced = () => {
-      setPaperState(getPaper() ?? DEFAULT_PAPER);
-      setPlan(getPlan());
+      setActive(getPaper());
       setSyncTick((t) => t + 1);
     };
     window.addEventListener('bagrut-paper-changed', onPaperChange);
     window.addEventListener('bagrut-state-synced', onSynced);
-    createClient()
-      .auth.getUser()
-      .then(({ data }) => setSignedIn(!!data.user))
-      .catch(() => setSignedIn(false));
     return () => {
       window.removeEventListener('bagrut-paper-changed', onPaperChange);
       window.removeEventListener('bagrut-state-synced', onSynced);
     };
   }, []);
 
-  // Per-node ladder summaries (depend on stored progress).
-  const summaries = useMemo(() => {
-    const map: Record<string, NodeLevelSummary> = {};
-    if (!ready) return map;
-    for (const n of allNodes) {
-      map[n.subId] = nodeLevelSummary(n.topic, n.subId, levelsBySub[n.subId] ?? []);
-    }
-    return map;
+  // Per-paper progress + resume point (localStorage-derived).
+  const stats = useMemo(
+    () =>
+      tracks.map(({ paper, tree, groups, nodes }) => {
+        if (!ready) return { paper, tree, done: 0, total: nodes.length, pct: 0, mastered: 0, resume: null };
+        const done = countCompleted(nodes);
+        const mastered = nodes.filter((n) => nodeLevelSummary(n.topic, n.subId, levelsBySub[n.subId] ?? []).mastered).length;
+        return {
+          paper,
+          tree,
+          done,
+          total: nodes.length,
+          pct: nodes.length ? Math.round((done / nodes.length) * 100) : 0,
+          mastered,
+          resume: getResumePoint(groups, levelsBySub),
+        };
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, allNodes, levelsBySub, syncTick]);
-
-  const overallDone = ready ? countCompleted(allNodes) : 0;
-  const overallPct = allNodes.length ? Math.round((overallDone / allNodes.length) * 100) : 0;
-  const totalXp = ready ? Object.values(summaries).reduce((s, x) => s + x.xp, 0) : 0;
-  const masteredCount = ready ? Object.values(summaries).filter((x) => x.mastered).length : 0;
-
-  // "Continue where you left off" + exam-date pacing (both localStorage-derived).
-  const resume = useMemo(
-    () => (ready ? getResumePoint(roadmap.mainTopics, levelsBySub) : null),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ready, roadmap, levelsBySub, summaries],
-  );
-  const pacing = useMemo(
-    () => (ready ? computePacing(roadmap.mainTopics, levelsBySub, plan) : null),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ready, roadmap, levelsBySub, plan, summaries],
+    [ready, tracks, levelsBySub, syncTick],
   );
 
-  // Spaced-repetition: how many questions are due for review today.
-  const reviewDue = useMemo(() => (ready ? dueCount() : 0), [ready, syncTick]);
-
-  // The diagnostic engine's single recommendation, for the topic the student is
-  // actually in. It already weighs resume, review and weakness against each
-  // other, so when it speaks it REPLACES those two cards rather than adding a
-  // third — the whole reason lib/cognition/next-step.ts exists.
-  //
-  // It speaks only when it has something the plain cards CANNOT say:
-  //   • 'start'          — the engine's own word for "no evidence yet".
-  //   • 'continue-ladder' — the resume card already says this, and says it
-  //     better: a brand-new student's step here is titled just "המשך", while
-  //     the resume card carries the sub-topic, the rung and its emoji.
-  // Everything else — a prerequisite to repair, a misconception to drill, a
-  // review that outranks continuing — is a measured judgement no other card on
-  // this page can make, and only then is it worth taking their place.
-  const guidance = useMemo(() => {
-    if (!ready || !resume?.topic) return null;
-    const state = getCognitiveState(SUBJECT, resume.topic);
-    if (!state) return null;
-    const kind = state.nextStep.kind;
-    return kind !== 'start' && kind !== 'continue-ladder' ? state : null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, resume?.topic, syncTick, summaries]);
-
-  // The single most worthwhile repair, when there is enough evidence for one.
-  // Null is the normal state for a new student and renders nothing.
-  const fixTarget = useMemo(
-    () => (ready ? getTopWeakness(SUBJECT) : null),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ready, syncTick, summaries],
-  );
-  // ===== which topic section is open =====
-  //
-  // Every topic used to render every one of its steps, always. With 10 topics
-  // of 4-5 steps that is ~44 step cards in one scroll, of which ~40 are LOCKED
-  // — a student opened the product's main screen and scrolled past dozens of
-  // rows reading "🔒 נפתח אחרי שתסיים את…" before finding the one thing they
-  // could actually do. The map showed everything and pointed at nothing.
-  //
-  // Now exactly one topic is open: the one the student is actually in. The
-  // rest collapse to a titled progress row they can open on purpose.
-  //
-  // `undefined` means "the student has not chosen yet", which is different
-  // from `null` ("they closed everything"). Keeping them distinct is what lets
-  // the auto-open follow their progress without an effect that would fight
-  // their clicks — and without setState-in-effect, which this repo's lint bans.
-  const [openOverride, setOpenOverride] = useState<string | null | undefined>(undefined);
-  const autoOpenTopic = resume?.topic ?? roadmap.mainTopics[0]?.topic ?? null;
-  const openTopic = openOverride === undefined ? autoOpenTopic : openOverride;
-  const toggleTopic = (topic: string) =>
-    setOpenOverride((prev) => {
-      const current = prev === undefined ? autoOpenTopic : prev;
-      return current === topic ? null : topic;
-    });
-
-  const dueBySub = useMemo(
-    () => (ready ? dueCountBySubTopic() : {}),
-    [ready, syncTick],
-  );
+  const choose = (paper: BagrutPaper) => {
+    setPaper(paper);
+    setActive(paper);
+    // Let paper-aware surfaces (profile drawer, quiz, formulas) follow the choice.
+    window.dispatchEvent(new Event('bagrut-paper-changed'));
+  };
 
   return (
     <PracticeShell subtitle="מסלול הלמידה" backHref="/" backLabel="בית">
       <div className="space-y-6">
-        {/* The screen used to open with a decorative title and then a 60-line
-            progress panel — a circular gauge, an XP tile and a mastery tile —
-            before the student reached the one button that starts the work. Up
-            to five cards stood between landing here and doing anything.
-
-            The question a student opens this page with is "what do I do now",
-            so the answer goes first and the scoreboard moves below it. The
-            numbers did not get deleted; they got demoted to one strip, which
-            is the weight a status readout should carry next to an action. */}
-        <h1 className="font-display text-xl font-black text-slate-900">
-          מסלול הלמידה שלי
-          <span className="font-normal text-sm text-slate-600"> · {roadmap.label}</span>
-        </h1>
-
-        {/* Repair first. A broken idea outranks retention: practising on top of
-            it spends the evening reinforcing the wrong thing — the same
-            ordering lib/cognition/next-step.ts uses (repair 100 > review 60).
-            Note the review card below drops its "הכי חשוב היום" label whenever
-            this one is showing: two cards claiming top priority is how a
-            student ends up arbitrating between them at 11pm. */}
-        {fixTarget && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-          >
-            <Link
-              href={`/fix/${encodeURIComponent(fixTarget.id)}`}
-              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-rose-600 to-orange-500 shadow-lg shadow-rose-500/25 hover:from-rose-500 hover:to-orange-400 transition-colors"
-            >
-              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl">
-                🛠️
-              </div>
-              <div className="flex-1 min-w-0 text-white">
-                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
-                  הכי חשוב היום
-                </div>
-                <div className="text-sm font-black leading-tight mt-0.5 truncate">
-                  {`מסלול תיקון · ${fixTarget.title}`}
-                </div>
-                <div className="text-[11px] text-white/80 mt-0.5 truncate">
-                  {`${fixTarget.topic} — ${fixTarget.detail}`}
-                </div>
-              </div>
-              <ArrowLeft className="w-5 h-5 text-white group-hover:-translate-x-1 transition-transform flex-shrink-0" />
-            </Link>
-          </motion.div>
-        )}
-
-        {/* The diagnostic engine's single recommendation. It scores the resume
-            point, the review queue and the measured weaknesses on one scale, so
-            it REPLACES the two cards below rather than joining them. The fix
-            card above stays: it is scoped to a possibly different topic and
-            comes from a store the engine is not given. */}
-        {guidance && <NextStepCard state={guidance} />}
-
-        {/* Daily spaced-repetition review — retention, once nothing is broken */}
-        {!guidance && reviewDue > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-          >
-            <Link
-              href="/roadmap/review"
-              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-rose-500 to-orange-500 shadow-lg shadow-rose-500/25 hover:from-rose-400 hover:to-orange-400 transition-colors"
-            >
-              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl">
-                🔁
-              </div>
-              <div className="flex-1 min-w-0 text-white">
-                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
-                  {fixTarget ? 'ואחר כך' : 'הכי חשוב היום'}
-                </div>
-                <div className="text-sm font-black leading-tight mt-0.5">חזרה יומית · {reviewDue} שאלות</div>
-                <div className="text-[11px] text-white/80 mt-0.5">מחזק את מה שכבר למדת כדי שלא יישכח</div>
-              </div>
-              <RotateCcw className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-500 flex-shrink-0" />
-            </Link>
-          </motion.div>
-        )}
-
-        {/* Anonymous students: nudge to sign in so progress isn't device-bound */}
-        {signedIn === false && overallDone > 0 && (
-          <Link
-            href="/signup?next=/roadmap"
-            className="flex items-center gap-2.5 rounded-2xl p-3.5 bg-amber-500/[0.08] border border-amber-500/30 hover:bg-amber-500/[0.12] transition-colors"
-          >
-            <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <span className="text-[12px] text-amber-900 leading-snug flex-1">
-              ההתקדמות שלך שמורה רק במכשיר הזה — <span className="font-black underline">התחבר</span> כדי לא לאבד אותה ולגשת מכל מכשיר.
-            </span>
-          </Link>
-        )}
-
-        {/* Continue where you left off — only when the engine stayed silent */}
-        {!guidance && resume && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-          >
-            {/* indigo/violet-600, not -500: the labels on this card are white at
-                10-14px, and white on indigo-500 is 4.47:1 / on violet-500 4.23:1
-                — both under the 4.5:1 AA floor for small text. 600 gives 6.3:1. */}
-            <Link
-              href={resume.href}
-              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-cyan-700 to-violet-600 shadow-lg shadow-violet-500/30 hover:from-cyan-700 hover:to-violet-500 transition-colors"
-            >
-              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl">
-                {resume.levelEmoji}
-              </div>
-              <div className="flex-1 min-w-0 text-white">
-                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
-                  {resume.reason === 'in-progress'
-                    ? 'המשך מאיפה שהפסקת'
-                    : resume.reason === 'mastery'
-                      ? 'להשלמת שליטה'
-                      : 'הצעד הבא שלך'}
-                </div>
-                <div className="text-sm font-black leading-tight mt-0.5 truncate">
-                  <MathText inline>{resume.title}</MathText>
-                </div>
-                <div className="text-[11px] text-white/80 mt-0.5">
-                  רמת {resume.levelTitle} {resume.levelEmoji}
-                </div>
-              </div>
-              <ArrowLeft className="w-5 h-5 text-white rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
-            </Link>
-          </motion.div>
-        )}
-
-        {/* ===== Status strip =====
-            Progress, XP, mastery and exam pacing used to be two separate
-            panels above the action. They are all answers to "how am I doing",
-            which is a question a student asks AFTER deciding what to do — so
-            they sit here, under the action, as one quiet row instead of two
-            loud cards. */}
-        <div className="surface-premium rounded-2xl p-4 space-y-2.5">
-          <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="font-black text-slate-900">
-              {overallPct}%
-              <span className="font-normal text-slate-600">
-                {' '}· {overallDone} מתוך {allNodes.length} שלבים
-              </span>
-            </span>
-            <span className="flex items-center gap-3 text-xs text-slate-600 shrink-0">
-              <span className="flex items-center gap-1">
-                <Sparkles aria-hidden="true" className="w-3.5 h-3.5 text-violet-700" />
-                {totalXp} XP
-              </span>
-              <span className="flex items-center gap-1">
-                <Crown aria-hidden="true" className="w-3.5 h-3.5 text-amber-600" />
-                {masteredCount}/{allNodes.length}
-              </span>
-            </span>
-          </div>
-
-          <div className="h-1.5 bg-slate-900/[0.06] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-l from-cyan-700 to-violet-600 transition-all duration-500"
-              style={{ width: `${overallPct}%` }}
-            />
-          </div>
-
-          {pacing && pacing.status !== 'no-date' && (
-            <div className="flex items-start gap-2 pt-0.5">
-              {pacing.status === 'behind' ? (
-                <Gauge aria-hidden="true" className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-              ) : (
-                <CalendarClock aria-hidden="true" className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
-              )}
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {pacing.daysLeft > 0 && pacing.status !== 'done' && (
-                  <span className="font-bold text-slate-800">
-                    {pacing.daysLeft} ימים לבגרות · יעד היום: {pacing.todayTarget} שאלות.{' '}
-                  </span>
-                )}
-                {pacing.message}
-              </p>
-            </div>
-          )}
+        <div className="space-y-1">
+          <h1 className="font-display text-2xl font-black text-slate-900">מסלול הלמידה שלי</h1>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            בחר את השאלון שאתה מתכונן אליו. כל שאלון הוא מסלול מסודר — נושא אחרי נושא, שלב אחרי שלב, מ״לומדים״ ועד רמת בגרות. אפשר לעבור בין השאלונים בכל רגע.
+          </p>
         </div>
 
-        {/* Main-topic sections */}
-        {roadmap.mainTopics.map((mt, mtIdx) => {
-          const showDivider =
-            roadmap.planTopicCount > 0 &&
-            roadmap.planTopicCount < roadmap.mainTopics.length &&
-            mtIdx === roadmap.planTopicCount;
-          return (
-          <div key={`wrap-${mt.topic}`}>
-          {showDivider && (
-            <div className="flex items-center gap-3 py-1 mb-3">
-              <div className="h-px flex-1 bg-slate-900/10" />
-              <span className="text-[11px] font-black tracking-widest text-slate-400 uppercase">נושאים נוספים</span>
-              <div className="h-px flex-1 bg-slate-900/10" />
-            </div>
-          )}
-          {(() => {
-          const topicDone = ready ? countCompleted(mt.nodes) : 0;
-          const topicPct = mt.nodes.length ? Math.round((topicDone / mt.nodes.length) * 100) : 0;
-          const isOpen = openTopic === mt.topic;
-          return (
-            <motion.section
-              key={mt.topic}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="glass-card rounded-3xl p-5 space-y-4"
-            >
-              {/* The whole header is the disclosure control, so the tap target
-                  is the row a student would aim at anyway. */}
-              <button
-                onClick={() => toggleTopic(mt.topic)}
-                aria-expanded={isOpen}
-                aria-controls={`topic-steps-${mt.topic}`}
-                className="w-full text-right space-y-4 rounded-xl"
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 perspective-1500">
+          {stats.map(({ paper, tree, done, total, pct, mastered, resume }, i) => {
+            const isActive = active === paper;
+            const complete = total > 0 && done === total;
+            return (
+              <motion.div
+                key={paper}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: 'easeOut', delay: i * 0.06 }}
               >
-                <div className="flex items-center gap-3">
-                  <span aria-hidden="true" className="text-2xl flex-shrink-0">{mt.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-black text-slate-900">{mt.displayName}</div>
-                    <div className="text-[11px] text-slate-500">
-                      {topicDone}/{mt.nodes.length} שלבים
+                <Link
+                  href={`/roadmap/track/${paper}`}
+                  onClick={() => choose(paper)}
+                  aria-current={isActive ? 'true' : undefined}
+                  className={`card-3d-strong glass-card group block h-full rounded-3xl p-5 text-right transition-colors ${
+                    isActive ? 'ring-2 ring-violet-500/40 border-violet-500/50' : 'hover:border-violet-500/40'
+                  }`}
+                >
+                  {/* Title row */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase">מסלול</div>
+                      <h2 className="font-display text-2xl font-black text-slate-900 leading-tight">{paperLabel(paper)}</h2>
+                      <p className="text-[11px] text-slate-600 mt-1 leading-snug">{PAPER_BLURB[paper]}</p>
+                    </div>
+                    {isActive && (
+                      <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-violet-600 text-white shrink-0">פעיל</span>
+                    )}
+                  </div>
+
+                  {/* Topics of the track */}
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {tree.topics.map((t) => (
+                      <span key={t.id} className="chip-primary inline-flex items-center gap-1 text-[10px] font-bold rounded-full px-2 py-0.5">
+                        <span aria-hidden="true">{t.emoji}</span>
+                        {t.title}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Progress */}
+                  <div className="mt-4 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-black text-slate-900">
+                        {pct}%
+                        <span className="font-normal text-slate-600"> · {done} מתוך {total} שלבים</span>
+                      </span>
+                      {mastered > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 font-bold">
+                          <Crown aria-hidden="true" className="w-3.5 h-3.5" />
+                          {mastered}
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className="h-1.5 bg-slate-900/[0.06] rounded-full overflow-hidden"
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={pct}
+                      aria-label={`התקדמות ב${paperLabel(paper)}`}
+                    >
+                      <div
+                        className={`h-full transition-all duration-500 ${
+                          complete ? 'bg-gradient-to-l from-emerald-500 to-teal-500' : 'bg-gradient-to-l from-cyan-700 to-violet-600'
+                        }`}
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
-                  <span className="text-sm font-black text-violet-700">{topicPct}%</span>
-                  <ChevronDown
-                    aria-hidden="true"
-                    className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                  />
-                </div>
-                <div className="h-1.5 bg-slate-900/[0.03] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-l from-emerald-500 to-teal-500 transition-all duration-500"
-                    style={{ width: `${topicPct}%` }}
-                  />
-                </div>
-              </button>
 
-              {isOpen && (
-              <>
-              {/* Vertical timeline of sub-topic nodes */}
-              <div id={`topic-steps-${mt.topic}`} className="relative pr-5">
-                <div className="absolute right-[7px] top-3 bottom-3 w-0.5 bg-slate-900/10" />
-                <div className="space-y-2">
-                  {mt.nodes.map((node, i) => {
-                    const prev = i > 0 ? mt.nodes[i - 1] : null;
-                    const status: StepStatus = ready
-                      ? nodeStatus(node.topic, node.subId, prev ? prev.subId : null)
-                      : i === 0
-                        ? 'UNLOCKED'
-                        : 'LOCKED';
-                    return (
-                      <RoadmapNodeCard
-                        key={node.subId}
-                        node={node}
-                        status={status}
-                        summary={ready ? summaries[node.subId] : null}
-                        levelCount={levelsBySub[node.subId]?.length ?? 0}
-                        prevTitle={prev?.title}
-                        stepNumber={i + 1}
-                        reviewDue={dueBySub[node.subId] ?? 0}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
+                  {/* Continue line + CTA */}
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <div className="min-w-0 text-[11px] text-slate-600 flex items-center gap-1.5">
+                      <Play aria-hidden="true" className="w-3 h-3 text-violet-700 shrink-0" />
+                      {resume ? (
+                        <span className="truncate chat-md">
+                          {resume.reason === 'in-progress' ? 'המשך: ' : resume.reason === 'mastery' ? 'להשלמת שליטה: ' : 'מתחילים: '}
+                          <MathText inline>{resume.title}</MathText>
+                          <span className="text-slate-400"> · רמת {resume.levelTitle} {resume.levelEmoji}</span>
+                        </span>
+                      ) : (
+                        <span className="truncate">{ready && complete ? 'המסלול הושלם — כל הכבוד! 👑' : 'מתחילים מהנושא הראשון'}</span>
+                      )}
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-xs font-black text-violet-700 shrink-0">
+                      כניסה למסלול
+                      <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    </span>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
 
-              {/* Reference + advanced course for this topic (formulas, worked
-                  examples, Pro course) — kept reachable from the spine. */}
-              <Link
-                href={`/practice/${SUBJECT}/${encodeURIComponent(mt.topic)}`}
-                className="block text-center text-[11px] text-slate-500 hover:text-violet-700 transition-colors pt-1"
-              >
-                📚 חומרי עזר וקורס מתקדם בנושא
-              </Link>
-              </>
-              )}
-            </motion.section>
-          );
-          })()}
-          </div>
-          );
-        })}
-
-        <p className="text-center text-[11px] text-slate-500 leading-relaxed pt-1">
-          {signedIn
-            ? 'ההתקדמות שלך מסתנכרנת לחשבון וזמינה בכל מכשיר. כל שלב הוא סולם של רמות — מ"לומדים" ועד "בגרות".'
-            : 'ההתקדמות נשמרת במכשיר הזה. התחבר כדי לשמור אותה בכל מכשיר. כל שלב הוא סולם של רמות — מ"לומדים" ועד "בגרות".'}
+        <p className="text-center text-[11px] text-slate-500 leading-relaxed">
+          נושאים משותפים (פונקציות, טריגונומטריה, חדו״א) נספרים בשני המסלולים — ההתקדמות בהם משותפת. כל שלב הוא סולם של רמות, מ״לומדים״ ועד ״בגרות״.
         </p>
       </div>
     </PracticeShell>
-  );
-}
-
-function RoadmapNodeCard({
-  node,
-  status,
-  summary,
-  levelCount,
-  prevTitle,
-  stepNumber,
-  reviewDue,
-}: {
-  node: RoadmapNode;
-  status: StepStatus;
-  summary: NodeLevelSummary | null;
-  levelCount: number;
-  prevTitle?: string;
-  stepNumber: number;
-  reviewDue: number;
-}) {
-  const mastered = !!summary?.mastered;
-  const done = status === 'COMPLETED';
-  const locked = status === 'LOCKED';
-  const cleared = summary?.clearedCount ?? 0;
-  const total = summary?.totalLevels ?? levelCount;
-  const inProgress = !locked && !done && cleared > 0;
-
-  const accent = mastered
-    ? 'border-amber-400/50 bg-amber-100/70'
-    : done
-      ? 'border-emerald-500/35 bg-emerald-100/60'
-      : locked
-        ? 'border-slate-900/[0.06] bg-white/40 opacity-60'
-        : 'border-violet-500/35 bg-[var(--primary-container)]/70 hover:border-violet-500/60';
-
-  const iconBg = mastered
-    ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white'
-    : done
-      ? 'bg-emerald-500/25 text-emerald-800'
-      : locked
-        ? 'bg-slate-900/[0.03] text-slate-500'
-        : 'bg-gradient-to-br from-violet-500 to-violet-600 text-white';
-
-  // One-line status under the title.
-  const statusLine = locked
-    ? `🔒 נפתח אחרי שתסיים את "${prevTitle ?? 'השלב הקודם'}"`
-    : mastered
-      ? '👑 שליטה מלאה בכל הרמות'
-      : done
-        ? `✓ הליבה הושלמה · ${cleared}/${total} רמות`
-        : inProgress
-          ? `רמה ${Math.min(cleared + 1, total)} מתוך ${total} · ממשיכים לטפס`
-          : node.tagline;
-
-  const content = (
-    <div className={`relative rounded-2xl border p-3 transition-all ${accent}`}>
-      <div className="flex items-start gap-3">
-        <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg} ${
-            !locked && !done && !mastered ? 'ring-2 ring-violet-400/40 animate-pulse' : ''
-          }`}
-        >
-          {mastered ? (
-            <Crown className="w-5 h-5" />
-          ) : done ? (
-            <CheckCircle className="w-5 h-5" />
-          ) : locked ? (
-            <Lock className="w-4 h-4" />
-          ) : (
-            <span className="text-lg">{node.emoji ?? '📘'}</span>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-[10px] font-black tracking-widest text-slate-500 uppercase">שלב {stepNumber}</div>
-            {!locked && total > 0 && (
-              <div className="flex items-center gap-1.5">
-                {/* rung dots */}
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: total }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        i < cleared ? (mastered ? 'bg-amber-500' : 'bg-violet-500') : 'bg-slate-900/15'
-                      }`}
-                    />
-                  ))}
-                </div>
-                {summary && summary.stars > 0 && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-600">
-                    <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
-                    {summary.stars}
-                  </span>
-                )}
-                {reviewDue > 0 && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-rose-600 bg-rose-500/10 border border-rose-500/25 rounded-full px-1.5">
-                    🔁 {reviewDue}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="text-sm font-black text-slate-900 chat-md">
-            <MathText inline>{node.title}</MathText>
-          </div>
-          <div className="text-[11px] text-slate-600 mt-0.5 line-clamp-1 chat-md">
-            <MathText inline>{statusLine}</MathText>
-          </div>
-        </div>
-        {!locked && !done && !mastered && <PlayCircle className="w-4 h-4 text-violet-700 flex-shrink-0 mt-1" />}
-      </div>
-    </div>
-  );
-
-  if (locked) return content;
-  return (
-    <Link href={`/roadmap/${encodeURIComponent(node.subId)}`} className="block">
-      {content}
-    </Link>
   );
 }

@@ -38,12 +38,22 @@ export function SubTopicLadder({
   subTopic,
   nextSubId,
   nextTitle,
+  nextHref,
+  mapHref = '/roadmap',
+  mapLabel = 'חזרה למפת הלמידה',
 }: {
   subject: string;
   topic: string;
   subTopic: SubTopic;
   nextSubId: string | null;
   nextTitle?: string;
+  /** Where "המשך לשלב הבא" goes (defaults to the plain ladder URL of nextSubId);
+   *  the page passes a URL that keeps the track context. */
+  nextHref?: string;
+  /** Where "back to the map" goes — the track-topic page when the student came
+   *  from one, else the roadmap hub. */
+  mapHref?: string;
+  mapLabel?: string;
 }) {
   const levels = useMemo(() => buildSubTopicLevels(subject, topic, subTopic), [subject, topic, subTopic]);
 
@@ -246,9 +256,11 @@ export function SubTopicLadder({
         </div>
       </div>
 
-      {/* The ladder — rendered top rung first so it visually "climbs" upward */}
+      {/* The ladder — רמה 1 (📖 לומדים) at the TOP, 🎓 בגרות at the bottom, so it
+          reads in the order it is climbed (owner's decision, 2026-08-17; it used
+          to be reversed to "climb upward", which put the last rung first). */}
       <div className="space-y-2.5">
-        {[...levels].reverse().map((level) => {
+        {levels.map((level) => {
           const status = statusOf(level);
           const isCurrent = ready && current?.index === level.index && status !== 'COMPLETED';
           const st = ready ? levelStars(topic, subTopic.id, level.kind) : 0;
@@ -285,15 +297,18 @@ export function SubTopicLadder({
         <div className="space-y-2">
           {nextSubId ? (
             <Link
-              href={`/roadmap/${encodeURIComponent(nextSubId)}`}
+              href={nextHref ?? `/roadmap/${encodeURIComponent(nextSubId)}`}
               className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-5 py-3.5 rounded-2xl font-black text-white shadow-lg shadow-emerald-500/30 transition-colors"
             >
-              <span>המשך לשלב הבא{nextTitle ? `: ${nextTitle}` : ''}</span>
+              <span className="chat-md">
+                המשך לשלב הבא{nextTitle ? ': ' : ''}
+                {nextTitle && <MathText inline>{nextTitle}</MathText>}
+              </span>
               <ArrowLeft className="w-4 h-4" />
             </Link>
           ) : (
             <Link
-              href="/roadmap"
+              href={mapHref}
               className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-emerald-600 to-teal-600 px-5 py-3.5 rounded-2xl font-black text-white shadow-lg shadow-emerald-500/30"
             >
               סיימת את הנושא! חזרה למפה
@@ -302,8 +317,8 @@ export function SubTopicLadder({
         </div>
       )}
 
-      <Link href="/roadmap" className="block text-center text-xs text-slate-500 hover:text-violet-700 py-1">
-        חזרה למפת הלמידה
+      <Link href={mapHref} className="block text-center text-xs text-slate-500 hover:text-violet-700 py-1">
+        {mapLabel}
       </Link>
     </div>
   );

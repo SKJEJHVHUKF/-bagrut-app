@@ -16,7 +16,7 @@
  */
 
 import type { BagrutPaper } from '../content/bagrut-curriculum';
-import { safeSetJSON } from '@/lib/storage';
+import { safeSet, safeSetJSON } from '@/lib/storage';
 
 const STORAGE_KEY = 'bagrut-study-plan-v1';
 const UNLOCK_THRESHOLD = 80; // % completion required to unlock next topic
@@ -171,13 +171,29 @@ function normalizePaper(raw: unknown): BagrutPaper | null {
   return null;
 }
 
+/** Device-local fallback for the active paper when there is no plan yet (the
+ *  /roadmap hub lets an anonymous student pick 571/572 before onboarding).
+ *  The plan wins whenever it exists — it is the copy that syncs across devices;
+ *  this key is only what makes the ladder's "back to topic" link and the hub's
+ *  "active" highlight work for a plan-less student. `bagrut-` prefix so
+ *  `claimForUser` wipes it on account switch like every other local key. */
+const PAPER_KEY = 'bagrut-paper-v1';
+
 /** The paper the student is focused on, or null if never chosen (= no filter). */
 export function getPaper(): BagrutPaper | null {
-  return normalizePaper(getPlan()?.paper as unknown);
+  const fromPlan = normalizePaper(getPlan()?.paper as unknown);
+  if (fromPlan) return fromPlan;
+  try {
+    return normalizePaper(localStorage.getItem(PAPER_KEY));
+  } catch {
+    return null;
+  }
 }
 
-/** Update the active paper on an existing plan (e.g. from the profile panel). */
+/** Update the active paper — on the plan when one exists (synced), and always
+ *  on the device-local fallback key so a plan-less student's choice sticks. */
 export function setPaper(paper: BagrutPaper): void {
+  safeSet(PAPER_KEY, paper);
   const plan = getPlan();
   if (!plan) return;
   plan.paper = paper;

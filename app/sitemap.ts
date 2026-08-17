@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { allLessonKeys } from '@/content/lessons';
+import { getTrack, TRACK_PAPERS } from '@/content/tracks';
 import { SITE_URL } from '@/lib/site';
 
 /**
@@ -35,5 +36,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...topicPages];
+  // The study tracks (/roadmap → 571/572 → topic tiles) are public and their
+  // titles/tiles are static content; only progress is client-side.
+  const trackPages: MetadataRoute.Sitemap = TRACK_PAPERS.flatMap((paper) => [
+    { url: `${SITE_URL}/roadmap/track/${paper}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
+    ...getTrack(paper).topics.map((t) => ({
+      url: `${SITE_URL}/roadmap/track/${paper}/${encodeURIComponent(t.id)}`,
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+  ]);
+
+  return [...staticPages, ...trackPages, ...topicPages];
 }

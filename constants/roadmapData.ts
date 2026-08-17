@@ -16,7 +16,6 @@ import {
   MATH5_CURRICULUM,
   type BagrutPaper,
 } from '@/content/bagrut-curriculum';
-import type { StudyPlan } from '@/lib/study-plan';
 import type { RoadmapVariant, RoadmapMainTopic, RoadmapNode } from '@/types/roadmap';
 
 const SUBJECT = 'math5';
@@ -64,32 +63,10 @@ export function allRoadmapNodes(paper: BagrutPaper): RoadmapNode[] {
   return buildRoadmap(paper).mainTopics.flatMap((mt) => mt.nodes);
 }
 
-export type PlannedRoadmap = RoadmapVariant & {
-  /** How many leading main-topics are the ones the student chose in onboarding
-   *  (the rest follow after a "נושאים נוספים" divider — content is never hidden). */
-  planTopicCount: number;
-};
-
-/**
- * Build the roadmap ordered by the student's plan: the topics they picked come
- * first, in the order they arranged them; every other in-paper topic follows
- * after a divider. Falls back to the plain curriculum order when there's no
- * plan. This is what finally makes the onboarding choices drive the map.
- */
-export function buildRoadmapFromPlan(plan: StudyPlan | null, paper: BagrutPaper): PlannedRoadmap {
-  const base = buildRoadmap(paper);
-  const planOrder = (plan?.topics ?? [])
-    .filter((t) => t.subject === SUBJECT)
-    .map((t) => t.topic);
-  if (planOrder.length === 0) {
-    return { ...base, planTopicCount: base.mainTopics.length };
-  }
-  const inPlan = base.mainTopics
-    .filter((mt) => planOrder.includes(mt.topic))
-    .sort((a, b) => planOrder.indexOf(a.topic) - planOrder.indexOf(b.topic));
-  const rest = base.mainTopics.filter((mt) => !planOrder.includes(mt.topic));
-  return { ...base, mainTopics: [...inPlan, ...rest], planTopicCount: inPlan.length };
-}
+// `buildRoadmapFromPlan` (plan-chosen topics first, the rest after a divider)
+// was removed 2026-08-17: the /roadmap pages, the daily plan and /my-plan now
+// walk the STUDY TRACK (content/tracks), whose order is the syllabus order —
+// 571 from the owner's document, 572 from the curriculum — for every student.
 
 /** Every math5 topic that has sub-topics (paper-independent). */
 function allTopicsWithSubTopics(): string[] {

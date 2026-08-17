@@ -23,14 +23,14 @@
 
 import { buildDailyPlan, type DailyPlan } from '@/lib/daily-plan';
 import { getPlan, getPaper } from '@/lib/study-plan';
-import { buildRoadmapFromPlan, allRoadmapNodes, DEFAULT_PAPER } from '@/constants/roadmapData';
-import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
+import { DEFAULT_PAPER } from '@/constants/roadmapData';
+import { getTrack } from '@/content/tracks';
+import { trackLevelsBySub, trackMainTopics } from '@/lib/track';
 import { getResumePoint } from '@/lib/roadmap-resume';
 import { predictOverall, topImpactTopics } from '@/lib/prediction';
 import { getWeaknesses } from '@/lib/remediation';
 import { dueCount } from '@/lib/review';
 import { computePacing } from '@/lib/pacing';
-import { getSubTopic } from '@/content/lessons';
 
 /**
  * Today's plan, or null when there is no study plan yet (a visitor who has not
@@ -45,15 +45,13 @@ export function buildTodayPlan(): DailyPlan | null {
     if (!plan) return null;
 
     const paper = getPaper() ?? DEFAULT_PAPER;
-    const roadmap = buildRoadmapFromPlan(plan, paper);
+    // The study track (content/tracks) — the same tree the /roadmap pages walk,
+    // so "next step" here and there agree.
+    const tree = getTrack(paper);
+    const mainTopics = trackMainTopics(tree);
+    const levelsBySub = trackLevelsBySub(tree);
 
-    const levelsBySub: Record<string, RoadmapLevel[]> = {};
-    for (const n of allRoadmapNodes(paper)) {
-      const st = getSubTopic('math5', n.topic, n.subId);
-      levelsBySub[n.subId] = st ? buildSubTopicLevels('math5', n.topic, st) : [];
-    }
-
-    const resume = getResumePoint(roadmap.mainTopics, levelsBySub);
+    const resume = getResumePoint(mainTopics, levelsBySub);
 
     return buildDailyPlan({
       target: plan.targetGrade ?? null,
@@ -67,7 +65,7 @@ export function buildTodayPlan(): DailyPlan | null {
       weaknesses: getWeaknesses('math5'),
       dueCount: dueCount(),
       resume: resume ? { href: resume.href, title: resume.title } : null,
-      pacing: computePacing(roadmap.mainTopics, levelsBySub, plan),
+      pacing: computePacing(mainTopics, levelsBySub, plan),
     });
   } catch {
     return null;

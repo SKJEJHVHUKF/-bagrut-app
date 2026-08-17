@@ -34,9 +34,9 @@ import { getWeaknesses } from '@/lib/remediation';
 import { dueCount } from '@/lib/review';
 import { getResumePoint } from '@/lib/roadmap-resume';
 import { computePacing } from '@/lib/pacing';
-import { buildRoadmapFromPlan, allRoadmapNodes, DEFAULT_PAPER } from '@/constants/roadmapData';
-import { getSubTopic } from '@/content/lessons';
-import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
+import { DEFAULT_PAPER } from '@/constants/roadmapData';
+import { getTrack } from '@/content/tracks';
+import { trackLevelsBySub, trackMainTopics } from '@/lib/track';
 import { topicLockReason, isProUser, isAdmin, type UserLike } from '@/lib/access';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
@@ -433,13 +433,12 @@ function TodaySection({ plan, onTargetSet }: { plan: StudyPlan; onTargetSet: () 
   // control below.
   useEffect(() => {
     const paper = getPaper() ?? DEFAULT_PAPER;
-    const roadmap = buildRoadmapFromPlan(plan, paper);
-    const levelsBySub: Record<string, RoadmapLevel[]> = {};
-    for (const n of allRoadmapNodes(paper)) {
-      const st = getSubTopic('math5', n.topic, n.subId);
-      levelsBySub[n.subId] = st ? buildSubTopicLevels('math5', n.topic, st) : [];
-    }
-    const resume = getResumePoint(roadmap.mainTopics, levelsBySub);
+    // The study track (content/tracks) — the same tree /roadmap walks, so the
+    // "next step" here and on the track page agree.
+    const tree = getTrack(paper);
+    const mainTopics = trackMainTopics(tree);
+    const levelsBySub = trackLevelsBySub(tree);
+    const resume = getResumePoint(mainTopics, levelsBySub);
     setDaily(
       buildDailyPlan({
         target: plan.targetGrade ?? null,
@@ -454,7 +453,7 @@ function TodaySection({ plan, onTargetSet }: { plan: StudyPlan; onTargetSet: () 
         weaknesses: getWeaknesses('math5'),
         dueCount: dueCount(),
         resume: resume ? { href: resume.href, title: resume.title } : null,
-        pacing: computePacing(roadmap.mainTopics, levelsBySub, plan),
+        pacing: computePacing(mainTopics, levelsBySub, plan),
       }),
     );
   }, [plan]);

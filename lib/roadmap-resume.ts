@@ -64,10 +64,12 @@ export function getResumePoint(
   // Pass 1 — the first node whose CORE rungs aren't done yet (the main climb).
   let firstNode: { node: RoadmapNode; level: RoadmapLevel } | null = null;
   for (const mt of mainTopics) {
-    let prevSubId: string | null = null;
+    // The predecessor may belong to a different lesson topic when `mainTopics`
+    // is a track (content/tracks) — pass its own topic for the progress lookup.
+    let prev: RoadmapNode | null = null;
     for (const node of mt.nodes) {
-      const status = nodeStatus(node.topic, node.subId, prevSubId);
-      prevSubId = node.subId;
+      const status = nodeStatus(node.topic, node.subId, prev?.subId ?? null, prev?.topic);
+      prev = node;
       const levels = levelsBySub[node.subId] ?? [];
       if (levels.length === 0) continue;
       if (!firstNode) firstNode = { node, level: levels[0] };

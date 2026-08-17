@@ -366,12 +366,23 @@ export function isNodePassed(topic: string, subId: string): boolean {
 
 /**
  * Derive a node's status on the map. `prevSubId` is the previous node in the
- * SAME topic (null if it's the topic's first node → always unlocked).
+ * same sequence (null if it's the first node → always unlocked).
+ *
+ * `prevTopic` is the topic that OWNS the previous node's progress record. It
+ * defaults to `topic` — right for the classic per-lesson map — but a track
+ * topic (content/tracks) can chain sub-topics from different lessons
+ * ("תחום הגדרה" from פונקציות → "כללי גזירה" from חשבון דיפרנציאלי), and
+ * looking the predecessor up under the wrong topic would lock the node forever.
  */
-export function nodeStatus(topic: string, subId: string, prevSubId: string | null): StepStatus {
+export function nodeStatus(
+  topic: string,
+  subId: string,
+  prevSubId: string | null,
+  prevTopic: string = topic,
+): StepStatus {
   if (isNodePassed(topic, subId)) return 'COMPLETED';
   if (prevSubId === null) return 'UNLOCKED';
-  if (isNodePassed(topic, prevSubId)) return 'UNLOCKED';
+  if (isNodePassed(prevTopic, prevSubId)) return 'UNLOCKED';
   return 'LOCKED';
 }
 
