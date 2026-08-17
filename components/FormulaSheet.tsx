@@ -17,13 +17,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sigma, X, ChevronDown, ExternalLink } from 'lucide-react';
 import { MathText } from './practice/MathText';
 import type { Formula } from '@/content/lessons/types';
-import { getLesson, allLessonKeys } from '@/content/lessons';
-import {
-  curriculumIndex,
-  isTopicInActivePaper,
-  getTopicMapping,
-  type BagrutPaper,
-} from '@/content/bagrut-curriculum';
+// NO static import of @/content/lessons. This drawer is mounted by the root
+// layout on every page, and a static ESM import is resolved at build time — so
+// the whole lesson corpus shipped in the first-load JS of every route,
+// including /login, for a drawer most sessions never open. It is fetched when
+// the drawer opens instead.
+import type { getLesson as GetLesson, allLessonKeys as AllLessonKeys } from '@/content/lessons';
+// Same reason as the lessons import above: these three read MATH5_CURRICULUM,
+// and all three are used only inside the open-the-drawer effect.
+import type { BagrutPaper } from '@/content/bagrut-curriculum';
 import { getPaper } from '@/lib/study-plan';
 
 // Study surfaces where the formula sheet is useful. Hidden everywhere else
@@ -47,7 +49,11 @@ function currentTopicFromPath(path: string): { subject: string; topic: string } 
 }
 
 /** Lesson-level + sub-topic-level formulas for a topic, de-duped by latex. */
-function formulasForTopic(subject: string, topic: string): Formula[] {
+function formulasForTopic(
+  getLesson: typeof GetLesson,
+  subject: string,
+  topic: string,
+): Formula[] {
   const lesson = getLesson(subject, topic);
   if (!lesson) return [];
   const seen = new Set<string>();
@@ -97,24 +103,41 @@ export default function FormulaSheet() {
 
   // Build the topic → formulas list. Filter to the active paper, but always
   // keep the topic the student is currently on even if it's the other paper.
-  const topics = useMemo<TopicFormulas[]>(() => {
-    if (!open) return [];
-    return allLessonKeys()
-      .filter((k) => k.subject === 'math5')
-      .filter(
-        (k) =>
-          !paper ||
-          isTopicInActivePaper(k.topic, paper) ||
-          (current != null && k.topic === current.topic)
-      )
-      .sort((a, b) => curriculumIndex(a.topic) - curriculumIndex(b.topic))
-      .map((k) => ({
-        topic: k.topic,
-        emoji: getTopicMapping(k.topic)?.emoji ?? '📐',
-        formulas: formulasForTopic(k.subject, k.topic),
-      }))
-      .filter((t) => t.formulas.length > 0);
-  }, [open, paper, current]);
+  // Depends on `current?.topic`, not `current`: currentTopicFromPath builds a
+  // fresh object every render, and an effect that setStates on an unstable
+  // object dependency never stops.
+  const currentTopicName = current?.topic ?? null;
+  const [topics, setTopics] = useState<TopicFormulas[]>([]);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void Promise.all([import('@/content/lessons'), import('@/content/bagrut-curriculum')]).then(
+      ([lessons, curriculum]) => {
+      if (cancelled) return;
+      const { allLessonKeys, getLesson } = lessons;
+      const { curriculumIndex, isTopicInActivePaper, getTopicMapping } = curriculum;
+      const built = (allLessonKeys as typeof AllLessonKeys)()
+        .filter((k) => k.subject === 'math5')
+        .filter(
+          (k) =>
+            !paper ||
+            isTopicInActivePaper(k.topic, paper) ||
+            (currentTopicName != null && k.topic === currentTopicName)
+        )
+        .sort((a, b) => curriculumIndex(a.topic) - curriculumIndex(b.topic))
+        .map((k) => ({
+          topic: k.topic,
+          emoji: getTopicMapping(k.topic)?.emoji ?? '📐',
+          formulas: formulasForTopic(getLesson, k.subject, k.topic),
+        }))
+        .filter((t) => t.formulas.length > 0);
+      setTopics(built);
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [open, paper, currentTopicName]);
 
   if (!show) return null;
 

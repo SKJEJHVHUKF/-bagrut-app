@@ -48,7 +48,14 @@ import {
   hasPlan,
   type UnitLevel,
 } from '@/lib/study-plan';
-import { paperLabel, type BagrutPaper } from '@/content/bagrut-curriculum';
+// type-only: a value import here would drag MATH5_CURRICULUM (the whole
+// syllabus table) into every page's first load — AppChrome is in the root
+// layout. `paperLabel` is inlined below; it is a one-line template.
+import type { BagrutPaper } from '@/content/bagrut-curriculum';
+
+/** Inline copy of content/bagrut-curriculum's paperLabel (a one-liner) — see
+ *  the import note above for why the real one is not imported. */
+const paperLabel = (paper: BagrutPaper) => `שאלון ${paper}`;
 
 // Public / auth routes where the floating avatar must NOT appear.
 // Hide only on the auth/onboarding flows. On the landing ("/") the avatar

@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
-import { searchAll, KIND_LABELS, type SearchItem, type SearchKind } from '@/lib/search-index';
+import { searchAll, loadIndex, KIND_LABELS, type SearchItem, type SearchKind } from '@/lib/search-index';
 
 const KIND_ORDER: SearchKind[] = ['topic', 'subtopic', 'formula', 'bagrut'];
 
@@ -47,7 +47,14 @@ export default function GlobalSearch() {
     }
   }, [open]);
 
-  const grouped = open ? searchAll(query) : new Map<SearchKind, SearchItem[]>();
+  // The index (and the content modules behind it) is fetched on first open, so
+  // a student who never presses Ctrl+K never downloads the corpus.
+  const [index, setIndex] = useState<SearchItem[] | null>(null);
+  useEffect(() => {
+    if (open && !index) void loadIndex().then(setIndex).catch(() => setIndex([]));
+  }, [open, index]);
+
+  const grouped = open && index ? searchAll(query, index) : new Map<SearchKind, SearchItem[]>();
   const flat: SearchItem[] = KIND_ORDER.flatMap((k) => grouped.get(k) ?? []);
   const clampedSelected = Math.min(selected, Math.max(0, flat.length - 1));
 

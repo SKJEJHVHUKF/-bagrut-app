@@ -36,7 +36,6 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { X, Send, Loader2, Sparkles, ArrowLeft, GraduationCap, ShieldCheck, CalendarCheck } from 'lucide-react';
-import { buildStudentSnapshot } from '@/lib/tutor-context';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
 import {
   getTutorFocus,
@@ -46,7 +45,17 @@ import {
   type TutorFocus,
 } from '@/lib/tutor-presence';
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
-import { buildTutorGreeting, type TutorGreeting } from '@/lib/tutor-greeting';
+// lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
+// two call sites below, not here. Both pull the whole content corpus behind
+// them — tutor-context via lib/cognition, tutor-greeting via
+// lib/daily-plan-client — and this bubble is mounted by the ROOT LAYOUT, so a
+// static import put the entire lesson bank in the first-load JS of every page,
+// including /login, for a drawer most sessions never open.
+//
+// Deferring here rather than making those libs async on purpose: the call
+// sites are already an async send handler and a click handler, so nothing else
+// changes — no signatures, no other pages, no test rewrites.
+import type { TutorGreeting } from '@/lib/tutor-greeting';
 import type { ResolvedSuggestion } from '@/lib/agents/tools';
 
 const MAX_LEN = 500;
@@ -186,6 +195,7 @@ export default function TutorBubble() {
       const f = getTutorFocus();
       let context = renderFocusContext(f);
       try {
+        const { buildStudentSnapshot } = await import('@/lib/tutor-context');
         const snap = buildStudentSnapshot('math5', f?.topic ?? '');
         context = [context, snap].filter(Boolean).join('\n\n').slice(0, 2000);
       } catch {
@@ -300,7 +310,11 @@ export default function TutorBubble() {
     // Rebuilt on every open so the plan reflects work finished since the last
     // one. Cheap enough to redo: pure arithmetic over the local event log, no
     // network and no model.
-    setGreeting(buildTutorGreeting('math5', ''));
+    // Opens immediately; the greeting fills in a beat later. The drawer has a
+    // null-greeting state already, so there is nothing to wait for.
+    void import('@/lib/tutor-greeting')
+      .then(({ buildTutorGreeting }) => setGreeting(buildTutorGreeting('math5', '')))
+      .catch(() => {});
     setOpen(true);
   }
 

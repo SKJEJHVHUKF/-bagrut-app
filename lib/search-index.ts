@@ -5,9 +5,12 @@
 // Zero network, zero API cost.
 // ============================================================
 
-import { MATH5_CURRICULUM } from '@/content/bagrut-curriculum';
-import { allLessonKeys, getLesson } from '@/content/lessons';
-import { ALL_PAST_BAGRUYOT } from '@/content/past-bagruyot';
+// NO static import of content here. This module is reached from the root
+// layout (GlobalSearch is mounted on every page), and a static ESM import is
+// resolved at BUILD time — so `@/content/lessons` and `@/content/past-bagruyot`
+// were bundled into the first-load JS of every route, including /login. The
+// header above always claimed the index was built lazily; only the ARRAY was.
+// The bytes now load with it, on first open of the palette.
 import { normalizeQuestionText, tokenSet } from '@/lib/question-match';
 
 export type SearchKind = 'topic' | 'subtopic' | 'formula' | 'bagrut';
@@ -33,8 +36,18 @@ const SEASON_HE: Record<string, string> = { summer: 'קיץ', winter: 'חורף'
 
 let _index: SearchItem[] | null = null;
 
-export function buildIndex(): SearchItem[] {
+/** Load the content modules and build the index. Memoized — the second open
+ *  of the palette is free. */
+export async function loadIndex(): Promise<SearchItem[]> {
   if (_index) return _index;
+  const [curriculum, lessons, past] = await Promise.all([
+    import('@/content/bagrut-curriculum'),
+    import('@/content/lessons'),
+    import('@/content/past-bagruyot'),
+  ]);
+  const { MATH5_CURRICULUM } = curriculum;
+  const { allLessonKeys, getLesson } = lessons;
+  const { ALL_PAST_BAGRUYOT } = past;
   const items: SearchItem[] = [];
 
   // Topics (curriculum — includes emoji + paper for context)
@@ -105,8 +118,15 @@ export function buildIndex(): SearchItem[] {
 
 export type SearchResult = { item: SearchItem; score: number };
 
-/** Score: substring hit = strong; token overlap = weaker. */
-export function searchAll(query: string, perKind = 5): Map<SearchKind, SearchItem[]> {
+/** Score: substring hit = strong; token overlap = weaker.
+ *
+ *  Takes the index rather than fetching it, so the scorer stays synchronous and
+ *  the caller decides when to pay for loading. */
+export function searchAll(
+  query: string,
+  index: SearchItem[],
+  perKind = 5,
+): Map<SearchKind, SearchItem[]> {
   const q = normalizeQuestionText(query);
   const grouped = new Map<SearchKind, SearchItem[]>();
   if (q.length < 2) return grouped;
@@ -114,7 +134,7 @@ export function searchAll(query: string, perKind = 5): Map<SearchKind, SearchIte
   const qTokens = [...tokenSet(q)];
   const results: SearchResult[] = [];
 
-  for (const item of buildIndex()) {
+  for (const item of index) {
     let score = 0;
     if (item.norm.includes(q)) score = 3;
     else {
