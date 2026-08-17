@@ -166,7 +166,7 @@ field — `'$= 4 - 3i$'` is fine in `solution.steps` and a defect in `keyPoints`
 - A flex row containing `MathText` puts `chat-md` on an inner `<div className="chat-md flex-1 min-w-0">`, never on the flex container — every `.chat-md` rule is a descendant combinator.
 - `dir="rtl"`, never `dir="auto"`: KaTeX emits the raw LaTeX in a clip-hidden `<annotation>`, so auto-detection reads a Latin first-strong-char and flips Hebrew lines that open with math.
 
-Left-aligning a standalone equation is driven by the `.math-only` class MathText computes **from the source string** — CSS can't do it, because `:only-child` ignores text nodes and so matches Hebrew prose containing one formula.
+Left-aligning a standalone equation is driven by the `.math-only` class MathText computes **from the source string** — CSS can't do it, because `:only-child` ignores text nodes and so matches Hebrew prose containing one formula. `.math-only` = **no Hebrew letters outside the math** (`'$a$ → $b$.'`, `'$x_1=2$, $x_2=3$'` qualify) and it sets `direction: ltr`, not just alignment: each `.katex` is already an LTR island, but the *order* of several islands and the side their punctuation lands on follow the paragraph direction, so inside the RTL `<p>` a chain rendered second-step-first with the arrow pointing backwards (2026-08-17). On Hebrew lines MathText also mirrors `→ ⇒ ⟹` outside math to `← ⇐ ⟸` — Unicode mirrors brackets in RTL but not arrows, so `'חיתוך → קיצון'` pointed back at its source. Author `→` in reading order; never hand-write `←` to compensate.
 
 Automated checks validate that LaTeX *parses*, NOT that math is *right* — always re-derive numbers by hand (a wrong-but-valid angle like `\cos(545°)` passes the build).
 

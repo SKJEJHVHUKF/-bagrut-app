@@ -502,13 +502,13 @@ export function QuestionRunnerCard({
               <div className="text-[10px] font-black tracking-widest text-violet-700 mb-2 uppercase flex items-center gap-1.5">
                 <KeyRound className="w-3 h-3" /> פתרון
               </div>
-              <ol className="space-y-2">
+              <ol className="space-y-2.5">
                 {q.solution.steps.map((step, i) => (
                   <li key={i} className="flex gap-2.5">
-                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-500/25 border border-violet-400/40 flex items-center justify-center text-[10px] font-black text-violet-800">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center text-[11px] font-black text-white shadow-sm shadow-violet-500/30">
                       {i + 1}
                     </div>
-                    <div className="flex-1 chat-md text-sm text-slate-800 pt-0.5"><MathText>{step}</MathText></div>
+                    <div className="flex-1 min-w-0 chat-md text-sm text-slate-800 pt-0.5"><MathText>{step}</MathText></div>
                   </li>
                 ))}
               </ol>

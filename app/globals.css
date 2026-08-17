@@ -340,6 +340,15 @@ html {
 .chat-md p { margin: 0; }
 .chat-md p + p { margin-top: 0.7em; }
 
+/* The 📖 learn rung — the first thing a student reads in a sub-topic. .chat-md
+ * pins 15px/1.75 for chat bubbles and cards; a lesson body gets a book-like
+ * measure instead: 16px, looser leading, a clear breath between paragraphs.
+ * Unlayered on purpose: Tailwind's text-* utilities live in @layer and lose
+ * to .chat-md's font-size, so `text-base` on the same element does nothing. */
+.chat-md.lesson-teach { font-size: 16px; line-height: 1.85; }
+.chat-md.lesson-teach p + p { margin-top: 1em; }
+.chat-md.lesson-title { font-size: 17px; line-height: 1.4; }
+
 /* MathText inline mode strips the <p>. Without a wrapper the caller receives
  * raw siblings — text nodes plus .katex inline-blocks — so a display:flex
  * caller made each one its own flex item and `.chat-md > * + *` added 0.65em
@@ -353,8 +362,9 @@ html {
  *                           element; restated so a reset can't drop it. */
 .mathtext-inline { display: inline; unicode-bidi: isolate; }
 
-/* A string that is nothing BUT math is a standalone worked-solution step
- * (STYLE_GUIDE §4) — left-align it so the equation starts at the left edge.
+/* A string with no Hebrew outside its math is a standalone worked-solution
+ * step (STYLE_GUIDE §4) — lay it out LTR and left-aligned so the equation
+ * starts at the left edge and reads in the order it was written.
  *
  * Keyed off the .math-only class that MathText computes from the SOURCE
  * STRING, deliberately not off a CSS selector. The previous rule matched
@@ -366,12 +376,18 @@ html {
  * $z^2=-25$?" (one .katex + text nodes) still matched and a Hebrew question
  * came out left-aligned. Only JS can see the text nodes.
  *
- * text-align only, never `direction` — a math run is already isolated LTR
- * by the .katex rules below, so alignment is the entire job here. */
+ * `direction` as well as text-align: each .katex is an LTR island, but the
+ * ORDER of several islands and the side their glue lands on follow the
+ * paragraph direction. Inside the RTL <p>, '$a$ → $b$.' rendered as
+ * '.b → a' — second step first, arrow pointing backwards — and the answer
+ * '$z_0=2$, $z_1=…$, $z_2=…$' listed z₂ first. Safe because the class is
+ * only granted to lines with no Hebrew in them. */
 .mathtext-block.math-only p,
 .mathtext-block.math-only li {
+  direction: ltr;
   text-align: left;
 }
+.mathtext-inline.math-only { direction: ltr; }
 .chat-md h1, .chat-md h2, .chat-md h3, .chat-md h4 {
   font-weight: 800;
   margin: 0.9em 0 0.4em;

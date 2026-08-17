@@ -84,27 +84,29 @@ export function LearnLevel({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.2), ease: 'easeOut' }}
-              className="surface-premium rounded-2xl p-4"
+              className="surface-premium rounded-2xl p-4 sm:p-5"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-violet-500/25 border border-violet-400/40 flex items-center justify-center text-[11px] font-black text-violet-800 flex-shrink-0">
+              {/* Step header: solid numbered badge + a title one notch above the
+                  body, so the eye finds "where am I" before it starts reading. */}
+              <div className="flex items-center gap-2.5 mb-3 pb-3 border-b border-slate-900/[0.06]">
+                <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center text-xs font-black text-white flex-shrink-0 shadow-sm shadow-violet-500/30">
                   {i + 1}
                 </div>
-                <div className="text-sm font-black text-slate-900 chat-md">
+                <div className="font-black text-slate-900 chat-md lesson-title">
                   <MathText inline>{step.title}</MathText>
                 </div>
               </div>
-              <div className="chat-md text-sm text-slate-800 leading-relaxed">
+              <div className="chat-md lesson-teach text-slate-800">
                 <MathText>{step.teach}</MathText>
               </div>
               {step.formula && (
-                <div className="mt-3">
+                <div className="mt-4">
                   <FormulaCard formula={step.formula} />
                 </div>
               )}
               {step.diagrams && step.diagrams.length > 0 && <DiagramRenderer diagrams={step.diagrams} />}
               {step.example && (
-                <div className="mt-3">
+                <div className="mt-4">
                   <WorkedExampleCard example={step.example} index={exampleCount++} />
                 </div>
               )}
@@ -113,7 +115,7 @@ export function LearnLevel({
           ))}
         </div>
       ) : (
-        <div className="surface-premium rounded-2xl p-4 chat-md text-sm text-slate-800 leading-relaxed">
+        <div className="surface-premium rounded-2xl p-4 sm:p-5 chat-md lesson-teach text-slate-800">
           <MathText>{subTopic.summary}</MathText>
         </div>
       )}

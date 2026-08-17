@@ -34,23 +34,34 @@ import 'katex/dist/katex.min.css';
 // sits in a neutral run bounded by RTL on both sides, and UAX#9 rule N1
 // resolves it to RTL. That is what makes "$z\bar z=|z|^2$ — זהות שימושית"
 // read correctly without any :has() direction hack in the CSS.
-// True when the string is nothing BUT math — a standalone worked-solution step
-// like '$= 4 - 3i$'. Those get left-aligned (STYLE_GUIDE §4); Hebrew prose does
-// not. This has to be decided here in JS, not in CSS: `:only-child` counts only
+// True when the string has NO Hebrew outside its math — a standalone
+// worked-solution step like '$= 4 - 3i$.' or a chain like '$2x=4$ → $x=2$'.
+// Those are laid out LTR and left-aligned (STYLE_GUIDE §4); Hebrew prose is
+// not. Direction, not just alignment: each .katex is an LTR island, but the
+// ORDER of several islands and the side their punctuation lands on follow the
+// paragraph direction — inside an RTL <p>, '$a$ → $b$.' displayed as
+// '.b → a', the second step first and the arrow pointing backwards. Only
+// Hebrew letters make a line RTL; punctuation, arrows and digits do not.
+// This has to be decided here in JS, not in CSS: `:only-child` counts only
 // ELEMENT children, so "מהם פתרונות המשוואה $z^2=-25$?" — one .katex plus text
 // nodes — matches it and a Hebrew sentence gets left-aligned.
-function isMathOnly(s: string) {
-  if (!s.includes('$')) return false;
-  return (
-    s
-      .replace(/\$\$[\s\S]*?\$\$/g, '')
-      .replace(/\$[^$\n]+\$/g, '')
-      .trim() === ''
-  );
+const MATH_ISLAND = /\$\$[\s\S]*?\$\$|\$[^$\n]+\$/g;
+const HEBREW = /[֐-׿]/; // U+0590–U+05FF, the Hebrew block
+
+// UAX#9 mirrors brackets in RTL text but NOT arrows, so on a Hebrew line
+// 'חיתוך → קיצון' (and 'לכן $x-2\ne0$ → $x\ne2$') the glyph points back at
+// the thing it came from. Point it along the reading direction. Math islands
+// are LTR and untouched; math-only lines never reach here. Content already
+// written the RTL way ('תחום ← חיתוכים') is left alone.
+const RTL_ARROW: Record<string, string> = { '→': '←', '⇒': '⇐', '⟹': '⟸' };
+function mirrorArrows(s: string) {
+  return s.replace(/(\$\$[\s\S]*?\$\$|\$[^$\n]+\$)|[→⇒⟹]/g, (m, math) => math ?? RTL_ARROW[m]);
 }
 
-export function MathText({ children, inline = false }: { children: string; inline?: boolean }) {
-  const mathOnly = isMathOnly(children) ? ' math-only' : '';
+export function MathText({ children: raw, inline = false }: { children: string; inline?: boolean }) {
+  const hebrew = HEBREW.test(raw.replace(MATH_ISLAND, ''));
+  const mathOnly = !hebrew && raw.includes('$') ? ' math-only' : '';
+  const children = hebrew ? mirrorArrows(raw) : raw;
   const components = inline
     ? { p: ({ children }: { children?: ReactNode }) => <>{children}</> }
     : {
