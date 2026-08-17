@@ -173,13 +173,14 @@ function TopicTiles({ paper, topicId }: { paper: BagrutPaper; topicId: string })
           </motion.div>
         )}
 
-        {/* Sub-topic tiles, in syllabus order */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 perspective-1500">
+        {/* Sub-topic tiles, in syllabus order. `auto-rows-fr` + h-full tiles =
+            every tile the same size, whatever it holds (owner's request). */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 auto-rows-fr gap-3.5 perspective-1500">
           {entries.map((entry, i) => {
             const delay = Math.min(i * 0.04, 0.35);
             if (entry.kind !== 'ladder') {
               return (
-                <motion.div key={`${entry.kind}-${entry.step}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut', delay }}>
+                <motion.div key={`${entry.kind}-${entry.step}`} className="h-full" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut', delay }}>
                   <SubTopicTile entry={entry} />
                 </motion.div>
               );
@@ -190,7 +191,7 @@ function TopicTiles({ paper, topicId }: { paper: BagrutPaper; topicId: string })
                 ? 'LOCKED'
                 : 'UNLOCKED';
             return (
-              <motion.div key={`${entry.node.subId}-${entry.step}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut', delay }}>
+              <motion.div key={`${entry.node.subId}-${entry.step}`} className="h-full" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut', delay }}>
                 <SubTopicTile
                   entry={entry}
                   status={status}

@@ -299,13 +299,16 @@ function Track({ paper }: { paper: BagrutPaper }) {
           )}
         </div>
 
-        {/* ===== Topic tiles — the track, in syllabus order ===== */}
+        {/* ===== Topic tiles — the track, in syllabus order =====
+            One frame for every topic, all the same size (`auto-rows-fr` +
+            h-full): emoji · number · title · what's inside · progress pinned
+            to the bottom. Content is clamped, never allowed to resize the tile. */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[11px] font-black tracking-widest text-slate-500 uppercase">הנושאים במסלול</h2>
-            <span className="text-[11px] text-slate-500">{tree.topics.length} נושאים</span>
+            <span className="text-[11px] text-slate-500">{tree.topics.length} נושאים · לפי סדר הלימוד</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 perspective-1500">
+          <div className="grid grid-cols-1 sm:grid-cols-2 auto-rows-fr gap-3.5 perspective-1500">
             {tree.topics.map((t, i) => {
               const nodes = groups[i]?.nodes ?? [];
               const done = ready ? countCompleted(nodes) : 0;
@@ -313,20 +316,22 @@ function Track({ paper }: { paper: BagrutPaper }) {
               const soon = t.tiles.filter((tl) => tl.kind === 'soon').length;
               const isHere = resumeTopicId === t.id;
               const complete = nodes.length > 0 && done === nodes.length;
+              const inside = nodes.map((n) => n.title).join(' · ');
               return (
                 <motion.div
                   key={t.id}
+                  className="h-full"
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, ease: 'easeOut', delay: Math.min(i * 0.04, 0.3) }}
                 >
                   <Link
                     href={`/roadmap/track/${paper}/${encodeURIComponent(t.id)}`}
-                    className={`card-3d group block h-full text-right rounded-2xl p-4 surface-premium transition-colors ${
+                    className={`card-3d group flex h-full min-h-[9.5rem] flex-col text-right rounded-2xl p-4 surface-premium transition-colors hover:border-violet-500/40 ${
                       isHere ? 'ring-2 ring-violet-500/30' : ''
-                    } hover:border-violet-500/40`}
+                    }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-start gap-3">
                       <span
                         aria-hidden="true"
                         className={`icon-3d w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${
@@ -336,29 +341,35 @@ function Track({ paper }: { paper: BagrutPaper }) {
                         {t.emoji}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <div className="font-black text-slate-900 truncate">{t.title}</div>
-                          {isHere && (
-                            <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-violet-600 text-white shrink-0">
-                              כאן אתה
-                            </span>
-                          )}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-[10px] font-black tracking-widest text-slate-500 uppercase">נושא {i + 1}</div>
+                          {isHere ? (
+                            <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-violet-600 text-white shrink-0">כאן אתה</span>
+                          ) : complete ? (
+                            <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-800 border border-emerald-500/25 shrink-0">הושלם</span>
+                          ) : null}
                         </div>
+                        <div className="text-[15px] font-black text-slate-900 leading-snug line-clamp-1">{t.title}</div>
                         <div className="text-[11px] text-slate-500 mt-0.5">
                           {done}/{nodes.length} שלבים
                           {soon > 0 && <span className="text-slate-400"> · {soon} בקרוב</span>}
                         </div>
                       </div>
-                      <span className="text-sm font-black text-violet-700 shrink-0">{pct}%</span>
-                      <ArrowLeft aria-hidden="true" className="w-4 h-4 text-slate-400 group-hover:-translate-x-1 transition-transform shrink-0" />
                     </div>
-                    <div className="h-1.5 mt-3 bg-slate-900/[0.04] rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-500 ${
-                          complete ? 'bg-gradient-to-l from-emerald-500 to-teal-500' : 'bg-gradient-to-l from-violet-500 to-violet-600'
-                        }`}
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className="mt-2 text-xs text-slate-600 leading-snug line-clamp-2 chat-md flex-1">
+                      <MathText inline>{inside}</MathText>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2">
+                      <div className="h-1.5 flex-1 bg-slate-900/[0.05] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-500 ${
+                            complete ? 'bg-gradient-to-l from-emerald-500 to-teal-500' : 'bg-gradient-to-l from-violet-500 to-violet-600'
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-black text-violet-700 shrink-0 w-9 text-left">{pct}%</span>
+                      <ArrowLeft aria-hidden="true" className="w-4 h-4 text-slate-400 group-hover:-translate-x-1 transition-transform shrink-0" />
                     </div>
                   </Link>
                 </motion.div>

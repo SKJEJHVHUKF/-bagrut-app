@@ -97,13 +97,14 @@ export default function RoadmapHubPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 perspective-1500">
+        <div className="grid grid-cols-1 sm:grid-cols-2 auto-rows-fr gap-4 perspective-1500">
           {stats.map(({ paper, tree, done, total, pct, mastered, resume }, i) => {
             const isActive = active === paper;
             const complete = total > 0 && done === total;
             return (
               <motion.div
                 key={paper}
+                className="h-full"
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, ease: 'easeOut', delay: i * 0.06 }}
@@ -112,7 +113,7 @@ export default function RoadmapHubPage() {
                   href={`/roadmap/track/${paper}`}
                   onClick={() => choose(paper)}
                   aria-current={isActive ? 'true' : undefined}
-                  className={`card-3d-strong glass-card group block h-full rounded-3xl p-5 text-right transition-colors ${
+                  className={`card-3d-strong glass-card group flex h-full flex-col rounded-3xl p-5 text-right transition-colors ${
                     isActive ? 'ring-2 ring-violet-500/40 border-violet-500/50' : 'hover:border-violet-500/40'
                   }`}
                 >
@@ -138,8 +139,8 @@ export default function RoadmapHubPage() {
                     ))}
                   </div>
 
-                  {/* Progress */}
-                  <div className="mt-4 space-y-1.5">
+                  {/* Progress — pinned to the bottom so both tiles line up */}
+                  <div className="mt-auto pt-4 space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-black text-slate-900">
                         {pct}%
