@@ -21,7 +21,7 @@
  */
 
 import { getSubTopics, hasBagrutBank } from '../content/lessons';
-import { EXCLUDED_571, getTrack, TRACK_PAPERS } from '../content/tracks';
+import { excludedFor, getTrack, TRACK_PAPERS } from '../content/tracks';
 import { resolveRoadmapNode, roadmapTopicOrder } from '../constants/roadmapData';
 import { locateInTrack, trackEntries, trackNodes } from '../lib/track';
 
@@ -109,7 +109,7 @@ for (const paper of TRACK_PAPERS) {
   }
 
   // Coverage: every sub-topic the paper's curriculum authored is on the track.
-  const excluded = paper === '571' ? new Set(EXCLUDED_571) : new Set<string>();
+  const excluded = new Set(excludedFor(paper));
   const onTrack = new Set(trackNodes(tree).map((n) => n.subId));
   for (const lessonTopic of roadmapTopicOrder(paper)) {
     for (const st of getSubTopics(SUBJECT, lessonTopic)) {

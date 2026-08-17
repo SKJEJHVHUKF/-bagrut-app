@@ -22,13 +22,24 @@ const SUBJECT = 'math5';
  *  fails on any OTHER 571 sub-topic that the track does not reach). */
 export const EXCLUDED_571: readonly string[] = ['volume-revolution'];
 
+/** Sub-topics of the SHARED lesson topics that belong to 571 only, so the
+ *  derived 572 track must skip them: plane trigonometry (sine/cosine laws,
+ *  triangle area) lives in the shared trigonometry lesson but is not 572
+ *  material. Drop this list when paper-572.ts is authored. */
+export const EXCLUDED_572: readonly string[] = ['trig-sine-cosine-laws', 'trig-triangle-area'];
+
+export function excludedFor(paper: BagrutPaper): readonly string[] {
+  return paper === '571' ? EXCLUDED_571 : EXCLUDED_572;
+}
+
 function derivedTrack(paper: BagrutPaper): TrackTree {
+  const excluded = new Set(excludedFor(paper));
   const topics: TrackTopic[] = buildRoadmap(paper).mainTopics.map((mt) => ({
     id: mt.topic,
     title: mt.displayName,
     emoji: mt.emoji,
     tiles: [
-      ...mt.nodes.map((n) => ({ kind: 'ladder' as const, subId: n.subId })),
+      ...mt.nodes.filter((n) => !excluded.has(n.subId)).map((n) => ({ kind: 'ladder' as const, subId: n.subId })),
       ...(hasBagrutBank(SUBJECT, mt.topic)
         ? [
             {

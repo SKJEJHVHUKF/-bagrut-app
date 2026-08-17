@@ -96,7 +96,12 @@ export const TRACK_571: TrackTree = {
             'מאורעות תלויים, בלתי-תלויים וזרים',
           ],
         },
-        { kind: 'soon', title: 'טבלת הסתברויות', bullets: ['כולל נעלמים — כולל הכל'] },
+        {
+          kind: 'ladder',
+          subId: 'prob-tables',
+          title: 'טבלת הסתברויות',
+          bullets: ['טבלה דו-ממדית — תאים ושוליים', 'הסתברות מותנית מתוך הטבלה', 'נעלמים בטבלה — משוואה מהסכומים', 'בדיקת אי-תלות'],
+        },
         {
           kind: 'ladder',
           subId: 'prob-conditional',
@@ -167,11 +172,21 @@ export const TRACK_571: TrackTree = {
           title: 'טריגונומטריה בסיסית — סינוס, קוסינוס, טנגנס',
           bullets: ['מעגל היחידה', 'ערכים מיוחדים', 'זוויות צמצום'],
         },
-        { kind: 'soon', title: 'משפט הסינוסים המורחב ומשפט הקוסינוסים' },
+        {
+          kind: 'ladder',
+          subId: 'trig-sine-cosine-laws',
+          title: 'משפט הסינוסים המורחב ומשפט הקוסינוסים',
+          bullets: ['משפט הסינוסים — צלע מול הזווית שלה, ו-$2R$', 'שתי התשובות של הזווית', 'משפט הקוסינוסים — כשאין זוג', 'איך בוחרים משפט'],
+        },
         { kind: 'ladder', subId: 'trig-equations', title: 'משוואות טריגונומטריות' },
         { kind: 'ladder', subId: 'trig-identities', title: 'זהויות טריגונומטריות' },
         { kind: 'soon', title: 'משפטים בגאומטריה בשירות הטריגונומטריה' },
-        { kind: 'soon', title: 'נוסחאות שטח משולש' },
+        {
+          kind: 'ladder',
+          subId: 'trig-triangle-area',
+          title: 'נוסחאות שטח משולש',
+          bullets: ['$S = \\tfrac12 ab\\sin\\gamma$ — הזווית הכלואה', 'מהשטח אל הזווית — שתי תשובות', '$S = \\dfrac{abc}{4R}$ והמעגל החוסם'],
+        },
         {
           kind: 'link',
           title: 'תרגול שאלות בגרות',
