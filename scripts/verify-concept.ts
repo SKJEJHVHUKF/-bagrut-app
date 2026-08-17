@@ -49,8 +49,14 @@ const MIN_L3_WHY_CORRECT = 120;
 const MIN_PER_LEVEL = 12;
 /** Every in-syllabus question already carries a hint — this stays enforced. */
 const HINT_RULE_IS_ERROR = true;
-/** Flip to true once every in-syllabus topic reaches MIN_PER_LEVEL. */
-const INVENTORY_RULE_IS_ERROR = false;
+/**
+ * Flipped to true on 2026-08-17, the day every in-syllabus topic reached
+ * MIN_PER_LEVEL (the ten-bank rewrite pass, ln-function through functions).
+ * From here a bank that slips below target is a build failure, not a warning —
+ * which is what keeps the reserve honest as content is edited. Out-of-syllabus
+ * topics (EXEMPT_TOPICS, derived from the curriculum) still only warn.
+ */
+const INVENTORY_RULE_IS_ERROR = true;
 
 /**
  * Topics exempt from the inventory target and the hint requirement.
