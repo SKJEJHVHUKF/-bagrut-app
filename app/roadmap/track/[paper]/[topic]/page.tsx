@@ -4,8 +4,8 @@
 // sub-topic in the syllabus order (content/tracks), each opening its level
 // ladder; syllabus items with no content yet sit in place as "בקרוב"; screens
 // that already exist (mixed bagrut practice, quick quiz) are link tiles.
-// Sequential unlock runs inside the topic (a tile opens when the previous
-// LADDER tile is core-done). All progress is client-side → render after mount.
+// Every tile is open — the syllabus order is the recommended order, not a
+// lock (owner, 2026-08-18). All progress is client-side → render after mount.
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -185,11 +185,9 @@ function TopicTiles({ paper, topicId }: { paper: BagrutPaper; topicId: string })
                 </motion.div>
               );
             }
-            const status: StepStatus = ready
-              ? trackTileStatus(entry.node, entry.prev)
-              : entry.prev
-                ? 'LOCKED'
-                : 'UNLOCKED';
+            // Every tile is open (owner, 2026-08-18) — the only question is
+            // whether it is already done, and that needs localStorage → mount.
+            const status: StepStatus = ready ? trackTileStatus(entry.node) : 'UNLOCKED';
             return (
               <motion.div key={`${entry.node.subId}-${entry.step}`} className="h-full" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut', delay }}>
                 <SubTopicTile
@@ -197,7 +195,6 @@ function TopicTiles({ paper, topicId }: { paper: BagrutPaper; topicId: string })
                   status={status}
                   summary={ready ? summaries[entry.node.subId] : null}
                   levelCount={levelsBySub[entry.node.subId]?.length ?? 0}
-                  prevTitle={entry.prev?.title}
                   reviewDue={dueBySub[entry.node.subId] ?? 0}
                   href={ladderHref(entry.node.subId, ctx)}
                 />

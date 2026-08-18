@@ -7,9 +7,10 @@
  * Unlock model:
  *   • Within a sub-topic — rungs unlock sequentially (rung N opens when N-1 is
  *     cleared). This is the "slow climb in level" the roadmap is built around.
- *   • Between sub-topics — the next sub-topic opens once THIS one is
- *     "core-done" (its learn+easy+mid rungs cleared). Hard + bagrut rungs are
- *     optional mastery, so the hardest question never blocks progress.
+ *   • Between sub-topics — none. Every tile is open (owner, 2026-08-18); a
+ *     sub-topic counts as COMPLETED once it is "core-done" (learn+easy+mid
+ *     rungs cleared). Hard + bagrut rungs are optional mastery, so the hardest
+ *     question never blocks progress.
  *
  * Two-way sync: reaching core-done also marks the sub-topic done in
  * lib/progress + lib/study-plan (so /my-plan and /insights reflect it), and a
@@ -365,25 +366,15 @@ export function isNodePassed(topic: string, subId: string): boolean {
 }
 
 /**
- * Derive a node's status on the map. `prevSubId` is the previous node in the
- * same sequence (null if it's the first node → always unlocked).
- *
- * `prevTopic` is the topic that OWNS the previous node's progress record. It
- * defaults to `topic` — right for the classic per-lesson map — but a track
- * topic (content/tracks) can chain sub-topics from different lessons
- * ("תחום הגדרה" from פונקציות → "כללי גזירה" from חשבון דיפרנציאלי), and
- * looking the predecessor up under the wrong topic would lock the node forever.
+ * Derive a node's status on the map. Every sub-topic is open — the owner
+ * dropped the sequential unlock between tiles (2026-08-18: "תפתח את כל
+ * התוכניות במסלול"), so a student can enter any step of a topic in any order.
+ * Sequencing survives only INSIDE a sub-topic (`levelStatus`: rung N opens
+ * when N−1 is cleared). The track order is still the recommended order —
+ * the resume point (lib/roadmap-resume) walks it — it just isn't a wall.
  */
-export function nodeStatus(
-  topic: string,
-  subId: string,
-  prevSubId: string | null,
-  prevTopic: string = topic,
-): StepStatus {
-  if (isNodePassed(topic, subId)) return 'COMPLETED';
-  if (prevSubId === null) return 'UNLOCKED';
-  if (isNodePassed(prevTopic, prevSubId)) return 'UNLOCKED';
-  return 'LOCKED';
+export function nodeStatus(topic: string, subId: string): StepStatus {
+  return isNodePassed(topic, subId) ? 'COMPLETED' : 'UNLOCKED';
 }
 
 /** How many of the given nodes are completed. */

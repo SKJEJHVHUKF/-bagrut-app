@@ -4,7 +4,8 @@
  * map never feels like a wall. Pure read over the progress store (client-side).
  *
  * Priority:
- *   1. the first UNLOCKED-but-not-core-done node → its next rung (the main climb)
+ *   1. the first node with rungs cleared but not core-done → its next rung
+ *      (in progress); else the first not-core-done node in track order (next up)
  *   2. else the first not-yet-mastered node → its next rung (optional mastery)
  *   3. else null (everything is mastered).
  *
@@ -61,26 +62,25 @@ export function getResumePoint(
   mainTopics: TopicGroup[],
   levelsBySub: Record<string, RoadmapLevel[]>,
 ): ResumePoint | null {
-  // Pass 1 — the first node whose CORE rungs aren't done yet (the main climb).
+  // Pass 1 — the main climb. Every tile is open (no lock between sub-topics),
+  // so a student may have jumped ahead: a node with rungs already cleared wins
+  // over the first untouched one earlier in the order — "continue" should
+  // follow the student, not the syllabus.
   let firstNode: { node: RoadmapNode; level: RoadmapLevel } | null = null;
+  let nextUp: ResumePoint | null = null;
   for (const mt of mainTopics) {
-    // The predecessor may belong to a different lesson topic when `mainTopics`
-    // is a track (content/tracks) — pass its own topic for the progress lookup.
-    let prev: RoadmapNode | null = null;
     for (const node of mt.nodes) {
-      const status = nodeStatus(node.topic, node.subId, prev?.subId ?? null, prev?.topic);
-      prev = node;
       const levels = levelsBySub[node.subId] ?? [];
       if (levels.length === 0) continue;
       if (!firstNode) firstNode = { node, level: levels[0] };
-      if (status === 'UNLOCKED') {
-        const summary = nodeLevelSummary(node.topic, node.subId, levels);
-        const idx = Math.min(summary.currentIndex, levels.length - 1);
-        const level = levels[idx];
-        return makePoint(node, level, summary.clearedCount > 0 ? 'in-progress' : 'next-up');
-      }
+      if (nodeStatus(node.topic, node.subId) === 'COMPLETED') continue;
+      const summary = nodeLevelSummary(node.topic, node.subId, levels);
+      const level = levels[Math.min(summary.currentIndex, levels.length - 1)];
+      if (summary.clearedCount > 0) return makePoint(node, level, 'in-progress');
+      nextUp ??= makePoint(node, level, 'next-up');
     }
   }
+  if (nextUp) return nextUp;
 
   // Pass 2 — everything core-done; offer the first not-yet-mastered node's next
   // optional rung (hard / bagrut).

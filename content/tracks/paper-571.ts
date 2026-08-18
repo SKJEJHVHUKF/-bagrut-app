@@ -324,18 +324,9 @@ export const TRACK_571: TrackTree = {
         { kind: 'soon', title: 'קשר בין גרף הפונקציה לגרף הנגזרת' },
       ],
     },
-    {
-      // Not in the syllabus; the owner asked to keep it as a foundations topic
-      // at the end of the track (2026-08-17).
-      id: 'algebra',
-      title: 'אלגברה — יסודות',
-      emoji: '🔣',
-      tiles: [
-        { kind: 'ladder', subId: 'quadratic-equations' },
-        { kind: 'ladder', subId: 'discriminant-parameter' },
-        { kind: 'ladder', subId: 'radical-rational' },
-        { kind: 'ladder', subId: 'inequalities' },
-      ],
-    },
+    // אלגברה — יסודות was here as a closing foundations topic (2026-08-17); the
+    // owner dropped it from the 571 track the next day. Its four sub-topics are
+    // listed in EXCLUDED_TOPICS['571'] (content/tracks/index.ts) so verify-tracks
+    // knows they are unreachable on purpose; the lessons themselves still exist.
   ],
 };

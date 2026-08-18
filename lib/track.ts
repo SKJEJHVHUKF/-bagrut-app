@@ -30,11 +30,11 @@ export type LinkTile = Extract<TrackTile, { kind: 'link' }>;
 const isLadder = (t: TrackTile): t is LadderTile => t.kind === 'ladder';
 
 /** One rendered row of a track topic — a ladder tile resolved against the
- *  lesson content (with its predecessor for the sequential unlock), or a
- *  soon/link tile as-is. Ladder tiles whose sub-topic does not exist are
- *  dropped here (verify-tracks turns that into a build failure). */
+ *  lesson content, or a soon/link tile as-is. Ladder tiles whose sub-topic
+ *  does not exist are dropped here (verify-tracks turns that into a build
+ *  failure). */
 export type TrackEntry =
-  | { kind: 'ladder'; tile: LadderTile; node: RoadmapNode; prev: RoadmapNode | null; step: number }
+  | { kind: 'ladder'; tile: LadderTile; node: RoadmapNode; step: number }
   | { kind: 'soon'; tile: SoonTile; step: number }
   | { kind: 'link'; tile: LinkTile; step: number };
 
@@ -54,15 +54,13 @@ export function trackNode(tile: LadderTile, indexInTopic = 0): RoadmapNode | nul
 
 export function trackEntries(topic: TrackTopic): TrackEntry[] {
   const out: TrackEntry[] = [];
-  let prev: RoadmapNode | null = null;
   let ladderIndex = 0;
   topic.tiles.forEach((tile, i) => {
     const step = i + 1;
     if (tile.kind === 'ladder') {
       const node = trackNode(tile, ladderIndex);
       if (!node) return;
-      out.push({ kind: 'ladder', tile, node, prev, step });
-      prev = node;
+      out.push({ kind: 'ladder', tile, node, step });
       ladderIndex++;
     } else if (tile.kind === 'soon') {
       out.push({ kind: 'soon', tile, step });
@@ -118,10 +116,10 @@ export function trackLevelsBySub(tree: TrackTree): Record<string, RoadmapLevel[]
   return levelsForNodes(trackNodes(tree));
 }
 
-/** Sequential unlock inside a track topic. The predecessor may live under a
- *  different lesson topic, so its own topic is passed for the lookup. */
-export function trackTileStatus(node: RoadmapNode, prev: RoadmapNode | null): StepStatus {
-  return nodeStatus(node.topic, node.subId, prev?.subId ?? null, prev?.topic);
+/** Tile status inside a track topic — COMPLETED or UNLOCKED, never LOCKED
+ *  (every tile is open; see nodeStatus). */
+export function trackTileStatus(node: RoadmapNode): StepStatus {
+  return nodeStatus(node.topic, node.subId);
 }
 
 // ---------------------------------------------------------------------------
