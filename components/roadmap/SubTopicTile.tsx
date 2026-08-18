@@ -200,7 +200,10 @@ export function SubTopicTile(props: Props) {
     : done
       ? 'border-emerald-500/35 bg-emerald-100/60'
       : locked
-        ? 'border-slate-900/[0.06] bg-white/40 opacity-60'
+        // Muted, not faded: whole-tile opacity made the step name and its
+        // "what you'll learn" list hard to read, and a student scanning the
+        // topic still needs to read what is coming.
+        ? 'border-slate-900/[0.07] bg-white/55 [&_.chat-md]:text-slate-500'
         : 'border-violet-500/35 bg-[var(--primary-container)]/70 group-hover:border-violet-500/60';
 
   const iconBg = mastered
@@ -208,7 +211,7 @@ export function SubTopicTile(props: Props) {
     : done
       ? 'bg-emerald-500/25 text-emerald-800'
       : locked
-        ? 'bg-slate-900/[0.03] text-slate-500'
+        ? 'bg-slate-900/[0.04] text-slate-400'
         : 'bg-gradient-to-br from-violet-500 to-violet-600 text-white';
 
   const statusText = locked
@@ -285,6 +288,7 @@ export function SubTopicTile(props: Props) {
       step={entry.step}
       chip={chip}
       title={node.title}
+      titleClass={locked ? 'text-slate-600' : 'text-slate-900'}
       bullets={tile.bullets?.length ? tile.bullets : [node.tagline]}
       footer={footer}
       trailing={

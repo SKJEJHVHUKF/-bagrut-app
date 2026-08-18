@@ -170,21 +170,23 @@ export default function RoadmapHubPage() {
                     </div>
                   </div>
 
-                  {/* Continue line + CTA */}
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <div className="min-w-0 text-[11px] text-slate-600 flex items-center gap-1.5">
-                      <Play aria-hidden="true" className="w-3 h-3 text-violet-700 shrink-0" />
-                      {resume ? (
-                        <span className="truncate chat-md">
+                  {/* Where you are — its own row, never truncated */}
+                  <div className="mt-3 flex items-start gap-2 rounded-xl bg-white/70 border border-slate-900/[0.05] px-3 py-2 text-xs text-slate-700">
+                    <Play aria-hidden="true" className="w-3.5 h-3.5 text-violet-700 shrink-0 mt-0.5" />
+                    {resume ? (
+                      <span className="chat-md min-w-0 leading-snug">
+                        <span className="font-bold text-slate-900">
                           {resume.reason === 'in-progress' ? 'המשך: ' : resume.reason === 'mastery' ? 'להשלמת שליטה: ' : 'מתחילים: '}
-                          <MathText inline>{resume.title}</MathText>
-                          <span className="text-slate-400"> · רמת {resume.levelTitle} {resume.levelEmoji}</span>
                         </span>
-                      ) : (
-                        <span className="truncate">{ready && complete ? 'המסלול הושלם — כל הכבוד! 👑' : 'מתחילים מהנושא הראשון'}</span>
-                      )}
-                    </div>
-                    <span className="inline-flex items-center gap-1 text-xs font-black text-violet-700 shrink-0">
+                        <MathText inline>{resume.title}</MathText>
+                        <span className="text-slate-500"> · רמת {resume.levelTitle} {resume.levelEmoji}</span>
+                      </span>
+                    ) : (
+                      <span>{ready && complete ? 'המסלול הושלם — כל הכבוד! 👑' : 'מתחילים מהנושא הראשון'}</span>
+                    )}
+                  </div>
+                  <div className="mt-3 flex items-center justify-end">
+                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2 text-xs font-black text-white shadow-md shadow-violet-500/25 group-hover:bg-violet-500 transition-colors">
                       כניסה למסלול
                       <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                     </span>

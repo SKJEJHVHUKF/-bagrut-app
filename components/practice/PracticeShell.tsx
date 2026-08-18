@@ -39,21 +39,29 @@ export function PracticeShell({
     <div className="min-h-screen text-slate-900 relative overflow-x-hidden">
       <BackgroundOrbs />
 
-      <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
+      {/* On phones this bar IS the header (AppHeader is desktop-only), so it
+          carries the logo. On desktop the global AppHeader already shows the
+          brand 64px above — a second logo directly under it read as a
+          duplicated header on every learning screen. So on md+ this collapses
+          to a slim context strip (where am I · back) that sticks right under
+          the global bar. */}
+      <nav className="sticky top-0 md:top-16 z-50 glass-card border-x-0 border-t-0 rounded-none">
+        <div className="max-w-2xl mx-auto px-4 py-3 md:py-2 flex items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-3 group md:hidden">
             <MathUpLogo size="md" />
             <div>
-              <div className="text-base font-black font-display text-slate-900">
-                MathUp
-              </div>
+              <div className="text-base font-black font-display text-slate-900">MathUp</div>
               <div className="text-[10px] text-slate-600 -mt-0.5">{subtitle}</div>
             </div>
           </Link>
+          <div className="hidden md:flex items-center gap-2 min-w-0 text-xs text-slate-600">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" aria-hidden="true" />
+            <span className="font-bold text-slate-800 truncate">{subtitle}</span>
+          </div>
           {backHref && (
             <Link
               href={backHref}
-              className="group flex items-center gap-2 bg-white/70 hover:bg-white border border-white/60 hover:border-violet-500/40 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+              className="group flex items-center gap-2 bg-white/70 hover:bg-white border border-white/60 hover:border-violet-500/40 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0"
             >
               <span>{backLabel ?? 'חזרה'}</span>
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />

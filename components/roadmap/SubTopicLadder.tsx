@@ -326,12 +326,19 @@ export function SubTopicLadder({
 
 function LadderHeader({ subTopic }: { subTopic: SubTopic }) {
   return (
-    <div className="text-center space-y-1">
-      <div className="text-3xl">{subTopic.emoji ?? '📘'}</div>
-      <h1 className="font-display text-2xl font-black text-slate-900 chat-md">
+    <div className="text-center space-y-2 pt-1">
+      {/* The same icon-tile language as the topic and track tiles, so the
+          climb reads as one continuous surface rather than a new screen. */}
+      <div
+        aria-hidden="true"
+        className="chip-primary icon-3d mx-auto w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-sm"
+      >
+        {subTopic.emoji ?? '📘'}
+      </div>
+      <h1 className="font-display text-2xl sm:text-[1.7rem] font-black text-slate-900 leading-tight chat-md text-balance">
         <MathText inline>{subTopic.title}</MathText>
       </h1>
-      <p className="text-sm text-slate-600 chat-md">
+      <p className="text-sm text-slate-600 chat-md max-w-md mx-auto leading-relaxed">
         <MathText inline>{subTopic.tagline}</MathText>
       </p>
     </div>
