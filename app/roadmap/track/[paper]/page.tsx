@@ -316,7 +316,11 @@ function Track({ paper }: { paper: BagrutPaper }) {
               const soon = t.tiles.filter((tl) => tl.kind === 'soon').length;
               const isHere = resumeTopicId === t.id;
               const complete = nodes.length > 0 && done === nodes.length;
-              const inside = nodes.map((n) => n.title).join(' · ');
+              // A grouped topic (סדרות) lists its sub-tracks, not every stage.
+              const ungrouped = new Set(t.tiles.flatMap((tl) => (tl.kind === 'ladder' && !tl.group ? [tl.subId] : [])));
+              const inside = t.groups?.length
+                ? [...t.groups.map((g) => g.title), ...nodes.filter((n) => ungrouped.has(n.subId)).map((n) => n.title)].join(' · ')
+                : nodes.map((n) => n.title).join(' · ');
               return (
                 <motion.div
                   key={t.id}

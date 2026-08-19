@@ -4,10 +4,11 @@
 //
 // One replay per sub-topic (five), so the 🧠 rung appears on every rung.
 //
-// TARGETS:
-//   arithmetic-sequences    seq-sub-ar-005    the sum peaks where the terms flip sign
-//   geometric-sequences     seq-sub-ge-006    divide the equations, but justify it
-//   infinite-geometric      seq-sub-inf-005   convergence is a condition, not a formality
+// TARGETS (sub-topic ids follow the 2026-08-19 stage split of סדרות — the
+// questions kept their ids and moved into the stage that teaches them):
+//   ar-recursion-sums       seq-sub-ar-005    the sum peaks where the terms flip sign
+//   ge-general-term         seq-sub-ge-006    divide the equations, but justify it
+//   ge-infinite             seq-sub-inf-005   convergence is a condition, not a formality
 //   sequences-applications  seq-sub-app-005   compound is not simple
 //   induction               seq-sub-ind-006   the step is where the real work hides
 //
@@ -34,13 +35,13 @@ export const sequencesGhostReplays: TopicGhostReplays = {
   topic: TOPIC,
   replays: [
     // =========================================================
-    // 1 · arithmetic-sequences
+    // 1 · ar-recursion-sums (was arithmetic-sequences)
     // =========================================================
     {
       id: 'gr-seq-ar-005',
       subject: SUBJECT,
       topic: TOPIC,
-      subTopicId: 'arithmetic-sequences',
+      subTopicId: 'ar-recursion-sums',
       questionId: 'seq-sub-ar-005',
       title: 'מתי הסכום מקסימלי — איך חושבים על זה',
       prompt:
@@ -291,13 +292,13 @@ $n$ טבעי, ולכן בודקים את שני השכנים: $S(13) = 286$ ו-$
     },
 
     // =========================================================
-    // 2 · geometric-sequences
+    // 2 · ge-general-term (was geometric-sequences)
     // =========================================================
     {
       id: 'gr-seq-ge-006',
       subject: SUBJECT,
       topic: TOPIC,
-      subTopicId: 'geometric-sequences',
+      subTopicId: 'ge-general-term',
       questionId: 'seq-sub-ge-006',
       title: 'שתי משוואות בסדרה הנדסית — איך חושבים על זה',
       prompt:
@@ -550,13 +551,13 @@ $$\\frac{a_2 + a_3}{a_1 + a_2} = q$$
     },
 
     // =========================================================
-    // 3 · infinite-geometric
+    // 3 · ge-infinite (was infinite-geometric)
     // =========================================================
     {
       id: 'gr-seq-inf-005',
       subject: SUBJECT,
       topic: TOPIC,
-      subTopicId: 'infinite-geometric',
+      subTopicId: 'ge-infinite',
       questionId: 'seq-sub-inf-005',
       title: 'סכום אינסופי נתון — איך חושבים על זה',
       prompt:

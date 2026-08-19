@@ -292,6 +292,198 @@ if (failures.length) {
   check('ghost ind-006 branch: divisibility by 3 alone is weaker — 3 divides 3n(n+1) trivially', (3 * 5 * 6) % 3, 0);
 }
 
+// ============================================================
+// STAGES (2026-08-19) — content/lessons/math5/sequences-arithmetic.ts and
+// sequences-geometric.ts: every lesson example, drill, question and bagrut
+// part. Sums over ranges are brute-forced (loops), not restated through the
+// same formula the content used.
+// ============================================================
+const sumRange = (f: (i: number) => number, from: number, to: number) => {
+  let s = 0;
+  for (let i = from; i <= to; i++) s += f(i);
+  return s;
+};
+const arithS = (a1: number, d: number, n: number) => arithSum(a1, arithTerm(a1, d, n), n);
+
+// ---- ar-general-term
+check('ar1 drill-002 a4 (12,-5)', arithTerm(12, -5, 4), -3);
+check('ar1 drill-003 a20 (3,7)', arithTerm(3, 7, 20), 136);
+check('ar1 drill-004 100 in 2,9,16 → n', (100 - 2) / 7 + 1, 15);
+check('ar1 drill-005 2x,11,x+10 → x', (22 - 10) / 3, 4);
+check('ar1 ex a3=10,a8=30 → d=4, a1=2', (30 - 10) / 5 * 10 + (10 - 2 * 4), 42);
+check('ar1 ex 58 is a15 of (2,4)', arithTerm(2, 4, 15), 58);
+check('ar1 seq-arg-001 a6 (7,-2)', arithTerm(7, -2, 6), -3);
+check('ar1 seq-arg-002 94 in 4,10,16 → n', (94 - 4) / 6 + 1, 16);
+check('ar1 seq-arg-003 a5 = 3·a2', arithTerm(2, 4, 5), 3 * arithTerm(2, 4, 2));
+check('ar1 seq-arg-003 a8 = 30', arithTerm(2, 4, 8), 30);
+check('ar1 seq-arg-004 first negative is a16 = -5', arithTerm(100, -7, 16), -5);
+check('ar1 seq-arg-004 a15 still positive', arithTerm(100, -7, 15) > 0 ? 1 : 0, 1);
+check('bag006 d', (37 - 17) / 5, 4);
+check('bag006 a1', 17 - 3 * 4, 5);
+check('bag006 a20', arithTerm(5, 4, 20), 81);
+check('bag006 121 = a30', arithTerm(5, 4, 30), 121);
+check('bag006 a50 = 201 first > 200', arithTerm(5, 4, 50), 201);
+check('bag006 a49 < 200', arithTerm(5, 4, 49) < 200 ? 1 : 0, 1);
+
+// ---- ar-recursion-sums
+check('ar2 drill-001 a4 (10,-3)', arithTerm(10, -3, 4), 1);
+check('ar2 ex a15 of 6n-1', 6 * 15 - 1, 89);
+check('ar2 drill-004 S10 of odds (brute)', sumRange((i) => 2 * i - 1, 1, 10), 100);
+check('ar2 drill-005 S_n=3n²+2n: a1 = S1', 3 + 2, 5);
+check('ar2 drill-005 a2 = S2 - S1', 12 + 4 - 5, 11);
+check('ar2 seq-ars-001 a5 (4,+3)', arithTerm(4, 3, 5), 16);
+check('ar2 seq-ars-003 S13 (2,5) = 416', arithS(2, 5, 13), 416);
+check('ar2 seq-ars-003 discriminant 129²', 1 + 4 * 5 * 832, 129 * 129);
+check('ar2 ex S12 (3,4) = 300', arithS(3, 4, 12), 300);
+check('ar2 ex discriminant 49²', 1 + 4 * 2 * 300, 49 * 49);
+check('ar2 teach S8 (3,3) = 108 → d = 3', arithS(3, 3, 8), 108);
+check('ar2 drill max-sum (20,-3): a7 = 2, a8 = -1', arithTerm(20, -3, 7) * 10 + arithTerm(20, -3, 8), 19);
+check('ar2 seq-ars-004 a_n = 4n+1 from S_n = 2n²+3n (n=7)', 2 * 49 + 21 - (2 * 36 + 18), 4 * 7 + 1);
+check('ar2 seq-sub-ar-005 S14 = 287', arithS(40, -3, 14), 287);
+check('ar2 ex max-sum (35,-4): a9 = 3, a10 = -1', arithTerm(35, -4, 9) * 10 + arithTerm(35, -4, 10), 29);
+check('ar2 ex max-sum S9 = 171', arithS(35, -4, 9), 171);
+check('bag007 S20 (5,3)', arithS(5, 3, 20), 670);
+check('bag007 S16 = 440', arithS(5, 3, 16), 440);
+check('bag007 a_n = 3n+2 at 4', 3 * 4 + 2, arithTerm(5, 3, 4));
+
+// ---- ar-positions-sums
+const ar34 = (i: number) => arithTerm(3, 4, i);
+const ar23 = (i: number) => arithTerm(2, 3, i);
+check('ar3 ex evens of 20 terms (2,3) brute', sumRange((i) => (i % 2 === 0 ? ar23(i) : 0), 1, 20), 320);
+check('ar3 ex odds of 20 terms (2,3) brute', sumRange((i) => (i % 2 === 1 ? ar23(i) : 0), 1, 20), 290);
+check('ar3 ex evens - odds = 10d', 320 - 290, 10 * 3);
+check('ar3 ex S20 (2,3)', arithS(2, 3, 20), 610);
+check('ar3 drill 7..18 count', 18 - 7 + 1, 12);
+check('ar3 last 10 of 30 (2,3) brute', sumRange((i) => arithTerm(2, 3, i), 21, 30), 755);
+check('ar3 terms 11..20 (2,3) brute', sumRange((i) => arithTerm(2, 3, i), 11, 20), 455);
+check('ar3 drill-005 middle = S15/15', 300 / 15, 20);
+check('ar3 seq-arp-001 a2,a4,a6 of (2,3)', arithTerm(2, 3, 2) * 10000 + arithTerm(2, 3, 4) * 100 + arithTerm(2, 3, 6), 51117);
+check('ar3 seq-arp-002 a20 (7,2)', arithTerm(7, 2, 20), 45);
+check('ar3 seq-arp-003 evens of 20 (4,3) brute', sumRange((i) => (i % 2 === 0 ? arithTerm(4, 3, i) : 0), 1, 20), 340);
+check('ar3 seq-arp-003 odds (4,3) brute', sumRange((i) => (i % 2 === 1 ? arithTerm(4, 3, i) : 0), 1, 20), 310);
+check('ar3 seq-arp-004 last 10 of 30 (3,5) brute', sumRange((i) => arithTerm(3, 5, i), 21, 30), 1255);
+check('ar3 seq-arp-005 8d = 40', 40 / 8, 5);
+check('ar3 seq-arp-006 odds of 25 (1,4) brute', sumRange((i) => (i % 2 === 1 ? arithTerm(1, 4, i) : 0), 1, 25), 637);
+check('ar3 seq-arp-006 evens of 25 (1,4) brute', sumRange((i) => (i % 2 === 0 ? arithTerm(1, 4, i) : 0), 1, 25), 588);
+check('ar3 seq-arp-007 first three (6,2)', sumRange((i) => arithTerm(6, 2, i), 1, 3), 24);
+check('ar3 seq-arp-007 last three of 20', sumRange((i) => arithTerm(6, 2, i), 18, 20), 126);
+check('ar3 seq-arp-007 terms 4..17', sumRange((i) => arithTerm(6, 2, i), 4, 17), 350);
+check('bag008 a20', ar34(20), 79);
+check('bag008 S20', arithS(3, 4, 20), 820);
+check('bag008 last five brute', sumRange(ar34, 16, 20), 355);
+check('bag008 S15', arithS(3, 4, 15), 465);
+
+// ---- ar-practice
+check('ar4 ex1 S10 (4,3)', arithS(4, 3, 10), 175);
+check('ar4 ex2 a3+a7 = 40 with (8,3)', arithTerm(8, 3, 3) + arithTerm(8, 3, 7), 40);
+check('ar4 ex2 a10 = 35', arithTerm(8, 3, 10), 35);
+check('ar4 ex2 S12 = 294', arithS(8, 3, 12), 294);
+check('ar4 ex2 100 is not a term: a31=98, a32=101', arithTerm(8, 3, 31) * 1000 + arithTerm(8, 3, 32), 98101);
+check('ar4 ex3 (50,-4) a14 = -2', arithTerm(50, -4, 14), -2);
+check('ar4 ex3 S13 = 338', arithS(50, -4, 13), 338);
+check('ar4 seq-arx-001 S10 (6,4)', arithS(6, 4, 10), 240);
+check('ar4 seq-arx-002 a1 = 6, S5 = 70', arithS(6, 4, 5), 70);
+check('ar4 seq-arx-003 a2+a8 = 34 with (5,3)', arithTerm(5, 3, 2) + arithTerm(5, 3, 8), 34);
+check('ar4 seq-arx-003 a5-a3 = 6', arithTerm(5, 3, 5) - arithTerm(5, 3, 3), 6);
+check('ar4 seq-arx-003 S10 = 185', arithS(5, 3, 10), 185);
+check('ar4 seq-arx-004 20 terms below 100: a20=97, a21=102', arithTerm(2, 5, 20) * 1000 + arithTerm(2, 5, 21), 97102);
+check('ar4 seq-arx-005 6d = 30', 30 / 6, 5);
+check('ar4 seq-arx-006 S4 = 26', arithS(2, 3, 4), 26);
+check('ar4 seq-arx-006 S8 = 100', arithS(2, 3, 8), 100);
+check('ar4 seq-arx-006 a10 = 29', arithTerm(2, 3, 10), 29);
+check('ar4 seq-arx-007 a8 = 3, a9 = -3', arithTerm(45, -6, 8) * 100 + arithTerm(45, -6, 9), 300 - 3);
+check('ar4 seq-arx-007 S8 = 192', arithS(45, -6, 8), 192);
+{
+  // Independent: brute-force the maximum of S_n for (45,-6).
+  let best = -Infinity, bestN = 0;
+  for (let n = 1; n <= 100; n++) { const s = arithS(45, -6, n); if (s > best) { best = s; bestN = n; } }
+  check('ar4 seq-arx-007 brute-force max at n=8', bestN, 8);
+  check('ar4 seq-arx-007 brute-force max value 192', best, 192);
+}
+check('bag009 d, a1', (25 - 9) / 4 * 100 + (9 - 4), 405);
+check('bag009 a25', arithTerm(5, 4, 25), 101);
+check('bag009 S25', arithS(5, 4, 25), 1325);
+check('bag009 evens of 25 brute', sumRange((i) => (i % 2 === 0 ? arithTerm(5, 4, i) : 0), 1, 25), 636);
+
+// ---- ge-general-term
+check('ge1 drill-002 a7 (5,2)', geoTerm(5, 2, 7), 320);
+check('ge1 drill-003 a6/a3 = q³ = 8', 96 / 12, 8);
+check('ge1 drill-004 1458 = a7 of (2,3)', geoTerm(2, 3, 7), 1458);
+check('ge1 drill-005 x,6,9 → x=4', 36 / 9, 4);
+check('ge1 ex 384 = a8 of (3,2)', geoTerm(3, 2, 8), 384);
+check('ge1 ex a2=10,a5=80 → q=2, a1=5', geoTerm(5, 2, 2) * 1000 + geoTerm(5, 2, 5), 10080);
+check('ge1 teach 2,8,32: a7 > 3000 > a6', geoTerm(2, 4, 7) > 3000 && geoTerm(2, 4, 6) < 3000 ? 1 : 0, 1);
+check('ge1 teach a1+a2=8, a2+a3=24 with (2,3)', (2 + 6) * 100 + (6 + 18), 824);
+check('ge1 seq-geg-001 a2..a4 of (4,-2)', geoTerm(4, -2, 2) * 10000 + geoTerm(4, -2, 3) * 100 + geoTerm(4, -2, 4), -80000 + 1600 - 32);
+check('ge1 seq-geg-002 (2,3): a3=18, a6=486', geoTerm(2, 3, 3) * 1000 + geoTerm(2, 3, 6), 18486);
+check('ge1 seq-geg-002 4374 = a8', geoTerm(2, 3, 8), 4374);
+check('bag010 a8', geoTerm(5, 2, 8), 640);
+check('bag010 a9 > 1000 > a8', geoTerm(5, 2, 9) > 1000 && geoTerm(5, 2, 8) < 1000 ? 1 : 0, 1);
+
+// ---- ge-proof-sum
+check('ge2 drill-001 a4 (81,1/3)', geoTerm(81, 1 / 3, 4), 3);
+check('ge2 teach 5·3^n: a1 = 15, ratio 3', 5 * 3 * 100 + (5 * 3 ** 4) / (5 * 3 ** 3), 1503);
+check('ge2 ex S5 (3,2) = 93', geoSum(3, 2, 5), 93);
+check('ge2 ex S6 (4,3) = 1456', geoSum(4, 3, 6), 1456);
+check('ge2 teach S3 = 28 (a1=4) for q=2 and q=-3', geoSum(4, 2, 3) * 100 + geoSum(4, -3, 3), 2828);
+check('ge2 teach last two of six (1,2) = 48', geoSum(1, 2, 6) - geoSum(1, 2, 4), 48);
+check('ge2 ex last three of eight (2,3) brute', sumRange((i) => geoTerm(2, 3, i), 6, 8), 6318);
+check('ge2 ex S8 - S5 (2,3)', geoSum(2, 3, 8) - geoSum(2, 3, 5), 6318);
+check('ge2 ex 3^(2n-1): ratio 9, a1 = 3', 3 ** 7 / 3 ** 5 * 10 + 3, 93);
+check('ge2 drill-002 7·2^(n+1): q = 2', (7 * 2 ** 5) / (7 * 2 ** 4), 2);
+check('ge2 drill-003 S5 of 1,2,4', geoSum(1, 2, 5), 31);
+check('ge2 ex S7 (3,2) = 381', geoSum(3, 2, 7), 381);
+check('ge2 ex S3 = 26 for q=3 and q=-4', geoSum(2, 3, 3) * 100 + geoSum(2, -4, 3), 2626);
+check('ge2 drill-004 S5 (2,3) = 242', geoSum(2, 3, 5), 242);
+check('ge2 ex last four of 10 (1,2) brute', sumRange((i) => geoTerm(1, 2, i), 7, 10), 960);
+check('ge2 drill-005 a7 + a8 of (3,2)', geoTerm(3, 2, 7) + geoTerm(3, 2, 8), 576);
+check('ge2 drill-005 S8 - S6', geoSum(3, 2, 8) - geoSum(3, 2, 6), 576);
+check('ge2 seq-ges-001 a4 (5,2)', geoTerm(5, 2, 4), 40);
+check('ge2 seq-ges-002 3·2^n: a1 = 6', 3 * 2, 6);
+check('ge2 seq-ges-006 (2,3): S2 = 8, S4 = 80', geoSum(2, 3, 2) * 1000 + geoSum(2, 3, 4), 8080);
+check('bag011 S8 (6,2)', geoSum(6, 2, 8), 1530);
+check('bag011 S10 = 6138', geoSum(6, 2, 10), 6138);
+check('bag011 a5..a10 brute', sumRange((i) => 3 * 2 ** i, 5, 10), 6048);
+
+// ---- ge-infinite
+check('ge3 drill-004 S∞ of 9,3,1', infSum(9, 1 / 3), 13.5);
+check('ge3 ex 4,-6,9: q = -1.5', -6 / 4, -1.5);
+check('ge3 ex 10,2,0.4 → 12.5', infSum(10, 1 / 5), 12.5);
+check('ge3 ex S∞=25, a1=20 → q=1/5, a3=4/5, tail 5', infSum(20, 1 / 5) * 100 + geoTerm(20, 1 / 5, 3) * 10 + (25 - 20), 2500 + 8 + 5);
+check('ge3 drill-005 a1 = S∞(1-q)', 20 * (1 - 1 / 4), 15);
+check('ge3 seq-gei-001 S∞ (12, 1/4)', infSum(12, 1 / 4), 16);
+check('ge3 seq-gei-002 (6, 2/3): S∞ = 18, a2 = 4', infSum(6, 2 / 3) * 10 + geoTerm(6, 2 / 3, 2), 184);
+check('ge3 seq-gei-002 (12, 1/3): S∞ = 18, a2 = 4', infSum(12, 1 / 3) * 10 + geoTerm(12, 1 / 3, 2), 184);
+{
+  let s = 0;
+  for (let n = 1; n <= 200; n++) s += geoTerm(12, 1 / 4, n);
+  check('ge3 seq-gei-001 200 partial terms land on 16', Math.abs(s - 16) < 1e-9 ? 1 : 0, 1);
+}
+
+// ---- ge-practice
+check('ge4 ex1 (2,3): a2 = 6, a4 = 54', geoTerm(2, 3, 2) * 100 + geoTerm(2, 3, 4), 654);
+check('ge4 ex1 S5 = 242', geoSum(2, 3, 5), 242);
+check('ge4 ex1 a7 > 1000 > a6', geoTerm(2, 3, 7) > 1000 && geoTerm(2, 3, 6) < 1000 ? 1 : 0, 1);
+check('ge4 ex2 (24,1/3) S∞ = 36', infSum(24, 1 / 3), 36);
+check('ge4 ex2 odd positions sum 27', infSum(24, 1 / 9), 27);
+check('ge4 ex2 even positions sum 9', infSum(8, 1 / 9), 9);
+check('ge4 ex2 odds + evens = S∞', 27 + 9, 36);
+check('ge4 seq-gex-008 squares: a1²=9, q²=1/4, sum 12', infSum(9, 1 / 4), 12);
+check('ge4 ex3 (4,2): a1+a3 = 20, a2+a4 = 40', (4 + 16) * 100 + (8 + 32), 2040);
+check('ge4 ex3 S6 = 252', geoSum(4, 2, 6), 252);
+check('ge4 seq-gex-001 (2,3) S4 = 80', geoSum(2, 3, 4), 80);
+check('ge4 seq-gex-002 S∞ (16,1/2) = 32, a5 = 1', infSum(16, 1 / 2) * 10 + geoTerm(16, 1 / 2, 5), 321);
+check('ge4 seq-gex-003 (4,3): a2=12, a4=108', geoTerm(4, 3, 2) * 1000 + geoTerm(4, 3, 4), 12108);
+check('ge4 seq-gex-003 a7 > 1000 > a6', geoTerm(4, 3, 7) > 1000 && geoTerm(4, 3, 6) < 1000 ? 1 : 0, 1);
+check('ge4 seq-gex-004 S_n = 2(3^n-1): a1 = 4, a2 = 12', 2 * (3 - 1) * 100 + (2 * (9 - 1) - 4), 412);
+check('ge4 seq-gex-004 a_n = 4·3^(n-1) vs S_n - S_{n-1} at n=6', 4 * 3 ** 5, 2 * (3 ** 6 - 1) - 2 * (3 ** 5 - 1));
+check('ge4 seq-gex-005 q = 1 - 9/12', 1 - 9 / 12, 0.25);
+check('ge4 seq-gex-006 (5,3): a1+a3 = 50, a2+a4 = 150', (5 + 45) * 1000 + (15 + 135), 50150);
+check('ge4 seq-gex-006 S5 = 605', geoSum(5, 3, 5), 605);
+check('ge4 seq-gex-007 (12,1/2): S∞ = 24, a1+a2 = 18', infSum(12, 1 / 2) * 100 + (12 + 6), 2418);
+check('bag012 q, S∞', (9 / 27) * 100 + infSum(27, 1 / 3), 100 / 3 + 40.5);
+check('bag012 odds 243/8, evens 81/8', infSum(27, 1 / 9) * 100 + infSum(9, 1 / 9), 3037.5 + 10.125);
+
 console.log(`\nverify-sequences: ${pass}/${pass + fail} checks passed.`);
 if (fail > 0) {
   // The list was collected and then thrown away, which made a red run useless.

@@ -14,7 +14,7 @@ import type { BagrutPaper } from '@/content/bagrut-curriculum';
 import { TRACK_571 } from './paper-571';
 import type { TrackTree, TrackTopic } from './types';
 
-export type { TrackTile, TrackTopic, TrackTree } from './types';
+export type { TrackGroup, TrackTile, TrackTopic, TrackTree } from './types';
 
 const SUBJECT = 'math5';
 
@@ -30,8 +30,12 @@ export const EXCLUDED_TOPICS: Record<BagrutPaper, readonly string[]> = {
 };
 
 /** 571 sub-topics intentionally absent from the authored track (verify-tracks
- *  fails on any OTHER 571 sub-topic that the track does not reach). */
-export const EXCLUDED_571: readonly string[] = ['volume-revolution'];
+ *  fails on any OTHER 571 sub-topic that the track does not reach).
+ *  `sequences-applications` (ריבית ונסיגה): the owner's סדרות structure
+ *  (2026-08-19) is two groups of four stages and does not include an interest
+ *  module; recursion moved into ar-recursion-sums. The module stays authored
+ *  (lesson page, quiz, cognition, ghost) — only the track skips it. */
+export const EXCLUDED_571: readonly string[] = ['volume-revolution', 'sequences-applications'];
 
 /** Every sub-topic a paper's track leaves out on purpose — the sub-topic list
  *  above plus every sub-topic of the excluded topics. verify-tracks treats

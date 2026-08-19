@@ -13,7 +13,7 @@
  * Nothing here reads localStorage except through lib/roadmap-progress.
  */
 
-import { getTrack, type TrackTile, type TrackTopic, type TrackTree } from '@/content/tracks';
+import { getTrack, type TrackGroup, type TrackTile, type TrackTopic, type TrackTree } from '@/content/tracks';
 import { resolveRoadmapNode } from '@/constants/roadmapData';
 import { getSubTopic } from '@/content/lessons';
 import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
@@ -32,11 +32,12 @@ const isLadder = (t: TrackTile): t is LadderTile => t.kind === 'ladder';
 /** One rendered row of a track topic — a ladder tile resolved against the
  *  lesson content, or a soon/link tile as-is. Ladder tiles whose sub-topic
  *  does not exist are dropped here (verify-tracks turns that into a build
- *  failure). */
+ *  failure). `step` counts inside the tile's group (1…n per group, and 1…n
+ *  for the ungrouped tiles), so each sub-track reads "שלב 1 … שלב 4". */
 export type TrackEntry =
-  | { kind: 'ladder'; tile: LadderTile; node: RoadmapNode; step: number }
-  | { kind: 'soon'; tile: SoonTile; step: number }
-  | { kind: 'link'; tile: LinkTile; step: number };
+  | { kind: 'ladder'; tile: LadderTile; node: RoadmapNode; step: number; group?: string }
+  | { kind: 'soon'; tile: SoonTile; step: number; group?: string }
+  | { kind: 'link'; tile: LinkTile; step: number; group?: string };
 
 /** Resolve a ladder tile → the roadmap node it opens (null if the id is unknown). */
 export function trackNode(tile: LadderTile, indexInTopic = 0): RoadmapNode | null {
@@ -55,20 +56,28 @@ export function trackNode(tile: LadderTile, indexInTopic = 0): RoadmapNode | nul
 export function trackEntries(topic: TrackTopic): TrackEntry[] {
   const out: TrackEntry[] = [];
   let ladderIndex = 0;
-  topic.tiles.forEach((tile, i) => {
-    const step = i + 1;
+  // Step numbers restart per group ('' = the ungrouped tiles).
+  const stepIn: Record<string, number> = {};
+  for (const tile of topic.tiles) {
+    const key = tile.group ?? '';
+    const step = (stepIn[key] = (stepIn[key] ?? 0) + 1);
     if (tile.kind === 'ladder') {
       const node = trackNode(tile, ladderIndex);
-      if (!node) return;
-      out.push({ kind: 'ladder', tile, node, step });
+      if (!node) continue;
+      out.push({ kind: 'ladder', tile, node, step, group: tile.group });
       ladderIndex++;
     } else if (tile.kind === 'soon') {
-      out.push({ kind: 'soon', tile, step });
+      out.push({ kind: 'soon', tile, step, group: tile.group });
     } else {
-      out.push({ kind: 'link', tile, step });
+      out.push({ kind: 'link', tile, step, group: tile.group });
     }
-  });
+  }
   return out;
+}
+
+/** The topic's groups, or null when it has none. */
+export function topicGroups(topic: TrackTopic): TrackGroup[] | null {
+  return topic.groups && topic.groups.length > 0 ? topic.groups : null;
 }
 
 /** The ladder nodes of one track topic, in order. */
@@ -153,16 +162,21 @@ export function ladderHref(subId: string, ctx?: { paper: BagrutPaper; topicId: s
 export type TrackLocation = {
   paper: BagrutPaper;
   topic: TrackTopic;
+  /** The sub-track (group) the ladder sits in, if the topic has groups. */
+  group: TrackGroup | null;
   prevSubId: string | null;
   nextSubId: string | null;
   nextTitle: string | null;
-  /** The topic page: /roadmap/track/{paper}/{topic.id} */
+  /** The topic page: /roadmap/track/{paper}/{topic.id}[?group={group.id}] —
+   *  "back" from a ladder returns to the same sub-track. */
   topicHref: string;
 };
 
 /** Where does `subId` sit in the track for `paper`? Prefers the topic named by
  *  the ctx param, then the first non-review appearance, then any appearance.
- *  prev/next skip soon/link tiles — they are the neighbouring LADDERS. */
+ *  prev/next skip soon/link tiles — they are the neighbouring LADDERS, and
+ *  they stay inside the ladder's own group (a sub-track has its own stages;
+ *  the last stage of סדרות חשבוניות does not flow into סדרות הנדסיות). */
 export function locateInTrack(paper: BagrutPaper, subId: string, ctxTopicId?: string | null): TrackLocation | null {
   const tree = getTrack(paper);
   const holds = (t: TrackTopic) => t.tiles.some((tl) => isLadder(tl) && tl.subId === subId);
@@ -172,16 +186,20 @@ export function locateInTrack(paper: BagrutPaper, subId: string, ctxTopicId?: st
     (ctxTopicId ? candidates.find((t) => t.id === ctxTopicId) : undefined) ??
     candidates.find((t) => t.tiles.some((tl) => isLadder(tl) && tl.subId === subId && !tl.review)) ??
     candidates[0];
-  const ladders = topic.tiles.filter(isLadder);
+  const mine = topic.tiles.find((tl) => isLadder(tl) && tl.subId === subId) as LadderTile;
+  const groupId = mine.group;
+  const group = (groupId && topic.groups?.find((g) => g.id === groupId)) || null;
+  const ladders = topic.tiles.filter((tl): tl is LadderTile => isLadder(tl) && (tl.group ?? '') === (groupId ?? ''));
   const idx = ladders.findIndex((tl) => tl.subId === subId);
   const prev = idx > 0 ? ladders[idx - 1] : null;
   const next = idx >= 0 && idx < ladders.length - 1 ? ladders[idx + 1] : null;
   return {
     paper,
     topic,
+    group,
     prevSubId: prev?.subId ?? null,
     nextSubId: next?.subId ?? null,
     nextTitle: next ? (next.title ?? resolveRoadmapNode(next.subId)?.node.title ?? null) : null,
-    topicHref: `/roadmap/track/${paper}/${encodeURIComponent(topic.id)}`,
+    topicHref: `/roadmap/track/${paper}/${encodeURIComponent(topic.id)}${group ? `?group=${encodeURIComponent(group.id)}` : ''}`,
   };
 }

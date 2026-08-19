@@ -77,7 +77,7 @@ export default function RoadmapLessonPage() {
 
   return (
     <PracticeShell
-      subtitle={location ? location.topic.title : resolved.topic}
+      subtitle={location ? (location.group ? `${location.topic.title} · ${location.group.title}` : location.topic.title) : resolved.topic}
       backHref={mapHref}
       backLabel={location ? 'לנושא' : 'למפה'}
     >

@@ -24,12 +24,12 @@ export const sequencesCognition: TopicCognitionMap = {
   subject: SUBJECT,
   topic: TOPIC,
   skills: [
-    { id: "ar-nth-term", title: "נוסחת האיבר הכללי בסדרה חשבונית", subject: SUBJECT, topic: TOPIC, subTopicId: "arithmetic-sequences", prereqs: [], band: "easy" },
-    { id: "ar-identify-condition", title: "תנאי הסדרה החשבונית ומציאת פרמטרים", subject: SUBJECT, topic: TOPIC, subTopicId: "arithmetic-sequences", prereqs: ["ar-nth-term"], band: "mid" },
-    { id: "ge-nth-term", title: "נוסחת האיבר הכללי בסדרה הנדסית", subject: SUBJECT, topic: TOPIC, subTopicId: "geometric-sequences", prereqs: [], band: "easy" },
-    { id: "ge-mean", title: "ממוצע הנדסי בין שני מספרים", subject: SUBJECT, topic: TOPIC, subTopicId: "geometric-sequences", prereqs: ["ge-nth-term"], band: "mid" },
-    { id: "inf-convergence-condition", title: "תנאי התכנסות של סדרה הנדסית אינסופית", subject: SUBJECT, topic: TOPIC, subTopicId: "infinite-geometric", prereqs: ["ge-nth-term"], band: "easy" },
-    { id: "inf-sum-formula", title: "נוסחת הסכום האינסופי המתכנס", subject: SUBJECT, topic: TOPIC, subTopicId: "infinite-geometric", prereqs: ["inf-convergence-condition"], band: "mid" },
+    { id: "ar-nth-term", title: "נוסחת האיבר הכללי בסדרה חשבונית", subject: SUBJECT, topic: TOPIC, subTopicId: "ar-general-term", prereqs: [], band: "easy" },
+    { id: "ar-identify-condition", title: "תנאי הסדרה החשבונית ומציאת פרמטרים", subject: SUBJECT, topic: TOPIC, subTopicId: "ar-general-term", prereqs: ["ar-nth-term"], band: "mid" },
+    { id: "ge-nth-term", title: "נוסחת האיבר הכללי בסדרה הנדסית", subject: SUBJECT, topic: TOPIC, subTopicId: "ge-general-term", prereqs: [], band: "easy" },
+    { id: "ge-mean", title: "ממוצע הנדסי בין שני מספרים", subject: SUBJECT, topic: TOPIC, subTopicId: "ge-general-term", prereqs: ["ge-nth-term"], band: "mid" },
+    { id: "inf-convergence-condition", title: "תנאי התכנסות של סדרה הנדסית אינסופית", subject: SUBJECT, topic: TOPIC, subTopicId: "ge-infinite", prereqs: ["ge-nth-term"], band: "easy" },
+    { id: "inf-sum-formula", title: "נוסחת הסכום האינסופי המתכנס", subject: SUBJECT, topic: TOPIC, subTopicId: "ge-infinite", prereqs: ["inf-convergence-condition"], band: "mid" },
     { id: "app-compound-interest", title: "ריבית דריבית כסדרה הנדסית", subject: SUBJECT, topic: TOPIC, subTopicId: "sequences-applications", prereqs: ["ge-nth-term"], band: "easy" },
     { id: "ind-base-step", title: "שלב הבסיס באינדוקציה", subject: SUBJECT, topic: TOPIC, subTopicId: "induction", prereqs: [], band: "easy" },
     { id: "ind-inductive-step", title: "שלב הצעד באינדוקציה", subject: SUBJECT, topic: TOPIC, subTopicId: "induction", prereqs: ["ind-base-step"], band: "mid" },
@@ -41,7 +41,7 @@ export const sequencesCognition: TopicCognitionMap = {
       title: "הכפלת $d$ ב-$n$ במקום ב-$n-1$",
       skill: "ar-nth-term",
       insight: "אתה מחשב $a_n = a_1 + n \\cdot d$ במקום $a_1 + (n-1) \\cdot d$, וכך מקבל איבר אחד יותר מדי.",
-      remedy: { subTopicId: "arithmetic-sequences" },
+      remedy: { subTopicId: "ar-general-term" },
       triggers: [
         { questionId: "seq-sub-ar-001", optionIndex: 1 },
       ],
@@ -51,7 +51,7 @@ export const sequencesCognition: TopicCognitionMap = {
       title: "עצירה איבר אחד מוקדם בסדרה חשבונית",
       skill: "ar-nth-term",
       insight: "אתה מחשב $a_{n-1}$ במקום $a_n$ — מפסיק להוסיף את $d$ צעד אחד לפני הסוף.",
-      remedy: { subTopicId: "arithmetic-sequences" },
+      remedy: { subTopicId: "ar-general-term" },
       triggers: [
         { questionId: "seq-sub-ar-001", optionIndex: 2 },
         { questionId: "seq-sub-ge-001", optionIndex: 1 },
@@ -62,7 +62,7 @@ export const sequencesCognition: TopicCognitionMap = {
       title: "הכפלת $a_1$ ב-$n$ כאילו הסדרה פרופורציונלית",
       skill: "ar-nth-term",
       insight: "אתה מחשב $a_n = a_1 \\cdot n$ במקום $a_1 + (n-1) \\cdot d$ — מתייחס לסדרה כאילו היא כפולות של הראשון.",
-      remedy: { subTopicId: "arithmetic-sequences" },
+      remedy: { subTopicId: "ar-general-term" },
       triggers: [
         { questionId: "seq-sub-ar-001", optionIndex: 3 },
       ],
@@ -72,7 +72,7 @@ export const sequencesCognition: TopicCognitionMap = {
       title: "בדיקת הפרש בין צמד אחד בלבד",
       skill: "ar-identify-condition",
       insight: "אתה בודק שהפרש בין שני איברים עוקבים נכון, אבל שוכח לוודא שכל ההפרשים שווים.",
-      remedy: { subTopicId: "arithmetic-sequences" },
+      remedy: { subTopicId: "ar-general-term" },
       triggers: [
         { questionId: "seq-sub-ar-004", optionIndex: 1 },
         { questionId: "seq-sub-ar-004", optionIndex: 2 },
@@ -83,7 +83,7 @@ export const sequencesCognition: TopicCognitionMap = {
       title: "הכפלה ב-$q^n$ במקום ב-$q^{n-1}$ בסדרה הנדסית",
       skill: "ge-nth-term",
       insight: "אתה מחשב $a_n = a_1 \\cdot q^n$ במקום $a_1 \\cdot q^{n-1}$, וכך מקבל איבר אחד גבוה מדי.",
-      remedy: { subTopicId: "geometric-sequences" },
+      remedy: { subTopicId: "ge-general-term" },
       triggers: [
         { questionId: "seq-sub-ge-001", optionIndex: 2 },
       ],
@@ -93,7 +93,7 @@ export const sequencesCognition: TopicCognitionMap = {
       title: "טיפול בסדרה הנדסית כחשבונית",
       skill: "ge-nth-term",
       insight: "אתה מוסיף הפרש קבוע במקום להכפיל ביחס $q$ — מחליף בין הסדרות.",
-      remedy: { subTopicId: "geometric-sequences" },
+      remedy: { subTopicId: "ge-general-term" },
       triggers: [
         { questionId: "seq-sub-ge-001", optionIndex: 3 },
       ],
@@ -103,7 +103,7 @@ export const sequencesCognition: TopicCognitionMap = {
       title: "שימוש בממוצע חשבוני במקום הנדסי",
       skill: "ge-mean",
       insight: "אתה מחשב $\\frac{a+b}{2}$ כשמבקשים ממוצע הנדסי — צריך $\\sqrt{a \\cdot b}$.",
-      remedy: { subTopicId: "geometric-sequences" },
+      remedy: { subTopicId: "ge-general-term" },
       triggers: [
         { questionId: "seq-sub-ge-004", optionIndex: 1 },
       ],
@@ -113,7 +113,7 @@ export const sequencesCognition: TopicCognitionMap = {
       title: "שכחת להוציא שורש בממוצע הנדסי",
       skill: "ge-mean",
       insight: "אתה מחשב את המכפלה $a \\cdot b$ אבל שוכח להוציא ממנה שורש ריבועי.",
-      remedy: { subTopicId: "geometric-sequences" },
+      remedy: { subTopicId: "ge-general-term" },
       triggers: [
         { questionId: "seq-sub-ge-004", optionIndex: 2 },
       ],
@@ -123,7 +123,7 @@ export const sequencesCognition: TopicCognitionMap = {
       title: "שיפוט התכנסות לפי סימן $q$ ולא לפי ערכו המוחלט",
       skill: "inf-convergence-condition",
       insight: "אתה חושב שסדרה מתכנסת כאשר $q$ חיובי, אבל הקובע הוא $|q| < 1$ — לא הסימן.",
-      remedy: { subTopicId: "infinite-geometric" },
+      remedy: { subTopicId: "ge-infinite" },
       triggers: [
         { questionId: "seq-sub-inf-001", optionIndex: 2 },
       ],
@@ -133,7 +133,7 @@ export const sequencesCognition: TopicCognitionMap = {
       title: "הצבה עיוורת בנוסחת הסכום האינסופי מחוץ לתחום",
       skill: "inf-sum-formula",
       insight: "אתה מציב בנוסחה $\\frac{a_1}{1-q}$ גם כאשר $|q| \\geq 1$ — הנוסחה תקפה רק כשהסדרה מתכנסת.",
-      remedy: { subTopicId: "infinite-geometric" },
+      remedy: { subTopicId: "ge-infinite" },
       triggers: [
         { questionId: "seq-sub-inf-004", optionIndex: 1 },
         { questionId: "seq-sub-inf-004", optionIndex: 2 },

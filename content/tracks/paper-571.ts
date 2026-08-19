@@ -30,47 +30,109 @@ export const TRACK_571: TrackTree = {
   paper: '571',
   topics: [
     {
+      // סדרות (owner, 2026-08-19): opening the topic offers a choice between
+      // סדרות חשבוניות and סדרות הנדסיות, and each is climbed as four stages of
+      // its own. The stage sub-topics live in content/lessons/math5/
+      // sequences-arithmetic.ts / sequences-geometric.ts. אינדוקציה and the
+      // mixed-bagrut link stay outside the two groups ("עוד בנושא").
       id: 'sequences',
       title: 'סדרות',
       emoji: '⋯',
+      groups: [
+        { id: 'arithmetic', title: 'סדרות חשבוניות', emoji: '➕', tagline: 'הפרש קבוע — ארבעה שלבים, מהאיבר הכללי ועד שאלות בסגנון בגרות' },
+        { id: 'geometric', title: 'סדרות הנדסיות', emoji: '✖️', tagline: 'מנה קבועה — ארבעה שלבים, מהאיבר הכללי ועד סדרה אינסופית ושאלות בגרות' },
+      ],
       tiles: [
+        // ---- סדרות חשבוניות ---------------------------------------------
         {
           kind: 'ladder',
-          subId: 'arithmetic-sequences',
-          title: 'סדרה חשבונית',
+          group: 'arithmetic',
+          subId: 'ar-general-term',
+          title: 'סדרה חשבונית — הפרש, איבר ראשון ואיבר כללי',
           bullets: [
-            'איבר כללי בסדרה חשבונית',
-            'נוסחאות הסכום',
-            'איברים במקומות זוגיים ואי-זוגיים',
-            'סכימת איברים ראשונים, אחרונים ואמצעיים',
+            'מהי סדרה חשבונית — ההפרש $d$ והאיבר הראשון $a_1$',
+            'נוסחת האיבר הכללי $a_n = a_1 + (n-1)d$',
+            'מציאת איבר כללי מתוך הפרש ואיבר ראשון',
+            'משחק עם הנעלמים — מוצאים $a_1$, $d$ או $n$',
           ],
         },
         {
-          // Recursion lives in the "applications" sub-topic together with
-          // compound interest — the closest existing ladder to this item.
           kind: 'ladder',
-          subId: 'sequences-applications',
-          title: 'כלל נסיגה והגדרת איבר לפי מיקום',
-          bullets: ['סדרות נסיגה $a_{n+1}=f(a_n)$', 'ריבית דריבית כסדרה'],
+          group: 'arithmetic',
+          subId: 'ar-recursion-sums',
+          title: 'כלל נסיגה, הוכחה שסדרה היא חשבונית ונוסחאות הסכום',
+          bullets: [
+            'כלל הנסיגה והגדרת איבר לפי כלל הנסיגה',
+            'הוכחה שסדרה היא סדרה חשבונית',
+            'נוסחאות הסכום של סדרה חשבונית וכיצד לעבוד איתן',
+          ],
         },
         {
           kind: 'ladder',
-          subId: 'geometric-sequences',
-          title: 'סדרה הנדסית',
+          group: 'arithmetic',
+          subId: 'ar-positions-sums',
+          title: 'מקומות זוגיים ואי-זוגיים, וסכומי איברים ראשונים, אחרונים ואמצעיים',
           bullets: [
-            'איבר כללי בסדרה הנדסית',
-            'מציאת מיקומו של איבר',
-            'איך מוכיחים שסדרה היא הנדסית (שיש לה מנה)',
-            'סכום של סדרה הנדסית',
+            'האיברים במקומות הזוגיים והאי-זוגיים',
+            'סכום $n$ האיברים הראשונים והאחרונים',
+            'סכום האיברים האמצעיים',
+          ],
+        },
+        {
+          kind: 'ladder',
+          group: 'arithmetic',
+          subId: 'ar-practice',
+          title: 'תרגול מסכם — שאלות בסגנון בגרות, קלות יותר',
+          bullets: [
+            'שאלות קצה שמשלבות את כל הנושאים',
+            'תרגילים שדומים לבגרות אבל קלים יותר',
+          ],
+        },
+        // ---- סדרות הנדסיות ----------------------------------------------
+        {
+          kind: 'ladder',
+          group: 'geometric',
+          subId: 'ge-general-term',
+          title: 'סדרה הנדסית — המנה, האיבר הכללי ומיקום של איבר',
+          bullets: [
+            'נוסחת האיבר הכללי של סדרה הנדסית $a_n = a_1 q^{n-1}$',
+            'איך מוצאים מיקום של איבר בסדרה הנדסית',
+            'מציאת המנה משני איברים',
+          ],
+        },
+        {
+          kind: 'ladder',
+          group: 'geometric',
+          subId: 'ge-proof-sum',
+          title: 'הוכחה שסדרה היא הנדסית ונוסחת הסכום',
+          bullets: [
+            'הוכחה שסדרה הנדסית היא הנדסית',
+            'נוסחת הסכום של סדרה הנדסית',
             'סכום $n$ איברים אחרונים',
           ],
         },
         {
           kind: 'ladder',
-          subId: 'infinite-geometric',
-          title: 'סדרה הנדסית אינסופית',
-          bullets: ['סכום סדרה אינסופית', 'סדרה אינסופית עולה, יורדת, מתכנסת'],
+          group: 'geometric',
+          subId: 'ge-infinite',
+          title: 'סדרה הנדסית אינסופית — עולה, יורדת, מתכנסת',
+          bullets: [
+            'סדרה הנדסית אינסופית',
+            'סדרה אינסופית יורדת / עולה',
+            'מתכנסת / לא מתכנסת — וסכום הסדרה המתכנסת',
+          ],
         },
+        {
+          kind: 'ladder',
+          group: 'geometric',
+          subId: 'ge-practice',
+          title: 'תרגול מסכם — כל הנושאים יחד ברמת בגרות',
+          bullets: [
+            'כל הנושאים מעורבבים יחד',
+            'ברמה של שאלות בגרות',
+          ],
+        },
+        // ---- עוד בנושא ----------------------------------------------------
         { kind: 'ladder', subId: 'induction', title: 'אינדוקציה מתמטית' },
         {
           kind: 'link',

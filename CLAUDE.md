@@ -65,6 +65,10 @@ content/
   bagrut-context.ts           MATH5.* — exam structure + style guide (used by AI prompts)
   lessons/math5/*.ts          16 topics: subTopics[] with lesson[] (guided), questions[] (MCQ+open),
                               bagrutQuestions[] (multi-part, expected:AnswerSpec). Accessors in index.ts.
+                              סדרות is split: sequences-arithmetic.ts / sequences-geometric.ts hold the 4+4
+                              STAGE sub-topics (ar-*/ge-*) and are spread into sequences.ts (2026-08-19).
+  tracks/                     study-track tree per שאלון (paper-571.ts authored). A topic may declare
+                              `groups` (סדרות: חשבוניות / הנדסיות) — the topic page opens with a chooser.
   concept-quiz/types.ts       ConceptQuestion + ConceptLevel (1|2|3, the axis the STUDENT picks on /quiz)
   concept-quiz/index.ts       registry keyed `${subject}:${topic}` — NOT topic alone (math4 shares math5's
                               Hebrew topic names and not always byte-identically). getConceptQuestions /

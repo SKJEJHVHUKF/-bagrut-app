@@ -60,6 +60,21 @@ for (const paper of TRACK_PAPERS) {
     if (topic.tiles.length === 0) err(`${at}: no tiles`);
     if (topic.note && !/^(\/|https:\/\/)/.test(topic.note.href)) err(`${at}: note href must be an in-app path or https URL`);
 
+    // Groups (sub-tracks): unique URL-safe ids, every referenced group exists,
+    // and no group is empty — an empty group would render a chooser card that
+    // opens onto nothing.
+    const groupIds = new Set<string>();
+    for (const g of topic.groups ?? []) {
+      if (groupIds.has(g.id)) err(`${at}: duplicate group id "${g.id}"`);
+      groupIds.add(g.id);
+      if (!/^[a-z0-9-]+$/.test(g.id)) err(`${at}: group id "${g.id}" is not URL-safe`);
+      if (!g.title.trim()) err(`${at}: group "${g.id}" has an empty title`);
+      if (!topic.tiles.some((tl) => tl.group === g.id)) err(`${at}: group "${g.id}" has no tiles`);
+    }
+    for (const tl of topic.tiles) {
+      if (tl.group && !groupIds.has(tl.group)) err(`${at}: tile refers to unknown group "${tl.group}"`);
+    }
+
     topic.tiles.forEach((tile, i) => {
       const where = `${at} · tile ${i + 1}`;
       const texts = [('title' in tile ? tile.title : undefined) ?? '', ...(tile.bullets ?? [])];
