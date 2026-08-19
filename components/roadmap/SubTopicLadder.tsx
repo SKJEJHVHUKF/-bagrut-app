@@ -64,12 +64,11 @@ export function SubTopicLadder({
     setReady(true);
     // Deep-link: /roadmap/<sub>?level=<kind> opens that rung directly (used by
     // "continue where you left off" and the "back to the explanation" link).
+    // Every rung is open, so any known kind can be opened.
     const kind = new URLSearchParams(window.location.search).get('level');
     if (kind) {
       const idx = levels.findIndex((l) => l.kind === kind);
-      if (idx >= 0 && levelStatus(topic, subTopic.id, levels[idx], levels) !== 'LOCKED') {
-        setOpenIndex(idx);
-      }
+      if (idx >= 0) setOpenIndex(idx);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -81,8 +80,9 @@ export function SubTopicLadder({
   );
 
   function statusOf(level: RoadmapLevel): StepStatus {
-    if (!ready) return level.index === 0 ? 'UNLOCKED' : 'LOCKED';
-    return levelStatus(topic, subTopic.id, level, levels);
+    // Nothing is locked; before mount we just don't know yet what is cleared.
+    if (!ready) return 'UNLOCKED';
+    return levelStatus(topic, subTopic.id, level);
   }
 
   function handleSubmit(

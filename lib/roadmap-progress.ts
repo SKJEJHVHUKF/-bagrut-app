@@ -4,13 +4,13 @@
  * Own localStorage store (`bagrut-roadmap-v1`). Each sub-topic node now tracks
  * a LEVEL LADDER (see lib/roadmap-levels.ts): per-rung `cleared` + `stars`.
  *
- * Unlock model:
- *   • Within a sub-topic — rungs unlock sequentially (rung N opens when N-1 is
- *     cleared). This is the "slow climb in level" the roadmap is built around.
- *   • Between sub-topics — none. Every tile is open (owner, 2026-08-18); a
- *     sub-topic counts as COMPLETED once it is "core-done" (learn+easy+mid
- *     rungs cleared). Hard + bagrut rungs are optional mastery, so the hardest
- *     question never blocks progress.
+ * Unlock model (owner, 2026-08-18: nothing in the learning path is locked):
+ *   • Within a sub-topic — every rung is open; `currentIndex` points at the
+ *     next one to climb, so the "slow climb in level" is a recommendation the
+ *     UI highlights, not a gate.
+ *   • Between sub-topics — none either. A sub-topic counts as COMPLETED once it
+ *     is "core-done" (learn+easy+mid rungs cleared). Hard + bagrut rungs are
+ *     optional mastery, so the hardest question never blocks progress.
  *
  * Two-way sync: reaching core-done also marks the sub-topic done in
  * lib/progress + lib/study-plan (so /my-plan and /insights reflect it), and a
@@ -142,41 +142,15 @@ function hasLevelProgress(rec: NodeRecord | undefined): boolean {
 // ============================================================
 
 /**
- * Status of a single rung. Sequential unlock inside the sub-topic. A node that
- * was completed BEFORE the ladder existed (legacy `passed` / `isSubTopicDone`
- * with no per-level records) has all its rungs unlocked for replay.
+ * Status of a single rung: COMPLETED once cleared, otherwise UNLOCKED. Nothing
+ * in the learning path is locked (owner, 2026-08-18: "שום דבר לא יהיה נעול
+ * במסלול למידה") — the ladder order is the recommended climb, `currentIndex`
+ * still points at the next rung to take, and inserting a new rung can no
+ * longer re-lock anything (the regression scripts/test-ladder-unlock.ts pins).
  */
-export function levelStatus(
-  topic: string,
-  subId: string,
-  level: RoadmapLevel,
-  levels: RoadmapLevel[],
-): StepStatus {
+export function levelStatus(topic: string, subId: string, level: RoadmapLevel): StepStatus {
   const rec = readAll()[nodeKey(topic, subId)];
-  if (levelRec(rec, level.kind)?.cleared) return 'COMPLETED';
-
-  const legacyComplete =
-    !hasLevelProgress(rec) && (!!rec?.passed || isSubTopicDone(SUBJECT, topic, subId));
-  if (legacyComplete) return 'UNLOCKED';
-
-  if (level.index === 0) return 'UNLOCKED';
-  const prev = levels[level.index - 1];
-  if (prev && levelRec(rec, prev.kind)?.cleared) return 'UNLOCKED';
-
-  // Progress never regresses. Inserting a NEW rung into the middle of the
-  // ladder shifts everything after it down one place, and the plain
-  // sequential rule would re-lock a rung the student had already reached —
-  // adding the 🧠 rung before 🎓 did exactly that to anyone mid-way through
-  // the bagrut rung. A rung the student has already played, or one they
-  // already finished, stays open regardless of what got inserted above it.
-  const self = levelRec(rec, level.kind);
-  if ((self?.attempts ?? 0) > 0) return 'UNLOCKED';
-  for (let i = level.index + 1; i < levels.length; i++) {
-    const later = levelRec(rec, levels[i].kind);
-    if (later?.cleared || (later?.attempts ?? 0) > 0) return 'UNLOCKED';
-  }
-
-  return 'LOCKED';
+  return levelRec(rec, level.kind)?.cleared ? 'COMPLETED' : 'UNLOCKED';
 }
 
 export type NodeLevelSummary = {

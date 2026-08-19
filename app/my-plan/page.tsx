@@ -7,7 +7,6 @@ import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import {
   ArrowLeft,
-  Lock,
   Crown,
   CheckCircle,
   Sparkles,
@@ -37,7 +36,7 @@ import { computePacing } from '@/lib/pacing';
 import { DEFAULT_PAPER } from '@/constants/roadmapData';
 import { getTrack } from '@/content/tracks';
 import { trackLevelsBySub, trackMainTopics } from '@/lib/track';
-import { topicLockReason, isProUser, isAdmin, type UserLike } from '@/lib/access';
+import { isProUser, isAdmin, type UserLike } from '@/lib/access';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
 
@@ -148,19 +147,16 @@ export default function MyPlanPage() {
           </motion.div>
 
           <motion.div variants={staggerContainer} className="space-y-2">
-            {plan.topics.map((t, i) => {
-              const reason = topicLockReason(user, plan, i);
-              return (
-                <motion.div
-                  key={`${t.subject}:${t.topic}`}
-                  variants={fadeUp}
-                  whileHover={{ x: -3 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <TopicCard index={i} topic={t} lockReason={reason} />
-                </motion.div>
-              );
-            })}
+            {plan.topics.map((t, i) => (
+              <motion.div
+                key={`${t.subject}:${t.topic}`}
+                variants={fadeUp}
+                whileHover={{ x: -3 }}
+                transition={{ duration: 0.2 }}
+              >
+                <TopicCard index={i} topic={t} />
+              </motion.div>
+            ))}
           </motion.div>
         </motion.section>
 
@@ -292,36 +288,21 @@ export default function MyPlanPage() {
 // Topic card
 // ============================================================
 
+// Every topic is open — the plan's order is a recommendation, not a lock
+// (owner, 2026-08-18: nothing in the learning path is locked).
 function TopicCard({
   index,
   topic,
-  lockReason,
 }: {
   index: number;
   topic: { subject: string; topic: string; completion: number; level: string };
-  lockReason: 'open' | 'locked-progress';
 }) {
-  const accessible = lockReason === 'open';
-  const href = accessible
-    ? `/practice/${topic.subject}/${encodeURIComponent(topic.topic)}`
-    : undefined;
+  const href = `/practice/${topic.subject}/${encodeURIComponent(topic.topic)}`;
 
   const card = (
-    <div
-      className={
-        accessible
-          ? 'card-3d bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border-slate-900/10 hover:border-violet-500/40 rounded-2xl p-4 border transition-all block'
-          : 'bg-slate-900/[0.02] border-slate-900/[0.06] rounded-2xl p-4 border opacity-70'
-      }
-    >
+    <div className="card-3d bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border-slate-900/10 hover:border-violet-500/40 rounded-2xl p-4 border transition-all block">
       <div className="flex items-center gap-3">
-        <div
-          className={
-            accessible
-              ? 'w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center font-black text-white flex-shrink-0'
-              : 'w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center font-black text-slate-500 flex-shrink-0'
-          }
-        >
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center font-black text-white flex-shrink-0">
           {topic.completion >= 80 ? <CheckCircle className="w-5 h-5" /> : index + 1}
         </div>
 
@@ -342,23 +323,13 @@ function TopicCard({
         </div>
 
         <div className="flex-shrink-0">
-          {lockReason === 'locked-progress' && (
-            <div className="flex items-center gap-1 text-slate-500" title="יפתח כשתסיים את הנושאים הקודמים">
-              <Lock className="w-4 h-4" />
-            </div>
-          )}
-          {accessible && (
-            <ArrowLeft className="w-4 h-4 text-violet-700" />
-          )}
+          <ArrowLeft className="w-4 h-4 text-violet-700" />
         </div>
       </div>
     </div>
   );
 
-  if (href) {
-    return <Link href={href}>{card}</Link>;
-  }
-  return card;
+  return <Link href={href}>{card}</Link>;
 }
 
 // ============================================================

@@ -8,9 +8,9 @@
  *   - the bagrut exam date (for countdown)
  *   - per-topic progress (0-100%)
  *
- * Unlock rule: the FIRST topic in the plan is always open. Each later
- * topic stays locked until the previous topic reaches `UNLOCK_THRESHOLD`%
- * completion (or the user is Pro / admin — see lib/access.ts).
+ * Every topic is open (owner, 2026-08-18 — nothing in the learning path is
+ * locked). `UNLOCK_THRESHOLD` only decides which topic counts as "current" and
+ * when a topic reads as done.
  *
  * Everything lives in localStorage. No server round-trip, no Supabase.
  */
@@ -19,7 +19,7 @@ import type { BagrutPaper } from '../content/bagrut-curriculum';
 import { safeSet, safeSetJSON } from '@/lib/storage';
 
 const STORAGE_KEY = 'bagrut-study-plan-v1';
-const UNLOCK_THRESHOLD = 80; // % completion required to unlock next topic
+const UNLOCK_THRESHOLD = 80; // % completion at which a topic counts as done
 
 export type ProficiencyLevel = 'weak' | 'mid' | 'strong';
 
@@ -246,27 +246,8 @@ export function markStep(
 }
 
 // ============================================================
-// Lock state — drives the paywall
+// Position in the plan
 // ============================================================
-
-/**
- * Is `(subject, topic)` unlocked **by completion progress alone**?
- * (Pro/admin overrides come from lib/access.ts and are not included here.)
- */
-export function isTopicUnlockedByProgress(
-  plan: StudyPlan,
-  subject: string,
-  topic: string
-): boolean {
-  const i = findTopicIndex(plan, subject, topic);
-  if (i < 0) return false;
-  if (i === 0) return true; // first topic always open
-  // every previous topic must be ≥ UNLOCK_THRESHOLD
-  for (let k = 0; k < i; k++) {
-    if (plan.topics[k].completion < UNLOCK_THRESHOLD) return false;
-  }
-  return true;
-}
 
 /** Index of the first topic that is NOT yet at threshold — the "current" topic. */
 export function currentTopicIndex(plan: StudyPlan): number {

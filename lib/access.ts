@@ -1,8 +1,8 @@
 /**
  * access.ts — who can see what.
  *
- * Free students get the FIRST topic in their plan only. Subsequent topics
- * are locked behind a Pro paywall.
+ * Learning is free and nothing in the learning path is locked; what is gated
+ * here is Pro DEPTH (see the feature gates below).
  *
  * Admin override: the site owner always has full access. Admin emails come from
  * `NEXT_PUBLIC_ADMIN_EMAIL` (comma-separated for multiple).
@@ -26,9 +26,6 @@
  * When that ships, we'll switch from email-equality to a Supabase column
  * check, keeping this module as the single source of truth.
  */
-
-import type { StudyPlan } from './study-plan';
-import { isTopicUnlockedByProgress } from './study-plan';
 
 // Both names are read, and the old one is the FALLBACK rather than a straight
 // rename, because the deploy env is edited by hand in the Vercel dashboard. A
@@ -63,38 +60,13 @@ export function isProUser(user: UserLike): boolean {
   return !!user?.user_metadata?.pro;
 }
 
-/**
- * Can this user access this topic in their plan?
- *
- * STRATEGY (2026-07): guided LEARNING is free for everyone, all topics —
- * it's static content (zero marginal cost) and the daily-habit hook that
- * grows the base. Pro monetizes DEPTH (advanced course, past-exam archive,
- * simulation, unlimited AI), not the basic lessons. The only remaining
- * gate here is the pedagogical progress-unlock, applied equally to all.
- */
-export function canAccessTopic(
-  user: UserLike,
-  plan: StudyPlan,
-  subject: string,
-  topic: string
-): boolean {
-  return isTopicUnlockedByProgress(plan, subject, topic);
-}
-
-/**
- * Why a topic card is locked. No longer a paywall — learning is free.
- * A later topic is only 'locked-progress' until earlier topics reach the
- * completion threshold (a gentle pedagogical ramp, same for free & Pro).
- */
-export function topicLockReason(
-  user: UserLike,
-  plan: StudyPlan,
-  topicIndex: number
-): 'open' | 'locked-progress' {
-  if (topicIndex === 0) return 'open';
-  const prevDone = plan.topics.slice(0, topicIndex).every((t) => t.completion >= 80);
-  return prevDone ? 'open' : 'locked-progress';
-}
+// STRATEGY (2026-07): guided LEARNING is free for everyone, all topics — it's
+// static content (zero marginal cost) and the daily-habit hook that grows the
+// base. Pro monetizes DEPTH (advanced course, past-exam archive, simulation,
+// unlimited AI), not the basic lessons. There is no topic gate of any kind:
+// the paywall went in 2026-07 and the last pedagogical progress-unlock
+// (`topicLockReason` / `canAccessTopic`) went on 2026-08-18 — nothing in the
+// learning path is locked (owner's decision).
 
 // ============================================================
 // Feature gates — the single source of truth for what's Pro.

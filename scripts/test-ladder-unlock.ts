@@ -7,9 +7,10 @@
  * Inserting the 🧠 rung between 🔥 אתגר and 🎓 בגרות shifted bagrut down one
  * position, and the plain "previous rung must be cleared" rule re-locked it
  * for every student who was already inside it. That reached production before
- * it was caught by eye. The rule it violated is one lib/roadmap-progress states
- * in its own header — "returning students are never re-locked" — so it is
- * pinned here rather than left to the next person inserting a rung.
+ * it was caught by eye. Since 2026-08-18 the owner's rule is stronger still —
+ * NOTHING in the learning path is locked (a rung is COMPLETED or UNLOCKED) —
+ * so this pins both: a cleared rung stays completed, and no rung is ever
+ * LOCKED, whatever got inserted above it and whatever the student has done.
  */
 
 const store = new Map<string, string>();
@@ -73,7 +74,7 @@ const played = (): Rec => ({ cleared: false, stars: 0, attempts: 1 });
 const BEFORE = ladder(['learn', 'easy', 'mid', 'hard', 'bagrut']);
 const AFTER = ladder(['learn', 'easy', 'mid', 'hard', 'ghost', 'bagrut']);
 const at = (levels: RoadmapLevel[], kind: RoadmapLevelKind) =>
-  levelStatus(TOPIC, SUB, levels.find((l) => l.kind === kind)!, levels);
+  levelStatus(TOPIC, SUB, levels.find((l) => l.kind === kind)!);
 
 // ============================================================
 section('The regression that shipped');
@@ -106,22 +107,21 @@ section('A student who had already finished the rung');
 }
 
 // ============================================================
-section('The gate still holds for everyone else');
+section('Nothing is locked — for anyone (owner, 2026-08-18)');
 // ============================================================
 
 {
-  // A student who never got past חימום must not be handed the later rungs.
+  // A student who never got past חימום can still open every later rung.
   seed({ learn: cleared(), easy: played() });
   assert(at(AFTER, 'easy') === 'UNLOCKED', 'the rung being played is open');
-  assert(at(AFTER, 'mid') === 'LOCKED', 'the next rung is still locked');
-  assert(at(AFTER, 'ghost') === 'LOCKED', 'and so is the new one');
-  assert(at(AFTER, 'bagrut') === 'LOCKED', 'and so is bagrut');
+  assert(at(AFTER, 'mid') === 'UNLOCKED', 'the next rung is open too');
+  assert(at(AFTER, 'ghost') === 'UNLOCKED', 'and so is the new one');
+  assert(at(AFTER, 'bagrut') === 'UNLOCKED', 'and so is bagrut');
 
   // A brand-new student.
   store.clear();
-  assert(at(AFTER, 'learn') === 'UNLOCKED', 'a new student starts with the first rung open');
-  assert(at(AFTER, 'easy') === 'LOCKED', 'and nothing else');
-  assert(at(AFTER, 'bagrut') === 'LOCKED', 'least of all bagrut');
+  for (const l of AFTER) assert(at(AFTER, l.kind) === 'UNLOCKED', `a new student finds ${l.kind} open`);
+  assert(AFTER.every((l) => at(AFTER, l.kind) !== 'LOCKED'), 'LOCKED is never returned for a rung');
 }
 
 // ============================================================
