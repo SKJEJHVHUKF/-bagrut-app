@@ -1,21 +1,27 @@
 /**
- * In-memory rate limiter with fingerprinting.
+ * In-memory burst limiter, keyed by client IP.
  *
- * Tracks by a fingerprint that combines client IP + a hash of the User-Agent.
- * This makes simple IP rotation less effective — an attacker would also need
- * to randomize their User-Agent to bypass per-fingerprint limits.
- *
- * Limits per fingerprint:
+ * Limits per IP:
  *   - 10 requests per minute (short burst protection)
  *   - 60 requests per hour (long-term protection)
  *
  * Additionally tracks **global** request volume across all IPs:
  *   - 200 requests per minute total (DDoS / cost-spike protection)
  *
- * Notes:
- *   - Works within a single serverless instance. For multi-instance
- *     consistency, switch to Upstash Redis (free tier 10K commands/day).
- *   - In-memory entries self-clean periodically to bound memory.
+ * ⚠️ This is a blast shield, not the quota. It lives in ONE serverless
+ * instance's memory: it resets on every cold start and is not shared between
+ * concurrent instances. The brake that actually bounds spend is the durable
+ * per-user count in `ai_generation_log` (lib/agents/guard.ts) — every AI route
+ * must go through that gate; this limiter only absorbs bursts in front of it.
+ *
+ * The key used to be `ip::hash(user-agent)`, sold as "harder to bypass". It
+ * was the opposite: the UA is attacker-controlled, so every rotated UA opened
+ * a fresh bucket and the per-key limits meant nothing. Vercel overwrites
+ * x-forwarded-for with the real client IP (it cannot be spoofed from outside),
+ * so the IP alone is the honest key.
+ *
+ * For a limiter shared across instances, swap checkRateLimit for
+ * @upstash/ratelimit — nothing else needs to change.
  */
 
 type Bucket = {
@@ -54,20 +60,6 @@ function cleanup(now: number) {
 export type RateLimitResult =
   | { allowed: true; remaining: number }
   | { allowed: false; reason: 'minute' | 'hour' | 'global'; retryAfterSeconds: number };
-
-/**
- * Cheap, deterministic 32-bit hash. We don't need cryptographic strength here —
- * just a way to fold the User-Agent into the fingerprint so attackers can't
- * trivially bypass the limiter by rotating IPs while keeping the same UA.
- */
-function fnv1a(input: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(36);
-}
 
 export function checkRateLimit(fingerprint: string): RateLimitResult {
   const now = Date.now();
@@ -129,21 +121,12 @@ export function checkRateLimit(fingerprint: string): RateLimitResult {
 }
 
 /**
- * Build a fingerprint from request headers.
- * Combines client IP (from x-forwarded-for) with a hash of the User-Agent.
+ * The limiter key: the client IP (first hop of x-forwarded-for, which Vercel
+ * sets itself), falling back to x-real-ip. Nothing attacker-controlled goes in.
  */
 export function getFingerprint(request: Request): string {
-  const xff = request.headers.get('x-forwarded-for');
-  let ip = 'unknown';
-  if (xff) {
-    const first = xff.split(',')[0]?.trim();
-    if (first) ip = first;
-  } else {
-    const xri = request.headers.get('x-real-ip');
-    if (xri) ip = xri.trim();
-  }
-  const ua = request.headers.get('user-agent') || '';
-  return `${ip}::${fnv1a(ua)}`;
+  const first = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  return first || request.headers.get('x-real-ip')?.trim() || 'unknown';
 }
 
 /**

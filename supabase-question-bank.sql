@@ -173,26 +173,47 @@ as $$
 $$;
 
 -- ------------------------------------------------------------
--- RLS
+-- RLS — reads are public, WRITES ARE SERVER-ONLY (service role)
 -- ------------------------------------------------------------
+-- The bank used to carry `for insert/update to authenticated ... (true)` so the
+-- route could write as the student. Those policies also applied to the
+-- student's own browser: any signed-in account could rewrite every row's
+-- solution_markdown and stamp it 'verified' (2026-08-19 security audit, H2).
+-- Writes now go through lib/supabase/admin.ts (service role, bypasses RLS),
+-- so no write policy exists for anon/authenticated at all.
 alter table public.question_bank enable row level security;
 
 drop policy if exists "public read question_bank" on public.question_bank;
 create policy "public read question_bank" on public.question_bank
   for select to anon, authenticated using (true);
 
-drop policy if exists "authed write question_bank" on public.question_bank;
-create policy "authed write question_bank" on public.question_bank
-  for insert to authenticated with check (true);
-
+-- Remove the old client write policies (no-ops on a fresh database).
+drop policy if exists "authed write question_bank"  on public.question_bank;
 drop policy if exists "authed update question_bank" on public.question_bank;
-create policy "authed update question_bank" on public.question_bank
-  for update to authenticated using (true) with check (true);
 
 -- The search function runs as the caller, so anon reads flow through the
 -- select policy above.
 grant execute on function public.search_question_bank(text, int) to anon, authenticated;
-grant execute on function public.increment_bank_served(uuid) to anon, authenticated;
--- Reporting requires an account: an anonymous report is unattributable and
--- would make the only human signal we have trivially spammable.
-grant execute on function public.report_bank_wrong(uuid) to authenticated;
+
+-- The two counters are writes → callable by the service role only. Postgres
+-- grants EXECUTE to PUBLIC on every new function, so revoking from
+-- anon/authenticated alone is not enough — PUBLIC has to go too.
+revoke execute on function public.increment_bank_served(uuid) from public, anon, authenticated;
+revoke execute on function public.report_bank_wrong(uuid)     from public, anon, authenticated;
+grant  execute on function public.increment_bank_served(uuid) to service_role;
+grant  execute on function public.report_bank_wrong(uuid)     to service_role;
+
+-- ------------------------------------------------------------
+-- One "wrong solution" vote per student per row
+-- ------------------------------------------------------------
+-- Three reports retire a row from search (`reported_wrong < 3` above). Without
+-- this table one account could send all three. The route inserts here first
+-- (service role); a duplicate hits the primary key and the row is NOT demoted
+-- again. RLS on with no policies = invisible to anon/authenticated.
+create table if not exists public.bank_reports (
+  bank_id    uuid not null references public.question_bank(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (bank_id, user_id)
+);
+alter table public.bank_reports enable row level security;

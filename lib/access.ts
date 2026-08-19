@@ -43,7 +43,11 @@ const ADMIN_EMAILS = new Set(
 
 export type UserLike = {
   email?: string | null;
-  user_metadata?: { pro?: boolean } & Record<string, unknown>;
+  /** Writable ONLY with the service role / dashboard — safe to gate on. */
+  app_metadata?: { pro?: boolean } & Record<string, unknown>;
+  /** Writable by the user himself (`supabase.auth.updateUser({ data })`,
+   *  which AppChrome does for the display name) — NEVER gate on it. */
+  user_metadata?: Record<string, unknown>;
 } | null;
 
 /** Is the user the site owner / admin? */
@@ -56,8 +60,11 @@ export function isAdmin(user: UserLike): boolean {
 export function isProUser(user: UserLike): boolean {
   // Stub: until billing is wired up, only admins are treated as Pro.
   if (isAdmin(user)) return true;
-  // Future: read from user_metadata.pro or a `pro_subscriptions` table.
-  return !!user?.user_metadata?.pro;
+  // Granted by hand in the Supabase SQL editor until billing ships:
+  //   update auth.users set raw_app_meta_data =
+  //     coalesce(raw_app_meta_data,'{}'::jsonb) || '{"pro":true}' where email = '…';
+  // A payment provider's webhook will do the same write with the service role.
+  return user?.app_metadata?.pro === true;
 }
 
 // STRATEGY (2026-07): guided LEARNING is free for everyone, all topics — it's

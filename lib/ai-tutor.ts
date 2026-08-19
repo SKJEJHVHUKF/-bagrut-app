@@ -12,80 +12,50 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { checkRateLimit, getFingerprint, looksLikeBot } from './rate-limit';
-import { createClient } from './supabase/server';
-import { isProUser, type UserLike } from './access';
-import { BLACKLIST } from './agents/guard';
-
-// ============================================================
-// Same-origin guard — request must come from our own site.
-// Identical logic to /api/check-answer.
-// ============================================================
-function isAllowedOrigin(request: Request): boolean {
-  const origin = request.headers.get('origin');
-  const host = request.headers.get('host');
-  if (!origin || !host) return false;
-  try {
-    return new URL(origin).host.toLowerCase() === host.toLowerCase();
-  } catch {
-    return false;
-  }
-}
+import { BLACKLIST, guardAgentRequest, logAgentUsage, type GuardOk } from './agents/guard';
 
 // ============================================================
 // Standard guard for every Pro-tier tutor endpoint.
 // ============================================================
 //
-// Use as the FIRST thing in a route handler:
+// Use as the FIRST thing in a route handler, and log AFTER a successful
+// model call so a failed call is not charged against the student:
 //
 //   const auth = await requireProUser(request);
 //   if (!auth.ok) return auth.response;
-//   // proceed with auth.user available
+//   ... callTutor(...) ...
+//   await logAgentUsage(auth.supabase, auth.user.id, 'tutor');
 //
-// Layers in order — fail fast:
-//   1. Origin (same-site only)
-//   2. Bot fingerprint
-//   3. Per-fingerprint rate limit
-//   4. Authenticated user (Supabase)
-//   5. Pro subscription
+// This is a thin layer over guardAgentRequest — the SAME gate /api/practice
+// and /api/teach use — so the order is: origin → bot UA → IP burst limit →
+// content-type → Supabase session → 20/hour per user → global daily budget →
+// daily cap, all counted in `ai_generation_log`, which survives cold starts
+// and is shared by every serverless instance. Then, on top: Pro.
 //
-// Free students can use /api/check-answer (verdict + feedback) but
-// the deeper tutor features are Pro-only since each call costs Claude
-// tokens — small per call but unbounded if abused.
+// It used to run its own origin/bot/in-memory-rate-limit/session chain with
+// NO durable quota at all. The in-memory limiter is per instance and resets on
+// every cold start, so the six tutor endpoints (two of them on Sonnet) were
+// effectively uncapped for anyone who passed the Pro check — see the
+// 2026-08-19 security audit (H3).
 
-type AuthOk = { ok: true; user: UserLike };
+/** Daily cap for the six tutor endpoints together, per UTC day. Applied to
+ *  free and Pro alike — free users never reach it (402 first), it exists so a
+ *  Pro account is bounded too. */
+export const PRO_DAILY_TUTOR = 60;
+
+type AuthOk = { ok: true; user: GuardOk['user']; supabase: GuardOk['supabase'] };
 type AuthFail = { ok: false; response: Response };
 export type AuthResult = AuthOk | AuthFail;
 
 export async function requireProUser(request: Request): Promise<AuthResult> {
-  if (!isAllowedOrigin(request)) {
-    return { ok: false, response: Response.json({ error: 'Forbidden' }, { status: 403 }) };
-  }
-  if (looksLikeBot(request)) {
-    return { ok: false, response: Response.json({ error: 'Forbidden' }, { status: 403 }) };
-  }
+  const gate = await guardAgentRequest(request, {
+    kind: 'tutor',
+    freeDaily: PRO_DAILY_TUTOR,
+    proDaily: PRO_DAILY_TUTOR,
+  });
+  if (!gate.ok) return gate;
 
-  const fingerprint = getFingerprint(request);
-  const limit = checkRateLimit(fingerprint);
-  if (!limit.allowed) {
-    return {
-      ok: false,
-      response: Response.json(
-        { error: 'יותר מדי בקשות. נסה שוב בעוד דקה.' },
-        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
-      ),
-    };
-  }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { ok: false, response: Response.json({ error: 'יש להתחבר' }, { status: 401 }) };
-  }
-
-  if (!isProUser(user as UserLike)) {
+  if (!gate.isPro) {
     return {
       ok: false,
       response: Response.json(
@@ -95,8 +65,10 @@ export async function requireProUser(request: Request): Promise<AuthResult> {
     };
   }
 
-  return { ok: true, user: user as UserLike };
+  return { ok: true, user: gate.user, supabase: gate.supabase };
 }
+
+export { logAgentUsage };
 
 // ============================================================
 // Anthropic SDK wrapper.

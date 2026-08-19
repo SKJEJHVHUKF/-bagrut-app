@@ -1,4 +1,4 @@
-import { requireProUser, callTutor, sanitize } from '@/lib/ai-tutor';
+import { requireProUser, callTutor, sanitize, logAgentUsage } from '@/lib/ai-tutor';
 
 // "Give me another question like this" — student finished an exercise
 // and wants to practice the same pattern with different numbers. We
@@ -86,6 +86,7 @@ ${original}
       user: userPrompt,
       schema: RESPONSE_SCHEMA,
     });
+    await logAgentUsage(auth.supabase, auth.user.id, 'tutor');
 
     return Response.json(data, {
       headers: { 'Cache-Control': 'no-store' },

@@ -1,4 +1,4 @@
-import { requireProUser, callTutor, sanitize } from '@/lib/ai-tutor';
+import { requireProUser, callTutor, sanitize, logAgentUsage } from '@/lib/ai-tutor';
 
 // Evaluate a student's free-text (Hebrew) answer to a "סעיף חשיבה והבנה"
 // question. Judges LOGICAL COMPLETENESS against the ideal answer points,
@@ -83,6 +83,7 @@ ${answer}
       user: userPrompt,
       schema: EVAL_SCHEMA,
     });
+    await logAgentUsage(auth.supabase, auth.user.id, 'tutor');
 
     return Response.json(data, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {

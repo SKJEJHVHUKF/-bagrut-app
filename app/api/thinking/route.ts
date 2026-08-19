@@ -1,5 +1,4 @@
-import { requireProUser, callTutor } from '@/lib/ai-tutor';
-import { createClient } from '@/lib/supabase/server';
+import { requireProUser, callTutor, logAgentUsage } from '@/lib/ai-tutor';
 import { serveFromPool } from '@/lib/question-pool';
 
 // "סעיפי חשיבה והבנה" — generate ONE qualitative/verbal conceptual sub-question
@@ -55,12 +54,12 @@ export async function POST(request: Request) {
     }
 
     // Pool first (free) — thinking questions amortize like quiz/concept.
-    const supabase = await createClient();
+    // A pool hit costs nothing, so it is NOT logged against the daily quota.
     const pooled = await serveFromPool<{
       question: string;
       idealAnswerPoints: string[];
       fullAnswer: string;
-    }>(supabase, 'math5', topic, 'thinking');
+    }>(auth.supabase, 'math5', topic, 'thinking');
     if (pooled && pooled.question) {
       return Response.json(pooled, { headers: { 'Cache-Control': 'no-store' } });
     }
@@ -78,6 +77,7 @@ export async function POST(request: Request) {
       user: `נושא: ${topic}\nצור סעיף חשיבה והבנה אחד, שונה וייחודי. מזהה גיוון: ${seed}`,
       schema: GEN_SCHEMA,
     });
+    await logAgentUsage(auth.supabase, auth.user.id, 'tutor');
 
     return Response.json(data, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {

@@ -10,7 +10,7 @@ import { readFacts, writeFacts, mergeFact, renderMemoryBlock } from '@/lib/tutor
 // One copy of the injection guard, in one place. This file used to keep its
 // own literal of the same regex — which is exactly how a fix in one copy
 // leaves the other one broken.
-import { BLACKLIST } from '@/lib/agents/guard';
+import { BLACKLIST, logAgentUsage } from '@/lib/agents/guard';
 
 // Hobby plan needs an explicit ceiling. Haiku 4.5 with a tight 6-message
 // context + max_tokens=800 typically finishes in 5-15s, well under 60s.
@@ -135,21 +135,29 @@ export async function POST(request: Request) {
     }
 
     // ===== 7. DAILY QUOTA CHECK =====
-    // Count user messages sent since UTC midnight. Replies don't count.
+    // Count billed turns since UTC midnight from the append-only usage log
+    // (kind 'chat'), NOT from chat_messages: a student may delete his own
+    // conversations, and chat_messages cascades with them — so counting
+    // messages let anyone reset the quota by deleting the conversation every
+    // ten turns. ai_generation_log has no delete policy (2026-08-19 audit, M1).
     const { count: todayCount, error: countError } = await supabase
-      .from('chat_messages')
+      .from('ai_generation_log')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
-      .eq('role', 'user')
+      .eq('kind', 'chat')
       .gte('created_at', todayStartIso());
 
+    // Repo convention for a missing/erroring accounting table: degrade to "no
+    // durable cap" and say so loudly, rather than take the whole chat down.
+    // The in-memory burst limiter above still applies. (It used to 500 here,
+    // but that was when the count came from chat_messages, a table the chat
+    // cannot function without anyway.)
     if (countError) {
-      console.error('quota count error:', countError);
-      return Response.json({ error: 'שגיאה זמנית. נסה שוב.' }, { status: 500 });
+      console.error('[chat] quota count failed — ai_generation_log missing? capping disabled:', countError.message);
     }
 
     const dailyCap = isProUser(user) ? PRO_DAILY_CHAT : FREE_DAILY_CHAT;
-    const used = todayCount ?? 0;
+    const used = countError ? 0 : (todayCount ?? 0);
     if (used >= dailyCap) {
       return Response.json(
         {
@@ -227,6 +235,9 @@ export async function POST(request: Request) {
       console.error('insert user msg error:', insertUserError);
       return Response.json({ error: 'שגיאה בשמירת ההודעה.' }, { status: 500 });
     }
+    // The turn is now committed to history, so it is charged to the quota —
+    // same moment as before (the user row), just in the table nobody can empty.
+    await logAgentUsage(supabase, user.id, 'chat');
 
     // ===== 10. CALL ANTHROPIC =====
     const apiKey = process.env.ANTHROPIC_API_KEY;

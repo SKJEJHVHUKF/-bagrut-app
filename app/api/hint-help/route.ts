@@ -1,4 +1,4 @@
-import { requireProUser, callTutor, sanitize } from '@/lib/ai-tutor';
+import { requireProUser, callTutor, sanitize, logAgentUsage } from '@/lib/ai-tutor';
 import { buildPilotGrounding } from '@/lib/tutor-grounding';
 
 // "I've seen all hints but still stuck" — student exhausted the 3
@@ -83,6 +83,7 @@ ${cleanHints.map((h, i) => `${i + 1}. ${h}`).join('\n')}
       user: userPrompt,
       schema: RESPONSE_SCHEMA,
     });
+    await logAgentUsage(auth.supabase, auth.user.id, 'tutor');
 
     return Response.json(data, {
       headers: { 'Cache-Control': 'no-store' },

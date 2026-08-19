@@ -138,9 +138,19 @@ function memoryRecord(userId: string, kind: AgentKind): void {
  */
 const GLOBAL_DAILY_LIMIT = Number(process.env.AI_DAILY_GLOBAL_LIMIT ?? '250');
 
-/** COUNT is one round trip; at this cap a 60s memo is accurate enough. */
+/** One round trip; at this cap a 60s memo is accurate enough. */
 let globalDayMemo: { day: string; count: number; at: number } | null = null;
 
+/**
+ * Site-wide count of billable calls today, via the `ai_calls_today()` SQL
+ * function (SECURITY DEFINER — see the SQL block at the bottom of this file).
+ *
+ * ⚠️ It cannot be a plain `.from('ai_generation_log').select(count)`: that
+ * runs as the signed-in student, and the table's RLS is "own rows only", so
+ * the "global" count was really THAT STUDENT's count — always below his own
+ * daily cap, so this brake had never tripped once (2026-08-19 audit, M2).
+ * `null` = function not installed yet / unreachable → per-user caps still apply.
+ */
 async function globalDayCount(supabase: SupabaseServerClient): Promise<number | null> {
   const day = dayStartIso();
   const now = Date.now();
@@ -148,12 +158,10 @@ async function globalDayCount(supabase: SupabaseServerClient): Promise<number | 
     return globalDayMemo.count;
   }
   try {
-    const { count, error } = await supabase
-      .from('ai_generation_log')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', day);
-    if (error) return null; // table missing → per-user caps still apply
-    const total = count ?? 0;
+    const { data, error } = await supabase.rpc('ai_calls_today');
+    if (error) return null;
+    const total = Number(data ?? 0);
+    if (!Number.isFinite(total)) return null;
     globalDayMemo = { day, count: total, at: now };
     return total;
   } catch {
@@ -336,5 +344,22 @@ text (no CHECK), so 'tutor' and 'grade' need no migration.
     for select using (auth.uid() = user_id);
   create policy "own rows write" on public.ai_generation_log
     for insert with check (auth.uid() = user_id);
+  -- No delete policy, on purpose: the quotas are counted from this table, and
+  -- a row a student could delete is a quota he could reset.
+
+  -- Site-wide count for the GLOBAL_DAILY_LIMIT brake. SECURITY DEFINER so it
+  -- sees every row (the policies above hide other students' rows from the
+  -- caller). Supabase's DB runs in UTC, so date_trunc('day', now()) is the
+  -- same midnight the app's dayStartIso() uses.
+  create or replace function public.ai_calls_today()
+  returns bigint
+  language sql stable security definer
+  set search_path = public
+  as $$
+    select count(*) from public.ai_generation_log
+     where created_at >= date_trunc('day', now());
+  $$;
+  revoke all on function public.ai_calls_today() from public;
+  grant execute on function public.ai_calls_today() to authenticated;
 ============================================================================
 */

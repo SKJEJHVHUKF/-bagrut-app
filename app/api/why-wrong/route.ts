@@ -1,4 +1,4 @@
-import { requireProUser, callTutor, sanitize } from '@/lib/ai-tutor';
+import { requireProUser, callTutor, sanitize, logAgentUsage } from '@/lib/ai-tutor';
 import { buildPilotGrounding } from '@/lib/tutor-grounding';
 
 // "Why did I get this wrong?" — appears only when the verdict from
@@ -95,6 +95,7 @@ ${userAnswer}
       user: userPrompt,
       schema: RESPONSE_SCHEMA,
     });
+    await logAgentUsage(auth.supabase, auth.user.id, 'tutor');
 
     return Response.json(data, {
       headers: { 'Cache-Control': 'no-store' },

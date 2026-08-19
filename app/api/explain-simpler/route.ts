@@ -1,4 +1,4 @@
-import { requireProUser, callTutor, sanitize } from '@/lib/ai-tutor';
+import { requireProUser, callTutor, sanitize, logAgentUsage } from '@/lib/ai-tutor';
 import { buildPilotGrounding } from '@/lib/tutor-grounding';
 
 // "Explain this solution to me in simpler words" — when the student
@@ -68,6 +68,8 @@ ${solution}
       user: userPrompt,
       schema: RESPONSE_SCHEMA,
     });
+    // Charge the durable daily quota only after the model call succeeded.
+    await logAgentUsage(auth.supabase, auth.user.id, 'tutor');
 
     return Response.json(data, {
       headers: { 'Cache-Control': 'no-store' },

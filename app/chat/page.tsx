@@ -126,11 +126,14 @@ export default function ChatPage() {
       const { data: { user } } = await supabase.auth.getUser();
       const cap = isProUser(user) ? PRO_DAILY_CHAT : FREE_DAILY_CHAT;
 
-      // Today's user-sent count to compute remaining.
+      // Today's billed turns, from the same append-only log the server counts
+      // (ai_generation_log, kind 'chat'; RLS shows the student his own rows).
+      // Counting chat_messages here would drift from the server's number as
+      // soon as a conversation is deleted.
       const { count } = await supabase
-        .from('chat_messages')
+        .from('ai_generation_log')
         .select('id', { count: 'exact', head: true })
-        .eq('role', 'user')
+        .eq('kind', 'chat')
         .gte('created_at', utcDayStartIso());
 
       if (cancelled) return;

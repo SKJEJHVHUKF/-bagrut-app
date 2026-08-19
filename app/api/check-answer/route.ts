@@ -1,15 +1,21 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
-import { createClient } from '@/lib/supabase/server';
 import { buildPilotGrounding } from '@/lib/tutor-grounding';
 // One copy of the injection guard, in one place. This file used to keep its
 // own literal of the same regex — which is exactly how a fix in one copy
 // leaves the other one broken.
-import { BLACKLIST } from '@/lib/agents/guard';
+import { BLACKLIST, guardAgentRequest, logAgentUsage } from '@/lib/agents/guard';
 
 // Answer-checking is short input/short output. Haiku 4.5 with max_tokens=400
 // runs in 2-5s and costs roughly $0.003 per check.
 export const maxDuration = 60;
+
+// Free-tier endpoint, so it is the cheapest place to burn tokens. Durable per-
+// user caps (counted in ai_generation_log, kind 'check') replace the in-memory
+// limiter that used to be the only brake here — per instance, reset on every
+// cold start. The LLM judge is only the fallback after the deterministic
+// client-side checker, so 60 real calls a day is far above normal use.
+const FREE_DAILY_CHECKS = 60;
+const PRO_DAILY_CHECKS = 300;
 
 // Limits — the inputs come from inside our own UI so we trust the shape,
 // but still cap sizes to prevent abuse via the open API.
@@ -17,18 +23,6 @@ const MAX_PROMPT_LEN = 1500;     // the question itself
 const MAX_ANSWER_LEN = 800;      // user's typed answer
 const MAX_CORRECT_LEN = 1000;    // the reference answer (final_answer field)
 const MAX_CONTEXT_LEN = 1500;    // optional surrounding context
-
-
-function isAllowedOrigin(request: Request): boolean {
-  const origin = request.headers.get('origin');
-  const host = request.headers.get('host');
-  if (!origin || !host) return false;
-  try {
-    return new URL(origin).host.toLowerCase() === host.toLowerCase();
-  } catch {
-    return false;
-  }
-}
 
 type Verdict = 'correct' | 'partial' | 'wrong';
 
@@ -85,35 +79,16 @@ const RESPONSE_SCHEMA = {
 
 export async function POST(request: Request) {
   try {
-    if (!isAllowedOrigin(request)) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    if (looksLikeBot(request)) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const fingerprint = getFingerprint(request);
-    const limit = checkRateLimit(fingerprint);
-    if (!limit.allowed) {
-      return Response.json(
-        { error: 'יותר מדי בקשות. נסה שוב בעוד דקה.' },
-        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
-      );
-    }
-
-    const contentType = request.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      return Response.json({ error: 'Invalid content type' }, { status: 415 });
-    }
-
-    // Auth — answer-checking is for logged-in students only.
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return Response.json({ error: 'יש להתחבר' }, { status: 401 });
-    }
+    // origin → bot UA → IP burst → content-type → session → 20/hour →
+    // global daily budget → daily cap (free/Pro). Same gate as every other
+    // AI route; answer-checking is for logged-in students only.
+    const gate = await guardAgentRequest(request, {
+      kind: 'check',
+      freeDaily: FREE_DAILY_CHECKS,
+      proDaily: PRO_DAILY_CHECKS,
+    });
+    if (!gate.ok) return gate.response;
+    const { supabase, user } = gate;
 
     let body: { question?: unknown; correctAnswer?: unknown; userAnswer?: unknown; context?: unknown; topic?: unknown };
     try {
@@ -175,6 +150,8 @@ ${userAnswer}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...({ output_config: { format: { type: 'json_schema', schema: RESPONSE_SCHEMA } } } as any),
     });
+    // Charge the durable daily quota only once the model actually answered.
+    await logAgentUsage(supabase, user.id, 'check');
 
     const content = message.content[0];
     if (content.type !== 'text') throw new Error('Unexpected response shape');

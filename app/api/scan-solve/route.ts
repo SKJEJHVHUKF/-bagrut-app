@@ -23,6 +23,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
+// Writes to the SHARED bank/cache go through the service-role client, never
+// through the student's session — see lib/supabase/admin.ts for why.
+import { createAdminClient } from '@/lib/supabase/admin';
 import { isProUser } from '@/lib/access';
 import { MATH5 } from '@/content/bagrut-context';
 import { matchScannedQuestion } from '@/lib/solution-library';
@@ -332,6 +335,11 @@ async function handleJson(request: Request) {
   // A student reporting a wrong solution. Auth-required and free — an
   // anonymous report is unattributable and would make the only human signal
   // the bank has trivially spammable.
+  //
+  // One vote per student per row: the report is first recorded in
+  // `bank_reports` (PK bank_id+user_id, service role only), and only a NEW
+  // vote demotes the row. Three reports used to retire a row from search, and
+  // nothing stopped one account from sending all three (audit H2).
   if (body.mode === 'report') {
     const supabase = await createClient();
     const {
@@ -341,7 +349,13 @@ async function handleJson(request: Request) {
     if (typeof body.bankId !== 'string' || body.bankId.length < 10) {
       return json({ error: 'Missing bankId' }, { status: 400 });
     }
-    await reportWrong(supabase, body.bankId);
+    const admin = createAdminClient();
+    if (admin) {
+      const { error: duplicate } = await admin
+        .from('bank_reports')
+        .insert({ bank_id: body.bankId, user_id: user.id });
+      if (!duplicate) await reportWrong(admin, body.bankId);
+    }
     return json({ ok: true });
   }
 
@@ -387,7 +401,10 @@ async function handleJson(request: Request) {
   const supabaseForBank = await createClient();
   const bankHit = await searchBank(supabaseForBank, question, topicHint);
   if (bankHit) {
-    void bumpServed(supabaseForBank, bankHit.id);
+    // Counter bump = a write → service role (the student can no longer update
+    // bank rows). Best-effort, as before.
+    const admin = createAdminClient();
+    if (admin) void bumpServed(admin, bankHit.id);
     return json({
       source: 'bank',
       topic: bankHit.topic ?? topicHint ?? '',
@@ -550,26 +567,33 @@ ${question}`,
       // instant the response finishes, losing anything still in flight.
       if (markdown.trim().length > 40) {
         try {
-          // The bank is the durable store: it deduplicates by fuzzy match, so
-          // a question a previous student photographed MERGES instead of
-          // adding a second near-identical row. That matters more than it
-          // sounds — near-identical rows are exactly what the matcher's
-          // margin rule refuses to choose between, so an un-deduplicated
-          // bank would degrade retrieval as it grew.
-          await upsertIntoBank(supabase, {
-            question,
-            solutionMarkdown: markdown,
-            topic: topicHint,
-          });
-          // The exact-hash cache is kept alongside it: free, indexed, and it
-          // short-circuits a literal re-submission of the same text without
-          // touching the bank at all.
-          await putCachedSolution(supabase, hash, {
-            topic: topicHint ?? '',
-            transcribedQuestion: question,
-            steps: [{ title: '', content: markdown }],
-            finalAnswer: '',
-          });
+          // Shared tables → service role. The student's client has no write
+          // access to the bank or the cache any more (and must not: with it,
+          // every student could rewrite every other student's solutions).
+          const admin = createAdminClient();
+          if (admin) {
+            // The bank is the durable store: it deduplicates by fuzzy match, so
+            // a question a previous student photographed MERGES instead of
+            // adding a second near-identical row. That matters more than it
+            // sounds — near-identical rows are exactly what the matcher's
+            // margin rule refuses to choose between, so an un-deduplicated
+            // bank would degrade retrieval as it grew.
+            await upsertIntoBank(admin, {
+              question,
+              solutionMarkdown: markdown,
+              topic: topicHint,
+            });
+            // The exact-hash cache is kept alongside it: free, indexed, and it
+            // short-circuits a literal re-submission of the same text without
+            // touching the bank at all.
+            await putCachedSolution(admin, hash, {
+              topic: topicHint ?? '',
+              transcribedQuestion: question,
+              steps: [{ title: '', content: markdown }],
+              finalAnswer: '',
+            });
+          }
+          // scan_log is per-user (RLS own rows) — stays on the student's client.
           await supabase.from('scan_log').insert({ source: 'ai' });
         } catch {
           // Storage and logging must never take the solution down with them.

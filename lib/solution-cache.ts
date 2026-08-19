@@ -199,10 +199,13 @@ export async function putCachedSolution(
 // alter table public.solution_cache enable row level security;
 // create policy "authed read cache"  on public.solution_cache
 //   for select to authenticated using (true);
-// create policy "authed write cache" on public.solution_cache
-//   for insert to authenticated with check (true);
-// create policy "authed bump cache"  on public.solution_cache
-//   for update to authenticated using (true) with check (true);
+// -- Writes are SERVER-ONLY (lib/supabase/admin.ts, service role). The two
+// -- client write policies below used to exist and let any signed-in browser
+// -- insert/overwrite cache rows served to everyone (2026-08-19 audit, H2):
+// drop policy if exists "authed write cache" on public.solution_cache;
+// drop policy if exists "authed bump cache"  on public.solution_cache;
+// -- (the served_count bump in getCachedSolution/findSimilarCached runs on the
+// --  student's client and is now a silent no-op — a counter, not a feature)
 //
 // -- Per-user scan log (drives the free-tier daily cap)
 // create table if not exists public.scan_log (
