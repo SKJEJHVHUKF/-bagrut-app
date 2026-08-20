@@ -252,14 +252,10 @@ function FormulaDrawer({
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[70] bg-slate-900/30 backdrop-blur-[2px]"
-      />
+      {/* No backdrop by design: the sheet is a non-modal side panel, so the
+          exercise stays visible AND interactive while formulas are open.
+          Closing is via the X button or ESC — an outside click must NOT close,
+          because clicking the exercise to keep solving is the whole point. */}
       <motion.aside
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
