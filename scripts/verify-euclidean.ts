@@ -1,5 +1,7 @@
 // Verification of every NUMERIC value authored in
-// content/lessons/math5/euclidean-geometry.ts (sub-topics + new bagrut).
+// content/lessons/math5/euclidean-geometry.ts (sub-topics + new bagrut)
+// AND content/lessons/math5/euclidean-stages.ts (the 571 three-level track:
+// destination question, eg-shapes / eg-method / eg-mixed, eg-bag-010..013).
 // Run: npx tsx scripts/verify-euclidean.ts
 
 const TOL = 1e-9;
@@ -335,6 +337,80 @@ const angDeg = (a: P2, b: P2, c: P2) => {
   assert('ghost circ-005 branch: 180-30 = 150 forgets the right angle', 180 - 30, 150);
   assert('ghost circ-005 branch: 90-30 = 60 is right, but only because ACB is 90', 90 - 30, 60);
 }
+
+// ============================================================
+// euclidean-stages.ts — the 571 three-level track
+// ============================================================
+
+// ---- DESTINATION_EG: chords AP=4, PB=9, CP=6 ----
+assert('destEG ב: 4·9 = 6·PD → PD = 6', (4 * 9) / 6, 6);
+assert('destEG ג: k = AP/DP = 2/3', 4 / 6, 2 / 3);
+assert('destEG ג cross-check: PC/PB = 2/3 too', 6 / 9, 2 / 3);
+assert('destEG ג: areas ratio k² = 4/9', (2 / 3) ** 2, 4 / 9);
+assert('destEG ד: S = 8·9/4 = 18', 8 * (9 / 4), 18);
+assert('destEG example: sum of areas 26', 8 + 18, 26);
+
+// ---- eg-shapes ----
+assert('shp iso 52° apex → base 64°', (180 - 52) / 2, 64);
+assert('shp iso example 40° apex → base 70°', (180 - 40) / 2, 70);
+assert('shp median-to-hyp 26 → 13', 26 / 2, 13);
+assert('shp centroid: AM = 2/3·12 = 8', (2 / 3) * 12, 8);
+assert('shp centroid: MD = 4 and 8:4 = 2:1', 12 / 3, 4);
+assert('shp trapezoid midsegment (8+14)/2 = 11', (8 + 14) / 2, 11);
+assert('shp same-height: S_ADC = 5/3·12 = 20', (5 / 3) * 12, 20);
+assert('shp median halves area: 30/2 = 15', 30 / 2, 15);
+assert('shp rhombus area 12·16/2 = 96', (12 * 16) / 2, 96);
+assert('shp rhombus side √(6²+8²) = 10', Math.hypot(6, 8), 10);
+assert('shp rhombus height 96/10 = 9.6', 96 / 10, 9.6);
+assert('shp parallelogram example: AO=7, BO=5', 14 / 2 + 10 / 2, 12);
+assert('shp-007 rectangle: BD = AC = 16 → BO = 8', 16 / 2, 8);
+
+// ---- eg-circle: new lesson step + secants question ----
+assert('circ step: radii isosceles 25° → ∠AOB = 130°', 180 - 2 * 25, 130);
+assert('circ drill: two tangents PA = 7 → PB = 7', 7, 7);
+assert('circ-006 secants: PB = PA + AB = 9', 4 + 5, 9);
+assert('circ-006: 4·9 = 3·PD → PD = 12', (4 * 9) / 3, 12);
+assert('circ-006: CD = 12 − 3 = 9', 12 - 3, 9);
+assert('circ-006 wrong 20/3 (PB taken as AB) ≠ 12', Math.abs((4 * 5) / 3 - 12) > TOL ? 1 : 0, 1);
+
+// ---- eg-mixed ----
+assert('mix-001 chords: 3·8 = 4·ED → ED = 6', (3 * 8) / 4, 6);
+assert('mix-002 areas 25:16 → sides 5:4; 15 → 12', 15 * (4 / 5), 12);
+assert('mix-002 check: (15/12)² = 25/16', (15 / 12) ** 2, 25 / 16);
+assert('mix-003 tangent: 64 = 4·PB → PB = 16', 64 / 4, 16);
+assert('mix-003 AB = 16 − 4 = 12', 16 - 4, 12);
+assert('mix example (thales+areas): k = 6/10 = 3/5', 6 / (6 + 4), 3 / 5);
+assert('mix example: S_ABC = 27·25/9 = 75', 27 * (25 / 9), 75);
+assert('mix example: trapezoid 75 − 27 = 48', 75 - 27, 48);
+assert('mix-004 k = 4/10 = 2/5 (whole side!)', 4 / (4 + 6), 2 / 5);
+assert('mix-004 S_ABC = 8·25/4 = 50', 8 * (25 / 4), 50);
+assert('mix-004 trapezoid 50 − 8 = 42', 50 - 8, 42);
+assert('mix example map: CH = √(9·16) = 12', Math.sqrt(9 * 16), 12);
+assert('mix example map: S = 25·12/2 = 150', (25 * 12) / 2, 150);
+assert('mix-005 HB = 50 − 18 = 32', 50 - 18, 32);
+assert('mix-005 CH = √(18·32) = 24', Math.sqrt(18 * 32), 24);
+assert('mix-005 AC = 30, BC = 40', Math.sqrt(18 * 50) + Math.sqrt(32 * 50), 70);
+assert('mix-005 S = 50·24/2 = 600 (= 30·40/2)', (50 * 24) / 2, (30 * 40) / 2);
+assert('mix-006 k = 12/8 = 3/2 → k² = 9/4', (12 / 8) ** 2, 9 / 4);
+assert('mix-006 S_ABM = 16·9/4 = 36', 16 * (9 / 4), 36);
+assert('mix drill: √(25/16) both sides → 5/4', Math.sqrt(25) / Math.sqrt(16), 5 / 4);
+
+// ---- new bagrut eg-bag-010..013 ----
+assert('bag010 א: AO=6, BO=8', 12 / 2 + 16 / 2 - 8, 6);
+assert('bag010 ב: side = 10', Math.hypot(6, 8), 10);
+assert('bag010 ג: S = 96', (12 * 16) / 2, 96);
+assert('bag010 ד: h = 9.6 < side', 96 / 10, 9.6);
+assert('bag012 ג: 36 = 3·PB → PB = 12', 36 / 3, 12);
+assert('bag012 ג: AB = 12 − 3 = 9', 12 - 3, 9);
+assert('bag012 ד: k = 6/12 = 1/2 (check 3/6 too)', 6 / 12, 3 / 6);
+assert('bag012 ד: S = 5·4 = 20', 5 * 4, 20);
+assert('bag013 ג: 6·4 = 3·ED → ED = 8', (6 * 4) / 3, 8);
+assert('bag013 ג consistency: AE/DE = BE/CE = 3/4', 6 / 8, 3 / 4);
+assert('bag013 ד: k² = 9/16 → S = 16·9/16 = 9', 16 * (9 / 16), 9);
+
+// ---- wrongAnswers on the older questions really are wrong ----
+assert('sim-004 wrong 16/25 ≠ 4/5', Math.abs(16 / 25 - 4 / 5) > TOL ? 1 : 0, 1);
+assert('circ-004 wrong 20 is PB, differs from 15', Math.abs(20 - 15) > TOL ? 1 : 0, 1);
 
 console.log(`\nVerification complete: ${passed}/${passed + failed} passed.`);
 if (failed > 0) {
