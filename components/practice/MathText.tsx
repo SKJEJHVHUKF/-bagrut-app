@@ -6,6 +6,7 @@ import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { ProbTreeFromJson } from './ProbTree';
 
 // Renders markdown + LaTeX (Hebrew prose with LTR math islands).
 //
@@ -70,26 +71,63 @@ function promoteDisplayMath(s: string) {
   return s.replace(/^[ \t]*\$\$([^\n$]+(?:\$(?!\$)[^\n$]*)*)\$\$[ \t]*$/gm, (_m, inner: string) => `\n$$\n${inner}\n$$\n`);
 }
 
+const BLOCK_COMPONENTS = {
+  p: ({ children }: { children?: ReactNode }) => <p dir="rtl">{children}</p>,
+  li: ({ children }: { children?: ReactNode }) => <li dir="rtl">{children}</li>,
+  td: ({ children }: { children?: ReactNode }) => <td dir="rtl">{children}</td>,
+  th: ({ children }: { children?: ReactNode }) => <th dir="rtl">{children}</th>,
+  h1: ({ children }: { children?: ReactNode }) => <h1 dir="rtl">{children}</h1>,
+  h2: ({ children }: { children?: ReactNode }) => <h2 dir="rtl">{children}</h2>,
+  h3: ({ children }: { children?: ReactNode }) => <h3 dir="rtl">{children}</h3>,
+  h4: ({ children }: { children?: ReactNode }) => <h4 dir="rtl">{children}</h4>,
+  blockquote: ({ children }: { children?: ReactNode }) => (
+    <blockquote dir="rtl">{children}</blockquote>
+  ),
+};
+
+// One markdown segment in block mode (mirroring + display-math promotion).
+function MdSegment({ text }: { text: string }) {
+  const hebrew = HEBREW.test(text.replace(MATH_ISLAND, ''));
+  const mirrored = hebrew ? mirrorArrows(text) : text;
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkMath, remarkGfm]}
+      rehypePlugins={[rehypeKatex]}
+      components={BLOCK_COMPONENTS}
+    >
+      {promoteDisplayMath(mirrored)}
+    </ReactMarkdown>
+  );
+}
+
+// A ```probtree fenced block carries a JSON ProbTree spec — a probability-tree
+// diagram drawn the way the bagrut draws it. Split the text around the fences
+// and render each spec as an SVG between the markdown segments. The outer
+// wrapper stays a single element, preserving the one-element contract above.
+const TREE_FENCE = /```probtree\s*\n([\s\S]*?)```/g;
+
 export function MathText({ children: raw, inline = false }: { children: string; inline?: boolean }) {
+  if (!inline && raw.includes('```probtree')) {
+    const parts = raw.split(TREE_FENCE);
+    return (
+      <div dir="rtl" className="mathtext-block">
+        {parts.map((part, i) =>
+          i % 2 === 1 ? (
+            <ProbTreeFromJson key={i} json={part} />
+          ) : part.trim() ? (
+            <MdSegment key={i} text={part} />
+          ) : null
+        )}
+      </div>
+    );
+  }
   const hebrew = HEBREW.test(raw.replace(MATH_ISLAND, ''));
   const mathOnly = !hebrew && raw.includes('$') ? ' math-only' : '';
   const mirrored = hebrew ? mirrorArrows(raw) : raw;
   const children = inline ? mirrored : promoteDisplayMath(mirrored);
   const components = inline
     ? { p: ({ children }: { children?: ReactNode }) => <>{children}</> }
-    : {
-        p: ({ children }: { children?: ReactNode }) => <p dir="rtl">{children}</p>,
-        li: ({ children }: { children?: ReactNode }) => <li dir="rtl">{children}</li>,
-        td: ({ children }: { children?: ReactNode }) => <td dir="rtl">{children}</td>,
-        th: ({ children }: { children?: ReactNode }) => <th dir="rtl">{children}</th>,
-        h1: ({ children }: { children?: ReactNode }) => <h1 dir="rtl">{children}</h1>,
-        h2: ({ children }: { children?: ReactNode }) => <h2 dir="rtl">{children}</h2>,
-        h3: ({ children }: { children?: ReactNode }) => <h3 dir="rtl">{children}</h3>,
-        h4: ({ children }: { children?: ReactNode }) => <h4 dir="rtl">{children}</h4>,
-        blockquote: ({ children }: { children?: ReactNode }) => (
-          <blockquote dir="rtl">{children}</blockquote>
-        ),
-      };
+    : BLOCK_COMPONENTS;
   const md = (
     <ReactMarkdown
       remarkPlugins={[remarkMath, remarkGfm]}

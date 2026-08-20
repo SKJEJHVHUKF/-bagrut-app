@@ -302,6 +302,20 @@ num('bag003c basket|soccer 10/24', 10 / 24, 5 / 12);
   num('cond-005: exact value 5/49', 0.009 / 0.0882, 5 / 49);
 }
 
+// ---- probtree diagrams (2026-08-20): every number drawn on a tree ----------
+console.log('\n== probtree diagrams ==');
+num('דני tree: 0.06+0.54+0.10+0.30 = 1', 0.06 + 0.54 + 0.1 + 0.3, 1);
+num('דני picked paths: 0.06+0.10 = 0.16', 0.6 * 0.1 + 0.4 * 0.25, 0.16);
+num('balls tree: 6/56+15/56+15/56+20/56 = 1', 6 / 56 + 15 / 56 + 15 / 56 + 20 / 56, 1);
+num('balls tree leaf products', (3 / 8) * (2 / 7), 6 / 56);
+num('unknown tree: 0.7·0.1 = 0.07, 0.7·0.9 = 0.63', 0.7 * 0.1 + 0.7 * 0.9, 0.7);
+num('factory step: smoker = 0.6·0.25 + 0.4·0.1 = 0.19', 0.6 * 0.25 + 0.4 * 0.1, 0.19);
+num('factory leaves sum to 1', 0.15 + 0.45 + 0.04 + 0.36, 1);
+num('factory non-smoker both ways: 0.45+0.36 = 1−0.19', 0.45 + 0.36, 1 - 0.19);
+num('factory drill: woman & non-smoker = 0.4·0.9 = 0.36', 0.4 * 0.9, 0.36);
+num('destination tree: 0.05+0.45+0.15+0.35 = 1', 0.05 + 0.45 + 0.15 + 0.35, 1);
+num('destination picked: 0.05+0.15 = 0.2', 0.5 * 0.1 + 0.5 * 0.3, 0.2);
+
 console.log(`\nRESULT: ${pass}/${pass + fail} passed${fail ? `  (${fail} FAILED)` : ''}`);
 if (fail) process.exit(1);
 
