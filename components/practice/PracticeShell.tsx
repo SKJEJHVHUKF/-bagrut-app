@@ -28,15 +28,26 @@ export function PracticeShell({
   subtitle,
   backHref,
   backLabel,
+  wide = false,
   children,
 }: {
   subtitle: string;
   backHref?: string;
   backLabel?: string;
+  /** Dashboard screens (roadmap hub/track/topic) breathe at 5xl on desktop;
+      reading screens (lessons, ladders) keep the 2xl book measure. */
+  wide?: boolean;
   children: ReactNode;
 }) {
+  const measure = wide ? 'max-w-5xl' : 'max-w-2xl';
   return (
-    <div className="min-h-screen text-slate-900 relative overflow-x-hidden">
+    // No overflow-x-hidden here: any overflow value other than `visible` turns
+    // this div into the sticky CONTAINER for the context strip below, which
+    // displaced the strip by its md:top-16 offset — permanently covering the
+    // first 64px of every page's content on desktop (and it never actually
+    // stuck on scroll either). BackgroundOrbs clips itself (fixed inset-0
+    // overflow-hidden), so nothing here overflows horizontally anyway.
+    <div className="min-h-screen text-slate-900 relative">
       <BackgroundOrbs />
 
       {/* On phones this bar IS the header (AppHeader is desktop-only), so it
@@ -46,7 +57,7 @@ export function PracticeShell({
           to a slim context strip (where am I · back) that sticks right under
           the global bar. */}
       <nav className="sticky top-0 md:top-16 z-50 glass-card border-x-0 border-t-0 rounded-none">
-        <div className="max-w-2xl mx-auto px-4 py-3 md:py-2 flex items-center justify-between gap-3">
+        <div className={`${measure} mx-auto px-4 py-3 md:py-2 flex items-center justify-between gap-3`}>
           <Link href="/" className="flex items-center gap-3 group md:hidden">
             <MathUpLogo size="md" />
             <div>
@@ -70,7 +81,7 @@ export function PracticeShell({
         </div>
       </nav>
 
-      <main className="relative z-10 max-w-2xl mx-auto px-4 py-6">{children}</main>
+      <main className={`relative z-10 ${measure} mx-auto px-4 py-6 md:py-8`}>{children}</main>
     </div>
   );
 }

@@ -88,12 +88,13 @@ export default function RoadmapHubPage() {
   };
 
   return (
-    <PracticeShell subtitle="מסלול הלמידה" backHref="/" backLabel="בית">
+    <PracticeShell subtitle="מסלול הלמידה" backHref="/" backLabel="בית" wide>
       <div className="space-y-6">
-        <div className="space-y-1">
-          <h1 className="font-display text-2xl font-black text-slate-900">מסלול הלמידה שלי</h1>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            בחר את השאלון שאתה מתכונן אליו. כל שאלון הוא מסלול מסודר — נושא אחרי נושא, שלב אחרי שלב, מ״לומדים״ ועד רמת בגרות. אפשר לעבור בין השאלונים בכל רגע.
+        <div className="space-y-1.5 text-center sm:text-right">
+          <div className="text-[11px] font-black tracking-[0.14em] text-violet-700 uppercase">מסלול הלמידה</div>
+          <h1 className="font-display text-2xl sm:text-3xl font-black text-slate-900 leading-tight">לאיזה שאלון אתה מתכונן?</h1>
+          <p className="text-sm text-slate-600 leading-relaxed max-w-2xl sm:mx-0 mx-auto">
+            כל שאלון הוא מסלול מסודר — נושא אחרי נושא, שלב אחרי שלב, מ״לומדים״ ועד רמת בגרות. אפשר לעבור בין השאלונים בכל רגע.
           </p>
         </div>
 
@@ -117,23 +118,25 @@ export default function RoadmapHubPage() {
                     isActive ? 'ring-2 ring-violet-500/40 border-violet-500/50' : 'hover:border-violet-500/40'
                   }`}
                 >
-                  {/* Title row */}
+                  {/* Title row — the paper number IS the card's identity */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase">מסלול</div>
-                      <h2 className="font-display text-2xl font-black text-slate-900 leading-tight">{paperLabel(paper)}</h2>
-                      <p className="text-[11px] text-slate-600 mt-1 leading-snug">{PAPER_BLURB[paper]}</p>
+                      <div className="text-[10px] font-black tracking-[0.14em] text-violet-700 uppercase mb-0.5">שאלון</div>
+                      <h2 className="font-display text-4xl sm:text-5xl font-black leading-none bg-gradient-to-l from-cyan-700 to-violet-600 bg-clip-text text-transparent tabular-nums">
+                        <span className="sr-only">שאלון </span>
+                        {paper}
+                      </h2>
                     </div>
                     {isActive && (
-                      <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-violet-600 text-white shrink-0">פעיל</span>
+                      <span className="text-[10px] font-bold rounded-full px-2.5 py-1 bg-violet-600 text-white shrink-0 shadow-sm shadow-violet-500/30">פעיל</span>
                     )}
                   </div>
+                  <p className="text-xs text-slate-600 mt-2.5 leading-relaxed">{PAPER_BLURB[paper]}</p>
 
                   {/* Topics of the track */}
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {tree.topics.map((t) => (
-                      <span key={t.id} className="chip-primary inline-flex items-center gap-1 text-[10px] font-bold rounded-full px-2 py-0.5">
-                        <span aria-hidden="true">{t.emoji}</span>
+                      <span key={t.id} className="chip-primary inline-flex items-center text-[10px] font-bold rounded-full px-2 py-0.5">
                         {t.title}
                       </span>
                     ))}
@@ -179,14 +182,14 @@ export default function RoadmapHubPage() {
                           {resume.reason === 'in-progress' ? 'המשך: ' : resume.reason === 'mastery' ? 'להשלמת שליטה: ' : 'מתחילים: '}
                         </span>
                         <MathText inline>{resume.title}</MathText>
-                        <span className="text-slate-500"> · רמת {resume.levelTitle} {resume.levelEmoji}</span>
+                        <span className="text-slate-500"> · רמת {resume.levelTitle}</span>
                       </span>
                     ) : (
                       <span>{ready && complete ? 'המסלול הושלם — כל הכבוד! 👑' : 'מתחילים מהנושא הראשון'}</span>
                     )}
                   </div>
-                  <div className="mt-3 flex items-center justify-end">
-                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2 text-xs font-black text-white shadow-md shadow-violet-500/25 group-hover:bg-violet-500 transition-colors">
+                  <div className="mt-3.5 flex items-center justify-end">
+                    <span className="btn-primary inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[13px] font-black text-white">
                       כניסה למסלול
                       <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                     </span>

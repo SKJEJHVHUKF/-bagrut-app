@@ -14,10 +14,11 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CalendarClock, Crown, Gauge, RotateCcw, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, CalendarClock, Crown, Gauge, RotateCcw, Sparkles, Wrench } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { MathText } from '@/components/practice/MathText';
 import { NextStepCard } from '@/components/roadmap/NextStepCard';
+import { TopicIcon, levelIconFor } from '@/components/roadmap/TopicIcon';
 import { getTrack, isTrackPaper } from '@/content/tracks';
 import { paperLabel, type BagrutPaper } from '@/content/bagrut-curriculum';
 import { ladderHref, levelsForNodes, trackMainTopics, trackNodes } from '@/lib/track';
@@ -159,14 +160,18 @@ function Track({ paper }: { paper: BagrutPaper }) {
   );
 
   return (
-    <PracticeShell subtitle="מסלול הלמידה" backHref="/roadmap" backLabel="שאלונים">
+    <PracticeShell subtitle="מסלול הלמידה" backHref="/roadmap" backLabel="שאלונים" wide>
       <div className="space-y-6">
         <div className="flex items-end justify-between gap-3">
-          <h1 className="font-display text-xl font-black text-slate-900">
-            מסלול הלמידה
-            <span className="font-normal text-sm text-slate-600"> · {paperLabel(paper)}</span>
-          </h1>
-          <Link href="/roadmap" className="text-[11px] font-bold text-violet-700 hover:text-violet-900 shrink-0">
+          <div>
+            <div className="text-[11px] font-black tracking-[0.14em] text-violet-700 uppercase mb-1">מסלול הלמידה</div>
+            <h1 className="font-display text-2xl sm:text-3xl font-black text-slate-900 leading-tight">{paperLabel(paper)}</h1>
+          </div>
+          <Link
+            href="/roadmap"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-white/70 border border-slate-900/[0.08] hover:border-violet-500/40 hover:bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-all shrink-0"
+          >
+            <ArrowLeftRight aria-hidden="true" className="w-3.5 h-3.5 text-violet-600" />
             החלף שאלון
           </Link>
         </div>
@@ -180,7 +185,9 @@ function Track({ paper }: { paper: BagrutPaper }) {
               href={`/fix/${encodeURIComponent(fixTarget.id)}`}
               className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-rose-600 to-orange-500 shadow-lg shadow-rose-500/25 hover:from-rose-500 hover:to-orange-400 transition-colors"
             >
-              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl">🛠️</div>
+              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white">
+                <Wrench aria-hidden="true" className="w-6 h-6" strokeWidth={1.75} />
+              </div>
               <div className="flex-1 min-w-0 text-white">
                 <div className="text-[10px] font-black tracking-widest uppercase text-white/70">הכי חשוב היום</div>
                 <div className="text-sm font-black leading-tight mt-0.5 truncate">{`מסלול תיקון · ${fixTarget.title}`}</div>
@@ -201,7 +208,9 @@ function Track({ paper }: { paper: BagrutPaper }) {
               href="/roadmap/review"
               className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-rose-500 to-orange-500 shadow-lg shadow-rose-500/25 hover:from-rose-400 hover:to-orange-400 transition-colors"
             >
-              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl">🔁</div>
+              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white">
+                <RotateCcw aria-hidden="true" className="w-6 h-6" strokeWidth={1.75} />
+              </div>
               <div className="flex-1 min-w-0 text-white">
                 <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
                   {fixTarget ? 'ואחר כך' : 'הכי חשוב היום'}
@@ -235,7 +244,12 @@ function Track({ paper }: { paper: BagrutPaper }) {
               href={resumeHref}
               className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-cyan-700 to-violet-600 shadow-lg shadow-violet-500/30 hover:from-cyan-700 hover:to-violet-500 transition-colors"
             >
-              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl">{resume.levelEmoji}</div>
+              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white">
+                {(() => {
+                  const LevelIcon = levelIconFor(resume.levelKind);
+                  return <LevelIcon aria-hidden="true" className="w-6 h-6" strokeWidth={1.75} />;
+                })()}
+              </div>
               <div className="flex-1 min-w-0 text-white">
                 <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
                   {resume.reason === 'in-progress' ? 'המשך מאיפה שהפסקת' : resume.reason === 'mastery' ? 'להשלמת שליטה' : 'הצעד הבא שלך'}
@@ -243,9 +257,7 @@ function Track({ paper }: { paper: BagrutPaper }) {
                 <div className="text-sm font-black leading-tight mt-0.5 truncate">
                   <MathText inline>{resume.title}</MathText>
                 </div>
-                <div className="text-[11px] text-white/80 mt-0.5">
-                  רמת {resume.levelTitle} {resume.levelEmoji}
-                </div>
+                <div className="text-[11px] text-white/80 mt-0.5">רמת {resume.levelTitle}</div>
               </div>
               <ArrowLeft className="w-5 h-5 text-white group-hover:-translate-x-1 transition-transform flex-shrink-0" />
             </Link>
@@ -253,18 +265,18 @@ function Track({ paper }: { paper: BagrutPaper }) {
         )}
 
         {/* ===== Status strip — "how am I doing", one quiet row under the action ===== */}
-        <div className="surface-premium rounded-2xl p-4 space-y-2.5">
-          <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="font-black text-slate-900">
-              {overallPct}%
-              <span className="font-normal text-slate-600"> · {overallDone} מתוך {allNodes.length} שלבים</span>
+        <div className="surface-premium rounded-2xl p-4 sm:p-5 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-baseline gap-2 min-w-0">
+              <span className="font-display text-2xl font-black text-slate-900 tabular-nums">{overallPct}%</span>
+              <span className="text-xs text-slate-600 truncate">{overallDone} מתוך {allNodes.length} שלבים</span>
             </span>
-            <span className="flex items-center gap-3 text-xs text-slate-600 shrink-0">
-              <span className="flex items-center gap-1">
-                <Sparkles aria-hidden="true" className="w-3.5 h-3.5 text-violet-700" />
+            <span className="flex items-center gap-2 shrink-0">
+              <span className="inline-flex items-center gap-1.5 rounded-full chip-primary px-2.5 py-1 text-[11px] font-bold tabular-nums">
+                <Sparkles aria-hidden="true" className="w-3.5 h-3.5" />
                 {totalXp} XP
               </span>
-              <span className="flex items-center gap-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-800 px-2.5 py-1 text-[11px] font-bold tabular-nums">
                 <Crown aria-hidden="true" className="w-3.5 h-3.5 text-amber-600" />
                 {masteredCount}/{allNodes.length}
               </span>
@@ -305,10 +317,10 @@ function Track({ paper }: { paper: BagrutPaper }) {
             to the bottom. Content is clamped, never allowed to resize the tile. */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[11px] font-black tracking-widest text-slate-500 uppercase">הנושאים במסלול</h2>
+            <h2 className="text-[11px] font-black tracking-[0.14em] text-slate-500 uppercase">הנושאים במסלול</h2>
             <span className="text-[11px] text-slate-500">{tree.topics.length} נושאים · לפי סדר הלימוד</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 auto-rows-fr gap-3.5 perspective-1500">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-3.5 perspective-1500">
             {tree.topics.map((t, i) => {
               const nodes = groups[i]?.nodes ?? [];
               const done = ready ? countCompleted(nodes) : 0;
@@ -338,15 +350,15 @@ function Track({ paper }: { paper: BagrutPaper }) {
                     <div className="flex items-start gap-3">
                       <span
                         aria-hidden="true"
-                        className={`icon-3d w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${
-                          complete ? 'bg-emerald-500/15' : 'chip-primary'
+                        className={`icon-3d w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                          complete ? 'bg-emerald-500/15 text-emerald-700' : 'chip-primary'
                         }`}
                       >
-                        {t.emoji}
+                        <TopicIcon id={t.id} className="w-6 h-6" />
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <div className="text-[10px] font-black tracking-widest text-slate-500 uppercase">נושא {i + 1}</div>
+                          <div className="text-[10px] font-black tracking-[0.14em] text-slate-500 uppercase">נושא {i + 1}</div>
                           {isHere ? (
                             <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-violet-600 text-white shrink-0">כאן אתה</span>
                           ) : complete ? (
