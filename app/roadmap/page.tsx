@@ -92,7 +92,7 @@ export default function RoadmapHubPage() {
       <div className="space-y-6">
         <div className="space-y-1.5 text-center sm:text-right">
           <div className="text-[11px] font-black tracking-[0.14em] text-violet-700 uppercase">מסלול הלמידה</div>
-          <h1 className="font-display text-2xl sm:text-3xl font-black text-slate-900 leading-tight">לאיזה שאלון אתה מתכונן?</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-black text-ink leading-tight">לאיזה שאלון אתה מתכונן?</h1>
           <p className="text-sm text-slate-600 leading-relaxed max-w-2xl sm:mx-0 mx-auto">
             כל שאלון הוא מסלול מסודר — נושא אחרי נושא, שלב אחרי שלב, מ״לומדים״ ועד רמת בגרות. אפשר לעבור בין השאלונים בכל רגע.
           </p>

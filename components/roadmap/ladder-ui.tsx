@@ -59,9 +59,9 @@ export function LevelClearedPanel({
   const { stars, xpGained, justMastered, justCoreDone } = result;
 
   const headline = justMastered
-    ? 'שליטה מלאה בתת-הנושא! 👑'
+    ? 'שליטה מלאה בתת-הנושא!'
     : justCoreDone
-      ? 'עברת את הליבה — נפתח השלב הבא! 🎉'
+      ? 'עברת את הליבה — נפתח השלב הבא!'
       : `כל הכבוד — רמת "${level.title}" הושלמה!`;
 
   return (
@@ -78,7 +78,7 @@ export function LevelClearedPanel({
           <Trophy className="w-12 h-12 mx-auto text-amber-600" />
         )}
         <StarRow value={stars} className="justify-center" size="w-7 h-7" />
-        <h3 className="font-display text-xl font-black text-slate-900">{headline}</h3>
+        <h3 className="font-display text-xl font-black text-ink">{headline}</h3>
         {xpGained > 0 && (
           <div className="inline-flex items-center gap-1.5 bg-violet-500/10 border border-violet-500/30 rounded-full px-3 py-1 text-sm font-black text-violet-700">
             +{xpGained} XP
@@ -102,7 +102,7 @@ export function LevelClearedPanel({
             href={teachHref}
             className="w-full inline-flex items-center justify-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 px-5 py-3 rounded-2xl font-bold text-violet-800 transition-colors"
           >
-            <span>🙋‍♀️ עכשיו תלמד את זה — ונראה אם באמת הבנת</span>
+            <span>עכשיו תלמד את זה — ונראה אם באמת הבנת</span>
           </Link>
         )}
         <motion.button
@@ -166,8 +166,8 @@ export function LevelFailedPanel({
       className="space-y-4"
     >
       <div className="rounded-3xl p-6 text-center space-y-2 border bg-gradient-to-br from-amber-500/10 to-rose-500/[0.05] border-amber-500/40">
-        <div className="text-4xl">💪</div>
-        <h3 className="font-display text-xl font-black text-slate-900">
+        <div className="text-4xl" aria-hidden="true">💪</div>
+        <h3 className="font-display text-xl font-black text-ink">
           כמעט — רמת "{level.title}" עוד קצת
         </h3>
         <p className="text-sm text-slate-600">

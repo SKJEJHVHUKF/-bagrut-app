@@ -51,8 +51,8 @@ const TOPIC_ICONS: Record<string, LucideIcon> = {
   'extremum-problems': Target,
   'short-questions': Zap,
   // Hebrew curriculum keys (the 572 track derives its ids from these; they are
-  // also the lesson-topic names carried on every track node, so SubTopicTile
-  // can key its badge off node.topic)
+  // also the lesson-topic names carried on every track node and passed to the
+  // ladder screen, so any surface can key an icon off its lesson topic)
   'אלגברה': Radical,
   'סדרות': BarChart3,
   'הסתברות': Dices,

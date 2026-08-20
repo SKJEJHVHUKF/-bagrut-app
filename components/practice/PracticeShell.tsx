@@ -13,11 +13,11 @@ function BackgroundOrbs() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       <div
-        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-400/12 blur-[130px] animate-pulse"
+        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-400/[0.07] blur-[130px] animate-pulse"
         style={{ animationDuration: '8s' }}
       />
       <div
-        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-400/10 blur-[130px] animate-pulse"
+        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-400/[0.06] blur-[130px] animate-pulse"
         style={{ animationDuration: '10s', animationDelay: '2s' }}
       />
     </div>

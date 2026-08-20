@@ -165,7 +165,7 @@ function Track({ paper }: { paper: BagrutPaper }) {
         <div className="flex items-end justify-between gap-3">
           <div>
             <div className="text-[11px] font-black tracking-[0.14em] text-violet-700 uppercase mb-1">מסלול הלמידה</div>
-            <h1 className="font-display text-2xl sm:text-3xl font-black text-slate-900 leading-tight">{paperLabel(paper)}</h1>
+            <h1 className="font-display text-2xl sm:text-3xl font-black text-ink leading-tight">{paperLabel(paper)}</h1>
           </div>
           <Link
             href="/roadmap"
@@ -240,18 +240,20 @@ function Track({ paper }: { paper: BagrutPaper }) {
         {!guidance && resume && resumeHref && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
             {/* -600 not -500: white 10-14px labels need ≥4.5:1; violet-600 gives 6.3:1. */}
+            {/* The one dark moment on the screen — the logo's own aesthetic:
+                a deep-indigo object with a neon cyan glow. */}
             <Link
               href={resumeHref}
-              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-cyan-700 to-violet-600 shadow-lg shadow-violet-500/30 hover:from-cyan-700 hover:to-violet-500 transition-colors"
+              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-[#241E7A] to-[#1E1B4B] border border-violet-500/25 shadow-xl shadow-indigo-950/25 transition-all hover:shadow-2xl hover:shadow-indigo-950/30 hover:-translate-y-0.5"
             >
-              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white">
+              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/[0.08] border border-cyan-400/25 flex items-center justify-center text-cyan-300">
                 {(() => {
                   const LevelIcon = levelIconFor(resume.levelKind);
                   return <LevelIcon aria-hidden="true" className="w-6 h-6" strokeWidth={1.75} />;
                 })()}
               </div>
               <div className="flex-1 min-w-0 text-white">
-                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
+                <div className="text-[10px] font-black tracking-widest uppercase text-cyan-200/90">
                   {resume.reason === 'in-progress' ? 'המשך מאיפה שהפסקת' : resume.reason === 'mastery' ? 'להשלמת שליטה' : 'הצעד הבא שלך'}
                 </div>
                 <div className="text-sm font-black leading-tight mt-0.5 truncate">
@@ -268,7 +270,7 @@ function Track({ paper }: { paper: BagrutPaper }) {
         <div className="surface-premium rounded-2xl p-4 sm:p-5 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <span className="flex items-baseline gap-2 min-w-0">
-              <span className="font-display text-2xl font-black text-slate-900 tabular-nums">{overallPct}%</span>
+              <span className="font-display text-2xl font-black text-ink tabular-nums">{overallPct}%</span>
               <span className="text-xs text-slate-600 truncate">{overallDone} מתוך {allNodes.length} שלבים</span>
             </span>
             <span className="flex items-center gap-2 shrink-0">
@@ -365,7 +367,7 @@ function Track({ paper }: { paper: BagrutPaper }) {
                             <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-800 border border-emerald-500/25 shrink-0">הושלם</span>
                           ) : null}
                         </div>
-                        <div className="text-[15px] font-black text-slate-900 leading-snug line-clamp-1">{t.title}</div>
+                        <div className="text-[15px] font-black text-ink leading-snug line-clamp-1">{t.title}</div>
                         <div className="text-[11px] text-slate-500 mt-0.5">
                           {done}/{nodes.length} שלבים
                           {soon > 0 && <span className="text-slate-400"> · {soon} בקרוב</span>}

@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Lock, Check, Play, Crown, Sparkles, ArrowLeft, Star } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
+import { TopicIcon, levelIconFor } from '@/components/roadmap/TopicIcon';
 import { celebrateCompletion, sparkle } from '@/lib/confetti';
 import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
 import {
@@ -145,7 +146,7 @@ export function SubTopicLadder({
 
     return (
       <div className="space-y-4">
-        <LadderHeader subTopic={subTopic} />
+        <LadderHeader subTopic={subTopic} topic={topic} />
         {/* Keyed (not AnimatePresence) so switching rungs remounts cleanly —
             a "wait"-mode exit could otherwise stall the swap between levels. */}
         <motion.div
@@ -210,7 +211,7 @@ export function SubTopicLadder({
 
   return (
     <div className="space-y-4">
-      <LadderHeader subTopic={subTopic} />
+      <LadderHeader subTopic={subTopic} topic={topic} />
 
       {/* Mastery meter */}
       <div
@@ -229,8 +230,8 @@ export function SubTopicLadder({
             {mastered ? <Crown className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-black text-slate-900">
-              {mastered ? 'שליטה מלאה 👑' : `${clearedCount}/${levels.length} רמות הושלמו`}
+            <div className="text-sm font-black text-ink">
+              {mastered ? 'שליטה מלאה' : `${clearedCount}/${levels.length} רמות הושלמו`}
             </div>
             <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-600">
               <span className="inline-flex items-center gap-1">
@@ -238,7 +239,12 @@ export function SubTopicLadder({
                 {stars}/{maxStars}
               </span>
               <span className="font-bold text-violet-700">{xp} XP</span>
-              {coreDone && !mastered && <span className="text-emerald-700 font-bold">✓ הליבה הושלמה</span>}
+              {coreDone && !mastered && (
+                <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
+                  <Check aria-hidden="true" className="w-3 h-3" strokeWidth={3} />
+                  הליבה הושלמה
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -250,7 +256,7 @@ export function SubTopicLadder({
             className={`h-full ${
               mastered
                 ? 'bg-gradient-to-l from-amber-400 to-amber-600'
-                : 'bg-gradient-to-l from-violet-500 to-violet-500'
+                : 'bg-gradient-to-l from-cyan-700 to-violet-600'
             }`}
           />
         </div>
@@ -286,11 +292,11 @@ export function SubTopicLadder({
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={() => setOpenIndex(current.index)}
-          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 px-5 py-3.5 rounded-2xl font-black text-white shadow-lg shadow-violet-500/25 transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-l from-[#241E7A] to-[#1E1B4B] border border-violet-500/25 px-5 py-3.5 rounded-2xl font-black text-white shadow-xl shadow-indigo-950/25 transition-all hover:shadow-2xl hover:shadow-indigo-950/30 hover:-translate-y-0.5"
         >
-          <Play className="w-4 h-4" />
+          <Play className="w-4 h-4 text-cyan-300" />
           <span>
-            {clearedCount === 0 ? 'התחל' : 'המשך'}: רמת {current.title} {current.emoji}
+            {clearedCount === 0 ? 'התחל' : 'המשך'}: רמת {current.title}
           </span>
         </motion.button>
       ) : (
@@ -324,18 +330,18 @@ export function SubTopicLadder({
   );
 }
 
-function LadderHeader({ subTopic }: { subTopic: SubTopic }) {
+function LadderHeader({ subTopic, topic }: { subTopic: SubTopic; topic: string }) {
   return (
     <div className="text-center space-y-2 pt-1">
-      {/* The same icon-tile language as the topic and track tiles, so the
+      {/* The same icon-tile language as the topic and track screens, so the
           climb reads as one continuous surface rather than a new screen. */}
       <div
         aria-hidden="true"
-        className="chip-primary icon-3d mx-auto w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-sm"
+        className="icon-3d mx-auto w-14 h-14 rounded-2xl flex items-center justify-center bg-ink text-cyan-300 shadow-lg shadow-indigo-950/25 ring-1 ring-violet-500/20"
       >
-        {subTopic.emoji ?? '📘'}
+        <TopicIcon id={topic} className="w-7 h-7" />
       </div>
-      <h1 className="font-display text-2xl sm:text-[1.7rem] font-black text-slate-900 leading-tight chat-md text-balance">
+      <h1 className="font-display text-2xl sm:text-[1.7rem] font-black text-ink leading-tight chat-md text-balance">
         <MathText inline>{subTopic.title}</MathText>
       </h1>
       <p className="text-sm text-slate-600 chat-md max-w-md mx-auto leading-relaxed">
@@ -368,48 +374,58 @@ function RungCard({
   const almost = !done && !locked && attempted;
 
   const shell = done
-    ? 'border-emerald-500/40 bg-emerald-500/[0.08]'
+    ? 'surface-premium border-emerald-500/25'
     : locked
       ? 'border-slate-900/[0.06] bg-slate-900/[0.02] opacity-60'
       : almost
-        ? 'border-amber-500/50 bg-amber-500/[0.07]'
+        ? 'border-amber-500/40 bg-amber-500/[0.05]'
         : isCurrent
-          ? 'border-violet-500/50 bg-gradient-to-br from-violet-600/15 to-violet-600/10 shadow-md shadow-violet-500/10'
-          : 'border-violet-500/30 bg-violet-500/[0.05] hover:border-violet-500/50';
+          ? 'bg-white border-violet-500/40 shadow-lg shadow-violet-500/10 ring-1 ring-violet-500/15'
+          : 'bg-white/70 border-slate-900/[0.06] group-hover:border-violet-500/40';
 
   const badge = done
-    ? 'bg-emerald-500/25 text-emerald-800'
+    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25'
     : locked
       ? 'bg-slate-900/[0.03] text-slate-400'
       : almost
-        ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white'
-        : 'bg-gradient-to-br from-violet-500 to-violet-600 text-white';
+        ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-sm shadow-amber-500/25'
+        : isCurrent
+          ? 'bg-gradient-to-br from-violet-500 to-violet-600 text-white shadow-md shadow-violet-500/30'
+          : 'bg-slate-900/[0.04] text-slate-500';
 
+  const LevelIcon = levelIconFor(level.kind);
   const inner = (
     <div className={`relative rounded-2xl border p-3.5 transition-all ${shell}`}>
       <div className="flex items-center gap-3">
         <div
-          className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-lg ${badge} ${
-            isCurrent ? 'ring-2 ring-violet-400/50 animate-pulse' : ''
-          }`}
+          className={`relative w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${badge}`}
         >
-          {done ? <Check className="w-5 h-5" /> : locked ? <Lock className="w-4 h-4" /> : <span>{level.emoji}</span>}
+          {isCurrent && (
+            <span className="absolute inset-0 rounded-xl ring-4 ring-violet-500/20 animate-pulse motion-reduce:animate-none" />
+          )}
+          {done ? (
+            <Check className="w-5 h-5" strokeWidth={3} />
+          ) : locked ? (
+            <Lock className="w-4 h-4" />
+          ) : (
+            <LevelIcon className="w-5 h-5" strokeWidth={1.75} />
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black tracking-widest text-slate-500 uppercase">
+            <span className="text-[10px] font-black tracking-[0.14em] text-slate-400 uppercase">
               רמה {level.index + 1}
             </span>
             {isCurrent && (
-              <span className="text-[9px] font-black tracking-wide text-violet-700 bg-violet-500/15 rounded-full px-1.5 py-0.5">
-                עכשיו
+              <span className="text-[9px] font-bold rounded-full px-1.5 py-0.5 bg-violet-600 text-white">
+                אתה כאן
               </span>
             )}
           </div>
-          <div className="text-sm font-black text-slate-900">{level.title}</div>
-          <div className={`text-[11px] mt-0.5 ${almost ? 'text-amber-700 font-bold' : 'text-slate-600'}`}>
+          <div className="text-sm font-black text-ink">{level.title}</div>
+          <div className={`text-[11px] mt-0.5 ${almost ? 'text-amber-700 font-bold' : 'text-slate-500'}`}>
             {locked
-              ? `🔒 נפתח אחרי רמת "${prevTitle ?? 'הקודמת'}"`
+              ? `נפתח אחרי רמת "${prevTitle ?? 'הקודמת'}"`
               : almost
                 ? 'כמעט! נסה שוב — רק מה שפספסת'
                 : level.subtitle}
@@ -419,7 +435,7 @@ function RungCard({
           {done ? (
             <StarRow value={stars} size="w-3.5 h-3.5" />
           ) : !locked ? (
-            <Play className="w-4 h-4 text-violet-700" />
+            <Play className={`w-4 h-4 ${isCurrent ? 'text-violet-700' : 'text-slate-400'}`} />
           ) : null}
         </div>
       </div>
@@ -428,7 +444,7 @@ function RungCard({
 
   if (locked) return inner;
   return (
-    <button onClick={onOpen} className="block w-full text-right">
+    <button onClick={onOpen} className="group block w-full text-right">
       {inner}
     </button>
   );
