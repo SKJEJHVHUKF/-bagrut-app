@@ -10,7 +10,7 @@
 // Mirrors the AppChrome drawer pattern (framer-motion slide-in + backdrop +
 // ESC + a global 'open-formula-sheet' event) so behaviour is consistent.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,29 +23,60 @@ import type { Formula } from '@/content/lessons/types';
 // including /login, for a drawer most sessions never open. It is fetched when
 // the drawer opens instead.
 import type { getLesson as GetLesson, allLessonKeys as AllLessonKeys } from '@/content/lessons';
-// Same reason as the lessons import above: these three read MATH5_CURRICULUM,
-// and all three are used only inside the open-the-drawer effect.
-import type { BagrutPaper } from '@/content/bagrut-curriculum';
+import type { TrackTile } from '@/content/tracks';
 import { getPaper } from '@/lib/study-plan';
 
 // Study surfaces where the formula sheet is useful. Hidden everywhere else
 // (marketing, auth, chat — the chat has its own tutor).
-const SHOW_PREFIXES = ['/practice', '/learn', '/quiz', '/bagruyot'];
+const SHOW_PREFIXES = ['/practice', '/learn', '/quiz', '/bagruyot', '/roadmap'];
 function shouldShow(path: string): boolean {
   return SHOW_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
 }
 
-/** Parse `/practice/<subject>/<topic>/…` or `/learn/…` → the active topic. */
-function currentTopicFromPath(path: string): { subject: string; topic: string } | null {
+const isLadder = (t: TrackTile): t is Extract<TrackTile, { kind: 'ladder' }> =>
+  t.kind === 'ladder';
+
+/** Resolve the topic the student is currently on from the URL.
+ *  /practice and /learn carry the (Hebrew) topic in the path. /roadmap pages
+ *  carry only a sub-topic id (`/roadmap/ar-general-term`) or a track topic id
+ *  (`/roadmap/track/571/sequences`), so those resolve through the roadmap
+ *  content — dynamically imported, since this runs only when the drawer opens. */
+async function resolveCurrentTopic(path: string): Promise<string | null> {
   const segs = path.split('/').filter(Boolean);
-  if ((segs[0] === 'practice' || segs[0] === 'learn') && segs[1] && segs[2]) {
+  const dec = (s: string) => {
     try {
-      return { subject: segs[1], topic: decodeURIComponent(segs[2]) };
+      return decodeURIComponent(s);
     } catch {
-      return { subject: segs[1], topic: segs[2] };
+      return s;
     }
+  };
+  if ((segs[0] === 'practice' || segs[0] === 'learn') && segs[1] && segs[2]) {
+    return dec(segs[2]);
   }
-  return null;
+  if (segs[0] !== 'roadmap' || !segs[1]) return null;
+  // Failing to resolve just loses the highlight — the drawer still opens
+  // with every topic, so this never takes the whole sheet down with it.
+  try {
+    const { resolveRoadmapNode } = await import('@/constants/roadmapData');
+    if (segs[1] === 'track') {
+      // /roadmap/track/<paper>/<topicId> — highlight the lesson topic of the
+      // first ladder tile (a track topic can chain sub-topics from several
+      // lessons; the first one is the topic the page opens on).
+      const paper = segs[2];
+      const topicId = segs[3] ? dec(segs[3]) : null;
+      if (!topicId || (paper !== '571' && paper !== '572')) return null;
+      const { getTrack } = await import('@/content/tracks');
+      const tile = getTrack(paper)
+        .topics.find((t) => t.id === topicId)
+        ?.tiles.find(isLadder);
+      return tile ? (resolveRoadmapNode(tile.subId)?.topic ?? null) : null;
+    }
+    if (segs[1] === 'review') return null;
+    // /roadmap/<subTopicId> — the level ladder where practice actually happens.
+    return resolveRoadmapNode(dec(segs[1]))?.topic ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** Lesson-level + sub-topic-level formulas for a topic, de-duped by latex. */
@@ -74,15 +105,8 @@ type TopicFormulas = { topic: string; emoji: string; formulas: Formula[] };
 export default function FormulaSheet() {
   const pathname = usePathname() ?? '/';
   const [open, setOpen] = useState(false);
-  const [paper, setPaperState] = useState<BagrutPaper | null>(null);
 
-  const current = currentTopicFromPath(pathname);
   const show = shouldShow(pathname);
-
-  // Read the active paper when opening (localStorage — client only).
-  useEffect(() => {
-    if (open) setPaperState(getPaper());
-  }, [open]);
 
   // Open via a global event too (so any button can trigger it).
   useEffect(() => {
@@ -91,28 +115,25 @@ export default function FormulaSheet() {
     return () => window.removeEventListener('open-formula-sheet', onOpen);
   }, []);
 
-  // ESC to close.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
-
-  // Build the topic → formulas list. Filter to the active paper, but always
+  // Everything the drawer shows loads when it opens: the active paper
+  // (localStorage), the resolved current topic (may need roadmap content),
+  // and the topic → formulas list. Filter to the active paper, but always
   // keep the topic the student is currently on even if it's the other paper.
-  // Depends on `current?.topic`, not `current`: currentTopicFromPath builds a
-  // fresh object every render, and an effect that setStates on an unstable
-  // object dependency never stops.
-  const currentTopicName = current?.topic ?? null;
-  const [topics, setTopics] = useState<TopicFormulas[]>([]);
+  // `topics === null` means "not loaded yet" — the drawer mounts only once
+  // loading finishes, so its expand-the-current-topic initializer never sees
+  // half-loaded data. Closing resets to null so a later open on another page
+  // can't flash the previous page's list.
+  const [currentTopic, setCurrentTopic] = useState<string | null>(null);
+  const [topics, setTopics] = useState<TopicFormulas[] | null>(null);
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    void Promise.all([import('@/content/lessons'), import('@/content/bagrut-curriculum')]).then(
-      ([lessons, curriculum]) => {
+    const paper = getPaper();
+    void Promise.all([
+      import('@/content/lessons'),
+      import('@/content/bagrut-curriculum'),
+      resolveCurrentTopic(pathname),
+    ]).then(([lessons, curriculum, topicName]) => {
       if (cancelled) return;
       const { allLessonKeys, getLesson } = lessons;
       const { curriculumIndex, isTopicInActivePaper, getTopicMapping } = curriculum;
@@ -122,7 +143,7 @@ export default function FormulaSheet() {
           (k) =>
             !paper ||
             isTopicInActivePaper(k.topic, paper) ||
-            (currentTopicName != null && k.topic === currentTopicName)
+            (topicName != null && k.topic === topicName)
         )
         .sort((a, b) => curriculumIndex(a.topic) - curriculumIndex(b.topic))
         .map((k) => ({
@@ -131,34 +152,59 @@ export default function FormulaSheet() {
           formulas: formulasForTopic(getLesson, k.subject, k.topic),
         }))
         .filter((t) => t.formulas.length > 0);
+      setCurrentTopic(topicName);
       setTopics(built);
-      },
-    );
+    }).catch(() => {
+      // Chunk load failed (offline / deploy in progress). Open the drawer
+      // with its empty state rather than leaving the button silently dead.
+      if (!cancelled) setTopics([]);
+    });
     return () => {
       cancelled = true;
     };
-  }, [open, paper, currentTopicName]);
+  }, [open, pathname]);
+
+  // Every close path funnels here — the loaded list is dropped so the next
+  // open (possibly on another page) re-resolves instead of flashing stale data.
+  const closeDrawer = () => {
+    setOpen(false);
+    setTopics(null);
+  };
+
+  // ESC to close.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        setTopics(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
 
   if (!show) return null;
 
   return (
     <>
-      {/* Floating trigger — bottom-left, opposite the top-left profile avatar. */}
+      {/* Floating trigger — bottom-right, same side the drawer slides in from
+          (in RTL the scrollbar sits on the left, so the right edge is clear). */}
       <button
         onClick={() => setOpen(true)}
         aria-label="דף הנוסחאות"
-        className="formula-fab fixed bottom-4 left-4 z-[55] inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur border border-violet-500/25 shadow-lg shadow-violet-500/15 px-3.5 py-2.5 text-violet-800 font-bold text-sm hover:bg-violet-500/5 hover:scale-[1.03] transition-all"
+        className="formula-fab fixed bottom-4 right-4 z-[55] inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur border border-violet-500/25 shadow-lg shadow-violet-500/15 px-3.5 py-2.5 text-violet-800 font-bold text-sm hover:bg-violet-500/5 hover:scale-[1.03] transition-all"
       >
         <Sigma className="w-4 h-4" />
         <span className="hidden sm:inline">נוסחאות</span>
       </button>
 
       <AnimatePresence>
-        {open && (
+        {open && topics && (
           <FormulaDrawer
             topics={topics}
-            currentTopic={current?.topic ?? null}
-            onClose={() => setOpen(false)}
+            currentTopic={currentTopic}
+            onClose={closeDrawer}
           />
         )}
       </AnimatePresence>
@@ -177,6 +223,8 @@ function FormulaDrawer({
 }) {
   // Which topic sections are expanded. The current topic starts open; if
   // there's no current topic, open the first one so the drawer isn't blank.
+  // The initializer is reliable because FormulaSheet mounts this drawer only
+  // after the topic list has finished loading.
   const [openTopics, setOpenTopics] = useState<Set<string>>(() => {
     if (currentTopic && topics.some((t) => t.topic === currentTopic)) {
       return new Set([currentTopic]);
