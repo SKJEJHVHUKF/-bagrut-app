@@ -1,6 +1,7 @@
 import type { Lesson } from '../types';
 import { ARITHMETIC_BAGRUT, ARITHMETIC_STAGES } from './sequences-arithmetic';
 import { GEOMETRIC_BAGRUT, GEOMETRIC_STAGES } from './sequences-geometric';
+import { INDUCTION_EXTRA } from './sequences-matkonet';
 
 export const math5Sequences: Lesson = {
   subject: 'math5',
@@ -1341,6 +1342,7 @@ $$(1 + r)^n = \\frac{A}{P} \\quad\\Longrightarrow\\quad 1 + r = \\sqrt[n]{\\frac
               'זו הוכחה שדורשת טיעון נוסף מעבר להנחה: ההנחה נותנת רק את $6m$, והזוגיות של $k(k+1)$ היא מה שהופך את $3k(k+1)$ לכפולה של $6$. בבגרות חייבים לנמק את הזוגיות במפורש.',
           },
         },
+        ...INDUCTION_EXTRA,
       ],
     },
   ],

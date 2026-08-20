@@ -642,6 +642,116 @@ check('bag019 S∞ of (8,1/2) = 16', infSum(8, 1 / 2), 16);
 // odd-length keyPoint: odds − evens = the middle element (5 terms)
 check('ar3 odd-n keyPoint (5 terms, a1=7, d=4)', sumRange((i) => (i % 2 === 1 ? arithTerm(7, 4, i) : 0), 1, 5) - sumRange((i) => (i % 2 === 0 ? arithTerm(7, 4, i) : 0), 1, 5), arithTerm(7, 4, 3));
 
+// ===========================================================================
+// מתכונת batch (sequences-matkonet.ts, 2026-08-20) — original mock-exam items
+// ===========================================================================
+// -- ar-general-term extras
+check('arg-005: 20,d=-3 → a12 = -13', arithTerm(20, -3, 12), -13);
+check('arg-006: 8,15,22 → a_n=7n+1; a289=2024 largest below 2026', arithTerm(8, 7, 289), 2024);
+check('arg-006: 2025/7 not an integer (2026 not a member)', Math.abs(2025 / 7 - Math.round(2025 / 7)) > 1e-9 ? 1 : 0, 1);
+check('arg-006: a290 = 2031 > 2026', arithTerm(8, 7, 290), 2031);
+check('arg-007: x=7 → 10,20,30 (middle=avg)', 2 * (3 * 7 - 1), (7 + 3) + (4 * 7 + 2));
+check('arg-008: a3+a7=8, a4·a5=-20 with a1=-32,d=9', arithTerm(-32, 9, 3) + arithTerm(-32, 9, 7), 8);
+check('arg-008 product', arithTerm(-32, 9, 4) * arithTerm(-32, 9, 5), -20);
+check('arg-009: training a15 = 66', arithTerm(10, 4, 15), 66);
+// -- ar-recursion-sums extras
+check('ars-005: Sn=3n²+2n → a1=5, a2=11', (3 + 2) * 100 + (16 - 5), 511);
+check('ars-006: a1=-8,d=3 → S14=161', arithS(-8, 3, 14), 161);
+check('ars-007: Sn=n²-6n → d=2, first positive n=4', (2 * 4 - 7 > 0 ? 4 : 0), 4);
+check('ars-007: a3 = -1 < 0', 2 * 3 - 7, -1);
+check('ars-008: S10=185, S20=670 → a1=5,d=3', arithS(5, 3, 10), 185);
+check('ars-008: S20', arithS(5, 3, 20), 670);
+check('ars-009: a1=25,d=-2: S8 = S18 = 144 (two natural roots)', arithS(25, -2, 8), 144);
+check('ars-009: S18', arithS(25, -2, 18), 144);
+check('ars-009: disc of n²-26n+144 is 10²', 26 * 26 - 4 * 144, 100);
+check('ars-009: a13=1, a14=-1 (sign flip explains the plateau)', arithTerm(25, -2, 13) + arithTerm(25, -2, 14), 0);
+// -- ar-positions-sums extras
+check('arp-008: positions 4..40 step4: 10 terms sum 650', sumRange((i) => (i % 4 === 0 ? arithTerm(2, 3, i) : 0), 1, 40), 650);
+check('arp-009: last 5 of 25 (a1=50,d=-4) = -190', arithS(50, -4, 25) - arithS(50, -4, 20), -190);
+check('arp-010: two-digit ÷6: 15 terms, sum 810', arithSum(12, 96, 15), 810);
+check('arp-011: odd 200 + even 248, d=6, a1=-17', arithS(-17, 6, 16), 448);
+check('arp-011 odd-positions sum', sumRange((i) => (i % 2 === 1 ? arithTerm(-17, 6, i) : 0), 1, 16), 200);
+check('arp-011 even-positions sum', sumRange((i) => (i % 2 === 0 ? arithTerm(-17, 6, i) : 0), 1, 16), 248);
+check('arp-012: a10..a20 of (4,5) = 814', arithS(4, 5, 20) - arithS(4, 5, 9), 814);
+// -- ar-practice extras
+check('arx-008: 5,9,13 — sum 27, product of extremes 65', 5 + 9 + 13 + 5 * 13, 27 + 65);
+check('arx-009: savings S8=1900 < 2000 < S9=2250', arithS(150, 25, 8), 1900);
+check('arx-009: S9', arithS(150, 25, 9), 2250);
+check('arx-010: a2=4,a5=22 → d=6,a1=-2,S10=250', arithS(-2, 6, 10), 250);
+check('arx-010 conditions', arithTerm(-2, 6, 2) + arithTerm(-2, 6, 5), 26);
+check('arx-010 product', arithTerm(-2, 6, 2) * arithTerm(-2, 6, 5), 88);
+check('arx-011: 7n-40: 5 negatives, sum -95', sumRange((i) => (7 * i - 40 < 0 ? 7 * i - 40 : 0), 1, 10), -95);
+check('arx-012: a15=3,d=-2 → a1=31', arithTerm(31, -2, 15), 3);
+// -- ge-general-term extras
+check('geg-003: 81,q=1/3 → a6 = 1/3', geoTerm(81, 1 / 3, 6), 1 / 3);
+check('geg-003 distractor: a4 = 3', geoTerm(81, 1 / 3, 4), 3);
+check('geg-004: a1=-5,a4=40 → q=-2, a2=10', geoTerm(-5, -2, 4), 40);
+check('geg-004 a2', geoTerm(-5, -2, 2), 10);
+check('geg-005: x=6 → 6,12,24; rejected x=-2 also geometric', (6 + 6) ** 2, 6 * 24);
+check('geg-005 rejected root', (-2 + 6) ** 2, (-2) * (-8));
+check('geg-006: q=3,a1=2 (a5/a3=9, a4=54)', geoTerm(2, 3, 4), 54);
+check('geg-006 ratio', geoTerm(2, 3, 5) / geoTerm(2, 3, 3), 9);
+check('geg-007: a2·a4=81, a6=243 → a1=1,q=3', geoTerm(1, 3, 2) * geoTerm(1, 3, 4), 81);
+check('geg-007 a6', geoTerm(1, 3, 6), 243);
+// -- ge-proof-sum extras
+check('ges-009: S4 of (81,1/3) = 120', geoSum(81, 1 / 3, 4), 120);
+check('ges-009 wrong 80 = numerator only', 81 * (1 - 1 / 81), 80);
+check('ges-010: S6 of (5,-2) = -105', geoSum(5, -2, 6), -105);
+check('ges-011: q=3, S4=200 → a1=5', geoSum(5, 3, 4), 200);
+check('ges-012: (64,1/2): S5=124 < 125 < S6=126', geoSum(64, 1 / 2, 5), 124);
+check('ges-012 S6', geoSum(64, 1 / 2, 6), 126);
+check('ges-012 ceiling: S∞ = 128', infSum(64, 1 / 2), 128);
+check('ges-013: odd positions of first 8 (2,q=3) = 1640', geoSum(2, 9, 4), 1640);
+check('ges-013 complement: evens = 3·1640, total S8', geoSum(2, 3, 8), 1640 + 3 * 1640);
+// -- ge-infinite extras
+check('gei-004: 12,-6,3 → q=-1/2, S∞ = 8', infSum(12, -1 / 2), 8);
+check('gei-004 distractor 24 = sign ignored', infSum(12, 1 / 2), 24);
+check('gei-004 distractor 4 = inverted ratio', 12 / (1 - -2), 4);
+check('gei-005: S∞=4a1 → q=3/4', infSum(1, 3 / 4), 4);
+check('gei-006: a2=6,q=1/3 → S∞=27', infSum(18, 1 / 3), 27);
+check('gei-007: (24,1/2): S∞-S2 = 12 = tail from a3', infSum(24, 1 / 2) - geoSum(24, 1 / 2, 2), 12);
+check('gei-007 tail', infSum(6, 1 / 2), 12);
+check('gei-008: ball descents 8/(1/4) = 32; ascents 24', infSum(8, 3 / 4), 32);
+check('gei-008 ascents', infSum(6, 3 / 4), 24);
+// -- ge-practice extras
+check('gex-010: 3,6,12 — sum 21, product 216', 3 + 6 + 12, 21);
+check('gex-010 product', 3 * 6 * 12, 216);
+check('gex-011: a3-a1=24,q=2 → a1=8, S6=504', geoTerm(8, 2, 3) - 8, 24);
+check('gex-011 S6', geoSum(8, 2, 6), 504);
+check('gex-012: 50000·0.9³ = 36450', 50000 * 0.9 ** 3, 36450);
+check('gex-013: 2,6,18 sum 26; +4 → 2,10,18 arithmetic', 2 + 6 + 18, 26);
+check('gex-013 arithmetic after add', 2 * 10, 2 + 18);
+check('gex-014: -15% per year → q = 0.85', 1 - 15 / 100, 0.85);
+check('gex-014 check: 100 → 85 → 72.25', 100 * 0.85 * 0.85, 72.25);
+// -- induction extras (numeric spot-checks n=1..6)
+check('ind-007: Σ2i = n(n+1) at n=6', sumRange((i) => 2 * i, 1, 6), 6 * 7);
+check('ind-008: Σi(i+1) = n(n+1)(n+2)/3 at n=6', sumRange((i) => i * (i + 1), 1, 6), (6 * 7 * 8) / 3);
+check('ind-009: n³+2n divisible by 3 (n=1..6)', sumRange((i) => (i ** 3 + 2 * i) % 3, 1, 6), 0);
+check('ind-010: a_{n+1}=2a_n+1, a1=1 → a_n=2^n-1 (n=1..7)', sumRange((i) => { let a = 1; for (let j = 1; j < i; j++) a = 2 * a + 1; return Math.abs(a - (2 ** i - 1)); }, 1, 7), 0);
+check('ind-011: 2^n > 2n+1 from n=3 (and fails at n=2)', (2 ** 3 > 7 ? 1 : 0) + (2 ** 4 > 9 ? 1 : 0) + (2 ** 2 > 5 ? 1 : 0), 2);
+// -- מתכונת multi-part
+check('bag020 א: a22 = 77', arithTerm(14, 3, 22), 77);
+check('bag020 ב: S22 = 1001', arithS(14, 3, 22), 1001);
+check('bag020 ג: rows 11..22 = 726', arithS(14, 3, 22) - arithS(14, 3, 10), 726);
+check('bag020 ד: a13 = 50', arithTerm(14, 3, 13), 50);
+check('bag020 ד: 60 impossible — 46/3 not integer', Math.abs(46 / 3 - Math.round(46 / 3)) > 1e-9 ? 1 : 0, 1);
+check('bag021 א: a3=1, a7=17 with d=4, a1=-7', arithTerm(-7, 4, 3) * 100 + arithTerm(-7, 4, 7), 117);
+check('bag021 ב: a2=-3<0, a3=1>0 → n=3', arithTerm(-7, 4, 2), -3);
+check('bag021 ג: S20 = 620', arithS(-7, 4, 20), 620);
+check('bag021 ד: S22=770 < 800 < S23=851', arithS(-7, 4, 22), 770);
+check('bag021 ד S23', arithS(-7, 4, 23), 851);
+check('bag021 ד quadratic root ≈22.4 in (22,23)', Math.floor((9 + Math.sqrt(6481)) / 4), 22);
+check('bag022 ב: 1000·1.1³ = 1331', 1000 * 1.1 ** 3, 1331);
+check('bag022 ג: 1.1^7<2<1.1^8', (1.1 ** 7 < 2 ? 1 : 0) + (1.1 ** 8 > 2 ? 1 : 0), 2);
+check('bag023 א: areas 64→32, q=1/2', (Math.hypot(4, 4)) ** 2, 32);
+check('bag023 ב: total 128', infSum(64, 1 / 2), 128);
+check('bag023 ג: odd positions 256/3', infSum(64, 1 / 4), 256 / 3);
+// -- new drills
+check('arx-drill-004: S8 of (20,5) = 300', arithS(20, 5, 8), 300);
+check('gex-drill-004: 1.2² = 1.44', 1.2 ** 2, 1.44);
+check('teach example runner: a11=8, S11=60.5', arithTerm(3, 0.5, 11) * 10 + arithS(3, 0.5, 11), 80 + 60.5);
+check('teach example city: 200000·1.05² = 220500', 200000 * 1.05 ** 2, 220500);
+
 console.log(`\nverify-sequences: ${pass}/${pass + fail} checks passed.`);
 if (fail > 0) {
   // The list was collected and then thrown away, which made a red run useless.
