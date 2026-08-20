@@ -484,6 +484,164 @@ check('ge4 seq-gex-007 (12,1/2): S∞ = 24, a1+a2 = 18', infSum(12, 1 / 2) * 100
 check('bag012 q, S∞', (9 / 27) * 100 + infSum(27, 1 / 3), 100 / 3 + 40.5);
 check('bag012 odds 243/8, evens 81/8', infSum(27, 1 / 9) * 100 + infSum(9, 1 / 9), 3037.5 + 10.125);
 
+// ============================================================
+// STAGES v2 (2026-08-19, second pass) — the destination questions that open
+// stage 1 and are solved in stage 4, the new bagrut-style steps, and the
+// seven new bagrut questions seq-bag-013..018. Brute-forced where possible.
+// ============================================================
+// ---- DESTINATION_AR: a3 = 14, a8 = 29
+check('destAR d', (29 - 14) / 5, 3);
+check('destAR a1', 14 - 2 * 3, 8);
+check('destAR a_n = 3n+5 at 20', 3 * 20 + 5, arithTerm(8, 3, 20));
+check('destAR S20 = 730', arithS(8, 3, 20), 730);
+check('destAR evens of 20 brute', sumRange((i) => (i % 2 === 0 ? arithTerm(8, 3, i) : 0), 1, 20), 380);
+check('destAR odds of 20 brute', sumRange((i) => (i % 2 === 1 ? arithTerm(8, 3, i) : 0), 1, 20), 350);
+check('destAR terms 11..20 brute', sumRange((i) => arithTerm(8, 3, i), 11, 20), 515);
+check('destAR 127 not a term: a40 = 125, a41 = 128', arithTerm(8, 3, 40) * 1000 + arithTerm(8, 3, 41), 125128);
+// ---- ar1 v2 examples
+check('ar1 v2 a2=11,a6=27 → d=4, a1=7', (27 - 11) / 4 * 10 + (11 - 4), 47);
+check('ar1 v2 7,11,15: 83 = a20', arithTerm(7, 4, 20), 83);
+check('ar1 v2 7,11,15: 100 not a term (a24=99, a25=103)', arithTerm(7, 4, 24) * 1000 + arithTerm(7, 4, 25), 99103);
+check('ar1 v2 first > 150 is a37 = 151, a36 = 147', arithTerm(7, 4, 37) * 1000 + arithTerm(7, 4, 36), 151147);
+// ---- ar2 v2: S_n = 3n²+2n → a_n = 6n−1 ; drill S_n = n²+4n → 5, 7 ; S_n=300 (3,4) → n=12 ; S8 (3,?)=108 → d=3 ; (35,−4) max at 9 = 171
+check('ar2 v2 S_n=3n²+2n: a_n = 6n-1 at n=4 brute', 3 * 16 + 8 - (3 * 9 + 6), 6 * 4 - 1);
+check('ar2 v2 drill n²+4n: a1=5, a2=7', (1 + 4) * 10 + (4 + 8 - 5), 57);
+check('ar2 v2 S12 (3,4) = 300', arithS(3, 4, 12), 300);
+check('ar2 v2 S8 (3,3) = 108', arithS(3, 3, 8), 108);
+{
+  let best = -Infinity, bestN = 0;
+  for (let n = 1; n <= 60; n++) { const s = arithS(35, -4, n); if (s > best) { best = s; bestN = n; } }
+  check('ar2 v2 (35,-4) brute max at n=9', bestN, 9);
+  check('ar2 v2 (35,-4) brute max = 171', best, 171);
+}
+// ---- ar3 v2: 30 terms, evens − odds = 45, total 1365 → d=3, a1=2 ; drill 20 terms diff 30 → d=3
+check('ar3 v2 15d = 45 → d=3', 45 / 15, 3);
+check('ar3 v2 S30 (2,3) = 1365', arithS(2, 3, 30), 1365);
+check('ar3 v2 evens of 30 brute = 705', sumRange((i) => (i % 2 === 0 ? arithTerm(2, 3, i) : 0), 1, 30), 705);
+check('ar3 v2 odds of 30 brute = 660', sumRange((i) => (i % 2 === 1 ? arithTerm(2, 3, i) : 0), 1, 30), 660);
+check('ar3 v2 drill-006 10d = 30 → d=3', 30 / 10, 3);
+// ---- ar4 v2 traps example (50,-4): a14 = -2, S13 = 338
+check('ar4 v2 (50,-4) a13 = 2, a14 = -2', arithTerm(50, -4, 13) * 10 + arithTerm(50, -4, 14), 20 - 2);
+check('ar4 v2 (50,-4) S13 = 338', arithS(50, -4, 13), 338);
+// ---- bag013: S_n = 2n²+4n → a_n = 4n+2
+check('bag013 a1 = 6, a2 = 10', (2 + 4) * 100 + (2 * 4 + 8 - 6), 610);
+check('bag013 a_n = 4n+2 at n=7 brute', 2 * 49 + 28 - (2 * 36 + 24), 4 * 7 + 2);
+check('bag013 evens of 20 brute = 460', sumRange((i) => (i % 2 === 0 ? arithTerm(6, 4, i) : 0), 1, 20), 460);
+check('bag013 S20 = 880', arithS(6, 4, 20), 880);
+check('bag013 first > 100 is a25 = 102, a24 = 98', arithTerm(6, 4, 25) * 1000 + arithTerm(6, 4, 24), 102098);
+// ---- bag014: runner 2 km, +0.5
+check('bag014 a15 = 9', arithTerm(2, 0.5, 15), 9);
+check('bag014 S15 = 82.5', arithS(2, 0.5, 15), 82.5);
+check('bag014 a22 = 12.5 > 12 = a21', arithTerm(2, 0.5, 22) * 100 + arithTerm(2, 0.5, 21), 1262);
+check('bag014 S25 = 200', arithS(2, 0.5, 25), 200);
+check('bag014 discriminant 57²', 49 + 3200, 57 * 57);
+// ---- bag015: 24 terms, evens − odds = 60, total 1500
+check('bag015 12d = 60 → d=5', 60 / 12, 5);
+check('bag015 a1 = 5 from S24 = 1500', arithS(5, 5, 24), 1500);
+check('bag015 a24 = 120', arithTerm(5, 5, 24), 120);
+check('bag015 evens − odds brute = 60', sumRange((i) => (i % 2 === 0 ? arithTerm(5, 5, i) : 0), 1, 24) - sumRange((i) => (i % 2 === 1 ? arithTerm(5, 5, i) : 0), 1, 24), 60);
+check('bag015 last four brute = 450', sumRange((i) => arithTerm(5, 5, i), 21, 24), 450);
+check('bag015 terms 5..20 brute = 1000', sumRange((i) => arithTerm(5, 5, i), 5, 20), 1000);
+check('bag015 S20 − S4 = 1000', arithS(5, 5, 20) - arithS(5, 5, 4), 1000);
+// ---- DESTINATION_GE: a1 = 24, S∞ = 32
+check('destGE q = 1/4', 1 - 24 / 32, 0.25);
+check('destGE odd positions 128/5', infSum(24, 1 / 16), 128 / 5);
+check('destGE even positions 32/5', infSum(6, 1 / 16), 32 / 5);
+check('destGE odds + evens = 32', infSum(24, 1 / 16) + infSum(6, 1 / 16), 32);
+check('destGE inserted: q′ = 1/2, new sum 48', infSum(24, 1 / 2), 48);
+check('destGE ratio term/tail = 3 = (1-q)/q', (1 - 0.25) / 0.25, 3);
+{
+  // Independent: ratio a_n / (sum after a_n) for several n, brute-forced tails.
+  for (const n of [1, 2, 5, 9]) {
+    let tail = 0;
+    for (let k = n + 1; k <= n + 400; k++) tail += geoTerm(24, 1 / 4, k);
+    check(`destGE brute ratio at n=${n} is 3`, Math.abs(geoTerm(24, 1 / 4, n) / tail - 3) < 1e-9 ? 1 : 0, 1);
+  }
+}
+check('destGE every third: 512/21', infSum(24, 1 / 64), 512 / 21);
+check('destGE S5 > 31.9 > S4', geoSum(24, 1 / 4, 5) > 31.9 && geoSum(24, 1 / 4, 4) < 31.9 ? 1 : 0, 1);
+// ---- ge1 v2
+check('ge1 v2 (7,3): a6 = 1701', geoTerm(7, 3, 6), 1701);
+check('ge1 v2 drill 96,(1/2): a5 = 6', geoTerm(96, 1 / 2, 5), 6);
+// ---- ge2 v2: S_n = 4^n − 1 → a_n = 3·4^(n−1); S_n = 2·3^n − 2 → 4·3^(n−1); 5^n − 1 → a2 = 20; 3^n − 1 → a1=2,a3=18
+check('ge2 v2 4^n−1: a1 = 3, a2 = 12', (4 - 1) * 100 + (16 - 1 - 3), 312);
+check('ge2 v2 4^n−1: a_n = 3·4^(n−1) at n=5', 4 ** 5 - 4 ** 4, 3 * 4 ** 4);
+check('ge2 v2 2·3^n−2: a1 = 4, a2 = 12', (2 * 3 - 2) * 100 + (2 * 9 - 2 - 4), 412);
+check('ge2 v2 5^n−1: a2 = 20', 24 - 4, 20);
+check('ge2 v2 3^n−1: a1 = 2, a3 = 18', (3 - 1) * 100 + (26 - 8), 218);
+check('ge2 v2 S10 (3,2) = 3069', geoSum(3, 2, 10), 3069);
+check('ge2 v2 S4 (5,3) = 200', geoSum(5, 3, 4), 200);
+check('ge2 v2 S6 (2,3) = 728', geoSum(2, 3, 6), 728);
+check('ge2 v2 S8 (1,2) = 255', geoSum(1, 2, 8), 255);
+// ---- ge3 v2
+check('ge3 v2 9,-3,1: S∞ = 6.75', infSum(9, -1 / 3), 6.75);
+check('ge3 v2 6,2,2/3: S∞ = 9', infSum(6, 1 / 3), 9);
+check('ge3 v2 S∞=32,a2=6: (8,3/4) and (24,1/4)', (infSum(8, 3 / 4) === 32 && geoTerm(8, 3 / 4, 2) === 6 && infSum(24, 1 / 4) === 32 && geoTerm(24, 1 / 4, 2) === 6) ? 1 : 0, 1);
+check('ge3 v2 16q²−16q+3 disc = 64', 256 - 192, 64);
+check('ge3 v2 (20,1/2): S∞=40, odds 80/3, evens 40/3', infSum(20, 1 / 2) * 100 + infSum(20, 1 / 4) + infSum(10, 1 / 4), 4000 + 40);
+check('ge3 v2 (36,1/3): evens 13.5, odds 40.5, total 54', infSum(12, 1 / 9) * 1000 + infSum(36, 1 / 9) * 10 + infSum(36, 1 / 3), 13500 + 405 + 54);
+check('ge3 v2 (8,1/2): odds 32/3, evens 16/3', infSum(8, 1 / 4) * 10 + infSum(4, 1 / 4), 320 / 3 + 16 / 3);
+check('ge3 v2 seq-gei-003 (18,1/3) evens 27/4', infSum(6, 1 / 9), 27 / 4);
+check('ge3 v2 drill S∞=20, a1=15 → q=1/4', 1 - 15 / 20, 0.25);
+check('ge3 v2 drill |x/4|<1 examples', (Math.abs(2 / 4) < 1 && !(Math.abs(6 / 4) < 1)) ? 1 : 0, 1);
+// ---- ge4 v2
+check('ge4 v2 a1+a2=6, a3+a4=54 → q=3, a1=1.5', (1.5 + 4.5) * 100 + (13.5 + 40.5), 654);
+check('ge4 v2 486/1.5 = 324 is not a power of 3', 3 ** 5 < 324 && 324 < 3 ** 6 ? 1 : 0, 1);
+check('ge4 v2 (10, S∞=15): q=1/3, ratio 2', (1 - 10 / 15) * 3 * 10 + 10 / (15 - 10), 12);
+check('ge4 v2 (32, q=2x, S∞=40): x=0.1', (1 - 32 / 40) / 2, 0.1);
+check('ge4 v2 evens 20/3, odds 100/3', infSum(6.4, 0.04) * 3 * 10 + infSum(32, 0.04) * 3, 200 + 100);
+check('ge4 v2 seq-gex-009 (18, S∞=27): q=1/3', 1 - 18 / 27, 1 / 3);
+check('ge4 v2 seq-gex-009 new sum 27+9√3', infSum(18, 1 / Math.sqrt(3)), 27 + 9 * Math.sqrt(3));
+// ---- bag016: 2 … 162 with three inserted
+check('bag016 q⁴ = 81', 162 / 2, 81);
+check('bag016 inserted 6, 18, 54', geoTerm(2, 3, 2) * 10000 + geoTerm(2, 3, 3) * 100 + geoTerm(2, 3, 4), 61854);
+check('bag016 a8 = 4374, S10 = 59048', geoTerm(2, 3, 8) * 100000 + geoSum(2, 3, 10), 437400000 + 59048);
+check('bag016 39366 = a10', geoTerm(2, 3, 10), 39366);
+check('bag016 nine terms with q′ = √3: a9′ = 162', 2 * Math.sqrt(3) ** 8, 162);
+// ---- bag017: 5000 × 1.2
+check('bag017 a4 = 8640', geoTerm(5000, 1.2, 4), 8640);
+check('bag017 S4 = 26840', geoSum(5000, 1.2, 4), 26840);
+check('bag017 brute S4', 5000 + 6000 + 7200 + 8640, 26840);
+check('bag017 a5 = 10368 > 10000 > a4', geoTerm(5000, 1.2, 5) > 10000 && geoTerm(5000, 1.2, 4) < 10000 ? 1 : 0, 1);
+// ---- bag018: a1 = 32, q = 2x, S∞ = 40
+check('bag018 x = 0.1', (1 - 32 / 40) / 2, 0.1);
+check('bag018 odds 100/3, evens 20/3', infSum(32, 0.04) * 3 * 10 + infSum(6.4, 0.04) * 3, 1000 + 20);
+check('bag018 odd/even ratio = 1/q = 5', infSum(32, 0.04) / infSum(6.4, 0.04), 5);
+
+// ============================================================
+// STAGES v3 (2026-08-20) — additions only: DESTINATION_AR part ו, the
+// ar-practice follow-up example and drills, seq-ges-008, seq-bag-019, and the
+// rationalised insertion sum in ge-infinite.
+// ============================================================
+check('destAR ו: S23 = 943 < 1000', arithS(8, 3, 23), 943);
+check('destAR ו: S24 = 1020 > 1000', arithS(8, 3, 24), 1020);
+check('ar4 follow-up 21..30 brute = 815', sumRange((i) => arithTerm(8, 3, i), 21, 30), 815);
+check('ar4 follow-up S30 - S20 = 815', arithS(8, 3, 30) - arithS(8, 3, 20), 815);
+check('ar4 follow-up 250 not a term (a81=248, a82=251)', arithTerm(8, 3, 81) * 1000 + arithTerm(8, 3, 82), 248251);
+check('ar4 drill-001 a30 = 95', arithTerm(8, 3, 30), 95);
+check('ar4 drill-002 6d = 18 → d = 3', 18 / 6, 3);
+{
+  // Independent: brute-force the maximum of S_n for (41,-3).
+  let best = -Infinity, bestN = 0;
+  for (let n = 1; n <= 60; n++) { const s = arithS(41, -3, n); if (s > best) { best = s; bestN = n; } }
+  check('ar4 drill-003 brute max at n=14', bestN, 14);
+  check('ar4 drill-003 a14 = 2, a15 = -1', arithTerm(41, -3, 14) * 10 + arithTerm(41, -3, 15), 19);
+}
+check('ges-008 S3 = 13 (a1=1, q=3)', geoSum(1, 3, 3), 13);
+check('ges-008 S6 = 364', geoSum(1, 3, 6), 364);
+check('ges-008 (S6-S3)/S3 = q³ = 27', (geoSum(1, 3, 6) - geoSum(1, 3, 3)) / geoSum(1, 3, 3), 27);
+check('ge3 insertion rationalised 54+18√3', infSum(36, 1 / Math.sqrt(3)), 54 + 18 * Math.sqrt(3));
+// ---- bag-019: arithmetic triple → geometric after +2 on the third
+check('bag019 middle = 12/3 = 4', 12 / 3, 4);
+check('bag019 quadratic disc = 36', 4 + 32, 36);
+check('bag019 d=2: 2,4,6 sums 12 and 2,4,8 geometric', (2 + 4 + 6) * 10 + (4 / 2 === 8 / 4 ? 1 : 0), 121);
+check('bag019 d=-4: 8,4,0 sums 12 and 8,4,2 geometric', (8 + 4 + 0) * 10 + (4 / 8 === 2 / 4 ? 1 : 0), 121);
+check('bag019 S8 of (2,2) = 510', geoSum(2, 2, 8), 510);
+check('bag019 256 = a8 of (2,2)', geoTerm(2, 2, 8), 256);
+check('bag019 S∞ of (8,1/2) = 16', infSum(8, 1 / 2), 16);
+// odd-length keyPoint: odds − evens = the middle element (5 terms)
+check('ar3 odd-n keyPoint (5 terms, a1=7, d=4)', sumRange((i) => (i % 2 === 1 ? arithTerm(7, 4, i) : 0), 1, 5) - sumRange((i) => (i % 2 === 0 ? arithTerm(7, 4, i) : 0), 1, 5), arithTerm(7, 4, 3));
+
 console.log(`\nverify-sequences: ${pass}/${pass + fail} checks passed.`);
 if (fail > 0) {
   // The list was collected and then thrown away, which made a red run useless.

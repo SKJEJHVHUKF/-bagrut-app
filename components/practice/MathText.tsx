@@ -58,10 +58,23 @@ function mirrorArrows(s: string) {
   return s.replace(/(\$\$[\s\S]*?\$\$|\$[^$\n]+\$)|[→⇒⟹]/g, (m, math) => math ?? RTL_ARROW[m]);
 }
 
+// remark-math parses a ONE-LINE `$$…$$` as inline double-dollar math, not as a
+// display block — only the multi-line form (`$$` / formula / `$$`) becomes
+// math-flow and gets `.katex-display`. Every lesson in this app writes display
+// formulas as a single `$$…$$` line, so without this they all rendered inline,
+// buried in the paragraph. Promote any line that is exactly `$$…$$` to the
+// multi-line form (blank lines around it so it can't be swallowed by a list
+// item or a paragraph). Lines with text around the math (table cells, prose)
+// are untouched.
+function promoteDisplayMath(s: string) {
+  return s.replace(/^[ \t]*\$\$([^\n$]+(?:\$(?!\$)[^\n$]*)*)\$\$[ \t]*$/gm, (_m, inner: string) => `\n$$\n${inner}\n$$\n`);
+}
+
 export function MathText({ children: raw, inline = false }: { children: string; inline?: boolean }) {
   const hebrew = HEBREW.test(raw.replace(MATH_ISLAND, ''));
   const mathOnly = !hebrew && raw.includes('$') ? ' math-only' : '';
-  const children = hebrew ? mirrorArrows(raw) : raw;
+  const mirrored = hebrew ? mirrorArrows(raw) : raw;
+  const children = inline ? mirrored : promoteDisplayMath(mirrored);
   const components = inline
     ? { p: ({ children }: { children?: ReactNode }) => <>{children}</> }
     : {
