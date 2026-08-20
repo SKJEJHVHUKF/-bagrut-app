@@ -82,7 +82,11 @@ export type AnswerDiagnosis =
   | { kind: 'sign-flip' }
   | { kind: 'conjugate' }
   | { kind: 'partial-set'; found: number; total: number }
-  | { kind: 'extra-root'; extra: number };
+  | { kind: 'extra-root'; extra: number }
+  /** The typed value matched an AUTHORED predictable mistake on the question
+   *  (`question.wrongAnswers`). `note` is the authored explanation, verbatim —
+   *  the strongest possible diagnosis, so it overrides the shape-based ones. */
+  | { kind: 'known-mistake'; note: string };
 
 export type CheckResult = {
   verdict: Verdict;
@@ -320,6 +324,29 @@ export function checkAnswer(studentRaw: string, spec: AnswerSpec): CheckResult {
     readAs: s.map(fmt).join(', '),
     ...(ok ? {} : { diagnosis: diagnose(s, e) }),
   };
+}
+
+/**
+ * Does the typed answer match one of the question's AUTHORED predictable
+ * mistakes? Returns that entry's note, or null.
+ *
+ * Reuses checkAnswer itself for the comparison, so a known-mistake value is
+ * matched exactly as leniently as the real answer is graded (LaTeX stripping,
+ * fractions, tolerance). Entries whose value contains a comma are compared as
+ * a set, mirroring how a set-typed question reads the input.
+ */
+export function matchKnownMistake(
+  studentRaw: string,
+  wrongAnswers: { value: string; note: string }[] | undefined,
+): string | null {
+  if (!wrongAnswers?.length || !(studentRaw ?? '').trim()) return null;
+  for (const w of wrongAnswers) {
+    const spec: AnswerSpec = w.value.includes(',')
+      ? { kind: 'set', values: w.value.split(',').map((s) => s.trim()) }
+      : { kind: 'value', value: w.value };
+    if (checkAnswer(studentRaw, spec).verdict === 'correct') return w.note;
+  }
+  return null;
 }
 
 function fmt(c: Cx): string {

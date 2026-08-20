@@ -195,6 +195,16 @@ export type PracticeQuestion = {
    *  all n", loci) so the intent is explicit. */
   expected?: AnswerSpec;
 
+  /** OPEN-only, OPTIONAL: the open-question counterpart of `distractorNotes`.
+   *  Each entry is a wrong value a student PREDICTABLY types (a mathjs
+   *  expression, compared with the same engine that grades `expected`) plus an
+   *  authored, tutor-voice explanation of the exact mistake that produces it —
+   *  e.g. for $a_{20}$ of $(3,7)$: value '143' ← "הכפלת את $d$ ב-$n$ במקום
+   *  ב-$n-1$". Consumed by QuestionRunnerCard ("למה טעית?" box) and by
+   *  lib/tutor-local (state E), so a typed wrong answer gets feedback as
+   *  specific as an MCQ distractor — no API. */
+  wrongAnswers?: { value: string; note: string }[];
+
   solution: {
     /** Step-by-step solution — one sentence per step, LaTeX-aware. */
     steps: string[];

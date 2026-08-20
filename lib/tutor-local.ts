@@ -215,6 +215,9 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
       (typeof f.chosenIndex === 'number' ? q?.distractorNotes?.[f.chosenIndex]?.trim() : '') ||
       q?.solution.explanation?.trim() ||
       undefined,
+    // The authored note behind a matched predictable mistake on a TYPED answer
+    // (question.wrongAnswers) — the open-question counterpart of {note}.
+    kmNote: f.answerDiagnosis?.kind === 'known-mistake' ? f.answerDiagnosis.note : undefined,
     note:
       typeof f.chosenIndex === 'number' ? q?.distractorNotes?.[f.chosenIndex]?.trim() : undefined,
   };
@@ -326,6 +329,11 @@ const TEMPLATES: Record<string, Tpl> = {
   ),
 
   // ---- E · typed answer, graded wrong, keyed by the diagnosis --------
+  'E:why-wrong:known-mistake': T(
+    'why-wrong',
+    'קראתי את מה שכתבת: {studentAnswer}. אני מזהה בדיוק את הטעות — היא מוכרת:\n\n{kmNote}\n\nעכשיו תקן רק את הצעד הזה ותחשב שוב — מה יוצא לך?',
+    'קראתי את מה שכתבת, והתוצאה לא נכונה — אבל אני לא רוצה לנחש איפה. תכתוב לי את השורה האחרונה שאתה בטוח בה, ונמשיך משם.',
+  ),
   'E:why-wrong:sign-flip': T(
     'why-wrong',
     'קראתי את מה שכתבת: {studentAnswer}. הגודל נכון והסימן הפוך — כלומר השיטה שלך עבדה, ומה שנשבר הוא מינוס אחד באחד המעברים. זו הטעות הכי שקטה שיש, כי כל השאר נראה תקין.\n\nתחזור לצעד שבו העברת אגף או פתחת סוגריים — איפה זה קרה?',

@@ -31,7 +31,7 @@ import { buttonTap } from '@/lib/animations';
 import { celebrateCorrect } from '@/lib/confetti';
 import { seededOrder } from '@/lib/shuffle';
 import { announce } from '@/lib/a11y/announce';
-import { checkAnswer, type CheckResult } from '@/lib/answer-check';
+import { checkAnswer, matchKnownMistake, type CheckResult } from '@/lib/answer-check';
 import { recordResult, type ResultSource } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
 import type { ErrorCategory } from '@/lib/mistakes';
@@ -280,7 +280,14 @@ export function QuestionRunnerCard({
 
   function submitOpen() {
     if (resolved || !q.expected || q.expected.kind === 'manual') return;
-    const res = checkAnswer(input, q.expected);
+    let res = checkAnswer(input, q.expected);
+    // An authored predictable-mistake match beats a shape-based diagnosis: it
+    // names the exact step that broke, in the author's words (the open-question
+    // counterpart of a distractor note).
+    if (res.verdict === 'wrong') {
+      const note = matchKnownMistake(input, q.wrongAnswers);
+      if (note) res = { ...res, diagnosis: { kind: 'known-mistake', note } };
+    }
     setCheck(res);
     // Unparseable is NOT a wrong answer — ask them to rewrite it, don't punish.
     if (res.verdict === 'unparseable' || res.verdict === 'manual') return;
@@ -491,6 +498,22 @@ export function QuestionRunnerCard({
                     <MathText>{q.distractorNotes[selected]!}</MathText>
                   </div>
                 )}
+              </div>
+            )}
+            {/* The same box for a TYPED answer that matched an authored
+                predictable mistake (question.wrongAnswers) — the open-question
+                counterpart of a distractor note. */}
+            {wrong && q.kind === 'open' && check?.diagnosis?.kind === 'known-mistake' && (
+              <div className="bg-rose-500/[0.06] border border-rose-500/25 rounded-2xl p-4">
+                <div className="text-[10px] font-black tracking-widest text-rose-700 uppercase mb-1.5 flex items-center gap-1.5">
+                  <XCircle className="w-3 h-3" /> למה טעית?
+                </div>
+                <div className="text-sm text-slate-800 chat-md leading-relaxed">
+                  כתבת <span dir="ltr" className="font-mono font-bold text-rose-800">{input}</span> — וזו טעות מוכרת:
+                </div>
+                <div className="mt-2 text-sm text-rose-900 chat-md leading-relaxed">
+                  <MathText>{check.diagnosis.note}</MathText>
+                </div>
               </div>
             )}
             {wrong && (

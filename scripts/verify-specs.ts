@@ -7,7 +7,7 @@
  * which the per-topic mathjs scripts do NOT catch (they bypass checkAnswer).
  *   npx tsx scripts/verify-specs.ts
  */
-import { checkAnswer } from '../lib/answer-check';
+import { checkAnswer, matchKnownMistake } from '../lib/answer-check';
 import type { Lesson } from '../content/lessons/types';
 import { math5ComplexNumbers } from '../content/lessons/math5/complex-numbers';
 import { math5Vectors } from '../content/lessons/math5/vectors';
@@ -62,6 +62,34 @@ function checkSpec(where: string, spec: unknown, reference: string) {
   }
 }
 
+// Authored predictable-mistake entries (question.wrongAnswers) ride the same
+// engine, so they get the same end-to-end test — in BOTH directions:
+//   1. the entry's own value must MATCH itself through matchKnownMistake
+//      (proving a student typing that mistake actually gets the note), and
+//   2. it must grade 'wrong' against the question's expected spec
+//      (an entry equal to the correct answer would hand the note to a student
+//      who answered correctly — the worst possible bug in this layer).
+function checkWrongAnswers(
+  where: string,
+  expected: unknown,
+  wrongAnswers: { value: string; note: string }[] | undefined,
+) {
+  if (!wrongAnswers?.length) return;
+  for (const w of wrongAnswers) {
+    const asInput = w.value.includes(',') ? w.value : w.value;
+    const matched = matchKnownMistake(asInput, [w]);
+    const vsExpected = expected ? checkAnswer(asInput, expected as never).verdict : 'wrong';
+    if (matched && vsExpected !== 'correct') {
+      pass++;
+    } else {
+      fail++;
+      console.log(
+        `  ✗ ${where}: wrongAnswer "${w.value}" ${!matched ? 'does not match itself (unparseable?)' : 'GRADES CORRECT against expected'}`,
+      );
+    }
+  }
+}
+
 for (const [name, L] of LESSONS) {
   // Bagrut-question parts.
   for (const q of L.bagrutQuestions ?? []) {
@@ -73,10 +101,12 @@ for (const [name, L] of LESSONS) {
   for (const st of L.subTopics ?? []) {
     for (const question of st.questions ?? []) {
       checkSpec(`${name}/${st.id}/${question.id}`, question.expected, question.solution.finalAnswer);
+      checkWrongAnswers(`${name}/${st.id}/${question.id}`, question.expected, question.wrongAnswers);
     }
     for (const step of st.lesson ?? []) {
       if (step.drill) {
         checkSpec(`${name}/${st.id}/drill:${step.drill.id}`, step.drill.expected, step.drill.solution.finalAnswer);
+        checkWrongAnswers(`${name}/${st.id}/drill:${step.drill.id}`, step.drill.expected, step.drill.wrongAnswers);
       }
     }
   }
