@@ -65,7 +65,8 @@ export type LocalAnswerKind =
   | 'first-step'
   | 'key-points'
   | 'full'
-  | 'formulas';
+  | 'formulas'
+  | 'explain';
 
 export type LocalAnswer = {
   /** Markdown + LaTeX, rendered by the same pipeline as a real reply. */
@@ -74,7 +75,7 @@ export type LocalAnswer = {
 };
 
 /** What the student asked for. */
-type Ask = 'help' | 'why-wrong' | 'full' | 'formulas' | 'key-points';
+type Ask = 'help' | 'why-wrong' | 'full' | 'formulas' | 'key-points' | 'explain';
 
 /**
  * Which situation the screen is in.
@@ -125,9 +126,20 @@ export function classifyAsk(message: string): Ask | null {
 
   if (
     has(t, 'תראה לי את הפתרון', 'הפתרון המלא', 'תפתור', 'תראה לי איך', 'פתרון מלא', 'תפתרי') ||
-    (has(t, 'פתרון') && has(t, 'תראה', 'תן', 'רוצה'))
+    (has(t, 'פתרון') && has(t, 'תראה', 'תן', 'רוצה', 'תסביר'))
   ) {
     return 'full';
+  }
+
+  // "Explain this to me" — the one-tap chip "תסביר לי את השאלה הזאת מההתחלה"
+  // and its natural variants. Checked AFTER why-wrong/formulas/key-points/full,
+  // so "תסביר למה טעיתי" and "תסביר את הפתרון" keep their more specific asks;
+  // the bare "לא הבנתי" (no object) stays a help ask below.
+  if (
+    has(t, 'תסביר', 'תסבירי', 'הסבר לי', 'הסבירי') ||
+    has(t, 'מה השאלה מבקשת', 'מה השאלה רוצה', 'מה מבקשים כאן', 'לא הבנתי את השאלה', 'מה זאת אומרת')
+  ) {
+    return 'explain';
   }
 
   // hint + "where do I start" collapse into one ask: which rung the student
@@ -196,6 +208,9 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
     keyPoints3: keyPoints3.length ? keyPoints3.map((k) => `- ${k}`).join('\n') : undefined,
     keyPoint1: keyPoints3[0],
     title: st?.title,
+    // The sub-topic's authored overview — the closest thing to "explain this
+    // to me from the top" that exists in writing.
+    summary: st?.summary?.trim() || undefined,
     formulas: st?.formulas?.length
       ? st.formulas
           .map((x) => `- **${x.name}** — $${x.latex}$${x.note ? ` — ${x.note}` : ''}`)
@@ -274,6 +289,15 @@ const TEMPLATES: Record<string, Tpl> = {
     'עוד לא סימנת כאן תשובה, אז אין לי מה להשוות מולה — ואני לא רוצה לנחש. מה שכן יש: {hint}\n\nתיקח את האפשרות שאתה שוקל ותבדוק אותה מול המשפט הזה — היא מתאימה?',
     'עוד לא סימנת כאן תשובה, אז אין לי מה להשוות מולה — ואני לא רוצה לנחש. תכתוב לי איזו אפשרות אתה שוקל ולמה, ונבדוק אותה יחד.',
   ),
+  // "תסביר לי את השאלה הזאת מההתחלה" — the one-tap chip. Explains WHAT the
+  // question is testing and how to read it, without solving: the topic, the
+  // one rule it stands on, and the authored nudge. Borrowed by B/C/E/F/G via
+  // keysFor, so a student who already answered gets the same grounding.
+  'A:explain': T(
+    'explain',
+    'בוא נפרק את השאלה שעל המסך, בלי לפתור אותה.\n\nהיא שייכת לנושא **{title}**, והכלל שהיא נשענת עליו: {keyPoint1}\n\nוהכיוון שלה: {hint}\n\nעכשיו קרא אותה שוב לאט, וכתוב לעצמך בשורה אחת מה נתון ומה מבקשים. כתוב לי מה יצא — ומשם נמשיך יחד.',
+    'בוא נפרק את השאלה שעל המסך, בלי לפתור אותה: קרא אותה שוב לאט, וכתוב בשורה אחת מה נתון ובשורה שנייה מה מבקשים. שלח לי את שתי השורות — ואגיד לך אם דייקת.',
+  ),
 
   // ---- B · MCQ wrong, authored note ----------------------------------
   'B:why-wrong': T(
@@ -326,6 +350,11 @@ const TEMPLATES: Record<string, Tpl> = {
     'key-points',
     'מה ששווה לקחת מהשאלה הזאת: {explanation}\n\nאם תפגוש שאלה כזאת בבגרות, מה הדבר הראשון שתבדוק?',
     'תנסה לנסח לעצמך במשפט אחד מה השאלה הזאת בדקה, ותכתוב לי אותו. אם הצלחת לנסח — זה כבר שלך.',
+  ),
+  'D:explain': T(
+    'explain',
+    'הפתרון כבר פתוח לפניך, אז "להסביר מההתחלה" פירושו להסביר למה הצעדים האלה בכלל: {explanation}\n\nעכשיו כסה את הפתרון ונסה לשחזר מהזיכרון את הצעד הראשון — כתוב לי אותו, ואגיד לך אם הוא מדויק.',
+    'הפתרון כבר פתוח לפניך. כסה אותו, נסה לשחזר מהזיכרון את הצעד הראשון, וכתוב לי אותו — אם הוא יוצא לך, כל השאר נגזר ממנו.',
   ),
 
   // ---- E · typed answer, graded wrong, keyed by the diagnosis --------
@@ -399,6 +428,14 @@ const TEMPLATES: Record<string, Tpl> = {
     'key-points',
     'אין עכשיו שאלה על המסך, אז ניקח את זה מלמעלה. מה שחשוב לזכור ב{title}:\n\n{keyPoints3}\n\nבחר את הדגש הפחות ברור לך וכתוב לי אותו — משם נצא לתרגול ממוקד.',
     'אין לי כאן רשימת דגשים למסך הזה. כתוב לי איזה חלק בנושא הזה רעוע אצלך, ונתחיל בדיוק ממנו.',
+  ),
+  // "תסביר לי את {topic}" — the topic-level chip. The authored sub-topic
+  // overview IS the written explanation; when no sub-topic is published the
+  // fallback asks for an anchor instead of paying a model to improvise.
+  'H:explain': T(
+    'explain',
+    'ניקח את זה מלמעלה. הנה ההסבר של **{title}**, מהחומר עצמו:\n\n{summary}\n\nזה הבסיס. עכשיו בחר מכאן משפט אחד שהכי פחות ברור לך וכתוב לי אותו — ומשם נצלול פנימה.',
+    'כדי להסביר כמו שצריך אני צריך עוגן: כתוב לי איזה מושג או איזו שאלה עצרו אותך, ונתחיל בדיוק משם.',
   ),
   'H:formulas': T(
     'formulas',

@@ -116,6 +116,11 @@ export default function TutorBubble() {
   // so a second "אני תקוע" walks down the ladder instead of repeating itself.
   // Keyed by question text so moving to the next question resets it.
   const servedRef = useRef<{ key: string; kinds: LocalAnswerKind[] }>({ key: '', kinds: [] });
+  // Bumped whenever the conversation is reset; an API stream that started under
+  // an older generation must not write into the fresh chat (see below).
+  const genRef = useRef(0);
+  // The last QUESTION the drawer talked about — id, or text when there is no id.
+  const lastQKeyRef = useRef('');
   /**
    * Today's plan, in the tutor's voice.
    *
@@ -146,6 +151,24 @@ export default function TutorBubble() {
     if (open) endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [msgs, open]);
 
+  // ===== a NEW question resets the conversation =====
+  // The chat about the previous question must not carry into the next one: the
+  // drawer opens clean, with the one-tap options showing again. Reset happens
+  // only when the focus moves to a DIFFERENT question — republishing the same
+  // question (e.g. after a wrong answer adds chosenIndex) keeps the thread, and
+  // leaving to a question-less screen keeps it too (nothing new to talk about
+  // yet). The server conversation id is deliberately kept: the transcript stays
+  // one conversation per visit; only the visible thread starts fresh.
+  useEffect(() => {
+    const k = focus?.question?.id ?? focus?.questionText ?? '';
+    if (k && lastQKeyRef.current && k !== lastQKeyRef.current) {
+      genRef.current++;
+      setMsgs([]);
+      setError(null);
+    }
+    if (k) lastQKeyRef.current = k;
+  }, [focus]);
+
   const nudgeKey = focus?.wrongAnswer ? `${focus.where}::${focus.wrongAnswer}` : null;
   const showNudge = !!nudgeKey && nudgeKey !== nudgeDismissed && !open;
 
@@ -165,6 +188,10 @@ export default function TutorBubble() {
 
       setError(null);
       setInput('');
+      // The generation this send belongs to. If the student moves to the next
+      // question mid-stream, the reset bumps genRef and everything below stops
+      // touching the (new) chat.
+      const gen = genRef.current;
       const userId = `u-${Date.now()}`;
       setMsgs((m) => [...m, { id: userId, role: 'user', text }]);
 
@@ -244,6 +271,7 @@ export default function TutorBubble() {
         let created = false;
 
         const apply = (ev: string, raw: string) => {
+          if (genRef.current !== gen) return; // the chat was reset — stale stream
           let d: {
             text?: string;
             reply?: string;
@@ -293,7 +321,7 @@ export default function TutorBubble() {
           }
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'שגיאה. נסה שוב.');
+        if (genRef.current === gen) setError(e instanceof Error ? e.message : 'שגיאה. נסה שוב.');
       } finally {
         setSending(false);
       }

@@ -526,7 +526,10 @@ const MUST_ABSTAIN = [
   'אפשר לפתור את זה גם בדרך אחרת?',
   'המורה שלי לימדה אחרת, מי צודק?',
   'האם זה יופיע בבגרות?',
-  'תסביר לי את הנושא הזה מההתחלה',
+  // 'תסביר לי את הנושא הזה מההתחלה' moved OUT of this list on 2026-08-20:
+  // Itay's directive is that every one-tap chip answers from authored content
+  // with no API call, and the explain ask now serves the sub-topic's written
+  // summary (tutor-local 'explain'). The novel-question asks above still abstain.
   'כמה זמן כדאי להשקיע בנושא הזה?',
 ];
 for (const msg of MUST_ABSTAIN) {
@@ -623,7 +626,7 @@ if (mcq) {
   );
 
   // Escalation: asking twice must not repeat the same rung.
-  const served: ('hint' | 'first-step' | 'full' | 'why-wrong' | 'formulas' | 'key-points')[] = [];
+  const served: ('hint' | 'first-step' | 'full' | 'why-wrong' | 'formulas' | 'key-points' | 'explain')[] = [];
   const a1 = answerLocally('אני תקוע', focus, served);
   if (a1) served.push(a1.kind);
   const a2 = answerLocally('אני עדיין תקוע', focus, served);
