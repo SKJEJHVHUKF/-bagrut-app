@@ -262,7 +262,10 @@ function FormulaDrawer({
         exit={{ x: '100%' }}
         transition={{ type: 'tween', duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
         dir="rtl"
-        className="fixed top-0 bottom-0 right-0 z-[71] w-[380px] max-w-[92vw] bg-[var(--background)] border-r border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
+        // z-[91] tops AppHeader's z-[90]: both are top-0, and with no backdrop
+        // the X in this drawer's header is the main way to close — under the
+        // navbar it was unreachable and the drawer looked impossible to close.
+        className="fixed top-0 bottom-0 right-0 z-[91] w-[380px] max-w-[92vw] bg-[var(--background)] border-r border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
       >
         {/* Header */}
         <div className="p-4 border-b border-slate-900/[0.08] flex items-center justify-between">
