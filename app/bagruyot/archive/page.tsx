@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { MathText } from '@/components/practice/MathText';
-import { AnswerInput } from '@/components/practice/AnswerInput';
 import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
 import {
   ALL_PAST_BAGRUYOT,
@@ -37,6 +36,47 @@ import {
 /** מועד א׳ before מועד ב׳ before מועד מיוחד, within the same year. */
 const MOED_ORDER: Record<string, number> = { a: 0, b: 1, special: 2 };
 
+/** Within a year, קיץ is the later (newer) session. */
+const SEASON_ORDER: Record<string, number> = { summer: 0, winter: 1 };
+
+const MOED_LABEL: Record<string, string> = { a: 'מועד א׳', b: 'מועד ב׳', special: 'מועד מיוחד' };
+
+type Session = {
+  key: string;
+  year: number;
+  season: 'summer' | 'winter';
+  paper: string;
+  moed?: string;
+  count: number;
+};
+
+/**
+ * The distinct exam sessions in the archive, newest first — one tile per real
+ * bagrut. Without this the archive is a flat list of ~90 questions and there is
+ * no way to say "show me that exam"; with it, one tap scopes the list to a
+ * single שאלון+מועד.
+ */
+function examSessions(): Session[] {
+  const map = new Map<string, Session>();
+  for (const q of ALL_PAST_BAGRUYOT) {
+    const key = `${q.year}-${q.season}-${q.paper}-${q.moed ?? 'a'}`;
+    const found = map.get(key);
+    if (found) found.count += 1;
+    else map.set(key, { key, year: q.year, season: q.season, paper: q.paper, moed: q.moed, count: 1 });
+  }
+  return Array.from(map.values()).sort(
+    (a, b) =>
+      b.year - a.year ||
+      SEASON_ORDER[a.season] - SEASON_ORDER[b.season] ||
+      MOED_ORDER[a.moed ?? 'a'] - MOED_ORDER[b.moed ?? 'a'] ||
+      a.paper.localeCompare(b.paper),
+  );
+}
+
+function sessionKeyOf(q: PastBagrutQuestion): string {
+  return `${q.year}-${q.season}-${q.paper}-${q.moed ?? 'a'}`;
+}
+
 // The archive is open to every signed-in student — free and Pro alike.
 // Only the sign-in step remains, so progress can be attached to an account.
 type AuthState = { status: 'loading' } | { status: 'unauthenticated' } | { status: 'in' };
@@ -47,6 +87,7 @@ export default function BagruyotArchivePage() {
   const [filterYear, setFilterYear] = useState<number | 'all'>('all');
   const [filterPaper, setFilterPaper] = useState<BagrutPaper | 'all'>('all');
   const [filterTopic, setFilterTopic] = useState<string | 'all'>('all');
+  const [filterSession, setFilterSession] = useState<string | 'all'>('all');
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -63,6 +104,7 @@ export default function BagruyotArchivePage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return ALL_PAST_BAGRUYOT.filter((qn) => {
+      if (filterSession !== 'all' && sessionKeyOf(qn) !== filterSession) return false;
       if (filterYear !== 'all' && qn.year !== filterYear) return false;
       if (filterPaper !== 'all' && qn.paper !== filterPaper) return false;
       if (filterTopic !== 'all' && qn.topic !== filterTopic) return false;
@@ -77,13 +119,15 @@ export default function BagruyotArchivePage() {
       .sort(
         (a, b) =>
           b.year - a.year ||
+          SEASON_ORDER[a.season] - SEASON_ORDER[b.season] ||
           MOED_ORDER[a.moed ?? 'a'] - MOED_ORDER[b.moed ?? 'a'] ||
           a.paper.localeCompare(b.paper) ||
           a.questionNumber - b.questionNumber,
       );
-  }, [filterYear, filterPaper, filterTopic, query]);
+  }, [filterSession, filterYear, filterPaper, filterTopic, query]);
 
   const clearFilters = () => {
+    setFilterSession('all');
     setFilterYear('all');
     setFilterPaper('all');
     setFilterTopic('all');
@@ -124,7 +168,9 @@ export default function BagruyotArchivePage() {
   const topics = availableTopics();
   const papers = availablePapers();
   const totalCount = totalQuestions();
-  const hasActiveFilter = filterYear !== 'all' || filterPaper !== 'all' || filterTopic !== 'all' || !!query;
+  const sessions = examSessions();
+  const hasActiveFilter =
+    filterSession !== 'all' || filterYear !== 'all' || filterPaper !== 'all' || filterTopic !== 'all' || !!query;
 
   return (
     <main className="min-h-screen px-4 sm:px-6 py-8 max-w-3xl mx-auto">
@@ -163,6 +209,56 @@ export default function BagruyotArchivePage() {
             שאלה שתחפש פה תהיה אותנטית 100%.
           </p>
         </div>
+      )}
+
+      {/* Jump straight to one past exam. Without this the archive is a flat
+          list of every question ever transcribed, with no way to say
+          "show me that bagrut". */}
+      {sessions.length > 0 && (
+        <section className="mb-5">
+          <div className="text-xs font-black tracking-widest text-slate-600 uppercase mb-2">
+            בגרויות קודמות
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            <button
+              onClick={() => setFilterSession('all')}
+              className={`flex-shrink-0 rounded-xl border px-3 py-2 text-right transition-colors ${
+                filterSession === 'all'
+                  ? 'bg-violet-600 border-violet-600 text-white'
+                  : 'surface-premium border-slate-900/[0.08] hover:bg-slate-900/[0.03]'
+              }`}
+            >
+              <div className="text-xs font-black leading-tight">כל השאלות</div>
+              <div className={`text-[10px] ${filterSession === 'all' ? 'text-white/80' : 'text-slate-600'}`}>
+                {totalCount} שאלות
+              </div>
+            </button>
+            {sessions.map((s) => {
+              const active = filterSession === s.key;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setFilterSession(active ? 'all' : s.key)}
+                  className={`flex-shrink-0 rounded-xl border px-3 py-2 text-right transition-colors ${
+                    active
+                      ? 'bg-violet-600 border-violet-600 text-white'
+                      : 'surface-premium border-slate-900/[0.08] hover:bg-slate-900/[0.03]'
+                  }`}
+                >
+                  <div className="text-xs font-black leading-tight whitespace-nowrap">
+                    {s.season === 'summer' ? 'קיץ' : 'חורף'} {s.year}
+                    {s.moed ? ` · ${MOED_LABEL[s.moed]}` : ''}
+                  </div>
+                  <div
+                    className={`text-[10px] whitespace-nowrap ${active ? 'text-white/80' : 'text-slate-600'}`}
+                  >
+                    שאלון {s.paper} · {s.count} שאלות
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {/* Search — hide when repo empty */}
@@ -302,27 +398,27 @@ function QuestionCard({
   return (
     <article className="surface-premium rounded-2xl overflow-hidden">
       <button onClick={onToggle} className="w-full text-right p-4 hover:bg-slate-900/[0.02] transition-colors">
-        <div className="flex items-start gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-              <span className="bg-violet-500/15 border border-violet-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-violet-800">
-                שאלון {question.paper}
+        {/* Collapsed row: identity only — שאלון, נושא, מועד, שנה, מספר שאלה.
+            No excerpt of the wording; the question itself opens on click. */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 min-w-0 flex flex-wrap items-center gap-1.5">
+            <span className="bg-violet-500/15 border border-violet-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-violet-800">
+              שאלון {question.paper}
+            </span>
+            <span className="bg-violet-500/15 border border-violet-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-violet-800">
+              {question.topic}
+            </span>
+            {moedHeb && (
+              <span className="bg-amber-500/15 border border-amber-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                {moedHeb}
               </span>
-              <span className="bg-violet-500/15 border border-violet-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-violet-800">
-                {question.topic}
-              </span>
-              {moedHeb && (
-                <span className="bg-amber-500/15 border border-amber-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-amber-800">
-                  {moedHeb}
-                </span>
-              )}
-              <span className="text-[10px] text-slate-600">
-                {seasonHeb} {question.year} • שאלה {question.questionNumber} • {question.totalPoints} נק׳
-              </span>
-            </div>
-            <div className="text-sm text-slate-800 line-clamp-2 chat-md leading-relaxed">
-              <MathText inline>{question.context}</MathText>
-            </div>
+            )}
+            <span className="text-sm font-black text-slate-800">
+              שאלה {question.questionNumber}
+            </span>
+            <span className="text-[10px] text-slate-600">
+              {seasonHeb} {question.year} • {question.totalPoints} נק׳
+            </span>
           </div>
           <div className="flex-shrink-0 text-slate-600">
             {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -398,11 +494,13 @@ function ExamScan({ src, label }: { src: string; label: string }) {
 }
 
 // ============================================================
-// PartPracticeCard — per-part interactive practice (answer + hints + solution)
+// PartPracticeCard — per-part study card: the scan, graded hints, full solution
 // ============================================================
+//
+// There is deliberately no answer box here. A bagrut part is solved on paper —
+// typing an expression into a textarea that nobody grades was busywork.
 
 function PartPracticeCard({ part }: { part: PastBagrutPart }) {
-  const [answer, setAnswer] = useState('');
   const [hintsShown, setHintsShown] = useState(0);
   const [solutionShown, setSolutionShown] = useState(false);
   const [selfReport, setSelfReport] = useState<'correct' | 'wrong' | null>(null);
@@ -423,33 +521,6 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
       <div className="chat-md text-sm text-slate-800 leading-relaxed">
         <MathText>{part.prompt}</MathText>
       </div>
-
-      {/* Answer textarea — collapses when solution shown */}
-      <AnimatePresence initial={false}>
-        {!solutionShown && (
-          <motion.div
-            key="answer"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            style={{ overflow: 'hidden' }}
-          >
-            <label className="block text-[10px] font-black tracking-widest text-slate-600 uppercase mb-1.5">
-              התשובה שלך
-            </label>
-            <AnswerInput
-              value={answer}
-              onChange={setAnswer}
-              type={
-                part.answer_type === 'number' || part.answer_type === 'expression'
-                  ? part.answer_type
-                  : 'text'
-              }
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Action buttons — subtle tap feedback */}
       <div className="flex flex-wrap gap-2">
