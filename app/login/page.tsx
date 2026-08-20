@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import MathUpLogo from '@/components/MathUpLogo';
 import {
   Mail,
   Lock,
@@ -12,7 +13,6 @@ import {
   Loader2,
   Eye,
   EyeOff,
-  GraduationCap,
 } from 'lucide-react';
 
 function LoginForm() {
@@ -62,10 +62,8 @@ function LoginForm() {
       onSubmit={handleSubmit}
       className="bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 rounded-3xl p-7 sm:p-9 shadow-2xl shadow-violet-500/10"
     >
-      <h1 className="font-display text-3xl sm:text-4xl font-black mb-2 text-center">
-        <span className="font-display text-slate-800">
-          ברוך שובך 👋
-        </span>
+      <h1 className="font-display text-3xl sm:text-4xl font-black mb-2 text-center text-ink">
+        ברוך שובך
       </h1>
       <p className="text-slate-600 text-center mb-7">התחבר כדי להתחיל לתרגל</p>
 
@@ -116,7 +114,7 @@ function LoginForm() {
       </label>
 
       {error && (
-        <div className="mt-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-red-200">
+        <div className="mt-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm font-bold text-red-700">
           {error}
         </div>
       )}
@@ -124,13 +122,13 @@ function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="group mt-6 w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-violet-600 to-violet-600 hover:from-violet-500 hover:to-violet-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3.5 rounded-xl font-bold text-white shadow-xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:-translate-y-0.5 transition-all"
+        className="group mt-6 w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-[#241E7A] to-[#1E1B4B] border border-violet-500/25 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3.5 rounded-xl font-bold text-white shadow-xl shadow-indigo-950/25 hover:shadow-2xl hover:shadow-indigo-950/30 hover:-translate-y-0.5 transition-all"
       >
         {loading ? (
           <Loader2 className="w-5 h-5 animate-spin" />
         ) : (
           <>
-            <Sparkles className="w-5 h-5" />
+            <Sparkles className="w-5 h-5 text-cyan-300" />
             <span>התחבר</span>
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           </>
@@ -155,21 +153,15 @@ export default function LoginPage() {
     <div className="min-h-screen text-slate-900 relative overflow-x-hidden" style={{ fontFamily: 'var(--font-heebo), sans-serif' }}>
       {/* Animated background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/30 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/25 blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-400/[0.07] blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-400/[0.06] blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
       </div>
 
       {/* Top bar */}
       <nav className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 via-violet-500 to-amber-400 flex items-center justify-center shadow-xl shadow-violet-500/50 ring-1 ring-slate-900/10 group-hover:scale-105 transition-transform">
-            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white drop-shadow-md">
-              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
-            </svg>
-          </div>
-          <span className="text-xl sm:text-2xl font-black font-display text-slate-800">
-            MathUp
-          </span>
+          <MathUpLogo size="md" />
+          <span className="text-xl sm:text-2xl font-black font-display text-ink">MathUp</span>
         </Link>
       </nav>
 

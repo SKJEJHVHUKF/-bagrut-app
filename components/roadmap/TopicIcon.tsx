@@ -58,6 +58,7 @@ const TOPIC_ICONS: Record<string, LucideIcon> = {
   'הסתברות': Dices,
   'גיאומטריה אוקלידית': Compass,
   'פונקציות (יסודות)': FunctionSquare,
+  'פונקציות': FunctionSquare,
   'טריגונומטריה': Triangle,
   'חשבון דיפרנציאלי': TrendingUp,
   'חשבון אינטגרלי': AreaChart,

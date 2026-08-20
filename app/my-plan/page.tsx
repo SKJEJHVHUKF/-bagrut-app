@@ -15,7 +15,9 @@ import {
   GraduationCap,
   Camera,
   BookOpen,
+  Sigma,
 } from 'lucide-react';
+import MathUpLogo from '@/components/MathUpLogo';
 import { createClient } from '@/lib/supabase/client';
 import {
   getPlan,
@@ -142,7 +144,7 @@ export default function MyPlanPage() {
         {/* Topics list */}
         <motion.section {...inViewProps} variants={staggerContainer}>
           <motion.div variants={fadeUp} className="flex items-baseline justify-between mb-3">
-            <h2 className="font-display text-lg font-black text-slate-900">תוכנית הלימוד</h2>
+            <h2 className="font-display text-lg font-black text-ink">תוכנית הלימוד</h2>
             <span className="text-xs text-slate-600">{plan.topics.length} נושאים</span>
           </motion.div>
 
@@ -164,21 +166,21 @@ export default function MyPlanPage() {
             page itself paywalls free users). Visually distinguished from
             "חומרים" because it's interactive, not reference material. */}
         <motion.section {...inViewProps} variants={staggerContainer}>
-          <motion.h2 variants={fadeUp} className="text-lg font-black text-slate-900 mb-3">
+          <motion.h2 variants={fadeUp} className="font-display text-lg font-black text-ink mb-3">
             צלם שאלה
             {pro ? null : <span className="text-xs font-normal text-amber-700 mr-2">Pro</span>}
           </motion.h2>
           <motion.div variants={fadeUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
             <Link
               href="/scan"
-              className="card-3d block bg-gradient-to-br from-violet-600/15 to-violet-600/15 border border-violet-500/40 hover:border-violet-500/70 rounded-2xl p-4"
+              className="card-3d block bg-white/70 border border-violet-500/30 hover:border-violet-500/60 rounded-2xl p-4"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center shadow-lg shadow-violet-500/30 flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-md shadow-violet-500/25 flex-shrink-0">
                   <Camera className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm sm:text-base text-slate-900">צלמי שאלה — קבלי פתרון מ-AI</div>
+                  <div className="font-bold text-sm sm:text-base text-ink">צלם שאלה — קבל פתרון מ-AI</div>
                   <div className="text-xs text-slate-600 mt-0.5">פתרון צעד-אחר-צעד, נשמר בספרייה לפי נושא</div>
                 </div>
                 <ArrowLeft className="w-4 h-4 text-violet-700 flex-shrink-0" />
@@ -232,16 +234,11 @@ export default function MyPlanPage() {
               className="card-3d block bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 hover:border-amber-500/60 rounded-2xl p-4"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
-                  <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                  </svg>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md shadow-amber-500/25 flex-shrink-0">
+                  <Sigma className="w-5 h-5 text-white" strokeWidth={1.75} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm sm:text-base text-slate-900">דף נוסחאות</div>
+                  <div className="font-bold text-sm sm:text-base text-ink">דף נוסחאות</div>
                   <div className="text-xs text-slate-600 mt-0.5">כל הנוסחאות של מתמטיקה 5 — מסודרות לפי נושא</div>
                 </div>
                 <ArrowLeft className="w-4 h-4 text-amber-700 flex-shrink-0" />
@@ -255,11 +252,11 @@ export default function MyPlanPage() {
           {!pro && (
             <Link
               href="/pricing"
-              className="block bg-gradient-to-br from-violet-600/15 to-violet-600/15 border border-violet-500/40 rounded-2xl p-5 text-center space-y-3"
+              className="block surface-premium border border-violet-500/25 rounded-2xl p-5 text-center space-y-3"
             >
               <Crown className="w-8 h-8 mx-auto text-amber-700" />
               <div>
-                <div className="text-base font-black text-slate-900 mb-1">שדרג ל-Pro</div>
+                <div className="text-base font-black text-ink mb-1">שדרג ל-Pro</div>
                 <div className="text-sm text-slate-700">
                   הקורס המתקדם ברמת בגרות, מאגר הבגרויות המלא, סימולציות ועזרת-AI ללא הגבלה. הלימוד עצמו תמיד חינם.
                 </div>
@@ -300,21 +297,27 @@ function TopicCard({
   const href = `/practice/${topic.subject}/${encodeURIComponent(topic.topic)}`;
 
   const card = (
-    <div className="card-3d bg-slate-900/[0.03] hover:bg-slate-900/[0.04] border-slate-900/10 hover:border-violet-500/40 rounded-2xl p-4 border transition-all block">
+    <div className="card-3d bg-white/70 hover:bg-white border-slate-900/[0.06] hover:border-violet-500/40 rounded-2xl p-4 border transition-all block">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-500 flex items-center justify-center font-black text-white flex-shrink-0">
+        <div
+          className={`w-10 h-10 rounded-xl flex items-center justify-center font-black flex-shrink-0 tabular-nums ${
+            topic.completion >= 80
+              ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25'
+              : 'bg-slate-900/[0.04] text-slate-500'
+          }`}
+        >
           {topic.completion >= 80 ? <CheckCircle className="w-5 h-5" /> : index + 1}
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="font-bold text-sm sm:text-base text-slate-900">{topic.topic}</div>
+          <div className="font-bold text-sm sm:text-base text-ink">{topic.topic}</div>
           <div className="mt-0.5">
             <BagrutBadge topic={topic.topic} variant="inline" />
           </div>
           <div className="flex items-center gap-3 mt-1.5">
             <div className="flex-1 h-1.5 bg-slate-900/5 rounded-full overflow-hidden max-w-[120px]">
               <div
-                className="h-full bg-gradient-to-l from-violet-500 to-violet-500 transition-all"
+                className="h-full bg-gradient-to-l from-cyan-700 to-violet-600 transition-all"
                 style={{ width: `${topic.completion}%` }}
               />
             </div>
@@ -349,11 +352,11 @@ function BackgroundOrbs() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       <div
-        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/30 blur-[120px] animate-pulse"
+        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-400/[0.07] blur-[120px] animate-pulse"
         style={{ animationDuration: '8s' }}
       />
       <div
-        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/25 blur-[120px] animate-pulse"
+        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-400/[0.06] blur-[120px] animate-pulse"
         style={{ animationDuration: '10s', animationDelay: '2s' }}
       />
     </div>
@@ -365,15 +368,9 @@ function TopBar() {
     <nav className="md:hidden sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 via-violet-500 to-amber-400 flex items-center justify-center shadow-xl shadow-violet-500/50 ring-1 ring-slate-900/10">
-            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
-              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
-            </svg>
-          </div>
+          <MathUpLogo size="md" />
           <div>
-            <div className="text-base font-black font-display text-slate-800">
-              MathUp
-            </div>
+            <div className="text-base font-black font-display text-ink">MathUp</div>
             <div className="text-[10px] text-slate-600 -mt-0.5">התוכנית שלי</div>
           </div>
         </Link>
@@ -431,7 +428,7 @@ function TodaySection({ plan, onTargetSet }: { plan: StudyPlan; onTargetSet: () 
 
   return (
     <motion.section {...inViewProps} variants={staggerContainer} className="space-y-3">
-      <h2 className="font-display text-lg font-black text-slate-900">היעד שלי</h2>
+      <h2 className="font-display text-lg font-black text-ink">היעד שלי</h2>
 
       {/* The goal picker. Lives here rather than in onboarding so students who
           already have a plan get it in the same place new ones do — no
@@ -477,7 +474,7 @@ function TodaySection({ plan, onTargetSet }: { plan: StudyPlan; onTargetSet: () 
               }}
               className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-colors ${
                 (plan.minutesPerDay ?? DEFAULT_MINUTES_PER_DAY) === m
-                  ? 'bg-slate-900 border-slate-900 text-white'
+                  ? 'bg-ink border-ink text-white'
                   : 'bg-slate-900/[0.03] border-slate-900/10 text-slate-700 hover:bg-slate-900/[0.06]'
               }`}
             >

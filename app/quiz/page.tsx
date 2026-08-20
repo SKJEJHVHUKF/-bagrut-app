@@ -25,6 +25,13 @@ import { pickQuestions, pickShuffled, studentTier } from '@/lib/adaptive';
 import { predictOverall } from '@/lib/prediction';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { toast } from 'sonner';
+import { Flame, Sprout, Target, Zap } from 'lucide-react';
+import { TopicIcon } from '@/components/roadmap/TopicIcon';
+import type { LucideIcon } from 'lucide-react';
+
+// The three concept levels, drawn with the ladder's icon language (🌱⚡🔥 in
+// the content stays; only the rendering swaps to lucide).
+const LEVEL_ICONS: Record<1 | 2 | 3, LucideIcon> = { 1: Sprout, 2: Zap, 3: Flame };
 
 
 
@@ -608,7 +615,10 @@ function Quiz() {
   const renderHome = () => (
     <div className="home-inner">
       <div className="hero">
-        <div className="hero-badge">⚡ בוחן מושגים · 3 רמות</div>
+        <div className="hero-badge">
+          <Zap className="w-3.5 h-3.5" aria-hidden="true" />
+          בוחן מושגים · 3 רמות
+        </div>
         <h1>בוחן מושגים</h1>
         <p>
           {effectiveLevel === 3
@@ -620,7 +630,7 @@ function Quiz() {
       <div className="subject-tabs">
         {Object.entries(SUBJECTS).map(([key, s]) => (
           <button key={key} className={`subject-tab ${s.tabCls} ${currentSubject === key ? 'active' : ''}`} onClick={() => { setCurrentSubject(key); setSelectedTopic(null); }}>
-            {s.emoji} {s.name}
+            {s.name}
           </button>
         ))}
       </div>
@@ -633,7 +643,9 @@ function Quiz() {
             style={{ gridColumn: '1 / -1' }}
           >
             <span className="topic-check">✓</span>
-            <span className="topic-emoji">🎯</span>
+            <span className="topic-emoji">
+              <Target aria-hidden="true" strokeWidth={1.75} />
+            </span>
             <div className="topic-name">בדיקה מעורבת — כל הנושאים</div>
             <div className="topic-sub">שאלות מושג מכל נושאי השאלון · מגלה לך איפה אתה חזק ואיפה צריך חיזוק</div>
           </div>
@@ -641,7 +653,9 @@ function Quiz() {
         {visibleTopics.map((t, i) => (
           <div key={i} className={`topic-card ${selectedTopic === t.name ? 'selected' : ''}`} onClick={() => setSelectedTopic(t.name)}>
             <span className="topic-check">✓</span>
-            <span className="topic-emoji">{t.emoji}</span>
+            <span className="topic-emoji">
+              <TopicIcon id={t.name} />
+            </span>
             <div className="topic-name">{t.name}</div>
             <div className="topic-sub">{t.sub}</div>
           </div>
@@ -668,13 +682,16 @@ function Quiz() {
                 : n && n > 0
                   ? `${n} שאלות מוכנות`
                   : 'נבנה מהמאגר';
+          const LevelIcon = LEVEL_ICONS[lv];
           return (
             <button
               key={lv}
               className={`level-card ${effectiveLevel === lv ? 'selected' : ''}`}
               onClick={() => chooseLevel(lv)}
             >
-              <span className="level-emoji">{meta.emoji}</span>
+              <span className="level-emoji">
+                <LevelIcon aria-hidden="true" strokeWidth={1.75} />
+              </span>
               <span className="level-title">{meta.title}</span>
               <span className="level-blurb">{meta.blurb}</span>
               <span className="level-count">{countLabel}</span>
@@ -694,13 +711,13 @@ function Quiz() {
         התחל בוחן — רמה {effectiveLevel} →
       </button>
       <a href="/chat" className="chat-link">
-        💬 שאל את המורה — צ&apos;אט עם AI
+        שאל את המורה — צ&apos;אט עם AI
       </a>
       <a href="/history" className="chat-link" style={{ marginTop: '8px' }}>
-        📊 ההיסטוריה שלי
+        ההיסטוריה שלי
       </a>
       <a href="/insights" className="chat-link" style={{ marginTop: '8px' }}>
-        📈 התמונה שלי — חוזקות וחולשות
+        התמונה שלי — חוזקות וחולשות
       </a>
     </div>
   );
@@ -712,8 +729,8 @@ function Quiz() {
           <div className="loading-state">
             <div className="loader-ring"></div>
             <div className="loading-tip">
-              <strong>{subject.emoji} {subject.name} — {selectedTopic === MIXED_TOPIC ? 'בדיקה מעורבת' : selectedTopic}</strong>
-              <span>⚡ מכין לך שאלות מושגים...</span>
+              <strong>{subject.name} — {selectedTopic === MIXED_TOPIC ? 'בדיקה מעורבת' : selectedTopic}</strong>
+              <span>מכין לך שאלות מושגים...</span>
               <span style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '8px' }}>בדרך כלל 5-15 שניות</span>
             </div>
           </div>
@@ -741,11 +758,11 @@ function Quiz() {
         <div style={{ display: 'flex', flex: 1, flexDirection: 'column', gap: '12px' }}>
           <div className="quiz-meta-strip">
             <span className="meta-subject-badge" style={{ color: subject.badge.color, background: subject.badge.bg, borderColor: subject.badge.border }}>
-              {subject.emoji} {subject.name}
+              {subject.name}
             </span>
-            <span className="meta-level-badge">{LEVEL_META[effectiveLevel].emoji} {LEVEL_META[effectiveLevel].short}</span>
+            <span className="meta-level-badge">{LEVEL_META[effectiveLevel].short}</span>
             <span className="meta-topic-label">
-              {selectedTopic === MIXED_TOPIC ? `🎯 בדיקה מעורבת · ${q.topic ?? ''}` : selectedTopic}
+              {selectedTopic === MIXED_TOPIC ? `בדיקה מעורבת · ${q.topic ?? ''}` : selectedTopic}
             </span>
           </div>
           <div className="question-card">
@@ -773,13 +790,12 @@ function Quiz() {
                 });
               }}
             >
-              💡 בקש רמז
+              בקש רמז
             </button>
           )}
           {q.hint && hintShown && (
             <div className="hint-card">
               <div className="lesson-label">
-                <span className="lesson-icon">💡</span>
                 <span>רמז</span>
               </div>
               <div className="hint-text math-content">
@@ -814,7 +830,7 @@ function Quiz() {
           {selectedAnswer !== null && (
             <>
               <div className={`verdict-banner ${isCorrect ? 'verdict-correct' : 'verdict-wrong'}`}>
-                {isCorrect ? '✅ נכון! כל הכבוד' : '❌ טעות — אבל בוא נלמד מזה'}
+                {isCorrect ? 'נכון! כל הכבוד' : 'טעות — אבל בוא נלמד מזה'}
               </div>
 
               {/* Structured explanation (new rich format).
@@ -843,7 +859,6 @@ function Quiz() {
                     q.distractorNotes[selectedAnswer] && (
                       <div className="lesson-card lesson-wrong">
                         <div className="lesson-label">
-                          <span className="lesson-icon">🎯</span>
                           <span>למה התשובה שבחרת שגויה</span>
                         </div>
                         <div className="lesson-text math-content">
@@ -855,7 +870,6 @@ function Quiz() {
                   {q.explanation?.why_correct && (
                     <div className="lesson-card lesson-correct">
                       <div className="lesson-label">
-                        <span className="lesson-icon">✅</span>
                         <span>למה התשובה הנכונה</span>
                       </div>
                       <div className="lesson-text math-content">
@@ -867,7 +881,6 @@ function Quiz() {
                   {q.explanation?.why_wrong && (
                     <div className="lesson-card lesson-wrong">
                       <div className="lesson-label">
-                        <span className="lesson-icon">❌</span>
                         <span>למה האחרות שגויות</span>
                       </div>
                       <div className="lesson-text math-content">
@@ -879,7 +892,6 @@ function Quiz() {
                   {q.explanation?.concept && (
                     <div className="lesson-card lesson-concept">
                       <div className="lesson-label">
-                        <span className="lesson-icon">📚</span>
                         <span>הרעיון העקרוני</span>
                       </div>
                       <div className="lesson-text math-content">
@@ -891,7 +903,6 @@ function Quiz() {
                   {q.explanation?.remember && (
                     <div className="lesson-card lesson-tip">
                       <div className="lesson-label">
-                        <span className="lesson-icon">💡</span>
                         <span>טיפ לזכור</span>
                       </div>
                       <div className="lesson-text math-content">
@@ -965,7 +976,7 @@ function Quiz() {
             }}
           >
             {predDelta > 0
-              ? `📈 הציון החזוי שלך עלה ב-${predDelta} נקודות`
+              ? `הציון החזוי שלך עלה ב-${predDelta} נקודות`
               : `הציון החזוי ירד ב-${Math.abs(predDelta)} — שווה חזרה על הנושא`}
           </div>
         )}
@@ -1017,7 +1028,7 @@ function Quiz() {
                 <div key={i} className={`review-item${i === 0 ? ' review-first' : ''}`}>
                   <div className="review-q math-content">
                     <MathText inline>{a.question}</MathText>
-                    {a.usedHint && <span className="review-hint-flag">🔎 נעזרת ברמז</span>}
+                    {a.usedHint && <span className="review-hint-flag">נעזרת ברמז</span>}
                   </div>
                   {a.chosenText && (
                     <div className="review-chosen math-content">
@@ -1042,8 +1053,8 @@ function Quiz() {
         <div className="action-row">
           <button className="start-btn" onClick={() => startQuiz()}>
             {selectedTopic === MIXED_TOPIC
-              ? 'בדיקה מעורבת נוספת 🔁'
-              : `סבב נוסף — רמה ${effectiveLevel} 🔁`}
+              ? 'בדיקה מעורבת נוספת'
+              : `סבב נוסף — רמה ${effectiveLevel}`}
           </button>
           {effectiveLevel < 3 && selectedTopic !== MIXED_TOPIC && (
             <button
@@ -1054,16 +1065,16 @@ function Quiz() {
                 startQuiz(next);
               }}
             >
-              ⬆️ נסה את רמה {effectiveLevel + 1}
+              נסה את רמה {effectiveLevel + 1}
             </button>
           )}
           {wrongAnswers.length > 0 && (
             <a href="/errors" className="btn-outline" style={{ textAlign: 'center', textDecoration: 'none', display: 'block' }}>
-              📓 תרגל את הטעויות שלי — מחברת הטעויות
+              תרגל את הטעויות שלי — מחברת הטעויות
             </a>
           )}
           <a href="/insights" className="btn-outline" style={{ textAlign: 'center', textDecoration: 'none', display: 'block' }}>
-            📈 התמונה שלי — חוזקות, חולשות ותרגול חיזוק
+            התמונה שלי — חוזקות, חולשות ותרגול חיזוק
           </a>
           <button className="btn-outline" onClick={() => setScreen('home')}>בחר נושא אחר</button>
         </div>
@@ -1117,10 +1128,6 @@ function Quiz() {
         @keyframes orb3 { to { transform: translate(-12%,12%) scale(1.25); } }
         .app { width: 100%; max-width: 520px; display: flex; flex-direction: column; position: relative; z-index: 1; box-shadow: 0 25px 60px -20px rgba(15,23,42,0.15); border-radius: 32px; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); margin: 20px; }
         .header { padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); background: rgba(252,248,255,0.90); position: sticky; top: 0; z-index: 10; border-radius: 32px 32px 0 0; }
-        /* cyan-700 → violet-600, the logo's own direction and the same ramp
-           .gradient-text uses in globals.css. cyan-600 under a label is
-           3.68:1, so cyan-700 is the lightest stop that stays legible. */
-        .logo { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #0E7490, #7C3AED); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .subject-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 24px; padding: 6px 16px; font-size: 12px; font-weight: 700; color: var(--text2); transition: all 0.3s; letter-spacing: 0.05em; }
         .screen { display: none; flex: 1; flex-direction: column; animation: fadeUp 0.4s cubic-bezier(.4,0,.2,1); }
         .screen.active { display: flex; }
@@ -1128,28 +1135,24 @@ function Quiz() {
         .home-inner { padding: 0 28px 40px; display: flex; flex-direction: column; flex: 1; }
         .hero { padding: 40px 0 32px; text-align: center; }
         .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(103,232,249,0.15)); border: 1.5px solid rgba(139,92,246,0.4); border-radius: 28px; padding: 8px 18px; font-size: 13px; font-weight: 700; color: #5B21B6; margin-bottom: 20px; }
-        .hero h1 { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; background: linear-gradient(160deg, #0F172A 30%, #5B21B6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero h1 { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; color: var(--ink); }
         .hero p { color: var(--text2); font-size: 15px; line-height: 1.8; max-width: 320px; margin: 0 auto; font-weight: 500; }
         .section-label { font-size: 12px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; margin-top: 8px; }
         .subject-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 20px; scrollbar-width: none; }
         .subject-tabs::-webkit-scrollbar { display: none; }
         .subject-tab { flex-shrink: 0; background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; padding: 10px 18px; font-family: var(--font-heebo), sans-serif; font-size: 14px; font-weight: 700; color: var(--text2); cursor: pointer; transition: all 0.25s; white-space: nowrap; }
         .subject-tab:hover { color: var(--text); border-color: var(--accent); transform: translateY(-2px); }
-        .subject-tab.active { color: var(--accent); border-color: var(--accent); background: rgba(79,70,229,0.10); }
+        .subject-tab.active { color: var(--accent); border-color: var(--accent); background: rgba(139,92,246,0.10); }
         .tab-math.active { border-color: #6D28D9; background: rgba(109,40,217,0.10); color: #6D28D9; }
-        .tab-physics.active { border-color: #0284C7; background: rgba(2,132,199,0.10); color: #0284C7; }
-        .tab-english.active { border-color: #C2410C; background: rgba(194,65,12,0.10); color: #C2410C; }
-        .tab-history.active { border-color: #B45309; background: rgba(180,83,9,0.10); color: #B45309; }
-        .tab-bible.active { border-color: #047857; background: rgba(4,120,87,0.10); color: #047857; }
-        .tab-chem.active { border-color: #BE185D; background: rgba(190,24,93,0.10); color: #BE185D; }
         .topics-grid { display: grid; gap: 12px; margin-bottom: 24px; }
         .topic-card { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px 16px 16px; cursor: pointer; transition: all 0.25s cubic-bezier(.4,0,.2,1); text-align: center; position: relative; overflow: hidden; }
-        .topic-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0, rgba(99,102,241,0.1), transparent); pointer-events: none; }
+        .topic-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0, rgba(139,92,246,0.08), transparent); pointer-events: none; }
         .topic-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 12px 32px -10px rgba(15,23,42,0.12); }
-        .topic-card.selected { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 16px 40px -12px rgba(79,70,229,0.20); }
+        .topic-card.selected { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 16px 40px -12px rgba(124,58,237,0.20); }
         .topic-check { position: absolute; top: 12px; left: 12px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; opacity: 0; transform: scale(0.3); transition: all 0.25s cubic-bezier(.34,1.56,.64,1); background: var(--accent); }
         .topic-card.selected .topic-check { opacity: 1; transform: scale(1); }
-        .topic-emoji { font-size: 32px; margin-bottom: 10px; display: block; line-height: 1; }
+        .topic-emoji { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; color: var(--accent); }
+        .topic-emoji svg { width: 28px; height: 28px; }
         .topic-name { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; position: relative; z-index: 1; }
         .topic-sub { font-size: 12px; color: var(--text3); margin-top: 4px; position: relative; z-index: 1; }
         /* ===== Level picker (3 · בחר רמה) =====
@@ -1160,8 +1163,9 @@ function Quiz() {
         .level-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
         .level-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 16px 10px 14px; background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.25s cubic-bezier(.4,0,.2,1); font-family: var(--font-heebo), sans-serif; text-align: center; }
         .level-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 10px 26px -12px rgba(15,23,42,0.14); }
-        .level-card.selected { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border-color: var(--accent); box-shadow: 0 14px 34px -14px rgba(79,70,229,0.22); }
-        .level-emoji { font-size: 22px; line-height: 1; }
+        .level-card.selected { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border-color: var(--accent); box-shadow: 0 14px 34px -14px rgba(124,58,237,0.22); }
+        .level-emoji { display: flex; align-items: center; justify-content: center; color: var(--accent); }
+        .level-emoji svg { width: 22px; height: 22px; }
         .level-title { font-size: 13px; font-weight: 800; color: var(--text); }
         .level-blurb { font-size: 11px; color: var(--text3); line-height: 1.5; font-weight: 500; }
         .level-count { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 0.03em; margin-top: 2px; }
@@ -1173,10 +1177,10 @@ function Quiz() {
         .hint-btn:hover { background: rgba(180,83,9,0.12); border-color: rgba(180,83,9,0.5); transform: translateY(-1px); }
         .hint-card { background: linear-gradient(135deg, rgba(180,83,9,0.05) 0%, var(--surface3) 100%); border: 1.5px solid var(--border); border-right: 4px solid #B45309; border-radius: var(--radius-sm); padding: 14px 16px; animation: fadeUp 0.3s ease; }
         .hint-text { font-size: 14px; line-height: 1.85; color: var(--text); font-weight: 500; unicode-bidi: plaintext; text-align: start; }
-        .meta-level-badge { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 800; color: var(--accent); background: rgba(79,70,229,0.09); border: 1.5px solid rgba(79,70,229,0.28); white-space: nowrap; }
+        .meta-level-badge { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 800; color: var(--accent); background: rgba(139,92,246,0.09); border: 1.5px solid rgba(139,92,246,0.28); white-space: nowrap; }
         .review-hint-flag { display: inline-block; margin-inline-start: 8px; font-size: 11px; font-weight: 700; color: #92400E; background: rgba(180,83,9,0.08); border-radius: 8px; padding: 2px 7px; }
-        .start-btn { width: 100%; padding: 16px; border: none; border-radius: var(--radius); font-family: var(--font-heebo), sans-serif; font-size: 16px; font-weight: 800; color: #fff; cursor: pointer; background: linear-gradient(135deg, #0E7490 0%, #7C3AED 100%); box-shadow: 0 8px 24px -6px rgba(124,58,237,0.35); transition: all 0.25s cubic-bezier(.4,0,.2,1); margin-top: auto; letter-spacing: 0.05em; }
-        .start-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 12px 32px -8px rgba(79,70,229,0.40); }
+        .start-btn { width: 100%; padding: 16px; border: 1px solid rgba(139,92,246,0.25); border-radius: var(--radius); font-family: var(--font-heebo), sans-serif; font-size: 16px; font-weight: 800; color: #fff; cursor: pointer; background: linear-gradient(135deg, #241E7A 0%, #1E1B4B 100%); box-shadow: 0 12px 30px -10px rgba(30,27,75,0.45); transition: all 0.25s cubic-bezier(.4,0,.2,1); margin-top: auto; letter-spacing: 0.05em; }
+        .start-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 16px 38px -12px rgba(30,27,75,0.55); }
         .start-btn:active:not(:disabled) { transform: translateY(-1px); }
         .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
         .chat-link { display: block; text-align: center; margin-top: 12px; padding: 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--surface); color: var(--text2); font-family: var(--font-heebo), sans-serif; font-size: 14px; font-weight: 700; text-decoration: none; transition: all 0.25s; }
@@ -1192,15 +1196,15 @@ function Quiz() {
         .progress-step { font-size: 12px; color: var(--text3); font-weight: 600; }
         .progress-score { font-size: 12px; font-weight: 800; color: var(--correct); }
         .quiz-meta-strip { display: flex; align-items: center; gap: 10px; }
-        .meta-subject-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 24px; font-size: 13px; font-weight: 700; border: 1.5px solid; white-space: nowrap; background: rgba(99,102,241,0.1); }
+        .meta-subject-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 24px; font-size: 13px; font-weight: 700; border: 1.5px solid; white-space: nowrap; background: rgba(139,92,246,0.10); }
         .meta-topic-label { font-size: 13px; color: var(--text3); font-weight: 600; }
         .question-card { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: 24px; padding: 28px; position: relative; overflow: hidden; }
-        .question-card::after { content: ''; position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(ellipse, rgba(99,102,241,0.15), transparent 70%); pointer-events: none; }
+        .question-card::after { content: ''; position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(ellipse, rgba(139,92,246,0.12), transparent 70%); pointer-events: none; }
         .q-number { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
         .q-text { font-size: 17px; line-height: 1.8; font-weight: 600; color: var(--text); position: relative; z-index: 1; unicode-bidi: plaintext; text-align: start; }
         .answers { display: flex; flex-direction: column; gap: 11px; }
         .answer-btn { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 15px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s ease; font-family: var(--font-heebo), sans-serif; color: var(--text); font-size: 15px; font-weight: 600; line-height: 1.5; text-align: right; }
-        .answer-btn:hover:not(:disabled) { border-color: var(--accent); background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); transform: translateX(-3px); box-shadow: 0 4px 12px rgba(99,102,241,0.1); }
+        .answer-btn:hover:not(:disabled) { border-color: var(--accent); background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); transform: translateX(-3px); box-shadow: 0 4px 12px rgba(139,92,246,0.10); }
         .answer-btn:disabled { cursor: default; }
         .answer-btn.correct { border-color: var(--correct); background: rgba(16,185,129,0.1); color: var(--correct); }
         .answer-btn.wrong { border-color: var(--wrong); background: rgba(239,68,68,0.1); color: var(--wrong); }
@@ -1223,7 +1227,7 @@ function Quiz() {
         .lesson-wrong { border-right: 4px solid #ef4444; }
         .lesson-wrong:hover { border-color: rgba(239,68,68,0.4); }
         .lesson-concept { border-right: 4px solid var(--accent); }
-        .lesson-concept:hover { border-color: rgba(99,102,241,0.4); }
+        .lesson-concept:hover { border-color: rgba(139,92,246,0.4); }
         .lesson-tip { border-right: 4px solid #B45309; background: linear-gradient(135deg, rgba(180,83,9,0.05) 0%, var(--surface3) 100%); }
         .lesson-tip:hover { border-color: rgba(245,158,11,0.4); }
         .lesson-label { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; }
@@ -1244,7 +1248,7 @@ function Quiz() {
         .result-hero { text-align: center; }
         .result-emoji { font-size: 60px; line-height: 1; margin-bottom: 16px; display: block; animation: bounce 0.8s ease; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        .result-title { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 32px; font-weight: 900; margin-bottom: 8px; background: linear-gradient(135deg, #0F172A, #5B21B6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .result-title { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 32px; font-weight: 900; margin-bottom: 8px; color: var(--ink); }
         .result-sub { font-size: 15px; color: var(--text2); line-height: 1.7; font-weight: 500; }
         .stats-row { display: flex; gap: 12px; width: 100%; }
         .stat-box { flex: 1; background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 18px; text-align: center; }
