@@ -184,8 +184,7 @@ export default function PracticePage() {
         <div className="grid grid-cols-3 gap-2 mb-6">
           {[
             { href: '/roadmap', label: 'מסלול הלמידה', hint: 'שלב אחר שלב' },
-            { href: '/teach', label: 'למד את הבוט', hint: 'אתה מסביר' },
-            { href: '/thinking', label: 'סעיפי חשיבה', hint: 'Pro' },
+                    { href: '/thinking', label: 'סעיפי חשיבה', hint: 'Pro' },
           ].map((m) => (
             <Link
               key={m.href}

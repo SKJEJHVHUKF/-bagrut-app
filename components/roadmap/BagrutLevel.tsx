@@ -14,7 +14,6 @@ import { buttonTap } from '@/lib/animations';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
 import type { AttemptResult } from '@/lib/roadmap-progress';
 import { LevelClearedPanel, LevelFailedPanel } from './ladder-ui';
-import { teachHref } from '@/lib/teach/rubric';
 
 export function BagrutLevel({
   subject,
@@ -72,8 +71,7 @@ export function BagrutLevel({
           result={result}
           onBack={onBack}
           onReplay={result.stars < 3 ? retry : undefined}
-          teachHref={teachHref(subject, topic, subId)}
-        />
+          />
       );
     }
     return (

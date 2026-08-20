@@ -271,7 +271,7 @@ export default function Landing() {
           <span className="text-xs font-semibold text-slate-500 tracking-wide">או בחר דרך ספציפית</span>
         </motion.div>
 
-        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           <ModeCard
             href="/quiz"
             tone="indigo"
@@ -279,22 +279,6 @@ export default function Landing() {
             title="בחינה מהירה"
             desc="5 שאלות רב-ברירה עם הסבר מלא לכל תשובה. מצב אידיאלי לבדיקה מהירה של ידע ולסקירה לפני מבחן."
             cta="התחל בחינה"
-          />
-          {/* This slot used to be a second /roadmap card, forty lines under the
-              featured banner above it — same destination, and the same
-              "לומדים ← חימום ← ביסוס ← אתגר ← בגרות" sentence word for word.
-              The banner already carries the learning path; a row headed
-              "או בחר דרך ספציפית" should offer the OTHER ways, not repeat it.
-              /teach was the one mode the homepage never mentioned, and it is
-              the thing this app has that nothing else does. */}
-          <ModeCard
-            href="/teach"
-            tone="amber"
-            badge="חדש"
-            icon={<Brain className="w-6 h-6" />}
-            title="למד את הבוט"
-            desc="נועה לא הבינה את הנושא ואתה מסביר לה. היא שואלת בדיוק את מה שחסר — ומי שלא מצליח להסביר, עוד לא באמת יודע."
-            cta="נסה ללמד"
           />
           <ModeCard
             href="/chat"

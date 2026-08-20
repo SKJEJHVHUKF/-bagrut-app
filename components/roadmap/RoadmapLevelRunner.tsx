@@ -14,7 +14,6 @@ import type { AttemptResult } from '@/lib/roadmap-progress';
 import type { PracticeQuestion } from '@/content/lessons/types';
 import { QuestionRunnerCard } from './QuestionRunnerCard';
 import { LevelClearedPanel, LevelFailedPanel } from './ladder-ui';
-import { teachHref } from '@/lib/teach/rubric';
 
 export function RoadmapLevelRunner({
   subject,
@@ -121,8 +120,7 @@ export function RoadmapLevelRunner({
           onNext={onNext}
           onBack={onBack}
           onReplay={result.stars < 3 ? replay : undefined}
-          teachHref={teachHref(subject, topic, subId)}
-        />
+          />
       );
     }
     return (

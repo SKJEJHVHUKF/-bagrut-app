@@ -63,12 +63,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Target,
         blurb: 'חמש שאלות, בדיקה מיידית איפה אתה עומד',
       },
-      {
-        href: '/teach',
-        label: 'למד את הבוט',
-        icon: GraduationCap,
-        blurb: 'תסביר לנועה — מי שלא מצליח להסביר, עוד לא יודע',
-      },
     ],
   },
   {

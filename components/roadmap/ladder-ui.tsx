@@ -41,7 +41,6 @@ export function LevelClearedPanel({
   onNext,
   onBack,
   onReplay,
-  teachHref,
 }: {
   level: RoadmapLevel;
   result: ClearResult;
@@ -50,11 +49,6 @@ export function LevelClearedPanel({
   onNext?: () => void;
   onBack: () => void;
   onReplay?: () => void;
-  /** Deep link into "למד את הבוט" for this sub-topic. Offered only once the
-   *  CORE is done — the moment the student has actually learned the thing and
-   *  explaining it is the natural next step. Earlier than that it would just
-   *  interrupt the climb. */
-  teachHref?: string;
 }) {
   const { stars, xpGained, justMastered, justCoreDone } = result;
 
@@ -96,14 +90,6 @@ export function LevelClearedPanel({
             <span>עלה לרמה הבאה: {nextTitle}</span>
             <ArrowLeft className="w-4 h-4" />
           </motion.button>
-        )}
-        {teachHref && (justCoreDone || justMastered) && (
-          <Link
-            href={teachHref}
-            className="w-full inline-flex items-center justify-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 px-5 py-3 rounded-2xl font-bold text-violet-800 transition-colors"
-          >
-            <span>עכשיו תלמד את זה — ונראה אם באמת הבנת</span>
-          </Link>
         )}
         <motion.button
           {...buttonTap}
