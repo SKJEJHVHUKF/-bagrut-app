@@ -332,6 +332,25 @@ async function handleJson(request: Request) {
     return json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
+  // Pro wall (owner, 2026-08-20): the scan feature is Pro-only — every path,
+  // including the free library/bank/cache reads. This reverses the earlier
+  // "small free quota grows the bank" decision (kept below for history): back
+  // then isProUser was effectively owner-only, so a wall dead-ended the bank.
+  // Pro can now actually be granted (admin panel, 2d1a8a7), so the wall is
+  // real product tiering rather than a dead end.
+  {
+    const gate = await createClient();
+    const {
+      data: { user: gateUser },
+    } = await gate.auth.getUser();
+    if (!gateUser) {
+      return json({ error: 'יש להתחבר כדי להשתמש בסריקה', authRequired: true }, { status: 401 });
+    }
+    if (!isProUser(gateUser)) {
+      return json({ error: 'סריקת שאלה זמינה למנויי Pro בלבד', proRequired: true }, { status: 403 });
+    }
+  }
+
   // A student reporting a wrong solution. Auth-required and free — an
   // anonymous report is unattributable and would make the only human signal
   // the bank has trivially spammable.
@@ -623,6 +642,10 @@ async function handleTranscribe(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) {
     return json({ error: 'יש להתחבר כדי להשתמש בזיהוי המתקדם', authRequired: true }, { status: 401 });
+  }
+  // Pro wall (owner, 2026-08-20) — see the note in handleJson.
+  if (!isProUser(user)) {
+    return json({ error: 'סריקת שאלה זמינה למנויי Pro בלבד', proRequired: true }, { status: 403 });
   }
   const pro = isProUser(user);
   const cap = pro ? PRO_DAILY_SCANS : FREE_DAILY_SCANS;

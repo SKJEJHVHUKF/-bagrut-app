@@ -127,6 +127,14 @@ export async function POST(request: Request) {
     }
 
     const pro = isProUser(user);
+    // Pro wall (owner, 2026-08-20): the scan feature — including its tutor —
+    // is Pro-only. Mirrors the gate in /api/scan-solve.
+    if (!pro) {
+      return Response.json(
+        { error: 'המורה האישי של הסריקה זמין למנויי Pro בלבד', proRequired: true },
+        { status: 403 }
+      );
+    }
     const dailyCap = pro ? PRO_DAILY_TUTOR : FREE_DAILY_TUTOR;
     const used = await tutorCallsToday(supabase, user.id);
     if (used >= dailyCap) {

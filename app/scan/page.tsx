@@ -31,6 +31,7 @@ import {
   ShieldCheck,
   Upload,
   X,
+  LogIn,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
@@ -114,14 +115,17 @@ export default function ScanPage() {
   }, []);
 
   // ---------- warm the wasm while the student frames the shot ----------
+  // Pro-only (owner, 2026-08-20): blocked visitors never scan, so don't make
+  // them download ~40 MB of wasm heap for a wall they can't pass.
   useEffect(() => {
+    if (access !== 'pro') return;
     void warmupLocalOcr();
     return () => {
       // ~40 MB of wasm heap; a student who opens the scanner and leaves
       // shouldn't keep paying for it.
       void disposeOcrEngines();
     };
-  }, []);
+  }, [access]);
 
   // ---------- object URL lifetime ----------
   useEffect(() => {
@@ -278,6 +282,20 @@ export default function ScanPage() {
       <main className="px-4 sm:px-6 py-6 max-w-3xl mx-auto">
         <Header theme={theme} onToggleTheme={toggleTheme} unitLevel={unitLevel} />
 
+        {/* Pro wall (owner, 2026-08-20): the scan feature is Pro-only. The
+            server enforces this too (scan-solve / scan-tutor return 403 for
+            non-Pro) — this screen is the honest storefront, not the lock. */}
+        {access === 'loading' ? (
+          <div className="py-24 flex justify-center" aria-label="טוען">
+            <div
+              className="w-8 h-8 border-2 rounded-full animate-spin motion-reduce:animate-none"
+              style={{ borderColor: 'var(--scan-primary)', borderTopColor: 'transparent' }}
+            />
+          </div>
+        ) : access !== 'pro' ? (
+          <ProWall anonymous={access === 'anonymous'} />
+        ) : (
+          <>
         {!previewUrl && !result && <Intro />}
 
         {/* ---------- capture ---------- */}
@@ -517,6 +535,8 @@ export default function ScanPage() {
         )}
 
         <CostFooter />
+          </>
+        )}
       </main>
       </div>
     </div>
@@ -526,6 +546,54 @@ export default function ScanPage() {
 // ------------------------------------------------------------
 // Pieces
 // ------------------------------------------------------------
+
+/** The Pro storefront shown to anonymous/free visitors instead of the
+ *  scanner. Sells what the feature does; the server is the actual lock. */
+function ProWall({ anonymous }: { anonymous: boolean }) {
+  return (
+    <section className="scan-card p-8 sm:p-10 text-center flex flex-col items-center gap-5">
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center"
+        style={{ background: 'var(--scan-card-2)' }}
+      >
+        <Crown className="w-7 h-7" style={{ color: 'var(--scan-primary)' }} aria-hidden />
+      </div>
+      <div className="space-y-2">
+        <h2 className="font-display text-xl sm:text-2xl font-black">סריקת שאלה — למנויי Pro</h2>
+        <p className="text-sm sm:text-base scan-muted leading-relaxed max-w-md mx-auto">
+          מצלמים שאלה ממתכונת או מבגרות — ומקבלים פתרון מלא, צעד אחר צעד, עם מורה אישי
+          שאפשר לשאול עליו כל דבר.
+        </p>
+      </div>
+      <ul className="text-sm scan-muted space-y-1.5 text-right">
+        <li className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 shrink-0" style={{ color: 'var(--scan-primary)' }} aria-hidden />
+          <span>פתרון מוסבר לכל סעיף, בעברית</span>
+        </li>
+        <li className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 shrink-0" style={{ color: 'var(--scan-primary)' }} aria-hidden />
+          <span>מורה אישי צמוד לכל שאלה שנסרקה</span>
+        </li>
+        <li className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 shrink-0" style={{ color: 'var(--scan-primary)' }} aria-hidden />
+          <span>השאלות נשמרות בספרייה האישית שלך</span>
+        </li>
+      </ul>
+      <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+        <Link href="/pricing" className="scan-btn-primary">
+          <Crown className="w-4 h-4" aria-hidden />
+          <span>שדרוג ל-Pro</span>
+        </Link>
+        {anonymous && (
+          <Link href="/login?next=%2Fscan" className="scan-btn">
+            <LogIn className="w-4 h-4" aria-hidden />
+            <span>כבר יש לך Pro? התחבר</span>
+          </Link>
+        )}
+      </div>
+    </section>
+  );
+}
 
 function Header({
   theme,
