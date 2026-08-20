@@ -61,7 +61,7 @@ export function PracticeShell({
           <Link href="/" className="flex items-center gap-3 group md:hidden">
             <MathUpLogo size="md" />
             <div>
-              <div className="text-base font-black font-display text-slate-900">MathUp</div>
+              <div className="text-base font-black font-display text-ink">MathUp</div>
               <div className="text-[10px] text-slate-600 -mt-0.5">{subtitle}</div>
             </div>
           </Link>

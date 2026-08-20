@@ -46,7 +46,7 @@ export default function AppHeader() {
           aria-label="MathUp — למסלול הלמידה"
         >
           <MathUpLogo size="sm" />
-          <span className="font-display text-base font-black text-slate-900">MathUp</span>
+          <span className="font-display text-base font-black text-ink">MathUp</span>
         </Link>
 
         <nav aria-label="ניווט ראשי" className="flex items-center gap-1">
