@@ -43,15 +43,16 @@ const COMPARISON: Row[] = [
   { label: 'תרגול מדורג + מבחן מהיר', free: true, pro: true },
   { label: 'תחזית ציון בגרות + "התמונה שלי"', free: true, pro: true },
   { label: 'צילום שאלה → פתרון מהמאגר', free: true, pro: true },
+  // The archive is free for everyone. Its real coverage per שאלון is stated on
+  // /bagruyot itself, derived from the corpus (paperFamilyCounts) — no number
+  // is repeated here, so nothing can go stale behind the content.
+  { label: 'מאגר בגרויות אמיתיות + רמזים ופתרונות מלאים', free: true, pro: true },
   { label: 'צ׳אט עם המורה הפרטי', free: '10 ביום', pro: 'ללא הגבלה' },
-  // The three Pro rows below name their real coverage on purpose. The archive
-  // is 68/71 שאלון-572 questions and all four advanced courses are 572 topics —
-  // a student revising for 571 must learn that HERE, not after paying. These
-  // strings are hand-maintained (importing the corpus just for a count would
-  // put ~400KB back on a page A20 just slimmed): when 571 content lands,
-  // update them — /bagruyot's coverage line is derived and will already agree.
+  // The Pro rows below name their real coverage on purpose: all four advanced
+  // courses are 572 topics, and a student revising for 571 must learn that
+  // HERE, not after paying. Hand-maintained (importing the corpus just for a
+  // count would put ~400KB back on a page A20 just slimmed).
   { label: 'הקורס המתקדם ברמת בגרות (כרגע בנושאי שאלון 572)', free: false, pro: true },
-  { label: 'מאגר בגרויות אמיתיות + פתרונות (כרגע שאלון 572)', free: false, pro: true },
   { label: 'סימולציית בגרות בסוף כל קורס מתקדם', free: false, pro: true },
   { label: 'עזרת-AI: "למה טעיתי", הסבר פשוט יותר', free: false, pro: true },
   { label: 'פתרון-AI לשאלה חדשה בצילום', free: false, pro: true },
@@ -90,9 +91,9 @@ export default function PricingPage() {
             המאסטרי — בתשלום.
           </h1>
           <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
-            כל השיעורים והתרגול פתוחים לכולם, בחינם, לתמיד. Pro פותח את מה שמעלה
-            ציון באמת: הקורס המתקדם ברמת בגרות, מאגר הבגרויות, סימולציות ועזרת-AI
-            ללא הגבלה.
+            כל השיעורים, התרגול ומאגר הבגרויות פתוחים לכולם, בחינם, לתמיד. Pro
+            פותח את מה שמעלה ציון באמת: הקורס המתקדם ברמת בגרות, סימולציות
+            ועזרת-AI ללא הגבלה.
           </p>
         </div>
 

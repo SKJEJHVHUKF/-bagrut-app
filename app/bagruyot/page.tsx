@@ -7,7 +7,6 @@ import { fadeUp, staggerContainer, scaleIn, inViewProps, heroStagger } from '@/l
 import { PageHeader } from '@/components/PageHeader';
 import {
   Loader2,
-  Crown,
   Lightbulb,
   CheckCircle2,
   PencilLine,
@@ -15,7 +14,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { isProUser } from '@/lib/access';
 import {
   ALL_PAST_BAGRUYOT,
   availableYears,
@@ -24,11 +22,9 @@ import {
   paperFamilyCounts,
 } from '@/content/past-bagruyot';
 
-type AuthState =
-  | { status: 'loading' }
-  | { status: 'unauthenticated' }
-  | { status: 'free' }
-  | { status: 'pro' };
+// The archive is open to every signed-in student — free and Pro alike, so the
+// only thing this page still needs to know is whether someone is signed in.
+type AuthState = { status: 'loading' } | { status: 'unauthenticated' } | { status: 'in' };
 
 export default function BagruyotLandingPage() {
   const [auth, setAuth] = useState<AuthState>({ status: 'loading' });
@@ -40,7 +36,7 @@ export default function BagruyotLandingPage() {
         setAuth({ status: 'unauthenticated' });
         return;
       }
-      setAuth({ status: isProUser(user) ? 'pro' : 'free' });
+      setAuth({ status: 'in' });
     });
   }, []);
 
@@ -56,7 +52,6 @@ export default function BagruyotLandingPage() {
   const years = availableYears();
   const topics = availableTopics();
 
-  const isPro = auth.status === 'pro';
   const isLoggedIn = auth.status !== 'unauthenticated';
 
   const sampleQuestion = ALL_PAST_BAGRUYOT[0];
@@ -216,44 +211,6 @@ export default function BagruyotLandingPage() {
               </div>
             </Link>
           </motion.div>
-        ) : !isPro ? (
-          <motion.div
-            variants={scaleIn}
-            className="card-3d bg-gradient-to-br from-amber-600/15 to-orange-600/15 border border-amber-500/40 rounded-2xl p-5"
-          >
-            <div className="flex items-start gap-3 mb-3">
-              <Crown className="w-6 h-6 text-amber-700 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-base sm:text-lg font-black text-slate-900">מאגר בגרויות — פיצ׳ר Pro</div>
-                <div className="text-xs text-slate-700 mt-0.5">
-                  תרגול מהבגרויות עם רמזים ופתרונות הוא חלק מהמנוי Pro.
-                </div>
-                {/* What the archive actually holds, stated BEFORE the money
-                    screen. Derived from the content (paperFamilyCounts), never
-                    typed by hand — a student revising for 571 must not discover
-                    only after paying that their paper is barely covered, and
-                    the day 571 sessions are transcribed this line corrects
-                    itself. */}
-                <div className="text-[11px] font-bold text-amber-800 mt-1.5">
-                  {(() => {
-                    const c = paperFamilyCounts();
-                    return c.p571 >= 5
-                      ? `במאגר כרגע: ${c.p572} שאלות משאלון 572 (לשעבר 582) ו-${c.p571} משאלון 571.`
-                      : `במאגר כרגע ${c.p572 + c.p571} שאלות פתורות — כמעט כולן משאלון 572 (לשעבר 582); שאלון 571 עדיין כמעט לא מכוסה.`;
-                  })()}
-                </div>
-              </div>
-            </div>
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="inline-block">
-              <Link
-                href="/pricing"
-                className="inline-flex items-center gap-2 bg-gradient-to-l from-amber-500 to-orange-500 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
-              >
-                שדרג ל-Pro
-                <ArrowLeft className="w-4 h-4" />
-              </Link>
-            </motion.div>
-          </motion.div>
         ) : (
           <motion.div variants={scaleIn} whileHover={{ y: -4, scale: 1.01 }} whileTap={{ scale: 0.99 }} transition={{ duration: 0.2 }}>
             <Link
@@ -267,6 +224,19 @@ export default function BagruyotLandingPage() {
                     {total > 0
                       ? `${total} ${total === 1 ? 'שאלה זמינה' : 'שאלות זמינות'} עכשיו`
                       : 'המאגר עוד מתמלא'}
+                  </div>
+                  {/* What the archive actually holds, derived from the content
+                      (paperFamilyCounts) and never typed by hand. It used to
+                      guard the money screen; the archive is free now, so it
+                      simply keeps a student revising for 571 from assuming
+                      their paper is covered as well as 572 is. */}
+                  <div className="text-[11px] font-bold text-emerald-800 mt-1.5">
+                    {(() => {
+                      const c = paperFamilyCounts();
+                      return c.p571 >= 5
+                        ? `מתוכן: ${c.p572} משאלון 572 (לשעבר 582) ו-${c.p571} משאלון 571.`
+                        : `כמעט כולן משאלון 572 (לשעבר 582); שאלון 571 עדיין כמעט לא מכוסה.`;
+                    })()}
                   </div>
                 </div>
                 <ArrowLeft className="w-5 h-5 text-emerald-700 flex-shrink-0" />

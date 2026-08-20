@@ -8,7 +8,6 @@ import { sparkle, celebrateCompletion, celebrateCorrect } from '@/lib/confetti';
 import {
   BookOpen,
   Loader2,
-  Crown,
   ChevronDown,
   ChevronUp,
   Search,
@@ -21,7 +20,6 @@ import {
   ScanLine,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { isProUser } from '@/lib/access';
 import { MathText } from '@/components/practice/MathText';
 import { AnswerInput } from '@/components/practice/AnswerInput';
 import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
@@ -39,11 +37,9 @@ import {
 /** מועד א׳ before מועד ב׳ before מועד מיוחד, within the same year. */
 const MOED_ORDER: Record<string, number> = { a: 0, b: 1, special: 2 };
 
-type AuthState =
-  | { status: 'loading' }
-  | { status: 'unauthenticated' }
-  | { status: 'free' }
-  | { status: 'pro' };
+// The archive is open to every signed-in student — free and Pro alike.
+// Only the sign-in step remains, so progress can be attached to an account.
+type AuthState = { status: 'loading' } | { status: 'unauthenticated' } | { status: 'in' };
 
 export default function BagruyotArchivePage() {
   const [auth, setAuth] = useState<AuthState>({ status: 'loading' });
@@ -60,7 +56,7 @@ export default function BagruyotArchivePage() {
         setAuth({ status: 'unauthenticated' });
         return;
       }
-      setAuth({ status: isProUser(user) ? 'pro' : 'free' });
+      setAuth({ status: 'in' });
     });
   }, []);
 
@@ -122,27 +118,7 @@ export default function BagruyotArchivePage() {
     );
   }
 
-  if (auth.status === 'free') {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="surface-premium rounded-2xl p-8 max-w-md text-center space-y-4">
-          <Crown className="w-12 h-12 text-amber-400 mx-auto" />
-          <h1 className="font-display text-2xl font-black">מאגר בגרויות — פיצ׳ר Pro</h1>
-          <p className="text-slate-700 leading-relaxed">
-            תרגול שאלות בגרות אמיתיות עם רמזים מדורגים ופתרונות מלאים. שדרג ל-Pro כדי לגשת.
-          </p>
-          <Link
-            href="/pricing"
-            className="inline-flex items-center gap-2 bg-gradient-to-l from-amber-500 to-orange-500 px-6 py-3 rounded-2xl font-bold"
-          >
-            פרטים על Pro
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
-  // ---------- Main UI (Pro) ----------
+  // ---------- Main UI ----------
 
   const years = availableYears();
   const topics = availableTopics();
