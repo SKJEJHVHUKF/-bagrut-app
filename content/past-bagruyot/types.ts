@@ -42,6 +42,10 @@ export type PastBagrutPart = {
   /** Optional diagrams for this section (geometry figures, function graphs).
    *  Rendered beneath the prompt via <DiagramRenderer>. */
   diagrams?: DiagramSpec[];
+  /** Scan of THIS section exactly as it is printed in the official exam paper
+   *  (public URL under /public/bagruyot/...). Shown above the transcribed
+   *  prompt so the student reads the wording the examiner actually used. */
+  imageSrc?: string;
   solution: {
     /** Step-by-step solution, one idea per step. */
     steps: string[];
@@ -73,6 +77,10 @@ export type PastBagrutQuestion = {
   /** Optional diagrams shown once for the whole question (beneath the
    *  context) — e.g. the graph of the function being studied. */
   diagrams?: DiagramSpec[];
+  /** Scan of the WHOLE question exactly as it is printed in the official exam
+   *  paper (public URL under /public/bagruyot/...). Shown at the top of the
+   *  question, before the transcribed context. */
+  imageSrc?: string;
   /** Ordered sub-questions. */
   parts: PastBagrutPart[];
   /** Provenance of the solution:

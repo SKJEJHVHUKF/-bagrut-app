@@ -18,6 +18,7 @@ import {
   Eye,
   CheckCircle2,
   ArrowRight,
+  ScanLine,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
@@ -34,6 +35,9 @@ import {
   type PastBagrutPart,
   type BagrutPaper,
 } from '@/content/past-bagruyot';
+
+/** מועד א׳ before מועד ב׳ before מועד מיוחד, within the same year. */
+const MOED_ORDER: Record<string, number> = { a: 0, b: 1, special: 2 };
 
 type AuthState =
   | { status: 'loading' }
@@ -71,7 +75,16 @@ export default function BagruyotArchivePage() {
         if (!hay.includes(q)) return false;
       }
       return true;
-    });
+    })
+      // Newest session first — otherwise a paper added today lands at the
+      // bottom of ~80 questions and reads as "it isn't there".
+      .sort(
+        (a, b) =>
+          b.year - a.year ||
+          MOED_ORDER[a.moed ?? 'a'] - MOED_ORDER[b.moed ?? 'a'] ||
+          a.paper.localeCompare(b.paper) ||
+          a.questionNumber - b.questionNumber,
+      );
   }, [filterYear, filterPaper, filterTopic, query]);
 
   const clearFilters = () => {
@@ -343,6 +356,11 @@ function QuestionCard({
 
       {isOpen && (
         <div className="px-4 pb-4 space-y-4 border-t border-slate-900/10 pt-4">
+          {/* The question exactly as it is printed in the official exam paper */}
+          {question.imageSrc && (
+            <ExamScan src={question.imageSrc} label={`שאלה ${question.questionNumber} כפי שהיא מופיעה בשאלון`} />
+          )}
+
           {/* Full context */}
           <div>
             <div className="text-xs font-black tracking-widest text-violet-700 uppercase mb-1.5">נתון</div>
@@ -376,6 +394,34 @@ function QuestionCard({
 }
 
 // ============================================================
+// ExamScan — the printed question, cropped straight off the exam page
+// ============================================================
+//
+// The transcription below it is ours; this is the wording the examiner
+// actually used. Wide Hebrew lines stay legible on a phone by keeping a
+// minimum width and letting the frame scroll sideways.
+
+function ExamScan({ src, label }: { src: string; label: string }) {
+  return (
+    <figure className="space-y-1.5">
+      <figcaption className="flex items-center gap-1.5 text-[10px] font-black tracking-widest text-slate-500 uppercase">
+        <ScanLine className="w-3 h-3" />
+        {label}
+      </figcaption>
+      <div className="overflow-x-auto rounded-xl border border-slate-900/[0.08] bg-white p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static crop, intrinsic size varies per question */}
+        <img
+          src={src}
+          alt={label}
+          loading="lazy"
+          className="block w-full min-w-[520px] max-w-none"
+        />
+      </div>
+    </figure>
+  );
+}
+
+// ============================================================
 // PartPracticeCard — per-part interactive practice (answer + hints + solution)
 // ============================================================
 
@@ -394,6 +440,10 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
         <span className="text-sm font-black text-violet-800">סעיף {part.label}.</span>
         {part.points != null && <span className="text-[10px] text-slate-600">{part.points} נק׳</span>}
       </div>
+
+      {/* The sub-question exactly as it is printed in the official exam paper */}
+      {part.imageSrc && <ExamScan src={part.imageSrc} label={`סעיף ${part.label} בשאלון המקורי`} />}
+
       <div className="chat-md text-sm text-slate-800 leading-relaxed">
         <MathText>{part.prompt}</MathText>
       </div>
