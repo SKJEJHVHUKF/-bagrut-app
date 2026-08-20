@@ -43,6 +43,7 @@ import { bagrut2025Summer582MoedB } from './2025-summer-582-moed-b';
 import { bagrut2026Summer572 } from './2026-summer-572';
 import { bagrut2022Summer571MoedA } from './2022-summer-571-moed-a';
 import { bagrut2026Summer571MoedA } from './2026-summer-571-moed-a';
+import { bagrut2026Summer571MoedB } from './2026-summer-571-moed-b';
 
 export const ALL_PAST_BAGRUYOT: PastBagrutQuestion[] = [
   ...bagrut2020Summer582,
@@ -62,6 +63,7 @@ export const ALL_PAST_BAGRUYOT: PastBagrutQuestion[] = [
   ...bagrut2026Summer572,
   ...bagrut2022Summer571MoedA,
   ...bagrut2026Summer571MoedA,
+  ...bagrut2026Summer571MoedB,
 ];
 
 // ============================================================
