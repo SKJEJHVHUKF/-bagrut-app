@@ -23,6 +23,7 @@ import type { Formula } from '@/content/lessons/types';
 // including /login, for a drawer most sessions never open. It is fetched when
 // the drawer opens instead.
 import type { getLesson as GetLesson, allLessonKeys as AllLessonKeys } from '@/content/lessons';
+import type { sheetFormulas as SheetFormulas } from '@/content/formula-sheet';
 import type { TrackTile } from '@/content/tracks';
 import { getPaper } from '@/lib/study-plan';
 
@@ -79,25 +80,14 @@ async function resolveCurrentTopic(path: string): Promise<string | null> {
   }
 }
 
-/** Lesson-level + sub-topic-level formulas for a topic, de-duped by latex. */
+/** The sheet's formulas for a topic — curated + ordered by content/formula-sheet. */
 function formulasForTopic(
   getLesson: typeof GetLesson,
+  sheetFormulas: typeof SheetFormulas,
   subject: string,
   topic: string,
 ): Formula[] {
-  const lesson = getLesson(subject, topic);
-  if (!lesson) return [];
-  const seen = new Set<string>();
-  const out: Formula[] = [];
-  const push = (f: Formula) => {
-    const key = f.latex.trim();
-    if (seen.has(key)) return;
-    seen.add(key);
-    out.push(f);
-  };
-  lesson.formulas?.forEach(push);
-  lesson.subTopics?.forEach((st) => st.formulas?.forEach(push));
-  return out;
+  return sheetFormulas(getLesson(subject, topic), topic);
 }
 
 type TopicFormulas = { topic: string; emoji: string; formulas: Formula[] };
@@ -133,10 +123,12 @@ export default function FormulaSheet() {
       import('@/content/lessons'),
       import('@/content/bagrut-curriculum'),
       resolveCurrentTopic(pathname),
-    ]).then(([lessons, curriculum, topicName]) => {
+      import('@/content/formula-sheet'),
+    ]).then(([lessons, curriculum, topicName, sheet]) => {
       if (cancelled) return;
       const { allLessonKeys, getLesson } = lessons;
       const { curriculumIndex, isTopicInActivePaper, getTopicMapping } = curriculum;
+      const { sheetFormulas } = sheet;
       const built = (allLessonKeys as typeof AllLessonKeys)()
         .filter((k) => k.subject === 'math5')
         .filter(
@@ -149,7 +141,7 @@ export default function FormulaSheet() {
         .map((k) => ({
           topic: k.topic,
           emoji: getTopicMapping(k.topic)?.emoji ?? '📐',
-          formulas: formulasForTopic(getLesson, k.subject, k.topic),
+          formulas: formulasForTopic(getLesson, sheetFormulas, k.subject, k.topic),
         }))
         .filter((t) => t.formulas.length > 0);
       setCurrentTopic(topicName);
