@@ -251,6 +251,57 @@ num('bag003c basket|soccer 10/24', 10 / 24, 5 / 12);
     Math.round(0.6 ** 3 * 1e9) / 1e9, 0.216);
 }
 
+// ============================================================
+// STAGES v2 (2026-08-20) — the destination question (DESTINATION_PR) solved in
+// pr-practice, its follow-up example/drill, the new pr-practice drills, and
+// every wrongAnswers value added to the stage questions. Brute where possible.
+// ============================================================
+{
+  // Destination: half vaccinated; sick 0.1 / 0.3.
+  const pSick = 0.5 * 0.1 + 0.5 * 0.3;
+  num('destPR א: P(sick) = 0.2', pSick, 0.2);
+  num('destPR א check: P(not sick) = 0.8 and totals 1', 0.5 * 0.9 + 0.5 * 0.7 + pSick, 1);
+  num('destPR ב: P(vac | sick) = 1/4', (0.5 * 0.1) / pSick, 0.25);
+  num('destPR ג: exactly 1 of 3 = 0.384', 3 * 0.2 * 0.8 ** 2, 0.384);
+  num('destPR ד: at least 1 = 0.488', 1 - 0.8 ** 3, 0.488);
+  num('destPR ה: exactly-1 | at-least-1 = 48/61', 0.384 / 0.488, 48 / 61);
+  // pr-practice step-1 example: none of 3 = 0.512; at most one = 0.896.
+  num('prx ex: P(0) = 0.512', 0.8 ** 3, 0.512);
+  num('prx ex: P(X<=1) = 0.896', 0.8 ** 3 + 3 * 0.2 * 0.8 ** 2, 0.896);
+  num('prx ex check: P(2)+P(3) = 0.104', 3 * 0.2 ** 2 * 0.8 + 0.2 ** 3, 0.104);
+  // pr-practice drills.
+  num('px-drill-003: P(A | defective) = 9/19', (0.6 * 0.03) / (0.6 * 0.03 + 0.4 * 0.05), 9 / 19);
+  num('px-drill-003 check: A|def + B|def = 1', 9 / 19 + 10 / 19, 1);
+  num('px-drill-004: both red without replacement = 3/10', (3 / 5) * (2 / 4), 3 / 10);
+  // wrongAnswers spot checks — each value must equal its claimed miscomputation
+  // AND differ from the correct answer (the generic gate in verify-specs also
+  // asserts the latter through the real grading engine).
+  num('wrong pb-002: without-replacement slip = 7/30', (7 / 10) * (3 / 9), 7 / 30);
+  num('wrong basics-004: complement itself = 25/36', (5 / 6) ** 2, 25 / 36);
+  num('wrong pt-005: single path = 1/5', (2 / 6) * (4 / 5) * (3 / 4), 1 / 5);
+  num('wrong comb-003: missing coefficient = 1/16', 0.5 ** 4, 1 / 16);
+  num('wrong pbn-002: at-least-one instead = 0.83193', 1 - 0.7 ** 5, 0.83193);
+  num('wrong pc-002: numerator alone = 27/64', 4 * 0.75 ** 3 * 0.25, 27 / 64);
+  num('wrong px-007: coefficient 4 slip = 4/15', (4 / 16) / (15 / 16), 4 / 15);
+  num('wrong tab-006: B-only cell = 0.18', 0.3 - 0.12, 0.18);
+  // v2.1 — the audit round: the "מבין ה…" multiplication-rule step, the 3D-
+  // with-unknown and unknown-p questions, and the x-part added to the tree
+  // unknowns example.
+  num('mult-rule step: 0.6·0.3 = 0.18', 0.6 * 0.3, 0.18);
+  num('mult-rule example: 5u total = 0.26', 0.6 * 0.3 + 0.4 * 0.2, 0.26);
+  num('pc-drill-004: 0.7·0.4 = 0.28', 0.7 * 0.4, 0.28);
+  num('pc-003: men-home 0.15, women-home 0.18, total 0.33', 0.6 * 0.25 + 0.4 * 0.45, 0.33);
+  num('pc-003: P(woman | home) = 6/11', (0.4 * 0.45) / 0.33, 6 / 11);
+  num('pc-003 wrong: men path = 5/11 and complements to 1', (0.6 * 0.25) / 0.33 + 6 / 11, 1);
+  num('ptb-003: 42 + 3x = 60 → x = 6', (60 - 42) / 3, 6);
+  num('ptb-003: boys table sums to 60', 30 + 12 + 2 * 6 + 6, 60);
+  num('ptb-003: P = 12/100', (2 * 6) / 100, 0.12);
+  num('pbn-003: q³ = 0.064 → q = 0.4', Math.cbrt(1 - 0.936), 0.4);
+  num('pbn-003: p = 0.6 and 1 − 0.4³ = 0.936', 1 - 0.4 ** 3, 0.936);
+  num('tree example (2): 3/(x+3) = 0.25 → x = 9', 3 / 0.25 - 3, 9);
+  num('cond-005: exact value 5/49', 0.009 / 0.0882, 5 / 49);
+}
+
 console.log(`\nRESULT: ${pass}/${pass + fail} passed${fail ? `  (${fail} FAILED)` : ''}`);
 if (fail) process.exit(1);
 

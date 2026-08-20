@@ -5,9 +5,9 @@
 // One replay per sub-topic (three), so the 🧠 rung appears on every rung.
 //
 // TARGETS:
-//   prob-basics        prob-sub-basics-005  "at least one" is a complement
-//   prob-conditional   prob-sub-cond-005    the base rate dominates the test
-//   prob-combinatorics prob-sub-comb-004    the binomial coefficient counts paths
+//   pr-practice        prob-sub-basics-005  "at least one" is a complement (moved to the mixed stage, 2026-08-19)
+//   pr-conditional     prob-sub-cond-005    the base rate dominates the test
+//   pr-bernoulli       prob-sub-comb-004    the binomial coefficient counts paths
 //
 // cond-005 is the one that changes how a student reads results for the rest of
 // their life: a test that is 90% sensitive, applied to a disease 1% of people
@@ -35,13 +35,13 @@ export const probabilityGhostReplays: TopicGhostReplays = {
   topic: TOPIC,
   replays: [
     // =========================================================
-    // 1 · prob-basics
+    // 1 · pr-practice (was prob-basics)
     // =========================================================
     {
       id: 'gr-prob-basics-005',
       subject: SUBJECT,
       topic: TOPIC,
-      subTopicId: 'prob-basics',
+      subTopicId: 'pr-practice',
       questionId: 'prob-sub-basics-005',
       title: '"לפחות אחד" — איך חושבים על זה',
       prompt:
@@ -282,13 +282,13 @@ $$P = 1 - (0.2)(0.4)(0.5) = 1 - 0.04 = 0.96$$
     },
 
     // =========================================================
-    // 2 · prob-conditional
+    // 2 · pr-conditional (was prob-conditional)
     // =========================================================
     {
       id: 'gr-prob-cond-005',
       subject: SUBJECT,
       topic: TOPIC,
-      subTopicId: 'prob-conditional',
+      subTopicId: 'pr-conditional',
       questionId: 'prob-sub-cond-005',
       title: 'בדיקה חיובית — כמה זה באמת אומר',
       prompt:
@@ -534,13 +534,13 @@ $$\\frac{9{,}000}{88{,}200} \\approx 10.2\\%$$
     },
 
     // =========================================================
-    // 3 · prob-combinatorics
+    // 3 · pr-bernoulli (was prob-combinatorics)
     // =========================================================
     {
       id: 'gr-prob-comb-004',
       subject: SUBJECT,
       topic: TOPIC,
-      subTopicId: 'prob-combinatorics',
+      subTopicId: 'pr-bernoulli',
       questionId: 'prob-sub-comb-004',
       title: 'בדיוק פעמיים מתוך שלוש — איך חושבים על זה',
       prompt:
