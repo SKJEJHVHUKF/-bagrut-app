@@ -33,7 +33,7 @@ const store = new Map<string, string>();
 
 import { allLessonKeys, getSubTopics } from '../content/lessons';
 import { answerLocally, classifyAsk, type LocalAnswerKind } from '../lib/tutor-local';
-import type { TutorFocus } from '../lib/tutor-presence';
+import { focusPrompts, type TutorFocus } from '../lib/tutor-presence';
 import type { AnswerDiagnosis } from '../lib/answer-check';
 
 let failures = 0;
@@ -89,12 +89,35 @@ function inspect(where: string, text: string) {
   if (!text.trim()) bad(`${where}: empty answer`);
 }
 
+// Every chip the bubble can render must classify, or that button costs an API
+// call on every tap.
+//
+// ⚠️ DERIVED from focusPrompts, never hand-copied — a hand-copied list stops
+// covering the button the day a chip is added, which is exactly how
+// "באיזו נוסחה משתמשים כאן?" would have shipped unasserted.
+// ⚠️ And kept OUT of ASKS below: the topic chip is "תסביר לי את <נושא>", which
+// is only ever produced together with that topic's focus. Feeding it into the
+// every-topic × every-state render sweep asks about הסתברות while standing in
+// טריגונומטריה — a question the app never asks.
+const CHIPS = [
+  ...focusPrompts({ wrongAnswer: '5' } as TutorFocus),
+  ...focusPrompts({ questionText: 'x' } as TutorFocus),
+  ...focusPrompts({ topic: 'הסתברות' } as TutorFocus),
+];
+if (CHIPS.length < 9) bad(`focusPrompts produced only ${CHIPS.length} chips — the derivation broke`);
+checks++;
+for (const a of CHIPS) {
+  if (!classifyAsk(a)) bad(`the app's own chip "${a}" is not classified — it falls to the API`);
+  checks++;
+}
+
 const ASKS = [
   'תן לי רמז',
   'מאיפה מתחילים?',
   'למה התשובה שלי שגויה?',
   'תראה לי את הפתרון המלא',
   'איזו נוסחה צריך פה?',
+  'באיזו נוסחה משתמשים כאן?',
   'מה הכי חשוב לדעת פה לבגרות?',
 ];
 for (const a of ASKS) {
