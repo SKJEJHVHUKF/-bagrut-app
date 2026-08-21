@@ -88,7 +88,7 @@ export const math5GrowthDecay: LearningPath = {
     {
       title: 'הלוגריתם הטבעי $\\ln$ כפעולה הפוכה',
       refresher:
-        'כדי לחלץ את הזמן או את הקצב מתוך החזקה צריך את הפעולה ההפוכה ל-$e^x$. זהו $\\ln$, והכלל המרכזי הוא $e^x = k \\Longleftrightarrow x = \\ln k$ (עבור $k > 0$). שתי זהויות עבודה: $e^{\\ln k} = k$ וגם $\\ln(e^x) = x$.',
+        'כדי לחלץ את הזמן או את הקצב מתוך החזקה צריך את הפעולה ההפוכה ל-$e^x$. זהו $\\ln$, והכלל המרכזי הוא $e^x = k \\Longrightarrow x = \\ln k$ (עבור $k > 0$). שתי זהויות עבודה: $e^{\\ln k} = k$ וגם $\\ln(e^x) = x$.',
       selfCheck: 'פתור $e^x = 5$. (תשובה: $x = \\ln 5 \\approx 1.609$.)',
       link: { subject: 'math5', topic: 'פונקציה מעריכית', label: 'רענון מלא — ln' },
     },

@@ -142,7 +142,7 @@ export const math5LnFunction: LearningPath = {
         'הדבר היחיד שצריך לזכור: $\\ln$ "מחלץ" חזקה של $e$. אם $e$ בחזקת משהו נתן לך מספר — $\\ln$ מחזיר לך את אותו משהו. לכן בכל פעם ש-$e$ ו-$\\ln$ נפגשים, הם מבטלים זה את זה.',
       formal: `$\\ln k$ מוגדר כחזקה שצריך להעלות את $e$ כדי לקבל $k$. מכאן שתי הזהויות שמבטלות את הפעולות זו את זו:
 
-$$e^x = k \\;\\Longleftrightarrow\\; x = \\ln k \\qquad (k > 0)$$
+$$e^x = k \\;\\Longrightarrow\\; x = \\ln k \\qquad (k > 0)$$
 
 $$e^{\\ln k} = k \\quad (k > 0) \\qquad \\ln(e^x) = x$$
 
@@ -879,7 +879,7 @@ $$\\int \\dfrac{1}{ax+b}\\,dx = \\dfrac{1}{a}\\ln|ax+b| + c$$
       },
       {
         name: 'משוואה לוגריתמית בסיסית',
-        latex: '\\ln f(x) = c \\;\\Longleftrightarrow\\; f(x) = e^c',
+        latex: '\\ln f(x) = c \\;\\Longrightarrow\\; f(x) = e^c',
         variables: [
           { sym: 'c', meaning: 'מספר קבוע' },
         ],

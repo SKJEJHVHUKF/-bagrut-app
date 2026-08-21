@@ -43,7 +43,7 @@ export const bagrut2020Summer582: PastBagrutQuestion[] = [
             'נפתח: $36x_1^2 - 24x_1 y_1 + 4y_1^2 = 36x_1^2 + 36y_1^2$, ולאחר צמצום: $-24x_1 y_1 - 32y_1^2 = 0$, או $y_1\\,(32y_1 + 24x_1) = 0$.',
             '**אפשרות 1:** $y_1 = 0$ — הנקודה $G$ על ציר ה-$x$, כלומר על הישר $y = 0$.',
             '**אפשרות 2:** $32y_1 + 24x_1 = 0 \\;\\Longrightarrow\\; y_1 = -\\dfrac{3}{4}x_1$ — הנקודה $G$ על הישר $y = -\\dfrac{3}{4}x$.',
-            'לכן המקום הגאומטרי של כל ה-$G$ האפשריים נמצא על איחוד שני הישרים $y=0$ ו-$y=-\\tfrac{3}{4}x$. ⬛',
+            'לכן המקום הגאומטרי של כל ה-$G$ האפשריים נמצא על איחוד שני הישרים $y=0$ ו-$y=-\\tfrac{3}{4}x$. **מש״ל**',
           ],
           final_answer: 'הישרים: $y = 0$ ו-$y = -\\dfrac{3}{4}x$.',
         },
@@ -110,7 +110,7 @@ export const bagrut2020Summer582: PastBagrutQuestion[] = [
             '$P$ ו-$Q$ הן נקודות השקה למעגל שמרכזו $M$ — לכן הרדיוסים $MP$ ו-$MQ$ מאונכים לישרים בהם.',
             'מכאן: $\\angle OPM = 90°$ ו-$\\angle OQM = 90°$.',
             'במרובע $OPMQ$ סכום זוויות נגדיות: $\\angle OPM + \\angle OQM = 90° + 90° = 180°$.',
-            'לפי משפט המרובע בר-החסימה: סכום זוויות נגדיות שווה ל-$180°$ $\\Longleftrightarrow$ המרובע ניתן לחסימה במעגל. לכן **כן, $OPMQ$ בר חסימה**.',
+            'לפי משפט המרובע בר-החסימה: סכום זוויות נגדיות שווה ל-$180°$ אם ורק אם המרובע ניתן לחסימה במעגל. לכן **כן, $OPMQ$ בר חסימה**.',
             '**מציאת המעגל החוסם:** כיוון שהזוויות ב-$P$ וב-$Q$ ישרות והן זוויות היקפיות במעגל החוסם, $OM$ הוא קוטר (זווית היקפית הנשענת על קוטר היא ישרה).',
             'מרכז המעגל החוסם הוא אמצע $OM$: $\\;F = \\left(\\dfrac{0+2}{2},\\,\\dfrac{0+6}{2}\\right) = (1,\\,3)$.',
             'רדיוס: $R = \\dfrac{|OM|}{2} = \\dfrac{\\sqrt{2^2+6^2}}{2} = \\dfrac{\\sqrt{40}}{2} = \\sqrt{10}$.',
@@ -203,7 +203,7 @@ export const bagrut2020Summer582: PastBagrutQuestion[] = [
             'בסעיף ב מצאנו $\\vec{KP} = \\tfrac{1}{5}\\vec{u} + \\tfrac{1}{5}\\vec{v}$ — צירוף לינארי של $\\vec{u}$ ו-$\\vec{v}$.',
             'הווקטורים $\\vec{u} = \\vec{KB}$ ו-$\\vec{v} = \\vec{KC}$ מונחים על המישור $KBC$ (כי הוא עובר דרך שלוש הנקודות $K, B, C$).',
             'כל צירוף לינארי של שני וקטורים שמונחים על מישור — גם הוא מונח על אותו מישור. לכן $\\vec{KP}$ מונח על $KBC$.',
-            'כיוון ש-$K$ על המישור והווקטור $\\vec{KP}$ מונח עליו — גם הנקודה $P = K + \\vec{KP}$ נמצאת על המישור. ⬛',
+            'כיוון ש-$K$ על המישור והווקטור $\\vec{KP}$ מונח עליו — גם הנקודה $P = K + \\vec{KP}$ נמצאת על המישור. **מש״ל**',
           ],
           final_answer: '$P$ על המישור $KBC$ כי $\\vec{KP}$ הוא צירוף לינארי של $\\vec{KB}$ ו-$\\vec{KC}$ — שניים מהווקטורים הפורשים את המישור.',
         },
@@ -274,14 +274,14 @@ export const bagrut2020Summer582: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           'השתמש בכלל חלוקה ב-$\\operatorname{cis}$: $\\dfrac{\\operatorname{cis}\\theta_1}{\\operatorname{cis}\\theta_2} = \\operatorname{cis}(\\theta_1 - \\theta_2)$. הפעל על $\\dfrac{z_1}{z_2}$.',
-          'מספר ב-$\\operatorname{cis}$ הוא ממשי ⟺ החלק המדומה שלו אפס ⟺ הסינוס של הזווית אפס. מתי $\\sin\\theta = 0$?',
+          'מספר ב-$\\operatorname{cis}$ הוא ממשי אם ורק אם החלק המדומה שלו אפס כלומר הסינוס של הזווית אפס. מתי $\\sin\\theta = 0$?',
           'תקבל משוואה ב-$\\alpha$ עם פרמטר שלם $k$. השתמש בתחום $\\frac{\\pi}{2} < \\alpha < \\pi$ כדי לבחור את הערך היחיד שמתאים.',
         ],
         solution: {
           steps: [
             'נחלק ב-$\\operatorname{cis}$: $\\dfrac{z_1}{z_2} = \\dfrac{\\operatorname{cis}\\alpha}{\\operatorname{cis}\\,(7\\alpha/3)} = \\operatorname{cis}\\left(\\alpha - \\dfrac{7\\alpha}{3}\\right) = \\operatorname{cis}\\left(-\\dfrac{4\\alpha}{3}\\right)$.',
             'במפורש: $\\dfrac{z_1}{z_2} = \\cos\\!\\left(-\\dfrac{4\\alpha}{3}\\right) + i\\sin\\!\\left(-\\dfrac{4\\alpha}{3}\\right)$.',
-            'תנאי "מספר ממשי" ⟺ החלק המדומה אפס: $\\sin\\!\\left(-\\dfrac{4\\alpha}{3}\\right) = 0 \\;\\Longleftrightarrow\\; -\\dfrac{4\\alpha}{3} = \\pi k$, $k \\in \\mathbb{Z}$.',
+            'תנאי "מספר ממשי" פירושו שהחלק המדומה אפס: $\\sin\\!\\left(-\\dfrac{4\\alpha}{3}\\right) = 0$, כלומר $-\\dfrac{4\\alpha}{3} = \\pi k$ עבור $k$ שלם.',
             'מכאן $\\alpha = -\\dfrac{3\\pi k}{4}$.',
             'נבחר $k$ שייתן $\\alpha$ בתחום $\\frac{\\pi}{2} < \\alpha < \\pi$: $\\;k=-1 \\Rightarrow \\alpha = \\dfrac{3\\pi}{4}$ (בודקים: $\\frac{\\pi}{2} = \\frac{2\\pi}{4} < \\frac{3\\pi}{4} < \\pi$ ✓). שאר ה-$k$-ים מחוץ לתחום.',
             'הצבה: $-\\dfrac{4\\alpha}{3} = -\\dfrac{4}{3}\\cdot\\dfrac{3\\pi}{4} = -\\pi$, ולכן $\\dfrac{z_1}{z_2} = \\cos(-\\pi) + i\\sin(-\\pi) = -1$.',
@@ -295,7 +295,7 @@ export const bagrut2020Summer582: PastBagrutQuestion[] = [
         answer_type: 'proof',
         hints: [
           'כפל ב-$\\operatorname{cis}$: $\\operatorname{cis}\\theta_1 \\cdot \\operatorname{cis}\\theta_2 = \\operatorname{cis}(\\theta_1 + \\theta_2)$. חבר את הזוויות והצב את ה-$\\alpha$ שמצאת.',
-          'מספר מדומה (טהור) ⟺ החלק הממשי אפס ⟺ קוסינוס הזווית אפס. זה קורה כאשר הזווית היא $\\frac{\\pi}{2}$ ועוד כפולה של $\\pi$.',
+          'מספר מדומה (טהור) אם ורק אם החלק הממשי אפס כלומר קוסינוס הזווית אפס. זה קורה כאשר הזווית היא $\\frac{\\pi}{2}$ ועוד כפולה של $\\pi$.',
         ],
         solution: {
           steps: [
@@ -303,7 +303,7 @@ export const bagrut2020Summer582: PastBagrutQuestion[] = [
             'נציב $\\alpha = \\dfrac{3\\pi}{4}$: $\\;\\dfrac{10\\alpha}{3} = \\dfrac{10}{3}\\cdot\\dfrac{3\\pi}{4} = \\dfrac{10\\pi}{4} = \\dfrac{5\\pi}{2}$.',
             'נוריד מחזור: $\\;\\dfrac{5\\pi}{2} - 2\\pi = \\dfrac{\\pi}{2}$. לכן $z_1 \\cdot z_2 = \\operatorname{cis}\\dfrac{\\pi}{2}$.',
             '$\\operatorname{cis}\\dfrac{\\pi}{2} = \\cos\\dfrac{\\pi}{2} + i\\sin\\dfrac{\\pi}{2} = 0 + i\\cdot 1 = i$.',
-            'החלק הממשי הוא $0$ — לכן $z_1\\cdot z_2 = i$ הוא מספר מדומה טהור. ⬛',
+            'החלק הממשי הוא $0$ — לכן $z_1\\cdot z_2 = i$ הוא מספר מדומה טהור. **מש״ל**',
           ],
           final_answer: '$z_1 \\cdot z_2 = i$ (מדומה טהור)',
         },

@@ -98,8 +98,8 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
         ],
         solution: {
           steps: [
-            '$A,B$ סימטריות לציר $y$ (אותו $|x|$, אותו $y$); $C,D$ סימטריות לציר $y$. אז מעגל סימטרי לציר $y$ (מרכזו על הציר) עובר ב-$A$ ⟺ עובר ב-$B$, ובדומה ל-$C,D$.',
-            'נדרש $k$ אחד שעבורו $|MA|=|MC|$ עם $M=(0,k)$. נראה שהוא קיים בסעיף הבא, ולכן 4 הנקודות על מעגל יחיד. ⬛',
+            '$A,B$ סימטריות לציר $y$ (אותו $|x|$, אותו $y$); $C,D$ סימטריות לציר $y$. אז מעגל סימטרי לציר $y$ (מרכזו על הציר) עובר ב-$A$ אם ורק אם עובר ב-$B$, ובדומה ל-$C,D$.',
+            'נדרש $k$ אחד שעבורו $|MA|=|MC|$ עם $M=(0,k)$. נראה שהוא קיים בסעיף הבא, ולכן 4 הנקודות על מעגל יחיד. **מש״ל**',
           ],
           final_answer:
             'הוכח: סימטריה לציר $y$ מבטיחה $|MA|=|MB|$ ו-$|MC|=|MD|$. דרישת $|MA|=|MC|$ נותנת $k$ יחיד $\\Rightarrow$ הכל על מעגל אחד.',
@@ -236,7 +236,7 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
         prompt: 'מצא את ערך $a$ שעבורו $z_1$ ו-$z_2$ ניצבים זה לזה.',
         answer_type: 'number',
         hints: [
-          '$z_1\\perp z_2$ כווקטורים במישור $\\iff \\text{Re}(z_1)\\cdot\\text{Re}(z_2) + \\text{Im}(z_1)\\cdot\\text{Im}(z_2) = 0$.',
+          '$z_1\\perp z_2$ כווקטורים במישור אם ורק אם $\\text{Re}(z_1)\\cdot\\text{Re}(z_2) + \\text{Im}(z_1)\\cdot\\text{Im}(z_2) = 0$.',
           'פתח את שתי המכפלות והוסף — תקבל פולינום ב-$a$ מסדר 3. $a=-1$ הוא שורש (נסה הצבה).',
         ],
         solution: {
@@ -265,7 +265,7 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
           steps: [
             'ב-$a=-1$: $z_1 = 1 + i$, ולכן $\\tfrac{z_1}{\\sqrt 2} = \\tfrac{1+i}{\\sqrt 2} = \\text{cis}(45°)$.',
             '$w_1 = \\text{cis}(45°\\cdot 4n) = \\text{cis}(180°n)$.',
-            '$\\text{cis}(180°n) = (-1)^n = \\pm 1$ — תמיד ממשי. ⬛',
+            '$\\text{cis}(180°n) = (-1)^n = \\pm 1$ — תמיד ממשי. **מש״ל**',
           ],
           final_answer: 'הוכח: $w_1 = (-1)^n \\in \\{1,-1\\}$ — ממשי לכל $n$.',
         },
@@ -284,7 +284,7 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
             'ב-$a=-1$: $z_2 = 1 - i$, $\\;\\tfrac{z_2}{\\sqrt 2} = \\text{cis}(-45°)$.',
             '$w_2 = \\text{cis}(-45°\\cdot(4n+2)) = \\text{cis}(-180°n - 90°)$.',
             'החלק הממשי: $\\cos(-180°n-90°) = \\cos(180°n+90°) = -\\sin(180°n)\\cdot(-1)^? = 0$ (כי $180°n + 90°$ הוא תמיד $90°$ או $270°$).',
-            'יותר ישיר: $\\text{cis}(180°n - 90°) = \\text{cis}(-90°)\\cdot\\text{cis}(180°n) = -i\\cdot(-1)^n = (-1)^{n+1}\\,i$ — מדומה טהור. ⬛',
+            'יותר ישיר: $\\text{cis}(180°n - 90°) = \\text{cis}(-90°)\\cdot\\text{cis}(180°n) = -i\\cdot(-1)^n = (-1)^{n+1}\\,i$ — מדומה טהור. **מש״ל**',
           ],
           final_answer: 'הוכח: $w_2 = (-1)^{n+1}\\,i \\in \\{i,-i\\}$ — מדומה טהור לכל $n$.',
         },
@@ -336,7 +336,7 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
         hints: ['$e^{2x}$ ו-$e^x$ מוגדרים לכל $x$. החילוק ב-$4$ תמיד תקין.'],
         solution: {
           steps: ['כל המרכיבים מוגדרים לכל $x$ ממשי.'],
-          final_answer: 'תחום ההגדרה: $\\;\\mathbb R$ (כל הישר).',
+          final_answer: 'תחום ההגדרה: כל $x$ ממשי (כל הישר).',
         },
       },
       {
@@ -361,7 +361,7 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           'ציר $y$: הצב $x=0$ ב-$f$.',
-          'ציר $x$: $f(x) = 0 \\iff e^{2x} - 3e^x - 4 = 0$. הצבה $u=e^x$ נותנת ריבועית פשוטה.',
+          'ציר $x$: $f(x) = 0$ כלומר $e^{2x} - 3e^x - 4 = 0$. הצבה $u=e^x$ נותנת ריבועית פשוטה.',
         ],
         solution: {
           steps: [
@@ -377,7 +377,7 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           'גזור: $\\;f\\,\'(x) = \\dfrac{2e^{2x} - 3e^x}{4} = \\dfrac{e^x(2e^x - 3)}{4}$.',
-          '$f\\,\' = 0 \\iff 2e^x = 3 \\iff x = \\ln(3/2)$. בדוק סימן בסביבה.',
+          '$f\\,\' = 0$ כלומר $2e^x = 3$ כלומר $x = \\ln(3/2)$. בדוק סימן בסביבה.',
         ],
         solution: {
           steps: [
@@ -426,7 +426,7 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
         hints: ['$g$ מוגדרת היכן ש-$f \\ne 0$. מסעיף א3: $f = 0$ רק ב-$x = \\ln 4$.'],
         solution: {
           steps: ['$g$ מוגדרת לכל $x$ עם $f(x)\\ne 0$, כלומר $x\\ne \\ln 4$.'],
-          final_answer: 'תחום ההגדרה: $\\;\\mathbb R \\setminus \\{\\ln 4\\}$.',
+          final_answer: 'תחום ההגדרה: כל $x$ ממשי פרט ל-$x = \\ln 4$.',
         },
       },
       {
@@ -490,13 +490,13 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           'הנגזרת של האינטגרל לפי הגבול העליון היא $g(t)$. מקסימום מתקבל היכן ש-$g(t) = 0$ עם מעבר מ-$+$ ל-$-$.',
-          '$g(t) = 0 \\iff 1/f(t) = -1 \\iff f(t) = -1$. פתור $f(t) = -1$ ובדוק שזה בתחום $(0, \\ln 4)$.',
+          '$g(t) = 0$ כלומר $1/f(t) = -1$ כלומר $f(t) = -1$. פתור $f(t) = -1$ ובדוק שזה בתחום $(0, \\ln 4)$.',
         ],
         solution: {
           steps: [
             'נסמן $F(t) = \\displaystyle\\int_0^t g(x)\\,dx$. אז $F\\,\'(t) = g(t)$.',
             'מקסימום כשתנאי $g(t) = 0$ ועובר מ-$+$ ל-$-$.',
-            '$g(t) = 0 \\iff 1/f(t) = -1 \\iff f(t) = -1$.',
+            '$g(t) = 0$ כלומר $1/f(t) = -1$ כלומר $f(t) = -1$.',
             'פתרון: $\\;\\dfrac{e^{2t} - 3e^t - 4}{4} = -1 \\Rightarrow e^{2t} - 3e^t = 0 \\Rightarrow e^t(e^t - 3) = 0 \\Rightarrow e^t = 3 \\Rightarrow t = \\ln 3$.',
             'בדיקת תחום: $\\ln 3 \\approx 1.099 < \\ln 4 \\approx 1.386$ ✓. ובדיקת מעבר: לכל $t<\\ln 3$ ב-$(0,\\ln 4)$: $f(t)<-1$ $\\Rightarrow g(t)>0$. ל-$\\ln 3 < t < \\ln 4$: $-1 < f < 0 \\Rightarrow 1/f < -1 \\Rightarrow g < 0$. כן מעבר $+$ ל-$-$ $\\Rightarrow$ מקסימום.',
           ],
@@ -526,11 +526,11 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
         prompt: 'מצא את תחום ההגדרה של $f$.',
         answer_type: 'expression',
         hints: [
-          '$\\ln x$ דורש $x > 0$. וגם $(\\ln x)^2 \\ne 1 \\iff \\ln x \\ne \\pm 1 \\iff x \\ne e,\\,\\tfrac{1}{e}$.',
+          '$\\ln x$ דורש $x > 0$. וגם $(\\ln x)^2 \\ne 1$ כלומר $\\ln x \\ne \\pm 1$ כלומר $x \\ne e,\\,\\tfrac{1}{e}$.',
         ],
         solution: {
           steps: [
-            '$x > 0$, וגם $(\\ln x)^2 \\ne 1 \\iff \\ln x \\ne \\pm 1 \\iff x \\ne \\tfrac{1}{e},\\,e$.',
+            '$x > 0$, וגם $(\\ln x)^2 \\ne 1$ כלומר $\\ln x \\ne \\pm 1$ כלומר $x \\ne \\tfrac{1}{e},\\,e$.',
           ],
           final_answer:
             'תחום ההגדרה: $\\;(0,\\,\\tfrac{1}{e})\\cup(\\tfrac{1}{e},\\,e)\\cup(e,\\,\\infty)$.',
@@ -620,7 +620,7 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
         label: 'ג1',
         prompt: 'האם יש פתרון למשוואה $\\;f(x) = 1$? נמק.',
         answer_type: 'text',
-        hints: ['$f(x) = 1 \\iff (\\ln x)^2 = (\\ln x)^2 - 1 \\iff 0 = -1$ — סתירה.'],
+        hints: ['$f(x) = 1$ כלומר $(\\ln x)^2 = (\\ln x)^2 - 1$ כלומר $0 = -1$ — סתירה.'],
         solution: {
           steps: [
             '$f(x) = 1 \\Rightarrow (\\ln x)^2 = (\\ln x)^2 - 1 \\Rightarrow 0 = -1$ — סתירה.',
@@ -634,11 +634,11 @@ export const bagrut2022Winter582: PastBagrutQuestion[] = [
         prompt: 'מהו הערך של $k$ שעבורו יש פתרון יחיד למשוואה $\\;f(x) = k$? נמק.',
         answer_type: 'number',
         hints: [
-          '$f(x) = k \\iff (\\ln x)^2 = \\dfrac{k}{k-1}$. עבור $k > 1$ או $k < 0$: $\\tfrac{k}{k-1} > 0$ — שני פתרונות. עבור $k = 0$: $(\\ln x)^2 = 0 \\Rightarrow x = 1$ יחיד.',
+          '$f(x) = k$ כלומר $(\\ln x)^2 = \\dfrac{k}{k-1}$. עבור $k > 1$ או $k < 0$: $\\tfrac{k}{k-1} > 0$ — שני פתרונות. עבור $k = 0$: $(\\ln x)^2 = 0 \\Rightarrow x = 1$ יחיד.',
         ],
         solution: {
           steps: [
-            '$f(x) = k \\iff (\\ln x)^2 = k\\bigl((\\ln x)^2 - 1\\bigr) \\iff (\\ln x)^2(1-k) = -k \\iff (\\ln x)^2 = \\dfrac{k}{k-1}$.',
+            '$f(x) = k$ כלומר $(\\ln x)^2 = k\\bigl((\\ln x)^2 - 1\\bigr)$ כלומר $(\\ln x)^2(1-k) = -k$ כלומר $(\\ln x)^2 = \\dfrac{k}{k-1}$.',
             'עבור $k > 1$: $\\tfrac{k}{k-1} > 0$ $\\Rightarrow \\ln x = \\pm\\sqrt{\\cdot}$ — שני פתרונות.',
             'עבור $k < 0$: $\\tfrac{k}{k-1}$ — שני שליליים, יחס חיובי — שני פתרונות.',
             'עבור $k = 0$: $(\\ln x)^2 = 0 \\Rightarrow \\ln x = 0 \\Rightarrow x = 1$ — פתרון יחיד.',

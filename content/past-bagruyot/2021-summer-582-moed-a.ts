@@ -650,7 +650,7 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         solution: {
           steps: [
             "$f'(x) = -2a\\,e^{-2x} < 0$ לכל $x$ (כי $a > 0$)",
-            '$f$ יורדת ממש בכל $\\mathbb{R}$ — אין קיצון',
+            '$f$ יורדת ממש לכל $x$ ממשי — אין קיצון',
           ],
           final_answer: '$f$ יורדת ממש על כל הישר, אין קיצון.',
         },
@@ -678,7 +678,7 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
             '$f(x) = 1 + ae^{-2x} > 1 > 0$ לכל $x$',
             '$f$ לעולם לא מתאפסת $\\;\\Rightarrow\\; g = \\tfrac{1}{f}$ מוגדרת לכל $x$',
           ],
-          final_answer: 'תחום ההגדרה של $g$: $\\;\\mathbb R$ (כל הישר).',
+          final_answer: 'תחום ההגדרה של $g$: כל $x$ ממשי (כל הישר).',
         },
       },
       {
@@ -986,7 +986,7 @@ export const bagrut2021Summer582MoedA: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           '$\\ln$ דורש $f(x) > 0$. מהסעיפים הקודמים, $f>0$ רק על הענף השמאלי.',
-          'אלגברית: $f>0 \\iff \\dfrac{x+1}{x+2}>1 \\iff x+2<0 \\iff x<-2$.',
+          'אלגברית: $f>0$ כלומר $\\dfrac{x+1}{x+2}>1$ כלומר $x+2<0$ כלומר $x<-2$.',
         ],
         solution: {
           steps: [

@@ -376,7 +376,7 @@ $$4n + 3 > 150 \\;\\Rightarrow\\; 4n > 147 \\;\\Rightarrow\\; n > 36.75$$
 
 אם האיברים הם $a, b, c$, אז $b = a + d$ וגם $c = b + d$. כלומר $b$ נמצא "באמצע הדרך" בין $a$ ל-$c$:
 
-$$b = \\frac{a + c}{2} \\qquad\\Longleftrightarrow\\qquad 2b = a + c$$
+$$b = \\frac{a + c}{2} \\qquad\\Longrightarrow\\qquad 2b = a + c$$
 
 ### מתי זה מופיע בבגרות
 

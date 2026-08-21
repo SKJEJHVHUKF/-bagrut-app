@@ -438,7 +438,7 @@ export const bagrut2021Summer582MoedB: PastBagrutQuestion[] = [
             '$(x + yi)^2 = x^2 - y^2 + 2xyi = -\\dfrac{b}{a}$',
             'הפתרונות מדומים טהורים, כלומר $\\;x = 0$, ולכן: $\\;-y^2 = -\\dfrac{b}{a} \\;\\Rightarrow\\; y^2 = \\dfrac{b}{a}$.',
             '$y$ ממשי ושונה מאפס, לכן $\\;y^2 > 0$, ומכאן $\\;\\dfrac{b}{a} > 0$.',
-            'נכפול ב-$a^2 > 0$: $\\;\\dfrac{b}{a}\\cdot a^2 = ab > 0$. $\\;\\blacksquare$',
+            'נכפול ב-$a^2 > 0$: $\\;\\dfrac{b}{a}\\cdot a^2 = ab > 0$. **מש״ל**',
           ],
           final_answer: 'מאחר ששני הפתרונות מדומים טהורים, $\\;y^2 = \\dfrac{b}{a} > 0$, ולכן $\\;ab > 0$.',
         },
