@@ -219,6 +219,10 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
     steps: q?.solution.steps.length
       ? q.solution.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')
       : undefined,
+    // The authored "which rule and why" line — solutions open with a step
+    // marked `**הכלל:**` (probability first, rolling out per topic). Kept with
+    // its label so the template can drop it in as-is.
+    rule: q?.solution.steps.find((s) => s.startsWith('**הכלל:**'))?.trim() || undefined,
     finalAnswer: q?.solution.finalAnswer,
     explanation: q?.solution.explanation?.trim() || undefined,
     chosenText:
@@ -273,6 +277,16 @@ const TEMPLATES: Record<string, Tpl> = {
     'full',
     'נעבור על הפתרון המלא:\n\n{steps}\n\n**התשובה: {finalAnswer}**\n\n**למה זה עובד:** {explanation}\n\nעכשיו תסגור את הפתרון ותפתור את השאלה מחדש. פתרון שקראת הוא עדיין לא פתרון שאתה יודע.',
     'נעבור על הפתרון המלא:\n\n{steps}\n\n**התשובה: {finalAnswer}**\n\nעכשיו תסגור את הפתרון ותפתור את השאלה מחדש. פתרון שקראת הוא עדיין לא פתרון שאתה יודע.',
+  ),
+  // Question-specific "which formula and why" — served BEFORE A:formulas when
+  // the solution carries an authored `**הכלל:**` opening step. Both t and f
+  // require {rule} ON PURPOSE (an exception to rule 2): when the question has
+  // no rule line, both fail and the loop falls through to the generic
+  // A:formulas below, which keeps today's behavior for every other topic.
+  'A:formulas-q': T(
+    'formulas',
+    'שאלת בדיוק את השאלה הנכונה — קודם בוחרים כלי, רק אחר כך מחשבים. בשאלה הזאת:\n\n{rule}\n\nוכל שאר הכלים של {title}, כדי לראות איפה זה יושב:\n\n{formulas}\n\nעכשיו תציב בכלל הזה את המספרים מהשאלה — מה יוצא לך?',
+    'שאלת בדיוק את השאלה הנכונה — קודם בוחרים כלי, רק אחר כך מחשבים. בשאלה הזאת:\n\n{rule}\n\nעכשיו תציב בכלל הזה את המספרים מהשאלה — מה יוצא לך?',
   ),
   'A:formulas': T(
     'formulas',
@@ -498,6 +512,10 @@ function keysFor(state: State, ask: Ask, tierKind?: string, diag?: string): stri
   }
 
   if (state === 'E' && ask === 'why-wrong' && diag) out.push(`E:why-wrong:${diag}`);
+  // A formulas ask on a question whose solution names its rule gets the
+  // question-specific answer first, in every state; without a rule line the
+  // template pair fails to fill and the generic keys below take over.
+  if (ask === 'formulas') out.push('A:formulas-q');
   out.push(`${state}:${ask}`);
   // Everything that isn't specialised borrows A's wording verbatim.
   if (state === 'C') out.push(`B:${ask}`);

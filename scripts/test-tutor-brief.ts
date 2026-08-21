@@ -509,6 +509,9 @@ const RECOGNISED: [string, string][] = [
   ['איפה טעיתי?', 'why-wrong'],
   ['תראה לי את הפתרון המלא', 'full'],
   ['איזו נוסחה צריך פה?', 'formulas'],
+  // The app's own one-tap chip, added when every probability solution gained a
+  // '**הכלל:**' opening step for the tutor to serve.
+  ['באיזו נוסחה משתמשים כאן?', 'formulas'],
   ['מה חשוב לזכור פה?', 'key-points'],
   // The app's own one-tap chip. It contains neither 'מה חשוב' nor 'מה לזכור',
   // so before this it was the single button guaranteed to cost an API call.
@@ -648,6 +651,68 @@ if (mcq) {
     const f = answerLocally('איזו נוסחה צריך פה?', focus);
     assert(f?.kind === 'formulas', 'formulas come from the sub-topic');
     assert(!!f && f.text.includes(sts[0].formulas[0].name), 'named as authored');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The rule line the owner asked for ("באיזה נוסחה משתמשים ולמה"), end to end.
+//
+// Every הסתברות solution opens with a '**הכלל:**' step. The tutor must serve
+// THAT sentence — the question-specific one — for a formulas ask, and must
+// still fall back to the generic sub-topic formula sheet on a topic whose
+// rollout has not happened yet. Both halves are asserted: without the second,
+// a future edit could make 'A:formulas-q' unconditional and silently blank the
+// formulas answer for every other topic.
+// ---------------------------------------------------------------------------
+section('tutor-local — the "which formula and why" line');
+{
+  const RULE = '**הכלל:**';
+  const probeTopic = (topic: string) => {
+    for (const st of getSTs('math5', topic)) {
+      for (const q of st.questions ?? []) {
+        const first = (q.solution?.steps?.[0] ?? '').trim();
+        return { st, q, hasRule: first.startsWith(RULE), first };
+      }
+    }
+    return null;
+  };
+
+  const prob = probeTopic('הסתברות');
+  assert(!!prob?.hasRule, 'a הסתברות question opens with the rule line');
+  if (prob?.hasRule) {
+    const ans = answerLocally('באיזו נוסחה משתמשים כאן?', {
+      where: 'תרגול',
+      topic: 'הסתברות',
+      subTopic: prob.st,
+      question: prob.q,
+      questionText: prob.q.question,
+    } as TutorFocus);
+    assert(ans?.kind === 'formulas', 'the chip is answered locally, with no API call');
+    assert(
+      !!ans && ans.text.includes(prob.first),
+      'and the answer carries THIS question\'s rule line, not just the formula sheet',
+    );
+    assert(
+      !!ans && !ans.text.trimStart().startsWith('$'),
+      'and it does not open on maths (bidi flip)',
+    );
+  }
+
+  // A topic mid-rollout must keep the old behaviour.
+  const plain = probeTopic('אלגברה');
+  if (plain && !plain.hasRule) {
+    const ans = answerLocally('באיזו נוסחה משתמשים כאן?', {
+      where: 'תרגול',
+      topic: 'אלגברה',
+      subTopic: plain.st,
+      question: plain.q,
+      questionText: plain.q.question,
+    } as TutorFocus);
+    assert(!!ans, 'a topic without rule lines still gets a local formulas answer');
+    assert(
+      !!ans && !ans.text.includes(RULE),
+      'and it falls through to the generic sub-topic formula sheet',
+    );
   }
 }
 

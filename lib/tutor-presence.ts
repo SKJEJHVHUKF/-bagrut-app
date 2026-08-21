@@ -211,10 +211,10 @@ export function renderFocusContext(focus: TutorFocus | null): string {
 export function focusPrompts(focus: TutorFocus | null): string[] {
   if (!focus) return [];
   if (focus.wrongAnswer) {
-    return ['למה התשובה שלי שגויה?', 'תן לי רמז בלי לפתור', 'תסביר לי את השאלה הזאת מההתחלה'];
+    return ['למה התשובה שלי שגויה?', 'באיזו נוסחה משתמשים כאן?', 'תן לי רמז בלי לפתור', 'תסביר לי את השאלה הזאת מההתחלה'];
   }
   if (focus.questionText) {
-    return ['אני תקוע בשאלה הזאת', 'מאיפה מתחילים?', 'תן לי רמז בלי לפתור'];
+    return ['אני תקוע בשאלה הזאת', 'מאיפה מתחילים?', 'באיזו נוסחה משתמשים כאן?', 'תן לי רמז בלי לפתור'];
   }
   if (focus.topic) return [`תסביר לי את ${focus.topic}`, 'מה הכי חשוב לדעת פה לבגרות?'];
   return [];
