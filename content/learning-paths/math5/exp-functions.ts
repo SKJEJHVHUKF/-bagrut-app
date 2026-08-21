@@ -171,7 +171,7 @@ $$e^m \\cdot e^n = e^{m+n} \\qquad \\dfrac{e^m}{e^n} = e^{m-n} \\qquad (e^m)^n =
         'איך פותרים $e^x = 7$? צריך פעולה ש"מחלצת" את החזקה. הפעולה הזו נקראת $\\ln$ — והיא עונה על השאלה: "איזו חזקה שמים על $e$ כדי לקבל את המספר הזה?"',
       formal: `$\\ln k$ מוגדר כחזקה שצריך להעלות את $e$ כדי לקבל $k$. לכן שתי הפעולות מבטלות זו את זו:
 
-$$e^x = k \\;\\Longleftrightarrow\\; x = \\ln k \\qquad (k > 0)$$
+$$e^x = k \\;\\Longrightarrow\\; x = \\ln k \\qquad (k > 0)$$
 
 $$e^{\\ln k} = k \\qquad \\ln(e^x) = x$$
 
@@ -821,7 +821,7 @@ $$\\int e^x\\,dx = e^x + c \\qquad \\int e^{ax+b}\\,dx = \\dfrac{1}{a}\\,e^{ax+b
     quickReview: [
       '**המספר $e$** $e \\approx 2.718$ • $e^0 = 1$ • $e^x > 0$ לכל $x$ — אף פעם לא אפס ולא שלילי',
       '**חוקי חזקות** $e^a \\cdot e^b = e^{a+b}$ • $\\dfrac{e^a}{e^b} = e^{a-b}$ • $(e^a)^b = e^{ab}$ • $e^{-a} = \\dfrac{1}{e^a}$',
-      '**$\\ln$ הפוך ל-$e^x$** $e^x = k \\iff x = \\ln k$ (עבור $k > 0$) • $e^{\\ln k} = k$ • $\\ln 1 = 0$ וכן $\\ln e = 1$',
+      '**$\\ln$ הפוך ל-$e^x$** $e^x = k$ כלומר $x = \\ln k$ (עבור $k > 0$) • $e^{\\ln k} = k$ • $\\ln 1 = 0$ וכן $\\ln e = 1$',
       `**נגזרת** $(e^x)' = e^x$ • $(e^{g(x)})' = g'(x)\\,e^{g(x)}$ • $(a^x)' = a^x \\ln a$`,
       '**אינטגרל** $\\displaystyle\\int e^x\\,dx = e^x + c$ • $\\displaystyle\\int e^{ax+b}\\,dx = \\dfrac{1}{a}e^{ax+b} + c$',
       '**משוואות** בסיס זהה → משווים מעריכים • תבנית ריבועית → הצבה $t = e^x$ ושומרים רק $t > 0$',
@@ -847,7 +847,7 @@ $$\\int e^x\\,dx = e^x + c \\qquad \\int e^{ax+b}\\,dx = \\dfrac{1}{a}\\,e^{ax+b
       },
       {
         name: 'משוואה מעריכית בסיסית',
-        latex: 'e^x = k \\;\\Longleftrightarrow\\; x = \\ln k \\quad (k > 0)',
+        latex: 'e^x = k \\;\\Longrightarrow\\; x = \\ln k \\quad (k > 0)',
         variables: [
           { sym: 'k', meaning: 'אגף ימין — חייב להיות חיובי' },
         ],

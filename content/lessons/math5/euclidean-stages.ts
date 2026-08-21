@@ -145,7 +145,7 @@ $$CM = \\tfrac12 AB = AM = MB$$
 **טעות נפוצה:** לערבב את התיכון ליתר עם הגובה ליתר. התיכון הולך ל**אמצע** היתר ושווה למחציתו; הגובה ניצב ליתר ומקיים $CH^2 = AH \\cdot HB$ (שלב הדמיון). שני קטעים שונים, שני משפטים שונים.`,
         formula: {
           name: 'תיכון ליתר',
-          latex: '\\angle C = 90° \\;\\Longleftrightarrow\\; CM = \\tfrac12 AB',
+          latex: '\\angle C = 90° \\;\\Longrightarrow\\; CM = \\tfrac12 AB',
           variables: [
             { sym: 'CM', meaning: 'התיכון מהקודקוד $C$ אל אמצע $AB$' },
           ],

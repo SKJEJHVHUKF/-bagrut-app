@@ -706,7 +706,7 @@ export const bagrut2024Summer572MoedB: PastBagrutQuestion[] = [
         answer_type: 'number',
         hints: [
           'מסעיף ג, המכפלה לאחר הסיבוב היא $-81\\,\\operatorname{cis}(4\\alpha)$.',
-          'מספר מדומה טהור ⟺ החלק הממשי מתאפס ⟺ $\\operatorname{cis}(4\\alpha) = \\pm i$.',
+          'מספר מדומה טהור אם ורק אם החלק הממשי מתאפס כלומר $\\operatorname{cis}(4\\alpha) = \\pm i$.',
           '$\\operatorname{cis}(4\\alpha) = \\pm i$ כאשר $4\\alpha = 90°$ או $4\\alpha = 270°$ (בתחום הנתון).',
         ],
         solution: {
@@ -910,7 +910,7 @@ export const bagrut2024Summer572MoedB: PastBagrutQuestion[] = [
             'מפתחים את המונה: $\\;e^x(x - 1) - (e^x - 1) = xe^x - e^x - e^x + 1 = xe^x - 2e^x + 1$.',
             'מזהים ש-$xe^x = k(x)$ וש-$2e^x - 1 = m(x)$, ולכן המונה הוא $\\;k(x) - m(x)$.',
             'מכאן $\\;f\'(x) = \\dfrac{k(x) - m(x)}{(x - 1)^2}$.',
-            'שבר מתאפס כאשר המונה מתאפס (והמכנה אינו): $\\;f\'(x) = 0 \\iff k(x) = m(x)$.',
+            'שבר מתאפס כאשר המונה מתאפס (והמכנה אינו): $\\;f\'(x) = 0$ כלומר $k(x) = m(x)$.',
             'נתון שגרפי $k$ ו-$m$ נחתכים בדיוק בשתי נקודות, $x = c$ ו-$x = d$.',
             'בשתי הנקודות $x \\ne 1$ (כי $k(1) = e \\ne 2e - 1 = m(1)$), ולכן המכנה $(x - 1)^2 \\ne 0$ שם.',
             'לכן למשוואה $f\'(x) = 0$ יש בדיוק שני פתרונות: $\\;x = c$ ו-$x = d$.',

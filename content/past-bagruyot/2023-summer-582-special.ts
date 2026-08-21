@@ -122,7 +122,7 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
             'שיפוע $\\ell_1$ הוא $\\tfrac{3}{4} \\ne 1$ — השיפועים שונים',
           ],
           final_answer:
-            '$\\ell_1$ אינו משיק לפרבולה ב-$A$: שיפוע המשיק לפרבולה שם הוא $1$, ושיפוע $\\ell_1$ הוא $\\tfrac{3}{4}$. ⬛',
+            '$\\ell_1$ אינו משיק לפרבולה ב-$A$: שיפוע המשיק לפרבולה שם הוא $1$, ושיפוע $\\ell_1$ הוא $\\tfrac{3}{4}$. **מש״ל**',
         },
       },
       {
@@ -360,7 +360,7 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
             '$xy = -\\dfrac{1}{2}$',
             '$y = -\\dfrac{1}{2x}$',
           ],
-          final_answer: '$y = -\\dfrac{1}{2x}$ ⬛',
+          final_answer: '$y = -\\dfrac{1}{2x}$ **מש״ל**',
         },
       },
       {
@@ -777,12 +777,12 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         answer_type: 'expression',
         hints: [
           "$m=e^{h}\\Rightarrow m'(x)=h'(x)\\,e^{h(x)} = -\\dfrac{f''(x)}{\\left(f'(x)\\right)^2}\\,e^{1/f'(x)}$. מצאו היכן $m'(x)=0$.",
-          "הגורמים $e^{1/f'(x)}\\ne 0$ ו-$\\left(f'(x)\\right)^2>0$, אז $\\;m'(x)=0 \\Leftrightarrow f''(x)=0$. פתרו, ואז קראו את תחומי הירידה מגרף $m$ (גרף $IV$).",
+          "הגורמים $e^{1/f'(x)}\\ne 0$ ו-$\\left(f'(x)\\right)^2>0$, אז $\\;m'(x)=0$ כלומר $f''(x)=0$. פתרו, ואז קראו את תחומי הירידה מגרף $m$ (גרף $IV$).",
         ],
         solution: {
           steps: [
             "$m'(x) = h'(x)\\,e^{h(x)} = -\\dfrac{f''(x)}{\\left(f'(x)\\right)^2}\\,e^{1/f'(x)}$",
-            "נשווה לאפס: $\\;e^{1/f'(x)}\\ne 0$ ו-$\\left(f'(x)\\right)^2>0$, ולכן $\\;m'(x)=0 \\Leftrightarrow f''(x)=0$",
+            "נשווה לאפס: $\\;e^{1/f'(x)}\\ne 0$ ו-$\\left(f'(x)\\right)^2>0$, ולכן $\\;m'(x)=0$ כלומר $f''(x)=0$",
             "$f''(x) = e^{-x^2/4}\\left(x^2-2\\right) = 0$",
             "$e^{-x^2/4}\\ne 0 \\;\\Rightarrow\\; x^2-2=0$",
             "$x=\\pm\\sqrt2$",
@@ -977,19 +977,19 @@ export const bagrut2023Summer582Special: PastBagrutQuestion[] = [
         prompt: 'מצאו את תחומי החיוביות והשליליות של $g(x)$.',
         answer_type: 'expression',
         hints: [
-          '$g=\\ln(-f)$. הסימן של $\\ln$ נקבע לפי האם הארגומנט גדול או קטן מ-$1$: $\\;g>0\\Leftrightarrow -f>1$, ו-$g<0\\Leftrightarrow 0<-f<1$.',
-          '$-f>1 \\Leftrightarrow f<-1$, ו-$0<-f<1 \\Leftrightarrow -1<f<0$. בדקו בכל ענף של תחום ההגדרה $(0,1)\\cup(e,\\infty)$.',
+          '$g=\\ln(-f)$. הסימן של $\\ln$ נקבע לפי האם הארגומנט גדול או קטן מ-$1$: $\\;g>0$ כלומר $-f>1$, ו-$g<0$ כלומר $0<-f<1$.',
+          '$-f>1$ כלומר $f<-1$, ו-$0<-f<1$ כלומר $-1<f<0$. בדקו בכל ענף של תחום ההגדרה $(0,1)\\cup(e,\\infty)$.',
         ],
         solution: {
           steps: [
-            '$g>0 \\;\\Leftrightarrow\\; -f(x)>1$',
-            '$-f(x)>1 \\;\\Leftrightarrow\\; f(x)<-1$',
-            '$f(x)<-1 \\;\\Leftrightarrow\\; \\dfrac{1}{\\ln x}-1<-1$',
-            '$\\dfrac{1}{\\ln x}-1<-1 \\;\\Leftrightarrow\\; \\dfrac{1}{\\ln x}<0$',
-            '$\\dfrac{1}{\\ln x}<0 \\;\\Leftrightarrow\\; 0<x<1$',
+            '$g>0$ כלומר $-f(x)>1$',
+            '$-f(x)>1$ כלומר $f(x)<-1$',
+            '$f(x)<-1$ כלומר $\\dfrac{1}{\\ln x}-1<-1$',
+            '$\\dfrac{1}{\\ln x}-1<-1$ כלומר $\\dfrac{1}{\\ln x}<0$',
+            '$\\dfrac{1}{\\ln x}<0$ כלומר $0<x<1$',
             'בענף $(0,1)$: $\\;g(x)>0$',
-            '$g<0 \\;\\Leftrightarrow\\; 0<-f(x)<1$',
-            '$0<-f(x)<1 \\;\\Leftrightarrow\\; -1<f(x)<0$, וזה מתקיים בענף $x>e$',
+            '$g<0$ כלומר $0<-f(x)<1$',
+            '$0<-f(x)<1$ כלומר $-1<f(x)<0$, וזה מתקיים בענף $x>e$',
             'בענף $(e,\\infty)$: $\\;g(x)<0$',
           ],
           final_answer: 'חיובית ב-$(0,1)$; $\\;$ שלילית ב-$(e,\\infty)$.',

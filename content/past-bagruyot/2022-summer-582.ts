@@ -266,7 +266,7 @@ export const bagrut2022Summer582: PastBagrutQuestion[] = [
             '$\\vec{CD} = (-3,\\,6,\\,-6)$, $|CD| = 9$. $\\;\\vec{DA} = (6,\\,6,\\,3)$, $|DA| = 9$.',
             'כל הצלעות שוות באורכן — זה רומבוס.',
             'בדיקת זווית ישרה: $\\;\\vec{AB}\\cdot\\vec{BC} = (3)(-6) + (-6)(-6) + (6)(-3) = -18 + 36 - 18 = 0$ ✓.',
-            'רומבוס עם זווית ישרה $\\Rightarrow$ ריבוע. ⬛',
+            'רומבוס עם זווית ישרה $\\Rightarrow$ ריבוע. **מש״ל**',
           ],
           final_answer: 'הוכח: כל הצלעות שוות ל-$9$ וזווית ישרה אחת $\\Rightarrow ABCD$ ריבוע (צלע $9$).',
         },
@@ -567,10 +567,10 @@ export const bagrut2022Summer582: PastBagrutQuestion[] = [
         label: 'ב2',
         prompt: 'מצא את נקודת החיתוך של $g$ עם ציר ה-$x$ (אם יש כזו).',
         answer_type: 'expression',
-        hints: ['$g(x) = 0 \\iff 1 - e^x = 0$ (המכנה תמיד שונה מאפס).'],
+        hints: ['$g(x) = 0$ כלומר $1 - e^x = 0$ (המכנה תמיד שונה מאפס).'],
         solution: {
           steps: [
-            '$g(x) = 0 \\iff 1 - e^x = 0 \\iff x = 0$.',
+            '$g(x) = 0$ כלומר $1 - e^x = 0$ כלומר $x = 0$.',
             'בדיקה: $g(0) = \\dfrac{1-1}{1-0} = 0$ ✓.',
           ],
           final_answer: 'נקודת חיתוך עם ציר $x$: $\\;(0,\\,0)$.',
@@ -590,7 +590,7 @@ export const bagrut2022Summer582: PastBagrutQuestion[] = [
             'מונה: $\\;-e^{2x} + xe^x - \\bigl[(1)(e^x) - 1 - e^{2x} + e^x\\bigr]$',
             '$= -e^{2x} + xe^x - e^x + 1 + e^{2x} - e^x$',
             '$= xe^x - 2e^x + 1 = f(x)$.',
-            'אז: $\\;g\\,\'(x) = \\dfrac{f(x)}{(e^x - x)^2}$. ⬛',
+            'אז: $\\;g\\,\'(x) = \\dfrac{f(x)}{(e^x - x)^2}$. **מש״ל**',
           ],
           final_answer: 'הוכח: $\\;g\\,\'(x) = \\dfrac{f(x)}{(e^x-x)^2}$.',
         },
@@ -689,7 +689,7 @@ export const bagrut2022Summer582: PastBagrutQuestion[] = [
         label: 'א1',
         prompt: 'מצא את תחום ההגדרה של $f$.',
         answer_type: 'expression',
-        hints: ['$\\ln$ דורש ארגומנט חיובי: $x^2 - 3 > 0 \\iff |x| > \\sqrt{3}$.'],
+        hints: ['$\\ln$ דורש ארגומנט חיובי: $x^2 - 3 > 0$ כלומר $|x| > \\sqrt{3}$.'],
         solution: {
           steps: [
             '$x^2 - 3 > 0 \\Rightarrow x^2 > 3 \\Rightarrow |x| > \\sqrt{3}$, כלומר $x > \\sqrt{3}$ או $x < -\\sqrt{3}$.',
@@ -809,10 +809,10 @@ export const bagrut2022Summer582: PastBagrutQuestion[] = [
         label: 'ב3',
         prompt: 'מצא את שיעורי נקודות החיתוך של $f\\,\'$ עם הצירים (אם יש כאלה).',
         answer_type: 'expression',
-        hints: ['$f\\,\'(x) = 0 \\iff (x+3)(x-1) = 0$. ציר $y$: בדוק $x=0$ — האם בתחום?'],
+        hints: ['$f\\,\'(x) = 0$ כלומר $(x+3)(x-1) = 0$. ציר $y$: בדוק $x=0$ — האם בתחום?'],
         solution: {
           steps: [
-            'ציר $x$: $\\;f\\,\'(x) = 0 \\iff x = -3$ (כי $x=1$ לא בתחום). נקודה $(-3,\\,0)$.',
+            'ציר $x$: $\\;f\\,\'(x) = 0$ כלומר $x = -3$ (כי $x=1$ לא בתחום). נקודה $(-3,\\,0)$.',
             'ציר $y$: $\\;x = 0$ אינו בתחום ההגדרה $\\Rightarrow$ אין חיתוך עם ציר $y$.',
           ],
           final_answer: 'חיתוך עם ציר $x$: $\\;(-3,\\,0)$. אין חיתוך עם ציר $y$.',
