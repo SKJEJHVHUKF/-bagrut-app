@@ -39,9 +39,19 @@
  * (`FOCUS_PRIORITY.lesson`), which is the honest resolution — and the tutor's
  * state-I template says outright that it can see a question but not its
  * breakdown, rather than pretending.
+ *
+ * ⚠️ …UNTIL THE STUDENT TOUCHES ONE PART. Then it is no longer a guess: the
+ * part they typed into, asked a hint on, or checked IS the question. That
+ * card publishes itself at question level with the full authored object
+ * (`partAsQuestion` below), and among equal priorities the most recently
+ * published entry wins — so the tutor follows the student's hands from סעיף א
+ * to סעיף ב without the container having to know. MEASURED before this: every
+ * one of the 120 bagrut parts in סדרות + הסתברות sat in state I, and every ask
+ * on them fell through to a paid API call despite hints, a rule line and a
+ * worked solution being authored for all of them.
  */
 
-import type { PracticeQuestion, SubTopic } from '@/content/lessons/types';
+import type { BagrutQuestionPart, PracticeQuestion, SubTopic } from '@/content/lessons/types';
 import type { AnswerDiagnosis } from '@/lib/answer-check';
 
 const EVENT = 'tutor-focus';
@@ -114,7 +124,11 @@ let current: TutorFocus | null = null;
 function recompute() {
   let best: { focus: TutorFocus; priority: number } | null = null;
   for (const entry of registry.values()) {
-    if (!best || entry.priority > best.priority) best = entry;
+    // `>=`, not `>`: among EQUAL priorities the most recently published entry
+    // wins (publish re-inserts at the end of the Map). Two question cards on
+    // one screen — the parts of a bagrut question — must resolve to the one
+    // the student touched last, not to whichever mounted first.
+    if (!best || entry.priority >= best.priority) best = entry;
   }
   current = best?.focus ?? null;
   // Guarded on the METHOD, not on `window`. `typeof window !== 'undefined'` is
@@ -142,8 +156,14 @@ export function publishTutorFocus(
   focus: TutorFocus | null,
   priority: number = FOCUS_PRIORITY.question,
 ) {
-  if (focus) registry.set(id, { focus, priority });
-  else registry.delete(id);
+  if (focus) {
+    // Delete first so a re-publish moves to the END of the Map — that is what
+    // makes "most recently published wins" true in `recompute`.
+    registry.delete(id);
+    registry.set(id, { focus, priority });
+  } else {
+    registry.delete(id);
+  }
   recompute();
 }
 
@@ -171,6 +191,57 @@ export function getTutorFocus(): TutorFocus | null {
   return current;
 }
 
+/**
+ * A bagrut PART, seen as a question the local tutor can hold.
+ *
+ * `BagrutQuestionPart` and `PracticeQuestion` carry the same material under
+ * different names (`final_answer` / `finalAnswer`, `hints[]` / `hint`) because
+ * the part shape was frozen to match an API response years before the local
+ * tutor existed. Rather than teach lib/tutor-local and lib/help-ladder a second
+ * shape — every template and every gate would need a twin — this maps a part
+ * onto the shape they already understand. Nothing is invented: every field
+ * below is authored content, moved.
+ *
+ * `hintsShown` — the card reveals hints one at a time, so the hint the tutor
+ * should offer is the NEXT unseen one. Once all are seen, `hint` is undefined
+ * and the help ladder steps past it to the rule line (`**הכלל:**` is
+ * `steps[0]` on 100% of סדרות/הסתברות parts, and the rule-line gate guarantees
+ * it never leaks the answer) — so "I saw every hint and I'm still stuck" gets
+ * the authored first step, not a paid call.
+ *
+ * `explanation` — parts have none. The rule line minus its marker IS the
+ * explanation of why these steps ("the formula — and why it applies here"),
+ * so it fills that slot rather than leaving "explain this to me" on the
+ * template's generic fallback.
+ */
+export function partAsQuestion(
+  part: BagrutQuestionPart,
+  args: {
+    questionId: string;
+    difficulty?: PracticeQuestion['difficulty'];
+    hintsShown?: number;
+  },
+): PracticeQuestion {
+  const shown = Math.max(0, args.hintsShown ?? 0);
+  const rule = part.solution.steps.find((s) => s.startsWith('**הכלל:**'));
+  return {
+    // Same `<questionId>/<label>` id the rule-line gate reports under, so a
+    // failure in either tool names the same place.
+    id: `${args.questionId}/${part.label}`,
+    difficulty: args.difficulty ?? 'mid',
+    kind: 'open',
+    question: part.prompt,
+    hint: part.hints[shown]?.trim() || undefined,
+    expected: part.expected,
+    answerLabels: part.answerLabels,
+    solution: {
+      steps: part.solution.steps,
+      finalAnswer: part.solution.final_answer,
+      explanation: rule ? rule.replace(/^\*\*הכלל:\*\*\s*/, '').trim() : '',
+    },
+  };
+}
+
 export function subscribeTutorFocus(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => {};
   window.addEventListener(EVENT, cb);
@@ -183,9 +254,11 @@ export function subscribeTutorFocus(cb: () => void): () => void {
  * Returns '' when there is nothing worth saying, so the caller can omit the
  * context entirely rather than send a heading with nothing under it.
  *
- * ⚠️ Kept short on purpose. The server hard-caps `context` at 2000 chars and
- * the student snapshot alone can reach 1800, so anything verbose here silently
- * pushes the cognitive diagnosis out of the request.
+ * ⚠️ Kept short on purpose. The server hard-caps `context` at 4000 chars
+ * (MAX_CONTEXT_LEN) and the student snapshot alone can reach 1800, so anything
+ * verbose here silently pushes the cognitive diagnosis out of the request. The
+ * authored-solution block below is capped at 1200 for the same reason: focus
+ * (~800) + solution (≤1200) + snapshot (≤1800) must fit.
  */
 export function renderFocusContext(focus: TutorFocus | null): string {
   if (!focus) return '';
@@ -197,6 +270,22 @@ export function renderFocusContext(focus: TutorFocus | null): string {
     lines.push(`הוא ענה "${focus.wrongAnswer.slice(0, 80)}" וזה שגוי.`);
     if (focus.correctAnswer) lines.push(`התשובה הנכונה: "${focus.correctAnswer.slice(0, 80)}".`);
     lines.push('אל תיתן לו את הפתרון — שאל שאלה אחת שתראה לו איפה זה נשבר.');
+  }
+
+  // The authored solution, for the MODEL's eyes only. A free-form ask reaches
+  // the model precisely when the local tutor abstained — the hard cases — and
+  // until now the model re-solved the question from scratch there, which can
+  // disagree with the verified steps in front of the student. With the steps
+  // in hand it guides along the written path instead. ~1,200 chars is ~500
+  // Haiku input tokens: under $0.001 per turn for the accuracy it buys.
+  const steps = focus.question?.solution.steps ?? [];
+  if (steps.length > 0) {
+    const body = steps.map((s, i) => `${i + 1}. ${s}`).join('\n').slice(0, 1200);
+    lines.push(
+      'הפתרון הכתוב והמאומת — בשבילך בלבד, לא לתלמיד. הנחה לפיו ואל תסטה ממנו. ' +
+        'אל תחשוף צעד שהתלמיד עוד לא הגיע אליו, ואל תצטט את התשובה הסופית:\n' +
+        body,
+    );
   }
   return lines.join('\n');
 }

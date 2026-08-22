@@ -13,6 +13,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { BLACKLIST, guardAgentRequest, logAgentUsage, type GuardOk } from './agents/guard';
+import { logCost } from './mathscan/cost';
 
 // ============================================================
 // Standard guard for every Pro-tier tutor endpoint.
@@ -91,11 +92,14 @@ export type CallTutorArgs = {
   maxTokens?: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema?: any;
+  /** Route name for the `[cost]` log line. Defaults to the model id, which
+   *  still separates Sonnet spend from Haiku spend when a caller omits it. */
+  label?: string;
 };
 
 export type CallTutorResult<T> = {
   data: T;
-  usage: { input: number; output: number };
+  usage: { input: number; output: number; cacheRead: number; cacheWrite: number; usd: number };
 };
 
 export async function callTutor<T = string>(
@@ -118,6 +122,12 @@ export async function callTutor<T = string>(
   const usage = {
     input: msg.usage?.input_tokens ?? 0,
     output: msg.usage?.output_tokens ?? 0,
+    cacheRead: msg.usage?.cache_read_input_tokens ?? 0,
+    cacheWrite: msg.usage?.cache_creation_input_tokens ?? 0,
+    // Every micro-route (why-wrong, hint-help, explain-simpler,
+    // similar-question, thinking) passes through here — one log line covers
+    // all of them, cache-aware.
+    usd: logCost(args.label ?? args.model, args.model, msg.usage),
   };
 
   const content = msg.content?.[0];

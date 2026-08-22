@@ -62,6 +62,7 @@ ${solution}
 
     const { data } = await callTutor<ExplainResponse>({
       apiKey,
+      label: 'explain-simpler',
       model: 'claude-haiku-4-5',
       maxTokens: 500,
       system,

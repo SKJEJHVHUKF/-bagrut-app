@@ -77,6 +77,7 @@ ${cleanHints.map((h, i) => `${i + 1}. ${h}`).join('\n')}
 
     const { data } = await callTutor<HintHelpResponse>({
       apiKey,
+      label: 'hint-help',
       model: 'claude-haiku-4-5',
       maxTokens: 600,
       system,

@@ -72,6 +72,11 @@ export type LocalAnswer = {
   /** Markdown + LaTeX, rendered by the same pipeline as a real reply. */
   text: string;
   kind: LocalAnswerKind;
+  /** True when the template's FALLBACK wording was used because a slot the
+   *  specific wording needed was empty (no hint, no sub-topic, …). Still a
+   *  correct, authored answer — but a less tailored one, and the measurement
+   *  that tells content authoring where to go next (scripts/test-tutor-voice). */
+  fallback?: boolean;
 };
 
 /** What the student asked for. */
@@ -110,7 +115,10 @@ export function classifyAsk(message: string): Ask | null {
 
   if (
     has(t, 'למה טעיתי', 'למה זה שגוי', 'למה התשובה שלי', 'מה הטעות שלי', 'איפה טעיתי') ||
-    (has(t, 'למה') && has(t, 'שגוי', 'שגויה', 'לא נכון', 'לא נכונה', 'טעות', 'טעיתי'))
+    (has(t, 'למה') && has(t, 'שגוי', 'שגויה', 'לא נכון', 'לא נכונה', 'טעות', 'טעיתי')) ||
+    // How students actually put it — each phrase below was a miss in the
+    // PHRASINGS corpus of scripts/test-tutor-voice.ts before it was added here.
+    has(t, 'לא בסדר', 'איפה הטעות', 'מה הטעות', 'עשיתי לא נכון', 'מה לא נכון')
   ) {
     return 'why-wrong';
   }
@@ -121,12 +129,15 @@ export function classifyAsk(message: string): Ask | null {
   // reads "מה הכי חשוב לדעת פה לבגרות?" (lib/tutor-presence.focusPrompts).
   // Without them the only button that produces this traffic fell through to the
   // API even though a perfectly good template was waiting for it.
-  if (has(t, 'מה חשוב', 'הכי חשוב', 'חשוב לזכור', 'חשוב לדעת', 'מה לזכור', 'סיכום'))
+  if (has(t, 'מה חשוב', 'הכי חשוב', 'חשוב לזכור', 'חשוב לדעת', 'מה לזכור', 'צריך לזכור', 'סיכום'))
     return 'key-points';
 
   if (
     has(t, 'תראה לי את הפתרון', 'הפתרון המלא', 'תפתור', 'תראה לי איך', 'פתרון מלא', 'תפתרי') ||
-    (has(t, 'פתרון') && has(t, 'תראה', 'תן', 'רוצה', 'תסביר'))
+    (has(t, 'פתרון') && has(t, 'תראה', 'תן', 'רוצה', 'תסביר')) ||
+    // "what's the answer" IS a request for the solution; the A/G templates
+    // decide how much of it a student who has not tried yet actually gets.
+    has(t, 'מה התשובה', 'מה הפתרון')
   ) {
     return 'full';
   }
@@ -137,7 +148,13 @@ export function classifyAsk(message: string): Ask | null {
   // the bare "לא הבנתי" (no object) stays a help ask below.
   if (
     has(t, 'תסביר', 'תסבירי', 'הסבר לי', 'הסבירי') ||
-    has(t, 'מה השאלה מבקשת', 'מה השאלה רוצה', 'מה מבקשים כאן', 'לא הבנתי את השאלה', 'מה זאת אומרת')
+    has(t, 'מה השאלה מבקשת', 'מה השאלה רוצה', 'מה מבקשים', 'לא הבנתי את השאלה', 'מה זאת אומרת') ||
+    // "מה זה אומר" / "מה הכוונה" only when they point at THIS question — bare,
+    // they also match "מה זה אומר שהסדרה מתכנסת", a definition question that
+    // belongs to the model, not to a template about the exercise on screen.
+    has(t, 'מה רוצים', 'מה זה אומר פה', 'מה זה אומר כאן', 'מה זה אומר בשאלה') ||
+    has(t, 'מה הכוונה פה', 'מה הכוונה כאן', 'מה הכוונה בשאלה') ||
+    t === 'מה זה אומר' || t === 'מה הכוונה'
   ) {
     return 'explain';
   }
@@ -147,7 +164,21 @@ export function classifyAsk(message: string): Ask | null {
   if (
     has(t, 'רמז', 'תרמז', 'רמזים') ||
     has(t, 'מאיפה מתחילים', 'איך מתחילים', 'מאיפה להתחיל', 'הצעד הראשון', 'איך ניגשים') ||
-    has(t, 'תקוע', 'תקועה', 'לא מצליח', 'לא מצליחה', 'נתקעתי', 'לא מבין', 'לא מבינה', 'לא הבנתי')
+    has(t, 'תקוע', 'תקועה', 'לא מצליח', 'לא מצליחה', 'נתקעתי', 'לא מבין', 'לא מבינה', 'לא הבנתי') ||
+    // Phrased the way students phrase it. Kept as PHRASES anchored to "this /
+    // here / now", never bare verbs: "מה עושים" alone also caught "מה עושים
+    // כשהדיסקרימיננטה שלילית" and "איך פותרים" caught "איך פותרים משוואה
+    // ריבועית עם פרמטר באופן כללי" — real method questions the model should
+    // get, which a hint about the question on screen would have hijacked.
+    // Same reasoning for "כיוון" (→ "תן לי כיוון"), "מאיפה" (→ "מאיפה אני
+    // מתחיל") and "איך מחשבים" (→ "…את זה"). The hijacks are asserted as
+    // API in scripts/test-tutor-voice.ts so they cannot creep back.
+    has(t, 'איך פותרים את זה', 'איך פותרים את ה', 'איך פותרים פה', 'איך פותרים כאן') ||
+    has(t, 'מה עושים עכשיו', 'מה עושים פה', 'מה עושים כאן', 'מה עושים עם זה', 'מה עושים בשלב') ||
+    has(t, 'עזרה', 'תעזור', 'תעזרי', 'לא יוצא לי') ||
+    has(t, 'לא יודע מה', 'לא יודעת מה', 'לא יודע איך', 'לא יודעת איך') ||
+    has(t, 'תן לי כיוון', 'תני לי כיוון', 'צריך כיוון', 'מאיפה אני מתחיל', 'מאיפה אני מתחילה') ||
+    has(t, 'איך מחשבים את', 'איך עושים את')
   ) {
     return 'help';
   }
@@ -596,7 +627,7 @@ export function answerLocally(
     if (filled) return { kind: tpl.kind, text: filled };
     // Rule 2: the fallback carries no optional slot, so it always renders.
     const fb = fill(tpl.f, slots);
-    if (fb) return { kind: tpl.kind, text: fb };
+    if (fb) return { kind: tpl.kind, text: fb, fallback: true };
   }
   return null;
 }

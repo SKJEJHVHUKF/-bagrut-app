@@ -121,7 +121,15 @@ export const MAX_MESSAGE_LEN = 800;
 export const MAX_SOLUTION_LEN = 4000;
 export const MAX_QUESTION_LEN = 2000;
 export const MAX_TOPIC_LEN = 80;
-export const MAX_CONTEXT_LEN = 2000;
+/**
+ * 4000, up from 2000. The bubble's context is focus (~800) + the authored
+ * solution the focus now carries for the model's guidance (≤1200, see
+ * renderFocusContext) + the student snapshot (≤1800). At 2000 the solution
+ * would have silently evicted the snapshot — and the truncation is from the
+ * END, so nothing would have said so. Cost of the extra room at Haiku rates:
+ * ≤2000 chars ≈ 800 input tokens ≈ $0.0008 per turn, uncached.
+ */
+export const MAX_CONTEXT_LEN = 4000;
 
 /** Turns of history replayed to the tutor (3 user/assistant pairs). */
 export const TUTOR_HISTORY_TURNS = 6;
@@ -195,6 +203,71 @@ export const MAX_TEACH_MESSAGE_LEN = 1500;
  *  the confusion arc stops feeling real and the cost stops being justified —
  *  the client shows the coverage report instead. */
 export const TEACH_MAX_TURNS = 5;
+
+// ============================================================
+// Exercise generation (/api/practice, /api/questions, generate-pool)
+// ============================================================
+
+/**
+ * GENERATOR → Haiku 4.5, verified, escalating to Sonnet 5 on a failed check.
+ *
+ * MEASURED (scripts/measure-generator.ts, 5 exercises x 3 models, 2026-08-17,
+ * max_tokens 3200). Every number below came off that run, not off a guess:
+ *
+ *   model              schema  checks ok  flagged  trunc  $/ex     s/ex
+ *   claude-sonnet-4-6   4/5     20/21      1/5     1/5    $0.0379  38.3
+ *   claude-sonnet-5     5/5     32/34      1/5     0/5    $0.0269  27.4
+ *   claude-haiku-4-5    5/5     21/24      1/5     0/5    $0.0115  18.3
+ *
+ * WHY THIS MOVED OFF SONNET 4.6, which is what both routes used to send:
+ *   • It was the ONLY model that truncated at 3,200 tokens (1 in 5), and at
+ *     38s/exercise it runs uncomfortably close to Vercel Hobby's 60s function
+ *     cap — a production risk that predates this change.
+ *   • 3.3x the cost of Haiku for no measured quality lead: all three models
+ *     flagged exactly ONE exercise in five.
+ *   • Both routes passed `output_config.format` to it behind an `as any` cast
+ *     while this same file documented that Sonnet 4.6 does not support
+ *     structured outputs.
+ *
+ * WHY HAIKU IS SAFE HERE and would not have been six months ago: nothing used
+ * to check the model's arithmetic. lib/verify-generated.ts now runs the model's
+ * own self-check through mathjs before a student ever sees the exercise, so
+ * Haiku's slightly looser decimal work (88% vs 94-95% of individual checks) is
+ * caught rather than shipped. The verifier is what buys the cheap tier.
+ *
+ * ⚠️ Re-run `npm run measure:generator` before changing any of this.
+ */
+export const GENERATOR_MODEL = 'claude-haiku-4-5';
+
+/**
+ * Second attempt when the cheap model's own self-check fails mathjs.
+ *
+ * Sonnet 5 rather than 4.6: it was the only model with zero truncations, it
+ * emitted the most checks (34 vs 21-24 — it verifies its own work hardest), and
+ * it is cheaper than 4.6 at $2/$10 introductory pricing.
+ *
+ * Expected blended cost at the measured 1-in-5 flag rate:
+ *   $0.0115 + 0.2 x $0.0269 = ~$0.017/exercise, against $0.0379 today.
+ */
+export const GENERATOR_ESCALATION_MODEL = 'claude-sonnet-5';
+
+/**
+ * ⚠️ Sonnet 5 runs ADAPTIVE THINKING when `thinking` is omitted (see
+ * `graderThinking` above for the same trap on the grader). In the first
+ * measurement run this scored it 0/5 — every response hit `stop_reason:
+ * max_tokens` with thinking having consumed the entire budget before any JSON
+ * was emitted. Generating against a fixed schema is not a reasoning task.
+ */
+export const GENERATOR_ESCALATION_OPTS = { thinking: { type: 'disabled' as const } };
+
+/**
+ * 3,200, up from the 2,000 both routes used.
+ *
+ * MEASURED: at 2,000 with the self-check field added, 5 of 9 runs truncated
+ * across all three models. Raising the cap is nearly free — billing is per
+ * token GENERATED, not per cap — and a truncated response costs a full retry.
+ */
+export const GENERATOR_MAX_TOKENS = 3200;
 
 /** `ai_generation_log.kind` values written by these routes. `kind` is plain
  *  text with no CHECK constraint, so adding a value needs no SQL migration.

@@ -31,9 +31,9 @@ const store = new Map<string, string>();
   globalThis as unknown as { window: { localStorage: unknown } }
 ).window.localStorage;
 
-import { allLessonKeys, getSubTopics } from '../content/lessons';
+import { allLessonKeys, getSubTopics, getLesson, getSubTopic } from '../content/lessons';
 import { answerLocally, classifyAsk, type LocalAnswerKind } from '../lib/tutor-local';
-import { focusPrompts, type TutorFocus } from '../lib/tutor-presence';
+import { focusPrompts, partAsQuestion, type TutorFocus } from '../lib/tutor-presence';
 import type { AnswerDiagnosis } from '../lib/answer-check';
 
 let failures = 0;
@@ -125,6 +125,80 @@ for (const a of ASKS) {
   checks++;
 }
 
+// ===== how students actually phrase the six asks =====
+// The chips above are the app's own wording. Students type their own. Each
+// line is a realistic phrasing with the ask it should resolve to — or null
+// when abstaining is RIGHT (a genuinely new question belongs to the model).
+// Every line is asserted: the vocabulary was grown FROM this list (16 of 35
+// missed before), and a phrase that stops classifying is a student silently
+// routed to a paid call — the regression this file exists to catch. Add the
+// phrase here first, then the keyword; never the other way round.
+const PHRASINGS: { text: string; expect: ReturnType<typeof classifyAsk> }[] = [
+  // help
+  { text: 'לא הבנתי את סעיף ב', expect: 'help' },
+  { text: 'איך פותרים את זה?', expect: 'help' },
+  { text: 'מה עושים עכשיו?', expect: 'help' },
+  { text: 'אפשר עזרה?', expect: 'help' },
+  { text: 'תעזור לי בבקשה', expect: 'help' },
+  { text: 'אני לא יודע מה לעשות', expect: 'help' },
+  { text: 'זה לא יוצא לי', expect: 'help' },
+  { text: 'איך ניגשים לסעיף ג', expect: 'help' },
+  { text: 'תן לי כיוון', expect: 'help' },
+  { text: 'רק רמז קטן', expect: 'help' },
+  { text: 'מאיפה אני מתחיל', expect: 'help' },
+  { text: 'איך מתחילים את זה', expect: 'help' },
+  { text: 'נתקעתי בסעיף א', expect: 'help' },
+  { text: 'איך מחשבים את זה', expect: 'help' },
+  // why-wrong
+  { text: 'למה זה לא נכון?', expect: 'why-wrong' },
+  { text: 'מה לא בסדר בתשובה שלי', expect: 'why-wrong' },
+  { text: 'איפה הטעות', expect: 'why-wrong' },
+  { text: 'למה קיבלתי לא נכון', expect: 'why-wrong' },
+  { text: 'מה עשיתי לא נכון', expect: 'why-wrong' },
+  // full
+  { text: 'תראה לי את הפתרון', expect: 'full' },
+  { text: 'תפתור לי את זה', expect: 'full' },
+  { text: 'מה התשובה?', expect: 'full' },
+  { text: 'תן לי את הפתרון המלא', expect: 'full' },
+  // formulas
+  { text: 'איזה נוסחה?', expect: 'formulas' },
+  { text: 'מה הנוסחה של זה', expect: 'formulas' },
+  // key-points
+  { text: 'מה חשוב פה', expect: 'key-points' },
+  { text: 'מה צריך לזכור', expect: 'key-points' },
+  // explain
+  { text: 'תסביר לי שוב', expect: 'explain' },
+  { text: 'לא הבנתי את השאלה', expect: 'explain' },
+  { text: 'מה רוצים ממני פה', expect: 'explain' },
+  { text: 'מה זה אומר', expect: 'explain' },
+  // genuinely new — the model's job
+  { text: 'האם אפשר להשתמש בנוסחת הסכום גם כשהסדרה אינסופית?', expect: null },
+  { text: 'מה ההבדל בין סדרה חשבונית להנדסית', expect: null },
+  { text: 'כמה זמן לוקח לפתור שאלה כזאת בבגרות', expect: null },
+  { text: 'זה אמור לצאת 5 לא?', expect: null },
+  // …and the method/definition questions the first vocabulary pass HIJACKED
+  // into a local hint. A bare verb ("מה עושים", "איך פותרים", "מה זה אומר")
+  // matches these; only the this/here/now-anchored phrases may.
+  { text: 'מה עושים כשהדיסקרימיננטה שלילית', expect: null },
+  { text: 'איך פותרים משוואה ריבועית עם פרמטר באופן כללי', expect: null },
+  { text: 'מה זה אומר שהסדרה מתכנסת', expect: null },
+  { text: 'מה הכוונה בסדרה חסומה', expect: null },
+  { text: 'מה כיוון הווקטור AB', expect: null },
+  { text: 'מאיפה הגיע ה-2 בשורה השלישית', expect: null },
+  { text: 'איך מחשבים נגזרת של ln בכלל', expect: null },
+  { text: 'בעזרת איזו שיטה פותרים מערכת עם פרמטר', expect: null },
+];
+let phrasingMisses = 0;
+for (const p of PHRASINGS) {
+  const got = classifyAsk(p.text);
+  if (got !== p.expect) {
+    phrasingMisses++;
+    bad(`ניסוח "${p.text}" → ${got ?? 'API'}, ציפיתי ל-${p.expect ?? 'API'}`);
+  }
+  checks++;
+}
+console.log(`ניסוחי תלמידים: ${PHRASINGS.length - phrasingMisses}/${PHRASINGS.length} מסווגים כמצופה`);
+
 const DIAGS: (AnswerDiagnosis | undefined)[] = [
   undefined,
   { kind: 'sign-flip' },
@@ -204,6 +278,81 @@ for (const key of allLessonKeys()) {
 }
 
 void seen;
+// ===== bagrut PARTS — the same sweep, through partAsQuestion =====
+// Before the adapter every part sat in state I ("I can see a question but not
+// its breakdown") and every ask on it fell to the API. This renders each part
+// in each state it can be in on the card — before answering, after a wrong
+// answer (each diagnosis shape), after the solution is revealed — and at both
+// ends of the hint ladder (no hint seen / every hint seen, where the next rung
+// MUST be the rule line, never a paid call). The per-topic line at the end is
+// the measured local-answer rate for parts; it is a number, not a promise.
+let partsRendered = 0;
+let partsMissing = 0;
+const partsByTopic = new Map<string, { ok: number; miss: number; fb: number }>();
+for (const key of allLessonKeys()) {
+  if (key.subject !== 'math5') continue;
+  const L = getLesson(key.subject, key.topic);
+  for (const b of L?.bagrutQuestions ?? []) {
+    const st = b.subTopicId ? getSubTopic(key.subject, key.topic, b.subTopicId) : null;
+    for (const p of b.parts) {
+      for (const shown of [0, p.hints.length]) {
+        const q = partAsQuestion(p, { questionId: b.id, difficulty: b.difficulty, hintsShown: shown });
+        const base: TutorFocus = {
+          where: `שאלת בגרות · ${key.topic} · סעיף ${p.label}`,
+          topic: key.topic,
+          questionText: p.prompt,
+          question: q,
+          ...(st ? { subTopic: st } : {}),
+        };
+        const variants: { name: string; f: TutorFocus }[] = [
+          { name: `לפני מענה · ${shown} רמזים נצפו`, f: base },
+          ...DIAGS.map((d) => ({
+            name: `טעה · ${d?.kind ?? 'ללא אבחון'} · ${shown} רמזים`,
+            f: { ...base, wrongAnswer: 'x=3', ...(d ? { answerDiagnosis: d } : {}) },
+          })),
+          { name: `אחרי חשיפה · ${shown} רמזים`, f: { ...base, wrongAnswer: 'x=3', correctAnswer: p.solution.final_answer } },
+        ];
+        const tally = partsByTopic.get(key.topic) ?? { ok: 0, miss: 0, fb: 0 };
+        for (const v of variants) {
+          for (const ask of ASKS) {
+            const served: LocalAnswerKind[] = [];
+            for (let turn = 0; turn < 3; turn++) {
+              const a = answerLocally(ask, v.f, served);
+              if (!a) {
+                partsMissing++;
+                tally.miss++;
+                if (partsMissing <= 5) console.log(`  ↯ סעיף ללא תשובה: ${q.id} · ${v.name} · "${ask}" (תור ${turn + 1})`);
+                break;
+              }
+              partsRendered++;
+              tally.ok++;
+              if (a.fallback) tally.fb++;
+              if (!served.includes(a.kind)) served.push(a.kind);
+              inspect(`${q.id}·${v.name}·${ask.slice(0, 12)}`, a.text);
+              if (ask !== 'תן לי רמז' && ask !== 'מאיפה מתחילים?') break;
+            }
+          }
+        }
+        partsByTopic.set(key.topic, tally);
+      }
+    }
+  }
+}
+rendered += partsRendered;
+missing += partsMissing;
+// "local" is the cost number; "tailored" is the quality number. A fallback is
+// still authored wording at $0, but it is the generic sentence — the share of
+// them per topic says where the next content pass (hints, sub-topic key
+// points) buys the most.
+console.log('\nסעיפי בגרות — תשובות מקומיות לפי נושא (מקומי · מתוכן מותאם):');
+for (const [topic, t] of [...partsByTopic.entries()].sort((a, b) => b[1].ok + b[1].miss - (a[1].ok + a[1].miss))) {
+  const total = t.ok + t.miss;
+  const tailored = t.ok ? Math.round(((t.ok - t.fb) / t.ok) * 100) : 0;
+  console.log(`  ${topic.padEnd(22)} ${String(t.ok).padStart(5)}/${String(total).padEnd(5)} (${Math.round((t.ok / total) * 100)}%) · מותאם ${tailored}%`);
+}
+const partsTotal = partsRendered + partsMissing;
+console.log(`  סה"כ סעיפים: ${partsRendered}/${partsTotal} מקומי (${partsTotal ? Math.round((partsRendered / partsTotal) * 100) : 0}%) · ${partsMissing} נפילות ל-API`);
+
 console.log(`\nרונדרו ${rendered} תשובות · ${checks} בדיקות · ${missing} נפילות ל-API`);
 console.log(`${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
 process.exit(failures === 0 ? 0 : 1);

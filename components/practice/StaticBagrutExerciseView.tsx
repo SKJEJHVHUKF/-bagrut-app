@@ -168,8 +168,16 @@ export function StaticBagrutExerciseView({
             // Reset card state when switching questions by including index in key.
             key={`${current.id}-${i}`}
             part={p}
+            subject={subject}
             context={current.context}
             topic={topic}
+            // Identity for the per-part tutor focus: the bubble answers from
+            // this part's own hints/steps once the student touches it, and the
+            // sub-topic gives it the "must remember" rung when a part is too
+            // short for a safe first step.
+            questionId={current.id}
+            subTopicId={current.subTopicId}
+            difficulty={current.difficulty}
             onDone={() => onPartDone(i, current.parts.length)}
           />
         ))}
