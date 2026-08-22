@@ -24,7 +24,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, KeyRound, LifeBuoy, ArrowLeft, RotateCcw, Wrench } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
-import { AnswerInput, AnswerParts } from '@/components/practice/AnswerInput';
+import { AnswerInput, AnswerParts, describeParts } from '@/components/practice/AnswerInput';
 import { MistakeTagger } from '@/components/practice/MistakeTagger';
 import { AITutorActions } from '@/components/practice/AITutorActions';
 import { buttonTap } from '@/lib/animations';
@@ -89,6 +89,9 @@ export function QuestionRunnerCard({
   const [parts, setParts] = useState<string[]>(() => (q.answerLabels ?? []).map(() => ''));
   const typed = labels ? labels.map((l, i) => `${l} = ${(parts[i] ?? '').trim()}`).join(', ') : input;
   const filled = labels ? parts.every((p) => p.trim()) : input.trim().length > 0;
+  // Boxes already graded right. They stay right (green, not editable), so a
+  // retry only has to fix the box that missed.
+  const [lockedParts, setLockedParts] = useState<boolean[]>(() => (q.answerLabels ?? []).map(() => false));
   const [tries, setTries] = useState(0);
   const [firstTryCorrect, setFirstTryCorrect] = useState<boolean | null>(null);
   const [revealed, setRevealed] = useState(false);
@@ -237,17 +240,24 @@ export function QuestionRunnerCard({
 
   // Wrong: on the FIRST miss open the gentlest unopened rung and offer one free
   // retry; on the second, reveal the full solution.
-  function gradeWrong() {
+  //
+  // `progressed`: a labelled answer that got at least one MORE box right than
+  // before. That is progress, not a strike — the right boxes are kept and the
+  // student gets another go at the wrong one before the solution is revealed.
+  function gradeWrong(progressed = false) {
     openNextRungAutomatically();
+    const reveal = tries >= 2 && !progressed;
     // Mirrors the reveal condition below so the announcement never promises a
     // retry the card is not actually offering.
     announce(
-      tries >= 2
+      reveal
         ? 'תשובה שגויה. הפתרון המלא נחשף.'
-        : 'תשובה שגויה. נפתחה עזרה נוספת — אפשר לנסות שוב.',
+        : progressed
+          ? 'תשובה חלקית. התיבות הנכונות נשמרו, אפשר לתקן את השאר ולנסות שוב.'
+          : 'תשובה שגויה. נפתחה עזרה נוספת — אפשר לנסות שוב.',
       'assertive',
     );
-    if (tries >= 2) setRevealed(true);
+    if (reveal) setRevealed(true);
   }
 
   /** After a miss, give the next rung of help without being asked — but only
@@ -300,6 +310,10 @@ export function QuestionRunnerCard({
     // Unparseable is NOT a wrong answer — ask them to rewrite it, don't punish.
     if (res.verdict === 'unparseable' || res.verdict === 'manual') return;
     const correct = res.verdict === 'correct';
+    // Keep the boxes that were right (`parts` is only set on a wrong verdict).
+    const boxes = res.parts;
+    const progressed = !!boxes && boxes.some((v, i) => v === 'correct' && !lockedParts[i]);
+    if (boxes) setLockedParts(lockedParts.map((l, i) => l || boxes[i] === 'correct'));
     const nextTries = tries + 1;
     setTries(nextTries);
     if (nextTries === 1) {
@@ -309,7 +323,7 @@ export function QuestionRunnerCard({
       logFirst(correct, typed, undefined, false);
     }
     if (correct) gradeCorrect();
-    else gradeWrong();
+    else gradeWrong(progressed);
   }
 
   function retryOpen() {
@@ -402,9 +416,17 @@ export function QuestionRunnerCard({
               onChange={setParts}
               disabled={firstTryCorrect === true}
               wrong={check?.parts?.map((v) => v === 'wrong')}
+              locked={lockedParts}
             />
           ) : (
             <AnswerInput value={input} onChange={setInput} type="expression" disabled={firstTryCorrect === true} />
+          )}
+          {/* Partly right: say which box is right and which to fix — instead of
+              a bare "wrong" that reads as "everything is wrong". */}
+          {labels && check?.parts?.includes('correct') && (
+            <div className="text-xs text-emerald-800 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2">
+              {describeParts(labels, check.parts)}
+            </div>
           )}
           {check?.diagnosis?.kind === 'swapped' && (
             <div className="text-xs text-amber-700 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
@@ -416,7 +438,7 @@ export function QuestionRunnerCard({
               לא הצלחתי לקרוא את התשובה — נסה לכתוב אותה כמספר או ביטוי (למשל <span dir="ltr">2+3i</span> או <span dir="ltr">x&gt;4</span>).
             </div>
           )}
-          {check && check.verdict !== 'unparseable' && check.readAs && (
+          {check && check.verdict !== 'unparseable' && check.readAs && !check.parts?.includes('correct') && (
             <div className="text-[11px] text-slate-500">
               קראתי את התשובה שלך כ־<span dir="ltr" className="font-mono">{check.readAs}</span>
             </div>

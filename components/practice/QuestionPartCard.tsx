@@ -16,7 +16,7 @@ import {
   Camera,
 } from 'lucide-react';
 import { MathText } from './MathText';
-import { AnswerInput, AnswerParts } from './AnswerInput';
+import { AnswerInput, AnswerParts, describeParts } from './AnswerInput';
 import { AITutorActions } from './AITutorActions';
 import { SolutionAudit } from './SolutionAudit';
 import { checkAnswer as runDeterministicCheck, checkAnswerParts, type AnswerSpec } from '@/lib/answer-check';
@@ -93,6 +93,9 @@ export function QuestionPartCard({
   const labels = part.answerLabels;
   const [parts, setParts] = useState<string[]>(() => (part.answerLabels ?? []).map(() => ''));
   const [wrongParts, setWrongParts] = useState<boolean[] | undefined>();
+  // Boxes already graded right stay right (green, not editable), so a retry
+  // only has to fix the box that missed.
+  const [lockedParts, setLockedParts] = useState<boolean[]>(() => (part.answerLabels ?? []).map(() => false));
   const typed = labels ? labels.map((l, i) => `${l} = ${(parts[i] ?? '').trim()}`).join(', ') : answer;
   const filled = labels ? parts.every((p) => p.trim()) : answer.trim().length > 0;
   const [hintsShown, setHintsShown] = useState(0);
@@ -283,7 +286,17 @@ export function QuestionPartCard({
         return;
       }
       if (det.verdict === 'wrong') {
-        setWrongParts(det.parts?.map((v) => v === 'wrong'));
+        const boxes = det.parts;
+        setWrongParts(boxes?.map((v) => v === 'wrong'));
+        // Partly right: keep the right boxes and let the student fix the rest.
+        // Like the LLM's 'partial', it is not final — nothing is recorded until
+        // the part is finally right, or self-assessed against the solution.
+        if (labels && boxes?.includes('correct')) {
+          setLockedParts((prev) => prev.map((l, i) => l || boxes[i] === 'correct'));
+          applyResult({ verdict: 'partial', feedback: describeParts(labels, boxes), tip: '' });
+          setChecking(false);
+          return;
+        }
         applyResult({
           verdict: 'wrong',
           feedback:
@@ -396,6 +409,7 @@ export function QuestionPartCard({
                 onChange={setParts}
                 disabled={answerLocked}
                 wrong={wrongParts}
+                locked={lockedParts}
               />
             ) : (
               <AnswerInput
