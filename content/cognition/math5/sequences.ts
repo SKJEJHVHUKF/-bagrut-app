@@ -38,7 +38,7 @@ export const sequencesCognition: TopicCognitionMap = {
   misconceptions: [
     {
       id: "ar-off-by-one-high",
-      title: "הכפלת $d$ ב-$n$ במקום ב-$n-1$",
+      title: "הכפלת $d$ בנעלם $n$ במקום בביטוי $n-1$",
       skill: "ar-nth-term",
       insight: "אתה מחשב $a_n = a_1 + n \\cdot d$ במקום $a_1 + (n-1) \\cdot d$, וכך מקבל איבר אחד יותר מדי.",
       remedy: { subTopicId: "ar-general-term" },
@@ -50,7 +50,7 @@ export const sequencesCognition: TopicCognitionMap = {
       id: "ar-off-by-one-low",
       title: "עצירה איבר אחד מוקדם בסדרה חשבונית",
       skill: "ar-nth-term",
-      insight: "אתה מחשב $a_{n-1}$ במקום $a_n$ — מפסיק להוסיף את $d$ צעד אחד לפני הסוף.",
+      insight: "אתה מחשב $a_{n-1}$ במקום $a_n$, מפסיק להוסיף את $d$ צעד אחד לפני הסוף.",
       remedy: { subTopicId: "ar-general-term" },
       triggers: [
         { questionId: "seq-sub-ar-001", optionIndex: 2 },
@@ -59,9 +59,9 @@ export const sequencesCognition: TopicCognitionMap = {
     },
     {
       id: "ar-treated-as-proportional",
-      title: "הכפלת $a_1$ ב-$n$ כאילו הסדרה פרופורציונלית",
+      title: "הכפלת $a_1$ בנעלם $n$ כאילו הסדרה פרופורציונלית",
       skill: "ar-nth-term",
-      insight: "אתה מחשב $a_n = a_1 \\cdot n$ במקום $a_1 + (n-1) \\cdot d$ — מתייחס לסדרה כאילו היא כפולות של הראשון.",
+      insight: "אתה מחשב $a_n = a_1 \\cdot n$ במקום $a_1 + (n-1) \\cdot d$, מתייחס לסדרה כאילו היא כפולות של הראשון.",
       remedy: { subTopicId: "ar-general-term" },
       triggers: [
         { questionId: "seq-sub-ar-001", optionIndex: 3 },
@@ -80,7 +80,7 @@ export const sequencesCognition: TopicCognitionMap = {
     },
     {
       id: "ge-off-by-one-high",
-      title: "הכפלה ב-$q^n$ במקום ב-$q^{n-1}$ בסדרה הנדסית",
+      title: "הכפלה פי $q^n$ במקום בביטוי $q^{n-1}$ בסדרה הנדסית",
       skill: "ge-nth-term",
       insight: "אתה מחשב $a_n = a_1 \\cdot q^n$ במקום $a_1 \\cdot q^{n-1}$, וכך מקבל איבר אחד גבוה מדי.",
       remedy: { subTopicId: "ge-general-term" },
@@ -92,7 +92,7 @@ export const sequencesCognition: TopicCognitionMap = {
       id: "ge-treated-as-arithmetic",
       title: "טיפול בסדרה הנדסית כחשבונית",
       skill: "ge-nth-term",
-      insight: "אתה מוסיף הפרש קבוע במקום להכפיל ביחס $q$ — מחליף בין הסדרות.",
+      insight: "אתה מוסיף הפרש קבוע במקום להכפיל ביחס $q$, מחליף בין הסדרות.",
       remedy: { subTopicId: "ge-general-term" },
       triggers: [
         { questionId: "seq-sub-ge-001", optionIndex: 3 },
@@ -102,7 +102,7 @@ export const sequencesCognition: TopicCognitionMap = {
       id: "ge-mean-arithmetic-instead",
       title: "שימוש בממוצע חשבוני במקום הנדסי",
       skill: "ge-mean",
-      insight: "אתה מחשב $\\frac{a+b}{2}$ כשמבקשים ממוצע הנדסי — צריך $\\sqrt{a \\cdot b}$.",
+      insight: "אתה מחשב $\\frac{a+b}{2}$ כשמבקשים ממוצע הנדסי. צריך $\\sqrt{a \\cdot b}$.",
       remedy: { subTopicId: "ge-general-term" },
       triggers: [
         { questionId: "seq-sub-ge-004", optionIndex: 1 },
@@ -122,7 +122,7 @@ export const sequencesCognition: TopicCognitionMap = {
       id: "inf-convergence-sign-not-magnitude",
       title: "שיפוט התכנסות לפי סימן $q$ ולא לפי ערכו המוחלט",
       skill: "inf-convergence-condition",
-      insight: "אתה חושב שסדרה מתכנסת כאשר $q$ חיובי, אבל הקובע הוא $|q| < 1$ — לא הסימן.",
+      insight: "אתה חושב שסדרה מתכנסת כאשר $q$ חיובי, אבל הקובע הוא $|q| < 1$, לא הסימן.",
       remedy: { subTopicId: "ge-infinite" },
       triggers: [
         { questionId: "seq-sub-inf-001", optionIndex: 2 },
@@ -132,7 +132,7 @@ export const sequencesCognition: TopicCognitionMap = {
       id: "inf-formula-outside-domain",
       title: "הצבה עיוורת בנוסחת הסכום האינסופי מחוץ לתחום",
       skill: "inf-sum-formula",
-      insight: "אתה מציב בנוסחה $\\frac{a_1}{1-q}$ גם כאשר $|q| \\geq 1$ — הנוסחה תקפה רק כשהסדרה מתכנסת.",
+      insight: "אתה מציב בנוסחה $\\frac{a_1}{1-q}$ גם כאשר $|q| \\geq 1$, הנוסחה תקפה רק כשהסדרה מתכנסת.",
       remedy: { subTopicId: "ge-infinite" },
       triggers: [
         { questionId: "seq-sub-inf-004", optionIndex: 1 },
@@ -151,9 +151,9 @@ export const sequencesCognition: TopicCognitionMap = {
     },
     {
       id: "app-percent-decimal-shift",
-      title: "הזזת הנקודה העשרונית ב-$\\%$ בכיוון שגוי",
+      title: "הזזת הנקודה העשרונית בביטוי $\\%$ בכיוון שגוי",
       skill: "app-compound-interest",
-      insight: "אתה ממיר $5\\%$ ל-$0.5$ במקום $0.05$, וכופל ב-$1.5$ במקום ב-$1.05$.",
+      insight: "אתה ממיר $5\\%$ למספר $0.5$ במקום $0.05$, וכופל במספר $1.5$ במקום במספר $1.05$.",
       remedy: { subTopicId: "sequences-applications" },
       triggers: [
         { questionId: "seq-sub-app-001", optionIndex: 2 },
@@ -163,7 +163,7 @@ export const sequencesCognition: TopicCognitionMap = {
       id: "ind-base-confused-with-hypothesis",
       title: "בלבול בין שלב הבסיס להנחת האינדוקציה",
       skill: "ind-base-step",
-      insight: "אתה מזהה את הנחת האינדוקציה ($n=k$) כשלב הבסיס — אלה שני שלבים שונים לחלוטין.",
+      insight: "אתה מזהה את הנחת האינדוקציה ($n=k$) כשלב הבסיס. אלה שני שלבים שונים לחלוטין.",
       remedy: { subTopicId: "induction" },
       triggers: [
         { questionId: "seq-sub-ind-001", optionIndex: 1 },
@@ -173,7 +173,7 @@ export const sequencesCognition: TopicCognitionMap = {
       id: "ind-base-confused-with-step",
       title: "בלבול בין שלב הבסיס לצעד האינדוקציה",
       skill: "ind-base-step",
-      insight: "אתה מזהה את צעד האינדוקציה ($k \\Rightarrow k+1$) כשלב הבסיס — הבסיס הוא רק הבדיקה ל-$n=1$.",
+      insight: "אתה מזהה את צעד האינדוקציה ($k \\Rightarrow k+1$) כשלב הבסיס. הבסיס הוא רק הבדיקה עבור $n=1$.",
       remedy: { subTopicId: "induction" },
       triggers: [
         { questionId: "seq-sub-ind-001", optionIndex: 2 },
@@ -183,7 +183,7 @@ export const sequencesCognition: TopicCognitionMap = {
       id: "ind-step-sufficient-without-base",
       title: "הצעד בלבד מספיק להוכחה באינדוקציה",
       skill: "ind-structure",
-      insight: "אתה חושב שהוכחת הצעד מספיקה גם בלי שלב הבסיס — בלי בסיס אין נקודת פתיחה לשרשרת.",
+      insight: "אתה חושב שהוכחת הצעד מספיקה גם בלי שלב הבסיס, בלי בסיס אין נקודת פתיחה לשרשרת.",
       remedy: { subTopicId: "induction" },
       triggers: [
         { questionId: "seq-sub-ind-002", optionIndex: 1 },
@@ -194,7 +194,7 @@ export const sequencesCognition: TopicCognitionMap = {
       id: "ind-step-target-wrong-factor",
       title: "אי-עדכון גורם בנוסחה בצעד האינדוקציה",
       skill: "ind-inductive-step",
-      insight: "אתה מציב $k+1$ בחלק מהגורמים בנוסחה אבל שוכח לעדכן את כולם — כל מופע של $n$ חייב להפוך ל-$k+1$.",
+      insight: "אתה מציב $k+1$ בחלק מהגורמים בנוסחה אבל שוכח לעדכן את כולם. כל מופע של $n$ חייב להפוך להיות $k+1$.",
       remedy: { subTopicId: "induction" },
       triggers: [
         { questionId: "seq-sub-ind-005", optionIndex: 1 },
