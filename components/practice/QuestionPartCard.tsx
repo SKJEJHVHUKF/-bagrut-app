@@ -16,10 +16,10 @@ import {
   Camera,
 } from 'lucide-react';
 import { MathText } from './MathText';
-import { AnswerInput } from './AnswerInput';
+import { AnswerInput, AnswerParts } from './AnswerInput';
 import { AITutorActions } from './AITutorActions';
 import { SolutionAudit } from './SolutionAudit';
-import { checkAnswer as runDeterministicCheck, type AnswerSpec } from '@/lib/answer-check';
+import { checkAnswer as runDeterministicCheck, checkAnswerParts, type AnswerSpec } from '@/lib/answer-check';
 import { sparkle, celebrateCorrect } from '@/lib/confetti';
 import { buttonTap } from '@/lib/animations';
 import {
@@ -44,6 +44,9 @@ export type QuestionPart = {
    *  present (value/set), the verdict comes from numeric equivalence, NOT
    *  from a model's judgement. Absent or `manual` falls back to the LLM. */
   expected?: AnswerSpec;
+  /** One labelled box per quantity asked for, ordered against
+   *  `expected.values` — see PracticeQuestion.answerLabels. */
+  answerLabels?: string[];
 };
 
 type Verdict = 'correct' | 'partial' | 'wrong';
@@ -83,6 +86,15 @@ export function QuestionPartCard({
 }) {
   const [open, setOpen] = useState(true);
   const [answer, setAnswer] = useState('');
+  // A part that asks for several named quantities ("מצא את $d$ ואת $a_1$")
+  // gets one labelled box each (part.answerLabels). `typed` is the whole
+  // answer as one string for the logs, the tutor and the LLM fallback; grading
+  // reads the boxes. `wrongParts` outlines the boxes that missed.
+  const labels = part.answerLabels;
+  const [parts, setParts] = useState<string[]>(() => (part.answerLabels ?? []).map(() => ''));
+  const [wrongParts, setWrongParts] = useState<boolean[] | undefined>();
+  const typed = labels ? labels.map((l, i) => `${l} = ${(parts[i] ?? '').trim()}`).join(', ') : answer;
+  const filled = labels ? parts.every((p) => p.trim()) : answer.trim().length > 0;
   const [hintsShown, setHintsShown] = useState(0);
   const [stepsShown, setStepsShown] = useState(-1);
   const [revealedFinal, setRevealedFinal] = useState(false);
@@ -150,7 +162,7 @@ export function QuestionPartCard({
       toast.success('כל הכבוד! 🎯', { description: 'סימנת שפתרת נכון', duration: 2000 });
     } else {
       toast.info('סומן — כדאי לחזור על הסעיף הזה', { duration: 2000 });
-      logWrong(answer);
+      logWrong(typed);
     }
     onSelfAssess?.(correct);
   }
@@ -242,14 +254,15 @@ export function QuestionPartCard({
   }
 
   async function checkAnswer() {
-    if (!answer.trim() || checking) return;
+    if (!filled || checking) return;
     setChecking(true);
     setCheckError(null);
     setCheckResult(null);
+    setWrongParts(undefined);
     // Capture the answer NOW so the tutor's "why wrong?" panel can
     // reference what the student actually typed, even if they edit
     // the input afterwards.
-    setLastUserAnswer(answer);
+    setLastUserAnswer(typed);
 
     // ===== 1) DETERMINISTIC CHECK FIRST (free, instant, authoritative) =====
     // For parts with a machine-checkable spec (value / set), the verdict is
@@ -259,7 +272,7 @@ export function QuestionPartCard({
     // model is only ever asked to *explain* a mistake, never to *judge*.
     const spec = part.expected;
     if (spec && spec.kind !== 'manual') {
-      const det = runDeterministicCheck(answer, spec);
+      const det = labels ? checkAnswerParts(parts, spec) : runDeterministicCheck(answer, spec);
       if (det.verdict === 'correct') {
         applyResult({
           verdict: 'correct',
@@ -270,14 +283,18 @@ export function QuestionPartCard({
         return;
       }
       if (det.verdict === 'wrong') {
+        setWrongParts(det.parts?.map((v) => v === 'wrong'));
         applyResult({
           verdict: 'wrong',
-          feedback: det.readAs
-            ? `קראתי את התשובה שלך כ-$${det.readAs}$ — היא אינה שקולה לתשובה הנכונה. בדוק אם פספסת חלק מהפתרון או טעית בסימן.`
-            : 'התשובה אינה שקולה לתשובה הנכונה. בדוק אם פספסת חלק מהפתרון או טעית בסימן.',
+          feedback:
+            det.diagnosis?.kind === 'swapped'
+              ? 'הערכים עצמם נכונים, אבל התחלפו ביניהם — בדוק איזה ערך שייך לאיזו תיבה.'
+              : det.readAs
+                ? `קראתי את התשובה שלך כ-$${det.readAs}$ — היא אינה שקולה לתשובה הנכונה. בדוק אם פספסת חלק מהפתרון או טעית בסימן.`
+                : 'התשובה אינה שקולה לתשובה הנכונה. בדוק אם פספסת חלק מהפתרון או טעית בסימן.',
           tip: '',
         });
-        logWrong(answer);
+        logWrong(typed);
         setChecking(false);
         return;
       }
@@ -295,7 +312,7 @@ export function QuestionPartCard({
         body: JSON.stringify({
           question: part.prompt,
           correctAnswer: part.solution.final_answer,
-          userAnswer: answer,
+          userAnswer: typed,
           context: context ?? '',
           topic: topic ?? '',
         }),
@@ -313,7 +330,7 @@ export function QuestionPartCard({
       const data = (await res.json()) as CheckResult & { category?: string };
       applyResult(data);
       if (data.verdict === 'wrong') {
-        logWrong(answer, toErrorCategory(data.category));
+        logWrong(typed, toErrorCategory(data.category));
       }
     } catch (e) {
       setCheckError(e instanceof Error ? e.message : String(e));
@@ -325,7 +342,7 @@ export function QuestionPartCard({
   const totalSteps = part.solution.steps.length;
   const onLastStep = stepsShown === totalSteps - 1;
   const answerLocked = checkResult?.verdict === 'correct' || onLastStep;
-  const canCheck = answer.trim().length > 0 && !checking && !answerLocked;
+  const canCheck = filled && !checking && !answerLocked;
 
   return (
     <div className="surface-premium rounded-2xl overflow-hidden">
@@ -372,12 +389,22 @@ export function QuestionPartCard({
             <div className="text-[10px] font-black tracking-widest text-slate-600 mb-1.5 uppercase">
               התשובה שלי
             </div>
-            <AnswerInput
-              value={answer}
-              onChange={setAnswer}
-              type={part.answer_type}
-              disabled={answerLocked}
-            />
+            {labels ? (
+              <AnswerParts
+                labels={labels}
+                values={parts}
+                onChange={setParts}
+                disabled={answerLocked}
+                wrong={wrongParts}
+              />
+            ) : (
+              <AnswerInput
+                value={answer}
+                onChange={setAnswer}
+                type={part.answer_type}
+                disabled={answerLocked}
+              />
+            )}
 
             {/* Check button + result — only shown if solution not yet opened */}
             {stepsShown < 0 && (

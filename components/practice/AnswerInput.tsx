@@ -33,6 +33,39 @@ const PLACEHOLDER: Record<Props['type'], string> = {
   text: 'כתוב את התשובה שלך…',
 };
 
+const FIELD_CLASS =
+  'w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-violet-500/60 focus:bg-white rounded-xl px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 outline-none transition-colors';
+
+/** Insert a symbol at the caret of `el` (append when there is no field yet)
+ *  and restore focus + caret after React re-renders the controlled value.
+ *  Returns the new field value. */
+function insertSymbol(
+  el: HTMLInputElement | HTMLTextAreaElement | null,
+  value: string,
+  sym: MathSymbol,
+  maxLength?: number,
+): string {
+  if (!el) return value + sym.insert;
+  const start = el.selectionStart ?? value.length;
+  const end = el.selectionEnd ?? value.length;
+  // The DOM `maxLength` does not constrain a programmatic value, so without
+  // this clamp the symbol bar could push the field past its own limit and the
+  // server would then truncate mid-word — exactly what maxLength exists to
+  // prevent.
+  const raw = value.slice(0, start) + sym.insert + value.slice(end);
+  const next = maxLength ? raw.slice(0, maxLength) : raw;
+  const caret = start + sym.insert.length - (sym.caretBack ?? 0);
+  requestAnimationFrame(() => {
+    el.focus();
+    try {
+      el.setSelectionRange(caret, caret);
+    } catch {
+      // some input types don't support selection ranges — ignore
+    }
+  });
+  return next;
+}
+
 export function AnswerInput({
   value,
   onChange,
@@ -54,33 +87,6 @@ export function AnswerInput({
 
   // Default: show the helper bar for math answers (not plain-text ones).
   const showBar = (symbolBar ?? type !== 'text') && !disabled;
-
-  function insertSymbol(sym: MathSymbol) {
-    const el = inputRef.current;
-    if (!el) {
-      onChange(value + sym.insert);
-      return;
-    }
-    const start = el.selectionStart ?? value.length;
-    const end = el.selectionEnd ?? value.length;
-    // The DOM `maxLength` does not constrain a programmatic value, so without
-    // this clamp the symbol bar could push the field past its own limit and the
-    // server would then truncate mid-word — exactly what maxLength exists to
-    // prevent.
-    const raw = value.slice(0, start) + sym.insert + value.slice(end);
-    const next = maxLength ? raw.slice(0, maxLength) : raw;
-    onChange(next);
-    // Restore focus + caret after React re-renders the controlled value.
-    const caret = start + sym.insert.length - (sym.caretBack ?? 0);
-    requestAnimationFrame(() => {
-      el.focus();
-      try {
-        el.setSelectionRange(caret, caret);
-      } catch {
-        // some input types don't support selection ranges — ignore
-      }
-    });
-  }
 
   const field =
     type === 'text' ? (
@@ -108,7 +114,7 @@ export function AnswerInput({
         placeholder={placeholder ?? PLACEHOLDER[type]}
         maxLength={maxLength}
         dir="auto"
-        className="w-full bg-slate-900/[0.03] border border-slate-900/10 focus:border-violet-500/60 focus:bg-white rounded-xl px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 outline-none transition-colors"
+        className={FIELD_CLASS}
       />
     );
 
@@ -116,8 +122,89 @@ export function AnswerInput({
 
   return (
     <div className="space-y-2">
-      <MathSymbolBar onInsert={insertSymbol} symbols={symbols} disabled={disabled} />
+      <MathSymbolBar
+        onInsert={(sym) => onChange(insertSymbol(inputRef.current, value, sym, maxLength))}
+        symbols={symbols}
+        disabled={disabled}
+      />
       {field}
+    </div>
+  );
+}
+
+/**
+ * One labelled box per quantity a question asks for ("מצא את $a_1$ ואת $d$"),
+ * driven by the question's `answerLabels`. One symbol bar serves every box and
+ * inserts into the one last focused. `values` is one string per box, in label
+ * order — grade it with checkAnswerParts, never by joining it into one string.
+ */
+export function AnswerParts({
+  labels,
+  values,
+  onChange,
+  disabled,
+  wrong,
+  symbols,
+}: {
+  labels: string[];
+  values: string[];
+  onChange: (next: string[]) => void;
+  disabled?: boolean;
+  /** Per-box verdict after a check: a wrong box is outlined, so the student
+   *  sees WHICH of a₁ / d missed rather than a bare "wrong". */
+  wrong?: boolean[];
+  symbols?: MathSymbol[];
+}) {
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const focused = useRef(0);
+
+  function setPart(i: number, v: string) {
+    const next = values.slice();
+    next[i] = v;
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-2">
+      {!disabled && (
+        <MathSymbolBar
+          symbols={symbols}
+          onInsert={(sym) => {
+            const i = focused.current;
+            setPart(i, insertSymbol(refs.current[i] ?? null, values[i] ?? '', sym));
+          }}
+        />
+      )}
+      {labels.map((label, i) => (
+        <label key={i} className="flex items-center gap-3">
+          <span
+            dir="auto"
+            className={`flex-shrink-0 min-w-[2.75rem] text-center text-sm font-black rounded-lg px-2.5 py-1.5 ${
+              wrong?.[i] ? 'bg-rose-500/10 text-rose-800' : 'bg-violet-500/[0.08] text-violet-800'
+            }`}
+          >
+            {label}
+          </span>
+          <input
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="text"
+            inputMode="text"
+            value={values[i] ?? ''}
+            onChange={(e) => setPart(i, e.target.value)}
+            onFocus={() => {
+              focused.current = i;
+            }}
+            disabled={disabled}
+            placeholder={`רשום את ${label}`}
+            dir="auto"
+            className={`${FIELD_CLASS} flex-1 min-w-0 ${
+              wrong?.[i] ? 'border-rose-500/60 bg-rose-500/[0.04]' : ''
+            }`}
+          />
+        </label>
+      ))}
     </div>
   );
 }

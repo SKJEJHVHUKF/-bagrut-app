@@ -83,6 +83,10 @@ export type AnswerDiagnosis =
   | { kind: 'conjugate' }
   | { kind: 'partial-set'; found: number; total: number }
   | { kind: 'extra-root'; extra: number }
+  /** Labelled multi-box answer (question.answerLabels) whose values are all
+   *  right but sit in the wrong boxes — a₁ and d exchanged. Only
+   *  checkAnswerParts produces it. */
+  | { kind: 'swapped' }
   /** The typed value matched an AUTHORED predictable mistake on the question
    *  (`question.wrongAnswers`). `note` is the authored explanation, verbatim —
    *  the strongest possible diagnosis, so it overrides the shape-based ones. */
@@ -97,6 +101,9 @@ export type CheckResult = {
    *  shape. Consumed by lib/tutor-local to answer "why is my answer wrong"
    *  with no API call. */
   diagnosis?: AnswerDiagnosis;
+  /** Labelled multi-box answers only (checkAnswerParts): the verdict of each
+   *  box in order, so the UI can outline WHICH box missed. */
+  parts?: ('correct' | 'wrong')[];
 };
 
 const TOL = 1e-7;
@@ -327,24 +334,55 @@ export function checkAnswer(studentRaw: string, spec: AnswerSpec): CheckResult {
 }
 
 /**
+ * Grade a LABELLED multi-box answer (question.answerLabels): box i against
+ * spec.values[i], in ORDER. The unordered set check would accept a₁=3, d=5 as
+ * an answer to a₁=5, d=3; with named boxes that is the one mistake the labels
+ * exist to expose. `parts` carries the per-box verdict, and a correct multiset
+ * in the wrong boxes is diagnosed as `swapped` rather than left as "wrong".
+ */
+export function checkAnswerParts(parts: string[], spec: AnswerSpec): CheckResult {
+  // Labels only make sense against a set of the same length; anything else is
+  // an authoring error (verify-specs catches it) — don't false-fail a student.
+  if (spec.kind !== 'set' || parts.length !== spec.values.length) return { verdict: 'manual' };
+  const each = parts.map((p, i) => checkAnswer(p, { kind: 'value', value: spec.values[i] }));
+  if (each.some((r) => r.verdict === 'unparseable')) return { verdict: 'unparseable' };
+  if (each.some((r) => r.verdict === 'manual')) return { verdict: 'manual' };
+  const verdicts = each.map((r) => r.verdict as 'correct' | 'wrong');
+  const readAs = each.map((r) => r.readAs).join(', ');
+  if (verdicts.every((v) => v === 'correct')) return { verdict: 'correct', readAs };
+  const swapped = checkAnswer(parts.join(', '), spec).verdict === 'correct';
+  return {
+    verdict: 'wrong',
+    readAs,
+    parts: verdicts,
+    ...(swapped ? { diagnosis: { kind: 'swapped' } } : {}),
+  };
+}
+
+/**
  * Does the typed answer match one of the question's AUTHORED predictable
  * mistakes? Returns that entry's note, or null.
  *
  * Reuses checkAnswer itself for the comparison, so a known-mistake value is
  * matched exactly as leniently as the real answer is graded (LaTeX stripping,
  * fractions, tolerance). Entries whose value contains a comma are compared as
- * a set, mirroring how a set-typed question reads the input.
+ * a set, mirroring how a set-typed question reads the input — or, when the
+ * student answered in labelled boxes (a string[]), box by box in order.
  */
 export function matchKnownMistake(
-  studentRaw: string,
+  student: string | string[],
   wrongAnswers: { value: string; note: string }[] | undefined,
 ): string | null {
-  if (!wrongAnswers?.length || !(studentRaw ?? '').trim()) return null;
+  const empty = Array.isArray(student) ? student.every((s) => !s.trim()) : !(student ?? '').trim();
+  if (!wrongAnswers?.length || empty) return null;
   for (const w of wrongAnswers) {
     const spec: AnswerSpec = w.value.includes(',')
       ? { kind: 'set', values: w.value.split(',').map((s) => s.trim()) }
       : { kind: 'value', value: w.value };
-    if (checkAnswer(studentRaw, spec).verdict === 'correct') return w.note;
+    const verdict = Array.isArray(student)
+      ? checkAnswerParts(student, spec).verdict
+      : checkAnswer(student, spec).verdict;
+    if (verdict === 'correct') return w.note;
   }
   return null;
 }

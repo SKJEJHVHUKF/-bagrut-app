@@ -7,7 +7,7 @@
  * which the per-topic mathjs scripts do NOT catch (they bypass checkAnswer).
  *   npx tsx scripts/verify-specs.ts
  */
-import { checkAnswer, matchKnownMistake } from '../lib/answer-check';
+import { checkAnswer, checkAnswerParts, matchKnownMistake } from '../lib/answer-check';
 import type { Lesson } from '../content/lessons/types';
 import { math5ComplexNumbers } from '../content/lessons/math5/complex-numbers';
 import { math5Vectors } from '../content/lessons/math5/vectors';
@@ -90,11 +90,49 @@ function checkWrongAnswers(
   }
 }
 
+// Labelled multi-box answers (answerLabels): the labels must line up one-to-one
+// with a 'set' spec, the reference values must grade CORRECT box by box (the
+// ORDERED check), and every authored wrong answer must carry one value per box
+// — otherwise a box is graded against nothing, or a predictable mistake can
+// never be matched.
+function checkLabels(
+  where: string,
+  expected: unknown,
+  labels: string[] | undefined,
+  wrongAnswers: { value: string; note: string }[] | undefined,
+) {
+  if (!labels) return;
+  const s = expected as { kind: string; values?: string[] } | undefined;
+  const values = s?.kind === 'set' ? s.values : undefined;
+  if (!values || values.length !== labels.length || labels.some((l) => !l.trim())) {
+    fail++;
+    console.log(`  ✗ ${where}: answerLabels (${labels.length}) must match a 'set' spec of the same length`);
+    return;
+  }
+  const res = checkAnswerParts(values, expected as never);
+  if (res.verdict === 'correct') {
+    pass++;
+  } else {
+    fail++;
+    console.log(`  ✗ ${where}: reference values do not grade correct box-by-box (verdict=${res.verdict})`);
+  }
+  for (const w of wrongAnswers ?? []) {
+    const n = w.value.split(',').length;
+    if (n === labels.length) {
+      pass++;
+    } else {
+      fail++;
+      console.log(`  ✗ ${where}: wrongAnswer "${w.value}" has ${n} values for ${labels.length} boxes`);
+    }
+  }
+}
+
 for (const [name, L] of LESSONS) {
   // Bagrut-question parts.
   for (const q of L.bagrutQuestions ?? []) {
     for (const p of q.parts) {
       checkSpec(`${name}/${q.id}/${p.label}`, p.expected, p.solution.final_answer);
+      checkLabels(`${name}/${q.id}/${p.label}`, p.expected, p.answerLabels, undefined);
     }
   }
   // Sub-topic practice questions + their micro-drills (the ladder loop).
@@ -102,11 +140,13 @@ for (const [name, L] of LESSONS) {
     for (const question of st.questions ?? []) {
       checkSpec(`${name}/${st.id}/${question.id}`, question.expected, question.solution.finalAnswer);
       checkWrongAnswers(`${name}/${st.id}/${question.id}`, question.expected, question.wrongAnswers);
+      checkLabels(`${name}/${st.id}/${question.id}`, question.expected, question.answerLabels, question.wrongAnswers);
     }
     for (const step of st.lesson ?? []) {
       if (step.drill) {
         checkSpec(`${name}/${st.id}/drill:${step.drill.id}`, step.drill.expected, step.drill.solution.finalAnswer);
         checkWrongAnswers(`${name}/${st.id}/drill:${step.drill.id}`, step.drill.expected, step.drill.wrongAnswers);
+        checkLabels(`${name}/${st.id}/drill:${step.drill.id}`, step.drill.expected, step.drill.answerLabels, step.drill.wrongAnswers);
       }
     }
   }
