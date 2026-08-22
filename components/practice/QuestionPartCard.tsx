@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -30,6 +30,9 @@ import {
 } from '@/lib/mistakes';
 import { recordResult } from '@/lib/results';
 import { MistakeTagger } from './MistakeTagger';
+import { publishTutorFocus, partAsQuestion, FOCUS_PRIORITY, type TutorFocus } from '@/lib/tutor-presence';
+import { getSubTopic } from '@/content/lessons';
+import type { AnswerDiagnosis } from '@/lib/answer-check';
 
 export type QuestionPart = {
   label: string;
@@ -177,6 +180,51 @@ export function QuestionPartCard({
   // Snapshot of the wrong answer so the "Why wrong?" tutor button can
   // explain THIS specific mistake (not the standard solution).
   const [lastUserAnswer, setLastUserAnswer] = useState('');
+  /** Shape of the last deterministic WRONG verdict (sign-flip, swapped, …).
+   *  Kept so the tutor bubble can say what went wrong at $0 — the checker
+   *  already computed it; discarding it was what forced a paid guess. */
+  const [diagnosis, setDiagnosis] = useState<AnswerDiagnosis | undefined>();
+
+  // ===== the tutor sees THIS part once the student touches it =====
+  // The container publishes the whole question at lesson level — every part
+  // at once, so naming one would be a guess. The moment the student types,
+  // opens a hint or checks an answer here, it is no longer a guess: publish
+  // this part at question level with the full authored object, and
+  // lib/tutor-local answers "רמז", "מאיפה מתחילים", "למה טעיתי" from the
+  // part's own hints, rule line and steps instead of falling to the API with
+  // "I can see a question but not its breakdown".
+  const touched =
+    hintsShown > 0 || filled || !!checkResult || revealedFinal || stepsShown >= 0 || !!selfReport;
+  const wrong =
+    checkResult?.verdict === 'wrong' || checkResult?.verdict === 'partial' || selfReport === 'wrong';
+  // One object, two consumers: published for the bubble AND handed to the
+  // AI buttons below, so "למה טעיתי?" and "עזרה שלב-שלב" ask the same local
+  // tutor the bubble does before either pays for a model call.
+  const partFocus = useMemo<TutorFocus | null>(() => {
+    if (!touched) return null;
+    const subTopic = subTopicId && topic ? getSubTopic(subject, topic, subTopicId) : null;
+    return {
+      where: `שאלת בגרות · ${topic ? `${topic} · ` : ''}סעיף ${part.label}`,
+      topic,
+      subTopicId,
+      questionText: [context, `${part.label}. ${part.prompt}`].filter(Boolean).join('\n\n'),
+      question: partAsQuestion(part, { questionId: questionId ?? 'q', difficulty, hintsShown }),
+      ...(subTopic ? { subTopic } : {}),
+      // `lastUserAnswer` is the whole typed answer — for labelled parts it
+      // reads "d = 4, a₁ = 3" — which is what the tutor should quote back.
+      ...(wrong && lastUserAnswer ? { wrongAnswer: lastUserAnswer } : {}),
+      ...(wrong && diagnosis ? { answerDiagnosis: diagnosis } : {}),
+      ...(revealedFinal ? { correctAnswer: part.solution.final_answer } : {}),
+    };
+  }, [
+    touched, wrong, hintsShown, lastUserAnswer, diagnosis, revealedFinal,
+    part, context, topic, subTopicId, subject, questionId, difficulty,
+  ]);
+  useEffect(() => {
+    const id = `bagrut-part:${questionId ?? 'q'}/${part.label}`;
+    publishTutorFocus(id, partFocus, FOCUS_PRIORITY.question);
+    return () => publishTutorFocus(id, null);
+  }, [partFocus, questionId, part.label]);
 
   function showFullSolution() {
     // Reveal the WHOLE solution at once (like the bagrut archive) — not
@@ -266,6 +314,7 @@ export function QuestionPartCard({
     // reference what the student actually typed, even if they edit
     // the input afterwards.
     setLastUserAnswer(typed);
+    setDiagnosis(undefined);
 
     // ===== 1) DETERMINISTIC CHECK FIRST (free, instant, authoritative) =====
     // For parts with a machine-checkable spec (value / set), the verdict is
@@ -276,6 +325,7 @@ export function QuestionPartCard({
     const spec = part.expected;
     if (spec && spec.kind !== 'manual') {
       const det = labels ? checkAnswerParts(parts, spec) : runDeterministicCheck(answer, spec);
+      setDiagnosis(det.diagnosis);
       if (det.verdict === 'correct') {
         applyResult({
           verdict: 'correct',
@@ -459,8 +509,10 @@ export function QuestionPartCard({
                     question={part.prompt}
                     correctAnswer={part.solution.final_answer}
                     userAnswer={lastUserAnswer}
+                    solution={part.solution.steps.join('\n')}
                     context={context}
                     topic={topic}
+                    localFocus={partFocus}
                     show={{ whyWrong: true }}
                     onCategory={(c) => {
                       const cat = toErrorCategory(c);
@@ -534,6 +586,7 @@ export function QuestionPartCard({
               hints={part.hints}
               context={context}
               topic={topic}
+              localFocus={partFocus}
               show={{ hintHelp: true }}
             />
           )}
@@ -607,6 +660,7 @@ export function QuestionPartCard({
                     solution={part.solution.steps.join('\n') + '\n' + part.solution.final_answer}
                     context={context}
                     topic={topic}
+                    localFocus={partFocus}
                     show={{ explainSimpler: true }}
                   />
                 )}

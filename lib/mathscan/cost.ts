@@ -22,15 +22,66 @@ import type { ScanStage, ScanStageName, ScanTrace } from './types';
 
 export const RATES = {
   'claude-sonnet-4-5': { input: 3 / 1_000_000, output: 15 / 1_000_000 },
+  'claude-sonnet-4-6': { input: 3 / 1_000_000, output: 15 / 1_000_000 },
+  /** Introductory pricing, checked 2026-08-17. */
+  'claude-sonnet-5': { input: 2 / 1_000_000, output: 10 / 1_000_000 },
   'claude-haiku-4-5': { input: 1 / 1_000_000, output: 5 / 1_000_000 },
 } as const;
 
 export type ModelId = keyof typeof RATES;
 
-// `costOfCall` used to live here and had ZERO call sites repo-wide.
-// /api/scan-solve computes its own cost inline and correctly accounts for
-// cache_creation_input_tokens, which this one omitted — so the dead copy was
-// also the wrong one, and wiring it up would have under-reported spend.
+/** The `usage` block of a Messages response, as the SDK returns it. */
+export type UsageLike = {
+  input_tokens?: number | null;
+  output_tokens?: number | null;
+  /** The SDK types these two as `number | null`, not `undefined`. */
+  cache_read_input_tokens?: number | null;
+  cache_creation_input_tokens?: number | null;
+};
+
+/**
+ * USD for one call, CACHE-AWARE.
+ *
+ * `input_tokens` EXCLUDES cached tokens: a prompt whose 5,000-token prefix
+ * was read from cache reports ~1,500 input tokens, and one whose prefix was
+ * just WRITTEN reports the same ~1,500. Ignore the two cache fields and a
+ * cached turn looks 4x cheaper than it is while an uncached one looks
+ * identical to a cached one — which is exactly how "a short chat cost $0.06"
+ * became unanswerable from the app's own numbers (2026-08-22).
+ *
+ * A `costOfCall` used to live here, omitted the cache fields, and had zero
+ * call sites; /api/scan-solve kept a correct inline copy. This is that copy,
+ * shared. Rates: 5-minute cache write 1.25x, read 0.1x.
+ */
+export function costOfUsage(model: string, usage: UsageLike | undefined | null): number {
+  const rate = RATES[model as ModelId];
+  if (!rate || !usage) return 0;
+  return (
+    (usage.input_tokens ?? 0) * rate.input +
+    (usage.output_tokens ?? 0) * rate.output +
+    (usage.cache_read_input_tokens ?? 0) * rate.input * 0.1 +
+    (usage.cache_creation_input_tokens ?? 0) * rate.input * 1.25
+  );
+}
+
+/**
+ * One line per paid call, for Vercel's log viewer. Filter on `[cost]`.
+ *
+ * This exists because production has no durable accounting: the
+ * `ai_generation_log` table was never created (PGRST205, verified
+ * 2026-08-22), so `logAgentUsage` fails silently and the only record of
+ * spend is the Anthropic console, which cannot say WHICH route spent it.
+ * Until the migration is applied, this line is the audit trail.
+ */
+export function logCost(label: string, model: string, usage: UsageLike | undefined | null): number {
+  const usd = costOfUsage(model, usage);
+  console.log(
+    `[cost] ${label} ${model} in=${usage?.input_tokens ?? 0} out=${usage?.output_tokens ?? 0} ` +
+      `cache_read=${usage?.cache_read_input_tokens ?? 0} cache_write=${usage?.cache_creation_input_tokens ?? 0} ` +
+      `usd=${usd.toFixed(5)}`
+  );
+  return usd;
+}
 
 // ------------------------------------------------------------
 // The per-scan meter

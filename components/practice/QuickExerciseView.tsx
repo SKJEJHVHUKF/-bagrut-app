@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { TutorFocus } from '@/lib/tutor-presence';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -30,6 +31,14 @@ type Exercise = {
   solution: { steps: string[] };
   final_answer: string;
   remember: string;
+  /**
+   * Set by /api/practice: `false` means the server ran the model's own
+   * arithmetic through mathjs, it disagreed, and a stronger model did not do
+   * better (~4% of exercises at the measured rates). Optional because the
+   * "similar question" path builds an Exercise with no verification at all —
+   * undefined means "not checked", which deliberately shows nothing.
+   */
+  verified?: boolean;
 };
 
 type Difficulty = 'easier' | 'normal' | 'harder';
@@ -51,6 +60,32 @@ export function QuickExerciseView({
   const [stepsShown, setStepsShown] = useState(-1);
   const [conceptOpen, setConceptOpen] = useState(false);
   const [doneMarked, setDoneMarked] = useState(false);
+
+  // The exercise's own hints, steps and concept, as the local tutor sees them
+  // — so "עזרה שלב-שלב" serves the next unseen hint (then the first step) and
+  // "הסבר פשוט" the concept line, before a second model call is paid to
+  // paraphrase material this exercise already carries.
+  const exerciseFocus = useMemo<TutorFocus | null>(() => {
+    if (!exercise) return null;
+    return {
+      where: `תרגיל · ${topic}`,
+      topic,
+      questionText: exercise.problem,
+      question: {
+        id: 'quick-exercise',
+        difficulty: difficulty === 'easier' ? 'easy' : difficulty === 'harder' ? 'hard' : 'mid',
+        kind: 'open',
+        question: exercise.problem,
+        hint: exercise.hints[hintsShown]?.trim() || undefined,
+        solution: {
+          steps: exercise.solution.steps,
+          finalAnswer: exercise.final_answer,
+          explanation: exercise.concept,
+        },
+      },
+      ...(stepsShown >= 0 ? { correctAnswer: exercise.final_answer } : {}),
+    };
+  }, [exercise, topic, difficulty, hintsShown, stepsShown]);
 
   async function load(d: Difficulty = difficulty) {
     setLoading(true);
@@ -271,6 +306,7 @@ export function QuickExerciseView({
         <AITutorActions
           question={exercise.problem}
           hints={exercise.hints}
+          localFocus={exerciseFocus}
           show={{ hintHelp: true }}
         />
       )}
@@ -334,6 +370,14 @@ export function QuickExerciseView({
                   <div className="text-sm sm:text-base font-bold text-emerald-900 chat-md">
                     <MathText inline>{exercise.final_answer}</MathText>
                   </div>
+                  {/* Only when the server POSITIVELY found a disagreement. A
+                      student who solved it correctly and is now told "wrong"
+                      by the answer check is the failure this line prevents. */}
+                  {exercise.verified === false && (
+                    <div className="mt-2 text-xs text-amber-800 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+                      ⚠️ לא הצלחנו לאמת את החישוב הזה אוטומטית. אם התשובה שלך שונה — ייתכן שדווקא אתה צודק. כדאי לבדוק שוב בעצמך.
+                    </div>
+                  )}
                 </motion.div>
               {exercise.remember && (
                 <div className="mt-3 bg-amber-500/8 border border-amber-500/30 rounded-xl px-4 py-3">
@@ -354,7 +398,9 @@ export function QuickExerciseView({
                 question={exercise.problem}
                 solution={exercise.solution.steps.join('\n') + '\n' + exercise.final_answer}
                 topic={topic}
+                subject={subject}
                 difficulty={difficulty === 'easier' ? 'easy' : difficulty === 'harder' ? 'hard' : 'mid'}
+                localFocus={exerciseFocus}
                 show={{ explainSimpler: true, similarQuestion: true }}
                 onSimilarQuestion={applySimilarQuestion}
               />

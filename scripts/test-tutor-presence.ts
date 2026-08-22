@@ -54,6 +54,18 @@ check('withdrawing the winner falls back to the lesson', getTutorFocus()?.where,
 publishTutorFocus('lesson', focus('the lesson, updated'), FOCUS_PRIORITY.lesson);
 check('re-publishing one id replaces it', getTutorFocus()?.where, 'the lesson, updated');
 
+// 5. EQUAL priority: the most recently published entry wins. Two parts of one
+//    bagrut question both publish at question level; the tutor must follow the
+//    part the student touched LAST, not the one that mounted first — and an
+//    older id that re-publishes becomes the most recent again.
+publishTutorFocus('question', focus('part a'), FOCUS_PRIORITY.question);
+publishTutorFocus('other', focus('part b'), FOCUS_PRIORITY.question);
+check('among equal priorities the later publisher wins', getTutorFocus()?.where, 'part b');
+publishTutorFocus('question', focus('part a, touched again'), FOCUS_PRIORITY.question);
+check('re-publishing an older id makes it the most recent', getTutorFocus()?.where, 'part a, touched again');
+publishTutorFocus('lesson', focus('the lesson'), FOCUS_PRIORITY.lesson);
+check('a lower priority published last still loses', getTutorFocus()?.where, 'part a, touched again');
+
 clearAll();
 check('withdrawing everything leaves no focus', getTutorFocus(), null);
 

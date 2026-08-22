@@ -1,8 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Sparkles, AlertCircle, RotateCw, MessageCircle, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
 import { MathText } from './MathText';
+import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
+import { getTutorFocus, type TutorFocus } from '@/lib/tutor-presence';
+import { buildHelpLadder } from '@/lib/help-ladder';
+import { getSubTopics } from '@/content/lessons';
 
 // ============================================================
 // AITutorActions — the 4 AI tutor buttons + their response panels.
@@ -20,6 +24,22 @@ import { MathText } from './MathText';
 // All 4 endpoints require Pro. The 402 response from any of them
 // is shown as a "שדרג ל-Pro" CTA — the panel doesn't need to know
 // the user's Pro status in advance.
+//
+// ===== AUTHORED CONTENT FIRST, THE MODEL SECOND =====
+// Every button used to go straight to its endpoint. But the bubble beside the
+// same question already answers "רמז", "למה טעיתי", "תסביר" from the authored
+// hint, rule line, distractor notes and answer diagnosis (lib/tutor-local) at
+// $0 — and a model paid to paraphrase that material can only drift from it.
+// So each button now asks the local tutor first and pays only when it
+// abstains. The acceptance rules are deliberately ACCURACY-first, not
+// cost-first: a local answer is used only when it is the specific one —
+//   hintHelp         an unserved real rung exists (hint / rule line / key
+//                    points); a ladder that is exhausted goes to the model
+//   whyWrong         a distractor note or an answer diagnosis exists; "I won't
+//                    guess" is not an answer worth replacing a model with
+//   explainSimpler   the specific wording rendered, not the template fallback
+//   similarQuestion  an authored sibling exists in the same topic's banks
+// The panel says "מהחומר הכתוב" when that is where the answer came from.
 
 export type SimilarQuestionResult = {
   question: string;
@@ -38,6 +58,18 @@ type AITutorActionsProps = {
   topic?: string;
   difficulty?: 'easy' | 'mid' | 'hard';
   context?: string;
+
+  /**
+   * The authored material behind this question, as the tutor bubble sees it.
+   * When present, every button asks lib/tutor-local FIRST and only pays for a
+   * model call when the local tutor abstains. When omitted, the focus the
+   * screen PUBLISHED for the bubble is used — but only if it describes this
+   * exact question (see `resolveFocus`); a stale or unrelated focus is worse
+   * than paying.
+   */
+  localFocus?: TutorFocus | null;
+  /** For "שאלה דומה": whose authored banks to draw a sibling from. */
+  subject?: string;
 
   // Which buttons to show.
   show: {
@@ -62,6 +94,8 @@ type ActionState = {
   response: string | null;       // For text-only endpoints
   error: string | null;
   expanded: boolean;
+  /** The response came from authored content, not from a model call. */
+  local?: boolean;
 };
 
 const INITIAL_STATE: ActionState = {
@@ -82,8 +116,38 @@ export function AITutorActions(props: AITutorActionsProps) {
   const setState = (key: ActionKey, patch: Partial<ActionState>) =>
     setStates((s) => ({ ...s, [key]: { ...s[key], ...patch } }));
 
+  /** Rungs already handed out for THIS question, so a second press walks the
+   *  help ladder instead of repeating the same hint. Reset per question. */
+  const servedRef = useRef<{ key: string; kinds: LocalAnswerKind[] }>({ key: '', kinds: [] });
+
   async function run(key: ActionKey) {
-    setState(key, { loading: true, error: null, response: null, expanded: true });
+    setState(key, { loading: true, error: null, response: null, expanded: true, local: false });
+
+    // ===== authored content first — no API call, no quota, no Pro gate =====
+    const focus = resolveFocus(props);
+    const qKey = focus?.question?.id ?? props.question;
+    if (servedRef.current.key !== qKey) servedRef.current = { key: qKey, kinds: [] };
+
+    if (key === 'similarQuestion') {
+      const sibling = findSibling(props.subject ?? 'math5', props.topic, props.difficulty, focus?.question?.id);
+      if (sibling) {
+        setState(key, {
+          loading: false,
+          local: true,
+          response: `**שאלה חדשה:** ${sibling.question}\n\n**רמז:** ${sibling.hint}`,
+        });
+        props.onSimilarQuestion?.(sibling);
+        return;
+      }
+    } else if (focus) {
+      const local = answerLocally(LOCAL_ASK[key], focus, servedRef.current.kinds);
+      if (local && acceptLocal(key, local, focus, servedRef.current.kinds)) {
+        if (!servedRef.current.kinds.includes(local.kind)) servedRef.current.kinds.push(local.kind);
+        setState(key, { loading: false, local: true, response: local.text });
+        return;
+      }
+    }
+
     try {
       const { url, body, parse } = buildRequest(key, props);
       const res = await fetch(url, {
@@ -206,6 +270,11 @@ export function AITutorActions(props: AITutorActionsProps) {
             <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase mb-1.5 flex items-center gap-1.5">
               {b.icon}
               <span>{b.label}</span>
+              {s.local && (
+                <span className="ms-auto text-[9px] font-bold text-emerald-700 normal-case tracking-normal">
+                  מהחומר הכתוב · חינם
+                </span>
+              )}
             </div>
             {s.error ? (
               <div className="text-violet-800">{s.error}</div>
@@ -244,6 +313,10 @@ function buildRequest(
           question: p.question,
           correctAnswer: p.correctAnswer ?? '',
           userAnswer: p.userAnswer ?? '',
+          // The authored steps, so the diagnosis is a comparison against the
+          // verified path rather than a re-solve. Only reached when the local
+          // tutor had no diagnosis of its own.
+          solution: p.solution ?? '',
           context: p.context,
           topic: p.topic ?? '',
         },
@@ -275,4 +348,81 @@ function buildRequest(
             : '',
       };
   }
+}
+
+// ============================================================
+// Local-first: what each button asks the authored tutor, and when the
+// answer is specific enough to stand in for a model call.
+// ============================================================
+
+/** The app's own chip wording — each one is asserted to classify in
+ *  scripts/test-tutor-voice.ts, so none can silently stop matching. */
+const LOCAL_ASK: Record<Exclude<ActionKey, 'similarQuestion'>, string> = {
+  hintHelp: 'אני תקוע בשאלה הזאת',
+  whyWrong: 'למה התשובה שלי שגויה?',
+  explainSimpler: 'תסביר לי את השאלה הזאת מההתחלה',
+};
+
+function resolveFocus(p: AITutorActionsProps): TutorFocus | null {
+  if (p.localFocus !== undefined) return p.localFocus;
+  // A screen that did not hand us its focus may still have PUBLISHED it for
+  // the bubble (QuestionRunnerCard does, on every render). Use it only when
+  // it describes this exact question — checked by text, since that is the one
+  // identity both sides are guaranteed to share.
+  const f = getTutorFocus();
+  return f?.question && f.questionText === p.question ? f : null;
+}
+
+function acceptLocal(
+  key: Exclude<ActionKey, 'similarQuestion'>,
+  local: { kind: LocalAnswerKind; fallback?: boolean },
+  focus: TutorFocus,
+  served: LocalAnswerKind[],
+): boolean {
+  switch (key) {
+    case 'hintHelp': {
+      // Only while a real rung is left. Once hint, rule line and key points
+      // are spent, the local tutor's next line is "tell me your last step" —
+      // honest, but the model's unpacking of the last hint helps more there.
+      if (!focus.question) return false;
+      const ladder = buildHelpLadder(focus.question, focus.subTopic ?? null);
+      return ladder.tiers.some((t) => t.kind !== 'full' && t.body.length > 0 && !served.includes(t.kind));
+    }
+    case 'whyWrong': {
+      const note =
+        typeof focus.chosenIndex === 'number'
+          ? focus.question?.distractorNotes?.[focus.chosenIndex]?.trim()
+          : '';
+      return !!note || !!focus.answerDiagnosis;
+    }
+    case 'explainSimpler':
+      return !local.fallback;
+  }
+}
+
+/**
+ * "שאלה דומה" from the authored banks: another open question on the same
+ * topic, same difficulty when one exists. Verified content, $0 — against a
+ * Sonnet call that invents one. Null when the topic has no authored bank, in
+ * which case the endpoint still runs as before.
+ */
+function findSibling(
+  subject: string,
+  topic: string | undefined,
+  difficulty: 'easy' | 'mid' | 'hard' | undefined,
+  excludeId?: string,
+): SimilarQuestionResult | null {
+  if (!topic) return null;
+  const pool = getSubTopics(subject, topic)
+    .flatMap((st) => st.questions ?? [])
+    .filter((q) => q.kind === 'open' && q.id !== excludeId);
+  if (pool.length === 0) return null;
+  const same = difficulty ? pool.filter((q) => q.difficulty === difficulty) : [];
+  const from = same.length > 0 ? same : pool;
+  const pick = from[Math.floor(Math.random() * from.length)];
+  return {
+    question: pick.question,
+    hint: pick.hint ?? '',
+    solution: { steps: pick.solution.steps, final_answer: pick.solution.finalAnswer },
+  };
 }

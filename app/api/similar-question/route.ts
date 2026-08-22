@@ -80,6 +80,7 @@ ${original}
 
     const { data } = await callTutor<SimilarResponse>({
       apiKey,
+      label: 'similar-question',
       model: 'claude-sonnet-4-5',
       maxTokens: 1200,
       system: SYSTEM_PROMPT,

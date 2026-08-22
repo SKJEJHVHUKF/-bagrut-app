@@ -71,6 +71,7 @@ export async function POST(request: Request) {
       fullAnswer: string;
     }>({
       apiKey,
+      label: 'thinking',
       model: 'claude-sonnet-4-5',
       maxTokens: 1200,
       system: GEN_SYSTEM,

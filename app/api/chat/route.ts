@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { isGroundedTopic } from '@/lib/tutor-grounding';
 import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
 import { buildTutorSystem } from '@/lib/agents/prompts';
-import { normalizeUnitLevel, normalizeFormNumber } from '@/lib/agents/config';
+import { normalizeUnitLevel, normalizeFormNumber, MAX_CONTEXT_LEN } from '@/lib/agents/config';
+import { logCost } from '@/lib/mathscan/cost';
 import { TUTOR_TOOLS, resolveSuggestion } from '@/lib/agents/tools';
 import { readFacts, writeFacts, mergeFact, renderMemoryBlock } from '@/lib/tutor-memory';
 // One copy of the injection guard, in one place. This file used to keep its
@@ -115,8 +116,10 @@ export async function POST(request: Request) {
     // behaviour (complex numbers only), and `context` is a snapshot of the
     // question/attempt the student is on — lets the tutor diagnose first.
     const topic = typeof body.topic === 'string' ? body.topic.trim().slice(0, 80) : '';
+    // One constant, shared with the bubble that builds this string — a cap
+    // written as a literal here drifted from the client's once already.
     const attemptContext =
-      typeof body.context === 'string' ? body.context.trim().slice(0, 2000) : '';
+      typeof body.context === 'string' ? body.context.trim().slice(0, MAX_CONTEXT_LEN) : '';
     // Level + שאלון drive how deep the tutor goes. Absent (older client, cached
     // JS) → the normalizers fall back to 5 units / 572, i.e. today's behaviour.
     const unitLevel = normalizeUnitLevel(body.unitLevel);
@@ -272,11 +275,31 @@ export async function POST(request: Request) {
       topic: topic || undefined,
       memory: renderMemoryBlock(facts),
     });
+    // ===== MODEL: Haiku by default, Sonnet only for topics listed in env =====
+    //
+    // This used to read the other way round — an EMPTY `TUTOR_SONNET_TOPICS`
+    // meant "Sonnet for every grounded topic", i.e. for all 13 math lessons,
+    // and nobody had set the variable. MEASURED from chat_messages on
+    // 2026-08-22 (~1,500 fresh input tokens, ~120 output, 4,759-token cached
+    // prefix for הסתברות), per conversation:
+    //
+    //                      turn 1 (cache write)   each later turn   5 turns
+    //   claude-sonnet-4-6        $0.024               $0.0077        $0.055
+    //   claude-haiku-4-5         $0.008               $0.0026        $0.018
+    //
+    // That $0.055 is the "short chat that cost $0.06". Most conversations are
+    // 1-3 turns, so the prefix WRITE dominates — and on Sonnet it is 3x.
+    //
+    // Why Haiku is now safe where it was not: the local tutor answers the six
+    // common asks from authored content before this route is reached, and the
+    // focus context carries the verified solution steps, so the model guides
+    // along a written path instead of re-solving. Sonnet stays one env edit
+    // away, per topic, for anything that measurably needs it.
     const sonnetAllowlist = (process.env.TUTOR_SONNET_TOPICS ?? '').trim();
     const useSonnet =
       grounded &&
-      (sonnetAllowlist === '' ||
-        sonnetAllowlist.split(',').map((s) => s.trim()).includes(topic));
+      sonnetAllowlist !== '' &&
+      sonnetAllowlist.split(',').map((s) => s.trim()).includes(topic);
     const model = useSonnet ? 'claude-sonnet-4-6' : 'claude-haiku-4-5';
 
     // Inject the question/attempt snapshot (if any) into THIS turn only, so
@@ -361,6 +384,10 @@ export async function POST(request: Request) {
 
           usageIn = final.usage.input_tokens;
           usageOut = final.usage.output_tokens;
+          // Cache-aware cost line for Vercel's logs. `input_tokens` alone hides
+          // the prefix: a cached turn and a turn that just WROTE the 4,800-token
+          // prefix report the same ~1,500 — and on Sonnet that write is ~$0.018.
+          logCost('chat', model, final.usage);
 
           // ===== tool calls: suggestion + memory =====
           // Both are best-effort and deliberately AFTER the text is settled.

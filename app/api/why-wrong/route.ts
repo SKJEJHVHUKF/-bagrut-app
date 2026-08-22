@@ -62,6 +62,11 @@ export async function POST(request: Request) {
     const correctAnswer = sanitize(body?.correctAnswer);
     const userAnswer = sanitize(body?.userAnswer, 800);
     const context = typeof body?.context === 'string' ? sanitize(body.context) : null;
+    // The authored worked solution. Without it the model diagnoses the mistake
+    // from the final answer alone — i.e. it re-solves the question itself and
+    // then guesses where the student diverged. With it, "the first deviation"
+    // is a comparison against verified steps, not a guess.
+    const solution = typeof body?.solution === 'string' ? sanitize(body.solution, 4000) : null;
     const topic = typeof body?.topic === 'string' ? body.topic.trim() : '';
 
     if (!question || !correctAnswer || !userAnswer) {
@@ -76,7 +81,7 @@ ${question}
 
 התשובה הנכונה:
 ${correctAnswer}
-
+${solution ? `\nהפתרון הכתוב והמאומת (להשוואה בלבד — אל תעתיק אותו; מצא את הסטייה הראשונה של התלמיד ממנו):\n${solution}\n` : ''}
 התשובה של התלמיד (לא נכונה):
 ${userAnswer}
 
@@ -89,6 +94,7 @@ ${userAnswer}
 
     const { data } = await callTutor<WhyWrongResponse>({
       apiKey,
+      label: 'why-wrong',
       model: 'claude-haiku-4-5',
       maxTokens: 500,
       system,

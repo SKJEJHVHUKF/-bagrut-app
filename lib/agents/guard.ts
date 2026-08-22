@@ -134,9 +134,29 @@ function memoryRecord(userId: string, kind: AgentKind): void {
  * number that makes "budget" an enforced limit rather than a hope. When it
  * trips, the static content — which is the product — is untouched.
  *
- * Raise it with AI_DAILY_GLOBAL_LIMIT once there is revenue.
+ * AI_DAILY_GLOBAL_LIMIT overrides the default without a deploy.
+ *
+ * DEFAULT 800, up from 250 — sized for ~20 active students, derived, not round.
+ *
+ * What a row costs: `ai_generation_log` is written by ~10 routes, and the mix a
+ * typical student produces in a day is roughly 8 answer checks (~$0.002), 4
+ * micro-helps (~$0.003), 5 tutor turns (~$0.004), 2 practice generations
+ * (~$0.017 blended Haiku + escalation) and 1 thinking question (~$0.024) —
+ * about $0.0053 per row. So the ceiling is also a cost ceiling:
+ *
+ *   250 rows/day  →  ~$1.3/day   trips at ~12 regular students
+ *   800 rows/day  →  ~$4.2/day   ~20 regular students with 2x headroom,
+ *                                 or ~20 heavy ones with none
+ *
+ * When 250 tripped, the symptom was NOT "the AI pauses": only /api/practice and
+ * /api/check-answer run this guard, so what a student actually saw was their
+ * exercise grading stop working mid-session while the chat carried on. That is
+ * the failure this number is set to avoid. Note the quiz page is not in the
+ * mix at all — it serves ~1,000 authored questions from static banks and only
+ * reaches /api/questions when both banks miss, which for math5 is never
+ * (`npm run pool:coverage`).
  */
-const GLOBAL_DAILY_LIMIT = Number(process.env.AI_DAILY_GLOBAL_LIMIT ?? '250');
+const GLOBAL_DAILY_LIMIT = Number(process.env.AI_DAILY_GLOBAL_LIMIT ?? '800');
 
 /** One round trip; at this cap a 60s memo is accurate enough. */
 let globalDayMemo: { day: string; count: number; at: number } | null = null;
@@ -194,6 +214,10 @@ async function countSince(
  * Records one billable agent call. Fire-and-forget: a logging failure must
  * never fail a request the student already paid for in latency.
  */
+/** Warn ONCE per process, not once per call — the failure is permanent until
+ *  the migration runs, and a line per call would bury the rest of the log. */
+let warnedMissingLog = false;
+
 export async function logAgentUsage(
   supabase: SupabaseServerClient,
   userId: string,
@@ -201,9 +225,23 @@ export async function logAgentUsage(
 ): Promise<void> {
   memoryRecord(userId, kind);
   try {
-    await supabase.from('ai_generation_log').insert({ user_id: userId, kind });
+    // ⚠️ supabase-js does NOT throw on a database error — it RETURNS one. The
+    // previous version awaited the insert and ignored the result, so a missing
+    // table (PGRST205) was invisible: no accounting, no durable quotas, no
+    // global budget brake, and nothing in any log to say so. Verified in
+    // production on 2026-08-22 — `supabase-security-hardening.sql` had never
+    // been applied.
+    const { error } = await supabase.from('ai_generation_log').insert({ user_id: userId, kind });
+    if (error && !warnedMissingLog) {
+      warnedMissingLog = true;
+      console.error(
+        `[ai_generation_log] insert failed (${error.code ?? '?'}: ${error.message}) — ` +
+          'usage accounting, per-user daily caps and the global budget brake are ALL off ' +
+          'until supabase-security-hardening.sql is applied. Only the per-instance memory backstop remains.'
+      );
+    }
   } catch {
-    /* table not created yet — the in-memory backstop still applies */
+    /* network-level failure — the in-memory backstop still applies */
   }
 }
 
