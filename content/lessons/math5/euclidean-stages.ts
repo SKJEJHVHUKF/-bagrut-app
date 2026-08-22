@@ -498,6 +498,7 @@ $$m = \\frac{a + b}{2}$$
         question: 'במשולש $\\triangle ABC$ התיכון $AD$ באורך $12$. $M$ היא נקודת מפגש התיכונים. מצא את $AM$ ואת $MD$.',
         hint: 'מפגש התיכונים מחלק כל תיכון ביחס $2:1$ מהקודקוד — החלק הגדול צמוד לקודקוד.',
         expected: { kind: 'set', values: ['8', '4'] },
+        answerLabels: ['AM', 'MD'],
         wrongAnswers: [
           { value: '6,6', note: 'חילקת לשני חלקים שווים — זה תיכון שחוצה צלע, לא נקודת המפגש. היחס הוא $2:1$: $AM = 8$ (צמוד לקודקוד) ו-$MD = 4$.' },
           { value: '9,3', note: 'חילקת ביחס $3:1$. נקודת המפגש מחלקת כל תיכון ביחס $2:1$ מהקודקוד: $\\frac23 \\cdot 12 = 8$ ו-$\\frac13 \\cdot 12 = 4$.' },
@@ -563,6 +564,7 @@ $$m = \\frac{a + b}{2}$$
         question: 'במעוין $ABCD$ האלכסונים באורך $12$ ו-$16$. מצא את שטח המעוין ואת אורך צלעו.',
         hint: 'שטח מעוין = מכפלת האלכסונים חלקי $2$; האלכסונים מאונכים וחוצים זה את זה — פיתגורס על החצאים.',
         expected: { kind: 'set', values: ['96', '10'] },
+        answerLabels: ['שטח המעוין', 'אורך הצלע'],
         wrongAnswers: [
           { value: '192,10', note: 'שכחת לחלק ב-$2$ בנוסחת השטח: $S = \\dfrac{d_1 d_2}{2} = \\dfrac{12 \\cdot 16}{2} = 96$.' },
           { value: '96,14', note: 'הצלע אינה חצי מסכום האלכסונים. האלכסונים מאונכים וחוצים זה את זה — פיתגורס על החצאים: $\\sqrt{6^2 + 8^2} = 10$.' },
@@ -1323,6 +1325,7 @@ $$S_{DPB} = S_{APC} \\cdot \\frac{9}{4} = 8 \\cdot \\frac{9}{4} = 18 \\text{ cm}
         question: 'מנקודה $P$ מחוץ למעגל יוצא משיק $PT = 8$ וחותך הפוגש את המעגל ב-$A$ (הקרובה) וב-$B$. נתון $PA = 4$. חשב את $PB$ ואת אורך המיתר $AB$.',
         hint: 'משיק-חותך: $PT^2 = PA \\cdot PB$; ואז $AB = PB - PA$.',
         expected: { kind: 'set', values: ['16', '12'] },
+        answerLabels: ['PB', 'AB'],
         wrongAnswers: [
           { value: '16,20', note: '$AB$ אינו $PB + PA$ — הנקודה $A$ נמצאת **בין** $P$ ל-$B$, ולכן $AB = PB - PA = 16 - 4 = 12$.' },
           { value: '2,2', note: 'שכחת להעלות את המשיק בריבוע ($8 = 4 \\cdot PB$ נותן $PB = 2$). המשפט: $PT^2 = PA \\cdot PB$, כלומר $64 = 4 \\cdot PB$ ו-$PB = 16$.' },
@@ -1344,6 +1347,7 @@ $$S_{DPB} = S_{APC} \\cdot \\frac{9}{4} = 8 \\cdot \\frac{9}{4} = 18 \\text{ cm}
         question: 'במשולש $\\triangle ABC$, $DE \\parallel BC$ עם $AD = 4$ ו-$DB = 6$. שטח $\\triangle ADE$ הוא $8$ סמ"ר. חשב את שטח $\\triangle ABC$ ואת שטח הטרפז $DBCE$.',
         hint: '$k = \\dfrac{AD}{AB}$ — עם הצלע השלמה במכנה! ואז $k^2$, והטרפז הוא ההפרש.',
         expected: { kind: 'set', values: ['50', '42'] },
+        answerLabels: ['שטח ABC', 'שטח הטרפז DBCE'],
         wrongAnswers: [
           { value: '18,10', note: 'המכנה נלקח $DB$ ($k = \\frac46$) — אבל יחס הדמיון הוא מול הצלע ה**שלמה**: $k = \\frac{4}{10} = \\frac25$, ולכן $S_{ABC} = 8 \\cdot \\frac{25}{4} = 50$.' },
           { value: '20,12', note: 'הופעל $k = \\frac25$ בלי ריבוע ($8 \\cdot \\frac52 = 20$). יחס שטחים הוא $k^2 = \\frac{4}{25}$: $S_{ABC} = 50$ והטרפז $42$.' },
@@ -1366,6 +1370,7 @@ $$S_{DPB} = S_{APC} \\cdot \\frac{9}{4} = 8 \\cdot \\frac{9}{4} = 18 \\text{ cm}
         question: 'במעגל, $AB$ קוטר באורך $50$, $C$ נקודה על המעגל, והגובה $CH$ אל $AB$ מקיים $AH = 18$. הוכח ש-$\\angle ACB = 90°$, וחשב את $CH$ ואת שטח $\\triangle ABC$.',
         hint: 'היקפית על קוטר; ואז $HB = 50 - 18$ ומשפט הגובה $CH^2 = AH \\cdot HB$.',
         expected: { kind: 'set', values: ['24', '600'] },
+        answerLabels: ['CH', 'שטח ABC'],
         wrongAnswers: [
           { value: '30,750', note: '$30$ הוא הניצב $AC$ ($\\sqrt{18 \\cdot 50}$), לא הגובה. משפט ה**גובה**: $CH = \\sqrt{AH \\cdot HB} = \\sqrt{18 \\cdot 32} = 24$, והשטח $\\frac{50 \\cdot 24}{2} = 600$.' },
           { value: '24,1200', note: 'השטח חושב בלי החלוקה ב-$2$: $S = \\dfrac{AB \\cdot CH}{2} = \\dfrac{50 \\cdot 24}{2} = 600$.' },
@@ -1434,6 +1439,7 @@ export const EUCLIDEAN_BAGRUT_EXTRA: StaticBagrutQuestion[] = [
           final_answer: '$AO = 6$, $BO = 8$ — אלכסונים חוצים זה את זה',
         },
         expected: { kind: 'set', values: ['6', '8'] },
+        answerLabels: ['AO', 'BO'],
       },
       {
         label: 'ב',
@@ -1632,6 +1638,7 @@ export const EUCLIDEAN_BAGRUT_EXTRA: StaticBagrutQuestion[] = [
           final_answer: '$PB = 12$, $AB = 9$',
         },
         expected: { kind: 'set', values: ['12', '9'] },
+        answerLabels: ['PB', 'AB'],
       },
       {
         label: 'ד',

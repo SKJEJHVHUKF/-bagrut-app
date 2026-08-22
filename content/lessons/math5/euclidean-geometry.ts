@@ -1041,6 +1041,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
           // The prompt asks for BOTH angles, so a `value` spec marked a student
           // who correctly answered "65, 115" as WRONG — it only ever accepted 65.
           expected: { kind: 'set', values: ['65', '115'] },
+          answerLabels: ['∠BAD', '∠ABC'],
         },
       ],
     },
@@ -1091,6 +1092,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
             final_answer: '$BC = 15$, $\\;AH = 7.2$',
           },
           expected: { kind: 'set', values: ['15', '7.2'] },
+          answerLabels: ['BC', 'AH'],
         },
         {
           label: 'ג',
@@ -2670,9 +2672,10 @@ $$PT^2 = PA \\cdot PB.$$
             'מנקודה $P$ שמחוץ למעגל יוצאים שני חותכים: האחד חותך את המעגל ב-$A$ וב-$B$ ($PA = 4$, $AB = 5$), והשני ב-$C$ וב-$D$ ($PC = 3$). מצא את $PD$ ואת $CD$.',
           hint: 'שני חותכים מאותה נקודה: $PA \\cdot PB = PC \\cdot PD$ — וכל מרחק נמדד עד הנקודה ה**רחוקה**, כלומר $PB = PA + AB$.',
           expected: { kind: 'set', values: ['12', '9'] },
+          answerLabels: ['PD', 'CD'],
           wrongAnswers: [
             {
-              value: '20/3',
+              value: '20/3, 11/3',
               note: 'הצבת $PB = 5$ — אבל $5$ הוא $AB$, המיתר שבין שתי נקודות החיתוך. $PB$ הוא המרחק מ-$P$ עד הנקודה הרחוקה: $PB = PA + AB = 4 + 5 = 9$.',
             },
           ],
