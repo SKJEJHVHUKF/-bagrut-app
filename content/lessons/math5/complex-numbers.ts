@@ -818,6 +818,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             final_answer: '$z_1 = 1 + \\sqrt{3}\\,i$, $\\;z_2 = 1 - \\sqrt{3}\\,i$.',
           },
           expected: { kind: 'set', values: ['1+sqrt(3)*i', '1-sqrt(3)*i'] },
+          answerLabels: ['z₁', 'z₂'],
         },
         {
           label: 'ב',
@@ -929,6 +930,7 @@ $|z - z_1| = |z - z_2|$ מתאר את האנך האמצעי של הקטע $\\ove
             final_answer: '$z_1 = 2(\\cos 60° + i\\sin 60°)$, $\\;z_2 = 2\\sqrt{2}(\\cos 135° + i\\sin 135°)$',
           },
           expected: { kind: 'set', values: ['2*cis(60)', '2*sqrt(2)*cis(135)'] },
+          answerLabels: ['z₁', 'z₂'],
         },
         {
           label: 'ב',
