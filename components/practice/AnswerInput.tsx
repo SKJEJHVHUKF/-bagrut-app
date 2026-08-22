@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useRef } from 'react';
+import { ChangeEvent, useEffect, useRef } from 'react';
 import { MathSymbolBar, type MathSymbol } from './MathSymbolBar';
 
 type Props = {
@@ -144,19 +144,32 @@ export function AnswerParts({
   onChange,
   disabled,
   wrong,
+  locked,
   symbols,
 }: {
   labels: string[];
   values: string[];
   onChange: (next: string[]) => void;
   disabled?: boolean;
-  /** Per-box verdict after a check: a wrong box is outlined, so the student
-   *  sees WHICH of a₁ / d missed rather than a bare "wrong". */
+  /** Per-box verdict after a check: a wrong box is outlined and focused, so
+   *  the student sees WHICH of a₁ / d missed rather than a bare "wrong". */
   wrong?: boolean[];
+  /** Boxes already graded right — shown green with a ✓ and no longer
+   *  editable, so a second attempt only has to fix what was wrong. */
+  locked?: boolean[];
   symbols?: MathSymbol[];
 }) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const focused = useRef(0);
+
+  // After a check, put the caret in the first wrong box. Keyed on the joined
+  // string, not the array: the parent rebuilds the array every render, and an
+  // effect on it would steal focus on every keystroke.
+  const wrongKey = wrong?.join(',') ?? '';
+  useEffect(() => {
+    const i = wrongKey ? wrongKey.split(',').indexOf('true') : -1;
+    if (i >= 0) refs.current[i]?.focus();
+  }, [wrongKey]);
 
   function setPart(i: number, v: string) {
     const next = values.slice();
@@ -171,40 +184,62 @@ export function AnswerParts({
           symbols={symbols}
           onInsert={(sym) => {
             const i = focused.current;
+            if (locked?.[i]) return;
             setPart(i, insertSymbol(refs.current[i] ?? null, values[i] ?? '', sym));
           }}
         />
       )}
-      {labels.map((label, i) => (
-        <label key={i} className="flex items-center gap-3">
-          <span
-            dir="auto"
-            className={`flex-shrink-0 min-w-[2.75rem] text-center text-sm font-black rounded-lg px-2.5 py-1.5 ${
-              wrong?.[i] ? 'bg-rose-500/10 text-rose-800' : 'bg-violet-500/[0.08] text-violet-800'
-            }`}
-          >
-            {label}
-          </span>
-          <input
-            ref={(el) => {
-              refs.current[i] = el;
-            }}
-            type="text"
-            inputMode="text"
-            value={values[i] ?? ''}
-            onChange={(e) => setPart(i, e.target.value)}
-            onFocus={() => {
-              focused.current = i;
-            }}
-            disabled={disabled}
-            placeholder={`רשום את ${label}`}
-            dir="auto"
-            className={`${FIELD_CLASS} flex-1 min-w-0 ${
-              wrong?.[i] ? 'border-rose-500/60 bg-rose-500/[0.04]' : ''
-            }`}
-          />
-        </label>
-      ))}
+      {labels.map((label, i) => {
+        const state = locked?.[i] ? 'locked' : wrong?.[i] ? 'wrong' : 'open';
+        return (
+          <label key={i} className="flex items-center gap-3">
+            <span
+              dir="auto"
+              className={`flex-shrink-0 min-w-[2.75rem] text-center text-sm font-black rounded-lg px-2.5 py-1.5 ${
+                state === 'locked'
+                  ? 'bg-emerald-500/15 text-emerald-800'
+                  : state === 'wrong'
+                    ? 'bg-rose-500/10 text-rose-800'
+                    : 'bg-violet-500/[0.08] text-violet-800'
+              }`}
+            >
+              {label}
+              {state === 'locked' && <span aria-label="נכון"> ✓</span>}
+            </span>
+            <input
+              ref={(el) => {
+                refs.current[i] = el;
+              }}
+              type="text"
+              inputMode="text"
+              value={values[i] ?? ''}
+              onChange={(e) => setPart(i, e.target.value)}
+              onFocus={() => {
+                focused.current = i;
+              }}
+              disabled={disabled || state === 'locked'}
+              placeholder={`רשום את ${label}`}
+              dir="auto"
+              className={`${FIELD_CLASS} flex-1 min-w-0 ${
+                state === 'locked'
+                  ? 'border-emerald-500/50 bg-emerald-500/[0.06] text-emerald-900'
+                  : state === 'wrong'
+                    ? 'border-rose-500/60 bg-rose-500/[0.04]'
+                    : ''
+              }`}
+            />
+          </label>
+        );
+      })}
     </div>
   );
+}
+
+/** One line of feedback for a PARTLY right labelled answer — names the boxes
+ *  that are right and the one(s) still to fix. Only meaningful when at least
+ *  one box is correct; callers fall back to their usual "wrong" text otherwise. */
+export function describeParts(labels: string[], verdicts: ('correct' | 'wrong')[]): string {
+  const right = labels.filter((_, i) => verdicts[i] === 'correct');
+  const wrong = labels.filter((_, i) => verdicts[i] === 'wrong');
+  return `ענית נכון על ${right.join(', ')} ✓, עכשיו תקן את ${wrong.join(' ואת ')} ונסה שוב.`;
 }
