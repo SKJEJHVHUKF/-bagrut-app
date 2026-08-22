@@ -131,6 +131,7 @@ const DIAGS: (AnswerDiagnosis | undefined)[] = [
   { kind: 'conjugate' },
   { kind: 'partial-set', found: 1, total: 2 },
   { kind: 'extra-root', extra: 1 },
+  { kind: 'swapped' },
 ];
 
 let rendered = 0;

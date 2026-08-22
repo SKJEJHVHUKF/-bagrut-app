@@ -397,6 +397,12 @@ const TEMPLATES: Record<string, Tpl> = {
     'קראתי את מה שכתבת: {studentAnswer}. האלגברה שלך תקינה, וכל מה שכתבת מקיים את המשוואה שגזרת — אבל מה שמקיים את המשוואה הוא לא בהכרח פתרון של השאלה.\n\nתציב כל ערך שכתבת בנפרד בשאלה המקורית, לא במשוואה שגזרת. איזה מהם לא חוקי שם?',
     'האלגברה שלך תקינה, וכל מה שכתבת מקיים את המשוואה שגזרת — אבל מה שמקיים את המשוואה הוא לא בהכרח פתרון של השאלה. תציב כל ערך בנפרד בשאלה המקורית — איזה מהם לא חוקי שם?',
   ),
+  // Labelled boxes (answerLabels) with every value right but in the wrong box.
+  'E:why-wrong:swapped': T(
+    'why-wrong',
+    'קראתי את מה שכתבת: {studentAnswer}. הערכים עצמם נכונים, אבל הם יושבים בתיבות הלא-נכונות: מה שכתבת בתיבה אחת שייך לתיבה האחרת.\n\nתחזור לשאלה ותבדוק מה כל גודל מסמן, ותכתוב כל ערך ליד הסימון שלו.',
+    'הערכים עצמם נכונים, אבל הם יושבים בתיבות הלא-נכונות. תחזור לשאלה ותבדוק מה כל גודל מסמן, ותכתוב כל ערך ליד הסימון שלו.',
+  ),
   // ⚠️ The default lives IN the map, not in the fallback. A fallback is only
   // reached when a slot is missing — here the slot is present, so an unknown
   // diagnosis kind would otherwise render a broken key.

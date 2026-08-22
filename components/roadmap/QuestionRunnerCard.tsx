@@ -24,14 +24,14 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, KeyRound, LifeBuoy, ArrowLeft, RotateCcw, Wrench } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
-import { AnswerInput } from '@/components/practice/AnswerInput';
+import { AnswerInput, AnswerParts } from '@/components/practice/AnswerInput';
 import { MistakeTagger } from '@/components/practice/MistakeTagger';
 import { AITutorActions } from '@/components/practice/AITutorActions';
 import { buttonTap } from '@/lib/animations';
 import { celebrateCorrect } from '@/lib/confetti';
 import { seededOrder } from '@/lib/shuffle';
 import { announce } from '@/lib/a11y/announce';
-import { checkAnswer, matchKnownMistake, type CheckResult } from '@/lib/answer-check';
+import { checkAnswer, checkAnswerParts, matchKnownMistake, type CheckResult } from '@/lib/answer-check';
 import { recordResult, type ResultSource } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
 import type { ErrorCategory } from '@/lib/mistakes';
@@ -81,6 +81,14 @@ export function QuestionRunnerCard({
 
   const [selected, setSelected] = useState<number | null>(null); // MCQ original index
   const [input, setInput] = useState('');
+  // A question that asks for several named quantities ("מצא את $a_1$ ואת $d$")
+  // gets one labelled box per quantity (question.answerLabels) instead of one
+  // box for all of them. `typed` is the whole answer as one string — what the
+  // logs, the tutor and the "למה טעית?" box read; grading uses the boxes.
+  const labels = q.answerLabels;
+  const [parts, setParts] = useState<string[]>(() => (q.answerLabels ?? []).map(() => ''));
+  const typed = labels ? labels.map((l, i) => `${l} = ${(parts[i] ?? '').trim()}`).join(', ') : input;
+  const filled = labels ? parts.every((p) => p.trim()) : input.trim().length > 0;
   const [tries, setTries] = useState(0);
   const [firstTryCorrect, setFirstTryCorrect] = useState<boolean | null>(null);
   const [revealed, setRevealed] = useState(false);
@@ -280,12 +288,12 @@ export function QuestionRunnerCard({
 
   function submitOpen() {
     if (resolved || !q.expected || q.expected.kind === 'manual') return;
-    let res = checkAnswer(input, q.expected);
+    let res = labels ? checkAnswerParts(parts, q.expected) : checkAnswer(input, q.expected);
     // An authored predictable-mistake match beats a shape-based diagnosis: it
     // names the exact step that broke, in the author's words (the open-question
     // counterpart of a distractor note).
     if (res.verdict === 'wrong') {
-      const note = matchKnownMistake(input, q.wrongAnswers);
+      const note = matchKnownMistake(labels ? parts : input, q.wrongAnswers);
       if (note) res = { ...res, diagnosis: { kind: 'known-mistake', note } };
     }
     setCheck(res);
@@ -298,7 +306,7 @@ export function QuestionRunnerCard({
       setFirstTryCorrect(correct);
       // submitOpen only runs when `expected` exists and isn't 'manual', so this
       // verdict came from lib/answer-check, not from the student.
-      logFirst(correct, input, undefined, false);
+      logFirst(correct, typed, undefined, false);
     }
     if (correct) gradeCorrect();
     else gradeWrong();
@@ -387,7 +395,22 @@ export function QuestionRunnerCard({
       {q.kind === 'open' && autoGradable && !revealed && (
         <div className="space-y-2">
           <div className="text-[11px] font-bold text-slate-600">התשובה שלך:</div>
-          <AnswerInput value={input} onChange={setInput} type="expression" disabled={firstTryCorrect === true} />
+          {labels ? (
+            <AnswerParts
+              labels={labels}
+              values={parts}
+              onChange={setParts}
+              disabled={firstTryCorrect === true}
+              wrong={check?.parts?.map((v) => v === 'wrong')}
+            />
+          ) : (
+            <AnswerInput value={input} onChange={setInput} type="expression" disabled={firstTryCorrect === true} />
+          )}
+          {check?.diagnosis?.kind === 'swapped' && (
+            <div className="text-xs text-amber-700 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+              הערכים עצמם נכונים, אבל התחלפו ביניהם — בדוק איזה ערך שייך לאיזו תיבה.
+            </div>
+          )}
           {check?.verdict === 'unparseable' && (
             <div className="text-xs text-amber-700 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
               לא הצלחתי לקרוא את התשובה — נסה לכתוב אותה כמספר או ביטוי (למשל <span dir="ltr">2+3i</span> או <span dir="ltr">x&gt;4</span>).
@@ -401,7 +424,7 @@ export function QuestionRunnerCard({
           <motion.button
             {...buttonTap}
             onClick={submitOpen}
-            disabled={!input.trim()}
+            disabled={!filled}
             className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 disabled:opacity-40 px-4 py-2.5 rounded-xl font-bold text-white text-sm transition-colors"
           >
             <CheckCircle className="w-4 h-4" />
@@ -509,7 +532,7 @@ export function QuestionRunnerCard({
                   <XCircle className="w-3 h-3" /> למה טעית?
                 </div>
                 <div className="text-sm text-slate-800 chat-md leading-relaxed">
-                  כתבת <span dir="ltr" className="font-mono font-bold text-rose-800">{input}</span> — וזו טעות מוכרת:
+                  כתבת <span dir="ltr" className="font-mono font-bold text-rose-800">{typed}</span> — וזו טעות מוכרת:
                 </div>
                 <div className="mt-2 text-sm text-rose-900 chat-md leading-relaxed">
                   <MathText>{check.diagnosis.note}</MathText>
@@ -585,7 +608,7 @@ export function QuestionRunnerCard({
                 <AITutorActions
                   question={q.question}
                   correctAnswer={q.solution.finalAnswer}
-                  userAnswer={q.kind === 'mcq' ? (selected !== null ? q.answers?.[selected] : undefined) : input || undefined}
+                  userAnswer={q.kind === 'mcq' ? (selected !== null ? q.answers?.[selected] : undefined) : typed || undefined}
                   solution={q.solution.steps.join('\n')}
                   hints={q.hint ? [q.hint] : undefined}
                   topic={topic}

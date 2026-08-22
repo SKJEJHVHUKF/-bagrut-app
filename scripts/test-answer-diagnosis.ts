@@ -19,7 +19,7 @@
  * mistakes with opposite repairs.
  */
 
-import { checkAnswer, type AnswerSpec } from '../lib/answer-check';
+import { checkAnswer, checkAnswerParts, matchKnownMistake, type AnswerSpec } from '../lib/answer-check';
 
 let failures = 0;
 let checks = 0;
@@ -85,6 +85,34 @@ assert(
 );
 const twoExtra = d('2,3,5,7', set('2', '3'));
 assert(twoExtra?.kind === 'extra-root' && twoExtra.extra === 2, 'two surplus roots are counted as two');
+
+section('labelled boxes (answerLabels) — graded in ORDER, box by box');
+
+// "מצא את a₁ ואת d" with a₁=5, d=3: the unordered set check would accept the
+// swap; with named boxes the swap is exactly the mistake to expose.
+const tuple = set('5', '3');
+assert(checkAnswerParts(['5', '3'], tuple).verdict === 'correct', 'right values in the right boxes are correct');
+assert(checkAnswerParts(['5', '3'], tuple).readAs === '5, 3', 'and are read back in box order');
+const swapped = checkAnswerParts(['3', '5'], tuple);
+assert(swapped.verdict === 'wrong', 'the same values in the other boxes are wrong');
+assert(swapped.diagnosis?.kind === 'swapped', 'and the diagnosis names the swap');
+assert(checkAnswer('3, 5', tuple).verdict === 'correct', '(the plain set check would have let it through)');
+const oneOff = checkAnswerParts(['5', '4'], tuple);
+assert(oneOff.verdict === 'wrong' && oneOff.diagnosis === undefined, 'one wrong box is wrong, with no invented diagnosis');
+assert(
+  oneOff.parts?.[0] === 'correct' && oneOff.parts?.[1] === 'wrong',
+  'and the per-box verdicts say WHICH box missed',
+);
+assert(checkAnswerParts(['5', ''], tuple).verdict === 'unparseable', 'an empty box is unparseable, not wrong');
+assert(checkAnswerParts(['5', 'שלוש'], tuple).verdict === 'unparseable', 'so is an unreadable box');
+assert(checkAnswerParts(['5'], tuple).verdict === 'manual', 'a box count that does not match the spec is an authoring error, never a fail');
+assert(checkAnswerParts(['5', '3'], val('5')).verdict === 'manual', 'labels against a single-value spec likewise');
+assert(checkAnswerParts(['1/3', '8/9'], set('1/3', '8/9')).verdict === 'correct', 'fractions grade box by box too');
+
+const wrongs = [{ value: '8, 3', note: 'counted d from a₁ instead of a₃' }];
+assert(matchKnownMistake(['8', '3'], wrongs) === wrongs[0].note, 'a known mistake is matched box by box');
+assert(matchKnownMistake(['3', '8'], wrongs) === null, 'and NOT as an unordered set');
+assert(matchKnownMistake(['', ''], wrongs) === null, 'empty boxes match nothing');
 
 console.log(`\n${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
 process.exit(failures === 0 ? 0 : 1);

@@ -195,6 +195,13 @@ export type PracticeQuestion = {
    *  all n", loci) so the intent is explicit. */
   expected?: AnswerSpec;
 
+  /** OPEN-only, OPTIONAL: one labelled answer box per quantity the question
+   *  asks for ("מצא את $a_1$ ואת $d$") instead of one box for all of them.
+   *  Aligned with `expected.values` (kind 'set'), which is then graded as an
+   *  ORDERED tuple — box i against values[i] — by checkAnswerParts. Plain text
+   *  shown inside an <input> (no KaTeX): 'a₁', 'd', 'S₁₀', 'מספר האיברים'. */
+  answerLabels?: string[];
+
   /** OPEN-only, OPTIONAL: the open-question counterpart of `distractorNotes`.
    *  Each entry is a wrong value a student PREDICTABLY types (a mathjs
    *  expression, compared with the same engine that grades `expected`) plus an
@@ -239,6 +246,9 @@ export type BagrutQuestionPart = {
   };
   /** Machine-checkable answer spec for free deterministic grading. */
   expected?: AnswerSpec;
+  /** One labelled box per quantity asked for — same contract as
+   *  PracticeQuestion.answerLabels (ordered against `expected.values`). */
+  answerLabels?: string[];
 };
 
 // ============================================================
