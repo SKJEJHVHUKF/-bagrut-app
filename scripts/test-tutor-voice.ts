@@ -160,6 +160,14 @@ const PHRASINGS: { text: string; expect: ReturnType<typeof classifyAsk> }[] = [
   { text: 'ואיך עושים את זה', expect: 'help' },
   { text: 'איך פותרים?', expect: 'help' },
   { text: 'ואיך?', expect: 'help' },
+  // Reported from a real probability session as costing a call. A two-way
+  // table is how the question is set up, so asking for it is asking for the
+  // first move — which the ladder already serves from authored content.
+  { text: 'תן לי הטבלה של זה', expect: 'help' },
+  { text: 'תן לי את הטבלה', expect: 'help' },
+  { text: 'אפשר טבלה?', expect: 'help' },
+  { text: 'תבנה לי טבלה', expect: 'help' },
+  { text: 'איך בונים את הטבלה', expect: 'help' },
   // why-wrong
   { text: 'למה זה לא נכון?', expect: 'why-wrong' },
   { text: 'מה לא בסדר בתשובה שלי', expect: 'why-wrong' },
@@ -182,6 +190,13 @@ const PHRASINGS: { text: string; expect: ReturnType<typeof classifyAsk> }[] = [
   { text: 'לא הבנתי את השאלה', expect: 'explain' },
   { text: 'מה רוצים ממני פה', expect: 'explain' },
   { text: 'מה זה אומר', expect: 'explain' },
+  // Also reported from a real session. `זה` points at the screen; it is not an
+  // object, so there is nothing else the sentence can be about.
+  { text: 'איך זה עובד', expect: 'explain' },
+  { text: 'איך זה עובד?', expect: 'explain' },
+  { text: 'איך זה עובד בדיוק', expect: 'explain' },
+  { text: 'איך זה קשור', expect: 'explain' },
+  { text: 'למה זה עובד', expect: 'explain' },
   // genuinely new — the model's job
   { text: 'האם אפשר להשתמש בנוסחת הסכום גם כשהסדרה אינסופית?', expect: null },
   { text: 'מה ההבדל בין סדרה חשבונית להנדסית', expect: null },
@@ -197,6 +212,12 @@ const PHRASINGS: { text: string; expect: ReturnType<typeof classifyAsk> }[] = [
   { text: 'מה כיוון הווקטור AB', expect: null },
   { text: 'מאיפה הגיע ה-2 בשורה השלישית', expect: null },
   { text: 'איך מחשבים נגזרת של ln בכלל', expect: null },
+  // The other side of the two fixes above: name a subject and it is a new
+  // question again, so it keeps going to the model.
+  { text: 'איך עובד חוק בייס', expect: null },
+  { text: 'איך עובדת הסתברות מותנית בכלל', expect: null },
+  { text: 'איך זה עובד כשיש שלושה מאורעות בלתי תלויים', expect: null },
+  { text: 'מה ההבדל בין טבלה דו ממדית לדיאגרמת עץ', expect: null },
   { text: 'בעזרת איזו שיטה פותרים מערכת עם פרמטר', expect: null },
 ];
 let phrasingMisses = 0;

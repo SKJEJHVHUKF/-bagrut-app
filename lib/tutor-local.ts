@@ -131,6 +131,37 @@ const has = (t: string, ...w: string[]) => w.some((x) => t.includes(x));
  *
  * Cost of the miss, reported from a real session: $0.01 for one "ואיך מחשבים?".
  */
+/**
+ * "איך זה עובד" — reported from a real session as costing a call.
+ *
+ * Same shape as BARE_METHOD and the same reasoning: `זה` is not an object, it
+ * is a pointer at the thing on the screen. A student who names something
+ * ("איך עובד חוק בייס", "איך זה עובד כשיש שלושה מאורעות בלתי תלויים") is
+ * asking a new question and still gets the model; a student who names nothing
+ * can only mean this exercise.
+ *
+ * The optional tail is intensifiers only — בדיוק / פה / כאן / עכשיו add
+ * emphasis, never a subject. Anything else after the verb disqualifies it,
+ * which is what keeps the two cases apart.
+ */
+const BARE_HOW_IT_WORKS =
+  /^(?:ו|אז|נו|טוב)?\s*(?:איך|למה|מדוע|מה)\s+זה\s*(?:עובד|קשור|הולך|מסתדר|יוצא|קורה|נכון)?\s*(?:בדיוק|פה|כאן|עכשיו|בכלל)?\s*$/;
+
+/**
+ * "תן לי הטבלה של זה" — also reported from a real session.
+ *
+ * A two-way table is how probability questions are set up, so asking for it is
+ * asking to be shown the first move, which is exactly what the help ladder
+ * serves. The model's own reply to this was a walkthrough of building one —
+ * something the ladder already does from authored content, for free.
+ *
+ * Anchored, so "תן לי טבלה של כל הנוסחאות בבגרות" is untouched — and it is
+ * already caught earlier as `formulas` anyway, since the formulas branch runs
+ * before this one.
+ */
+const TABLE_REQUEST =
+  /^(?:ו|אז)?\s*(?:תן|תני|אפשר|בוא|בואי|תבנה|תבני|נבנה|איך בונים|איך עושים|איך מסדרים)?\s*(?:לי|נא)?\s*(?:את\s*)?(?:ה)?טבלה\s*(?:של\s*זה|לזה|פה|כאן|כאן\?)?\s*$/;
+
 const BARE_METHOD =
   /^(?:ו|אז|נו|טוב|או?ק(?:יי)?)?\s*(?:איך|כיצד)(?:\s+(?:מחשבים|מחשב|עושים|פותרים|ניגשים|מתחילים|יודעים|ממשיכים|מוצאים|קובעים))?(?:\s+(?:את\s+זה|זה|זאת|פה|כאן|אותו|אותה|עכשיו))?$/;
 
@@ -181,7 +212,8 @@ export function classifyAsk(message: string): Ask | null {
     has(t, 'יותר פשוט', 'פשוט יותר', 'בפשטות', 'במילים פשוטות', 'הסבר פשוט') ||
     has(t, 'מה רוצים', 'מה זה אומר פה', 'מה זה אומר כאן', 'מה זה אומר בשאלה') ||
     has(t, 'מה הכוונה פה', 'מה הכוונה כאן', 'מה הכוונה בשאלה') ||
-    t === 'מה זה אומר' || t === 'מה הכוונה'
+    t === 'מה זה אומר' || t === 'מה הכוונה' ||
+    BARE_HOW_IT_WORKS.test(t)
   ) {
     return 'explain';
   }
@@ -206,7 +238,8 @@ export function classifyAsk(message: string): Ask | null {
     has(t, 'לא יודע מה', 'לא יודעת מה', 'לא יודע איך', 'לא יודעת איך') ||
     has(t, 'תן לי כיוון', 'תני לי כיוון', 'צריך כיוון', 'מאיפה אני מתחיל', 'מאיפה אני מתחילה') ||
     has(t, 'איך מחשבים את', 'איך עושים את') ||
-    BARE_METHOD.test(t)
+    BARE_METHOD.test(t) ||
+    TABLE_REQUEST.test(t)
   ) {
     return 'help';
   }
