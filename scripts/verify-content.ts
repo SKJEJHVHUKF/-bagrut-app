@@ -17,6 +17,7 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import { pathToFileURL } from 'url';
+import { checkGeoFences } from '../lib/geo-figure';
 
 const STRICT = process.argv.includes('--strict');
 const HEB = /[֐-׿]/;
@@ -106,6 +107,12 @@ function checkString(file: string, path: string, key: string, value: string) {
     return;
   }
   if (SKIP_FIELDS.has(key)) return;
+
+  // A ```geo sketch is a model of the question: every mark it makes (right
+  // angle, "50°", parallel, equal ticks, point on circle, lengths to scale) is
+  // checked against its own coordinates, so a figure can never contradict the
+  // question it illustrates.
+  if (value.includes('```geo')) for (const e of checkGeoFences(value)) add('geo-figure', 'error', file, path, e);
 
   for (const span of mathSpans(value)) {
     if (HEB.test(span)) add('hebrew-in-math', 'error', file, path, span);

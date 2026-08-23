@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { ProbTreeFromJson } from './ProbTree';
+import { GeoFigureFromJson } from './GeoFigure';
 
 // Renders markdown + LaTeX (Hebrew prose with LTR math islands).
 //
@@ -101,23 +102,23 @@ function MdSegment({ text }: { text: string }) {
 }
 
 // A ```probtree fenced block carries a JSON ProbTree spec — a probability-tree
-// diagram drawn the way the bagrut draws it. Split the text around the fences
-// and render each spec as an SVG between the markdown segments. The outer
-// wrapper stays a single element, preserving the one-element contract above.
-const TREE_FENCE = /```probtree\s*\n([\s\S]*?)```/g;
+// diagram drawn the way the bagrut draws it; a ```geo block carries a JSON
+// GeoSpec — the geometry sketch printed beside the question. Split the text
+// around the fences and render each spec as an SVG between the markdown
+// segments. The outer wrapper stays a single element, preserving the
+// one-element contract above.
+const FIGURE_FENCE = /```(probtree|geo)\s*\n([\s\S]*?)```/g;
 
 export function MathText({ children: raw, inline = false }: { children: string; inline?: boolean }) {
-  if (!inline && raw.includes('```probtree')) {
-    const parts = raw.split(TREE_FENCE);
+  if (!inline && (raw.includes('```probtree') || raw.includes('```geo'))) {
+    const parts = raw.split(FIGURE_FENCE); // [text, lang, json, text, lang, json, …]
     return (
       <div dir="rtl" className="mathtext-block">
-        {parts.map((part, i) =>
-          i % 2 === 1 ? (
-            <ProbTreeFromJson key={i} json={part} />
-          ) : part.trim() ? (
-            <MdSegment key={i} text={part} />
-          ) : null
-        )}
+        {parts.map((part, i) => {
+          if (i % 3 === 1) return null; // the fence language, consumed below
+          if (i % 3 === 2) return parts[i - 1] === 'geo' ? <GeoFigureFromJson key={i} json={part} /> : <ProbTreeFromJson key={i} json={part} />;
+          return part.trim() ? <MdSegment key={i} text={part} /> : null;
+        })}
       </div>
     );
   }

@@ -53,6 +53,7 @@
 
 import type { BagrutQuestionPart, PracticeQuestion, SubTopic } from '@/content/lessons/types';
 import type { AnswerDiagnosis } from '@/lib/answer-check';
+import { stripFigureFences } from '@/lib/geo-figure';
 
 const EVENT = 'tutor-focus';
 
@@ -280,7 +281,8 @@ export function renderFocusContext(focus: TutorFocus | null): string {
   // Haiku input tokens: under $0.001 per turn for the accuracy it buys.
   const steps = focus.question?.solution.steps ?? [];
   if (steps.length > 0) {
-    const body = steps.map((s, i) => `${i + 1}. ${s}`).join('\n').slice(0, 1200);
+    // Figure fences (a JSON sketch) would eat most of the budget — the model gets a marker instead.
+    const body = steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n').slice(0, 1200);
     lines.push(
       'הפתרון הכתוב והמאומת — בשבילך בלבד, לא לתלמיד. הנחה לפיו ואל תסטה ממנו. ' +
         'אל תחשוף צעד שהתלמיד עוד לא הגיע אליו, ואל תצטט את התשובה הסופית:\n' +
