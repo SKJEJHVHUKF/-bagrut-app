@@ -19,6 +19,7 @@ import { answerLocally, type LocalAnswerKind } from '../lib/tutor-local';
 import { routeMessage } from '../lib/tutor-router';
 import { partAsQuestion, focusPrompts, type TutorFocus } from '../lib/tutor-presence';
 import { answerFromFaq } from '../lib/tutor-faq';
+import { examMetaAnswer } from '../lib/tutor-exam-meta';
 
 const TOPIC = process.argv[2] ?? 'הסתברות';
 
@@ -31,7 +32,33 @@ const FOLLOW_UPS: [string, string[]][] = [
   ['ask about what was just said', ['למה?', 'למה זה ככה', 'מה זאת אומרת', 'תסביר את זה']],
   ['acknowledge', ['הבנתי', 'תודה', 'אוקיי', 'סבבה']],
   ['give up / want the answer', ['אני מוותר', 'פשוט תגיד לי', 'תראה לי כבר', 'מה התשובה']],
-  ['a genuinely new question', ['מה ההבדל בין וגם לאו', 'איך זה קשור לעץ הסתברות']],
+  // ===== the student keeps digging into THIS question =====
+  // Everything above is conversational glue. What follows is the real content
+  // of a tutoring session, and it is where "answered from what is written"
+  // either holds up or turns into a bill. Grouped by what would have to exist
+  // for the answer to be free.
+  ['about a step in this solution', [
+    'למה מכפילים ולא מחברים', 'מאיפה הגיע המספר הזה', 'למה חילקת בזה',
+    'למה הצעד השני ככה', 'מה עשית בשורה 2',
+  ]],
+  ['the concept behind this question', [
+    'מה זה בלי החזרה', 'מה זה מאורעות תלויים', 'מה ההבדל בין וגם לאו',
+    'מתי משתמשים בעץ ומתי בטבלה', 'איך יודעים אם המאורעות בלתי תלויים',
+    'מה זה בעצם הסתברות מותנית',
+  ]],
+  ['a wrong idea the student has', [
+    'חשבתי שצריך לחבר', 'למה לא סוכמים הכל', 'אני תמיד מתבלבל בזה',
+    'מה הטעות הנפוצה כאן',
+  ]],
+  ['what if the question changed', [
+    'ומה אם היו שלושה מאורעות', 'ואם זה היה עם החזרה', 'ומה אם שואלים על לפחות אחד',
+  ]],
+  ['checking and remembering', [
+    'איך אני בודק שזה נכון', 'איך אני זוכר את זה', 'יש דרך קצרה יותר',
+  ]],
+  ['exam meta', [
+    'זה יבוא בבגרות', 'כמה נקודות זה שווה', 'זה תמיד ככה בשאלות האלה',
+  ]],
 ];
 
 (async () => {
@@ -67,6 +94,8 @@ const FOLLOW_UPS: [string, string[]][] = [
       formulas: 'באיזו נוסחה משתמשים כאן?', 'key-points': 'מה חשוב לזכור?', explain: 'תסביר לי את השאלה הזאת מההתחלה',
     };
     const probe = route.kind === 'ask' ? (CANONICAL[route.ask] ?? msg) : msg;
+    const meta = examMetaAnswer(msg, focus.topic);
+    if (meta) { free++; return 'exam-meta (data)'; }
     const local = answerLocally(probe, focus, served);
     if (local) {
       if (!served.includes(local.kind)) served.push(local.kind);
