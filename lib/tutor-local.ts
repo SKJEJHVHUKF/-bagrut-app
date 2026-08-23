@@ -153,6 +153,9 @@ export function classifyAsk(message: string): Ask | null {
     // "מה זה אומר" / "מה הכוונה" only when they point at THIS question — bare,
     // they also match "מה זה אומר שהסדרה מתכנסת", a definition question that
     // belongs to the model, not to a template about the exercise on screen.
+    // "אפשר יותר פשוט" — a request to say the same thing again, more plainly.
+    // It arrives constantly as a follow-up and was falling through to the API.
+    has(t, 'יותר פשוט', 'פשוט יותר', 'בפשטות', 'במילים פשוטות', 'הסבר פשוט') ||
     has(t, 'מה רוצים', 'מה זה אומר פה', 'מה זה אומר כאן', 'מה זה אומר בשאלה') ||
     has(t, 'מה הכוונה פה', 'מה הכוונה כאן', 'מה הכוונה בשאלה') ||
     t === 'מה זה אומר' || t === 'מה הכוונה'

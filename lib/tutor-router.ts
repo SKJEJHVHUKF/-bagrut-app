@@ -36,20 +36,84 @@
  * against, an absence of question wording, and a value that actually parses.
  */
 
-import { answerLocally, classifyAsk } from '@/lib/tutor-local';
+import { answerLocally, classifyAsk, type LocalAnswerKind } from '@/lib/tutor-local';
 import { isParseable, latexToMathjs } from '@/lib/mathscan/solve/parse';
 import { checkAnswer } from '@/lib/answer-check';
 import type { TutorFocus } from '@/lib/tutor-presence';
 import type { AnswerSpec, Verdict } from '@/lib/answer-check';
+
+type Ask = NonNullable<ReturnType<typeof classifyAsk>>;
 
 export type Route =
   /** A. the student typed a value to be graded. `spec` is what to grade against. */
   | { kind: 'answer'; spec: AnswerSpec; typed: string }
   /** B/C. one of the six recurring asks — hint, first step, why wrong, full
    *  solution, formulas, key points — all served from authored content. */
-  | { kind: 'ask'; ask: NonNullable<ReturnType<typeof classifyAsk>> }
+  | { kind: 'ask'; ask: Ask }
+  /** "תודה", "הבנתי", "אוקיי". A fixed reply. Paying a model to say "בכיף"
+   *  is the least defensible call in the app. */
+  | { kind: 'ack'; text: string }
   /** D. an original question. The model's job. */
   | { kind: 'open' };
+
+/**
+ * What the tutor said last turn. Without it a conversation cannot be routed:
+ * "ואז?" means "more of what you just gave me", and a stateless classifier can
+ * only shrug and pay.
+ *
+ * MEASURED before this existed (scripts/sim-tutor-session.ts): the four
+ * opening chips were 100% local, and the conversation that followed was 38%.
+ * Every "המשך", "נו", "ואז?", "תודה", "אוקיי" was a billed model call.
+ */
+export type TurnState = {
+  /** The ask the previous turn resolved to, if any. */
+  lastAsk?: Ask | null;
+  /** Rungs already handed out for this question (the bubble's `servedRef`). */
+  served?: readonly LocalAnswerKind[];
+};
+
+// ------------------------------------------------------------
+// Conversational moves that are not questions
+// ------------------------------------------------------------
+
+/** Pure acknowledgement — nothing is being asked. */
+const ACK = /^\s*(?:תודה(?:\s*רבה)?|אוקיי?|או\.?ק\.?|סבבה|מגניב|יופי|מעולה|הבנתי(?:\s*תודה)?|ברור|נכון מאוד|בסדר|טוב|כן טוב|ok|okay|thanks?)\s*[!.…]*\s*$/i;
+
+/**
+ * "Carry on" — no new content, just a request for more of the same. Anchored
+ * to the whole message on purpose: "ואז מחשבים את הסכום" is a statement about
+ * the maths, not a nudge, and must not be swallowed as one.
+ */
+const CONTINUE = /^\s*(?:ו?אז\s*(?:מה)?|ו?מה\s*(?:עכשיו|הלאה|הצעד הבא)|המשך|תמשיך|הלאה|נו|עוד|עוד\s*קצת|ו\?|וכן\?|אחר כך|ואחר כך|ובהמשך)\s*[?!.…]*\s*$/;
+
+/** "עוד רמז", "תן לי עוד כיוון" — a request for one more of whatever came
+ *  last. Not anchored, because it carries a noun and cannot be confused with a
+ *  statement about the maths. */
+// ⚠️ No `\b`. Hebrew letters are not `\w` in JavaScript regex, so a word
+// boundary next to them matches in places you do not expect and fails in the
+// ones you do — `\bעוד` did not match "תן לי עוד כיוון" at all.
+const MORE = /עוד\s+(?:רמז|כיוון|צעד|משהו|אחד|דוגמ)/;
+
+/** A bare "למה?" with nothing after it is about the sentence the tutor just
+ *  said, not about the exercise. It continues the thread. */
+const BARE_WHY = /^\s*(?:למה|למה\s*זה(?:\s*ככה)?|מדוע)\s*[?!.…]*\s*$/;
+
+/** A leading acknowledgement in front of a real move: "אוקיי ומה הלאה",
+ *  "תודה, עוד רמז". Stripped so the move underneath is seen. */
+const ACK_PREFIX = /^\s*(?:תודה(?:\s*רבה)?|אוקיי?|או\.?ק\.?|סבבה|יופי|מעולה|הבנתי|ברור|בסדר|טוב|ok|okay)\s*[,.!]*\s+/i;
+
+/** The student has stopped trying and wants the solution. TUTOR_CORE's own
+ *  rule says this is the moment to give it, in full. */
+const GIVE_UP = /אני\s*מוותר|פשוט\s*תגיד|תגיד\s*לי\s*כבר|תראה\s*לי\s*כבר|נמאס|לא\s*מצליח\s*בכלל|אין\s*לי\s*כוח/;
+
+/** Warm, short, and it always ends by offering the next move — the same rule
+ *  every template in lib/tutor-local follows. Rotated by message length so two
+ *  acknowledgements in a row do not get the identical line. */
+const ACK_REPLIES = [
+  'בכיף. רוצה לנסות את הסעיף הבא, או שנעבור על משהו שוב?',
+  'יופי. תגיד לי כשתרצה את הצעד הבא, או אם משהו עוד לא יושב.',
+  'מצוין. אני כאן אם תיתקע בהמשך.',
+];
 
 // ------------------------------------------------------------
 // Answer detection
@@ -129,9 +193,39 @@ export function looksLikeAnswer(message: string): boolean {
  * value, but "זה 16?" does, and a student asking for a hint while a spec
  * happens to exist must still get the hint.
  */
-export function routeMessage(message: string, focus: TutorFocus | null): Route {
+export function routeMessage(message: string, focus: TutorFocus | null, state: TurnState = {}): Route {
+  const trimmed = message.trim();
+
+  // Social move. Answered, not billed.
+  if (ACK.test(trimmed)) {
+    return { kind: 'ack', text: ACK_REPLIES[trimmed.length % ACK_REPLIES.length] };
+  }
+
+  // "פשוט תגיד לי" — the student is done trying. TUTOR_CORE already says this
+  // is when to give the whole solution, so it is an ask, not an open question.
+  if (GIVE_UP.test(trimmed)) return { kind: 'ask', ask: 'full' };
+
   const ask = classifyAsk(message);
   if (ask) return { kind: 'ask', ask };
+
+  // "ואז?" / "המשך" / "נו" / "עוד רמז" — no content of its own; it inherits
+  // the last ask. The acknowledgement prefix is stripped first, so
+  // "אוקיי ומה הלאה" is read as the nudge it is.
+  const move = trimmed.replace(ACK_PREFIX, '');
+  if (state.lastAsk && (CONTINUE.test(move) || MORE.test(move) || BARE_WHY.test(move))) {
+    // …except when the help ladder is spent. Repeating "here is a hint" to a
+    // student who has had every hint is the behaviour TUTOR_CORE forbids
+    // ("after about two hints that did not land, switch to a full, direct
+    // explanation"), so continuation escalates instead of looping.
+    const served = state.served ?? [];
+    const ladderSpent =
+      state.lastAsk === 'help' && served.includes('hint') &&
+      (served.includes('first-step') || served.includes('key-points'));
+    // A bare "למה?" asks about the sentence just said, which is an
+    // explanation request — not another rung of the same ladder.
+    if (BARE_WHY.test(move)) return { kind: 'ask', ask: 'explain' };
+    return { kind: 'ask', ask: ladderSpent ? 'full' : state.lastAsk };
+  }
 
   const spec = focus?.question?.expected;
   // `manual` means the content author said this answer cannot be graded
@@ -140,6 +234,31 @@ export function routeMessage(message: string, focus: TutorFocus | null): Route {
     return { kind: 'answer', spec, typed: bareValue(message) };
   }
   return { kind: 'open' };
+}
+
+/**
+ * A canonical phrasing for each ask.
+ *
+ * `answerLocally` takes the student's WORDS and classifies them itself, so a
+ * resolved continuation ("ואז?" → the previous ask) has to be handed to it as
+ * something it can classify. Without this the router would resolve the ask and
+ * the local tutor would immediately re-classify the raw "ואז?" as nothing and
+ * fall through to the model — the routing would be correct and have no effect.
+ *
+ * Each string below is asserted to classify back to its own key in
+ * scripts/test-tutor-voice.ts's phrasing corpus.
+ */
+const CANONICAL: Record<Ask, string> = {
+  help: 'תן לי רמז',
+  'why-wrong': 'למה התשובה שלי שגויה?',
+  full: 'תראה לי את הפתרון',
+  formulas: 'באיזו נוסחה משתמשים כאן?',
+  'key-points': 'מה חשוב לזכור?',
+  explain: 'תסביר לי את השאלה הזאת מההתחלה',
+};
+
+export function canonicalFor(ask: Ask): string {
+  return CANONICAL[ask];
 }
 
 // ------------------------------------------------------------
