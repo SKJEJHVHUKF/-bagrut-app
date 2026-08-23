@@ -47,7 +47,24 @@ type CueRule = { kind: ProblemKind; patterns: RegExp[]; weight: number };
  * load — which would take the whole page down, not just the classifier.
  */
 function heb(word: string): RegExp {
-  return new RegExp(`(?:^|[^א-ת])(${word})(?:[^א-ת]|$)`);
+  // The optional letter is a CLITIC — the one-letter prefixes Hebrew glues on
+  // (ה the, ו and, ב in, ל to, מ from, ש that, כ as). Without it the leading
+  // guard rejects exactly the phrasing the exam uses: `heb('סדרה')` matched
+  // "נתונה סדרה חשבונית" but NOT "נתונה הסדרה החשבונית", so a question
+  // classified as domain 'sequences' or as 'unknown' depending on one ה, and
+  // an unknown domain makes topicForDomain return null — no topic chip, no
+  // topic routing, silently.
+  //
+  // The trailing guard is what prevents the חשב / חשבון collision, and it is
+  // untouched: in "חשבון" the character after חשב is ו, which is a Hebrew
+  // letter, so the match still fails. Adding a leading clitic cannot
+  // reintroduce that collision, because ח is not a clitic.
+  // Two, not one: clitics stack, and the stacked forms are the ones exam prose
+  // actually uses — "שהסדרה" (ש+ה), "וההסתברות" (ו+ה). Three ("כשהסדרה") is
+  // rare enough to leave on the floor.
+  // ponytail: a fixed prefix set, not a morphological analyser. Widen only if
+  // a real question is seen to miss.
+  return new RegExp(`(?:^|[^א-ת])([הובלמשכ]{0,2}${word})(?:[^א-ת]|$)`);
 }
 
 // Order matters only for readability; scoring decides the winner.

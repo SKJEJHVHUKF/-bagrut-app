@@ -131,6 +131,16 @@ console.log('the Python function (new):');
   ok(validate.json?.isCorrect === true, '8/2 is accepted as equivalent to 4',
     `body: ${validate.text.slice(0, 160)}`);
 
+  // The case the in-process mathjs engine cannot finish, so a pass here is
+  // proof the SymPy hop is genuinely live rather than mathjs answering twice.
+  const derivative = await req('/api/math/solve', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'derivative', expression: 'x^3 - 4*x', variable: 'x' }),
+  });
+  ok(derivative.json?.status === 'solved', 'SymPy differentiates x^3-4x (mathjs alone cannot)',
+    `status ${derivative.status}, body: ${derivative.text.slice(0, 200)}`);
+
   const attack = await req('/api/math/solve', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -147,7 +157,18 @@ console.log('the Python function (new):');
 
 // ---------- 2. the routes that must NOT have been swallowed ----------
 console.log('\nthe existing Next.js routes (must still be Next.js):');
-for (const path of ['/api/chat', '/api/practice', '/api/questions', '/api/check-answer', '/api/why-wrong']) {
+// `/api/analyze` is new and `/api/analyze-solution` already existed. Both are
+// listed because a new route segment that shadows an older one is exactly the
+// sort of break that only a real deployment reveals.
+for (const path of [
+  '/api/chat',
+  '/api/practice',
+  '/api/questions',
+  '/api/check-answer',
+  '/api/why-wrong',
+  '/api/analyze',
+  '/api/analyze-solution',
+]) {
   const res = await req(path, {
     method: 'POST',
     headers: { 'content-type': 'application/json', origin: base },
