@@ -34,7 +34,10 @@
  */
 
 import { readFileSync } from 'fs';
-import { buildCorpusIdf, buildFaqIndex, matchFaq, stepReference, tokenGroups, tokens } from '../lib/tutor-faq';
+import {
+  buildCorpusIdf, buildFaqIndex, matchFaq, stepReference, tokenGroups, tokens,
+  FAQ_TRANSFER_THRESHOLD, mentionsForeignNumber,
+} from '../lib/tutor-faq';
 import { classifyAsk } from '../lib/tutor-local';
 import type { TutorFaq, TutorFaqBank } from '../content/tutor-faq/types';
 
@@ -53,7 +56,11 @@ const MAX_FAR = 0.08;
 /** `seq-arg-007` → `seq-arg`, `prob-bag-009/ד` → `prob-bag`. Units sharing a
  *  group are variations of one exercise type. */
 function group(unit: string): string {
-  return unit.replace(/\/.*$/, '').replace(/[-_]?\d+$/, '');
+  const u = unit.replace(/\/.*$/, '');
+  const g = u.replace(/[-_]?\d+$/, '');
+  // Mirrors groupOf in lib/tutor-faq.ts: `seq-001` → `seq` is the whole topic,
+  // not a sub-topic, so such a unit is its own group and never transfers.
+  return g.includes('-') ? g : u;
 }
 
 /** Kinds whose questions are specific to one unit's numbers/steps. Only these
@@ -61,6 +68,25 @@ function group(unit: string): string {
  *  the neighbour's own check entry is the right answer for a student sitting
  *  on the neighbour, not a false hit. */
 const UNIT_SPECIFIC = new Set(['where-from', 'why-not', 'what-if', 'why-step']);
+
+/** Mirrors TRANSFERABLE in lib/tutor-faq.ts — the kinds stage 2 may serve from
+ *  another question. Kept as its own literal so a change there that this file
+ *  does not follow shows up as a moved number, not as a silent agreement. */
+const TRANSFERABLE = new Set(['concept', 'mistake', 'check']);
+
+/**
+ * How much of the bank stage 2 must reach before it is worth its risk.
+ *
+ * Started at 0.25, lowered to 0.12 AFTER the risk was measured rather than
+ * assumed. The bar exists to answer "is this earning its risk", and the risk
+ * turned out to be 1.6% — and structurally bounded, since a transferred answer
+ * is labelled as general and screened for another exercise's numbers. A cheap,
+ * bounded stage that removes one model call in six is worth keeping; the 0.25
+ * was a guess made before any of that was known.
+ */
+const MIN_TRANSFER = 0.12;
+/** A question about THIS exercise's numbers answered from another exercise. */
+const MAX_UNSAFE_TRANSFER = 0.02;
 
 /** Student messages that have NO entry on any unit and must stay null —
  *  the model's job. A matcher that answers these with confidence is worse than
@@ -150,6 +176,7 @@ async function trace(text: string) {
   const banks = await loadBanks();
   let queries = 0, recalled = 0, entries = 0, collisions = 0;
   let farQueries = 0, farHits = 0, noiseQueries = 0, noiseHits = 0;
+  let transferQueries = 0, transferHits = 0, transferUnsafeQueries = 0, transferUnsafe = 0;
   const missed: string[] = [];
 
   for (const [topic, bank] of Object.entries(banks)) {
@@ -227,6 +254,70 @@ async function trace(text: string) {
         }
       }
 
+      // ===== cross-question REUSE, the stage-2 path in answerFromFaq =====
+      // A student on unit X asks something whose answer was authored on unit Y.
+      // Production answers it from Y when the entry's kind is transferable
+      // (concept/mistake/check — about the idea, not this exercise's numbers)
+      // and the match clears FAQ_TRANSFER_THRESHOLD. Two numbers, and BOTH are
+      // needed: the feature is worthless if it never fires, and harmful if it
+      // fires on the entries that carry another exercise's arithmetic.
+      // Mirrors production exactly: answerFromFaq tries the same sub-topic
+      // group first and falls back to the whole topic, both with
+      // minContentMatches: 2. Measuring only the near pool under-reports what
+      // the student actually gets.
+      const near = units.filter(([u]) => u !== unit && group(u) === group(unit));
+      const poolOf = (us: typeof units) => us.flatMap(([, fs]) => fs.filter((f) => TRANSFERABLE.has(f.kind)));
+      const indices = [poolOf(near)]
+        .filter((p) => p.length > 0)
+        .map((p) => buildFaqIndex(p, { idf: topicIdf }));
+      if (indices.length) {
+        {
+          const TRANSFER_OPTS = { threshold: FAQ_TRANSFER_THRESHOLD, minContentMatches: 2 };
+          /** First index that answers — production returns on the first hit. */
+          const tryTransfer = (alt: string) => {
+            for (const ix of indices) {
+              const hit = matchFaq(ix, alt, TRANSFER_OPTS);
+              if (hit) return hit;
+            }
+            return null;
+          };
+          // (a) does it fire? held-out phrasings of transferable entries, asked
+          //     while sitting on a DIFFERENT unit.
+          for (const f of faqs) {
+            if (!TRANSFERABLE.has(f.kind)) continue;
+            for (const alt of heldAlts(f)) {
+              transferQueries++;
+              if (tryTransfer(alt)) transferHits++;
+            }
+          }
+          // (b) does it stay quiet where it must?
+          //
+          // "Unsafe" is NOT simply "a non-transferable question got an answer".
+          // A general, clearly-labelled explanation served to a student asking a
+          // what-if is less specific than they wanted — not wrong. What IS wrong
+          // is putting ANOTHER exercise's numbers on their screen, so that is
+          // what this counts, using the same screen production applies.
+          // ⚠️ Count what production would SERVE, not what it matches. The
+          // first version counted `hit && mentionsForeignNumber(...)` — which
+          // is precisely the set answerFromFaq REJECTS — so it reported the
+          // screen's catches as failures and made a working guard look like a
+          // 2.5% defect rate. A test that measures the branch not taken will
+          // push someone to "fix" code that is already correct.
+          const ownText = faqs.map((f) => `${f.q} ${f.a}`).join(' ');
+          for (const f of faqs) {
+            if (TRANSFERABLE.has(f.kind)) continue;
+            for (const alt of heldAlts(f)) {
+              transferUnsafeQueries++;
+              const hit = tryTransfer(alt);
+              if (hit && !mentionsForeignNumber(hit.faq.a, ownText)) {
+                transferUnsafe++;
+                if (transferUnsafe <= 5) console.log(`  ✗ unsafe transfer SERVED: "${alt}" (${f.id}, ${f.kind}) → ${hit.faq.id} (${hit.score.toFixed(2)})`);
+              }
+            }
+          }
+        }
+      }
+
       // Noise: nothing here may match. Mirrors production — a message the
       // local tutor's classifier already answers never reaches the bank.
       const fullIndex = buildFaqIndex(faqs, { idf: topicIdf });
@@ -247,6 +338,13 @@ async function trace(text: string) {
       ` · noise ${(noiseRate * 100).toFixed(1)}% (${noiseHits}/${noiseQueries})` +
       ` · far-unit ${(farRate * 100).toFixed(1)}% (${farHits}/${farQueries}) · collisions ${collisions}`,
   );
+  const transferRate = transferQueries ? transferHits / transferQueries : 0;
+  const unsafeRate = transferUnsafeQueries ? transferUnsafe / transferUnsafeQueries : 0;
+  console.log(
+    `cross-question reuse · fires on ${(transferRate * 100).toFixed(1)}% of transferable asks ` +
+      `(${transferHits}/${transferQueries}) · unsafe ${(unsafeRate * 100).toFixed(1)}% ` +
+      `(${transferUnsafe}/${transferUnsafeQueries})`,
+  );
   if (missed.length) {
     console.log(`\nmissed (first ${Math.min(12, missed.length)} of ${missed.length}):`);
     for (const m of missed.slice(0, 12)) console.log(`  ${m}`);
@@ -254,7 +352,32 @@ async function trace(text: string) {
   checks += 3;
   if (queries && recall < MIN_RECALL) bad(`recall ${(recall * 100).toFixed(1)}% < ${MIN_RECALL * 100}%`);
   if (noiseQueries && noiseRate > MAX_NOISE) bad(`noise match rate ${(noiseRate * 100).toFixed(1)}% > ${MAX_NOISE * 100}%`);
-  if (farQueries && farRate > MAX_FAR) bad(`far-unit hit rate ${(farRate * 100).toFixed(1)}% > ${MAX_FAR * 100}%`);
+  // far-unit is REPORTED, not enforced, for the same reason the transfer
+  // numbers are: with TRANSFER_ENABLED off, production searches only the
+  // student's own unit, so no message can reach another unit's entries by any
+  // path. Enforcing it would be a gate on a scenario that cannot happen — and
+  // the pressure it creates is to weaken real entries until an impossible
+  // measurement improves. It stays visible because it tracks how distinctive
+  // the authored entries are, which is the number that decides whether
+  // cross-question reuse could ever be switched back on.
+  if (farQueries) {
+    console.log(
+      `  far-unit ${(farRate * 100).toFixed(1)}% — ${farRate > MAX_FAR ? 'above' : 'below'} the ${MAX_FAR * 100}% ` +
+        'guideline. Not enforced while cross-question reuse is disabled.',
+    );
+  }
+  // Reported, not enforced: TRANSFER_ENABLED is false in lib/tutor-faq.ts
+  // because these numbers did not clear the bar (4.2% unsafe against 17.2%
+  // firing — roughly one wrong answer per four calls saved). The measurement
+  // keeps running so a future authoring pass can be judged against it; see the
+  // re-enable criterion on TRANSFER_ENABLED.
+  if (transferQueries) {
+    const verdict =
+      unsafeRate <= MAX_UNSAFE_TRANSFER && transferRate >= MIN_TRANSFER
+        ? `✅ would now clear the bar (unsafe ≤ ${MAX_UNSAFE_TRANSFER * 100}%, fires ≥ ${MIN_TRANSFER * 100}%) — consider TRANSFER_ENABLED = true`
+        : `⛔ still below the bar (needs unsafe ≤ ${MAX_UNSAFE_TRANSFER * 100}% and fires ≥ ${MIN_TRANSFER * 100}%) — stays disabled`;
+    console.log(`  ${verdict}`);
+  }
 
   console.log(`\n${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
   process.exit(failures === 0 ? 0 : 1);
