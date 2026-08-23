@@ -362,9 +362,18 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
     warnings.push('at least one expression could not be parsed');
   }
 
+  // Parsing is not the same as being maths. mathjs reads `cat /etc/passwd` as
+  // a perfectly valid division of three variables and the engine "solves" it
+  // to `cat/etc/passwd` — nothing executes, but a confident solution to a
+  // shell command is exactly the failure the brief names: do not attempt to
+  // solve text that is not a valid mathematical expression.
+  const prose = prosePosingAsMaths(normalizedExpressions, problem.variables);
+  if (parseable && prose) warnings.push(prose);
+
   const deterministicEligible =
     DETERMINISTIC_KINDS.includes(problem.kind) &&
     parseable &&
+    !prose &&
     !problem.multiPart &&
     !hasHebrewInsideMath(normalizedQuestion);
 
@@ -517,6 +526,38 @@ function unsupported(normalizedQuestion: string, reason: string): QuestionAnalys
     verdict: null,
     hints: [],
   };
+}
+
+/**
+ * Does this parse as maths while obviously not being maths? Returns the reason,
+ * or null when it looks like a genuine expression.
+ *
+ * mathjs is permissive by design: every bare word becomes a Symbol, so
+ * `cat /etc/passwd` is a valid division and `foo bar` is a valid product. That
+ * permissiveness is what let a shell command come back with a "solution", and
+ * it is the same shape of bug as Hebrew prose becoming SymPy variables — a
+ * confident answer to a question nobody asked.
+ *
+ * Two signals, both cheap:
+ *   - characters that appear in code and never in a bagrut expression
+ *   - two or more multi-letter "variables". Exam maths names its unknowns
+ *     x, y, t, a₁ — one long identifier might be an OCR artefact, but two is
+ *     prose wearing an expression's clothes.
+ *
+ * ponytail: a heuristic, not a grammar. It runs only to DISQUALIFY, so its
+ * failure mode is handing something to the caller as `requiresLLM` — the safe
+ * direction.
+ */
+function prosePosingAsMaths(expressions: string[], variables: string[]): string | null {
+  const joined = expressions.join(' ');
+  if (/__|['"`;\\]|\bimport\b|\bsystem\b|\beval\b|\bexec\b/.test(joined)) {
+    return 'the expression contains code syntax, not mathematics';
+  }
+  const wordy = variables.filter((v) => v.replace(/[_\d]/g, '').length >= 3);
+  if (wordy.length >= 2) {
+    return `not a mathematical expression — "${wordy.slice(0, 3).join('", "')}" are words, not unknowns`;
+  }
+  return null;
 }
 
 /**
@@ -828,6 +869,8 @@ function dedupe(items: string[]): string[] {
 }
 
 export const __testables = {
+  prosePosingAsMaths,
+  parseableExpression,
   estimateDifficulty,
   maxDegree,
   rollUpConfidence,
