@@ -149,6 +149,17 @@ const PHRASINGS: { text: string; expect: ReturnType<typeof classifyAsk> }[] = [
   { text: 'איך מתחילים את זה', expect: 'help' },
   { text: 'נתקעתי בסעיף א', expect: 'help' },
   { text: 'איך מחשבים את זה', expect: 'help' },
+  // Bare method questions — no object, so the only thing they can be about is
+  // the question on screen. Reported from a real session: "ואיך מחשבים?" cost
+  // $0.01 because the bare form was left out to protect the general-method
+  // cases pinned as `null` further down. Both now hold: the object is what
+  // separates them.
+  { text: 'ואיך מחשבים?', expect: 'help' },
+  { text: 'איך מחשבים?', expect: 'help' },
+  { text: 'אז איך?', expect: 'help' },
+  { text: 'ואיך עושים את זה', expect: 'help' },
+  { text: 'איך פותרים?', expect: 'help' },
+  { text: 'ואיך?', expect: 'help' },
   // why-wrong
   { text: 'למה זה לא נכון?', expect: 'why-wrong' },
   { text: 'מה לא בסדר בתשובה שלי', expect: 'why-wrong' },

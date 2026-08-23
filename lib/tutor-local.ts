@@ -111,6 +111,29 @@ const has = (t: string, ...w: string[]) => w.some((x) => t.includes(x));
  *
  * Order matters: "למה התשובה שלי שגויה" contains both "למה" and "תשובה".
  */
+/**
+ * "ואיך מחשבים?" — a method question with NO OBJECT.
+ *
+ * The `has(t, 'איך מחשבים את', …)` phrases above are deliberately anchored to
+ * "this / here / now", because a bare `איך מחשבים` also appears inside
+ * "איך מחשבים נגזרת של ln בכלל" — a general method question that belongs to
+ * the model, and one the voice corpus pins as such. So the bare form was left
+ * out entirely, and fell through to the API.
+ *
+ * The missing distinction is not the verb, it is the OBJECT. A student who
+ * names one ("איך מחשבים סטיית תקן") is asking about mathematics; a student
+ * who names none ("ואיך מחשבים?", "אז איך?") can only mean the question on the
+ * screen, because there is nothing else for the sentence to be about.
+ *
+ * Anchored at both ends, so any object at all disqualifies it — which is
+ * exactly what keeps the corpus's general-method cases going to the model.
+ * Same shape as BARE_WHY in lib/tutor-router.ts, for the same reason.
+ *
+ * Cost of the miss, reported from a real session: $0.01 for one "ואיך מחשבים?".
+ */
+const BARE_METHOD =
+  /^(?:ו|אז|נו|טוב|או?ק(?:יי)?)?\s*(?:איך|כיצד)(?:\s+(?:מחשבים|מחשב|עושים|פותרים|ניגשים|מתחילים|יודעים|ממשיכים|מוצאים|קובעים))?(?:\s+(?:את\s+זה|זה|זאת|פה|כאן|אותו|אותה|עכשיו))?$/;
+
 export function classifyAsk(message: string): Ask | null {
   const t = norm(message);
 
@@ -182,7 +205,8 @@ export function classifyAsk(message: string): Ask | null {
     has(t, 'עזרה', 'תעזור', 'תעזרי', 'לא יוצא לי') ||
     has(t, 'לא יודע מה', 'לא יודעת מה', 'לא יודע איך', 'לא יודעת איך') ||
     has(t, 'תן לי כיוון', 'תני לי כיוון', 'צריך כיוון', 'מאיפה אני מתחיל', 'מאיפה אני מתחילה') ||
-    has(t, 'איך מחשבים את', 'איך עושים את')
+    has(t, 'איך מחשבים את', 'איך עושים את') ||
+    BARE_METHOD.test(t)
   ) {
     return 'help';
   }
