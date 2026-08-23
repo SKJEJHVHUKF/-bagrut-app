@@ -509,6 +509,64 @@ const show = (a: QuestionAnalysis) =>
   }
 
   // ============================================================
+  // notation this pipeline is KNOWN to corrupt.
+  //
+  // Every case below was reproduced returning a wrong answer with
+  // `verified: true` AND `requiresLLM: false` — the worst pair, because
+  // nothing downstream doubts it and no model is ever asked. The bar is
+  // therefore not "the answer is right"; it is "no answer is offered, and the
+  // caller is told to pay". Two of these were regressions introduced by the
+  // fix in the commit before this one.
+  // ============================================================
+  console.log('\n-- known manglings --');
+  {
+    const UNSAFE: [string, string, Record<string, unknown>?][] = [
+      // The verb says compute, the page carries an equation. For
+      // "חשב את x כאשר 2x+3=11" solving is right; for the line/area question
+      // below it is not, and the evaluate path returned the equation's RHS.
+      ['equation vs evaluate: area question answered 0', 'הישר $x + y - 6 = 0$ חותך את הצירים. חשב את שטח המשולש $OBC$.'],
+      ['equation vs evaluate: correct answer graded wrong', 'חשב את $x$ כאשר $2x + 3 = 11$', { studentAnswer: '4', requestedMode: 'validate' }],
+      ['imaginary unit after an operator: (4+i)(2+i) → 15', 'חשב את המספר המרוכב $(4+i)*(2+i)$'],
+      ['imaginary unit after a digit: (2+3i)(1-2i) → -660', 'חשב את $(2 + 3i)(1 - 2i)$'],
+      ['absolute value bars → the digit 1', 'פתור את המשוואה: $|2x+1| = 7$'],
+      ['absolute value inequality', 'פתור את אי-השוויון $|2x+1| < 5$'],
+      ['trig evaluated in radians', 'חשב את $\\sin(30) + \\cos(60)$'],
+      ['trig with the degree sign, which is stripped', 'חשב את $\\sin(30°) + \\cos(60°)$'],
+      ['bare log is base 10 here, ln in mathjs', 'חשב $\\log(2) + \\log(5)$'],
+      ['function without parentheses parses as a product', 'גזור את הפונקציה $f(x) = \\sin x$'],
+    ];
+
+    for (const [label, question, extra] of UNSAFE) {
+      const a = await analyzeQuestion({ question, ...(extra ?? {}) });
+      ok(a.deterministicEligible === false, `refused: ${label}`);
+      ok(a.solution === null, `…no answer offered: ${label}`);
+      // The other half, and the one that turns a refusal into a dead end if it
+      // is missed: something must still be able to answer the student.
+      ok(a.requiresLLM === true, `…and escalated to a model: ${label}`);
+      ok(a.warnings.length > 0, `…with a stated reason: ${a.warnings[0] ?? '(silent!)'}`);
+      if (extra?.requestedMode === 'validate') {
+        ok(a.verdict === null, `…and no verdict is passed on a corrupted reference: ${label}`);
+      }
+    }
+
+    // …and the shapes that must NOT be caught by any of the above.
+    const SAFE: [string, string][] = [
+      ['a plain linear equation', 'פתור את המשוואה: 2x + 3 = 11'],
+      ['a derivative with parentheses', 'גזור את הפונקציה $x^3 - 4x$'],
+      ['trig with a SYMBOLIC argument has no degree ambiguity', 'גזור את הפונקציה $f(x) = \\sin(x)$'],
+      ['a log with an explicit base is unambiguous', 'חשב $\\log_{10}(100)$'],
+      ['a quadratic', 'פתור את המשוואה $x^2 - 5x + 6 = 0$'],
+    ];
+    for (const [label, question] of SAFE) {
+      const a = await analyzeQuestion({ question });
+      ok(
+        __testables.knownMangling(question, a.normalizedExpressions, a.domain) === null,
+        `NOT flagged as mangled: ${label} (${__testables.knownMangling(question, a.normalizedExpressions, a.domain) ?? 'clean'})`,
+      );
+    }
+  }
+
+  // ============================================================
   // the invariants
   // ============================================================
   console.log('\n-- invariants --');

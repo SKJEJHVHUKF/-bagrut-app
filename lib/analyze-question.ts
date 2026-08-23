@@ -381,24 +381,30 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
     );
   }
 
-  // ⚠️ ONE narrow case, checked against the ORIGINAL text rather than the
-  // repaired one: a digit immediately followed by `i`.
+  const mangled = knownMangling(raw, normalizedExpressions, problem.domain);
+  if (mangled) warnings.push(mangled);
+
+  // ⚠️ The verb and the structure disagree, and we cannot tell which is right.
   //
-  // `repairOcrText` rewrites a bare `i` to `1`, which is correct for a scanned
-  // 1 misread as i and catastrophic for the imaginary unit. Measured:
-  // `(2 + 3i)(1 - 2i)` becomes `(2 + 31)(1 - 21)`, is solved to -660, and is
-  // marked VERIFIED — because -660 genuinely is the answer to the corrupted
-  // expression. The real answer is 8 - i. Nothing downstream can catch this;
-  // by the time the solver sees it the imaginary unit is gone.
+  // `חשב` scores `evaluate`; an `=` on the page scores `equation`; both weigh
+  // 2, and the tie goes to whichever entered the score map first. For
+  // "חשב את x כאשר 2x+3=11" solving the equation is right. For
+  // "הישר x+y-6=0 … חשב את שטח המשולש" it is not — the area is 18 and the
+  // `evaluate` path returns the equation's right-hand side, 0, marked
+  // verified. Same classification, opposite correct answers, and nothing in
+  // the text distinguishes them.
   //
-  // Deliberately NOT `domain === 'complex'`. That was the first version, and
-  // it was measured to be wrong: `z^2 = -9 במספרים מרוכבים` is solved
-  // correctly to z = ±3i by the existing engine, so rejecting the whole domain
-  // threw away working behaviour to fix a problem that only the `3i` shape has.
-  const corruptedImaginaryUnit = /\d\s*i(?![a-zA-Z])/.test(raw);
-  if (corruptedImaginaryUnit) {
+  // So this abstains instead of guessing. It costs a model call on a phrasing
+  // we could sometimes have answered; the alternative is telling a student
+  // their correct answer is wrong, which measurably happened: "חשב את x כאשר
+  // 2x+3=11" with a typed 4 came back isCorrect:false against a "correct
+  // answer" of 11.
+  const verbStructureClash =
+    problem.kind === 'evaluate' &&
+    normalizedExpressions.some((e) => splitRelation(e)?.relation === '=');
+  if (verbStructureClash) {
     warnings.push(
-      'an imaginary unit written as 3i is rewritten to 31 by OCR repair — refusing rather than answering the corrupted expression',
+      'the instruction says "compute" but the page carries an equation — which one is asked for cannot be told from the text',
     );
   }
 
@@ -408,7 +414,8 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
     !prose &&
     !explosive &&
     !givensOnly &&
-    !corruptedImaginaryUnit &&
+    !mangled &&
+    !verbStructureClash &&
     !problem.multiPart &&
     !hasHebrewInsideMath(normalizedQuestion);
 
@@ -512,6 +519,7 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
   const requiresLLM = decideRequiresLLM({
     mode,
     confidence,
+    knownUnsafe: Boolean(mangled) || verbStructureClash,
     deterministicEligible,
     solved: solution !== null,
     hints: hints.length,
@@ -647,6 +655,91 @@ function stripLeadingInstruction(line: string): string {
   // Never let the split throw away the only maths on the line.
   if (!/[0-9=<>+\-*/^]/.test(after)) return line;
   return after;
+}
+
+/**
+ * Notation this pipeline is KNOWN to corrupt. Returns the reason, or null.
+ *
+ * ============================================================
+ * WHY A LIST AND NOT A FIX
+ * ============================================================
+ * Every entry below was reproduced end to end, and every one produced a wrong
+ * answer carrying `verified: true` and `requiresLLM: false` — the worst
+ * possible combination, because nothing downstream has any reason to doubt it
+ * and no model is ever asked for a second opinion.
+ *
+ * The corruption happens in `lib/mathscan/ocr/normalize.ts` and
+ * `lib/mathscan/solve/parse.ts`, which are shared with the scan pipeline and
+ * tuned against photographed exam papers. Changing them to suit this endpoint
+ * is how a scan regression gets introduced — measured the hard way once
+ * already. Refusing the input here is contained, honest, and fails in the safe
+ * direction: the question goes to a model instead of getting a confident wrong
+ * answer.
+ *
+ * Each entry states the observed corruption, not a suspicion:
+ *
+ *   |2x+1| = 7        `repairDigitConfusions` maps `|` → `1` when a digit sits
+ *                     on one side, so BOTH bars die: `12x+11 = 7`, solved to
+ *                     x = -1/3, verified. The real answer is x = 3 or x = -4.
+ *                     Bars next to a letter survive, which is why only the
+ *                     digit-flanked form — the common bagrut one — fails.
+ *   (4+i)(2+i)        the same repair maps a standalone `i` → `1` whenever an
+ *                     operator OR a digit is to its left: `(4+1)*(2+1)` = 15,
+ *                     verified. The real answer is 7+6i. An earlier version of
+ *                     this guard only looked for a DIGIT before the `i` and
+ *                     missed `+i`, `-i`, `=i` entirely.
+ *   sin(30)+cos(60)   mathjs trig is RADIANS; the bagrut is degrees. `°` is
+ *                     stripped by parse.ts, so writing it changes nothing.
+ *                     Result -1.9404, verified. The real answer is 1.
+ *                     engine-local already refuses trig EQUATIONS over this;
+ *                     `evaluate` had no such guard.
+ *   log(2)+log(5)     a bare `log` in the Israeli bagrut is base 10; mathjs's
+ *                     one-argument `log` is ln. Result 2.3026, verified. The
+ *                     real answer is 1. `log_a(b)` with an explicit base is
+ *                     handled correctly and is NOT refused.
+ *   f(x) = sin x      without parentheses mathjs reads `sin x` as the product
+ *                     sin·x, so the derivative comes back as the bare symbol
+ *                     `sin`, verified. The real answer is cos x. Adding
+ *                     parentheses fixes it, so only the paren-free textbook
+ *                     form is refused.
+ */
+const TRIG = /\\?\b(?:sin|cos|tan|cot|arcsin|arccos|arctan)\b/;
+
+function knownMangling(raw: string, normalized: string[], domain: MathDomain): string | null {
+  const joined = normalized.join(' ');
+
+  if (/\|[^|]*\d[^|]*\|/.test(raw) || /\|/.test(raw)) {
+    return 'absolute-value bars are rewritten to the digit 1 by OCR repair — refusing rather than solving the corrupted expression';
+  }
+
+  // A standalone `i`: not part of a word, on either side.
+  if (
+    domain === 'complex' ||
+    /(?:^|[^a-zA-Z֐-׿])i(?![a-zA-Z])/.test(raw) ||
+    /\bcis\b|מרוכב|צמוד/.test(raw)
+  ) {
+    return 'the imaginary unit is rewritten to the digit 1 by OCR repair — refusing rather than answering the corrupted expression';
+  }
+
+  // Trigonometry with a NUMERIC argument is the degrees/radians trap. A
+  // symbolic argument (sin(x)) has no such ambiguity and is left alone.
+  if (/°/.test(raw) || (TRIG.test(joined) && /\b(?:sin|cos|tan|cot)\s*\(\s*-?\d/.test(joined))) {
+    return 'mathjs evaluates trigonometry in radians while the bagrut works in degrees, and the degree sign is stripped before it gets here';
+  }
+
+  // `log` with no explicit base. `log(x, 10)` and `log_10(x)` are fine.
+  if (/\blog\s*\(/.test(joined) && !/\blog\s*\([^)]*,/.test(joined)) {
+    return 'a bare log is base 10 in the bagrut but natural log in mathjs — refusing rather than answering with ln';
+  }
+
+  // `sin x` / `\ln x` — a function applied without parentheses parses as a
+  // product, and the derivative of a product of symbols is not the derivative
+  // of the function.
+  if (/\b(?:sin|cos|tan|cot|ln|log|sqrt)\s+[a-zA-Z]/.test(joined)) {
+    return 'a function written without parentheses parses as a multiplication — refusing rather than differentiating the wrong thing';
+  }
+
+  return null;
 }
 
 /**
@@ -978,6 +1071,9 @@ function deriveHints(
 function decideRequiresLLM(f: {
   mode: AnalyzeMode;
   confidence: number;
+  /** We did not merely fail to answer — we KNOW the deterministic path would
+   *  answer wrongly. That is the strongest possible reason to pay. */
+  knownUnsafe: boolean;
   deterministicEligible: boolean;
   solved: boolean;
   hints: number;
@@ -987,6 +1083,13 @@ function decideRequiresLLM(f: {
   // An explicit request for a personalised explanation is the one case the
   // brief names outright, and the one thing templates genuinely cannot do.
   if (f.mode === 'explain') return true;
+  // ⚠️ Before the out-of-scope early return. A question whose notation this
+  // pipeline is known to corrupt has no deterministic answer worth having, and
+  // a generic method hint is not a substitute — the student asked for the
+  // absolute value equation to be solved, and "isolate the unknown" does not
+  // solve it. Saying `false` here would leave them with no answer from any
+  // source at all, which is how a refusal turns into a dead end.
+  if (f.knownUnsafe) return true;
   // Out of syllabus: there is a ready Hebrew sentence for this and no reason
   // to pay a model to repeat it.
   if (f.outOfScope) return false;
@@ -1060,6 +1163,7 @@ function dedupe(items: string[]): string[] {
 }
 
 export const __testables = {
+  knownMangling,
   prosePosingAsMaths,
   parseableExpression,
   stripLeadingInstruction,
