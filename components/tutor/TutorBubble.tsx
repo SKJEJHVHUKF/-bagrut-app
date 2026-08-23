@@ -46,6 +46,7 @@ import {
 } from '@/lib/tutor-presence';
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
 import { routeMessage, answerGradedLocally, canonicalFor } from '@/lib/tutor-router';
+import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
 // two call sites below, not here. Both pull the whole content corpus behind
 // them — tutor-context via lib/cognition, tutor-greeting via
@@ -252,6 +253,19 @@ export default function TutorBubble() {
           probe = canonicalFor(route.ask);
           lastAskRef.current = route.ask;
         }
+      }
+
+      // "זה יבוא בבגרות?" / "כמה נקודות זה שווה?" — exact answers that already
+      // exist as data in content/bagrut-curriculum.ts. A model would invent a
+      // plausible number; the table has the right one, and it is the same one
+      // /roadmap shows the student elsewhere.
+      const meta = examMetaAnswer(text, focusNow?.topic);
+      if (meta) {
+        setMsgs((m) => [
+          ...m,
+          { id: `a-${Date.now()}`, role: 'assistant', text: meta, local: true },
+        ]);
+        return;
       }
 
       const local = answerLocally(probe, focusNow, servedRef.current.kinds);

@@ -550,6 +550,47 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
     if (hit) return { text: hit.faq.a, source: 'faq', faqId: hit.faq.id, score: hit.score };
   }
 
+  // ---- stage 1b: the OTHER PARTS of this same bagrut question ----
+  //
+  // Not the same thing as cross-question reuse below, and not subject to its
+  // objection. `prob-bag-001/א` … `/ד` are סעיפים of ONE exam question: one
+  // story, one set of numbers, one context that the student has on screen in
+  // full. An answer written on סעיף ג is about the student's own data.
+  //
+  // MEASURED: "למה מכפילים ולא מחברים" asked on סעיף א scored 1.00 against
+  // `prob-bag-001/ג#4` ("למה כפל ולא חיבור בין השלבים") and was going to the
+  // model anyway, because only the current part was ever searched. On סעיף א
+  // itself the same words tie three entries at 2/3 and are correctly refused —
+  // the answer simply lives one part over.
+  //
+  // ALL kinds are allowed here, unlike the transfer stage: a `where-from` on a
+  // sibling part refers to a number in the same table the student is reading.
+  const slash = q.id.indexOf('/');
+  if (slash > 0) {
+    const questionId = q.id.slice(0, slash);
+    const siblings: TutorFaq[] = [];
+    for (const [unit, list] of Object.entries(bank)) {
+      if (unit === q.id || !unit.startsWith(`${questionId}/`)) continue;
+      for (const f of list) {
+        if (f.reveals && !canReveal) continue;
+        siblings.push(f);
+      }
+    }
+    if (siblings.length > 0) {
+      const hit = matchFaq(buildFaqIndex(siblings, { idf }), message, { step });
+      if (hit) {
+        return {
+          source: 'faq',
+          faqId: hit.faq.id,
+          score: hit.score,
+          // Named, because the student should know which סעיף it came from —
+          // they can look at it. Opens on a Hebrew word (bidi).
+          text: `זה מוסבר בסעיף ${hit.faq.id.slice(questionId.length + 1).split('#')[0]} של אותה שאלה:\n\n${hit.faq.a}`,
+        };
+      }
+    }
+  }
+
   // ---- stage 2: the same IDEA, authored on a different question ----
   // Only when the student did not point at a step (a step reference is about
   // THIS solution and cannot transfer), and only for TRANSFERABLE kinds.
