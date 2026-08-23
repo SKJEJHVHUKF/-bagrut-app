@@ -560,8 +560,8 @@ const show = (a: QuestionAnalysis) =>
     for (const [label, question] of SAFE) {
       const a = await analyzeQuestion({ question });
       ok(
-        __testables.knownMangling(question, a.normalizedExpressions, a.domain) === null,
-        `NOT flagged as mangled: ${label} (${__testables.knownMangling(question, a.normalizedExpressions, a.domain) ?? 'clean'})`,
+        __testables.knownMangling(question, a.normalizedExpressions) === null,
+        `NOT flagged as mangled: ${label} (${__testables.knownMangling(question, a.normalizedExpressions) ?? 'clean'})`,
       );
     }
   }

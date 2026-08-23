@@ -381,7 +381,7 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
     );
   }
 
-  const mangled = knownMangling(raw, normalizedExpressions, problem.domain);
+  const mangled = knownMangling(raw, normalizedExpressions);
   if (mangled) warnings.push(mangled);
 
   // ⚠️ The verb and the structure disagree, and we cannot tell which is right.
@@ -493,7 +493,17 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
   // The engine chain stops at the first engine that says 'solved', so a local
   // engine returning the input this way also prevents SymPy — which does
   // differentiate correctly — from ever being asked.
-  if (solution && (problem.kind === 'derivative' || problem.kind === 'integral' || problem.kind === 'definite-integral')) {
+  if (
+    solution &&
+    (problem.kind === 'derivative' ||
+      problem.kind === 'integral' ||
+      problem.kind === 'definite-integral' ||
+      // `simplify` was missing, and it is the kind where handing the input back
+      // is most likely: "(x+2)^2 - x^2" came back as itself, verified, with
+      // three solution steps whose latex was identical — a solution with zero
+      // moves reported as solved. The real answer is 4x+4.
+      problem.kind === 'simplify')
+  ) {
     const input = bareForm(normalizedExpressions.join(''));
     const answer = bareForm(solution.answerLatex || solution.answerValues.join(''));
     if (answer && input && answer === input) {
@@ -505,8 +515,32 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
   }
 
   // ---- 7. the student's answer -----------------------------------------
-  const verdict =
+  let verdict =
     engineResult && engineResult.isCorrect !== null ? { isCorrect: engineResult.isCorrect } : null;
+
+  // ⚠️ SYMBOLIC ANSWERS. `checkAnswer` evaluates both sides as numbers, so any
+  // answer carrying an unbound variable — every derivative, every integral,
+  // every simplification, every inequality — comes back 'unparseable', which
+  // this layer surfaced as `verdict: null` and `detectedMistakeType:
+  // 'unreadable'`.
+  //
+  // Measured: a student typing the CORRECT derivative `3x^2 - 4` was told
+  // their answer could not be read and sent back to rephrase, while the
+  // byte-identical reference answer sat in the same result object. `validate`
+  // therefore worked only for bare numbers — most of the paper is not bare
+  // numbers.
+  //
+  // ponytail: a normalised string comparison, not a CAS equivalence check. It
+  // accepts `3x^2-4` and `3*x^2 - 4`; it will NOT accept `-4+3x^2`. That is a
+  // known ceiling, and the failure direction is `verdict: null` — the same
+  // place we were already — so a miss costs nothing that was not already lost.
+  if (verdict === null && typedAnswer && solution) {
+    const typedBare = bareForm(latexToMathjs(typedAnswer));
+    const matches = [solution.answerLatex, ...solution.answerValues]
+      .filter(Boolean)
+      .some((candidate) => bareForm(latexToMathjs(candidate)) === typedBare);
+    if (matches) verdict = { isCorrect: true };
+  }
 
   const detectedMistakeType = typedAnswer
     ? diagnoseMistake(typedAnswer, engineResult, verdict)
@@ -537,13 +571,21 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
     hasSolution: solution !== null,
   });
 
-  const status: AnalyzeStatus = !scope.inScope
-    ? 'unsupported'
-    : deterministicEligible && (solution !== null || mathEngineAction === 'none')
-      ? 'ok'
-      : deterministicEligible && solution === null
-        ? 'partial'
-        : 'partial';
+  // ⚠️ `status` describes WHAT WE PRODUCED, never whose syllabus the question
+  // belongs to. Keying it off `scope` meant a 4-unit student whose profile
+  // still said level 3 got `status: 'unsupported'` alongside
+  // `solution.verified: true` — two halves of one payload instructing opposite
+  // behaviour. A caller reading `status` throws away a correct answer; a
+  // caller reading `solution` renders an answer the same object calls
+  // unsupported.
+  //
+  // Out of syllabus is a WARNING (checkScope already writes the Hebrew
+  // sentence for it), not a failure to analyse.
+  // `unsupported` is returned only by the early exit above, for input with no
+  // maths in it at all. Anything that reaches here IS a maths question: either
+  // we answered it ('ok') or we could not and said why ('partial').
+  const status: AnalyzeStatus =
+    solution !== null || (deterministicEligible && mathEngineAction === 'none') ? 'ok' : 'partial';
 
   return {
     status,
@@ -703,38 +745,73 @@ function stripLeadingInstruction(line: string): string {
  *                     parentheses fixes it, so only the paren-free textbook
  *                     form is refused.
  */
-const TRIG = /\\?\b(?:sin|cos|tan|cot|arcsin|arccos|arctan)\b/;
+/**
+ * The maths islands of the ORIGINAL text. Several rules below must read the
+ * question as the student wrote it — after normalisation `\ln` and `\log` are
+ * the same token and the distinction they turn on is gone — but reading the
+ * whole raw string would let Hebrew prose trip rules meant for notation.
+ */
+function mathIslands(raw: string): string {
+  const islands = raw.match(/\$[^$]*\$/g);
+  return islands ? islands.join(' ') : raw.replace(/[֐-׿]+/g, ' ');
+}
 
-function knownMangling(raw: string, normalized: string[], domain: MathDomain): string | null {
+function knownMangling(raw: string, normalized: string[]): string | null {
   const joined = normalized.join(' ');
+  const islands = mathIslands(raw);
 
-  if (/\|[^|]*\d[^|]*\|/.test(raw) || /\|/.test(raw)) {
+  if (/\|/.test(raw)) {
     return 'absolute-value bars are rewritten to the digit 1 by OCR repair — refusing rather than solving the corrupted expression';
   }
 
-  // A standalone `i`: not part of a word, on either side.
-  if (
-    domain === 'complex' ||
-    /(?:^|[^a-zA-Z֐-׿])i(?![a-zA-Z])/.test(raw) ||
-    /\bcis\b|מרוכב|צמוד/.test(raw)
-  ) {
+  // A standalone `i` INSIDE THE MATHS. Reading the whole raw string caught
+  // Hebrew sentences, and the first version also keyed off `domain ===
+  // 'complex'` plus the words מרוכב/צמוד — which refused
+  // "גדר מלבנית הצמודה לקיר" (adjacent, the canonical optimisation question)
+  // and "הארגומנט של הלוגריתם" (a logarithm's argument, which the classifier
+  // reads as a complex argument). Neither contains a complex number, and both
+  // were being answered correctly before the guard.
+  if (/(?:^|[^a-zA-Z])i(?![a-zA-Z])/.test(islands) || /\bcis\b/.test(islands)) {
     return 'the imaginary unit is rewritten to the digit 1 by OCR repair — refusing rather than answering the corrupted expression';
   }
 
-  // Trigonometry with a NUMERIC argument is the degrees/radians trap. A
-  // symbolic argument (sin(x)) has no such ambiguity and is left alone.
-  if (/°/.test(raw) || (TRIG.test(joined) && /\b(?:sin|cos|tan|cot)\s*\(\s*-?\d/.test(joined))) {
+  // Only a PURE NUMBER inside the parentheses is the degrees/radians trap.
+  // The first version tested one character after `(`, so `\cos(2x)` — the most
+  // common trig derivative on the 581 paper — was refused even though `2x` is
+  // symbolic and has no angle to interpret.
+  if (/[°º⁰]/.test(raw) || /\b(?:sin|cos|tan|cot)\s*\(\s*-?\d+(?:\.\d+)?\s*\)/.test(joined)) {
     return 'mathjs evaluates trigonometry in radians while the bagrut works in degrees, and the degree sign is stripped before it gets here';
   }
 
-  // `log` with no explicit base. `log(x, 10)` and `log_10(x)` are fine.
-  if (/\blog\s*\(/.test(joined) && !/\blog\s*\([^)]*,/.test(joined)) {
+  // ⚠️ Tested on the RAW text, and only for `\log`. After normalisation `\ln`
+  // is also spelled `log`, and mathjs's one-argument `log` IS the natural log
+  // — so testing the normalised form refused every ln question in the app for
+  // a trap that cannot occur there. Measured: 104 authored questions, 25 of
+  // them answered correctly and verified before the guard.
+  const bareLog = /\\log\s*\(|(?:^|[^\\a-zA-Z])log\s*\(/.test(islands);
+  if (bareLog && !/\\log\s*_|\blog\s*\([^)]*,/.test(islands)) {
     return 'a bare log is base 10 in the bagrut but natural log in mathjs — refusing rather than answering with ln';
   }
 
-  // `sin x` / `\ln x` — a function applied without parentheses parses as a
-  // product, and the derivative of a product of symbols is not the derivative
-  // of the function.
+  // A percent sign is DELETED outright, so `1000 * 5%` is solved as 1000·5.
+  if (/%/.test(raw)) {
+    return 'the percent sign is stripped before parsing, which multiplies the answer by 100 — refusing';
+  }
+
+  // A degree sign typed as the letter o, or as the superscript zero, is turned
+  // into a digit: `30o` → `300`, `30⁰` → `30^0` → 1. Both ship as verified.
+  if (/\d\s*o(?![a-zA-Z])/.test(islands)) {
+    return 'a degree sign written as the letter o becomes a digit 0 — refusing rather than answering an angle ten times too large';
+  }
+
+  // A single capital parameter next to a digit is read as a digit: `2B` → 28.
+  if (/\d[A-Z](?![A-Za-z])/.test(islands)) {
+    return 'a capital parameter next to a digit is rewritten as a digit by OCR repair — refusing rather than solving against a corrupted coefficient';
+  }
+
+  // `sin x` — a function applied without parentheses parses as a product, and
+  // the derivative of a product of symbols is not the derivative of the
+  // function.
   if (/\b(?:sin|cos|tan|cot|ln|log|sqrt)\s+[a-zA-Z]/.test(joined)) {
     return 'a function written without parentheses parses as a multiplication — refusing rather than differentiating the wrong thing';
   }
