@@ -65,7 +65,7 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
       id: "sim-ratio-cubed",
       title: "יחס שטחים = יחס נפחים ($k^3$)",
       skill: "sim-ratio-area",
-      insight: "אתה מחשב יחס שטחים עם $k^3$ — זו הנוסחה לנפחים בגופים תלת-ממדיים. לשטחים (דו-ממד) נכון להשתמש ב-$k^2$.",
+      insight: "אתה מחשב יחס שטחים עם $k^3$, זו הנוסחה לנפחים בגופים תלת-ממדיים. לשטחים (דו-ממד) נכון להשתמש ביחס $k^2$.",
       remedy: { subTopicId: "eg-similarity" },
       triggers: [
         { questionId: "eg-sub-sim-001", optionIndex: 2 },
@@ -128,7 +128,7 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
       id: "thales-midline-double",
       title: "קו האמצעים — הכפלה במקום חלוקה",
       skill: "thales-midline",
-      insight: "אתה מכפיל ב-$2$ את הצלע השלישית, אבל קו האמצעים קצר ממנה — הוא שווה למחציתה.",
+      insight: "אתה מכפיל פי $2$ את הצלע השלישית, אבל קו האמצעים קצר ממנה — הוא שווה למחציתה.",
       remedy: { subTopicId: "eg-thales" },
       triggers: [
         { questionId: "eg-sub-thales-002", optionIndex: 1 },
@@ -169,7 +169,7 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
       id: "inscribed-double-central",
       title: "זווית היקפית = כפולת הזווית המרכזית",
       skill: "circle-central-inscribed",
-      insight: "אתה מכפיל ב-$2$ במקום לחלק ב-$2$. המרכזית היא זו שכפולה מההיקפית — לא להפך.",
+      insight: "אתה מכפיל פי $2$ במקום לחלק במספר $2$. המרכזית היא זו שכפולה מההיקפית — לא להפך.",
       remedy: { subTopicId: "eg-circle" },
       triggers: [
         { questionId: "eg-sub-circ-001", optionIndex: 2 },
@@ -177,9 +177,9 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
     },
     {
       id: "circle-supplement-error",
-      title: "השלמה ל-$180°$ במקום חלוקה ב-$2$",
+      title: "השלמה לסכום $180°$ במקום חלוקה במספר $2$",
       skill: "circle-central-inscribed",
-      insight: "אתה מחשב $180° - \\angle AOB$ במקום $\\dfrac{\\angle AOB}{2}$. השלמה ל-$180°$ נכונה לזוויות צמודות — לא ליחס היקפית-מרכזית.",
+      insight: "אתה מחשב $180° - \\angle AOB$ במקום $\\dfrac{\\angle AOB}{2}$. השלמה לסכום $180°$ נכונה לזוויות צמודות — לא ליחס היקפית-מרכזית.",
       remedy: { subTopicId: "eg-circle" },
       triggers: [
         { questionId: "eg-sub-circ-001", optionIndex: 3 },
@@ -199,7 +199,7 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
       id: "circle-chords-product-not-quotient",
       title: "החזרת המכפלה כולה במקום חלוקה",
       skill: "circle-chords",
-      insight: "אתה עוצר אחרי $AE \\cdot EB$ ומחזיר את המכפלה כתשובה במקום לחלק ב-$CE$ כדי לקבל את $ED$.",
+      insight: "אתה עוצר אחרי $AE \\cdot EB$ ומחזיר את המכפלה כתשובה במקום לחלק באורך $CE$ כדי לקבל את $ED$.",
       remedy: { subTopicId: "eg-circle" },
       triggers: [
         { questionId: "eg-sub-circ-003", optionIndex: 3 },

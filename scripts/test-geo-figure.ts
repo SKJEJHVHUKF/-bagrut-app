@@ -35,5 +35,32 @@ const text = 'נתון משולש.\n\n```geo\n' + JSON.stringify(good) + '\n```\
 const errs = checkGeoFences(text);
 ok('fence #1 clean, #2 too few points, #3 bad JSON', errs.length === 2 && /geo#2: .*at least 2/.test(errs[0]) && /geo#3: invalid JSON/.test(errs[1]));
 
-if (fails) process.exit(1);
-console.log('test-geo-figure: all checks passed');
+// --- the rendered SVG must be hydration-stable -----------------------------
+// Math.cos/sin/hypot are implementation-defined in ECMAScript, so an unrounded
+// coordinate can differ between Node and the browser in its last digit. React
+// then reports "a tree hydrated but some attributes … didn't match" and leaves
+// the client value in place (measured: 83.13314837617413 vs …566 on an angle
+// arc). Every number the component emits must therefore be rounded — assert it
+// on the real markup so nobody reintroduces a raw float.
+async function renderCheck() {
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const { GeoFigure } = await import('../components/practice/GeoFigure');
+  const { createElement } = await import('react');
+
+  const rich: GeoSpec = {
+    ...good,
+    angles: [{ at: 'B', from: 'A', to: 'C', label: '30°', n: 2 }],
+    parallel: [{ on: 'AB' }, { on: 'AB' }],
+    labels: [{ on: 'AH', text: '2' }, { on: 'HB', text: '6' }, { at: 'C', text: 'משיק' }],
+  };
+  const html = renderToStaticMarkup(createElement(GeoFigure, { spec: rich }));
+  const longs = [...html.matchAll(/\d+\.\d{3,}/g)].map((m) => m[0]);
+  ok(`no coordinate carries >2 decimals (found ${longs.length}: ${longs.slice(0, 3).join(' ')})`, longs.length === 0);
+  ok('the figure actually rendered', /<svg/.test(html) && /<polyline/.test(html) && /<polygon/.test(html));
+  // Same input twice must give byte-identical markup (no Date/random/iteration order).
+  ok('render is deterministic', renderToStaticMarkup(createElement(GeoFigure, { spec: rich })) === html);
+
+  if (fails) process.exit(1);
+  console.log('test-geo-figure: all checks passed');
+}
+renderCheck();
