@@ -130,6 +130,41 @@ console.log('\n— the graded verdict is the deterministic one —');
 }
 
 // ------------------------------------------------------------
+console.log('\n— the conversation after the first chip —');
+// ------------------------------------------------------------
+{
+  // MEASURED (scripts/sim-tutor-session.ts): the four opening chips were 100%
+  // local and the follow-ups were 38%. These are the moves that were falling
+  // through, and each one is a billed call if it regresses.
+  const withState = (msg: string) =>
+    routeMessage(msg, withValue, { lastAsk: 'help', served: ['hint'] });
+
+  for (const msg of ['תודה', 'אוקיי', 'הבנתי', 'סבבה', 'תודה רבה', 'ok']) {
+    const r = withState(msg);
+    ok(r.kind === 'ack', `acknowledgement answered without a model: ${JSON.stringify(msg)} → ${r.kind}`);
+  }
+  for (const msg of ['ואז?', 'ואז מה', 'ומה עכשיו', 'המשך', 'נו', 'הלאה', 'עוד קצת',
+                     'אוקיי ומה הלאה', 'תן לי עוד כיוון', 'עוד רמז']) {
+    const r = withState(msg);
+    ok(r.kind === 'ask', `continuation resolved locally: ${JSON.stringify(msg)} → ${r.kind}`);
+  }
+  for (const msg of ['אני מוותר', 'פשוט תגיד לי', 'תראה לי כבר']) {
+    const r = withState(msg);
+    ok(r.kind === 'ask' && r.ask === 'full', `giving up serves the full solution: ${JSON.stringify(msg)}`);
+  }
+  // A bare "why" is about what was just said; with content it is a real ask.
+  ok(withState('למה?').kind === 'ask', 'bare "למה?" continues the thread');
+  // Continuation needs a previous turn — on the first message it means nothing.
+  ok(routeMessage('ואז?', withValue, {}).kind === 'open', 'a continuation with no previous ask goes to the model');
+  // …and a sentence that merely STARTS with "ואז" is not a nudge.
+  ok(routeMessage('ואז מחשבים את הסכום של כל האיברים', withValue, { lastAsk: 'help' }).kind === 'open',
+    'a statement beginning with "ואז" is not a continuation');
+  // The ladder escalates instead of repeating a spent hint.
+  const spent = routeMessage('ואז?', withValue, { lastAsk: 'help', served: ['hint', 'first-step'] });
+  ok(spent.kind === 'ask' && spent.ask === 'full', 'a spent hint ladder escalates to the full solution');
+}
+
+// ------------------------------------------------------------
 const MIN_ANSWER_RECALL = 0.8;
 checks += 2;
 if (misrouted > 0) bad(`${misrouted} question(s) routed to grading — this must be zero`);

@@ -13,6 +13,7 @@
     "measure:cachefit": "tsx scripts/measure-generator-cachefit.ts",
     "test:faq": "tsx scripts/test-tutor-faq.ts",
     "test:router": "tsx scripts/test-tutor-router.ts",
+    "sim:tutor": "tsx scripts/sim-tutor-session.ts",
     "check:faq-coverage": "tsx scripts/check-faq-coverage.ts",
     "check:db": "tsx scripts/check-db.ts",
     "check:usage": "tsx scripts/check-usage.ts",

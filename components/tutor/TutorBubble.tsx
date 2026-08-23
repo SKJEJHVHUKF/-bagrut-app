@@ -45,7 +45,7 @@ import {
   type TutorFocus,
 } from '@/lib/tutor-presence';
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
-import { routeMessage, answerGradedLocally } from '@/lib/tutor-router';
+import { routeMessage, answerGradedLocally, canonicalFor } from '@/lib/tutor-router';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
 // two call sites below, not here. Both pull the whole content corpus behind
 // them — tutor-context via lib/cognition, tutor-greeting via
@@ -117,6 +117,11 @@ export default function TutorBubble() {
   // so a second "אני תקוע" walks down the ladder instead of repeating itself.
   // Keyed by question text so moving to the next question resets it.
   const servedRef = useRef<{ key: string; kinds: LocalAnswerKind[] }>({ key: '', kinds: [] });
+  /** The ask the previous turn resolved to. Without it "ואז?" and "המשך" carry
+   *  no meaning and every one of them was a billed call. Cleared with the
+   *  served rungs when the question changes, since a continuation refers to
+   *  this conversation and not the previous question's. */
+  const lastAskRef = useRef<Parameters<typeof canonicalFor>[0] | null>(null);
   // Bumped whenever the conversation is reset; an API stream that started under
   // an older generation must not write into the fresh chat (see below).
   const genRef = useRef(0);
@@ -204,14 +209,26 @@ export default function TutorBubble() {
       // anything ambiguous, so the real tutor still handles the novel question.
       const focusNow = getTutorFocus();
       const qKey = focusNow?.question?.id ?? focusNow?.questionText ?? '';
-      if (servedRef.current.key !== qKey) servedRef.current = { key: qKey, kinds: [] };
+      if (servedRef.current.key !== qKey) {
+        servedRef.current = { key: qKey, kinds: [] };
+        // A new question means "ואז?" no longer refers to anything.
+        lastAskRef.current = null;
+      }
       // ===== the router decides who answers, before anything is sent =====
       // A typed answer is arithmetic, and arithmetic belongs to mathjs, not to
       // a model that judges it by eye. MEASURED before this: none of nine
       // realistic typed answers were recognised, and every one was graded by
       // the model. See lib/tutor-router.ts.
+      // `probe` is what the local tutor is asked. Normally the student's own
+      // words; for a resolved continuation ("ואז?" → the previous ask) it is
+      // the canonical phrasing of that ask, because answerLocally classifies
+      // the words it is given and "ואז?" classifies as nothing.
+      let probe = text;
       if (focusNow) {
-        const route = routeMessage(text, focusNow);
+        const route = routeMessage(text, focusNow, {
+          lastAsk: lastAskRef.current,
+          served: servedRef.current.kinds,
+        });
         if (route.kind === 'answer') {
           const graded = answerGradedLocally(route, focusNow);
           if (graded) {
@@ -223,10 +240,21 @@ export default function TutorBubble() {
           }
           // `unparseable` — the router guessed wrong about this being a value.
           // Fall through: the model is the right place for it after all.
+        } else if (route.kind === 'ack') {
+          // "תודה" / "אוקיי". Paying a model to say "בכיף" was 4 of every 32
+          // turns in a measured session (scripts/sim-tutor-session.ts).
+          setMsgs((m) => [
+            ...m,
+            { id: `a-${Date.now()}`, role: 'assistant', text: route.text, local: true },
+          ]);
+          return;
+        } else if (route.kind === 'ask') {
+          probe = canonicalFor(route.ask);
+          lastAskRef.current = route.ask;
         }
       }
 
-      const local = answerLocally(text, focusNow, servedRef.current.kinds);
+      const local = answerLocally(probe, focusNow, servedRef.current.kinds);
       if (local) {
         servedRef.current.kinds.push(local.kind);
         setMsgs((m) => [
