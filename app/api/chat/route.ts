@@ -98,6 +98,8 @@ export async function POST(request: Request) {
       conversationId?: unknown;
       unitLevel?: unknown;
       formNumber?: unknown;
+      /** Unit id when the client's local tutor + FAQ bank both abstained. */
+      faqMiss?: unknown;
     };
     try {
       body = await request.json();
@@ -135,6 +137,13 @@ export async function POST(request: Request) {
     }
     if (BLACKLIST.test(message)) {
       return Response.json({ error: 'הודעה לא חוקית' }, { status: 400 });
+    }
+    // The client tried the authored tutor and the per-question FAQ bank and
+    // both abstained. Logged with the unit id so `grep '[faq-miss]'` in the
+    // Vercel logs is literally the list of what to author next — the bank
+    // grows from what students actually ask, not from what we guess.
+    if (typeof body.faqMiss === 'string' && body.faqMiss.length <= 80) {
+      console.log(`[faq-miss] topic=${topic} unit=${body.faqMiss.replace(/\s/g, '_')} msg=${JSON.stringify(message.slice(0, 160))}`);
     }
 
     // ===== 7. DAILY QUOTA CHECK =====

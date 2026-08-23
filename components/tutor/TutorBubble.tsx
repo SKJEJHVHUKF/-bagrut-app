@@ -216,6 +216,31 @@ export default function TutorBubble() {
 
       setSending(true);
 
+      // ===== second local stage: what students ask about THIS solution =====
+      // The six recurring asks were handled above. Everything else used to be
+      // a paid call — but on a given solution the "everything else" is a short
+      // list asked in many phrasings, and that list is authored per question
+      // (content/tutor-faq, matched by lib/tutor-faq). Lazy: the bank for a
+      // topic is imported the first time a student here types something.
+      let faqMissed = false;
+      if (focusNow?.question && focusNow.topic) {
+        try {
+          const { answerFromFaq } = await import('@/lib/tutor-faq');
+          const faq = await answerFromFaq(text, focusNow);
+          if (faq) {
+            setMsgs((m) => [
+              ...m,
+              { id: `a-${Date.now()}`, role: 'assistant', text: faq.text, local: true },
+            ]);
+            setSending(false);
+            return;
+          }
+          faqMissed = true;
+        } catch {
+          /* no bank for this topic yet — the model handles it, as before */
+        }
+      }
+
       // Focus FIRST, student snapshot second. The server truncates `context`
       // from the end at 4000 chars (MAX_CONTEXT_LEN), and the snapshot alone
       // can reach 1800 — focus-last would silently drop the question the
@@ -250,6 +275,10 @@ export default function TutorBubble() {
             message: text,
             topic: f?.topic ?? '',
             conversationId: convIdRef.current,
+            // A question was on screen, the local tutor AND its FAQ bank both
+            // abstained — the server logs it as `[faq-miss]`, and that log is
+            // the next authoring list. The model's answer is still billed.
+            ...(faqMissed && f?.question ? { faqMiss: f.question.id } : {}),
             ...(context ? { context } : {}),
             ...(unitLevel ? { unitLevel } : {}),
             ...(formNumber ? { formNumber } : {}),
