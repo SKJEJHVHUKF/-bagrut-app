@@ -96,6 +96,31 @@ const ok = (cond: boolean, msg: string) => {
     ok(empty.isCorrect === null, 'an empty answer gets no verdict');
   }
 
+  console.log('\n-- the Hebrew instruction decides what the engine DOES --');
+  {
+    // Same expression, two questions. Dropping `text` is not a harmless
+    // default: without it classifyProblem sees only `x^3-4x`, calls it an
+    // `evaluate`, and the engine simplifies — handing the input back as a
+    // "verified" answer to a question nobody asked. Measured, not theorised:
+    // the scan pipeline, which passes the full transcription, got the correct
+    // derivative from this same engine on this same input.
+    const withText = await MathEngine.solve('x^3 - 4*x', {
+      text: 'גזור את הפונקציה $x^3 - 4x$',
+      variable: 'x',
+    });
+    ok(withText.success, `with the Hebrew verb it solves (${withText.warnings.join('|')})`);
+    ok(
+      !withText.success || /3\s*\*?\s*x\s*\^\s*\{?2/.test(withText.result),
+      `and differentiates: expected 3x^2-4, got ${withText.result}`,
+    );
+
+    const withoutText = await MathEngine.solve('x^3 - 4*x', { variable: 'x' });
+    ok(
+      !withoutText.success || withoutText.result !== withText.result,
+      'without it the engine is asked something else entirely — which is why callers pass `text`',
+    );
+  }
+
   console.log('\n-- the cost contract --');
   {
     // The single most important property in this file: nothing here can spend

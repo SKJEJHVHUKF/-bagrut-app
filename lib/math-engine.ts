@@ -89,7 +89,14 @@ const DETERMINISTIC: ProblemKind[] = [
   'derivative', 'integral', 'definite-integral', 'limit',
 ];
 
-async function run(action: MathAction, input: string | string[], variable?: string): Promise<MathEngineResult> {
+async function run(
+  action: MathAction,
+  input: string | string[],
+  variable?: string,
+  /** The ORIGINAL question, Hebrew prose included. See the classify call below —
+   *  omitting it silently changes what the engine is asked to DO. */
+  text?: string,
+): Promise<MathEngineResult> {
   const expressions = (Array.isArray(input) ? input : [input]).map((s) => String(s ?? '').trim()).filter(Boolean);
   const normalized = expressions.map((e) => latexToMathjs(e).trim()).join(' ; ');
 
@@ -100,7 +107,15 @@ async function run(action: MathAction, input: string | string[], variable?: stri
   // explicit that the Hebrew IS the signal for what to DO, and classifying
   // from the equation alone loses the instruction verb. `expressions` is the
   // maths already extracted from it.
-  const problem = classifyProblem({ text: expressions.join('\n'), expressions });
+  //
+  // ⚠️ MEASURED: falling back to `expressions.join('\n')` is not a harmless
+  // default, it CHANGES THE QUESTION. "גזור את הפונקציה $x^3 - 4x$" without
+  // its Hebrew is just the expression `x^3-4x`, which classifies as `evaluate`
+  // — so the engine simplified it and handed the input back as a "verified"
+  // answer. The scan pipeline, which passes the full transcription, got the
+  // correct `f'(x) = 3x^2 - 4` from the same engine on the same input. The
+  // bug was never in the solver; it was in what we told it to solve.
+  const problem = classifyProblem({ text: text?.trim() || expressions.join('\n'), expressions });
   if (!DETERMINISTIC.includes(problem.kind)) {
     return {
       ...EMPTY(action, normalized, `not a deterministic problem kind: ${problem.kind}`),
@@ -143,18 +158,18 @@ async function run(action: MathAction, input: string | string[], variable?: stri
 
 export const MathEngine = {
   /** Solve an equation, a system, a derivative, an integral, a limit. */
-  solve(input: string | string[], opts: { variable?: string } = {}) {
-    return run('solve', input, opts.variable);
+  solve(input: string | string[], opts: { variable?: string; text?: string } = {}) {
+    return run('solve', input, opts.variable, opts.text);
   },
 
-  simplify(input: string, opts: { variable?: string } = {}) {
-    return run('simplify', input, opts.variable);
+  simplify(input: string, opts: { variable?: string; text?: string } = {}) {
+    return run('simplify', input, opts.variable, opts.text);
   },
 
   /** The worked steps, without the framing. Same work as `solve`; a separate
    *  name because the hint flow asks for steps and reads better saying so. */
-  getSteps(input: string | string[], opts: { variable?: string } = {}) {
-    return run('steps', input, opts.variable);
+  getSteps(input: string | string[], opts: { variable?: string; text?: string } = {}) {
+    return run('steps', input, opts.variable, opts.text);
   },
 
   /**
@@ -172,7 +187,7 @@ export const MathEngine = {
    */
   async validate(
     studentAnswer: string,
-    against: { spec?: AnswerSpec; expression?: string | string[]; variable?: string },
+    against: { spec?: AnswerSpec; expression?: string | string[]; variable?: string; text?: string },
   ): Promise<MathEngineResult> {
     const typed = String(studentAnswer ?? '').trim();
     if (!typed) return EMPTY('validate', '', 'empty answer');
@@ -202,7 +217,7 @@ export const MathEngine = {
 
     if (!against.expression) return EMPTY('validate', latexToMathjs(typed).trim(), 'no spec and no expression to check against');
 
-    const solved = await run('validate', against.expression, against.variable);
+    const solved = await run('validate', against.expression, against.variable, against.text);
     if (!solved.success) return { ...solved, action: 'validate' };
 
     const { checkAnswer: check } = await import('@/lib/answer-check');

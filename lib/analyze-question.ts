@@ -381,20 +381,25 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
     );
   }
 
-  // ⚠️ Complex numbers are checked against the ORIGINAL text, not the repaired
-  // one. `repairOcrText` fixes OCR digit confusion and rewrites a bare `i` to
-  // `1`, which is right for a scanned `1` misread as `i` and catastrophic for
-  // the imaginary unit: `(2 + 3i)(1 - 2i)` became `(2 + 31)(1 - 21)` and came
-  // back as -660, marked VERIFIED, with no warning. The real answer is 8 - i.
+  // ⚠️ ONE narrow case, checked against the ORIGINAL text rather than the
+  // repaired one: a digit immediately followed by `i`.
   //
-  // mathjs is also real-only here, so `z^2 = -9` returns "אין פתרון ממשי" as a
-  // verified answer to a question that explicitly asked for complex roots.
-  // Both failures end the same way, so both are handled the same way: complex
-  // arithmetic is not deterministic on this path.
-  const complexNumbers =
-    problem.domain === 'complex' || /\d\s*i(?![a-zA-Z])/.test(raw) || /\bcis\b|מרוכב/.test(raw);
-  if (complexNumbers) {
-    warnings.push('complex numbers are not handled deterministically on this path');
+  // `repairOcrText` rewrites a bare `i` to `1`, which is correct for a scanned
+  // 1 misread as i and catastrophic for the imaginary unit. Measured:
+  // `(2 + 3i)(1 - 2i)` becomes `(2 + 31)(1 - 21)`, is solved to -660, and is
+  // marked VERIFIED — because -660 genuinely is the answer to the corrupted
+  // expression. The real answer is 8 - i. Nothing downstream can catch this;
+  // by the time the solver sees it the imaginary unit is gone.
+  //
+  // Deliberately NOT `domain === 'complex'`. That was the first version, and
+  // it was measured to be wrong: `z^2 = -9 במספרים מרוכבים` is solved
+  // correctly to z = ±3i by the existing engine, so rejecting the whole domain
+  // threw away working behaviour to fix a problem that only the `3i` shape has.
+  const corruptedImaginaryUnit = /\d\s*i(?![a-zA-Z])/.test(raw);
+  if (corruptedImaginaryUnit) {
+    warnings.push(
+      'an imaginary unit written as 3i is rewritten to 31 by OCR repair — refusing rather than answering the corrupted expression',
+    );
   }
 
   const deterministicEligible =
@@ -403,7 +408,7 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
     !prose &&
     !explosive &&
     !givensOnly &&
-    !complexNumbers &&
+    !corruptedImaginaryUnit &&
     !problem.multiPart &&
     !hasHebrewInsideMath(normalizedQuestion);
 
@@ -432,14 +437,26 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
   let engineResult: MathEngineResult | null = null;
   if (mathEngineAction !== 'none' && mode !== 'explain') {
     engineResult = await withTimeout(
+      // ⚠️ `text` is not optional in practice. Without it MathEngine
+      // re-classifies from the expressions alone, the Hebrew instruction verb
+      // is gone, and "גזור את הפונקציה $x^3-4x$" becomes the bare expression
+      // `x^3-4x` — an `evaluate`, which the engine dutifully simplified and
+      // returned as a verified answer to a question it was never asked.
       mathEngineAction === 'validate'
         ? MathEngine.validate(typedAnswer, {
             expression: normalizedExpressions,
             variable: problem.variables[0],
+            text: normalizedQuestion,
           })
         : mathEngineAction === 'simplify'
-          ? MathEngine.simplify(normalizedExpressions[0], { variable: problem.variables[0] })
-          : MathEngine.solve(normalizedExpressions, { variable: problem.variables[0] }),
+          ? MathEngine.simplify(normalizedExpressions[0], {
+              variable: problem.variables[0],
+              text: normalizedQuestion,
+            })
+          : MathEngine.solve(normalizedExpressions, {
+              variable: problem.variables[0],
+              text: normalizedQuestion,
+            }),
       input.timeoutMs ?? DEFAULT_TIMEOUT_MS,
     );
     if (!engineResult) warnings.push('the maths engine did not answer in time');

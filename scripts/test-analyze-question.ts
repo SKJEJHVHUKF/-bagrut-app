@@ -166,6 +166,24 @@ const show = (a: QuestionAnalysis) =>
       `topic is חשבון דיפרנציאלי (got ${a.topic})`,
     );
     ok(a.requiresLLM === false, 'no model needed');
+    // ⚠️ The value, not just the label. This came back as `x^3-4x` — the
+    // question handed back as a "verified" answer — because MathEngine
+    // re-classified from the expressions alone and never saw the Hebrew verb
+    // "גזור", so it simplified instead of differentiating. The engine was
+    // fine; what we asked it was not.
+    ok(
+      !a.solution || /3x\^\{?2\}?\s*-\s*4/.test(a.solution.answerLatex),
+      `the derivative is 3x^2-4, not the input (got ${a.solution?.answerLatex ?? 'null'})`,
+    );
+  }
+
+  {
+    const bare = await analyzeQuestion({ question: 'גזור את הפונקציה $x^3 - 4x$' });
+    ok(bare.questionType === 'derivative', `without f(x)= it is still a derivative (${bare.questionType})`);
+    ok(
+      !bare.solution || /3x\^\{?2\}?\s*-\s*4/.test(bare.solution.answerLatex),
+      `and still answered correctly (got ${bare.solution?.answerLatex ?? 'null'})`,
+    );
   }
 
   // ============================================================
@@ -429,11 +447,17 @@ const show = (a: QuestionAnalysis) =>
       const product = await analyzeQuestion({ question: 'חשב את $(2 + 3i)(1 - 2i)$' });
       ok(product.deterministicEligible === false, `3i is not treated as 31 (det=${product.deterministicEligible})`);
       ok(product.solution === null, 'and no answer is offered for it');
+      // NOT rejected: the existing engine solves this one correctly to z = ±3i.
+      // Rejecting the whole complex domain was the first version of the guard,
+      // and it threw away working behaviour — measured, then narrowed.
       const root = await analyzeQuestion({ question: 'פתור את המשוואה $z^2 = -9$ במספרים מרוכבים' });
-      ok(root.deterministicEligible === false, `z^2=-9 is not "solved" over the reals (det=${root.deterministicEligible})`);
       ok(
         !(root.solution?.answerLatex ?? '').includes('אין פתרון ממשי'),
-        'and the student is never shown "no real solution" for a complex question',
+        'the student is never shown "no real solution" for a complex question',
+      );
+      ok(
+        root.solution === null || /3i/.test(root.solution.answerLatex),
+        `if it answers at all, the roots are imaginary (got ${root.solution?.answerLatex ?? 'null'})`,
       );
     }
 
