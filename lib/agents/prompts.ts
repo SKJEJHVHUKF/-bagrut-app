@@ -51,6 +51,35 @@
  */
 
 import type { TextBlockParam } from '@anthropic-ai/sdk/resources/messages';
+
+/**
+ * ONE HOUR, not the default five minutes.
+ *
+ * MEASURED (scripts/measure-chat-turn.ts, הסתברות, Haiku 4.5): the cached
+ * prefix is 4,805 tokens, and writing it is $0.0060 of a $0.0087 first turn —
+ * 69% of the cost. Reading it is $0.0005. So the whole game is how often the
+ * write is repeated, and at a 5-minute TTL it is repeated constantly: a student
+ * reading a question, working it on paper and coming back to ask is past five
+ * minutes almost every time. Itay measured three questions costing $0.02, i.e.
+ * ~$0.01 per call — the cold-turn price, twice. Nothing was being reused.
+ *
+ * Why an hour is the right trade here, and not just a bigger number:
+ *   • A 1h write costs 2x instead of 1.25x, so it needs ~1.6 uses of the same
+ *     prefix per hour to pay for itself. One avoided re-write already does it.
+ *   • THE PREFIX IS SHARED ACROSS STUDENTS. It is the tutor persona plus the
+ *     topic's verified lesson — no user id, no memory, no question text (the
+ *     per-student memory block is emitted last and deliberately uncached for
+ *     exactly this reason). One student on סדרות warms it for all of them, so
+ *     with a class the reuse count is not 2, it is dozens.
+ *
+ * The honest cost: a topic touched once an hour and never again pays 2x instead
+ * of 1.25x. That is the rare topic at 3am; the common topics carry the volume.
+ *
+ * ⚠️ Verify with `usage.cache_read_input_tokens` (the `[cost]` log line in
+ * lib/mathscan/cost.ts prints it). If it stays 0 across turns, something is
+ * invalidating the prefix and the TTL is not the problem.
+ */
+const CACHE_1H = { type: 'ephemeral', ttl: '1h' } as const;
 import { buildPilotGrounding } from '@/lib/tutor-grounding';
 import type { UnitLevel } from './config';
 
@@ -164,14 +193,14 @@ export function buildTutorSystem(ctx: PromptContext): TextBlockParam[] {
   // Sonnet. Breakpoints cost nothing; only cached bytes are billed, and we use
   // 2 of the 4 available slots.
   const blocks: TextBlockParam[] = [
-    { type: 'text', text: TUTOR_CORE, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: TUTOR_CORE, cache_control: CACHE_1H },
   ];
 
   if (grounding) {
     blocks.push({
       type: 'text',
       text: `${grounding}\n\nהסתמך על החומר המאומת שלמעלה. אם התלמיד שואל משהו שסותר אותו — החומר גובר.`,
-      cache_control: { type: 'ephemeral' },
+      cache_control: CACHE_1H,
     });
   }
 
@@ -240,6 +269,11 @@ ${LEVEL_GUIDE}
  */
 export function buildGraderSystem(ctx: PromptContext): TextBlockParam[] {
   return [
+    // 5 minutes on purpose, unlike the tutor above. Grading is a one-shot call,
+    // not a conversation: a student submits, reads the feedback, and goes back
+    // to working. The prefix is shared across students, but the arrival rate is
+    // far below the ~1.6/hour a 1h write needs to beat a 1.25x one. Raise this
+    // to CACHE_1H if the `[cost]` logs ever show grade calls clustering.
     { type: 'text', text: GRADER_CORE, cache_control: { type: 'ephemeral' } },
     { type: 'text', text: levelBlock(ctx) },
   ];

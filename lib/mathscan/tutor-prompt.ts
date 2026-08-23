@@ -103,7 +103,12 @@ ${SOURCE_NOTE[grounding.source] ?? ''}
     // this route moves to Sonnet, whose minimum is 1,024.
     //
     // Re-run the script after editing the persona and update these numbers.
-    { type: 'text', text: SCAN_TUTOR_CORE, cache_control: { type: 'ephemeral' } },
+    // 1 hour, same reasoning as the chat tutor (lib/agents/prompts.ts CACHE_1H):
+    // this is a CONVERSATION about a scanned question, the student pauses to
+    // work between turns, and a 5-minute window expires across those pauses —
+    // so the prefix was being re-written at 1.25x on nearly every turn instead
+    // of read at 0.1x. The prefix carries no per-student data, so it is shared.
+    { type: 'text', text: SCAN_TUTOR_CORE, cache_control: { type: 'ephemeral', ttl: '1h' } },
     // NOT cached, deliberately: this block differs for every scanned
     // question, so a breakpoint here would pay the 1.25× cache-WRITE premium
     // on every conversation and never once be read.
