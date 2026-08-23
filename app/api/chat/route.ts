@@ -23,7 +23,21 @@ const MIN_MESSAGE_LEN = 1;
 // Daily cap is tier-based: free students get FREE_DAILY_CHAT, Pro get a
 // much higher (effectively unlimited) ceiling. The cap itself is a gentle
 // conversion lever — a heavy free user feels the wall and upgrades.
-const CONTEXT_MESSAGE_COUNT = 6; // last 3 user/assistant pairs
+/**
+ * Replayed history, in messages. 4 = the last 2 user/assistant pairs.
+ *
+ * MEASURED (scripts/measure-chat-turn.ts): dropping from 6 to 4 saves $0.00006
+ * of a $0.00316 warm turn — 1.9%. It is here because it is free to do, not
+ * because it is a lever; history sits AFTER the cached prefix, so it is pure
+ * token cost and invalidates nothing.
+ *
+ * ⚠️ The floor is 4, and lowering it further would cost more than it saves.
+ * This tutor is Socratic: it asks a question and waits. With 2 pairs it can
+ * still see the hint it just gave and what the student did with it. With 1 it
+ * would start repeating hints, and a repeated hint buys another turn — which
+ * is ~50x the saving.
+ */
+const CONTEXT_MESSAGE_COUNT = 4;
 
 // Block obvious prompt-injection / abuse markers — same lightweight check
 // we run on the quiz topic input.
@@ -356,7 +370,13 @@ export async function POST(request: Request) {
         try {
           const stream = client.messages.stream({
             model,
-            max_tokens: 800,
+            // 500, down from 800. This is a SAFETY RAIL, not a saving:
+            // billing is per token generated, so a cap only costs money when
+            // it is hit — and then it truncates the answer mid-sentence and
+            // the student asks again. The `[truncated]` warning below is how
+            // we find out whether that is happening; if it appears in the
+            // logs, raise this rather than leaving replies cut off.
+            max_tokens: 500,
             system,
             messages: claudeMessages,
             // The tutor may suggest an in-app action and may remember a fact.
@@ -397,6 +417,12 @@ export async function POST(request: Request) {
           // the prefix: a cached turn and a turn that just WROTE the 4,800-token
           // prefix report the same ~1,500 — and on Sonnet that write is ~$0.018.
           logCost('chat', model, final.usage);
+          if (final.stop_reason === 'max_tokens') {
+            console.warn(
+              `[truncated] chat reply hit max_tokens (out=${usageOut}) — the student got a cut-off ` +
+                'answer and will likely ask again, which costs more than the cap saves. Raise max_tokens.'
+            );
+          }
 
           // ===== tool calls: suggestion + memory =====
           // Both are best-effort and deliberately AFTER the text is settled.

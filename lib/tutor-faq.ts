@@ -32,7 +32,7 @@
 
 import type { TutorFocus } from '@/lib/tutor-presence';
 import { loadFaqBank } from '@/content/tutor-faq';
-import type { TutorFaq } from '@/content/tutor-faq';
+import type { TutorFaq, TutorFaqKind } from '@/content/tutor-faq';
 import { leaksAnswer } from '@/lib/help-ladder';
 
 // ------------------------------------------------------------
@@ -258,6 +258,66 @@ export function stepReference(text: string, stepCount: number): number | null {
 export const FAQ_THRESHOLD = 0.5;
 export const FAQ_MARGIN = 0.12;
 
+/**
+ * Kinds whose answer is about the IDEA, not about this exercise's numbers.
+ *
+ * This is what makes cross-question reuse safe. "מה זה הסתברות מותנית",
+ * "מה המלכודת כאן", "איך בודקים את התשובה" are true of every question in the
+ * topic; "מאיפה ה-60" and "למה לא 40 חלקי 200" belong to one exercise and
+ * serving them on another would be a confident wrong answer.
+ *
+ * Why it matters: the bank holds ~1,500 authored entries, and until this
+ * existed only the ~10 belonging to the question on screen were ever searched.
+ * Everything else was paid for and never read.
+ */
+const TRANSFERABLE = new Set<TutorFaqKind>(['concept', 'mistake', 'check']);
+
+/**
+ * Higher than FAQ_THRESHOLD, deliberately. Inside one unit the candidates are
+ * ten entries about one exercise, so a moderate match is informative. Across a
+ * topic the pool is hundreds of entries, and the chance of a coincidental
+ * overlap rises with it — so an answer from another exercise has to earn a
+ * clearly better match before it is served in place of a model call.
+ */
+export const FAQ_TRANSFER_THRESHOLD = 0.62;
+
+/**
+ * ⛔ CROSS-QUESTION REUSE IS OFF. It was built, measured, and did not earn its
+ * risk. The code stays because the measurement in scripts/test-tutor-faq.ts
+ * still runs against it, so if the bank is ever authored to be more
+ * discriminating the numbers will say so — but nothing reaches students today.
+ *
+ * The idea: ~2,300 entries are authored, and only the ~10 on the student's own
+ * question are ever searched. Stage 2 would serve an entry from a sibling
+ * exercise when the question is about the IDEA (concept/mistake/check) rather
+ * than this exercise's numbers.
+ *
+ * MEASURED across five tightenings, on the full סדרות + הסתברות bank:
+ *
+ *   as first designed                     fires 17.1%  unsafe 13.2%
+ *   + require 2 matching content words    fires 15.5%  unsafe  5.1%
+ *   + reject answers with foreign numbers fires 15.5%  unsafe  1.6%  ← looked fine
+ *   + honest metric (count what is SERVED,
+ *     not what the screen blocks)         fires 17.7%  unsafe  4.7%
+ *   + no clamp on the content requirement fires 17.2%  unsafe  4.2%
+ *
+ * The 1.6% was a measurement error of mine: the test counted the cases the
+ * foreign-number screen REJECTS as failures, so a working guard read as a
+ * defect and the rest read as clean. Corrected, the real rate is 4.2% — about
+ * one wrong answer for every four calls saved.
+ *
+ * That trade is wrong for this product. A student told something about a
+ * different exercise stops trusting the tutor, and the whole point of routing
+ * work away from the model is that deterministic answers are MORE reliable,
+ * not cheaper-and-shakier. The saving it bought was ~4% of remaining calls.
+ *
+ * TO RE-ENABLE: get `unsafe` under 2% while `fires` stays above ~12% in
+ * `npm run test:faq`, then flip this. The likeliest route is authoring, not
+ * tuning — entries whose wording is specific enough that a sibling exercise's
+ * phrasing does not match them.
+ */
+const TRANSFER_ENABLED = false;
+
 type Indexed = { faq: TutorFaq; docs: Set<string>[] };
 
 export type FaqIndex = { items: Indexed[]; idf: Map<string, number> };
@@ -306,7 +366,11 @@ export type FaqMatch = { faq: TutorFaq; score: number; margin: number };
  *  "מחר" go unexplained. MEASURED: at 1.5 that noise scored 0.62. */
 const UNKNOWN_WEIGHT = 2.2;
 
-export function matchFaq(index: FaqIndex, message: string, opts: { step?: number | null } = {}): FaqMatch | null {
+export function matchFaq(
+  index: FaqIndex,
+  message: string,
+  opts: { step?: number | null; threshold?: number; minContentMatches?: number } = {},
+): FaqMatch | null {
   const groups = tokenGroups(message);
   if (groups.length === 0) return null;
   // A word's weight is that of its best-known variant; a word with no known
@@ -323,6 +387,25 @@ export function matchFaq(index: FaqIndex, message: string, opts: { step?: number
   // At least one CONTENT word must match — a frame word alone ("מה… ?")
   // matches every entry on the unit and says nothing about which.
   const contentIdx = groups.map((g, i) => (isFrame(g) ? -1 : i)).filter((i) => i >= 0);
+  /**
+   * How many content words must match. 1 inside a unit; the caller raises it
+   * for cross-question reuse.
+   *
+   * MEASURED, and it is the whole difference between the stage-2 path being
+   * safe and being a liability: at 1, "למה לא 17" scored a perfect 1.00 against
+   * an entry on a DIFFERENT exercise that merely also mentions 17 — one shared
+   * number, no shared idea. 13.2% of number questions were answered from the
+   * wrong exercise. A query that shares only one content word with an entry
+   * from another question has not established that it is the same question.
+   */
+  const minContent = opts.minContentMatches ?? 1;
+  // ⚠️ NOT clamped to what the query happens to contain. The first version did
+  // `Math.min(required, contentIdx.length)`, which meant a two-word message
+  // could never fail the requirement — it was lowered to fit. That is how
+  // "למה לא 3" scored a perfect 1.00 against a different exercise on the
+  // strength of one shared number. A query too short to meet the bar has not
+  // established anything; it must not transfer at all.
+  if (contentIdx.length < minContent) return null;
 
   const scored = index.items
     .filter((it) => opts.step === undefined || opts.step === null || it.faq.step === undefined || it.faq.step === opts.step)
@@ -332,15 +415,15 @@ export function matchFaq(index: FaqIndex, message: string, opts: { step?: number
       for (const d of it.docs) {
         let hit = 0;
         let matched = 0;
-        let content = false;
+        let contentMatched = 0;
         groups.forEach((g, i) => {
           if (g.some((t) => d.has(t))) {
             hit += weights[i];
             matched++;
-            if (contentIdx.includes(i)) content = true;
+            if (contentIdx.includes(i)) contentMatched++;
           }
         });
-        if (!content) continue;
+        if (contentMatched < minContent) continue;
         const score = hit / denom;
         if (score > best) {
           best = score;
@@ -351,14 +434,15 @@ export function matchFaq(index: FaqIndex, message: string, opts: { step?: number
     })
     .sort((a, b) => b.score - a.score);
 
+  const threshold = opts.threshold ?? FAQ_THRESHOLD;
   const top = scored[0];
-  if (!top || top.score < FAQ_THRESHOLD) return null;
+  if (!top || top.score < threshold) return null;
   // One shared word in a message of four or more is a coincidence, however
   // heavy that word is ("מה הבדיקה כאן" landing on an entry via "בדיקה").
   if (top.matched < 2 && groups.length >= 4) return null;
   const second = scored[1]?.score ?? 0;
   const margin = top.score - second;
-  if (second >= FAQ_THRESHOLD && margin < FAQ_MARGIN) return null;
+  if (second >= threshold && margin < FAQ_MARGIN) return null;
   return { faq: top.faq, score: top.score, margin };
 }
 
@@ -368,11 +452,62 @@ export function matchFaq(index: FaqIndex, message: string, opts: { step?: number
 
 export type FaqAnswer = {
   text: string;
-  /** 'faq' — an authored entry; 'step' — the step text itself. */
-  source: 'faq' | 'step';
+  /**
+   * 'faq'      an authored entry for THIS question
+   * 'transfer' an authored entry from another question in the topic, whose
+   *            answer is about the idea rather than this exercise's numbers
+   * 'step'     the solution step the student pointed at
+   */
+  source: 'faq' | 'transfer' | 'step';
   faqId?: string;
   score?: number;
 };
+
+/**
+ * `seq-arg-007#3` → `seq-arg`. Units in one group are variations of one
+ * exercise type, so an idea explained on one reads naturally on another.
+ *
+ * ⚠️ A SINGLE-SEGMENT RESULT IS NOT A GROUP. Top-level question ids look like
+ * `seq-001`, and stripping the digits leaves `seq` — the whole topic. The first
+ * version returned that, so every top-level question in סדרות was "the same
+ * sub-topic" as every other one and transferred freely between them. MEASURED:
+ * that alone pushed unsafe transfers from 1.6% to 2.5% as the bank grew, with
+ * failures like "למה לא מכפילים 15 ב-4" on seq-001 answered from seq-010.
+ * A degenerate group returns the unit's own id instead, so it matches nothing
+ * but itself and those units simply do not participate in transfer.
+ */
+function groupOf(faqId: string): string {
+  const unit = faqId.replace(/#.*$/, '').replace(/\/.*$/, '');
+  const g = unit.replace(/[-_]?\d+$/, '');
+  return g.includes('-') ? g : unit;
+}
+
+/**
+ * Would serving this answer put ANOTHER exercise's numbers on the screen?
+ *
+ * This is the real boundary for cross-question reuse, and it is sharper than
+ * "which kind is it". A `concept` answer that says "התנאי מחליף את המכנה"
+ * is true everywhere and helps wherever it is served. The same kind of answer
+ * that says "המכנה הוא 60" is about one exercise, and a student looking at
+ * different numbers will either be confused or quietly misled.
+ *
+ * MEASURED: restricting by kind alone left 5.1% of number questions answered
+ * from a neighbouring exercise. Screening the ANSWER for foreign numbers is
+ * what closes it, and it costs one regex.
+ *
+ * Small integers (0-2) and anything already visible in the student's own
+ * question or solution are not foreign — "שני נעלמים" and a `2` in their own
+ * equation say nothing about a different exercise.
+ */
+export function mentionsForeignNumber(answer: string, ownText: string): boolean {
+  const own = new Set(ownText.match(/\d+(?:\.\d+)?/g) ?? []);
+  for (const n of answer.match(/\d+(?:\.\d+)?/g) ?? []) {
+    if (Number(n) <= 2) continue;
+    if (own.has(n)) continue;
+    return true;
+  }
+  return false;
+}
 
 /** Topic-wide IDF, computed once per loaded bank. */
 const idfCache = new WeakMap<object, Map<string, number>>();
@@ -406,9 +541,62 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
   const canReveal = answered(focus);
   const usable = entries.filter((f) => !f.reveals || canReveal);
 
-  if (usable.length > 0 && bank) {
-    const hit = matchFaq(buildFaqIndex(usable, { idf: topicIdf(bank) }), message, { step });
+  if (!bank) return null;
+  const idf = topicIdf(bank);
+
+  // ---- stage 1: this question's own entries ----
+  if (usable.length > 0) {
+    const hit = matchFaq(buildFaqIndex(usable, { idf }), message, { step });
     if (hit) return { text: hit.faq.a, source: 'faq', faqId: hit.faq.id, score: hit.score };
+  }
+
+  // ---- stage 2: the same IDEA, authored on a different question ----
+  // Only when the student did not point at a step (a step reference is about
+  // THIS solution and cannot transfer), and only for TRANSFERABLE kinds.
+  // Two passes so a sibling exercise wins over a distant one without matchFaq
+  // having to know anything about unit ids.
+  if (TRANSFER_ENABLED && step === null) {
+    // SAME SUB-TOPIC ONLY, and this is a measured choice, not caution for its
+    // own sake. Adding a topic-wide fallback was tried and rejected:
+    //
+    //   same sub-topic only   fires 15.5% · unsafe 1.6%   ← shipping
+    //   + whole topic         fires 26.8% · unsafe 5.6%
+    //
+    // 1.7x the reach for 3.5x the wrong answers. A student who is told
+    // something about a different exercise stops trusting the tutor, and that
+    // costs more than the model call it saved. Revisit only with a measurement.
+    const myGroup = groupOf(q.id);
+    const nearPool: TutorFaq[] = [];
+    for (const [unit, list] of Object.entries(bank)) {
+      if (unit === q.id) continue;
+      if (groupOf(`${unit}#0`) !== myGroup) continue;
+      for (const f of list) {
+        if (!TRANSFERABLE.has(f.kind)) continue;
+        if (f.reveals && !canReveal) continue;
+        nearPool.push(f);
+      }
+    }
+    // What the student can actually see, for the foreign-number screen.
+    const ownText = `${q.question} ${steps.join(' ')} ${q.solution.finalAnswer}`;
+    if (nearPool.length > 0) {
+      const hit = matchFaq(buildFaqIndex(nearPool, { idf }), message, {
+        threshold: FAQ_TRANSFER_THRESHOLD,
+        minContentMatches: 2,
+      });
+      if (hit && !mentionsForeignNumber(hit.faq.a, ownText)) {
+        return {
+          source: 'transfer',
+          faqId: hit.faq.id,
+          score: hit.score,
+          // Said out loud, because it is true and the student can see the
+          // numbers on their own screen: this explains the idea, not this
+          // exercise's arithmetic. Opens on a Hebrew word — the bubble is
+          // `unicodeBidi: 'plaintext'` and a latin/maths first character flips
+          // the whole paragraph to LTR.
+          text: `זו שאלה שחוזרת בנושא הזה, אז ההסבר כללי ולא על המספרים שלפניך:\n\n${hit.faq.a}`,
+        };
+      }
+    }
   }
 
   // No entry, but the student pointed at a step: the step explains itself,

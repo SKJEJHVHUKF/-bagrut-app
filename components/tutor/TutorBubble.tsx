@@ -45,6 +45,7 @@ import {
   type TutorFocus,
 } from '@/lib/tutor-presence';
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
+import { routeMessage, answerGradedLocally } from '@/lib/tutor-router';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
 // two call sites below, not here. Both pull the whole content corpus behind
 // them — tutor-context via lib/cognition, tutor-greeting via
@@ -204,6 +205,27 @@ export default function TutorBubble() {
       const focusNow = getTutorFocus();
       const qKey = focusNow?.question?.id ?? focusNow?.questionText ?? '';
       if (servedRef.current.key !== qKey) servedRef.current = { key: qKey, kinds: [] };
+      // ===== the router decides who answers, before anything is sent =====
+      // A typed answer is arithmetic, and arithmetic belongs to mathjs, not to
+      // a model that judges it by eye. MEASURED before this: none of nine
+      // realistic typed answers were recognised, and every one was graded by
+      // the model. See lib/tutor-router.ts.
+      if (focusNow) {
+        const route = routeMessage(text, focusNow);
+        if (route.kind === 'answer') {
+          const graded = answerGradedLocally(route, focusNow);
+          if (graded) {
+            setMsgs((m) => [
+              ...m,
+              { id: `a-${Date.now()}`, role: 'assistant', text: graded.text, local: true },
+            ]);
+            return;
+          }
+          // `unparseable` — the router guessed wrong about this being a value.
+          // Fall through: the model is the right place for it after all.
+        }
+      }
+
       const local = answerLocally(text, focusNow, servedRef.current.kinds);
       if (local) {
         servedRef.current.kinds.push(local.kind);
