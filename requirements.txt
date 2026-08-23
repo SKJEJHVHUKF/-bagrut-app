@@ -1,0 +1,18 @@
+# Runtime dependencies for the Python Vercel Functions under /api.
+#
+# ⚠️ SYMPY ONLY. DO NOT ADD fastapi, flask, django OR ANY WEB FRAMEWORK.
+#
+# Vercel's Python runtime gives a detected framework preset precedence over
+# file-based functions: "When Vercel detects a framework preset, the framework
+# application handles all requests, and files under /api don't become separate
+# Vercel Functions."
+#
+# This repository is a Next.js app with 15 route handlers under app/api/. If a
+# web framework appears here, Vercel reclassifies the project as a Python app
+# and routes EVERY request to it — /api/chat, /api/practice, /api/scan-solve
+# and the rest stop existing. That is the exact failure reported by people who
+# tried to mix the two.
+#
+# The handler in api/math/solve.py therefore uses BaseHTTPRequestHandler from
+# the standard library, which needs no framework and triggers no preset.
+sympy==1.13.3
