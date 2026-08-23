@@ -32,7 +32,7 @@ import { allLessonKeys, getLesson } from '../content/lessons';
 const RULE = '**הכלל:**';
 
 /** Topics whose rollout is complete — absence of the line is an error here. */
-const REQUIRE_FULL = new Set(['הסתברות', 'סדרות']);
+const REQUIRE_FULL = new Set(['הסתברות', 'סדרות', 'גיאומטריה אוקלידית']);
 
 const HEB = /[֐-׿]/;
 

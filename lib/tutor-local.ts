@@ -57,6 +57,7 @@
  */
 
 import { buildHelpLadder, type HelpTier } from '@/lib/help-ladder';
+import { stripFigureFences } from '@/lib/geo-figure';
 import type { TutorFocus } from '@/lib/tutor-presence';
 
 export type LocalAnswerKind =
@@ -248,7 +249,7 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
           .join('\n')
       : undefined,
     steps: q?.solution.steps.length
-      ? q.solution.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')
+      ? q.solution.steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n')
       : undefined,
     // The authored "which rule and why" line — solutions open with a step
     // marked `**הכלל:**` (probability first, rolling out per topic). Kept with
