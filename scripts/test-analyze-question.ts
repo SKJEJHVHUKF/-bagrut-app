@@ -334,6 +334,157 @@ const show = (a: QuestionAnalysis) =>
   }
 
   // ============================================================
+  // regressions — one per defect an adversarial review confirmed.
+  // Every one of these SHIPPED and returned a confident wrong answer.
+  // ============================================================
+  console.log('\n-- regressions --');
+  {
+    // 1. A ratio is not an instruction seam.
+    {
+      const a = await analyzeQuestion({
+        question: 'היחס בין הצלעות a ל-b הוא 3:4\nחשב את היקף המשולש.',
+      });
+      ok(
+        !(a.status === 'ok' && a.solution?.answerValues.join() === '4'),
+        `a ratio question is not "solved" as 4 (status=${a.status}, answer=${JSON.stringify(a.solution?.answerValues)})`,
+      );
+      ok(
+        __testables.stripLeadingInstruction('היחס הוא 3:4') === 'היחס הוא 3:4',
+        'a digit:digit colon is left alone',
+      );
+      ok(
+        __testables.stripLeadingInstruction('פתור את המשוואה: 2x + 3 = 11') === '2x + 3 = 11',
+        'an instruction colon still splits',
+      );
+    }
+
+    // 2. Rounding means equal at some decimal place — not merely close.
+    {
+      const wrong = await analyzeQuestion({
+        question: 'פתור את המשוואה $1000x = 1$',
+        studentAnswer: '0.005',
+        requestedMode: 'validate',
+      });
+      ok(
+        wrong.detectedMistakeType !== 'rounding',
+        `0.005 for 0.001 is NOT rounding (got ${wrong.detectedMistakeType})`,
+      );
+      const far = await analyzeQuestion({
+        question: 'פתור את המשוואה $x - 1200 = 0$',
+        studentAnswer: '1205',
+        requestedMode: 'validate',
+      });
+      ok(far.detectedMistakeType !== 'rounding', `1205 for 1200 is NOT rounding (got ${far.detectedMistakeType})`);
+      const real = await analyzeQuestion({
+        question: 'פתור את המשוואה: 3x = 1',
+        studentAnswer: '0.333',
+        requestedMode: 'validate',
+      });
+      ok(real.detectedMistakeType === 'rounding', `0.333 for 1/3 IS rounding (got ${real.detectedMistakeType})`);
+    }
+
+    // 3. Never instruct a caller to render working that does not exist.
+    {
+      const a = await analyzeQuestion({
+        question: 'פתור את המשוואה שקיבלת בסעיף הקודם',
+        requestedMode: 'solve',
+      });
+      ok(
+        !(a.recommendedNextStep === 'solve' && a.solution === null),
+        `no "solve" instruction without a solution (next=${a.recommendedNextStep}, solution=${a.solution ? 'present' : 'null'})`,
+      );
+    }
+
+    // 4. A sequences question's givens are not a system to solve.
+    {
+      const a = await analyzeQuestion({
+        question: 'נתונה סדרה חשבונית שבה a1 = 3 וההפרש d = 5. חשב את האיבר ה-10',
+      });
+      ok(
+        !a.solution || !(a.solution.answerValues.includes('3') && a.solution.answerValues.includes('5')),
+        `the givens are not returned as the answer (got ${JSON.stringify(a.solution?.answerValues)})`,
+      );
+      ok(a.deterministicEligible === false, `and it is not called deterministic (${a.deterministicEligible})`);
+      ok(a.domain === 'sequences', `still recognised as sequences (${a.domain})`);
+      ok(__testables.isJustGivenData(['a1 = 3', 'd = 5']), 'given data is detected');
+      ok(!__testables.isJustGivenData(['x + y = 10', 'x - y = 2']), 'a real system is NOT flagged as given data');
+    }
+
+    // 5. A derivative answered with the question itself is not an answer.
+    {
+      const a = await analyzeQuestion({ question: 'גזור את הפונקציה $x^3 - 4x$' });
+      const answer = a.solution?.answerLatex ?? '';
+      ok(
+        !(a.solution && __testables.bareForm(answer) === __testables.bareForm('x^3-4x')),
+        `the input is not handed back as the derivative (got ${answer || 'null'})`,
+      );
+      ok(
+        !a.solution || !a.solution.verified || __testables.bareForm(answer) !== __testables.bareForm('x^3-4x'),
+        'and nothing wrong is marked verified',
+      );
+    }
+
+    // 6. Complex numbers: mathjs is real-only here and OCR repair eats `i`.
+    {
+      const product = await analyzeQuestion({ question: 'חשב את $(2 + 3i)(1 - 2i)$' });
+      ok(product.deterministicEligible === false, `3i is not treated as 31 (det=${product.deterministicEligible})`);
+      ok(product.solution === null, 'and no answer is offered for it');
+      const root = await analyzeQuestion({ question: 'פתור את המשוואה $z^2 = -9$ במספרים מרוכבים' });
+      ok(root.deterministicEligible === false, `z^2=-9 is not "solved" over the reals (det=${root.deterministicEligible})`);
+      ok(
+        !(root.solution?.answerLatex ?? '').includes('אין פתרון ממשי'),
+        'and the student is never shown "no real solution" for a complex question',
+      );
+    }
+
+    // 7. A limit belongs to calculus, not algebra.
+    {
+      for (const q of [
+        'חשב את הגבול $\\lim_{x \\to 2} \\frac{x^2 - 4}{x - 2}$',
+        'חשב את הגבול $\\lim_{n \\to \\infty} \\frac{3n+1}{n}$',
+      ]) {
+        const a = await analyzeQuestion({ question: q });
+        ok(a.topic !== 'אלגברה', `a limit is not filed under אלגברה (got ${a.topic})`);
+      }
+    }
+
+    // 8. A power tower must be refused BEFORE mathjs, not timed out after it —
+    //    a Promise race cannot interrupt synchronous CPU work.
+    {
+      const started = Date.now();
+      const a = await analyzeQuestion({ question: 'חשב את $9^9^9^9^9$' });
+      const elapsed = Date.now() - started;
+      ok(a.deterministicEligible === false, `a power tower is refused (det=${a.deterministicEligible})`);
+      ok(elapsed < 3000, `and refused FAST, before the CPU burns: ${elapsed}ms`);
+      ok(__testables.explosiveExponent(['9^9^9']) !== null, 'stacked exponents detected');
+      ok(__testables.explosiveExponent(['x^2 + 3*x']) === null, 'an ordinary square is NOT refused');
+      ok(__testables.explosiveExponent(['x^3 - 4*x']) === null, 'an ordinary cube is NOT refused');
+    }
+
+    // 9. The heb() clitic experiment, reverted. Each of these flipped.
+    {
+      const integral = await analyzeQuestion({
+        question: 'חשב את האינטגרל $\\int \\frac{2x}{x^2+1} dx$. שים לב שהמונה שווה לנגזרת המכנה.',
+      });
+      ok(
+        integral.questionType !== 'derivative',
+        `"לנגזרת המכנה" does not turn an integral into a derivative (got ${integral.questionType})`,
+      );
+      const line = await analyzeQuestion({
+        question: 'נתון הישר העובר דרך $A(1,3)$ ו-$B(4,9)$. מצא את השיפוע ואת האיבר החופשי.',
+      });
+      ok(line.topic !== 'סדרות', `"האיבר החופשי" does not file a line under סדרות (got ${line.topic})`);
+      const junk = await analyzeQuestion({ question: 'המחשב שלי איטי מאוד, מה כדאי לי לעשות?' });
+      ok(junk.questionType === 'not-math', `"המחשב שלי איטי" is still not maths (got ${junk.questionType})`);
+
+      // …and the one thing the experiment was FOR is kept, by a two-word
+      // phrase that cannot fire inside another word.
+      const seq = await analyzeQuestion({ question: 'נתונה הסדרה החשבונית שבה a1 = 3' });
+      ok(seq.domain === 'sequences', `"הסדרה החשבונית" is still recognised (got ${seq.domain})`);
+    }
+  }
+
+  // ============================================================
   // the invariants
   // ============================================================
   console.log('\n-- invariants --');

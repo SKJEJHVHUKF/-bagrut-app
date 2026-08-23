@@ -318,7 +318,8 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
   //
   // `domain` separates them for free: classifyProblem scores it from
   // vocabulary alone, with no expression required.
-  const isMathsProse = problem.domain !== 'unknown' || problem.cues.length > 0;
+  const isMathsProse =
+    problem.domain !== 'unknown' || problem.cues.length > 0 || hasMathsVocabulary(normalizedQuestion);
   const questionType: QuestionType =
     problem.kind === 'unknown' && normalizedExpressions.length === 0 && !isMathsProse
       ? 'not-math'
@@ -370,10 +371,39 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
   const prose = prosePosingAsMaths(normalizedExpressions, problem.variables);
   if (parseable && prose) warnings.push(prose);
 
+  const explosive = explosiveExponent(normalizedExpressions);
+  if (explosive) warnings.push(explosive);
+
+  const givensOnly = problem.kind === 'system' && isJustGivenData(normalizedExpressions);
+  if (givensOnly) {
+    warnings.push(
+      'the equations only restate the given values — there is no system to solve, so the real question is in the prose',
+    );
+  }
+
+  // ⚠️ Complex numbers are checked against the ORIGINAL text, not the repaired
+  // one. `repairOcrText` fixes OCR digit confusion and rewrites a bare `i` to
+  // `1`, which is right for a scanned `1` misread as `i` and catastrophic for
+  // the imaginary unit: `(2 + 3i)(1 - 2i)` became `(2 + 31)(1 - 21)` and came
+  // back as -660, marked VERIFIED, with no warning. The real answer is 8 - i.
+  //
+  // mathjs is also real-only here, so `z^2 = -9` returns "אין פתרון ממשי" as a
+  // verified answer to a question that explicitly asked for complex roots.
+  // Both failures end the same way, so both are handled the same way: complex
+  // arithmetic is not deterministic on this path.
+  const complexNumbers =
+    problem.domain === 'complex' || /\d\s*i(?![a-zA-Z])/.test(raw) || /\bcis\b|מרוכב/.test(raw);
+  if (complexNumbers) {
+    warnings.push('complex numbers are not handled deterministically on this path');
+  }
+
   const deterministicEligible =
     DETERMINISTIC_KINDS.includes(problem.kind) &&
     parseable &&
     !prose &&
+    !explosive &&
+    !givensOnly &&
+    !complexNumbers &&
     !problem.multiPart &&
     !hasHebrewInsideMath(normalizedQuestion);
 
@@ -416,7 +446,7 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
     else warnings.push(...engineResult.warnings);
   }
 
-  const solution =
+  let solution =
     engineResult && engineResult.success
       ? {
           engine: engineResult.engine,
@@ -426,6 +456,29 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
           steps: engineResult.steps,
         }
       : null;
+
+  // ⚠️ A derivative whose "answer" is the question is not an answer.
+  //
+  // `גזור את הפונקציה $x^3 - 4x$` came back with answerLatex `x^{3}-4x`,
+  // `verified: true`, `requiresLLM: false` — the input handed straight back,
+  // wearing the clothes of a checked result. The derivative is 3x²-4. Worse in
+  // validate mode: a student who typed the CORRECT `3x^2 - 4` was graded
+  // against that bogus solution and came back `unreadable`, so the mode could
+  // never grade a derivative at all.
+  //
+  // The engine chain stops at the first engine that says 'solved', so a local
+  // engine returning the input this way also prevents SymPy — which does
+  // differentiate correctly — from ever being asked.
+  if (solution && (problem.kind === 'derivative' || problem.kind === 'integral' || problem.kind === 'definite-integral')) {
+    const input = bareForm(normalizedExpressions.join(''));
+    const answer = bareForm(solution.answerLatex || solution.answerValues.join(''));
+    if (answer && input && answer === input) {
+      warnings.push(
+        `the engine returned the question unchanged as the ${problem.kind} — treating it as unsolved rather than as a verified answer`,
+      );
+      solution = null;
+    }
+  }
 
   // ---- 7. the student's answer -----------------------------------------
   const verdict =
@@ -456,6 +509,7 @@ export async function analyzeQuestion(input: AnalyzeInput): Promise<QuestionAnal
     verdict,
     detectedMistakeType,
     hints,
+    hasSolution: solution !== null,
   });
 
   const status: AnalyzeStatus = !scope.inScope
@@ -529,6 +583,107 @@ function unsupported(normalizedQuestion: string, reason: string): QuestionAnalys
 }
 
 /**
+ * Is this maths PROSE — a question with no expression in it, but unmistakably
+ * about mathematics? "הוכח שהסדרה מתכנסת" is; "ספר לי בדיחה" is not.
+ *
+ * ⚠️ Deliberately separate from the classifier's cues, and deliberately more
+ * permissive, because the two have opposite costs when wrong.
+ *
+ * classify.ts drives `kind` and `domain`, which become the topic, the lesson
+ * routing and the instruction shown to the student — a false positive there
+ * sends someone to the wrong subject, which is why its `heb()` guard is strict
+ * enough to reject the definite article. Here the only decision is "is this
+ * maths at all", and a false positive costs exactly one thing: `requiresLLM`
+ * turns true instead of the question being dismissed as junk. That is the safe
+ * direction, so the definite article is allowed by matching plain substrings.
+ *
+ * NOUNS ONLY. The instruction verbs are excluded on purpose: חשב is inside
+ * המחשב (the computer) and פתור is inside כפתור (button), so including them
+ * would make "המחשב שלי איטי" read as an arithmetic question.
+ */
+const MATHS_VOCABULARY =
+  /סדרה|סדרת|סדרות|הסתברות|משוואה|משוואות|פונקציה|פונקציות|נגזרת|אינטגרל|משולש|מרובע|מלבן|טרפז|מקבילית|מעוין|מעגל|זווית|וקטור|מרוכב|שיפוע|טריגונומטר|סינוס|קוסינוס|לוגריתם|פולינום|פרבולה|היפרבולה|אליפסה|מטריצה|התפלגות|תוחלת|שכיח|חציון|אסימפטוט|קיצון|מכנה|מונה|חזקה|שורש/;
+
+function hasMathsVocabulary(text: string): boolean {
+  return MATHS_VOCABULARY.test(text);
+}
+
+/**
+ * "פתור את המשוואה: 2x+3=11" → "2x+3=11". A Hebrew instruction and its maths
+ * routinely share a line, and the colon is the seam.
+ *
+ * ⚠️ A RATIO IS NOT A SEAM. "היחס בין הצלעות a ל-b הוא 3:4" splits on that
+ * same colon, and the naive version kept only "4" — so a perimeter question
+ * came back `status: 'ok'`, `confidence: 0.9`, answer 4, with no warning that
+ * the question had been thrown away. A ratio a:b is the most common colon in
+ * Israeli geometry and trigonometry prose, which made this the likeliest way
+ * for the endpoint to be confidently wrong.
+ */
+function stripLeadingInstruction(line: string): string {
+  const idx = line.indexOf(':');
+  if (idx <= 0 || idx === line.length - 1) return line;
+  // Digit on both sides with nothing between → a ratio, not a separator.
+  if (/\d/.test(line[idx - 1]) && /\d/.test(line[idx + 1])) return line;
+  const before = line.slice(0, idx);
+  const after = line.slice(idx + 1).trim();
+  if (!/[א-ת]/.test(before) || !after) return line;
+  // Never let the split throw away the only maths on the line.
+  if (!/[0-9=<>+\-*/^]/.test(after)) return line;
+  return after;
+}
+
+/**
+ * Would handing this to mathjs burn the CPU?
+ *
+ * `simplify('9^9^9^9^9')` takes ~25 SECONDS of synchronous work, and four such
+ * terms take 96. Two things make that dangerous rather than merely slow:
+ * `withTimeout` cannot help — a Promise race cannot interrupt a synchronous
+ * call, so the event loop is blocked and every other request on the instance
+ * queues behind it — and /api/analyze is exempt from the AI quota gates, so a
+ * logged-in student is bounded only by the IP rate limit.
+ *
+ * The fix has to be refusal before the call, never a timeout after it.
+ */
+function explosiveExponent(expressions: string[]): string | null {
+  for (const e of expressions) {
+    // A power tower: 9^9^9. One operand between two carets.
+    if (/\^\s*\{?\s*[0-9a-zA-Z.]+\s*\}?\s*\^/.test(e)) {
+      return 'stacked exponents are refused — a power tower is not a bagrut expression';
+    }
+    for (const m of e.matchAll(/\^\s*\{?\s*(\d+)/g)) {
+      if (Number(m[1]) > 12) return `exponent ${m[1]} is out of range for a bagrut expression`;
+    }
+    if ((e.match(/\^/g) ?? []).length > 6) return 'too many exponents in one expression';
+  }
+  return null;
+}
+
+/**
+ * A "system" in which every equation is `symbol = number` has no unknown to
+ * find — it is the question's GIVEN DATA.
+ *
+ * "נתונה סדרה חשבונית שבה a1 = 3 וההפרש d = 5. חשב את האיבר ה-10" carries two
+ * equals signs, so the structural rule elects `system`, and the solver duly
+ * returns ["3", "5"] — the two numbers the question just stated — marked
+ * verified, `status: 'ok'`, `requiresLLM: false`. The student asked for a₁₀
+ * and got their own givens back as a confident answer. This is the exact
+ * phrasing the app's own sequences content uses, so it is not an edge case.
+ */
+function isJustGivenData(expressions: string[]): boolean {
+  if (expressions.length < 2) return false;
+  return expressions.every((e) => {
+    const rel = splitRelation(e);
+    if (!rel || rel.relation !== '=') return false;
+    return /^[a-zA-Z][a-zA-Z0-9_]{0,3}$/.test(rel.lhs.trim()) && /^-?\d+(\.\d+)?$/.test(rel.rhs.trim());
+  });
+}
+
+/** Strip formatting so `x^3 - 4x` and `x^{3}-4x` compare equal. */
+function bareForm(s: string): string {
+  return s.replace(/\\[a-zA-Z]+|[{}\s$]/g, '').replace(/\*/g, '');
+}
+
+/**
  * Does this parse as maths while obviously not being maths? Returns the reason,
  * or null when it looks like a genuine expression.
  *
@@ -594,11 +749,7 @@ function fallbackExpressions(text: string): string[] {
       const hasOperand = /[0-9]|(?:^|[^A-Za-z])[a-zA-Z](?:[^A-Za-z]|$)/.test(line);
       return hasMathish && hasOperand;
     })
-    .map((line) =>
-      // Strip the Hebrew instruction that so often shares the line with the
-      // maths ("פתור את המשוואה: 2x+3=11"), keeping the maths after the colon.
-      line.includes(':') && /[א-ת]/.test(line.split(':')[0]) ? line.split(':').slice(1).join(':').trim() : line,
-    )
+    .map(stripLeadingInstruction)
     .filter(Boolean)
     .slice(0, 6);
 }
@@ -703,9 +854,22 @@ function diagnoseMistake(
   for (const value of engineResult.values) {
     const exact = numericValue(value);
     if (exact === null) continue;
-    const scale = Math.max(1, Math.abs(exact));
-    const off = Math.abs(exact - typed) / scale;
-    if (off > 0 && off < 0.005) return 'rounding';
+    if (exact === typed) continue;
+    // ⚠️ NOT a tolerance window. The first version accepted anything within
+    // 0.5% of `max(1, |exact|)`, and that floor of 1 turns into an ABSOLUTE
+    // ±0.005 window for every answer below 1: for 1000x = 1 (exact 0.001) a
+    // student typing 0.005 — five times the right answer — was told they had
+    // "rounded too early". Symmetrically 1205 was called a rounding of 1200,
+    // which it is at no decimal place.
+    //
+    // Rounding is not "close". It is "equal at some number of decimal places",
+    // and that is exactly what is tested — for rounding and for truncation,
+    // because students do both.
+    for (let places = 0; places <= 8; places++) {
+      const factor = 10 ** places;
+      if (Number(exact.toFixed(places)) === typed) return 'rounding';
+      if (Math.trunc(exact * factor) / factor === typed) return 'rounding';
+    }
   }
   return null;
 }
@@ -827,12 +991,22 @@ function decideNextStep(f: {
   verdict: { isCorrect: boolean } | null;
   detectedMistakeType: MistakeType | null;
   hints: DerivedHint[];
+  hasSolution: boolean;
 }): NextStep {
   if (f.confidence < 0.4) return 'ask_clarification';
-  if (f.mode === 'solve') return 'solve';
+  // ⚠️ `solve` is an INSTRUCTION to the caller: show the full working. Issuing
+  // it with `solution: null` tells a client to render working that does not
+  // exist, and the first version did exactly that whenever a student pressed
+  // "פתור לי" on a question whose maths did not extract — while also saying
+  // requiresLLM: false, so nothing else would produce it either.
+  if (f.mode === 'solve') {
+    if (f.hasSolution) return 'solve';
+    return f.hints.length > 0 ? 'hint1' : 'ask_clarification';
+  }
 
   if (f.typedAnswer) {
-    if (f.verdict?.isCorrect) return 'solve'; // right answer → show the full working
+    // Right answer → show the full working, but only if there IS working.
+    if (f.verdict?.isCorrect) return f.hasSolution ? 'solve' : 'hint1';
     // A named mistake means we can point at the specific move that went wrong,
     // which is rung 2's job. An unnamed one gets the gentler rung.
     if (f.detectedMistakeType && f.detectedMistakeType !== 'unreadable') {
@@ -871,6 +1045,11 @@ function dedupe(items: string[]): string[] {
 export const __testables = {
   prosePosingAsMaths,
   parseableExpression,
+  stripLeadingInstruction,
+  explosiveExponent,
+  isJustGivenData,
+  bareForm,
+  numericValue,
   estimateDifficulty,
   maxDegree,
   rollUpConfidence,
