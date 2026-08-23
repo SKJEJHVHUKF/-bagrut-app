@@ -42,7 +42,31 @@
 
 import type { ClassifiedProblem, ProblemKind, SolveOutcome, SolveStep, SymbolicEngine } from '../types';
 
-const ENDPOINT = process.env.NEXT_PUBLIC_SYMPY_ENDPOINT ?? '';
+/**
+ * Where the SymPy service lives.
+ *
+ * Defaults to the in-repo Vercel Python Function at `api/math/solve.py`, so
+ * no configuration is needed for the normal case. `NEXT_PUBLIC_SYMPY_ENDPOINT`
+ * still overrides it — that is how you point at an external service, or turn
+ * the engine off entirely by setting it to an empty string.
+ *
+ * ⚠️ A relative URL only resolves in the browser. On the server (a route
+ * handler calling the chain) `fetch('/api/…')` throws, so the absolute origin
+ * is rebuilt from VERCEL_URL. Getting this wrong fails in production only,
+ * because local dev and the browser path both work by accident.
+ */
+const DEFAULT_PATH = '/api/math/solve';
+
+function resolveEndpoint(): string {
+  const configured = process.env.NEXT_PUBLIC_SYMPY_ENDPOINT;
+  if (configured !== undefined) return configured; // '' deliberately disables
+  if (typeof window !== 'undefined') return DEFAULT_PATH;
+  const origin =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL ?? '';
+  return origin ? `https://${origin}${DEFAULT_PATH}` : `http://localhost:3000${DEFAULT_PATH}`;
+}
+
+const ENDPOINT = resolveEndpoint();
 
 /** Everything the local engine does, plus the things it deliberately
  *  refuses — which is the entire reason to reach for SymPy. */
@@ -87,9 +111,12 @@ export const sympyEngine: SymbolicEngine = {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(`${ENDPOINT.replace(/\/$/, '')}/health`, {
-        signal: controller.signal,
-      });
+      // GET on the endpoint ITSELF, not `${ENDPOINT}/health`. The in-repo
+      // function is one file mapped to one path — `api/math/solve.py` serves
+      // `/api/math/solve` and nothing below it — so a `/health` suffix would
+      // 404 and the engine would report itself permanently unavailable.
+      // `do_GET` answers the probe; `do_POST` does the work.
+      const res = await fetch(ENDPOINT, { signal: controller.signal });
       clearTimeout(timer);
       availability = res.ok;
     } catch {
