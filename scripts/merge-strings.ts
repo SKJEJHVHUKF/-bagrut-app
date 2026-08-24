@@ -10,6 +10,7 @@
  * identifier. That is what makes a 200-string sweep safe to apply blind.
  */
 import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { spelledNums } from '../lib/rtl-prose';
 
 const MAQAF = /[א-ת]-(?=\$|\d)/g;
 const DASHM = /\$ ?[—–] | [—–] ?\$/g;
@@ -25,7 +26,8 @@ if (!wd) { console.error('usage: merge-strings.ts <workdir> [--file <out.json>]'
 const oneFile = process.argv.includes('--file') ? process.argv[process.argv.indexOf('--file') + 1] : '';
 const manifest: { name: string; file: string }[] = JSON.parse(readFileSync(`${wd}/manifest.json`, 'utf8'));
 
-let bad = 0;
+const partial = process.argv.includes('--partial');
+let bad = 0, skipped = 0;
 const fail = (w: string, m: string, d = '') => { bad++; console.log(`  ✗ ${w} — ${m}${d ? `\n      «${d.slice(0, 150)}»` : ''}`); };
 
 const islands = (s: string) => (s.match(ISLAND) ?? []).slice().sort();
@@ -51,17 +53,36 @@ for (const { name, file } of slices) {
 
   for (const r of rows) {
     const e = byWhere.get(r.where);
-    if (!e) { fail(r.where, 'MISSING — no rewrite authored'); continue; }
+    // --partial: a deterministic rules sweep deliberately leaves the rows whose
+    // phrasing needs judgment. Those are reported and hand-fixed, not guessed.
+    if (!e) { if (!partial) fail(r.where, 'MISSING — no rewrite authored'); else skipped++; continue; }
     const to = e.text;
     if (typeof to !== 'string' || !to.trim()) { fail(r.where, 'empty rewrite'); continue; }
     if (to === r.text) { fail(r.where, 'unchanged — the defect is still there'); continue; }
 
-    // 1. the mathematics is untouchable
-    if (!eq(islands(r.text), islands(to)))
-      fail(r.where, `math islands changed (${islands(r.text).length} → ${islands(to).length})`, to);
-    // 2. no invented or lost data outside the math
-    if (!eq(digits(r.text), digits(to)))
-      fail(r.where, `numbers outside math changed [${digits(r.text)}] → [${digits(to)}]`, to);
+    // 1. the mathematics is untouchable — except that a bare-number island may
+    //    legitimately become its Hebrew word (`ב-$2$` → `בשניים`), which is the
+    //    sanctioned fix for a maqaf on a digit. deWord puts the number back so
+    //    the comparison sees through that one rewrite and nothing else.
+    const fromIslands = islands(r.text);
+    const toIslands = islands(to);
+    const toSpelled = spelledNums(to);
+    const lostAsWord: string[] = [];
+    const stillMissing = fromIslands.filter((i) => {
+      const k = toIslands.indexOf(i);
+      if (k !== -1) { toIslands.splice(k, 1); return false; }
+      const m = i.match(/^\$(-?\d+)\$$/);
+      if (m && toSpelled.includes(m[1])) { lostAsWord.push(m[1]); return false; }
+      return true;
+    });
+    if (stillMissing.length || toIslands.length)
+      fail(r.where, `math islands changed (lost: ${stillMissing.join(' ') || '—'}; added: ${toIslands.join(' ') || '—'})`, to);
+    // 2. no invented or lost data. A number may move between an island, a bare
+    //    digit and a Hebrew word, but the SET of numbers mentioned may not change.
+    const fromNums = [...digits(r.text), ...spelledNums(r.text), ...lostAsWord].sort();
+    const toNums = [...digits(to), ...toSpelled].sort();
+    if (!eq(fromNums, toNums))
+      fail(r.where, `numbers changed [${fromNums}] → [${toNums}]`, to);
     if (!eq(latin(r.text), latin(to)))
       fail(r.where, `Latin identifiers outside math changed [${latin(r.text)}] → [${latin(to)}]`, to);
     // 3. the defect must actually be gone, and none introduced
@@ -85,7 +106,7 @@ for (const { name, file } of slices) {
 }
 
 if (!oneFile) writeFileSync(`${wd}/string-items.json`, JSON.stringify(items, null, 1), 'utf8');
-console.log(`\n${items.length} rewrites ready; ${bad} problem(s).`);
+console.log(`\n${items.length} rewrites ready; ${bad} problem(s)${skipped ? `; ${skipped} row(s) left for a human pass` : ''}.`);
 if (bad > 0) process.exit(1);
 
 export {};
