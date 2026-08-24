@@ -58,6 +58,8 @@
 
 import { buildHelpLadder, type HelpTier } from '@/lib/help-ladder';
 import { stripFigureFences } from '@/lib/geo-figure';
+import { namesAMathsSubject } from '@/lib/maths-vocabulary';
+import { getTopicMapping } from '@/content/bagrut-curriculum';
 import type { TutorFocus } from '@/lib/tutor-presence';
 
 export type LocalAnswerKind =
@@ -144,6 +146,33 @@ const has = (t: string, ...w: string[]) => w.some((x) => t.includes(x));
  * emphasis, never a subject. Anything else after the verb disqualifies it,
  * which is what keeps the two cases apart.
  */
+/**
+ * Does the sentence NAME a subject of its own?
+ *
+ * "מה הנוסחה?" points at the screen; "מה הנוסחה לסכום סדרה
+ * הנדסית אינסופית" names one, and answering it from this sub-topic's
+ * formula sheet is a true page about a question nobody asked.
+ *
+ * The first attempt tested for a preposition followed by a space. Hebrew
+ * prepositions are PREFIXES — "לסכום" is ל+סכום with nothing between
+ * them — so it matched almost nothing and 174 of the census's unsafe answers
+ * survived it. Testing for the maths NOUN instead is both simpler and right:
+ * naming a piece of mathematics is what makes a question general.
+ */
+function namesOwnSubject(t: string): boolean {
+  if (!namesAMathsSubject(t)) return false;
+  // ⚠️ The app's OWN chip is `תסביר לי את ${topic}` (tutor-presence
+  // focusPrompts), so it necessarily names a maths subject — and it is a
+  // button we drew, on the topic the student is already in. Exempted by
+  // checking the tail against the curriculum rather than by loosening the
+  // rule: a real general question ("תסביר לי על וקטורים") is not a topic
+  // key and stays with the model. Caught by scripts/test-tutor-voice.ts,
+  // which asserts every chip classifies.
+  const chip = t.match(/^(?:תסביר|הסבר)\s+לי\s+את\s+(.+)$/);
+  if (chip && getTopicMapping(chip[1].trim())) return false;
+  return true;
+}
+
 const BARE_HOW_IT_WORKS =
   /^(?:ו|אז|נו|טוב)?\s*(?:איך|למה|מדוע|מה)\s+זה\s*(?:עובד|קשור|הולך|מסתדר|יוצא|קורה|נכון)?\s*(?:בדיוק|פה|כאן|עכשיו|בכלל)?\s*$/;
 
@@ -178,7 +207,13 @@ export function classifyAsk(message: string): Ask | null {
     return 'why-wrong';
   }
 
-  if (has(t, 'נוסחה', 'נוסחא', 'נוסחאות')) return 'formulas';
+  // ⚠️ NOT a bare substring. "מה הנוסחה?" is about this screen; "מה הנוסחה
+  // לסכום סדרה הנדסית אינסופית" NAMES ITS OWN SUBJECT and the honest answer is
+  // the model's. The unanchored version served the sub-topic's whole formula
+  // sheet to the second one — a true page about a question nobody asked.
+  // Measured in scripts/report-tutor-usage.ts: 174 of the 356 unsafe local
+  // answers in the census came from this single line.
+  if (has(t, 'נוסחה', 'נוסחא', 'נוסחאות') && !namesOwnSubject(t)) return 'formulas';
 
   // ⚠️ 'הכי חשוב' and 'חשוב לדעת' are here because the app's OWN one-tap chip
   // reads "מה הכי חשוב לדעת פה לבגרות?" (lib/tutor-presence.focusPrompts).
@@ -202,7 +237,7 @@ export function classifyAsk(message: string): Ask | null {
   // so "תסביר למה טעיתי" and "תסביר את הפתרון" keep their more specific asks;
   // the bare "לא הבנתי" (no object) stays a help ask below.
   if (
-    has(t, 'תסביר', 'תסבירי', 'הסבר לי', 'הסבירי') ||
+    (has(t, 'תסביר', 'תסבירי', 'הסבר לי', 'הסבירי') && !namesOwnSubject(t)) ||
     has(t, 'מה השאלה מבקשת', 'מה השאלה רוצה', 'מה מבקשים', 'לא הבנתי את השאלה', 'מה זאת אומרת') ||
     // "מה זה אומר" / "מה הכוונה" only when they point at THIS question — bare,
     // they also match "מה זה אומר שהסדרה מתכנסת", a definition question that
