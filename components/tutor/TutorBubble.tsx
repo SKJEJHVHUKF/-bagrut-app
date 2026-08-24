@@ -49,6 +49,7 @@ import { routeMessage, answerGradedLocally, canonicalFor } from '@/lib/tutor-rou
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
 import { AI_DAILY_LIMIT } from '@/lib/access';
+import { offTopicRedirect } from '@/lib/off-topic';
 import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
 import { decideFallbackReason } from '@/lib/tutor-telemetry';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
@@ -444,6 +445,29 @@ export default function TutorBubble() {
         formNumber = getPaper() ?? undefined;
       } catch {
         /* server defaults to 5 units / 572 */
+      }
+
+      // ===== last local layer: the message is not about maths at all =====
+      //
+      // Placed LAST on purpose. Every layer above has already declined, so
+      // nothing that could have been answered is being redirected instead —
+      // and a redirect that lands on a real question is the expensive failure
+      // here, far worse than paying for one model call. `offTopicRedirect` is
+      // built the same way round: a long list of reasons to stay silent and a
+      // short one to speak.
+      const redirect = offTopicRedirect(
+        text,
+        focusNow?.question
+          ? `${String((focusNow.question as Record<string, unknown>).question ?? '')} ${focusNow.topic ?? ''}`
+          : undefined,
+      );
+      if (redirect) {
+        setMsgs((m) => [
+          ...m,
+          { id: `a-${Date.now()}`, role: 'assistant', text: redirect, local: true },
+        ]);
+        setSending(false);
+        return;
       }
 
       // ===== the trace: why this turn is reaching the model =====
