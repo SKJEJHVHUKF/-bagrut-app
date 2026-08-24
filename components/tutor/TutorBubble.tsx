@@ -488,7 +488,7 @@ export default function TutorBubble() {
           hasQuestion: Boolean(traceQ),
           intent: traceIntent.intent ?? '',
           confidence: traceIntent.confidence,
-          groundingMissing: Boolean(traceIntent.intent) && groundingFor(traceIntent.intent!, focusNow) === null,
+          groundingMissing: Boolean(traceIntent.intent) && groundingFor(traceIntent.intent!, focusNow, text) === null,
           faqSearched: faqMissed,
           faqMatched: false,
           transferCandidateRejected: false,

@@ -40,8 +40,11 @@ import type { ClientTrace } from '@/lib/tutor-telemetry';
  * Intents whose answer is true about the SUBJECT rather than about one
  * exercise's numbers. Only these are ever served across questions.
  *
- * ⚠️ `why_this_step`, `next_step`, `what_to_do_here`, `how_to_solve` and
- * `why_wrong` are deliberately absent. Each of them is answered in terms of
+ * ⚠️ `why_this_step`, `next_step`, `what_to_do_here`, `how_to_solve`,
+ * `why_wrong`, `where_from`, `why_not` and `what_if` are deliberately absent.
+ * The last three are the sharpest cases in the set: "מאיפה ה-60" is a question
+ * about one exercise's arithmetic, and an answer to it served on another
+ * exercise names a number that is not on the screen. Each of them is answered in terms of
  * the exercise in front of the student, and the more fluent the answer the
  * more damage it does on a different one.
  */
@@ -51,6 +54,9 @@ export const TRANSFERABLE: ReadonlySet<string> = new Set<CanonicalIntent>([
   'which_formula',
   'give_table',
   'give_example',
+  // "איך יודעים שזה נכון" — a method, not a number. The FAQ bank's own
+  // transfer rule has always carried `check` for the same reason.
+  'check',
 ]);
 
 /**

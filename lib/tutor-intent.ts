@@ -53,6 +53,18 @@ export const CANONICAL_INTENTS = [
   'next_step',
   'why_wrong',
   'didnt_understand',
+  // ⚠️ THE FOUR BELOW MIRROR THE FAQ BANK'S OWN KINDS, AND THEIR ABSENCE WAS
+  // THE LARGEST HOLE IN THE ROUTER.
+  //
+  // Measured over 21,381 Hebrew phrasings that content authors actually wrote
+  // (scripts/measure-intent-coverage.ts): 85.1% matched no rule at all, and
+  // 14,382 of those misses fall into exactly four shapes the bank has always
+  // had entries for and the router had no name for. "מאיפה …" alone was 5,323
+  // — the single most common way a student asks anything in this app.
+  'where_from',
+  'why_not',
+  'what_if',
+  'check',
   // ⚠️ The one intent that is ALLOWED to name its own subject.
   //
   // Every other rule here refuses a message that names a piece of mathematics,
@@ -216,6 +228,14 @@ const TAIL = `(?:\\s*${HERE})?(?:\\s*${JUST})?\\s*$`;
  * veto is what protects the student. A rule that matched too narrowly cost a
  * paid call every single time.
  */
+// ⚠️ EVERY PATTERN BELOW IS TESTED AGAINST THE CANONICAL FORM, NOT THE RAW
+// MESSAGE. `canonicalize` removes the FILLER words above, so a rule that
+// mentions one can never match anything — it is dead the moment it is written
+// and looks perfectly correct.
+//
+// Two rules were dead exactly this way: `איך אני בודק` (אני is filler) and
+// `טעות שלי` (שלי is filler). `npm run test:intent` now fails on any pattern
+// containing a filler word, so the next one is caught at authoring time.
 const RULES: Rule[] = [
   // --- "איך מחשבים?" ------------------------------------------------
     R('how_to_compute', `(?:איך|כיצד)\\s*(?:מחשבים|לחשב|חישבת|מחשב)`, 0.9),
@@ -251,6 +271,25 @@ const RULES: Rule[] = [
     // ordinary words. "תן לי עץ" is a real ask and must reach the tree card.
     R('give_table', `(?:טבלה|טבלת|דיאגרמ|(?:^|[^א-ת])עץ(?:[^א-ת]|$))`, 0.85),
 
+  // --- "מאיפה ה-60?" -------------------------------------------------
+    // The most common question shape in the bank, and the only one of the four
+    // that can be answered from the question object: the step that introduces
+    // the number IS the answer.
+    R('where_from', `(?:^|[^א-ת])(?:מאיפה|מהיכן|מניין|מנין)`, 0.9),
+    R('where_from', `(?:מה|למה)\\s*(?:אומר|המשמעות\\s*של)\\s*ה?סימון`, 0.85),
+
+  // --- "למה לא הפוך?" ------------------------------------------------
+    // Checked before why_this_step on purpose: "למה לא" is a question about a
+    // road not taken, not about the step that was taken.
+    R('why_not', `(?:למה|מדוע)\\s*(?:לא|אי(?:[^א-ת]|$)|אסור|אין)`, 0.9),
+
+  // --- "מה אם היו ארבעה?" --------------------------------------------
+    R('what_if', `(?:^|[^א-ת])(?:מה\\s*(?:אם|יקרה\\s*אם|היה\\s*קורה\\s*אם)|ואם\\s)`, 0.85),
+
+  // --- "איך יודעים שזה נכון?" ----------------------------------------
+    R('check', `איך\\s*(?:בודקים|לבדוק|יודעים\\s*ש|לוודא|מוודאים|אדע\\s*ש)`, 0.9),
+    R('check', `איך\\s*(?:יודע|בודק|לבדוק|לוודא|מוודא|אדע)`, 0.85),
+
   // --- "מה הנוסחה?" -------------------------------------------------
     R('which_formula', `נוסחה`, 0.85),
 
@@ -263,7 +302,7 @@ const RULES: Rule[] = [
     R('next_step', `(?:^|[^א-ת])(?:ואז|אז\\s*מה|המשך|תמשיך|הלאה)(?:[^א-ת]|$)`, 0.8),
 
   // --- "למה התשובה הזאת שגויה?" -------------------------------------
-    R('why_wrong', `(?:טעיתי|הטעות|טעות\\s*שלי|לא\\s*נכונה|שגויה|לא\\s*בסדר|פספסתי)`, 0.9),
+    R('why_wrong', `(?:טעיתי|טעות|לא\\s*נכונה|שגויה|לא\\s*בסדר|פספסתי)`, 0.9),
     R('why_wrong', `(?:למה|מדוע|איפה|מה)\\s*(?:זה\\s*)?לא\\s*נכון`, 0.9),
 
   // --- "לא הבנתי" ---------------------------------------------------
@@ -385,7 +424,17 @@ const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is st
  * topic-level fact. `null` means the honest outcome is a model call — this
  * function exists to say no.
  */
-export function groundingFor(intent: CanonicalIntent, focus: TutorFocus | null): Grounding | null {
+export function groundingFor(
+  intent: CanonicalIntent,
+  focus: TutorFocus | null,
+  /**
+   * The student's own words. Optional, and used by exactly one intent:
+   * `where_from` cannot be answered without knowing WHICH number was asked
+   * about. Every existing caller keeps working without passing it — they
+   * simply get `null` for that one intent, which is the old behaviour.
+   */
+  message?: string,
+): Grounding | null {
   const q = focus?.question as LooseQuestion | undefined;
   if (!q) return null;
 
@@ -431,6 +480,44 @@ export function groundingFor(intent: CanonicalIntent, focus: TutorFocus | null):
       // part of the active question at all. Nothing HERE can ground it, and
       // saying so is the honest answer.
       return null;
+
+    case 'where_from': {
+      // "מאיפה ה-60?" — the step that introduces the number IS the answer, and
+      // it is already written. Without the student's words there is nothing to
+      // look for, so this is the one intent that needs them.
+      if (!message || !steps.length) return null;
+      // Digits only. A Hebrew word shared with a step means nothing — every
+      // step shares words with the question — but a number is specific.
+      const asked = (message.match(/\d+(?:[.,]\d+)?/g) ?? []).filter((n) => n.length <= 6);
+      if (!asked.length) return null;
+      // The step that mentions the MOST of what was asked, not the first one
+      // that mentions any of it: "מאיפה 7 מעל 3" should land on the step that
+      // has both, not on an earlier step that happens to contain a 3.
+      let hit: string | null = null;
+      let bestScore = 0;
+      for (const st of steps) {
+        const score = asked.filter((n) => st.includes(n)).length;
+        if (score > bestScore) { bestScore = score; hit = st; }
+      }
+      return hit ? { kind: 'solution-steps', text: hit } : null;
+    }
+
+    case 'why_not':
+    case 'what_if':
+      // ⚠️ Honestly ungrounded. "למה לא הפוך" and "מה אם היו ארבעה" are about a
+      // road the solution did not take, and nothing in the question object
+      // describes roads not taken. The FAQ bank answers these — it has entries
+      // written for exactly these kinds — and when it has none, a model call is
+      // the truthful outcome. Naming the intent still earns its place: the
+      // trace stops calling them `unknown_intent`, and the answer library knows
+      // not to carry them to a different question.
+      return null;
+
+    case 'check':
+      // "איך יודעים שזה נכון" — the last step is the one that closes the
+      // argument, and on a written solution that is where the verification
+      // lives. Falls back to nothing rather than inventing a method.
+      return steps.length > 1 ? { kind: 'solution-steps', text: steps[steps.length - 1] } : null;
 
     case 'give_table':
     case 'give_example':
