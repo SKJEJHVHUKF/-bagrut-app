@@ -397,7 +397,16 @@ export default function TutorBubble() {
         : (focusNow?.topic ?? '');
       const traceIntent = canonicalIntent(text, traceOwn || undefined);
       const trace = {
-        screen: (pathname ?? '').split('/')[1] ?? '',
+        // ⚠️ NOT the `pathname` from usePathname — `send` is a useCallback with
+        // `[sending]` as its only dependency, so every value it closes over is
+        // frozen at the render where `sending` last changed. The first real
+        // trace row proved it: screen read "login", because the component had
+        // mounted on the login redirect and `send` never saw the navigation.
+        //
+        // Everything else in here is already read live (`getTutorFocus()`, the
+        // refs), which is why the answer itself was about the right question
+        // and only the label was wrong. This reads live too.
+        screen: (typeof window === 'undefined' ? '' : window.location.pathname).split('/')[1] ?? '',
         topic: focusNow?.topic ?? '',
         subtopic: focusNow?.subTopicId ?? '',
         questionId: String(traceQ?.id ?? ''),
