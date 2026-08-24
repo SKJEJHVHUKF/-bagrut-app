@@ -3,6 +3,10 @@ import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { isGroundedTopic } from '@/lib/tutor-grounding';
 import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
+import {
+  AI_DAILY_LIMIT, QUOTA_EXHAUSTED_MESSAGE, quotaEnforced, quotaShadowed,
+  reserveAiCall, releaseAiCall,
+} from '@/lib/ai-quota';
 import { buildTutorSystem } from '@/lib/agents/prompts';
 import { normalizeUnitLevel, normalizeFormNumber, MAX_CONTEXT_LEN } from '@/lib/agents/config';
 import { logCost } from '@/lib/mathscan/cost';
@@ -191,9 +195,19 @@ export async function POST(request: Request) {
       console.error('[chat] quota count failed — ai_generation_log missing? capping disabled:', countError.message);
     }
 
-    const dailyCap = isProUser(user) ? PRO_DAILY_CHAT : FREE_DAILY_CHAT;
+    // ⚠️ TWO QUOTAS EXIST DURING THE ROLLOUT, AND ONLY ONE DECIDES.
+    //
+    // The old one counts rows in ai_generation_log and charges BEFORE the model
+    // is called, so a failed call costs a credit and two parallel requests both
+    // pass. The new one reserves in Postgres and gives the credit back when the
+    // call produces nothing. While `quotaEnforced` is false the old gate is
+    // still the one that blocks — the new counters move in the background so
+    // the mechanism can be watched before it is allowed to lock anyone out.
+    const enforceV2 = quotaEnforced(user.email);
+    const shadowV2 = quotaShadowed(user.email);
+    const dailyCap = enforceV2 ? AI_DAILY_LIMIT : isProUser(user) ? PRO_DAILY_CHAT : FREE_DAILY_CHAT;
     const used = countError ? 0 : (todayCount ?? 0);
-    if (used >= dailyCap) {
+    if (!enforceV2 && used >= dailyCap) {
       return Response.json(
         {
           error: isProUser(user)
@@ -283,6 +297,30 @@ export async function POST(request: Request) {
     // difference a hit makes is that no model is called.
     const clientTrace = sanitizeClientTrace(body.trace);
     const learned = await findLearnedAnswer(clientTrace);
+
+    // ===== 9c. TAKE ONE AI CREDIT =====
+    //
+    // Here, and nowhere earlier: at this line the local layers have all
+    // declined AND the library has nothing, so a model call is certain. A hint,
+    // a formula, a written solution or a library hit never reaches this code
+    // and therefore never costs a credit — which is the rule, expressed as
+    // control flow rather than as a condition somebody has to remember.
+    //
+    // Given back below on every path where no answer is produced.
+    let creditTaken = false;
+    let v2Remaining: number | null = null;
+    if (!learned && (enforceV2 || shadowV2)) {
+      const q = await reserveAiCall(user.id, AI_DAILY_LIMIT);
+      creditTaken = q.allowed && q.degraded !== true;
+      v2Remaining = q.remaining;
+      if (!q.allowed && enforceV2) {
+        return Response.json(
+          { error: QUOTA_EXHAUSTED_MESSAGE, quotaExceeded: true, localHelpStillFree: true, remaining: 0 },
+          { status: 429 },
+        );
+      }
+    }
+
     if (!learned) {
       // The turn is now committed to history, so it is charged to the quota —
       // same moment as before (the user row), just in the table nobody can empty.
@@ -292,6 +330,8 @@ export async function POST(request: Request) {
     // ===== 10. CALL ANTHROPIC =====
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
+      // Reserved a credit for a call that will never happen.
+      if (creditTaken) await releaseAiCall(user.id);
       return Response.json({ error: 'Server configuration error' }, { status: 500 });
     }
     const client = new Anthropic({ apiKey });
@@ -373,7 +413,7 @@ export async function POST(request: Request) {
     // Vercel-serverless trap is doing async work AFTER the response finishes —
     // we don't; we do it before controller.close()).
     const encoder = new TextEncoder();
-    const remaining = Math.max(0, dailyCap - (used + 1));
+    const remaining = v2Remaining ?? Math.max(0, dailyCap - (used + 1));
 
     const sseStream = new ReadableStream({
       async start(controller) {
@@ -536,10 +576,21 @@ export async function POST(request: Request) {
           }
         } catch (streamErr) {
           console.error('Chat stream error:', streamErr);
+          // ⚠️ THE STUDENT GOT NO ANSWER, SO THE CREDIT GOES BACK.
+          //
+          // A timeout, a 529, an abort mid-stream — the whole reason the credit
+          // is reserved rather than charged is so this line can exist. Awaited:
+          // the response is already lost, and letting the function close before
+          // the counter is restored would charge for the failure after all.
+          if (creditTaken) await releaseAiCall(user.id);
           send('error', { error: "שגיאת צ'אט. נסה שוב." });
           controller.close();
           return;
         }
+
+        // An empty reply is a failed call wearing a success's clothes: the
+        // stream ended, nothing threw, and the student has nothing to read.
+        if (!fullText.trim() && creditTaken) await releaseAiCall(user.id);
 
         // ===== persist assistant reply — AWAITED before close() =====
         if (fullText.trim()) {

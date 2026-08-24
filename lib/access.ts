@@ -114,6 +114,17 @@ export function canUseFeature(user: UserLike, feature: ProFeature): boolean {
 }
 
 /** Free daily chat cap; Pro is unlimited. */
+/**
+ * The AI allowance, identical for every student — free and Pro alike
+ * (Itay's call, 2026-08-25). Everything local stays unlimited; see
+ * lib/ai-quota.ts for what does and does not spend one.
+ *
+ * ⚠️ Lives HERE and not in lib/ai-quota because the tutor renders it, and
+ * lib/ai-quota imports the service-role Supabase client. A client component
+ * importing that module drags a server-only file into the browser bundle.
+ */
+export const AI_DAILY_LIMIT = 10;
+
 export const FREE_DAILY_CHAT = 10;
 export const PRO_DAILY_CHAT = 200; // effectively unlimited, keeps a sane ceiling
 

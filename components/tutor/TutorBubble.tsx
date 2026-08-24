@@ -48,6 +48,7 @@ import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
 import { routeMessage, answerGradedLocally, canonicalFor } from '@/lib/tutor-router';
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
+import { AI_DAILY_LIMIT } from '@/lib/access';
 import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
 import { decideFallbackReason } from '@/lib/tutor-telemetry';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
@@ -109,6 +110,11 @@ export default function TutorBubble() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // How many AI turns are left today, as the SERVER counts them. null until a
+  // turn has actually reached the model — showing "10 מתוך 10" to a student
+  // who has only ever used the free local help would advertise a limit they
+  // have not touched.
+  const [aiLeft, setAiLeft] = useState<number | null>(null);
   // Kept for the life of the visit so the whole side-conversation lands in ONE
   // server conversation. Sending null every turn would mint a new conversation
   // per message and flood the student's history list.
@@ -550,6 +556,7 @@ export default function TutorBubble() {
             reply?: string;
             error?: string;
             conversationId?: string | null;
+            remaining?: number;
           } & Partial<ResolvedSuggestion>;
           try {
             d = JSON.parse(raw);
@@ -558,6 +565,7 @@ export default function TutorBubble() {
           }
           if (ev === 'meta') {
             if (d.conversationId) convIdRef.current = d.conversationId;
+            if (typeof d.remaining === 'number') setAiLeft(d.remaining);
           } else if (ev === 'delta') {
             acc += d.text ?? '';
             if (!created) {
@@ -833,6 +841,28 @@ export default function TutorBubble() {
                 {error && (
                   <div className="text-xs text-red-600 bg-red-500/5 border border-red-500/20 rounded-xl px-3 py-2">
                     {error}
+                  </div>
+                )}
+
+                {/*
+                  ⚠️ THE INPUT IS NEVER DISABLED BY THIS, AND THAT IS THE WHOLE
+                  DESIGN. Running out of AI turns is not running out of tutor:
+                  hints, the next step, formulas, answer checking, "why was I
+                  wrong", the written solution, Topic Cards and the FAQ bank all
+                  keep working and cost nothing. Greying out the box would take
+                  the free help away along with the paid kind, which is both
+                  wrong and the fastest way to make a student close the app.
+                */}
+                {aiLeft !== null && aiLeft > 0 && (
+                  <div className="text-[11px] text-slate-400 text-center">
+                    נותרו לך {aiLeft} מתוך {AI_DAILY_LIMIT} שאלות AI היום
+                  </div>
+                )}
+                {aiLeft === 0 && (
+                  <div className="text-xs text-amber-700 bg-amber-500/5 border border-amber-500/20 rounded-xl px-3 py-2 leading-relaxed">
+                    נגמרו השאלות החופשיות למורה AI להיום.
+                    <br />
+                    עדיין אפשר להשתמש ברמזים, פתרונות, נוסחאות ובדיקת תשובות ללא הגבלה.
                   </div>
                 )}
                 <div ref={endRef} />

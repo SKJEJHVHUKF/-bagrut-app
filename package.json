@@ -19,6 +19,7 @@
     "test:compiler": "tsx scripts/test-tutor-compiler.ts",
     "test:telemetry": "tsx scripts/test-tutor-telemetry.ts",
     "test:answers": "tsx scripts/test-tutor-answer.ts",
+    "test:quota": "tsx scripts/test-ai-quota.ts",
     "report:answers": "tsx scripts/report-tutor-answers.ts",
     "report:tutor": "tsx scripts/report-tutor-usage.ts",
     "report:trace": "tsx scripts/report-tutor-trace.ts",
