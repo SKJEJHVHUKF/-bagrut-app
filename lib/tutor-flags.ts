@@ -58,3 +58,37 @@ export function tutorFlag(flag: TutorFlag): boolean {
 export function activeTutorFlags(): string[] {
   return [...enabled()].sort();
 }
+
+/**
+ * Turn flags on from the URL: `?flags=compiler`, or `?flags=off` to clear.
+ *
+ * ⚠️ THIS EXISTS BECAUSE THE CONSOLE INSTRUCTION DID NOT WORK.
+ *
+ * Chrome and Edge block the FIRST paste into the DevTools console and print
+ * "type 'allow pasting' below and press Enter" instead of running anything. So
+ * `localStorage.setItem('mathup-flags','compiler')` silently never ran, the
+ * flag stayed off, and the honest conclusion from the outside was "the feature
+ * does nothing" — reported exactly that way, with a screenshot of the console
+ * warning still on screen.
+ *
+ * A rollout switch that needs a browser-specific workaround to reach is not a
+ * switch. A query parameter needs no console, no paste, and no explanation.
+ *
+ * Still per browser and still off by default: it only ever writes what the URL
+ * says, on a device the person is holding.
+ */
+export function adoptFlagsFromUrl(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = new URL(window.location.href).searchParams.get('flags');
+    if (raw === null) return;
+    const wanted = raw.trim().toLowerCase();
+    if (!wanted || wanted === 'off' || wanted === 'none') {
+      window.localStorage.removeItem(KEY);
+      return;
+    }
+    window.localStorage.setItem(KEY, wanted);
+  } catch {
+    /* a blocked storage or a malformed URL must not break the page */
+  }
+}

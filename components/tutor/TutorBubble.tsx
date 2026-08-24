@@ -47,7 +47,7 @@ import {
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
 import { routeMessage, answerGradedLocally, canonicalFor } from '@/lib/tutor-router';
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
-import { tutorFlag } from '@/lib/tutor-flags';
+import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
 // two call sites below, not here. Both pull the whole content corpus behind
 // them — tutor-context via lib/cognition, tutor-greeting via
@@ -147,6 +147,13 @@ export default function TutorBubble() {
   const hidden = HIDDEN_PREFIXES.some(
     (p) => pathname === p || pathname?.startsWith(p + '/'),
   );
+
+  // `?flags=compiler` in the address bar, once, and it sticks for this browser.
+  // Read before anything else so the very first message of the visit already
+  // sees the flag. See lib/tutor-flags for why this exists at all.
+  useEffect(() => {
+    adoptFlagsFromUrl();
+  }, []);
 
   // Track what the page is showing.
   useEffect(() => {

@@ -296,6 +296,41 @@ const fullQuestion = {
       },
     };
     ok(!tutorFlag('compiler'), 'a throwing localStorage stays off, not on');
+
+    // ---- ?flags= in the URL ----------------------------------------
+    // The console route did not work in practice: Chrome and Edge block the
+    // first paste into DevTools, so the setItem never ran and the feature
+    // looked dead from outside. A rollout switch that needs a
+    // browser-specific workaround to reach is not a switch.
+    const jar = new Map<string, string>();
+    const withUrl = (href: string) => {
+      (globalThis as unknown as { window: unknown }).window = {
+        location: { href },
+        localStorage: {
+          getItem: (k: string) => jar.get(k) ?? null,
+          setItem: (k: string, v: string) => jar.set(k, v),
+          removeItem: (k: string) => jar.delete(k),
+        },
+      };
+    };
+    const flags = await import('../lib/tutor-flags');
+
+    withUrl('https://x.test/roadmap?flags=compiler');
+    flags.adoptFlagsFromUrl();
+    ok(flags.tutorFlag('compiler'), '?flags=compiler turns it on');
+
+    withUrl('https://x.test/roadmap?flags=off');
+    flags.adoptFlagsFromUrl();
+    ok(!flags.tutorFlag('compiler'), '?flags=off turns it off again');
+
+    jar.set('mathup-flags', 'compiler');
+    withUrl('https://x.test/roadmap');
+    flags.adoptFlagsFromUrl();
+    ok(flags.tutorFlag('compiler'), 'a URL with no flags param leaves the setting alone');
+
+    withUrl('not a url at all');
+    flags.adoptFlagsFromUrl();
+    ok(true, 'a malformed URL does not throw');
   }
 
   // ============================================================
