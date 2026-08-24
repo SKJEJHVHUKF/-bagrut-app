@@ -289,29 +289,66 @@ export const TRACK_571: TrackTree = {
       title: 'טריגונומטריה',
       emoji: '🔺',
       note: { label: 'נספח: רשימת הזהויות — ללמוד רק מה שרלוונטי לבגרות', href: '/formulas' },
+      // The owner's four-level path for טריגונומטריה במישור (571). They are a
+      // PROGRESSION, not alternatives — the chooser doubles as a level picker,
+      // and the deeper 581-flavoured ladders (identities in full, the general
+      // solution of an equation, the unit circle) stay reachable underneath as
+      // "עוד בנושא" instead of interrupting the levels.
+      groups: [
+        { id: 'basics', title: 'רמת בסיס', emoji: '🧭', tagline: 'הזהויות שצריך, משפטי המעגל, וחזרה קצרה על משוואה טריגונומטרית' },
+        { id: 'right-triangle', title: 'רמה 1 — משולש ישר זווית', emoji: '📐', tagline: 'סינוס, קוסינוס וטנגנס: למצוא יתר, ניצב או זווית' },
+        { id: 'laws', title: 'רמה 2 — משפטים ושטח', emoji: '🔺', tagline: 'משפט הסינוסים המורחב, משפט הקוסינוסים, ושטח לפי שתי צלעות והזווית שביניהן' },
+        { id: 'mixed', title: 'רמה 3 — משלבים הכול', emoji: '🎓', tagline: 'שאלות רב-שלביות ברמת בגרות שמערבות את כל הכלים' },
+      ],
       tiles: [
+        // ---- רמת בסיס -----------------------------------------------------
         {
-          // Closest existing ladder: the unit circle, special values, reduction.
           kind: 'ladder',
-          subId: 'special-angles-reduction',
-          title: 'טריגונומטריה בסיסית — סינוס, קוסינוס, טנגנס',
-          bullets: ['מעגל היחידה', 'ערכים מיוחדים', 'זוויות צמצום'],
+          group: 'basics',
+          subId: 'trig-plane-basics',
+          title: 'זהויות, משפטי מעגל ומשוואה טריגונומטרית',
+          bullets: ['הזהויות שצריך לפתרון משולשים', '$\\sin(180°-\\alpha)$ ו-$\\cos(180°-\\alpha)$', 'זווית מרכזית, היקפית, משיק ומרובע חסום', 'משוואה פשוטה בתחום נתון'],
         },
+        // ---- רמה 1 --------------------------------------------------------
         {
           kind: 'ladder',
+          group: 'right-triangle',
+          subId: 'trig-right-triangle',
+          title: 'סינוס, קוסינוס וטנגנס במשולש ישר זווית',
+          bullets: ['מול חלקי יתר, ליד חלקי יתר, מול חלקי ליד', 'למצוא את היתר', 'למצוא ניצב', 'למצוא את הזווית מהיחס'],
+        },
+        // ---- רמה 2 --------------------------------------------------------
+        {
+          kind: 'ladder',
+          group: 'laws',
           subId: 'trig-sine-cosine-laws',
           title: 'משפט הסינוסים המורחב ומשפט הקוסינוסים',
           bullets: ['משפט הסינוסים — צלע מול הזווית שלה, ו-$2R$', 'שתי התשובות של הזווית', 'משפט הקוסינוסים — כשאין זוג', 'איך בוחרים משפט'],
         },
-        { kind: 'ladder', subId: 'trig-equations', title: 'משוואות טריגונומטריות' },
-        { kind: 'ladder', subId: 'trig-identities', title: 'זהויות טריגונומטריות' },
-        { kind: 'soon', title: 'משפטים בגאומטריה בשירות הטריגונומטריה' },
         {
           kind: 'ladder',
+          group: 'laws',
           subId: 'trig-triangle-area',
           title: 'נוסחאות שטח משולש',
           bullets: ['$S = \\tfrac12 ab\\sin\\gamma$ — הזווית הכלואה', 'מהשטח אל הזווית — שתי תשובות', '$S = \\dfrac{abc}{4R}$ והמעגל החוסם'],
         },
+        // ---- רמה 3 --------------------------------------------------------
+        {
+          kind: 'ladder',
+          group: 'mixed',
+          subId: 'trig-plane-mixed',
+          title: 'שאלות משולבות ברמת בגרות',
+          bullets: ['איזה כלי מתאים לאיזה נתון', 'לפרק שאלה רב-סעיפית', 'המלכודות שמפילות', 'שאלות בגרות מלאות'],
+        },
+        // ---- עוד בנושא (מעמיק, מעבר לארבע הרמות) ---------------------------
+        {
+          kind: 'ladder',
+          subId: 'special-angles-reduction',
+          title: 'מעגל היחידה, ערכים מיוחדים וזוויות צמצום',
+          bullets: ['מעגל היחידה', 'ערכים מיוחדים', 'זוויות צמצום'],
+        },
+        { kind: 'ladder', subId: 'trig-equations', title: 'משוואות טריגונומטריות — הפתרון הכללי' },
+        { kind: 'ladder', subId: 'trig-identities', title: 'זהויות טריגונומטריות — הרחבה' },
         {
           kind: 'link',
           title: 'תרגול שאלות בגרות',

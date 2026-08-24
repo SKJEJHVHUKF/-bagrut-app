@@ -38,7 +38,7 @@ export const trigonometryCognition: TopicCognitionMap = {
       id: "double-angle-missing-factor-2",
       title: "שכחת המקדם $2$ בנוסחת הזווית הכפולה",
       skill: "double-angle-identity",
-      insight: "אתה מוותר על הכפלה ב-$2$ בנוסחת $\\sin 2x = 2\\sin x\\cos x$ ומשתמש בערך $\\sin x\\cos x$ כמו שהוא.",
+      insight: "אתה מוותר על הכפלה פי $2$ בנוסחת $\\sin 2x = 2\\sin x\\cos x$ ומשתמש בערך $\\sin x\\cos x$ כמו שהוא.",
       remedy: { subTopicId: "trig-identities" },
       triggers: [
         { questionId: "trig-sub-id-003", optionIndex: 1 },
@@ -46,9 +46,9 @@ export const trigonometryCognition: TopicCognitionMap = {
     },
     {
       id: "double-angle-divided-instead-of-multiply",
-      title: "חילוק ב-$2$ במקום כפל בנוסחת הזווית הכפולה",
+      title: "חילוק במספר $2$ במקום כפל בנוסחת הזווית הכפולה",
       skill: "double-angle-identity",
-      insight: "אתה מחלק ב-$2$ במקום להכפיל כש-$\\sin 2x = 2\\sin x\\cos x$ — המקדם $2$ נמצא במונה, לא במכנה.",
+      insight: "אתה מחלק בשניים במקום להכפיל כאשר $\\sin 2x = 2\\sin x\\cos x$. המקדם $2$ נמצא במונה, לא במכנה.",
       remedy: { subTopicId: "trig-identities" },
       triggers: [
         { questionId: "trig-sub-id-003", optionIndex: 2 },
@@ -132,7 +132,7 @@ export const trigonometryCognition: TopicCognitionMap = {
       id: "cos-derivative-sign-lost",
       title: "אובדן המינוס בנגזרת הקוסינוס",
       skill: "trig-derivatives",
-      insight: "אתה נוגר $\\cos x$ ל-$+\\sin x$ במקום $-\\sin x$ — הנגזרת של הקוסינוס משנה סימן.",
+      insight: "אתה נוגר $\\cos x$ לביטוי $+\\sin x$ במקום $-\\sin x$. הנגזרת של הקוסינוס משנה סימן.",
       remedy: { subTopicId: "trig-calculus" },
       triggers: [
         { questionId: "trig-sub-calc-001", optionIndex: 1 },
@@ -143,7 +143,7 @@ export const trigonometryCognition: TopicCognitionMap = {
       id: "both-trig-derivatives-negated",
       title: "שלילת שתי הנגזרות הטריגונומטריות",
       skill: "trig-derivatives",
-      insight: "אתה מוסיף מינוס לנגזרות של גם $\\sin x$ וגם $\\cos x$, אך רק $\\cos x$ נגזר לערך שלילי — $\\sin x$ נגזר ל-$+\\cos x$.",
+      insight: "אתה מוסיף מינוס לנגזרות של גם $\\sin x$ וגם $\\cos x$, אך רק $\\cos x$ נגזר לערך שלילי: $\\sin x$ נגזר לביטוי $+\\cos x$.",
       remedy: { subTopicId: "trig-calculus" },
       triggers: [
         { questionId: "trig-sub-calc-001", optionIndex: 3 },
@@ -153,7 +153,7 @@ export const trigonometryCognition: TopicCognitionMap = {
       id: "amplitude-sum-not-root-sum-squares",
       title: "חיבור המקדמים במקום חישוב $\\sqrt{a^2+b^2}$",
       skill: "trig-amplitude",
-      insight: "אתה מחשב את המקסימום של $a\\sin x + b\\cos x$ כ-$a+b$ במקום $\\sqrt{a^2+b^2}$ — $\\sin x$ ו-$\\cos x$ לא מגיעים למקסימום שלהם בו-זמנית.",
+      insight: "אתה מחשב את המקסימום של $a\\sin x + b\\cos x$ כמו הביטוי $a+b$ במקום $\\sqrt{a^2+b^2}$. $\\sin x$ וגם $\\cos x$ לא מגיעים למקסימום שלהם בו-זמנית.",
       remedy: { subTopicId: "trig-calculus" },
       triggers: [
         { questionId: "trig-sub-calc-006", optionIndex: 1 },
@@ -164,7 +164,7 @@ export const trigonometryCognition: TopicCognitionMap = {
       id: "amplitude-difference-squares",
       title: "חיסור ריבועי המקדמים במקום חיבורם",
       skill: "trig-amplitude",
-      insight: "אתה מחשב $\\sqrt{a^2 - b^2}$ כמשרעת במקום $\\sqrt{a^2+b^2}$ — הריבועים מתחברים בנוסחת המשרעת, לא מתחסרים.",
+      insight: "אתה מחשב $\\sqrt{a^2 - b^2}$ כמשרעת במקום $\\sqrt{a^2+b^2}$. הריבועים מתחברים בנוסחת המשרעת, לא מתחסרים.",
       remedy: { subTopicId: "trig-calculus" },
       triggers: [
         { questionId: "trig-sub-calc-006", optionIndex: 2 },
