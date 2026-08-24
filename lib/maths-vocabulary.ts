@@ -55,4 +55,25 @@ export function namesAMathsSubject(text: string): boolean {
   return NAMES_A_MATHS_SUBJECT.test(text);
 }
 
+/**
+ * A subject the MESSAGE names that the question in front of the student does
+ * not mention — the foreign-subject screen.
+ *
+ * `mentionsForeignNumber` stops another exercise's ARITHMETIC from landing on
+ * the screen. This stops another exercise's SUBJECT from doing the same, and
+ * it was added after a measurement: "תסביר לי על וקטורים", asked while sitting
+ * on a sequences question, matched that question's FAQ entry at 0.77 and would
+ * have been served. Nothing about vectors is in the answer, so the number
+ * screen could not see it.
+ *
+ * Returns the offending noun, or null when every subject the student named is
+ * one this question is actually about.
+ */
+export function foreignSubject(message: string, ownText: string): string | null {
+  for (const noun of NOUNS) {
+    if (message.includes(noun) && !ownText.includes(noun)) return noun;
+  }
+  return null;
+}
+
 export const MATHS_NOUNS = NOUNS;

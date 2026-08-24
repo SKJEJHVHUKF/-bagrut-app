@@ -67,6 +67,10 @@ type Row = {
   /** Filled only for turns that would reach the model — the question being
    *  asked is whether the ENGINE could have taken them instead. */
   fit?: MathFit;
+  /** The raw phrasing and the question it was asked against, so the AFTER
+   *  pass can re-run the compiler on exactly the same turn. */
+  phrase: string;
+  sample?: { question: Record<string, unknown>; subTopic?: unknown; chosenIndex?: number };
   existingFallbackReason?: FallbackReason;
   proposedFallbackReason?: FallbackReason | 'answered_by_math_engine';
 };
@@ -186,7 +190,9 @@ function wrongIndex(q: Record<string, unknown>): number | undefined {
 
       rows.push({
         screen: t.screen, topic: t.topic, intent: intent ?? '(none)', local, reason,
-        canonical, layer, shouldPay: p.expect === null,
+        canonical, layer, shouldPay: p.mustStayWithModel === true,
+        phrase: p.text,
+        ...(local ? {} : { sample: { question: t.question, subTopic: t.subTopic, ...(idx !== undefined ? { chosenIndex: idx } : {}) } }),
         ...(fit ? { fit, existingFallbackReason: reason as FallbackReason, proposedFallbackReason: proposed } : {}),
       });
     }
@@ -355,6 +361,58 @@ function wrongIndex(q: Record<string, unknown>): number | undefined {
         ` · steps=${r.fit!.mathEngineHasUsableSteps} · conf=${r.fit!.mathEngineConfidence}`);
     }
     if (!fits.length) console.log('    (none)');
+  }
+
+  // ============================================================
+  // 6. AFTER: what the response compiler would take
+  // ============================================================
+  //
+  // The same paid turns, run through the compiler that is NOT yet wired to any
+  // screen. This is the before/after in one table: the layers above are today,
+  // this is what the new layer adds on top of them.
+  {
+    const { compileTutorResponse } = await import('../lib/tutor-compiler');
+    const byType = new Map<string, number>();
+    const bySource = new Map<string, number>();
+    let taken = 0;
+    let unsafeAfter = 0;
+    for (const r of paid) {
+      const t = r.sample;
+      if (!t) continue;
+      const res = await compileTutorResponse({
+        canonicalIntent: r.intent === '(none)' ? null : (r.intent as never),
+        message: r.phrase,
+        activeQuestion: t.question,
+        selectedAnswer: t.chosenIndex ?? null,
+        topic: r.topic,
+        formulas: (t.subTopic as { formulas?: never[] } | undefined)?.formulas,
+        keyPoints: (t.subTopic as { keyPoints?: string[] } | undefined)?.keyPoints,
+      });
+      if (!res.handled) continue;
+      taken++;
+      byType.set(res.responseType, (byType.get(res.responseType) ?? 0) + 1);
+      for (const s of res.groundedSources) bySource.set(s, (bySource.get(s) ?? 0) + 1);
+      // A turn the corpus says belongs to the model, answered locally, is the
+      // one number that must not rise.
+      if (r.shouldPay) unsafeAfter++;
+    }
+
+    console.log('\n=== AFTER: what the response compiler adds (not yet wired) ===\n');
+    console.log(`  paid turns today                     ${paid.length}`);
+    console.log(`  the compiler would answer            ${taken}  (${pct(taken, paid.length)} of paid)`);
+    console.log(`  still the model's                    ${paid.length - taken}`);
+    console.log(`\n  local rate:  ${pct(localAll, rows.length)}  →  ${pct(localAll + taken, rows.length)}`);
+    console.log(`  model rate:  ${pct(paid.length, rows.length)}  →  ${pct(paid.length - taken, rows.length)}`);
+    console.log(`\n  unsafe (answered locally when it should not be): ${wronglyLocal} → ${wronglyLocal + unsafeAfter}`);
+
+    console.log('\n  by response type:');
+    for (const [k, n] of [...byType.entries()].sort((a, b) => b[1] - a[1])) {
+      console.log(`    ${k.padEnd(20)} ${String(n).padStart(6)}  (${pct(n, taken)})`);
+    }
+    console.log('\n  grounded in:');
+    for (const [k, n] of [...bySource.entries()].sort((a, b) => b[1] - a[1])) {
+      console.log(`    ${k.padEnd(20)} ${String(n).padStart(6)}`);
+    }
   }
 
   console.log(

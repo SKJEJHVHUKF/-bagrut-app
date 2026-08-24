@@ -60,7 +60,7 @@ console.log('\n-- every phrasing resolves the way the corpus says --');
   }
   ok(misses === 0, `no misses (${misses})`);
   ok(falsePositives === 0, `no false positives (${falsePositives})`);
-  console.log(`   ${PHRASINGS.length} phrasings, ${PHRASINGS.filter((p) => p.expect === null).length} of them must stay with the model`);
+  console.log(`   ${PHRASINGS.length} phrasings, ${PHRASINGS.filter((p) => p.mustStayWithModel).length} of them must stay with the model`);
 }
 
 // ============================================================

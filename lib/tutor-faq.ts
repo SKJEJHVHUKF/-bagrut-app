@@ -34,6 +34,7 @@ import type { TutorFocus } from '@/lib/tutor-presence';
 import { loadFaqBank } from '@/content/tutor-faq';
 import type { TutorFaq, TutorFaqKind } from '@/content/tutor-faq';
 import { leaksAnswer } from '@/lib/help-ladder';
+import { foreignSubject } from '@/lib/maths-vocabulary';
 
 // ------------------------------------------------------------
 // Normalisation
@@ -589,6 +590,23 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
 
   if (!bank) return null;
   const idf = topicIdf(bank);
+
+  // ⚠️ THE FOREIGN-SUBJECT SCREEN, and it guards every stage below.
+  //
+  // `mentionsForeignNumber` stops another exercise's ARITHMETIC reaching the
+  // screen. Nothing stopped another SUBJECT: "תסביר לי על וקטורים", typed on a
+  // sequences question, matched that question's own entry at 0.77 and was
+  // about to be served — an answer with nothing to do with vectors in it, so
+  // the number screen was blind to it.
+  //
+  // Found the honest way. `classifyAsk` used to answer that message from a
+  // template, which kept it out of this measurement entirely; anchoring
+  // `classifyAsk` let it through to here and the noise gate rose from under
+  // 2% to 2.5%. The fix moved the defect rather than removing it, and this is
+  // where it actually gets removed.
+  const questionSubject = `${q.question} ${steps.join(' ')} ${q.solution?.finalAnswer ?? ''} ${focus.topic ?? ''}`;
+  const foreign = foreignSubject(message, questionSubject);
+  if (foreign) return null;
 
   // ---- stage 1: this question's own entries ----
   if (usable.length > 0) {

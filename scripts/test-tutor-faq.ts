@@ -39,6 +39,7 @@ import {
   FAQ_TRANSFER_THRESHOLD, mentionsForeignNumber, pointsAtThisExercise,
 } from '../lib/tutor-faq';
 import { classifyAsk } from '../lib/tutor-local';
+import { foreignSubject } from '../lib/maths-vocabulary';
 import type { TutorFaq, TutorFaqBank } from '../content/tutor-faq/types';
 
 /** Alts at these 0-based positions are held out (2 of ≥7). Fixed positions in
@@ -336,9 +337,21 @@ async function trace(text: string) {
 
       // Noise: nothing here may match. Mirrors production — a message the
       // local tutor's classifier already answers never reaches the bank.
+      //
+      // ⚠️ "Mirrors production" has to keep being true. This loop calls
+      // `matchFaq` directly rather than `answerFromFaq`, so every screen the
+      // real path applies must be applied here too or the gate measures a
+      // system nobody runs. That drifted once: anchoring `classifyAsk` stopped
+      // it from answering "תסביר לי על וקטורים", the message reached the bank
+      // for the first time, and the rate went from under 2% to 2.5% — a real
+      // defect the gate had never been able to see. The foreign-subject screen
+      // fixes it in `answerFromFaq`, and this line is what lets the gate
+      // confirm that rather than keep reporting the old number.
       const fullIndex = buildFaqIndex(faqs, { idf: topicIdf });
+      const unitSubject = faqs.map((f) => `${f.q} ${f.a} ${f.alts.join(' ')}`).join(' ') + ' ' + topic;
       for (const n of NOISE) {
         if (classifyAsk(n)) continue;
+        if (foreignSubject(n, unitSubject)) continue;
         noiseQueries++;
         const hit = matchFaq(fullIndex, n);
         if (hit) { noiseHits++; if (noiseHits <= 6) console.log(`  ✗ noise matched: "${n}" → ${hit.faq.id} (${hit.score.toFixed(2)})`); }

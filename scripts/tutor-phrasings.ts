@@ -19,7 +19,23 @@
 
 import type { CanonicalIntent } from '../lib/tutor-intent';
 
-export type Phrasing = { text: string; expect: CanonicalIntent | null; reported?: boolean };
+export type Phrasing = {
+  text: string;
+  /** The intent a rule must resolve it to, or null when no rule may. */
+  expect: CanonicalIntent | null;
+  /**
+   * ⚠️ SEPARATE from `expect`, and it must stay separate.
+   *
+   * `expect` asks what the message MEANS; this asks who should ANSWER it.
+   * They came apart the moment `concept` was added: "מה זה בכלל נגזרת"
+   * is unmistakably a concept question, so labelling it null was wrong — and
+   * it must still reach the model, because no card is authored for calculus.
+   * Folding the two into one field would have forced a choice between a
+   * wrong label and a lost safety assertion.
+   */
+  mustStayWithModel?: boolean;
+  reported?: boolean;
+};
 
 export const PHRASINGS: Phrasing[] = [
   // ---- how_to_compute ----------------------------------------------
@@ -108,6 +124,23 @@ export const PHRASINGS: Phrasing[] = [
   { text: 'נתקעתי', expect: 'didnt_understand' },
   { text: 'אני תקוע', expect: 'didnt_understand' },
 
+  // ---- concept: answerable ONLY by an authored Topic Card ----------
+  //
+  // One phrasing per card, so the census exercises the card layer instead of
+  // reporting a zero that only means "the corpus never asked". These name a
+  // subject on purpose — that is what a concept question is — and they are
+  // safe because a card is the only thing allowed to answer them.
+  { text: 'מה זה בלי החזרה', expect: 'concept' },
+  { text: 'מה ההבדל בין וגם לאו', expect: 'concept' },
+  { text: 'מה זה מאורעות זרים', expect: 'concept' },
+  { text: 'מה זה בלתי תלויים', expect: 'concept' },
+  { text: 'מה זה הסתברות מותנית', expect: 'concept' },
+  { text: 'איך קוראים עץ הסתברות', expect: 'concept' },
+  { text: 'איך ממלאים טבלת הסתברות', expect: 'concept' },
+  { text: 'מה זה חוק המשלים', expect: 'concept' },
+  { text: 'מתי משתמשים בהתפלגות בינומית', expect: 'concept' },
+  { text: 'איך מזהים n p k בבינומית', expect: 'concept' },
+
   // ==================================================================
   // MUST STAY WITH THE MODEL — each names a subject of its own.
   //
@@ -115,20 +148,20 @@ export const PHRASINGS: Phrasing[] = [
   // matched these would be "saving" a call by answering a different question
   // than the one asked, which is worse than paying for it.
   // ==================================================================
-  { text: 'איך מחשבים סטיית תקן', expect: null },
-  { text: 'איך מחשבים נגזרת של ln בכלל', expect: null },
-  { text: 'איך עובד חוק בייס', expect: null },
-  { text: 'איך זה עובד כשיש שלושה מאורעות בלתי תלויים', expect: null },
-  { text: 'איך פותרים משוואה ריבועית עם פרמטר באופן כללי', expect: null },
-  { text: 'מה ההבדל בין טבלה דו ממדית לדיאגרמת עץ', expect: null },
-  { text: 'מה ההבדל בין סדרה חשבונית להנדסית', expect: null },
-  { text: 'מה הנוסחה לסכום סדרה הנדסית אינסופית', expect: null },
-  { text: 'למה מחלקים בשונות ולא בתוחלת', expect: null },
-  { text: 'תן דוגמה לסדרה שמתכנסת אבל לא חסומה', expect: null },
-  { text: 'כמה זמן יש בבגרות לשאלה כזאת', expect: null },
-  { text: 'מה זה בכלל נגזרת', expect: null },
-  { text: 'תסביר לי על וקטורים', expect: null },
-  { text: 'מה עושים כשהדיסקרימיננטה שלילית', expect: null },
+  { text: 'איך מחשבים סטיית תקן', expect: null, mustStayWithModel: true },
+  { text: 'איך מחשבים נגזרת של ln בכלל', expect: null, mustStayWithModel: true },
+  { text: 'איך עובד חוק בייס', expect: null, mustStayWithModel: true },
+  { text: 'איך זה עובד כשיש שלושה מאורעות בלתי תלויים', expect: null, mustStayWithModel: true },
+  { text: 'איך פותרים משוואה ריבועית עם פרמטר באופן כללי', expect: null, mustStayWithModel: true },
+  { text: 'מה ההבדל בין טבלה דו ממדית לדיאגרמת עץ', expect: 'concept', mustStayWithModel: true },
+  { text: 'מה ההבדל בין סדרה חשבונית להנדסית', expect: 'concept', mustStayWithModel: true },
+  { text: 'מה הנוסחה לסכום סדרה הנדסית אינסופית', expect: null, mustStayWithModel: true },
+  { text: 'למה מחלקים בשונות ולא בתוחלת', expect: null, mustStayWithModel: true },
+  { text: 'תן דוגמה לסדרה שמתכנסת אבל לא חסומה', expect: null, mustStayWithModel: true },
+  { text: 'כמה זמן יש בבגרות לשאלה כזאת', expect: null, mustStayWithModel: true },
+  { text: 'מה זה בכלל נגזרת', expect: 'concept', mustStayWithModel: true },
+  { text: 'תסביר לי על וקטורים', expect: null, mustStayWithModel: true },
+  { text: 'מה עושים כשהדיסקרימיננטה שלילית', expect: null, mustStayWithModel: true },
 ];
 
 export const REPORTED = PHRASINGS.filter((p) => p.reported);

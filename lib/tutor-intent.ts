@@ -52,6 +52,17 @@ export const CANONICAL_INTENTS = [
   'next_step',
   'why_wrong',
   'didnt_understand',
+  // ⚠️ The one intent that is ALLOWED to name its own subject.
+  //
+  // Every other rule here refuses a message that names a piece of mathematics,
+  // because a general answer to a question about the exercise is something
+  // true about something else. A concept question is the opposite case: the
+  // subject IS the question, and the right answer is general by nature.
+  //
+  // It is safe only because of what may serve it. `concept` is answerable by
+  // an authored Topic Card and by nothing else — no ladder rung, no FAQ entry,
+  // no derived step. If no card matches, it goes to the model unchanged.
+  'concept',
 ] as const;
 
 export type CanonicalIntent = (typeof CANONICAL_INTENTS)[number];
@@ -236,6 +247,25 @@ const RULES: Rule[] = [
 
   // --- "לא הבנתי" ---------------------------------------------------
     R('didnt_understand', `${OPEN}(?:לא\\s*הבנתי|לא\\s*מבין|לא\\s*מבינה|לא\\s*ברור|תקוע|תקועה|נתקעתי)${TAIL}`, 0.9),
+
+  // --- concept: the subject IS the question -------------------------
+  //
+  // ⚠️ These rules deliberately require a NAMED SUBJECT, which every other
+  // rule in this file refuses. That inversion is safe here and only here,
+  // because a `concept` intent is answerable by an authored Topic Card and by
+  // nothing else — no ladder rung, no derived step, no FAQ entry from another
+  // exercise. No card, no answer.
+  //
+  // The subject is required (`[א-ת]{3,}` after the frame) precisely so a bare
+  // "מה זה?" does NOT land here: with nothing named there is no card to find
+  // and no question to answer.
+    R('concept', `${OPEN}מה\\s*(?:זה|זו|זאת|הכוונה\\s*ב)\\s+[א-ת].{2,}$`, 0.85),
+    R('concept', `${OPEN}מה\\s*ה?הבדל\\s*בין\\s+[א-ת].{2,}$`, 0.9),
+    R('concept', `${OPEN}מתי\\s*(?:משתמשים|בוחרים|צריך)\\s*ב?[א-ת].{2,}$`, 0.85),
+    // `\\S` and not `[א-ת]`: the subject is often written in maths notation —
+    // "איך מזהים n p k בבינומית" is a concept question whose subject starts on
+    // a latin letter, and requiring Hebrew there dropped it silently.
+    R('concept', `${OPEN}(?:איך|כיצד)\\s*(?:קוראים|בונים|ממלאים|מזהים)\\s+\\S.{2,}$`, 0.85),
 ];
 
 /**
@@ -335,6 +365,12 @@ export function groundingFor(intent: CanonicalIntent, focus: TutorFocus | null):
     case 'why_this_step':
       if (explanation) return { kind: 'explanation', text: explanation };
       return steps.length ? { kind: 'solution-steps', text: steps.join('\n') } : null;
+
+    case 'concept':
+      // A concept question is answered by an authored Topic Card, which is not
+      // part of the active question at all. Nothing HERE can ground it, and
+      // saying so is the honest answer.
+      return null;
 
     case 'give_table':
     case 'give_example':
