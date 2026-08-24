@@ -147,6 +147,28 @@ const fullQuestion = {
     ok(covered.responseType === 'topic_card', `…as a topic card (${covered.responseType})`);
     ok(covered.groundedSources.includes('topic_card'), '…and says the card is the source');
     ok((await loadTopicCards('טריגונומטריה')).length === 0, 'an unauthored topic loads empty, not undefined');
+
+    // ⚠️ A CONCEPT QUESTION NEEDS NO ACTIVE QUESTION.
+    //
+    // Reported from a real session on /roadmap/<lesson>: the tutor still
+    // called the model there. `SubTopicLadder` publishes a focus with `where`
+    // and NO question object, and the compiler demanded one before it would
+    // even look at the cards — blocking exactly the screen where a card is
+    // most useful, a student reading a lesson and asking what something means.
+    //
+    // The census could not catch this: it samples QUESTIONS, and this screen
+    // has none.
+    for (const q of ['מה זה בלי החזרה', 'מה ההבדל בין וגם לאו', 'איך קוראים עץ הסתברות']) {
+      const r = await compileTutorResponse({ message: q, activeQuestion: null, topic: TOPIC });
+      ok(r.handled, `answered with no question on screen: "${q}"`);
+      ok(r.responseType === 'topic_card', `…as a card (${r.responseType})`);
+    }
+    // …and the exercise intents still require one, on that same screen.
+    for (const intent of ['next_step', 'why_this_step', 'what_to_do_here'] as CanonicalIntent[]) {
+      const r = await compileTutorResponse({ canonicalIntent: intent, activeQuestion: null, topic: TOPIC });
+      ok(!r.handled, `${intent}: still needs a question`);
+      ok(r.fallbackReason === 'missing_question_context', `${intent}: and says which (${r.fallbackReason})`);
+    }
   }
 
   // ============================================================

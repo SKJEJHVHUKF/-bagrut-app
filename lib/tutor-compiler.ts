@@ -163,6 +163,37 @@ export async function compileTutorResponse(input: CompilerInput): Promise<Compil
   }
 
   if (!intent) return unhandled(q ? 'unknown_intent' : 'missing_question_context');
+
+  // ---- 2. topic cards need only the TOPIC ---------------------------
+  //
+  // ⚠️ THIS RUNS BEFORE THE `!q` GUARD, and it must.
+  //
+  // A concept question is about the subject, not about an exercise: "מה זה
+  // בלי החזרה" is answerable while reading a lesson, with nothing on screen to
+  // ground in. The first version demanded an active question first, which
+  // blocked exactly the screen where cards are most useful — a student on
+  // /roadmap/<lesson>, where SubTopicLadder publishes a focus with `where` and
+  // no question object at all.
+  //
+  // Reported from a real session: the tutor still called the model on that
+  // page, and the reason was this ordering rather than anything about the
+  // cards. The census could not see it because it sampled QUESTIONS, and this
+  // screen has none.
+  if (cardCanAnswer(intent)) {
+    const topic = input.topic ?? '';
+    const hit = topic ? await matchTopicCard(input.message ?? '', topic, intent) : null;
+    if (hit) {
+      return served('topic_card', renderTopicCard(hit.card), ['topic_card'], hit.score);
+    }
+    // No card. The question's own explanation is still grounded and still
+    // better than a model call — when there IS a question.
+    if (q && (intent === 'explain' || intent === 'didnt_understand') && explanation) {
+      return served('hint', explanation, ['explanation'], 0.7);
+    }
+    if (q && intent === 'didnt_understand' && hint) return served('hint', hint, ['hint'], 0.75);
+    return unhandled(q ? 'no_local_content' : 'missing_question_context');
+  }
+
   if (!q) return unhandled('missing_question_context');
 
   // ---- 2. the exercise intents — grounded or nothing ----------------
@@ -223,23 +254,7 @@ export async function compileTutorResponse(input: CompilerInput): Promise<Compil
     return unhandled('no_local_content');
   }
 
-  // ---- 4. the topic intents — a card, or nothing --------------------
-  if (cardCanAnswer(intent)) {
-    const topic = input.topic ?? '';
-    const hit = topic ? await matchTopicCard(input.message ?? '', topic, intent) : null;
-    if (hit) {
-      return served('topic_card', renderTopicCard(hit.card), ['topic_card'], hit.score);
-    }
-    // A card did not match. The question's own explanation is still grounded
-    // and still better than a model call, for the two intents it fits.
-    if ((intent === 'explain' || intent === 'didnt_understand') && explanation) {
-      return served('hint', explanation, ['explanation'], 0.7);
-    }
-    if (intent === 'didnt_understand' && hint) return served('hint', hint, ['hint'], 0.75);
-    return unhandled('no_local_content');
-  }
-
-  // ---- 5. everything else is genuinely the model's ------------------
+  // ---- everything else is genuinely the model's ---------------------
   // give_example and how_to_compute among them: a second example does not
   // exist in the content, and inventing one is what a model is for.
   return unhandled('unsupported_phrase');
