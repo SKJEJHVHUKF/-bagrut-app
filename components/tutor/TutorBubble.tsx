@@ -47,6 +47,7 @@ import {
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
 import { routeMessage, answerGradedLocally, canonicalFor } from '@/lib/tutor-router';
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
+import { tutorFlag } from '@/lib/tutor-flags';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
 // two call sites below, not here. Both pull the whole content corpus behind
 // them — tutor-context via lib/cognition, tutor-greeting via
@@ -302,6 +303,47 @@ export default function TutorBubble() {
           faqMissed = true;
         } catch {
           /* no bank for this topic yet — the model handles it, as before */
+        }
+      }
+
+      // ===== third local stage: the response compiler (FLAGGED OFF) =====
+      //
+      // Placed HERE and not earlier, and the position is a measurement rather
+      // than a preference. The authored hint, the authored FAQ entry and the
+      // distractor note are all written for THIS question by a person; the
+      // compiler assembles from the same content but generically. Whenever the
+      // layers above have something, theirs is better, so the compiler only
+      // ever sees what they declined.
+      //
+      // Measured before wiring (scripts/report-tutor-usage.ts): it takes 1,609
+      // of the turns that reach the model — local 50.6% → 61.4% — with the
+      // unsafe count unchanged at 8. It answers only from this question's own
+      // steps, rule line, hint and explanation, or from an authored Topic Card
+      // for a question about the TOPIC.
+      //
+      // Off for everyone until `localStorage.setItem('mathup-flags','compiler')`.
+      if (tutorFlag('compiler') && focusNow) {
+        try {
+          const { compileTutorResponse } = await import('@/lib/tutor-compiler');
+          const compiled = await compileTutorResponse({
+            message: text,
+            activeQuestion: (focusNow.question ?? null) as Record<string, unknown> | null,
+            selectedAnswer: typeof focusNow.chosenIndex === 'number' ? focusNow.chosenIndex : null,
+            topic: focusNow.topic ?? '',
+            formulas: focusNow.subTopic?.formulas,
+            keyPoints: focusNow.subTopic?.keyPoints,
+          });
+          if (compiled.handled && compiled.safeToServe && compiled.message.trim()) {
+            setMsgs((m) => [
+              ...m,
+              { id: `a-${Date.now()}`, role: 'assistant', text: compiled.message, local: true },
+            ]);
+            setSending(false);
+            return;
+          }
+        } catch {
+          /* the compiler is additive — a failure here must cost nothing more
+             than the model call that was already about to happen */
         }
       }
 

@@ -259,6 +259,65 @@ const fullQuestion = {
   }
 
   // ============================================================
+  // ============================================================
+  console.log('\n-- the flag, and that OFF is the default --');
+  // ============================================================
+  {
+    const store = new Map<string, string>();
+    (globalThis as unknown as { window: unknown }).window = {
+      localStorage: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => store.set(k, v),
+        removeItem: (k: string) => store.delete(k),
+      },
+    };
+    const { tutorFlag, activeTutorFlags } = await import('../lib/tutor-flags');
+
+    ok(!tutorFlag('compiler'), 'with nothing set, the compiler is OFF');
+    ok(activeTutorFlags().length === 0, 'and nothing reports as active');
+
+    store.set('mathup-flags', 'compiler');
+    ok(tutorFlag('compiler'), 'it turns on when the key says so');
+    ok(!tutorFlag('trace'), 'and only the flag that is named');
+
+    store.set('mathup-flags', 'compiler, trace');
+    ok(tutorFlag('compiler') && tutorFlag('trace'), 'a comma list turns on both');
+
+    // A flag must fail CLOSED. Every one of these is a real browser state.
+    for (const junk of ['', '   ', ',,,', '{"compiler":true}']) {
+      store.set('mathup-flags', junk);
+      ok(!tutorFlag('compiler'), `malformed value stays off: ${JSON.stringify(junk)}`);
+    }
+    (globalThis as unknown as { window: unknown }).window = {
+      localStorage: {
+        getItem: () => {
+          throw new Error('storage disabled');
+        },
+      },
+    };
+    ok(!tutorFlag('compiler'), 'a throwing localStorage stays off, not on');
+  }
+
+  // ============================================================
+  console.log('\n-- the wiring really is behind the flag --');
+  // ============================================================
+  {
+    const fs = await import('fs');
+    const { resolve } = await import('path');
+    const src = fs.readFileSync(resolve(process.cwd(), 'components/tutor/TutorBubble.tsx'), 'utf8');
+    ok(src.includes('tutor-compiler'), 'the bubble reaches the compiler');
+    // The only call site must sit inside a flag check. Asserted on the source
+    // because the alternative is rendering a React tree, and a regression here
+    // would silently change what every student sees.
+    const at = src.indexOf('compileTutorResponse');
+    const before = src.slice(Math.max(0, at - 400), at);
+    ok(/tutorFlag\('compiler'\)/.test(before), 'and only inside `tutorFlag(\'compiler\')`');
+    ok(
+      src.indexOf('compileTutorResponse') > src.indexOf('answerFromFaq'),
+      'and after the FAQ — authored beats assembled, which is what the measurement said',
+    );
+  }
+
   console.log('\n-- the cost contract --');
   // ============================================================
   {
