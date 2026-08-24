@@ -46,6 +46,7 @@ import { decideFallbackReason, type FallbackReason } from '../lib/tutor-telemetr
 import { getLesson, allLessonKeys } from '../content/lessons';
 import { conceptBankEntries, getConceptQuestions, CONCEPT_LEVELS } from '../content/concept-quiz';
 import { PHRASINGS } from './tutor-phrasings';
+import { analysisFor, assessMathEngine, type MathFit } from './math-engine-fit';
 import type { TutorFocus } from '../lib/tutor-presence';
 
 const ONLY_REASON = process.argv.includes('--reason')
@@ -63,6 +64,11 @@ type Row = {
   /** The corpus says this phrasing NAMES A SUBJECT and belongs to the model.
    *  A paid call here is the right outcome. */
   shouldPay: boolean;
+  /** Filled only for turns that would reach the model — the question being
+   *  asked is whether the ENGINE could have taken them instead. */
+  fit?: MathFit;
+  existingFallbackReason?: FallbackReason;
+  proposedFallbackReason?: FallbackReason | 'answered_by_math_engine';
 };
 
 type Target = { screen: string; topic: string; question: Record<string, unknown>; subTopic?: unknown };
@@ -165,7 +171,24 @@ function wrongIndex(q: Record<string, unknown>): number | undefined {
             solverAttemptedAndFailed: false,
           });
 
-      rows.push({ screen: t.screen, topic: t.topic, intent: intent ?? '(none)', local, reason, canonical, layer, shouldPay: p.expect === null });
+      // Only the turns that would PAY are worth assessing — the engine is
+      // being considered as an alternative to the model, not to the ladder.
+      let fit: MathFit | undefined;
+      let proposed: FallbackReason | 'answered_by_math_engine' | undefined;
+      if (!local) {
+        const analysis = await analysisFor(
+          String(t.question.id ?? t.question.question),
+          String(t.question.question ?? ''),
+        );
+        fit = assessMathEngine(analysis, intent, false);
+        proposed = fit.mathEngineCanAnswerIntent ? 'answered_by_math_engine' : (reason as FallbackReason);
+      }
+
+      rows.push({
+        screen: t.screen, topic: t.topic, intent: intent ?? '(none)', local, reason,
+        canonical, layer, shouldPay: p.expect === null,
+        ...(fit ? { fit, existingFallbackReason: reason as FallbackReason, proposedFallbackReason: proposed } : {}),
+      });
     }
   }
 
@@ -258,6 +281,82 @@ function wrongIndex(q: Record<string, unknown>): number | undefined {
       console.log(`      ${String(n).padStart(5)} × "${ph}"  → answered by ${layer}`);
     }
   }
+  // ============================================================
+  // 5. could the MATHS ENGINE have taken any of these?
+  // ============================================================
+  const assessed = paid.filter((r) => r.fit);
+  if (assessed.length) {
+    const fits = assessed.filter((r) => r.fit!.mathEngineCanAnswerIntent);
+    console.log('\n=== could the maths engine have answered instead? ===\n');
+    console.log(`  paid turns assessed                  ${assessed.length}`);
+    console.log(`  the engine could answer SAFELY       ${fits.length}  (${pct(fits.length, assessed.length)} of paid)`);
+    console.log(`    = of ALL turns                     ${pct(fits.length, rows.length)}`);
+
+    // ---- 5a. by the action the intent asks for ----
+    console.log('\n  by action the student is asking for:');
+    const byAction = new Map<string, { n: number; ok: number }>();
+    for (const r of assessed) {
+      const k = r.fit!.mathEngineActionCandidate;
+      const cur = byAction.get(k) ?? { n: 0, ok: 0 };
+      byAction.set(k, { n: cur.n + 1, ok: cur.ok + (r.fit!.mathEngineCanAnswerIntent ? 1 : 0) });
+    }
+    for (const [a, { n, ok: good }] of [...byAction.entries()].sort((x, y) => y[1].n - x[1].n)) {
+      console.log(`    ${a.padEnd(16)} ${String(n).padStart(6)} turns · engine safe for ${String(good).padStart(5)} (${pct(good, n)})`);
+    }
+
+    // ---- 5b. computed but NOT usable — the number the naive measure misses ----
+    const computedNotUsed = assessed.filter(
+      (r) => r.fit!.mathEngineSucceeded && !r.fit!.mathEngineCanAnswerIntent,
+    );
+    console.log(
+      `\n  the engine COMPUTED an answer but it must not be used: ${computedNotUsed.length}` +
+        `  (${pct(computedNotUsed.length, assessed.length)} of paid)`,
+    );
+    const byNotSafe = new Map<string, Row[]>();
+    for (const r of assessed) {
+      const k = r.fit!.reasonNotSafeToUseMathEngine || '(safe)';
+      if (!byNotSafe.has(k)) byNotSafe.set(k, []);
+      byNotSafe.get(k)!.push(r);
+    }
+    for (const [k, rs] of [...byNotSafe.entries()].sort((a, b) => b[1].length - a[1].length)) {
+      console.log(`    ${k.padEnd(26)} ${String(rs.length).padStart(6)}  (${pct(rs.length, assessed.length)})`);
+      for (const r of rs.slice(0, 5)) console.log(`        "${r.canonical}"  · ${r.intent} · ${r.topic}`);
+    }
+
+    // ---- 5c. where the saving is ----
+    console.log('\n  by topic — where the engine would save the most:');
+    const byTopic = new Map<string, { n: number; ok: number }>();
+    for (const r of assessed) {
+      const cur = byTopic.get(r.topic) ?? { n: 0, ok: 0 };
+      byTopic.set(r.topic, { n: cur.n + 1, ok: cur.ok + (r.fit!.mathEngineCanAnswerIntent ? 1 : 0) });
+    }
+    for (const [t, { n, ok: good }] of [...byTopic.entries()].sort((a, b) => b[1].ok - a[1].ok).slice(0, 8)) {
+      console.log(`    ${t.padEnd(22)} ${String(good).padStart(5)} of ${String(n).padStart(5)} paid turns  (${pct(good, n)})`);
+    }
+
+    // ---- 5d. where it would sit in the chain ----
+    console.log('\n  where the engine belongs, per intent:');
+    console.log('    (BEFORE the ladder only where the ladder has nothing; the authored');
+    console.log('     hint beats a derived step every time it exists)');
+    const byIntentFit = new Map<string, { n: number; ok: number }>();
+    for (const r of assessed) {
+      const cur = byIntentFit.get(r.intent) ?? { n: 0, ok: 0 };
+      byIntentFit.set(r.intent, { n: cur.n + 1, ok: cur.ok + (r.fit!.mathEngineCanAnswerIntent ? 1 : 0) });
+    }
+    for (const [i, { n, ok: good }] of [...byIntentFit.entries()].sort((a, b) => b[1].ok - a[1].ok)) {
+      const place = good === 0 ? 'never — leave it with the model' : 'AFTER the ladder, before the model';
+      console.log(`    ${i.padEnd(20)} ${String(good).padStart(5)}/${String(n).padEnd(6)} ${place}`);
+    }
+
+    // ---- 5e. five examples of each success ----
+    console.log('\n  five examples the engine could take:');
+    for (const r of fits.slice(0, 5)) {
+      console.log(`    "${r.canonical}" · ${r.intent} · ${r.topic} · ${r.fit!.mathEngineActionCandidate}` +
+        ` · steps=${r.fit!.mathEngineHasUsableSteps} · conf=${r.fit!.mathEngineConfidence}`);
+    }
+    if (!fits.length) console.log('    (none)');
+  }
+
   console.log(
     `\n  ${paid.length} of ${rows.length} turns would reach the model (${pct(paid.length, rows.length)}); ` +
       `${addressable} of those are addressable.`,
