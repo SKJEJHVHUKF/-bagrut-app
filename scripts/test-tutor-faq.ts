@@ -36,7 +36,7 @@
 import { readFileSync } from 'fs';
 import {
   buildCorpusIdf, buildFaqIndex, matchFaq, stepReference, tokenGroups, tokens,
-  FAQ_TRANSFER_THRESHOLD, mentionsForeignNumber,
+  FAQ_TRANSFER_THRESHOLD, mentionsForeignNumber, pointsAtThisExercise,
 } from '../lib/tutor-faq';
 import { classifyAsk } from '../lib/tutor-local';
 import type { TutorFaq, TutorFaqBank } from '../content/tutor-faq/types';
@@ -272,9 +272,25 @@ async function trace(text: string) {
         .map((p) => buildFaqIndex(p, { idf: topicIdf }));
       if (indices.length) {
         {
-          const TRANSFER_OPTS = { threshold: FAQ_TRANSFER_THRESHOLD, minContentMatches: 2 };
+          // Overridable so the re-enable bar can be SWEPT rather than argued
+          // about. The note in lib/tutor-faq.ts says the route back is
+          // authoring rather than tuning; that is a claim, and a claim about
+          // numbers should be cheap to re-test:
+          //
+          //   FAQ_SWEEP_THRESHOLD=0.78 FAQ_SWEEP_MIN_CONTENT=3 npm run test:faq
+          //
+          // Defaults are exactly production, so an ordinary run is unchanged.
+          const TRANSFER_OPTS = {
+            threshold: Number(process.env.FAQ_SWEEP_THRESHOLD) || FAQ_TRANSFER_THRESHOLD,
+            minContentMatches: Number(process.env.FAQ_SWEEP_MIN_CONTENT) || 2,
+          };
           /** First index that answers — production returns on the first hit. */
+          const SCREEN = process.env.FAQ_SWEEP_NO_SCREEN !== '1';
           const tryTransfer = (alt: string) => {
+            // The same question-side screen production applies. Off via
+            // FAQ_SWEEP_NO_SCREEN=1 so its contribution is measurable, not
+            // assumed.
+            if (SCREEN && pointsAtThisExercise(alt)) return null;
             for (const ix of indices) {
               const hit = matchFaq(ix, alt, TRANSFER_OPTS);
               if (hit) return hit;
@@ -363,7 +379,12 @@ async function trace(text: string) {
   if (farQueries) {
     console.log(
       `  far-unit ${(farRate * 100).toFixed(1)}% — ${farRate > MAX_FAR ? 'above' : 'below'} the ${MAX_FAR * 100}% ` +
-        'guideline. Not enforced while cross-question reuse is disabled.',
+        'guideline. REPORTED, never enforced: this fires held-out queries at a ' +
+        'unit from a different SUB-TOPIC, and production cannot reach that — ' +
+        'stage 1 searches only the student’s own unit and stage 2 only their ' +
+        'own group. It is a specificity signal for authoring, and enforcing it ' +
+        'would push someone to weaken real entries to satisfy a scenario that ' +
+        'does not exist.',
     );
   }
   // Reported, not enforced: TRANSFER_ENABLED is false in lib/tutor-faq.ts
@@ -374,7 +395,7 @@ async function trace(text: string) {
   if (transferQueries) {
     const verdict =
       unsafeRate <= MAX_UNSAFE_TRANSFER && transferRate >= MIN_TRANSFER
-        ? `✅ would now clear the bar (unsafe ≤ ${MAX_UNSAFE_TRANSFER * 100}%, fires ≥ ${MIN_TRANSFER * 100}%) — consider TRANSFER_ENABLED = true`
+        ? `✅ clears the bar (unsafe ≤ ${MAX_UNSAFE_TRANSFER * 100}%, fires ≥ ${MIN_TRANSFER * 100}%) — cross-question reuse stays ON`
         : `⛔ still below the bar (needs unsafe ≤ ${MAX_UNSAFE_TRANSFER * 100}% and fires ≥ ${MIN_TRANSFER * 100}%) — stays disabled`;
     console.log(`  ${verdict}`);
   }

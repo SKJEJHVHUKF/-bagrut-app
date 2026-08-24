@@ -279,13 +279,12 @@ const TRANSFERABLE = new Set<TutorFaqKind>(['concept', 'mistake', 'check']);
  * overlap rises with it — so an answer from another exercise has to earn a
  * clearly better match before it is served in place of a model call.
  */
-export const FAQ_TRANSFER_THRESHOLD = 0.62;
+export const FAQ_TRANSFER_THRESHOLD = 0.66;
 
 /**
- * ⛔ CROSS-QUESTION REUSE IS OFF. It was built, measured, and did not earn its
- * risk. The code stays because the measurement in scripts/test-tutor-faq.ts
- * still runs against it, so if the bank is ever authored to be more
- * discriminating the numbers will say so — but nothing reaches students today.
+ * ✅ CROSS-QUESTION REUSE IS ON, after a sixth tightening cleared the bar the
+ * previous five did not. It was off for a long time and the history below is
+ * kept because it is the argument for every guard that is still here.
  *
  * The idea: ~2,300 entries are authored, and only the ~10 on the student's own
  * question are ever searched. Stage 2 would serve an entry from a sibling
@@ -306,17 +305,35 @@ export const FAQ_TRANSFER_THRESHOLD = 0.62;
  * defect and the rest read as clean. Corrected, the real rate is 4.2% — about
  * one wrong answer for every four calls saved.
  *
- * That trade is wrong for this product. A student told something about a
- * different exercise stops trusting the tutor, and the whole point of routing
- * work away from the model is that deterministic answers are MORE reliable,
- * not cheaper-and-shakier. The saving it bought was ~4% of remaining calls.
+ * That trade was wrong for this product, and the note here said the way back
+ * was authoring rather than tuning. That turned out to be half right: a
+ * threshold sweep alone found no working point (0.62/mc3 came closest at
+ * 11.2% fires / 1.6% unsafe, still short on reach), but it also showed WHY.
+ * Every screen in place was reading the ANSWER. Nothing read the QUESTION.
  *
- * TO RE-ENABLE: get `unsafe` under 2% while `fires` stays above ~12% in
- * `npm run test:faq`, then flip this. The likeliest route is authoring, not
- * tuning — entries whose wording is specific enough that a sibling exercise's
- * phrasing does not match them.
+ *   + screen the question too (pointsAtThisExercise)
+ *                                         fires 14.8%  unsafe  1.9%
+ *
+ * A student asking "מאיפה הגיע ה-60" or "למה חילקת בשורה השנייה" is pointing
+ * at the thing in front of them, and a general explanation from a sibling
+ * exercise answers none of it — those are exactly the where-from / why-not /
+ * what-if / why-step asks stage 2 is not allowed to serve. At runtime we
+ * cannot know which kind the student meant, only what their words point at,
+ * and deixis is cheap to detect: a number, or one of פה / כאן / הזה / בשורה.
+ *
+ * That cut the wrong answers by 55% (4.2% → 1.9%) for 2.4 points of reach.
+ * Sweeping the threshold on top of it, 0.62 through 0.68 all clear the bar;
+ * 0.66 was chosen for having margin on BOTH sides (12.7% fires, 1.5% unsafe)
+ * rather than the most reach, because the two errors do not cost the same: a
+ * miss costs one model call, a wrong answer costs the student's trust.
+ *
+ * TO TURN IT OFF AGAIN: flip this to false. The bar it must keep clearing is
+ * `unsafe ≤ 2%` with `fires ≥ 12%` in `npm run test:faq`, which is asserted
+ * there — and both knobs are sweepable from the environment
+ * (FAQ_SWEEP_THRESHOLD, FAQ_SWEEP_MIN_CONTENT, FAQ_SWEEP_NO_SCREEN) so the
+ * claim can be re-tested in a minute instead of argued about.
  */
-const TRANSFER_ENABLED = false;
+const TRANSFER_ENABLED = true;
 
 type Indexed = { faq: TutorFaq; docs: Set<string>[] };
 
@@ -499,6 +516,35 @@ function groupOf(faqId: string): string {
  * question or solution are not foreign — "שני נעלמים" and a `2` in their own
  * equation say nothing about a different exercise.
  */
+/**
+ * Is the student pointing at THIS exercise? Then nothing from another one may
+ * be served, however well it scores.
+ *
+ * `mentionsForeignNumber` screens the ANSWER — it stops another exercise's
+ * arithmetic from landing on the screen. This screens the QUESTION, which is
+ * the half that was missing: "מאיפה הגיע ה-60", "למה חילקת בשורה השנייה",
+ * "ומה אם היו שלושה" are all about the specific thing in front of the student,
+ * and a general explanation from a sibling exercise answers none of them. Those
+ * asks are exactly the `where-from` / `why-not` / `what-if` / `why-step` kinds
+ * the transfer stage is not allowed to serve — but at runtime we do not know
+ * which kind the student MEANT, only what their words point at.
+ *
+ * Two signals, both cheap and both about deixis rather than topic:
+ *   a number   — a concept question almost never carries one; a question about
+ *                this solution's arithmetic almost always does
+ *   a pointer  — פה / כאן / הזה / בשורה / בשלב / למעלה / שלך
+ *
+ * Measured effect on the cross-question reuse bar, over the whole bank:
+ *   without it   fires 11.2%  unsafe 1.6%   (threshold 0.62, minContent 3)
+ *   with it      see scripts/test-tutor-faq.ts — this is why it exists
+ */
+export function pointsAtThisExercise(message: string): boolean {
+  if (/\d/.test(message)) return true;
+  return /(?:^|[^א-ת])(?:פה|כאן|הזה|הזאת|הזו|בשורה|בשלב|למעלה|למטה|שלך|שכתבת|שעשית|שחילקת|שהצבת)(?:[^א-ת]|$)/.test(
+    message,
+  );
+}
+
 export function mentionsForeignNumber(answer: string, ownText: string): boolean {
   const own = new Set(ownText.match(/\d+(?:\.\d+)?/g) ?? []);
   for (const n of answer.match(/\d+(?:\.\d+)?/g) ?? []) {
@@ -596,7 +642,7 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
   // THIS solution and cannot transfer), and only for TRANSFERABLE kinds.
   // Two passes so a sibling exercise wins over a distant one without matchFaq
   // having to know anything about unit ids.
-  if (TRANSFER_ENABLED && step === null) {
+  if (TRANSFER_ENABLED && step === null && !pointsAtThisExercise(message)) {
     // SAME SUB-TOPIC ONLY, and this is a measured choice, not caution for its
     // own sake. Adding a topic-wide fallback was tried and rejected:
     //
