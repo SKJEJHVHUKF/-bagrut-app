@@ -15,7 +15,9 @@
  * served than that it is.
  */
 
-import { screen, similarity, SIMILARITY_THRESHOLD, TRANSFERABLE } from '../lib/tutor-answer-library';
+import {
+  screen, similarity, SIMILARITY_THRESHOLD, SAME_QUESTION_THRESHOLD, TRANSFERABLE,
+} from '../lib/tutor-answer-library';
 import { EMPTY_TRACE, type ClientTrace } from '../lib/tutor-telemetry';
 import { CANONICAL_INTENTS } from '../lib/tutor-intent';
 
@@ -42,7 +44,12 @@ const GOOD =
 
 console.log('\n=== what may be stored at all ===\n');
 ok(screen(t({ questionId: '' }), GOOD) === 'skipped', 'no question id → nothing to key on, skipped');
-ok(screen(t({ intent: '' }), GOOD) === 'skipped', 'no intent → nothing to key on, skipped');
+// ⚠️ The case that emptied the library. 10 of the first 12 turns that reached
+// the model had no recognised intent — which is WHY they reached it — and the
+// first version skipped every one of them.
+ok(screen(t({ intent: '' }), GOOD) === 'live', 'NO intent is still captured: those are the turns that cost money');
+ok(screen(t({ normalizedUserMessage: 'אה' }), GOOD) === 'skipped', 'a probe too short to mean anything keys nothing');
+ok(screen(t({ normalizedUserMessage: '' }), GOOD) === 'skipped', 'an empty probe keys nothing');
 ok(screen(t({}), 'קצר מדי') === 'rejected-shape', 'too short to be an answer');
 ok(screen(t({}), 'א'.repeat(2000)) === 'rejected-shape', 'too long to be an answer');
 ok(screen(t({}), `${GOOD} ∀x∈ℝ`) === 'rejected-shape', 'university notation is not תיכון notation');
@@ -59,19 +66,22 @@ ok(
   'why_wrong → rejected even when the wording is clean; the INTENT is about their attempt',
 );
 
-console.log('\n=== live vs pending ===\n');
-// The point of the split: only an answer about the SUBJECT is served across
-// questions. Everything about one exercise's numbers waits for a person.
+console.log('\n=== capture is permissive, TRANSFER is not ===\n');
+// Capture keeps everything that passes the personal and shape screens. What an
+// answer may be REUSED for is decided at LOOKUP: tier 1 is the same question,
+// tier 2 refuses any intent outside TRANSFERABLE. Gating capture on that rule
+// as well was the same check twice, and the second copy emptied the library.
 for (const intent of CANONICAL_INTENTS) {
   if (intent === 'why_wrong') continue; // covered above, always rejected
-  const verdict = screen(t({ intent }), GOOD);
-  const want = TRANSFERABLE.has(intent) ? 'live' : 'pending';
-  ok(verdict === want, `${intent.padEnd(22)} → ${want}`);
+  ok(screen(t({ intent }), GOOD) === 'live', `${intent.padEnd(22)} → captured`);
 }
 ok(!TRANSFERABLE.has('why_this_step'), 'why_this_step never travels — it is about this exercise');
 ok(!TRANSFERABLE.has('next_step'), 'next_step never travels');
 ok(!TRANSFERABLE.has('what_to_do_here'), 'what_to_do_here never travels');
 ok(!TRANSFERABLE.has('how_to_solve'), 'how_to_solve never travels — it would hand over the solution');
+ok(!TRANSFERABLE.has(''), 'an unrecognised intent never travels across questions either');
+ok(SAME_QUESTION_THRESHOLD > SIMILARITY_THRESHOLD,
+   'the same-question bar is HIGHER: nothing else has filtered the match there');
 
 console.log('\n=== how close is close enough ===\n');
 const sim = (a: string, b: string) => similarity(a, b);

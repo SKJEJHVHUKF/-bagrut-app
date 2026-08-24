@@ -79,6 +79,9 @@ const PERSONAL = [
 /** University notation the content standard forbids. Same list as the merge gate. */
 const BANNED = /[∀∃∧∨⟺∅ℝℂ■]/;
 
+/** Below this a probe is a noise word, not a question. "אה" must key nothing. */
+const MIN_PROBE = 8;
+
 const MIN_LEN = 60;
 const MAX_LEN = 1800;
 
@@ -90,20 +93,36 @@ export type CaptureInput = {
 };
 
 /** Why an answer was not stored. Returned so the report can show the shape of what is lost. */
-export type CaptureVerdict = 'live' | 'pending' | 'rejected-personal' | 'rejected-shape' | 'skipped';
+/**
+ * ⚠️ `pending` is a DATABASE status, not a verdict this function returns any
+ * more. Cross-question safety is enforced at LOOKUP time — tier 2 refuses any
+ * intent outside TRANSFERABLE — so gating capture on it as well was the same
+ * check twice, and the second copy was the one that emptied the library.
+ * A person can still set a row to 'pending' or 'rejected' by hand.
+ */
+export type CaptureVerdict = 'live' | 'rejected-personal' | 'rejected-shape' | 'skipped';
 
 export function screen(trace: ClientTrace, answer: string): CaptureVerdict {
   const a = answer.trim();
-  // Nothing to key on: without a question and an intent there is no lookup
-  // that could ever find this row again, so storing it is pure noise.
-  if (!trace.questionId || !trace.intent) return 'skipped';
+  // ⚠️ AN INTENT IS NOT REQUIRED, AND REQUIRING ONE MADE THE LIBRARY USELESS.
+  //
+  // The first version keyed on (question, intent) and skipped anything with no
+  // intent. Then the first real day of traffic: 10 of 12 turns that reached the
+  // model had NO recognised intent — which is exactly why they reached it. The
+  // library was refusing to learn from precisely the turns it exists for, and
+  // measured empty after a full round of questions.
+  //
+  // So the key is the question plus the words. A probe too short to carry
+  // meaning is still skipped: "אה" would match anything on that question.
+  if (!trace.questionId) return 'skipped';
+  if (trace.normalizedUserMessage.trim().length < MIN_PROBE) return 'skipped';
   if (a.length < MIN_LEN || a.length > MAX_LEN) return 'rejected-shape';
   if (BANNED.test(a)) return 'rejected-shape';
   if (PERSONAL.some((p) => a.includes(p))) return 'rejected-personal';
   // `why_wrong` is ABOUT the student's attempt by definition, even when the
   // wording happens to dodge every phrase above.
   if (trace.intent === 'why_wrong') return 'rejected-personal';
-  return TRANSFERABLE.has(trace.intent) ? 'live' : 'pending';
+  return 'live';
 }
 
 /**
@@ -159,6 +178,17 @@ export function similarity(a: string, b: string): number {
 /** How close a different phrasing has to be before the stored answer is served. */
 export const SIMILARITY_THRESHOLD = 0.7;
 
+/**
+ * The bar on the SAME question when the intent cannot vouch for the match.
+ *
+ * Higher than the cross-question bar, which reads backwards until you see why:
+ * across questions the intent has already done the filtering, and only a
+ * subject-level answer is eligible at all. Here nothing has filtered anything —
+ * the two probes are all there is — so the words have to carry the whole
+ * decision on their own.
+ */
+export const SAME_QUESTION_THRESHOLD = 0.75;
+
 export type LearnedAnswer = { id: number; answer: string; via: 'same-question' | 'same-topic' };
 
 /**
@@ -175,21 +205,41 @@ export async function findLearnedAnswer(trace: ClientTrace): Promise<LearnedAnsw
     const db = createAdminClient();
     if (!db) return null;
 
-    // ---- tier 1: the same question, the same intent ----
+    // ---- tier 1: the same question ----
     //
-    // No similarity test. The student is looking at the identical exercise and
-    // asking the identical kind of thing; the phrasing they chose does not
-    // change what the right answer is.
+    // Two ways in, and the second is the one that carries the traffic.
+    //
+    //   same intent      served straight away. The student is looking at the
+    //                    identical exercise and asking the identical KIND of
+    //                    thing; their choice of words does not change the
+    //                    right answer.
+    //   no intent, or a  the words have to match instead, at a HIGHER bar than
+    //   different one    the cross-question one. Most turns that reach the
+    //                    model have no recognised intent — that is why they
+    //                    reached it — so without this branch the library never
+    //                    learns from the turns it exists for.
     if (trace.questionId) {
       const { data } = await db
         .from('tutor_answer')
-        .select('id, answer')
+        .select('id, answer, intent, normalized_message')
         .eq('status', 'live')
         .eq('question_id', trace.questionId)
-        .eq('intent', trace.intent)
         .order('hits', { ascending: false })
-        .limit(1);
-      if (data?.length) return { id: data[0].id as number, answer: data[0].answer as string, via: 'same-question' };
+        .limit(20);
+      const rows = (data ?? []) as Array<{ id: number; answer: string; intent: string; normalized_message: string }>;
+
+      if (trace.intent) {
+        const sameIntent = rows.find((r) => r.intent === trace.intent);
+        if (sameIntent) return { id: sameIntent.id, answer: sameIntent.answer, via: 'same-question' };
+      }
+
+      let best: { id: number; answer: string; score: number } | null = null;
+      for (const r of rows) {
+        const score = similarity(trace.normalizedUserMessage, r.normalized_message ?? '');
+        if (score >= SAME_QUESTION_THRESHOLD && (!best || score > best.score))
+          best = { id: r.id, answer: r.answer, score };
+      }
+      if (best) return { id: best.id, answer: best.answer, via: 'same-question' };
     }
 
     // ---- tier 2: the same topic, a close phrasing, and only if it travels ----

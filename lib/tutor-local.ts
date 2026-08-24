@@ -223,7 +223,9 @@ export function classifyAsk(message: string): Ask | null {
     return 'key-points';
 
   if (
-    has(t, 'תראה לי את הפתרון', 'הפתרון המלא', 'תפתור', 'תראה לי איך', 'פתרון מלא', 'תפתרי') ||
+    has(t, 'תראה לי את הפתרון', 'הפתרון המלא', 'תפתור', 'תראה לי איך', 'פתרון מלא', 'תפתרי',
+           // "אתה יכול לפתור את זה" — the same request as "תפתור", asked politely.
+           'אתה יכול לפתור', 'את יכולה לפתור', 'תוכל לפתור', 'תוכלי לפתור') ||
     (has(t, 'פתרון') && has(t, 'תראה', 'תן', 'רוצה', 'תסביר')) ||
     // "what's the answer" IS a request for the solution; the A/G templates
     // decide how much of it a student who has not tried yet actually gets.
