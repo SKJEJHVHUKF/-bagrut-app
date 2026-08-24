@@ -35,14 +35,23 @@ export type ServerStamp = {
 let warned = false;
 
 export async function recordTutorTrace(raw: unknown, stamp: ServerStamp): Promise<void> {
-  // The client's account of itself is a claim. Everything below `sanitize` is
-  // clamped to the enums, capped in length and coerced to the right type; the
-  // stamp is the server's own measurement and is the only part trusted.
-  const t = sanitizeClientTrace(raw);
-  const db = createAdminClient();
-  if (!db) return;
-
+  // ⚠️ THE WHOLE BODY IS INSIDE THE TRY, INCLUDING THE SETUP.
+  //
+  // The caller does `void recordTutorTrace(...)` with no `.catch`, and an
+  // unhandled rejection is a process-level fault in Node 15+ — so a throw here
+  // would not merely lose a diagnostic row, it would take down a warm lambda
+  // after the student's answer had already streamed. `createAdminClient` can
+  // throw on a malformed URL, which is precisely the kind of environment
+  // mistake this table exists to survive. "Never throws" has to be true, not
+  // documented.
   try {
+    // The client's account of itself is a claim. Everything below `sanitize`
+    // is clamped to the enums, capped in length and coerced to the right type;
+    // the stamp is the server's own measurement and is the only part trusted.
+    const t = sanitizeClientTrace(raw);
+    const db = createAdminClient();
+    if (!db) return;
+
     const { error } = await db.from('tutor_trace').insert({
       screen: t.screen,
       topic: t.topic,
@@ -76,6 +85,7 @@ export async function recordTutorTrace(raw: unknown, stamp: ServerStamp): Promis
       );
     }
   } catch {
-    /* network-level failure: the reply already streamed, and that is what matters */
+    /* a bad env var, a dead network, anything at all: the reply already
+       streamed, and that is the only thing that was ever at stake here */
   }
 }
