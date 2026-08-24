@@ -227,7 +227,13 @@ export function classifyAsk(message: string): Ask | null {
     (has(t, 'פתרון') && has(t, 'תראה', 'תן', 'רוצה', 'תסביר')) ||
     // "what's the answer" IS a request for the solution; the A/G templates
     // decide how much of it a student who has not tried yet actually gets.
-    has(t, 'מה התשובה', 'מה הפתרון')
+    has(t, 'מה התשובה', 'מה הפתרון') ||
+    // "תעבור איתי על הכל" — a real phrasing from the trace, and the first one
+    // the router did not recognise at all. Deliberately NOT a bare "תעבור על":
+    // "תעבור על התשובה שלי" is a request to CHECK, and answering it with the
+    // full solution would hand the answer to a student who asked to be marked.
+    // "איתי" and "הכל" are what make it a walkthrough.
+    has(t, 'תעבור איתי', 'נעבור איתי', 'תעברי איתי', 'תעבור על הכל', 'נעבור על הכל')
   ) {
     return 'full';
   }
