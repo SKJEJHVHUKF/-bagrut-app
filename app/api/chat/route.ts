@@ -7,6 +7,8 @@ import { buildTutorSystem } from '@/lib/agents/prompts';
 import { normalizeUnitLevel, normalizeFormNumber, MAX_CONTEXT_LEN } from '@/lib/agents/config';
 import { logCost } from '@/lib/mathscan/cost';
 import { recordTutorTrace } from '@/lib/tutor-trace-store';
+import { findLearnedAnswer, captureAnswer, countHit } from '@/lib/tutor-answer-library';
+import { sanitizeClientTrace } from '@/lib/tutor-telemetry';
 import { TUTOR_TOOLS, resolveSuggestion } from '@/lib/agents/tools';
 import { readFacts, writeFacts, mergeFact, renderMemoryBlock } from '@/lib/tutor-memory';
 // One copy of the injection guard, in one place. This file used to keep its
@@ -268,9 +270,24 @@ export async function POST(request: Request) {
       console.error('insert user msg error:', insertUserError);
       return Response.json({ error: 'שגיאה בשמירת ההודעה.' }, { status: 500 });
     }
-    // The turn is now committed to history, so it is charged to the quota —
-    // same moment as before (the user row), just in the table nobody can empty.
-    await logAgentUsage(supabase, user.id, 'chat');
+    // ===== 9b. HAVE WE ALREADY PAID FOR THIS ANSWER? =====
+    //
+    // Before the quota is charged, not after. The daily cap exists to bound
+    // what a student can COST, and an answer served from the library costs
+    // nothing — charging for it would ration a free thing. So a hit skips
+    // `logAgentUsage` entirely and the student's allowance is untouched.
+    //
+    // The lookup runs here rather than earlier because everything above has
+    // to happen either way: the message is in history, the conversation
+    // exists, and the reply will stream through the same events. The only
+    // difference a hit makes is that no model is called.
+    const clientTrace = sanitizeClientTrace(body.trace);
+    const learned = await findLearnedAnswer(clientTrace);
+    if (!learned) {
+      // The turn is now committed to history, so it is charged to the quota —
+      // same moment as before (the user row), just in the table nobody can empty.
+      await logAgentUsage(supabase, user.id, 'chat');
+    }
 
     // ===== 10. CALL ANTHROPIC =====
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -374,101 +391,146 @@ export async function POST(request: Request) {
         let usageIn = 0;
         let usageOut = 0;
 
+        // ===== the answer we already paid for =====
+        //
+        // Sent as ONE delta rather than typed out character by character. The
+        // streaming effect exists to hide the model's latency, and there is no
+        // latency to hide — faking it would spend real milliseconds to look
+        // slower. Everything after this block is identical to a model turn:
+        // the same persist, the same `done` event, the same client code.
+        if (learned) {
+          fullText = learned.answer;
+          send('delta', { text: fullText });
+          void countHit(learned.id);
+          void recordTutorTrace(
+            { ...clientTrace, fallbackReason: 'no_fallback' },
+            {
+              durationMs: Date.now() - startedAt,
+              model: `library:${learned.via}`,
+              inputTokens: 0,
+              outputTokens: 0,
+              cachedRead: 0,
+              cachedWrite: 0,
+            },
+          );
+        }
+
         try {
-          const stream = client.messages.stream({
-            model,
-            // 500, down from 800. This is a SAFETY RAIL, not a saving:
-            // billing is per token generated, so a cap only costs money when
-            // it is hit — and then it truncates the answer mid-sentence and
-            // the student asks again. The `[truncated]` warning below is how
-            // we find out whether that is happening; if it appears in the
-            // logs, raise this rather than leaving replies cut off.
-            max_tokens: 500,
-            system,
-            messages: claudeMessages,
-            // The tutor may suggest an in-app action and may remember a fact.
-            // Neither executes anything here: `suggest_action` becomes a button
-            // the student chooses to press, and that is why there is no
-            // tool_result round-trip and no agent loop — the turn ends when the
-            // text ends. ⚠️ Tools serialise ahead of `system` in the cached
-            // prefix; editing lib/agents/tools.ts invalidates every tutor cache
-            // entry once (see the note there).
-            tools: TUTOR_TOOLS,
-            // Cost valve: effort:'low' only on the Sonnet path. ⚠️ Haiku 4.5
-            // (ungrounded) 400s on effort ("This model does not support the
-            // effort parameter"), so gate on useSonnet. Haiku is cheap anyway.
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ...(useSonnet ? ({ output_config: { effort: 'low' } } as any) : {}),
-          });
+          // The model is called only when the library had nothing. Everything
+          // below — tools, memory, the trace, the capture — belongs to a turn
+          // that was actually paid for.
+          if (!learned) {
+            const stream = client.messages.stream({
+              model,
+              // 500, down from 800. This is a SAFETY RAIL, not a saving:
+              // billing is per token generated, so a cap only costs money when
+              // it is hit — and then it truncates the answer mid-sentence and
+              // the student asks again. The `[truncated]` warning below is how
+              // we find out whether that is happening; if it appears in the
+              // logs, raise this rather than leaving replies cut off.
+              max_tokens: 500,
+              system,
+              messages: claudeMessages,
+              // The tutor may suggest an in-app action and may remember a fact.
+              // Neither executes anything here: `suggest_action` becomes a button
+              // the student chooses to press, and that is why there is no
+              // tool_result round-trip and no agent loop — the turn ends when the
+              // text ends. ⚠️ Tools serialise ahead of `system` in the cached
+              // prefix; editing lib/agents/tools.ts invalidates every tutor cache
+              // entry once (see the note there).
+              tools: TUTOR_TOOLS,
+              // Cost valve: effort:'low' only on the Sonnet path. ⚠️ Haiku 4.5
+              // (ungrounded) 400s on effort ("This model does not support the
+              // effort parameter"), so gate on useSonnet. Haiku is cheap anyway.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(useSonnet ? ({ output_config: { effort: 'low' } } as any) : {}),
+            });
 
-          stream.on('text', (delta: string) => {
-            fullText += delta;
-            send('delta', { text: delta });
-          });
+            stream.on('text', (delta: string) => {
+              fullText += delta;
+              send('delta', { text: delta });
+            });
 
-          const final = await stream.finalMessage();
+            const final = await stream.finalMessage();
 
-          // ⚠️ This used to read content[0] and assume it was the text block.
-          // With tools in play the model can put a tool_use block first, and
-          // that assumption silently discarded the authoritative text — so join
-          // every text block instead of trusting a position.
-          const authoritative = final.content
-            .filter((b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text')
-            .map((b) => b.text)
-            .join('');
-          if (authoritative.trim()) fullText = authoritative;
+            // ⚠️ This used to read content[0] and assume it was the text block.
+            // With tools in play the model can put a tool_use block first, and
+            // that assumption silently discarded the authoritative text — so join
+            // every text block instead of trusting a position.
+            const authoritative = final.content
+              .filter((b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text')
+              .map((b) => b.text)
+              .join('');
+            if (authoritative.trim()) fullText = authoritative;
 
-          usageIn = final.usage.input_tokens;
-          usageOut = final.usage.output_tokens;
-          // Cache-aware cost line for Vercel's logs. `input_tokens` alone hides
-          // the prefix: a cached turn and a turn that just WROTE the 4,800-token
-          // prefix report the same ~1,500 — and on Sonnet that write is ~$0.018.
-          logCost('chat', model, final.usage);
-          // The diagnostic row. NOT awaited: the reply has already streamed to
-          // the student, and a slow or missing table must not hold the request
-          // open. `trace` is whatever the client sent and is validated inside.
-          const u = final.usage as unknown as Record<string, number | undefined>;
-          void recordTutorTrace(body.trace, {
-            durationMs: Date.now() - startedAt,
-            model,
-            inputTokens: usageIn,
-            outputTokens: usageOut,
-            cachedRead: u.cache_read_input_tokens ?? 0,
-            cachedWrite: u.cache_creation_input_tokens ?? 0,
-          });
-          if (final.stop_reason === 'max_tokens') {
-            console.warn(
-              `[truncated] chat reply hit max_tokens (out=${usageOut}) — the student got a cut-off ` +
-                'answer and will likely ask again, which costs more than the cap saves. Raise max_tokens.'
-            );
-          }
-
-          // ===== tool calls: suggestion + memory =====
-          // Both are best-effort and deliberately AFTER the text is settled.
-          // Nothing here may throw past its own guard: a malformed tool input
-          // must not cost the student the answer that already streamed.
-          for (const b of final.content) {
-            if (b.type !== 'tool_use') continue;
-
-            if (b.name === 'suggest_action') {
-              // resolveSuggestion drops anything it cannot map to a real route.
-              const action = resolveSuggestion(b.input, 'math5', topic);
-              if (action) send('action', action);
-              continue;
+            usageIn = final.usage.input_tokens;
+            usageOut = final.usage.output_tokens;
+            // Cache-aware cost line for Vercel's logs. `input_tokens` alone hides
+            // the prefix: a cached turn and a turn that just WROTE the 4,800-token
+            // prefix report the same ~1,500 — and on Sonnet that write is ~$0.018.
+            logCost('chat', model, final.usage);
+            // The diagnostic row. NOT awaited: the reply has already streamed to
+            // the student, and a slow or missing table must not hold the request
+            // open. `trace` is whatever the client sent and is validated inside.
+            const u = final.usage as unknown as Record<string, number | undefined>;
+            void recordTutorTrace(body.trace, {
+              durationMs: Date.now() - startedAt,
+              model,
+              inputTokens: usageIn,
+              outputTokens: usageOut,
+              cachedRead: u.cache_read_input_tokens ?? 0,
+              cachedWrite: u.cache_creation_input_tokens ?? 0,
+            });
+            // ===== pay for this answer once =====
+            //
+            // Screened and stored so the next student asking the same thing on
+            // the same question is served from the table and no model is
+            // called. `screen` decides between 'live' and 'pending': an answer
+            // about this exercise's numbers is never served automatically, and
+            // one that mentions the student's own attempt is not stored at all.
+            //
+            // Not awaited, for the same reason as the trace — the reply has
+            // already streamed, and a missing table must not hold it open.
+            void captureAnswer({
+              trace: clientTrace,
+              answer: fullText,
+              model,
+              outputTokens: usageOut,
+            });
+            if (final.stop_reason === 'max_tokens') {
+              console.warn(
+                `[truncated] chat reply hit max_tokens (out=${usageOut}) — the student got a cut-off ` +
+                  'answer and will likely ask again, which costs more than the cap saves. Raise max_tokens.'
+              );
             }
 
-            if (b.name === 'remember') {
-              const fact = (b.input as { fact?: unknown })?.fact;
-              if (typeof fact !== 'string' || !fact.trim()) continue;
-              // Reject anything the student could have injected into his own
-              // profile: the fact is model-authored, but the model was reading
-              // the student's message when it wrote it.
-              if (BLACKLIST.test(fact)) continue;
-              const merged = mergeFact(facts, fact, Date.now());
-              if (await writeFacts(supabase, user.id, merged)) {
-                // The client shows what was saved — memory the student can't
-                // see isn't memory, it's a file on him.
-                send('memory', { facts: merged });
+            // ===== tool calls: suggestion + memory =====
+            // Both are best-effort and deliberately AFTER the text is settled.
+            // Nothing here may throw past its own guard: a malformed tool input
+            // must not cost the student the answer that already streamed.
+            for (const b of final.content) {
+              if (b.type !== 'tool_use') continue;
+
+              if (b.name === 'suggest_action') {
+                // resolveSuggestion drops anything it cannot map to a real route.
+                const action = resolveSuggestion(b.input, 'math5', topic);
+                if (action) send('action', action);
+                continue;
+              }
+
+              if (b.name === 'remember') {
+                const fact = (b.input as { fact?: unknown })?.fact;
+                if (typeof fact !== 'string' || !fact.trim()) continue;
+                // Reject anything the student could have injected into his own
+                // profile: the fact is model-authored, but the model was reading
+                // the student's message when it wrote it.
+                if (BLACKLIST.test(fact)) continue;
+                const merged = mergeFact(facts, fact, Date.now());
+                if (await writeFacts(supabase, user.id, merged)) {
+                  // The client shows what was saved — memory the student can't
+                  // see isn't memory, it's a file on him.
+                  send('memory', { facts: merged });
+                }
               }
             }
           }
