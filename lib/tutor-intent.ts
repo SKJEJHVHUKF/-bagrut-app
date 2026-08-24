@@ -280,7 +280,7 @@ const RULES: Rule[] = [
   // The subject is required (`[א-ת]{3,}` after the frame) precisely so a bare
   // "מה זה?" does NOT land here: with nothing named there is no card to find
   // and no question to answer.
-    R('concept', `${OPEN}מה\\s*(?:זה|זו|זאת|הכוונה\\s*ב)\\s+[א-ת].{2,}$`, 0.85),
+    R('concept', `${OPEN}מה\\s*(?:זה|זו|זאת|הכוונה)\\s*ב?\\s*[א-ת].{2,}$`, 0.85),
     R('concept', `${OPEN}מה\\s*ה?הבדל\\s*בין\\s+[א-ת].{2,}$`, 0.9),
     R('concept', `${OPEN}מתי\\s*(?:משתמשים|בוחרים|צריך)\\s*ב?[א-ת].{2,}$`, 0.85),
     // `\\S` and not `[א-ת]`: the subject is often written in maths notation —

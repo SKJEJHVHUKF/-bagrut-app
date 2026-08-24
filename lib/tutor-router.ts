@@ -77,7 +77,7 @@ export type TurnState = {
 // ------------------------------------------------------------
 
 /** Pure acknowledgement — nothing is being asked. */
-const ACK = /^\s*(?:תודה(?:\s*רבה)?|אוקיי?|או\.?ק\.?|סבבה|מגניב|יופי|מעולה|הבנתי(?:\s*תודה)?|ברור|נכון מאוד|בסדר|טוב|כן טוב|ok|okay|thanks?)\s*[!.…]*\s*$/i;
+const ACK = /^\s*(?:תודה(?:\s*רבה)?|אה+|אוקיי?|או\.?ק\.?|סבבה|מגניב|יופי|מעולה|הבנתי(?:\s*תודה)?|ברור|נכון מאוד|בסדר|טוב|כן טוב|ok|okay|thanks?)\s*[!.…]*\s*$/i;
 
 /**
  * "Carry on" — no new content, just a request for more of the same. Anchored

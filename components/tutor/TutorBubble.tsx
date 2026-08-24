@@ -157,6 +157,61 @@ export default function TutorBubble() {
     adoptFlagsFromUrl();
   }, []);
 
+  // ===== the denominator =====
+  //
+  // A turn answered by the router, the ladder, the FAQ bank or a card never
+  // leaves the browser, so tutor_trace only ever saw the expensive half. That
+  // answers "why did we pay" and cannot answer "how often" — and without the
+  // second, "most questions are answered locally" is a feeling.
+  //
+  // ⚠️ Hooked to `local: true` on the MESSAGE rather than to the six places
+  // that return one. Every local layer already sets that flag to render the
+  // message differently, so this catches all six today and whatever is added
+  // next without anyone remembering to instrument it. The alternative was six
+  // near-identical insertions, which is six chances to miss one.
+  //
+  // Fire and forget, 204, ignored: a diagnostic must never be something the
+  // student can feel. `reportedRef` is what stops a re-render from counting
+  // the same answer twice.
+  const reportedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const last = msgs[msgs.length - 1];
+    if (!last || last.role !== 'assistant' || !last.local) return;
+    if (reportedRef.current.has(last.id)) return;
+    reportedRef.current.add(last.id);
+
+    const asked = [...msgs].reverse().find((m) => m.role === 'user');
+    if (!asked) return;
+    const focus = getTutorFocus();
+    const q = (focus?.question ?? null) as Record<string, unknown> | null;
+    const own = q ? `${String(q.question ?? '')} ${focus?.topic ?? ''}` : (focus?.topic ?? '');
+    const intent = canonicalIntent(asked.text, own || undefined);
+
+    void fetch('/api/tutor-trace', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({
+        trace: {
+          screen: (typeof window === 'undefined' ? '' : window.location.pathname).split('/')[1] ?? '',
+          topic: focus?.topic ?? '',
+          subtopic: focus?.subTopicId ?? '',
+          questionId: String(q?.id ?? ''),
+          normalizedUserMessage: intent.canonical,
+          intent: intent.intent ?? '',
+          confidence: intent.confidence,
+          // ⚠️ Which layer answered is NOT recorded yet. The flag says "some
+          // local layer did", which is exactly the denominator and no more.
+          // Naming the layer means carrying it on the message, and that is a
+          // change at all six sites — worth doing once the denominator has
+          // shown it is worth doing.
+          localRouterMatched: true,
+          fallbackReason: 'no_fallback',
+        },
+      }),
+    }).catch(() => {});
+  }, [msgs]);
+
   // Track what the page is showing.
   useEffect(() => {
     const sync = () => setFocus(getTutorFocus());

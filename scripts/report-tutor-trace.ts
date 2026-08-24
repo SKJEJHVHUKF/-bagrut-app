@@ -51,6 +51,7 @@ type Trace = {
   output_tokens: number;
   cached_read: number;
   cached_write: number;
+  used_llm: boolean;
 };
 
 const pct = (n: number, d: number) => (d ? `${((n / d) * 100).toFixed(1)}%` : '—');
@@ -89,11 +90,31 @@ function table(title: string, rows: Map<string, Trace[]>, total: number) {
     process.exit(2);
   }
 
-  const rows = (data ?? []) as Trace[];
-  console.log(`\ntutor turns that reached the model, last ${DAYS} days: ${rows.length}\n`);
+  const all = (data ?? []) as Trace[];
+  // ⚠️ THE HEADLINE IS THE RATE, NOT THE COUNT.
+  //
+  // This report used to open with "turns that reached the model: 5", which is
+  // a number nobody can act on: five out of eight is an emergency and five out
+  // of eighty is a finished job. The local rows exist so the denominator does.
+  const rows = all.filter((r) => r.used_llm !== false);
+  const localRows = all.filter((r) => r.used_llm === false);
+  const total = all.length;
+  console.log(`\ntutor turns, last ${DAYS} days: ${total}\n`);
+  if (total > 0) {
+    console.log(`  answered locally, no model call   ${String(localRows.length).padStart(5)}  ${pct(localRows.length, total)}`);
+    console.log(`  reached the model                 ${String(rows.length).padStart(5)}  ${pct(rows.length, total)}`);
+  }
+  if (localRows.length === 0 && rows.length > 0) {
+    console.log();
+    console.log('  ⚠️ No local turns recorded. Either every turn really did reach the model,');
+    console.log('     or these rows predate /api/tutor-trace — the rate above is then a');
+    console.log('     ceiling, not a measurement.');
+  }
+  console.log();
   if (rows.length === 0) {
-    console.log('  The table exists and is empty. Either no turn reached the model, or');
-    console.log('  nobody used the tutor. Check `npm run check:usage` for total calls\n');
+    console.log('  No turn reached the model in this window.');
+    if (localRows.length) console.log(`  ${localRows.length} turn(s) were answered locally. That is the goal state.`);
+    else console.log('  And no local turns either — nobody used the tutor.');
     return;
   }
 

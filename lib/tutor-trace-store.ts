@@ -30,6 +30,17 @@ export type ServerStamp = {
   outputTokens: number;
   cachedRead: number;
   cachedWrite: number;
+  /**
+   * Did this turn cost a model call?
+   *
+   * ⚠️ WITHOUT THIS THE TABLE HAS NO DENOMINATOR. It began as a record of
+   * turns that reached the model, and that answers "why did we pay" but never
+   * "how often do we pay" — three unknown_intent rows out of five is 60% of
+   * the FAILURES and says nothing about whether five turns happened or forty.
+   * "Most questions are answered locally" was a feeling for exactly this
+   * reason. Defaults to true so the model path reads as it always did.
+   */
+  usedLlm?: boolean;
 };
 
 let warned = false;
@@ -67,7 +78,7 @@ export async function recordTutorTrace(raw: unknown, stamp: ServerStamp): Promis
       math_engine_used: t.mathEngineUsed,
       compiler_flag_on: (raw as { compilerFlagOn?: boolean } | null)?.compilerFlagOn === true,
       fallback_reason: t.fallbackReason,
-      used_llm: true,
+      used_llm: stamp.usedLlm !== false,
       duration_ms: Math.max(0, Math.round(stamp.durationMs)),
       model: stamp.model.slice(0, 40),
       input_tokens: stamp.inputTokens,
