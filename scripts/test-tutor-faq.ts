@@ -40,12 +40,11 @@ import {
 } from '../lib/tutor-faq';
 import { classifyAsk } from '../lib/tutor-local';
 import { foreignSubject } from '../lib/maths-vocabulary';
-import type { TutorFaq, TutorFaqBank } from '../content/tutor-faq/types';
+import { HELD_POSITIONS, type TutorFaq, type TutorFaqBank } from '../content/tutor-faq/types';
 
 /** Alts at these 0-based positions are held out (2 of ≥7). Fixed positions in
  *  the MIDDLE, not "the last two": an author told "the last two are the test"
  *  writes two outliers there and the number stops meaning anything. */
-const HELD_POSITIONS = new Set([1, 4]);
 const MIN_RECALL = 0.85;
 /** Noise is the production-relevant failure: nothing that no unit covers may
  *  ever be answered. Held to near-zero. */

@@ -64,3 +64,22 @@ export type TutorFaq = {
 
 /** Keyed by unit id (the gate's `where`). */
 export type TutorFaqBank = Record<string, TutorFaq[]>;
+
+/**
+ * Which alts the recall test hides, and therefore which alts have to earn
+ * their entry's place in the index.
+ *
+ * ⚠️ THIS IS NOT "the last two". It is positions 1 and 4, and the difference
+ * is the whole game: `matchFaq` takes a max over each phrasing SEPARATELY, so
+ * a hidden alt is found only if it paraphrases something still visible. An
+ * entry whose alts read [A, A', B, C, C'] scores near zero, because hiding
+ * [1] and [4] removes A' and C' — the only two that echo anything left.
+ * Written the other way round, [A, A', B, C, C'] with the pairs AT 1 and 4,
+ * it scores in the nineties. Same entry, same words, 29% versus 96%.
+ *
+ * It lived as a private const in the test, so an author reading the brief had
+ * no way to see it. Six trigonometry slices passed every structural gate with
+ * zero drops and were functionally silent. It lives here now because both the
+ * test and the merge need the same answer.
+ */
+export const HELD_POSITIONS = new Set([1, 4]);
