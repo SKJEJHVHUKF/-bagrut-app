@@ -6,6 +6,7 @@ import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
 import { buildTutorSystem } from '@/lib/agents/prompts';
 import { normalizeUnitLevel, normalizeFormNumber, MAX_CONTEXT_LEN } from '@/lib/agents/config';
 import { logCost } from '@/lib/mathscan/cost';
+import { recordTutorTrace } from '@/lib/tutor-trace-store';
 import { TUTOR_TOOLS, resolveSuggestion } from '@/lib/agents/tools';
 import { readFacts, writeFacts, mergeFact, renderMemoryBlock } from '@/lib/tutor-memory';
 // One copy of the injection guard, in one place. This file used to keep its
@@ -62,6 +63,9 @@ function todayStartIso(): string {
 }
 
 export async function POST(request: Request) {
+  // Wall clock for the trace. Taken at the very top so it measures what the
+  // student waited for, not just the model call.
+  const startedAt = Date.now();
   try {
     // ===== 1. ORIGIN VALIDATION =====
     if (!isAllowedOrigin(request)) {
@@ -114,6 +118,9 @@ export async function POST(request: Request) {
       formNumber?: unknown;
       /** Unit id when the client's local tutor + FAQ bank both abstained. */
       faqMiss?: unknown;
+      /** Diagnostics from the client: why the local layers declined. Validated
+       *  in lib/tutor-telemetry before any of it is stored. */
+      trace?: unknown;
     };
     try {
       body = await request.json();
@@ -417,6 +424,18 @@ export async function POST(request: Request) {
           // the prefix: a cached turn and a turn that just WROTE the 4,800-token
           // prefix report the same ~1,500 — and on Sonnet that write is ~$0.018.
           logCost('chat', model, final.usage);
+          // The diagnostic row. NOT awaited: the reply has already streamed to
+          // the student, and a slow or missing table must not hold the request
+          // open. `trace` is whatever the client sent and is validated inside.
+          const u = final.usage as unknown as Record<string, number | undefined>;
+          void recordTutorTrace(body.trace, {
+            durationMs: Date.now() - startedAt,
+            model,
+            inputTokens: usageIn,
+            outputTokens: usageOut,
+            cachedRead: u.cache_read_input_tokens ?? 0,
+            cachedWrite: u.cache_creation_input_tokens ?? 0,
+          });
           if (final.stop_reason === 'max_tokens') {
             console.warn(
               `[truncated] chat reply hit max_tokens (out=${usageOut}) — the student got a cut-off ` +

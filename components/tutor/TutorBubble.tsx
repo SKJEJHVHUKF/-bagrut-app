@@ -48,6 +48,8 @@ import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
 import { routeMessage, answerGradedLocally, canonicalFor } from '@/lib/tutor-router';
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
+import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
+import { decideFallbackReason } from '@/lib/tutor-telemetry';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
 // two call sites below, not here. Both pull the whole content corpus behind
 // them — tutor-context via lib/cognition, tutor-greeting via
@@ -233,11 +235,15 @@ export default function TutorBubble() {
       // the canonical phrasing of that ask, because answerLocally classifies
       // the words it is given and "ואז?" classifies as nothing.
       let probe = text;
+      // Remembered for the trace: whether the router understood the message at
+      // all is the difference between 'unknown_intent' and 'no_local_content'.
+      let routeKind: string = 'open';
       if (focusNow) {
         const route = routeMessage(text, focusNow, {
           lastAsk: lastAskRef.current,
           served: servedRef.current.kinds,
         });
+        routeKind = route.kind;
         if (route.kind === 'answer') {
           const graded = answerGradedLocally(route, focusNow);
           if (graded) {
@@ -379,6 +385,51 @@ export default function TutorBubble() {
         /* server defaults to 5 units / 572 */
       }
 
+      // ===== the trace: why this turn is reaching the model =====
+      //
+      // Built HERE because this is the last line of the chain: everything
+      // above declined, and only this scope knows which of them was even
+      // reached. `intent` is classified with the question's own words so the
+      // label matches what the router actually saw.
+      const traceQ = (focusNow?.question ?? null) as Record<string, unknown> | null;
+      const traceOwn = traceQ
+        ? `${String(traceQ.question ?? '')} ${focusNow?.topic ?? ''}`
+        : (focusNow?.topic ?? '');
+      const traceIntent = canonicalIntent(text, traceOwn || undefined);
+      const trace = {
+        screen: (pathname ?? '').split('/')[1] ?? '',
+        topic: focusNow?.topic ?? '',
+        subtopic: focusNow?.subTopicId ?? '',
+        questionId: String(traceQ?.id ?? ''),
+        normalizedUserMessage: traceIntent.canonical,
+        intent: traceIntent.intent ?? '',
+        // `matched` here means the layer produced SOMETHING, not that it
+        // answered — an answered turn returned long before this line. The
+        // router can match an ask whose rung the ladder then failed to fill,
+        // and that distinction is what separates "we did not understand" from
+        // "we understood and had nothing".
+        localRouterMatched: routeKind !== 'open',
+        localLadderMatched: false,
+        faqMatched: false,
+        crossQuestionReuseMatched: false,
+        mathEngineUsed: false,
+        compilerFlagOn: tutorFlag('compiler'),
+        fallbackReason: decideFallbackReason({
+          hasQuestion: Boolean(traceQ),
+          intent: traceIntent.intent ?? '',
+          confidence: traceIntent.confidence,
+          groundingMissing: Boolean(traceIntent.intent) && groundingFor(traceIntent.intent!, focusNow) === null,
+          faqSearched: faqMissed,
+          faqMatched: false,
+          transferCandidateRejected: false,
+          multiPart: false,
+          proofOrOpen: false,
+          askedForPersonalExplanation: false,
+          solverAttemptedAndFailed: false,
+        }),
+        confidence: traceIntent.confidence,
+      };
+
       const assistantId = `a-${Date.now()}`;
       try {
         const res = await fetch('/api/chat', {
@@ -392,6 +443,19 @@ export default function TutorBubble() {
             // abstained — the server logs it as `[faq-miss]`, and that log is
             // the next authoring list. The model's answer is still billed.
             ...(faqMissed && f?.question ? { faqMiss: f.question.id } : {}),
+            // ⚠️ WHY the model is being asked, recorded at the only place that
+            // knows. `/api/chat` counts model calls perfectly and cannot see a
+            // reason: the router, the ladder, the FAQ bank and the compiler
+            // all ran HERE and all declined. Without this the server can say
+            // "1,000 calls" and never "1,000 calls, 400 of them because no
+            // rule recognised the phrasing" — and the second sentence is the
+            // only one anyone can act on.
+            //
+            // Carries no user id, no conversation and no sentence the student
+            // wrote; `normalizedUserMessage` is folded, capped and stripped of
+            // anything shaped like contact detail. The server validates every
+            // field against the enums before storing any of it.
+            trace,
             ...(context ? { context } : {}),
             ...(unitLevel ? { unitLevel } : {}),
             ...(formNumber ? { formNumber } : {}),

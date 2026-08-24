@@ -400,11 +400,15 @@ async function trace(text: string) {
         'does not exist.',
     );
   }
-  // Reported, not enforced: TRANSFER_ENABLED is false in lib/tutor-faq.ts
-  // because these numbers did not clear the bar (4.2% unsafe against 17.2%
-  // firing — roughly one wrong answer per four calls saved). The measurement
-  // keeps running so a future authoring pass can be judged against it; see the
-  // re-enable criterion on TRANSFER_ENABLED.
+  // Reported, NOT enforced — and now that cross-question reuse is ON, that is
+  // worth stating rather than assuming. Only two numbers fail this gate:
+  // MIN_RECALL and MAX_NOISE. The transfer verdict prints and does not exit.
+  //
+  // Deliberate, because the transfer numbers move whenever a topic is ADDED:
+  // a new bank changes the denominator for everyone. Failing the build on that
+  // would block an author who did nothing wrong, and the verdict line is what
+  // tells a person to look. If it says ⛔, TRANSFER_ENABLED in lib/tutor-faq.ts
+  // should be flipped back to false by hand.
   if (transferQueries) {
     const verdict =
       unsafeRate <= MAX_UNSAFE_TRANSFER && transferRate >= MIN_TRANSFER
