@@ -142,6 +142,36 @@ export const PHRASINGS: Phrasing[] = [
   { text: 'איך מזהים n p k בבינומית', expect: 'concept' },
 
   // ==================================================================
+  // HELD OUT — the shapes hand-enumeration always misses.
+  //
+  // Every line here is the SAME ask as one above with ordinary extra words
+  // around it, and every one of them returned null under the anchored rules:
+  // an anchor breaks on the first word it did not expect, and students never
+  // write the shape you listed. These exist to measure GENERALISATION rather
+  // than recall — passing them means the recogniser found the ask inside a
+  // sentence, which is the only thing that can converge.
+  //
+  // Safety is unaffected: the veto, not the anchor, is what stops a message
+  // that names its own subject, and the `mustStayWithModel` block below still
+  // holds it.
+  // ==================================================================
+  { text: 'אז מה עושים עכשיו עם זה?', expect: 'what_to_do_here' },
+  { text: 'רגע, אני לא בטוח מה עושים כאן', expect: 'what_to_do_here' },
+  { text: 'אוקיי אבל איך מחשבים את זה בפועל', expect: 'how_to_compute' },
+  { text: 'תוכל להסביר לי שוב בבקשה', expect: 'explain' },
+  { text: 'לא הבנתי כלום ממה שכתבת', expect: 'didnt_understand' },
+  { text: 'אני קצת אבוד פה', expect: 'didnt_understand' },
+  { text: 'רגע למה עושים את הצעד הזה', expect: 'why_this_step' },
+  { text: 'ומה השלב הבא אחרי זה', expect: 'next_step' },
+  { text: 'טוב ואז מה', expect: 'next_step' },
+  { text: 'אפשר בבקשה עוד דוגמה אחת', expect: 'give_example' },
+  { text: 'תוכל לתת לי טבלה בשביל זה', expect: 'give_table' },
+  { text: 'איפה בדיוק הטעות שלי פה', expect: 'why_wrong' },
+  { text: 'אני חושב שטעיתי אבל לא יודע איפה', expect: 'why_wrong' },
+  { text: 'מאיפה מתחילים בכלל עם השאלה הזאת', expect: 'how_to_solve' },
+  { text: 'תסביר לי את זה יותר פשוט בבקשה', expect: 'explain' },
+
+  // ==================================================================
   // MUST STAY WITH THE MODEL — each names a subject of its own.
   //
   // These are the reason every rule is anchored at both ends. A rule that

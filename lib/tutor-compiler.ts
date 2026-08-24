@@ -132,12 +132,20 @@ function stepsOf(q: Record<string, unknown> | null | undefined) {
 }
 
 export async function compileTutorResponse(input: CompilerInput): Promise<CompilerResult> {
+  const q = input.activeQuestion ?? null;
+
+  // ⚠️ The question's own words are passed to the classifier, and that is what
+  // makes the wider phrase rules safe. Without them any maths noun vetoes;
+  // with them only a noun THIS question does not mention does. "מה עושים עם
+  // ההסתברות הזאת" on a probability question names nothing foreign; the same
+  // sentence about vectors does.
+  const ownWords = q
+    ? `${String(q.question ?? '')} ${list((q.solution as Record<string, unknown>)?.steps).join(' ')} ${input.topic ?? ''}`
+    : (input.topic ?? '');
   const intent =
     input.canonicalIntent !== undefined
       ? input.canonicalIntent
-      : classifyIntent(input.message ?? '').intent;
-
-  const q = input.activeQuestion ?? null;
+      : classifyIntent(input.message ?? '', ownWords || undefined).intent;
   const { rule, moves, finalAnswer } = stepsOf(q);
   const hint = text(q?.hint);
   const explanation = text((q?.solution as Record<string, unknown>)?.explanation) || text(q?.explanation);

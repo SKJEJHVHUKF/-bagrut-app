@@ -32,6 +32,7 @@
  */
 
 import type { TutorFocus } from '@/lib/tutor-presence';
+import { namesAMathsSubject, foreignSubject } from '@/lib/maths-vocabulary';
 
 // ============================================================
 // Canonical intents
@@ -196,57 +197,77 @@ const JUST = '(?:בדיוק|בכלל|באמת|שוב|קצת)';
 const OPEN = '(?:^|^ו|^אז|^טוב|^אבל)\\s*';
 const TAIL = `(?:\\s*${HERE})?(?:\\s*${JUST})?\\s*$`;
 
+/**
+ * ⚠️ THESE ARE PHRASES, NOT WHOLE SENTENCES — and that reversal is the fix.
+ *
+ * The first version anchored every rule at both ends. It was precise and it
+ * could not converge: "מה עושים עכשיו" matched and "אז מה עושים עכשיו עם זה?"
+ * did not, because one extra word fell outside the anchor. Students write
+ * hundreds of shapes; enumerating them by hand is a race that never ends, and
+ * every screenshot Itay sent was one more shape nobody had listed.
+ *
+ * The anchoring existed to stop "איך מחשבים סטיית תקן" from being answered
+ * about the exercise on screen. That job now belongs to the VETO in
+ * `canonicalIntent` — the same object test that already screens the FAQ — so
+ * the rules can go back to doing the one thing they are good at: recognising
+ * the ask, wherever it sits in the sentence.
+ *
+ * A rule that matches too widely now costs a paid call at worst, because the
+ * veto is what protects the student. A rule that matched too narrowly cost a
+ * paid call every single time.
+ */
 const RULES: Rule[] = [
   // --- "איך מחשבים?" ------------------------------------------------
-    R('how_to_compute', `${OPEN}(?:איך|כיצד)\\s*(?:מחשבים|לחשב|חישבת|מחשב)${TAIL}`, 0.9),
+    R('how_to_compute', `(?:איך|כיצד)\\s*(?:מחשבים|לחשב|חישבת|מחשב)`, 0.9),
     R('how_to_compute', `${OPEN}(?:איך|כיצד)${TAIL}`, 0.7),
 
   // --- "איך זה עובד?" -----------------------------------------------
-    R('how_it_works', `${OPEN}(?:איך|למה|מדוע|מה)\\s*זה\\s*(?:עובד|קשור|הולך|מסתדר|יוצא|קורה)${TAIL}`, 0.9),
+    R('how_it_works', `(?:איך|למה|מדוע|מה)\\s*זה\\s*(?:עובד|קשור|הולך|מסתדר|יוצא|קורה|נכון)`, 0.9),
 
   // --- "איך פותרים?" ------------------------------------------------
-    R('how_to_solve', `${OPEN}(?:איך|כיצד)\\s*(?:פותרים|לפתור|ניגשים|מתחילים|להתחיל)${TAIL}`, 0.9),
-    // Singular AND plural. `אני` is filler now, so "מאיפה אני מתחיל" arrives as
-    // "מאיפה מתחיל" — and a rule written only for the plural missed it.
-    R('how_to_solve', `${OPEN}(?:מאיפה|מהיכן)\\s*(?:מתחילים|מתחיל(?:ה)?|להתחיל)${TAIL}`, 0.9),
+    R('how_to_solve', `(?:איך|כיצד)\\s*(?:פותרים|לפתור|ניגשים|לגשת|מתחילים|להתחיל|ממשיכים)`, 0.9),
+    R('how_to_solve', `(?:מאיפה|מהיכן)\\s*(?:מתחילים|מתחיל(?:ה)?|להתחיל)`, 0.9),
 
   // --- "תסביר לי" ---------------------------------------------------
-    // The "more simply" phrases are an optional TAIL of the verb, not only a
-    // sentence of their own: "תסביר במילים פשוטות" is one ask, and the first
-    // version needed two separate rules that between them covered neither.
-    R('explain', `${OPEN}(?:תסביר|הסבר)(?:\\s*(?:יותר\\s*פשוט|פשוט\\s*יותר|במילים\\s*פשוטות|בפשטות|שוב|מחדש))?${TAIL}`, 0.9),
-    R('explain', `${OPEN}(?:יותר\\s*פשוט|פשוט\\s*יותר|במילים\\s*פשוטות|בפשטות)${TAIL}`, 0.85),
+    R('explain', `(?:תסביר|הסבר|להסביר)`, 0.9),
+    R('explain', `(?:יותר\\s*פשוט|פשוט\\s*יותר|במילים\\s*פשוטות|בפשטות|לא\\s*תפסתי)`, 0.85),
 
   // --- "מה עושים כאן?" ----------------------------------------------
-    R('what_to_do_here', `${OPEN}מה\\s*(?:עושים|לעשות|צריך\\s*לעשות)${TAIL}`, 0.85),
+    // ⚠️ The left boundary is load-bearing: "למה" ENDS in "מה", so an unguarded
+    // `מה\s*עושים` swallows "למה עושים את זה" and reports it as
+    // what_to_do_here instead of why_this_step. Hebrew has no word boundary in
+    // JavaScript regex, so it is written as "not preceded by a Hebrew letter".
+    R('what_to_do_here', `(?:^|[^א-ת])מה\\s*(?:עושים|לעשות|צריך\\s*לעשות|עלי\\s*לעשות)`, 0.85),
 
   // --- "למה עושים את זה?" -------------------------------------------
-    R('why_this_step', `${OPEN}(?:למה|מדוע)\\s*(?:עושים|מציבים|מחלקים|מכפילים|מחברים|מחסרים|בוחרים)${TAIL}`, 0.85),
+    R('why_this_step', `(?:למה|מדוע|בשביל\\s*מה)\\s*(?:עושים|מציבים|מחלקים|מכפילים|מחברים|מחסרים|בוחרים|צריך|לוקחים)`, 0.85),
     R('why_this_step', `${OPEN}(?:למה|מדוע)${TAIL}`, 0.7),
 
   // --- "תן דוגמה" ---------------------------------------------------
-    // The verb is optional: "אפשר דוגמה?" normalises to a bare "דוגמה" once
-    // the politeness is dropped, and requiring a verb missed that whole form.
-    R('give_example', `${OPEN}(?:תן|תראה|יש|רוצה|צריך)?\\s*(?:עוד\\s*)?דוגמה${TAIL}`, 0.9),
+    R('give_example', `דוגמה`, 0.9),
 
   // --- "תן לי טבלה" -------------------------------------------------
-    R('give_table', `${OPEN}(?:תן|תבנה|נבנה|תראה|יש|צריך)?\\s*(?:לי)?\\s*(?:את\\s*)?(?:ה)?(?:טבלה|עץ|דיאגרמה)(?:\\s*של\\s*זה)?${TAIL}`, 0.85),
-    R('give_table', `${OPEN}(?:איך)\\s*(?:בונים|מסדרים|עושים)\\s*(?:את\\s*)?(?:ה)?(?:טבלה|עץ)${TAIL}`, 0.9),
+    // `עץ` needs boundaries on both sides — it is two letters and sits inside
+    // ordinary words. "תן לי עץ" is a real ask and must reach the tree card.
+    R('give_table', `(?:טבלה|טבלת|דיאגרמ|(?:^|[^א-ת])עץ(?:[^א-ת]|$))`, 0.85),
 
   // --- "מה הנוסחה?" -------------------------------------------------
-    R('which_formula', `${OPEN}(?:מה|איזו|איזה|באיזו|באיזה)\\s*(?:ה)?נוסחה(?:\\s*(?:צריך|משתמשים|מתאימה|נכונה))?${TAIL}`, 0.9),
-    R('which_formula', `${OPEN}(?:ה)?נוסחה${TAIL}`, 0.75),
+    R('which_formula', `נוסחה`, 0.85),
 
   // --- "מה השלב הבא?" -----------------------------------------------
-    R('next_step', `${OPEN}מה\\s*(?:ה)?(?:שלב|צעד)\\s*(?:ה)?בא${TAIL}`, 0.9),
-    R('next_step', `${OPEN}(?:מה\\s*(?:הלאה|עכשיו)|ואז|המשך|תמשיך|הלאה)${TAIL}`, 0.8),
+    R('next_step', `(?:ה)?(?:שלב|צעד)\\s*(?:ה)?בא`, 0.9),
+    R('next_step', `מה\\s*(?:הלאה|עכשיו|אחר\\s*כך)`, 0.85),
+    // Unanchored like the rest, with Hebrew boundaries. "טוב ואז מה" was the
+    // last held-out phrasing still failing, and it failed for the old reason:
+    // an anchor that expected the sentence to end where the keyword did.
+    R('next_step', `(?:^|[^א-ת])(?:ואז|אז\\s*מה|המשך|תמשיך|הלאה)(?:[^א-ת]|$)`, 0.8),
 
   // --- "למה התשובה הזאת שגויה?" -------------------------------------
-    R('why_wrong', `${OPEN}(?:למה|מדוע)\\s*(?:ה)?תשובה\\s*(?:ה)?(?:זאת|זו|שלי)?\\s*(?:לא\\s*נכונה|שגויה|לא\\s*טובה)${TAIL}`, 0.95),
-    R('why_wrong', `${OPEN}(?:למה|איפה|מה)\\s*(?:טעיתי|הטעות|לא\\s*נכון|זה\\s*לא\\s*נכון)${TAIL}`, 0.9),
+    R('why_wrong', `(?:טעיתי|הטעות|טעות\\s*שלי|לא\\s*נכונה|שגויה|לא\\s*בסדר|פספסתי)`, 0.9),
+    R('why_wrong', `(?:למה|מדוע|איפה|מה)\\s*(?:זה\\s*)?לא\\s*נכון`, 0.9),
 
   // --- "לא הבנתי" ---------------------------------------------------
-    R('didnt_understand', `${OPEN}(?:לא\\s*הבנתי|לא\\s*מבין|לא\\s*מבינה|לא\\s*ברור|תקוע|תקועה|נתקעתי)${TAIL}`, 0.9),
+    R('didnt_understand', `(?:לא\\s*הבנתי|לא\\s*מבין|לא\\s*מבינה|לא\\s*ברור|מבולבל|תקוע|תקועה|נתקעתי|אבוד)`, 0.9),
 
   // --- concept: the subject IS the question -------------------------
   //
@@ -276,13 +297,52 @@ const RULES: Rule[] = [
  * סטיית תקן") matches nothing here and continues to the model, which is
  * correct: it is a new question, not an ask about the screen.
  */
-export function canonicalIntent(message: string): IntentMatch {
+/**
+ * Which intent is this, if any?
+ *
+ * ============================================================
+ * THE VETO IS THE SAFETY MODEL — the rules are only the recogniser
+ * ============================================================
+ * A phrase rule fires wherever the ask appears, so "איך מחשבים סטיית תקן" and
+ * "ואיך מחשבים?" both match `how_to_compute`. What separates them is not the
+ * pattern but whether the sentence NAMES A SUBJECT of its own:
+ *
+ *   with `ownText`     the subject is foreign only if the question on screen
+ *                      does not mention it. "מה עושים עם ההסתברות הזאת" on a
+ *                      probability question names nothing foreign and is
+ *                      answerable; "תסביר לי על וקטורים" there is.
+ *   without `ownText`  any maths noun vetoes. Strictly more cautious, which is
+ *                      right for a caller with no context to judge against —
+ *                      the report, a test, a trace label.
+ *
+ * `concept` inverts both: it REQUIRES a named subject, because there the
+ * subject is the question. It is safe only because an authored Topic Card is
+ * the one thing allowed to answer it.
+ *
+ * This replaced whole-sentence anchoring. Anchoring was precise and could not
+ * converge — one extra word broke every rule, and students write hundreds of
+ * shapes. A rule that fires too widely now costs a model call at worst,
+ * because the veto is what protects the student; a rule that fired too
+ * narrowly cost a model call every time.
+ */
+export function canonicalIntent(message: string, ownText?: string): IntentMatch {
   const canonical = normalise(message);
   if (!canonical) return { intent: null, confidence: 0, canonical: '' };
 
   const folded = fold(canonical);
+  const namesSubject = ownText
+    ? foreignSubject(canonical, ownText) !== null
+    : namesAMathsSubject(canonical);
+
   let best: Rule | null = null;
   for (const rule of RULES) {
+    // The veto, and the inversion for `concept`.
+    // ⚠️ The veto does NOT apply to `concept`. Its own patterns already
+    // demand a subject ("מה זה <משהו>"), and the vocabulary list cannot
+    // stand in for that: "מה זה בלי החזרה" names a real concept that no
+    // noun list will ever contain in full. Gating concept on the list made
+    // every card unreachable — measured, all ten card phrasings returned null.
+    if (rule.intent !== 'concept' && namesSubject) continue;
     if (!rule.re.test(folded)) continue;
     if (!best || rule.weight > best.weight) best = rule;
   }
