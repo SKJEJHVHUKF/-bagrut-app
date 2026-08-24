@@ -251,6 +251,15 @@ export function classifyAsk(message: string): Ask | null {
 // 2. Which situation are we in?
 // ------------------------------------------------------------
 
+/** The /quiz bank writes its prose as a top-level `explanation`, not under
+ *  `solution`. Read through an accessor rather than widening the type: the
+ *  focus arrives from `useState<any[]>` in app/quiz/page.tsx, so the shape is
+ *  already erased and a cast here would only hide that. */
+function conceptExplanation(q: unknown): string | undefined {
+  const e = (q as { explanation?: unknown } | null | undefined)?.explanation;
+  return typeof e === 'string' && e.trim() ? e.trim() : undefined;
+}
+
 function detectState(f: TutorFocus): State {
   // Keyed on the OBJECT first, not on the text. A screen that supplies the
   // question object is answerable whether or not it also set `questionText`,
@@ -315,8 +324,17 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
     // marked `**הכלל:**` (probability first, rolling out per topic). Kept with
     // its label so the template can drop it in as-is.
     rule: q?.solution?.steps.find((s) => s.startsWith('**הכלל:**'))?.trim() || undefined,
-    finalAnswer: q?.solution?.finalAnswer,
-    explanation: q?.solution?.explanation?.trim() || undefined,
+    // For an mcq with no `solution`, the correct option text is the final
+    // answer — there is nowhere else for it to come from.
+    finalAnswer:
+      q?.solution?.finalAnswer ||
+      (typeof q?.correct === 'number' ? q?.answers?.[q.correct] : undefined),
+    // ⚠️ Two field names for one thing. A PracticeQuestion keeps its prose in
+    // `solution.explanation`; a ConceptQuestion (the /quiz bank) has no
+    // `solution` at all and keeps it in a top-level `explanation`. Reading only
+    // the first left 574 authored explanations unreachable, so every "תראה לי
+    // את הפתרון" on the quiz screen returned nothing and went to the model.
+    explanation: q?.solution?.explanation?.trim() || conceptExplanation(q) || undefined,
     chosenText:
       typeof f.chosenIndex === 'number' ? q?.answers?.[f.chosenIndex] : undefined,
     correctText: f.correctAnswer,
@@ -325,6 +343,7 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
     why:
       (typeof f.chosenIndex === 'number' ? q?.distractorNotes?.[f.chosenIndex]?.trim() : '') ||
       q?.solution?.explanation?.trim() ||
+      conceptExplanation(q) ||
       undefined,
     // The authored note behind a matched predictable mistake on a TYPED answer
     // (question.wrongAnswers) — the open-question counterpart of {note}.
@@ -375,6 +394,25 @@ const TEMPLATES: Record<string, Tpl> = {
   // require {rule} ON PURPOSE (an exception to rule 2): when the question has
   // no rule line, both fail and the loop falls through to the generic
   // A:formulas below, which keeps today's behavior for every other topic.
+  /**
+   * The last resort for "show me the solution", and the only one that asks for
+   * no worked steps.
+   *
+   * A ConceptQuestion (/quiz) has `answers` + `correct` + `explanation` and no
+   * `solution` at all, so A:full and B:full — which both require {steps} in
+   * their primary AND their fallback wording — could never fill, and every
+   * "תראה לי את הפתרון" on that screen went to the model with an authored
+   * explanation sitting right there.
+   *
+   * The wording does not pretend there are steps. For a concept question the
+   * honest full answer IS the correct option plus why it is correct.
+   */
+  'ANY:full': T(
+    'full',
+    'הנה הפתרון:\n\n**התשובה הנכונה: {finalAnswer}**\n\n**למה:** {explanation}\n\nעכשיו כסה את זה ונסח בעצמך, במשפט אחד, למה שאר האפשרויות נפסלות.',
+    'הנה הפתרון:\n\n**התשובה הנכונה: {finalAnswer}**\n\nעכשיו נסח בעצמך, במשפט אחד, למה דווקא זו התשובה ולא האחרות.',
+  ),
+
   'A:formulas-q': T(
     'formulas',
     'שאלת בדיוק את השאלה הנכונה — קודם בוחרים כלי, רק אחר כך מחשבים. בשאלה הזאת:\n\n{rule}\n\nוכל שאר הכלים של {title}, כדי לראות איפה זה יושב:\n\n{formulas}\n\nעכשיו תציב בכלל הזה את המספרים מהשאלה — מה יוצא לך?',
@@ -616,9 +654,22 @@ function keysFor(state: State, ask: Ask, tierKind?: string, diag?: string): stri
   if (ask === 'formulas') out.push('A:formulas-q');
   out.push(`${state}:${ask}`);
   // Everything that isn't specialised borrows A's wording verbatim.
-  if (state === 'C') out.push(`B:${ask}`);
+  //
+  // ⚠️ C falls through B and THEN to A. It used to stop at B, and B holds only
+  // full / help / why-wrong — so an mcq that was answered wrong with no
+  // authored note (that is exactly what C means) had NO template for explain,
+  // formulas or key-points and returned null, i.e. a paid call. Every other
+  // state already reaches A; C was the one that did not, and A is the right
+  // last resort because C is a MORE SPECIFIC A: same mcq, same screen, we
+  // simply also know the student answered and that no note was written for
+  // what they picked.
+  if (state === 'C') out.push(`B:${ask}`, `A:${ask}`);
   if (state === 'B' || state === 'D' || state === 'E' || state === 'F' || state === 'G')
     out.push(`A:${ask}`);
+  // Terminal key, same idea as ANY:help. It is reached ONLY when every state
+  // key above failed to FILL, so defining one cannot change a question that
+  // already had an answer — it can only turn a null into something.
+  out.push(`ANY:${ask}`);
   return out;
 }
 

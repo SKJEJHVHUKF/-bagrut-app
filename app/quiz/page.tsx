@@ -406,6 +406,14 @@ function Quiz() {
         ...q,
         topic: selectedTopic,
         difficulty: LEVEL_DIFFICULTY[q.level],
+        // `kind` is what lib/tutor-local's detectState branches on to reach the
+        // mcq states, and a ConceptQuestion does not carry it. Without it the
+        // tutor treated every quiz question as an OPEN one and answered
+        // "איני רואה את הדף שלך" — while `distractorNotes` sat authored,
+        // holding the single best thing we can say to this student: why the
+        // option THEY picked is wrong. Measured: no ask loses coverage, and
+        // why-wrong goes from a generic sentence to naming their choice.
+        kind: 'mcq' as const,
       }));
       // pickShuffled, NOT pickQuestions: the student chose this level
       // explicitly, and TIER_MIX would dilute it back with adjacent bands.
