@@ -26,11 +26,12 @@
 
 const KEY = 'mathup-flags';
 
-export type TutorFlag =
-  /** Route through lib/tutor-compiler before falling back to the model. */
-  | 'compiler'
-  /** Send the diagnostic trace with each /api/chat request. */
-  | 'trace';
+/** Route through lib/tutor-compiler before falling back to the model. */
+export type TutorFlag = 'compiler';
+// There is deliberately no 'trace' flag. The diagnostic goes with EVERY turn
+// that reaches the model, because a sample of the browsers that opted in is a
+// sample of the people who already knew what to look for. It carries no user
+// id and no sentence a student wrote, so there is nothing to opt out of.
 
 function enabled(): Set<string> {
   if (typeof window === 'undefined') return new Set();

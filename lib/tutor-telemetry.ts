@@ -31,7 +31,7 @@
  * greps and nobody can count.
  */
 
-import type { CanonicalIntent } from '@/lib/tutor-intent';
+import { CANONICAL_INTENTS, type CanonicalIntent } from '@/lib/tutor-intent';
 
 // ============================================================
 // The enum
@@ -142,9 +142,13 @@ export type ReasonInput = {
  * that decides what to do about it and the second is a consequence. A report
  * whose buckets overlap cannot be acted on — every row would need reading.
  *
- * `no_fallback` is last and should stay rare. If it grows, the model is being
- * paid for something none of these sentences describes, and the enum is what
- * needs extending — not the bucket that needs ignoring.
+ * ⚠️ THIS FUNCTION NEVER RETURNS `no_fallback`. Once `!f.intent` is handled,
+ * every remaining path has an intent, so the old trailing `if (f.intent)` /
+ * `return 'no_fallback'` pair was unreachable — and a bucket that reads 0
+ * forever looks like good news instead of dead code. `no_fallback` now means
+ * exactly one thing: the trace itself was absent or malformed, stamped by
+ * `sanitizeClientTrace`. If it grows, the client stopped sending, which is a
+ * different bug from any of the reasons below.
  */
 export function decideFallbackReason(f: ReasonInput): FallbackReason {
   if (!f.hasQuestion) return 'missing_question_context';
@@ -157,8 +161,7 @@ export function decideFallbackReason(f: ReasonInput): FallbackReason {
   if (f.confidence > 0 && f.confidence < 0.75) return 'low_confidence';
   if (f.groundingMissing) return 'no_local_content';
   if (f.faqSearched && !f.faqMatched) return 'no_faq_match';
-  if (f.intent) return 'unsupported_phrase';
-  return 'no_fallback';
+  return 'unsupported_phrase';
 }
 
 // ============================================================
@@ -167,6 +170,21 @@ export function decideFallbackReason(f: ReasonInput): FallbackReason {
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '');
 const bool = (v: unknown) => v === true;
+
+// ⚠️ `intent` IS AN ENUM TOO, not only `fallbackReason`.
+//
+// The report groups by it, and a free-text value in a grouped column is worse
+// than a missing one: it splits one bucket into several that nobody notices
+// while the totals still add up. Anything not in the set lands in '', which
+// the report already shows as "(none)".
+//
+// `screen` is deliberately NOT checked against a list. It comes from our own
+// router — `pathname.split('/')[1]` — and never from the student, so there is
+// nothing to pollute it; a stale allow-list would silently blank real rows the
+// day a route is added, which is the more expensive failure. Length cap only.
+const INTENTS = new Set<string>(CANONICAL_INTENTS);
+const oneOf = (v: unknown, allowed: Set<string>) =>
+  typeof v === 'string' && allowed.has(v) ? v : '';
 
 /**
  * Coerce whatever arrived into a record we are willing to store.
@@ -184,7 +202,7 @@ export function sanitizeClientTrace(raw: unknown): ClientTrace {
     subtopic: str(o.subtopic, 40),
     questionId: str(o.questionId, 64),
     normalizedUserMessage: str(o.normalizedUserMessage, 120),
-    intent: str(o.intent, 32) as CanonicalIntent | '',
+    intent: oneOf(o.intent, INTENTS) as CanonicalIntent | '',
     localRouterMatched: bool(o.localRouterMatched),
     localLadderMatched: bool(o.localLadderMatched),
     faqMatched: bool(o.faqMatched),

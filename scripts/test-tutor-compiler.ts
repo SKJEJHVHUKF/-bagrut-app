@@ -300,10 +300,13 @@ const fullQuestion = {
 
     store.set('mathup-flags', 'compiler');
     ok(tutorFlag('compiler'), 'it turns on when the key says so');
-    ok(!tutorFlag('trace'), 'and only the flag that is named');
+    ok(activeTutorFlags().join() === 'compiler', 'and only the flag that is named');
 
-    store.set('mathup-flags', 'compiler, trace');
-    ok(tutorFlag('compiler') && tutorFlag('trace'), 'a comma list turns on both');
+    // 'compiler' is the only flag today. A second name in the list must be
+    // carried, not choke the parse — the next rollout switch arrives that way.
+    store.set('mathup-flags', 'compiler, future');
+    ok(tutorFlag('compiler'), 'a comma list still turns the compiler on');
+    ok(activeTutorFlags().join() === 'compiler,future', 'and an unknown name is kept, not dropped');
 
     // A flag must fail CLOSED. Every one of these is a real browser state.
     for (const junk of ['', '   ', ',,,', '{"compiler":true}']) {
