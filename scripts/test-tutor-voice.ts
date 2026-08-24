@@ -32,6 +32,7 @@ const store = new Map<string, string>();
 ).window.localStorage;
 
 import { allLessonKeys, getSubTopics, getLesson, getSubTopic } from '../content/lessons';
+import { CONCEPT_MATH5 } from '../content/concept-quiz/math5';
 import { answerLocally, classifyAsk, type LocalAnswerKind } from '../lib/tutor-local';
 import { focusPrompts, partAsQuestion, type TutorFocus } from '../lib/tutor-presence';
 import type { AnswerDiagnosis } from '../lib/answer-check';
@@ -87,6 +88,68 @@ function inspect(where: string, text: string) {
   if (first === '$' || first === '`' || /[A-Za-z0-9]/.test(first))
     bad(`${where}: opens on a non-Hebrew character "${first}" → bidi flip`);
   if (!text.trim()) bad(`${where}: empty answer`);
+}
+
+// ===== /quiz: a question shape with NO `solution` =====
+//
+// The concept bank carries `explanation`, not `solution` — and buildSlots read
+// `q?.solution.steps`, which guards `q` and not `q.solution`. Every tutor ask
+// on /quiz therefore THREW, and the screen measured 0% local coverage while
+// its `hint`, `distractorNotes` and `explanation` sat authored and unused.
+// TypeScript could not catch it: app/quiz/page.tsx holds the bank in
+// `useState<any[]>`, so the shape is erased at the boundary.
+//
+// Pinned here rather than in a unit test because the failure was a THROW, and
+// a throw is invisible to a coverage count — it looks exactly like "no answer
+// available" from the outside.
+{
+  const conceptQuestions: Record<string, unknown>[] = [];
+  const collect = (v: unknown) => {
+    if (Array.isArray(v)) return v.forEach(collect);
+    if (v && typeof v === 'object') {
+      const o = v as Record<string, unknown>;
+      if (typeof o.question === 'string' && Array.isArray(o.answers)) conceptQuestions.push(o);
+      else Object.values(o).forEach(collect);
+    }
+  };
+  collect(CONCEPT_MATH5);
+  if (conceptQuestions.length < 100) bad(`concept bank collapsed to ${conceptQuestions.length} questions`);
+  checks++;
+
+  const QUIZ_ASKS = ['תן לי רמז', 'למה התשובה שלי שגויה?', 'תסביר לי את השאלה הזאת מההתחלה'];
+  let quizServed = 0;
+  let quizTotal = 0;
+  for (const q of conceptQuestions) {
+    const focus = {
+      where: 'בוחן',
+      topic: q.topic as string | undefined,
+      questionText: q.question as string,
+      question: q,
+      wrongAnswer: (q.answers as string[])?.[0],
+      chosenIndex: 0,
+    } as unknown as TutorFocus;
+    for (const ask of QUIZ_ASKS) {
+      quizTotal++;
+      let a: ReturnType<typeof answerLocally> = null;
+      try {
+        a = answerLocally(ask, focus, []);
+      } catch (e) {
+        bad(`/quiz "${ask}" THREW on ${String(q.id)}: ${e instanceof Error ? e.message : e}`);
+      }
+      checks++;
+      if (a?.text?.trim()) {
+        quizServed++;
+        inspect(`/quiz ${String(q.id)} · ${ask}`, a.text);
+      }
+    }
+  }
+  const quizRate = quizTotal ? quizServed / quizTotal : 0;
+  console.log(
+    `\n/quiz local coverage: ${quizServed}/${quizTotal} (${(quizRate * 100).toFixed(1)}%) — was 0% while buildSlots threw`,
+  );
+  // Deliberately a floor, not an equality: the number should be free to rise.
+  if (quizRate < 0.6) bad(`/quiz local coverage fell to ${(quizRate * 100).toFixed(1)}% (floor 60%)`);
+  checks++;
 }
 
 // Every chip the bubble can render must classify, or that button costs an API

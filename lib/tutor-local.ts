@@ -308,15 +308,15 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
           .map((x) => `- **${x.name}** — $${x.latex}$${x.note ? ` — ${x.note}` : ''}`)
           .join('\n')
       : undefined,
-    steps: q?.solution.steps.length
-      ? q.solution.steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n')
+    steps: q?.solution?.steps.length
+      ? q.solution!.steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n')
       : undefined,
     // The authored "which rule and why" line — solutions open with a step
     // marked `**הכלל:**` (probability first, rolling out per topic). Kept with
     // its label so the template can drop it in as-is.
-    rule: q?.solution.steps.find((s) => s.startsWith('**הכלל:**'))?.trim() || undefined,
-    finalAnswer: q?.solution.finalAnswer,
-    explanation: q?.solution.explanation?.trim() || undefined,
+    rule: q?.solution?.steps.find((s) => s.startsWith('**הכלל:**'))?.trim() || undefined,
+    finalAnswer: q?.solution?.finalAnswer,
+    explanation: q?.solution?.explanation?.trim() || undefined,
     chosenText:
       typeof f.chosenIndex === 'number' ? q?.answers?.[f.chosenIndex] : undefined,
     correctText: f.correctAnswer,
@@ -324,7 +324,7 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
     studentAnswer: f.wrongAnswer ? '`' + f.wrongAnswer.replace(/`/g, '') + '`' : undefined,
     why:
       (typeof f.chosenIndex === 'number' ? q?.distractorNotes?.[f.chosenIndex]?.trim() : '') ||
-      q?.solution.explanation?.trim() ||
+      q?.solution?.explanation?.trim() ||
       undefined,
     // The authored note behind a matched predictable mistake on a TYPED answer
     // (question.wrongAnswers) — the open-question counterpart of {note}.
