@@ -167,6 +167,41 @@ const ASKING = /למה|מדוע|איך|כיצד|מאיפה|מהיכן|תסביר
 const LEAD_IN =
   /^\s*(?:אז\s+)?(?:אני\s+)?(?:חושב(?:ת)?\s+ש|מקבל(?:ת)?|קיבלתי|יצא\s+לי|התשובה\s+(?:היא|שלי)?|התוצאה\s+(?:היא)?|זה|נראה\s+לי\s+ש|לדעתי)\s*[:=]?\s*/;
 
+/**
+ * "האם התשובה היא 15?" — a value being CHECKED, not a question.
+ *
+ * ⚠️ THE ASKING VETO REJECTED EVERY ONE OF THESE, AND IT WAS RIGHT TO EXIST.
+ *
+ * `ASKING` keeps questions out of the grading path, and it lists האם, נכון and
+ * "מה " among the words that mark one. But "האם התשובה היא 15" is not a
+ * question about the material — it is a value with a question mark around it,
+ * which is the single most natural way a student asks to be checked. Every
+ * form below was going to the model to have arithmetic confirmed:
+ *
+ *   האם התשובה היא 15 · האם זה 19 · אז זה 19 נכון? · האם קיבלתי נכון 42
+ *
+ * The frame is matched first and the value falls out of it, so the veto still
+ * guards everything that is not shaped this way. "האם צריך להכפיל" and "האם
+ * הסדרה חשבונית" carry no value and are left exactly where they were.
+ */
+const VERIFY_FORM =
+  /^[ ]*(?:אז[ ]+)?(?:האם[ ]+)?(?:זה[ ]+|התשובה[ ]+|התוצאה[ ]+|הפתרון[ ]+|קיבלתי[ ]+|יצא[ ]+לי[ ]+)?(?:היא[ ]+|הוא[ ]+|זה[ ]+)?([^A-Za-z֐-׿]*[0-9][^֐-׿]*?)[ ]*(?:נכון|נכונה|נכונים)?[ ]*[?]*[ ]*$/;
+
+/**
+ * The value a "is it X?" message is asking about, or null.
+ *
+ * Requires a digit, and refuses anything with a Hebrew letter left in the
+ * captured part: "האם הסדרה חשבונית" must not be read as a value.
+ */
+export function verificationValue(message: string): string | null {
+  const m = VERIFY_FORM.exec(message.trim());
+  if (!m) return null;
+  const v = m[1].trim();
+  if (!v || !/[0-9]/.test(v)) return null;
+  if (/[֐-׿]/.test(v)) return null;
+  return v;
+}
+
 /** Longest a plain answer gets. A value is short; prose is not. */
 const MAX_ANSWER_LEN = 60;
 
@@ -275,6 +310,27 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
     // It asked for a value we could not compute. Grading against the final
     // answer here is the bug: the student was asked for something else.
     if (state.pending?.kind === 'value-unknown') return { kind: 'open' };
+  }
+
+  // ---- "האם התשובה היא 15?" — a value, wearing a question mark -------
+  //
+  // Placed before the yes-no and follow-up branches because it is the most
+  // specific reading available: the message names a number and asks whether it
+  // is right, and that is answerable exactly and for free.
+  {
+    const checking = verificationValue(trimmed);
+    if (checking) {
+      if (state.pending?.kind === 'step-value') {
+        return {
+          kind: 'answer',
+          spec: { kind: 'value', value: state.pending.expected },
+          typed: checking,
+          about: { step: state.pending.step },
+        };
+      }
+      const own = focus?.question?.expected;
+      if (own && own.kind !== 'manual') return { kind: 'answer', spec: own, typed: checking };
+    }
   }
 
   // ---- the tutor asked a yes-or-no question and got one -------------

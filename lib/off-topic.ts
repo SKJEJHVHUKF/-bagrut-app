@@ -70,6 +70,27 @@ const OFF_TOPIC: Array<{ re: RegExp; label: string }> = [
 const MIN_WORD = 3;
 
 /**
+ * Social openers. Not off-topic in the "football" sense — off-topic in the
+ * sense that no maths was asked and answering with a model call is paying for
+ * "היי" to be greeted.
+ */
+const CHIT_CHAT =
+  /^[ ]*(?:היי|הי|שלום|אהלן|יו|הלו|מה[ ]*קורה|מה[ ]*נשמע|מה[ ]*המצב|מה[ ]*שלומך|בוקר[ ]*טוב|ערב[ ]*טוב|לילה[ ]*טוב|hi|hello|hey|yo)(?:[ ]+(?:אחי|אח|גבר|מלך|מה[ ]*קורה|מה[ ]*נשמע|מה[ ]*המצב|יא[ ]*\S+))*[ ]*[!?.]*[ ]*$/i;
+
+/**
+ * Noise: laughter, filler and a key held down.
+ *
+ * A run of four identical characters is the giveaway and it is safe — Hebrew
+ * has no word with four of the same letter in a row, and neither does any
+ * formula the app renders.
+ */
+const NOISE = /^[ ]*(?:[חהה]{3,}|לול|חחח+|lol+|xd+|hahaha+|\?{2,}|\.{3,})[ ]*$/i;
+// ⚠️ The backreference IS the rule. Written without it, /(.){3,}/ matches any
+// three characters and every message becomes noise. It also arrived here once
+// as a literal 0x01 byte, which greps as nothing and reads as correct.
+const RUN_OF_FOUR = /(.)\1{3,}/;
+
+/**
  * Words long enough to pass MIN_WORD and still carrying no subject.
  *
  * ⚠️ WITHOUT THIS THE ECHO VETO SILENCES ALMOST EVERYTHING. "בן כמה אתה" was
@@ -107,7 +128,17 @@ export function offTopicRedirect(message: string, questionText?: string): string
   // continuations of something the tutor just said. A two-word fragment is
   // never enough evidence to tell a student they have wandered off.
   const w = words(raw);
-  if (w.filter((x) => x.length >= MIN_WORD).length < 2) return null;
+  const contentWords = w.filter((x) => x.length >= MIN_WORD).length;
+  // ⚠️ The short-message veto runs AFTER the noise check below, not before it.
+  // "לול" and "חחחח" are one short word each and would be waved through by a
+  // rule written to protect "אה" and "2 ו3 ו4" — which are continuations of
+  // something the tutor said, not noise.
+  const isNoise = NOISE.test(raw) || RUN_OF_FOUR.test(raw) || CHIT_CHAT.test(raw);
+  // A LONE long word is not "too little to judge" — it is a whole message that
+  // nothing recognised, and it has its own answer below. The veto exists for
+  // continuations like "אה" and "2 ו3 ו4", which are short AND follow something
+  // the tutor just said.
+  if (!isNoise && contentWords < 2) return null;
 
   // ---- veto 2: anything mathematical ----
   if (/\d/.test(raw)) return null;
@@ -137,6 +168,32 @@ export function offTopicRedirect(message: string, questionText?: string): string
     );
     if (w.some((x) => x.length >= MIN_WORD && !NO_SUBJECT.has(x) && own.has(x))) return null;
   }
+
+  // ---- nothing was asked at all ----
+  //
+  // ⚠️ THESE GET A DIFFERENT SENTENCE, AND THE DIFFERENCE IS THE POINT.
+  //
+  // "היי מה קורה אחי" and "אסדגכלדס" are not football. One is a greeting and
+  // the other is a key held down, and telling either of them "אני המורה
+  // למתמטיקה כאן" answers a question nobody asked. The honest reply is that
+  // nothing was understood, phrased as an invitation rather than a verdict —
+  // a student whose real message was mistyped simply types it again.
+  if (CHIT_CHAT.test(raw) || NOISE.test(raw) || RUN_OF_FOUR.test(raw)) {
+    return 'לא הגיעה אליי שאלה שאני יכול לעבוד איתה 🙂\nתכתוב לי מה מפריע לך בשאלה שעל המסך, ונתקדם משם.';
+  }
+
+  // ⚠️ THERE IS DELIBERATELY NO "A LONE UNKNOWN WORD IS GIBBERISH" RULE.
+  //
+  // It was written and measured and removed. It caught "אסדגכלדס" and
+  // "asdkjhasd", and it also caught "אינדקס", "דיפרנציאלי" and "מקומות" —
+  // three real maths words a student might reasonably type on their own, each
+  // answered with "לא הצלחתי להבין". Every shape test tried afterwards had the
+  // same problem: a consonant-run threshold that rejects "אסדגכלדס" also
+  // rejects "דיפרנציאלי", which has four consonants in a row.
+  //
+  // So single-word mash reaches the model, and that is the cheaper mistake by a
+  // wide margin: one call, versus telling a student who asked a real question
+  // that they made no sense.
 
   // ---- and only now, a reason to speak ----
   const hit = OFF_TOPIC.find((o) => o.re.test(raw));

@@ -89,6 +89,29 @@ ok(offTopicRedirect('אחרי המבחן אני הולך לאכול פיצה', Q
 ok(offTopicRedirect('כמה קלוריות יש בפיצה אם יש 8 משולשים', Q) === null,
    'a digit anywhere → silent');
 
+console.log('');
+console.log('=== nothing was asked at all — greetings and noise ===');
+console.log('');
+// Itay: "או סתם מחרבש לו דברים". These are not football; one is a greeting and
+// the other is a key held down, and paying a model to be greeted is the least
+// defensible call in the app.
+for (const m of ['היי', 'שלום', 'מה נשמע', 'היי מה קורה אחי', 'yo אחי', 'hello', 'לול', 'חחחחח', 'אאאאאא', '???']) {
+  const out = offTopicRedirect(m, Q) ?? '';
+  ok(out.includes('לא הגיעה אליי'), `"${m}" → the nothing-was-asked reply`);
+}
+
+console.log('');
+console.log('=== and the words that ARE a question, alone ===');
+console.log('');
+// ⚠️ A lone-unknown-word rule was written, measured and REMOVED. It caught
+// "אסדגכלדס" and it also caught these three, each answered with "לא הצלחתי
+// להבין" — a student who asked a real thing, told they made no sense. Mash
+// reaching the model costs one call; this costs the student.
+for (const m of ['אינדקס', 'דיפרנציאלי', 'מקומות', 'קומבינטוריקה', 'נוסחה', 'הסתברות']) {
+  ok(offTopicRedirect(m, Q) === null, `"${m}" alone is a question, not noise`);
+}
+ok(offTopicRedirect('אסדגכלדס', Q) === null, 'and single-word mash goes to the model, by choice');
+
 console.log(
   failed === 0
     ? '\nOK off-topic: speaks on nine shapes and stays quiet on everything else\n'

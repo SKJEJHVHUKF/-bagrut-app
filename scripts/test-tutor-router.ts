@@ -52,6 +52,15 @@ const ANSWERS = [
   'x=3', '1+2i', '0.36', '2/6', 'x = -5', '1/3', '$x=3$', 'זה 16?',
   'יצא לי 0.36', 'קיבלתי 1/3', 'התשובה היא 2/6', 'אני חושב ש-x=3',
   'd=4, a1=3', 'x=2 או x=3', '2*sqrt(3)', '\\dfrac{1}{3}', '-0.5', '16',
+  // ⚠️ "IS IT X?" IS A VALUE, NOT A QUESTION — Itay, 2026-08-25.
+  //
+  // Every one of these went to a model to have arithmetic confirmed, because
+  // ASKING lists האם and נכון among the words that mark a question. They do,
+  // in general; they do not when the message is a number with a question mark
+  // around it. `verificationValue` matches the frame and takes the value out
+  // of it, so "האם צריך להכפיל" and "האם הסדרה חשבונית" stay untouched — and
+  // "למה זה 16" stays on the must-NOT-grade list two blocks below.
+  'האם התשובה היא 1/3', 'האם זה 0.36', 'אז זה 1/3 נכון?', 'האם 0.36 נכון',
 ];
 let caught = 0;
 for (const msg of ANSWERS) {
@@ -69,7 +78,7 @@ const QUESTIONS = [
   'למה זה 16', 'למה התשובה 1/3', 'איך הגעת ל-0.36', 'מאיפה ה-6',
   'תן לי רמז', 'אני תקוע', 'מאיפה מתחילים?', 'למה טעיתי',
   'תראה לי את הפתרון', 'מה הנוסחה', 'מה חשוב לזכור', 'תסביר לי את השאלה',
-  'לא הבנתי את 2/6', 'זה נכון ש-x=3?', 'האם 0.36 נכון', 'מה זה אומר x=3',
+  'לא הבנתי את 2/6', 'זה נכון ש-x=3?', 'מה זה אומר x=3',
   'בדוק לי את התשובה', 'אפשר עוד רמז', 'מה עושים עכשיו', 'למה לא 1/2',
   'כן', 'תודה', 'אוקיי', 'מה ההבדל בין וגם לאו',
 ];
