@@ -26,7 +26,7 @@
  * else. `cardCanAnswer` holds that line; this file holds it again.
  */
 
-import { canonicalIntent as classifyIntent, type CanonicalIntent } from '@/lib/tutor-intent';
+import { canonicalIntent as classifyIntent, stepIntroducing, type CanonicalIntent } from '@/lib/tutor-intent';
 import { matchTopicCard, renderTopicCard, cardCanAnswer } from '@/lib/topic-cards';
 import { coachMistake, type MistakeKind } from '@/lib/error-coach';
 import { leaksAnswer } from '@/lib/help-ladder';
@@ -98,6 +98,12 @@ const unhandled = (reason: FallbackReason): CompilerResult => ({
   fallbackReason: reason,
 });
 
+/**
+ * Below this a rule matched but is not sure enough to answer with. Same line
+ * `decideFallbackReason` uses for `low_confidence`; they must not drift apart.
+ */
+export const MIN_CONFIDENCE = 0.75;
+
 const served = (
   responseType: ResponseType,
   message: string,
@@ -142,10 +148,25 @@ export async function compileTutorResponse(input: CompilerInput): Promise<Compil
   const ownWords = q
     ? `${String(q.question ?? '')} ${list((q.solution as Record<string, unknown>)?.steps).join(' ')} ${input.topic ?? ''}`
     : (input.topic ?? '');
-  const intent =
+  // ⚠️ THE RULE'S OWN CONFIDENCE IS A GATE, NOT DECORATION.
+  //
+  // It was carried around and ignored until the catch-all "למה" rule was added.
+  // That rule exists because "למה" opens 4,877 of the phrasings nothing
+  // recognised — but it matches "למה אתה כל כך איטי" as readily as "למה
+  // מציבים כאן", and serving this question's explanation for the first one is
+  // a confident answer to something nobody asked.
+  //
+  // So it sits at 0.7 and anything below MIN_CONFIDENCE is LABELLED but never
+  // SERVED: the trace gets an accurate name for the shape, the answer library
+  // knows what it is, and the student still gets the model. 0.75 is not a new
+  // number — `decideFallbackReason` already treats that line as the border
+  // between `low_confidence` and a real answer, and the two disagreeing was
+  // itself the bug.
+  const classified =
     input.canonicalIntent !== undefined
-      ? input.canonicalIntent
-      : classifyIntent(input.message ?? '', ownWords || undefined).intent;
+      ? { intent: input.canonicalIntent, confidence: 1 }
+      : classifyIntent(input.message ?? '', ownWords || undefined);
+  const intent = classified.confidence >= MIN_CONFIDENCE ? classified.intent : null;
   const { rule, moves, finalAnswer } = stepsOf(q);
   const hint = text(q?.hint);
   const explanation = text((q?.solution as Record<string, unknown>)?.explanation) || text(q?.explanation);
@@ -208,6 +229,56 @@ export async function compileTutorResponse(input: CompilerInput): Promise<Compil
   //
   // These three are about THIS question. A Topic Card here would be a general
   // answer to a specific ask, so the card layer is not even consulted.
+  // ---- "מאיפה ה-19?" — the step that introduces it ------------------
+  //
+  // The single most common question shape in this app (5,323 phrasings in the
+  // bank) and it has a written answer sitting in the solution: whichever step
+  // first produces the number. Digits only, and the step that accounts for the
+  // most of them — see stepIntroducing.
+  if (intent === 'where_from') {
+    const from = stepIntroducing(moves, input.message);
+    if (from) {
+      return served(
+        'why_step',
+        `זה מגיע מהצעד הזה:
+
+${from}`,
+        ['solution.steps'],
+        0.85,
+      );
+    }
+    // The number asked about is not in any step — often because the student
+    // typed a number of their own. Saying nothing is the honest outcome.
+    return unhandled('no_local_content');
+  }
+
+  // ---- "איך יודעים שזה נכון?" ---------------------------------------
+  //
+  // The last step is where a written solution closes its argument. Only when
+  // there is more than one step: on a single-step solution the "last" step is
+  // the whole answer, and handing that over is not a verification method.
+  if (intent === 'check') {
+    if (moves.length > 1) {
+      const last = moves[moves.length - 1];
+      if (!(finalAnswer && leaksAnswer(last, finalAnswer))) {
+        return served('why_step', `ככה בודקים:
+
+${last}`, ['solution.steps'], 0.8);
+      }
+    }
+    return unhandled('no_local_content');
+  }
+
+  // ---- "למה לא הפוך?" / "מה אם היו ארבעה?" --------------------------
+  //
+  // ⚠️ DELIBERATELY UNANSWERED. Both are about a road the solution did not
+  // take, and nothing in the question object describes roads not taken. The
+  // FAQ bank has entries written for exactly these — it answers them before
+  // this layer is reached — and when it has none, the model is the truthful
+  // outcome. Serving the explanation here would answer a different question
+  // fluently, which is the failure this whole file exists to avoid.
+  if (intent === 'why_not' || intent === 'what_if') return unhandled('no_local_content');
+
   if (intent === 'next_step' || intent === 'what_to_do_here') {
     if (moves.length === 0) {
       // No steps, but a written hint is still this question's own content and

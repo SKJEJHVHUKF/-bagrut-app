@@ -247,6 +247,7 @@ const RULES: Rule[] = [
   // --- "איך פותרים?" ------------------------------------------------
     R('how_to_solve', `(?:איך|כיצד)\\s*(?:[א-ת]+\\s+)?(?:פותרים|לפתור|ניגשים|לגשת|מתחילים|להתחיל|ממשיכים)`, 0.9),
     R('how_to_solve', `(?:מאיפה|מהיכן)\\s*(?:מתחילים|מתחיל(?:ה)?|להתחיל)`, 0.9),
+    R('how_to_solve', `יש\\s*(?:עוד\\s*)?דרך`, 0.8),
 
   // --- "תסביר לי" ---------------------------------------------------
     R('explain', `(?:תסביר|הסבר|להסביר)`, 0.9),
@@ -277,6 +278,7 @@ const RULES: Rule[] = [
     // the number IS the answer.
     R('where_from', `(?:^|[^א-ת])(?:מאיפה|מהיכן|מניין|מנין)`, 0.9),
     R('where_from', `(?:מה|למה)\\s*(?:אומר|המשמעות\\s*של)\\s*ה?סימון`, 0.85),
+    R('where_from', `(?:איך|כיצד)\\s*(?:יצא|מגיעים|מקבלים|הגענו|הגיע|קיבלנו|יוצא)`, 0.85),
 
   // --- "למה לא הפוך?" ------------------------------------------------
     // Checked before why_this_step on purpose: "למה לא" is a question about a
@@ -285,10 +287,12 @@ const RULES: Rule[] = [
 
   // --- "מה אם היו ארבעה?" --------------------------------------------
     R('what_if', `(?:^|[^א-ת])(?:מה\\s*(?:אם|יקרה\\s*אם|היה\\s*קורה\\s*אם)|ואם\\s)`, 0.85),
+    R('what_if', `מה\\s*(?:קורה|משתנה|יקרה|יהיה)`, 0.8),
 
   // --- "איך יודעים שזה נכון?" ----------------------------------------
     R('check', `איך\\s*(?:בודקים|לבדוק|יודעים\\s*ש|לוודא|מוודאים|אדע\\s*ש)`, 0.9),
     R('check', `איך\\s*(?:יודע|בודק|לבדוק|לוודא|מוודא|אדע)`, 0.85),
+    R('check', `(?:מה\\s*ה?בדיקה|איך\\s*מאמתים|(?:יש\\s*)?דרך\\s*לבדוק|לבדוק\\s*את\\s*ה?תשובה)`, 0.85),
 
   // --- "מה הנוסחה?" -------------------------------------------------
     R('which_formula', `נוסחה`, 0.85),
@@ -304,6 +308,7 @@ const RULES: Rule[] = [
   // --- "למה התשובה הזאת שגויה?" -------------------------------------
     R('why_wrong', `(?:טעיתי|טעות|לא\\s*נכונה|שגויה|לא\\s*בסדר|פספסתי)`, 0.9),
     R('why_wrong', `(?:למה|מדוע|איפה|מה)\\s*(?:זה\\s*)?לא\\s*נכון`, 0.9),
+    R('why_wrong', `(?:מה\\s*ה?מלכודת|איפה\\s*טועים|במה\\s*מתבלבלים|התבלבלתי|חשבתי\\s*ש|יצא\\s*אחרת|טעות\\s*נפוצה)`, 0.85),
 
   // --- "לא הבנתי" ---------------------------------------------------
     R('didnt_understand', `(?:לא\\s*הבנתי|לא\\s*מבין|לא\\s*מבינה|לא\\s*ברור|לא\\s*מובן|מבולבל|תקוע|תקועה|נתקעתי|אבוד)`, 0.9),
@@ -321,11 +326,29 @@ const RULES: Rule[] = [
   // and no question to answer.
     R('concept', `${OPEN}מה\\s*(?:זה|זו|זאת|הכוונה)\\s*ב?\\s*[א-ת].{2,}$`, 0.85),
     R('concept', `${OPEN}מה\\s*ה?הבדל\\s*בין\\s+[א-ת].{2,}$`, 0.9),
+    R('concept', `מה\\s*(?:מייצג|מסמל|המשמעות\\s*של)\\s+[א-ת].{2,}`, 0.8),
     R('concept', `${OPEN}מתי\\s*(?:משתמשים|בוחרים|צריך)\\s*ב?[א-ת].{2,}$`, 0.85),
     // `\\S` and not `[א-ת]`: the subject is often written in maths notation —
     // "איך מזהים n p k בבינומית" is a concept question whose subject starts on
     // a latin letter, and requiring Hebrew there dropped it silently.
     R('concept', `${OPEN}(?:איך|כיצד)\\s*(?:קוראים|בונים|ממלאים|מזהים)\\s+\\S.{2,}$`, 0.85),
+
+  // --- the catch-all "למה" ------------------------------------------
+  //
+  // ⚠️ LAST IN THE TABLE, AND THAT POSITION IS THE WHOLE DESIGN.
+  //
+  // "למה" opens 4,877 of the phrasings no rule matched — by far the largest
+  // single shape in the corpus, and the old rule wanted למה followed by one of
+  // eight verbs. Students write "למה האיבר", "למה המכנה", "למה הסכום",
+  // "למה 3", "למה כל", "למה זו" — the noun is the subject, not a verb from a
+  // list nobody can finish enumerating.
+  //
+  // Placed after EVERY other rule so each specific one gets first refusal:
+  // "למה לא" is still why_not, "למה טעיתי" is still why_wrong, "למה זה עובד"
+  // is still how_it_works. Only a "למה" that nothing else claimed lands here.
+  // Confidence 0.7 says so — below the 0.75 line, so `decideFallbackReason`
+  // reports `low_confidence` rather than pretending to be sure.
+    R('why_this_step', `(?:^|[^א-ת])(?:למה|מדוע|מדוע)(?:[^א-ת]|$)`, 0.7),
 ];
 
 /**
@@ -424,6 +447,31 @@ const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is st
  * topic-level fact. `null` means the honest outcome is a model call — this
  * function exists to say no.
  */
+/**
+ * The solution step that introduces what the student asked about, or null.
+ *
+ * ⚠️ DIGITS ONLY. A shared Hebrew word means nothing here — every step shares
+ * words with its own question — but a number is specific enough to point at.
+ * The step that mentions the MOST of what was asked wins, not the first one to
+ * mention any of it: "מאיפה 7 מעל 3" belongs on the step that has both, not on
+ * an earlier one that happens to contain a 3.
+ *
+ * Exported because `compileTutorResponse` answers `where_from` with exactly
+ * this and a second copy would drift.
+ */
+export function stepIntroducing(steps: string[], message?: string): string | null {
+  if (!message || !steps.length) return null;
+  const asked = (message.match(/\d+(?:[.,]\d+)?/g) ?? []).filter((n) => n.length <= 6);
+  if (!asked.length) return null;
+  let hit: string | null = null;
+  let best = 0;
+  for (const st of steps) {
+    const score = asked.filter((n) => st.includes(n)).length;
+    if (score > best) { best = score; hit = st; }
+  }
+  return hit;
+}
+
 export function groundingFor(
   intent: CanonicalIntent,
   focus: TutorFocus | null,
@@ -485,20 +533,7 @@ export function groundingFor(
       // "מאיפה ה-60?" — the step that introduces the number IS the answer, and
       // it is already written. Without the student's words there is nothing to
       // look for, so this is the one intent that needs them.
-      if (!message || !steps.length) return null;
-      // Digits only. A Hebrew word shared with a step means nothing — every
-      // step shares words with the question — but a number is specific.
-      const asked = (message.match(/\d+(?:[.,]\d+)?/g) ?? []).filter((n) => n.length <= 6);
-      if (!asked.length) return null;
-      // The step that mentions the MOST of what was asked, not the first one
-      // that mentions any of it: "מאיפה 7 מעל 3" should land on the step that
-      // has both, not on an earlier step that happens to contain a 3.
-      let hit: string | null = null;
-      let bestScore = 0;
-      for (const st of steps) {
-        const score = asked.filter((n) => st.includes(n)).length;
-        if (score > bestScore) { bestScore = score; hit = st; }
-      }
+      const hit = stepIntroducing(steps, message);
       return hit ? { kind: 'solution-steps', text: hit } : null;
     }
 

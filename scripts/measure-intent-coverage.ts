@@ -111,6 +111,33 @@ const TOPICS = ['probability', 'sequences', 'trigonometry', 'geometry'];
   for (const [k, n] of [...missByKind.entries()].sort((a, b) => b[1] - a[1]))
     console.log(`  ${k.padEnd(16)} ${String(n).padStart(6)}`);
 
+  // ---- the shapes, which is what a rule is written against ----
+  //
+  // A flat list of 16,000 phrasings is unreadable and a list of the first words
+  // is not: Hebrew questions open on the interrogative, so grouping by the
+  // first one or two words shows which SHAPES have no rule, in order of how
+  // much traffic each carries. That is the unit a rule is written in.
+  const shape1 = new Map<string, number>();
+  const shape2 = new Map<string, number>();
+  for (const [text] of misses) {
+    const parts = text.replace(/[?!.,]/g, '').split(/\s+/).filter(Boolean);
+    if (parts[0]) shape1.set(parts[0], (shape1.get(parts[0]) ?? 0) + 1);
+    if (parts[1]) {
+      const k = `${parts[0]} ${parts[1]}`;
+      shape2.set(k, (shape2.get(k) ?? 0) + 1);
+    }
+  }
+  console.log();
+  console.log('=== unmatched, by opening word ===');
+  console.log();
+  for (const [k, n] of [...shape1.entries()].sort((a, b) => b[1] - a[1]).slice(0, 22))
+    console.log(`  ${String(n).padStart(5)}  ${k}`);
+  console.log();
+  console.log('=== unmatched, by opening pair ===');
+  console.log();
+  for (const [k, n] of [...shape2.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30))
+    console.log(`  ${String(n).padStart(5)}  ${k}`);
+
   console.log(`\n=== ${Math.min(N, misses.size)} of ${misses.size} distinct unmatched phrasings ===\n`);
   console.log('  This is the rule backlog, in the words content authors actually chose.\n');
   for (const [text, m] of [...misses.entries()].slice(0, N))
