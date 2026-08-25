@@ -50,6 +50,7 @@ import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
 import { AI_DAILY_LIMIT } from '@/lib/access';
 import { offTopicRedirect } from '@/lib/off-topic';
+import { planAnswer } from '@/lib/tutor-plan-answer';
 import { expectationOf, nextStepAfter, type Pending } from '@/lib/tutor-pending';
 import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
 import { decideFallbackReason } from '@/lib/tutor-telemetry';
@@ -489,6 +490,23 @@ export default function TutorBubble() {
         formNumber = getPaper() ?? undefined;
       } catch {
         /* server defaults to 5 units / 572 */
+      }
+
+      // ===== "על מה כדאי לעבוד עכשיו" — from the student's own plan =====
+      //
+      // The only phrasing that appeared TWICE in the live trace, and it came
+      // back `missing_question_context`. The model does not know this student;
+      // `buildTodayPlan` has their results, their mistakes and their target,
+      // and is what /my-plan renders. Silent whenever a question is on screen:
+      // there "מה לעשות עכשיו" means the exercise, and `what_to_do_here` owns it.
+      const fromPlan = planAnswer(text, Boolean(focusNow?.question));
+      if (fromPlan) {
+        setMsgs((m) => [
+          ...m,
+          { id: `a-${Date.now()}`, role: 'assistant', text: fromPlan, local: true },
+        ]);
+        setSending(false);
+        return;
       }
 
       // ===== last local layer: the message is not about maths at all =====

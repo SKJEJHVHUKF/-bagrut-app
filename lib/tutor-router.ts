@@ -41,7 +41,7 @@ import { isParseable, latexToMathjs } from '@/lib/mathscan/solve/parse';
 import { checkAnswer } from '@/lib/answer-check';
 import type { TutorFocus } from '@/lib/tutor-presence';
 import type { AnswerSpec, Verdict } from '@/lib/answer-check';
-import { reportedValue, type Pending } from '@/lib/tutor-pending';
+import { reportedValue, yesNo, type Pending } from '@/lib/tutor-pending';
 import { followUp, ladderMove } from '@/lib/tutor-followup';
 
 type Ask = NonNullable<ReturnType<typeof classifyAsk>>;
@@ -275,6 +275,24 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
     // It asked for a value we could not compute. Grading against the final
     // answer here is the bug: the student was asked for something else.
     if (state.pending?.kind === 'value-unknown') return { kind: 'open' };
+  }
+
+  // ---- the tutor asked a yes-or-no question and got one -------------
+  //
+  // "תיקח את הראשון מהם ותבדוק אותו מול השאלה — הוא מתקיים?" and the student
+  // types "לא". That was an unrecognised message and therefore a paid call, on
+  // a question the tutor itself had just asked. Both answers move the ladder:
+  // a "כן" means the check held and the next rung is what they need, a "לא"
+  // means it did not and they need the rung anyway. The difference is which
+  // template speaks, and `answerLocally` decides that from `served`.
+  //
+  // Gated on the pending expectation, so a bare "לא" in a fresh conversation —
+  // where it means something else entirely, or nothing — is untouched.
+  if (state.pending?.kind === 'yes-no') {
+    const v = yesNo(trimmed);
+    if (v !== null) {
+      return { kind: 'ask', ask: ladderMove(v ? 'more' : 'stuck', state.served ?? [], state.lastAsk) as Ask };
+    }
   }
 
   // ---- still talking about what the tutor just said ----------------
