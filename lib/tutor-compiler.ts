@@ -26,7 +26,7 @@
  * else. `cardCanAnswer` holds that line; this file holds it again.
  */
 
-import { canonicalIntent as classifyIntent, stepIntroducing, type CanonicalIntent } from '@/lib/tutor-intent';
+import { canonicalIntent as classifyIntent, stepIntroducing, explanationFor, type CanonicalIntent } from '@/lib/tutor-intent';
 import { matchTopicCard, renderTopicCard, cardCanAnswer } from '@/lib/topic-cards';
 import { coachMistake, type MistakeKind } from '@/lib/error-coach';
 import { leaksAnswer } from '@/lib/help-ladder';
@@ -169,7 +169,11 @@ export async function compileTutorResponse(input: CompilerInput): Promise<Compil
   const intent = classified.confidence >= MIN_CONFIDENCE ? classified.intent : null;
   const { rule, moves, finalAnswer } = stepsOf(q);
   const hint = text(q?.hint);
-  const explanation = text((q?.solution as Record<string, unknown>)?.explanation) || text(q?.explanation);
+  // Reads BOTH content shapes — a lesson's explanation string and a /quiz
+  // question's four-field object. See explanationFor: the object form was
+  // invisible to every reader here, which is why fifteen phrasings failed on
+  // all 574 quiz questions at once.
+  const explanation = explanationFor(q, intent);
 
   // ---- 1. a graded answer outranks everything -----------------------
   // The student typed something and it was checked. Whatever they also asked,
@@ -216,7 +220,24 @@ export async function compileTutorResponse(input: CompilerInput): Promise<Compil
     }
     // No card. The question's own explanation is still grounded and still
     // better than a model call — when there IS a question.
-    if (q && (intent === 'explain' || intent === 'didnt_understand') && explanation) {
+    // ⚠️ `how_it_works` BELONGS HERE. `concept` DOES NOT, AND THE TEST SUITE
+    // CAUGHT ME ADDING IT.
+    //
+    // "איך זה עובד" points at the thing on the screen, so this question's
+    // written explanation is the right answer. "מה זה בכלל נגזרת" points at a
+    // subject of the student's own choosing — `concept` is the one intent
+    // allowed to name its own — and answering THAT with this question's
+    // explanation is a fluent answer to something nobody asked. There is an
+    // assertion for it ("a concept question with no card stays with the
+    // model") and it went red the moment I widened the condition.
+    //
+    // The cost is real: "מה הכוונה אינדקס" on /quiz goes back to the model
+    // until a Topic Card exists for it. That is the honest outcome.
+    if (
+      q &&
+      (intent === 'explain' || intent === 'didnt_understand' || intent === 'how_it_works') &&
+      explanation
+    ) {
       return served('hint', explanation, ['explanation'], 0.7);
     }
     if (q && intent === 'didnt_understand' && hint) return served('hint', hint, ['hint'], 0.75);
@@ -258,6 +279,13 @@ ${from}`,
   // there is more than one step: on a single-step solution the "last" step is
   // the whole answer, and handing that over is not a verification method.
   if (intent === 'check') {
+    // No steps at all (/quiz): `explanation.remember` is the written "what to
+    // hold on to", which is the closest honest answer to "how do I know".
+    if (moves.length === 0) {
+      const remember = explanationFor(q, 'check');
+      if (remember) return served('why_step', remember, ['explanation'], 0.75);
+      return unhandled('no_local_content');
+    }
     if (moves.length > 1) {
       const last = moves[moves.length - 1];
       if (!(finalAnswer && leaksAnswer(last, finalAnswer))) {
@@ -277,10 +305,37 @@ ${last}`, ['solution.steps'], 0.8);
   // this layer is reached — and when it has none, the model is the truthful
   // outcome. Serving the explanation here would answer a different question
   // fluently, which is the failure this whole file exists to avoid.
-  if (intent === 'why_not' || intent === 'what_if') return unhandled('no_local_content');
+  // ---- "מה המלכודת פה?" / "איפה טועים?" ------------------------------
+  //
+  // `why_wrong` is handled at the top ONLY when a graded attempt exists. Asked
+  // cold — which is how "מה המלכודת" and "איפה טועים בדרך כלל" arrive — it fell
+  // through to the model, while `explanation.why_wrong` on every /quiz question
+  // is written to answer precisely that.
+  if (intent === 'why_wrong') {
+    const trap = explanationFor(q, 'why_wrong');
+    if (trap) return served('mistake_feedback', trap, ['explanation'], 0.8);
+    return unhandled('no_local_content');
+  }
 
-  if (intent === 'next_step' || intent === 'what_to_do_here') {
+  // ---- "למה לא הפוך?" ------------------------------------------------
+  //
+  // Still ungrounded on a question with a written solution: nothing there
+  // describes a road not taken. But a /quiz question's `why_wrong` is exactly
+  // "why the other options fail", which IS that road.
+  if (intent === 'why_not') {
+    const why = explanationFor(q, 'why_not');
+    if (why) return served('why_step', why, ['explanation'], 0.75);
+    return unhandled('no_local_content');
+  }
+
+  if (intent === 'what_if') return unhandled('no_local_content');
+
+  if (intent === 'next_step' || intent === 'what_to_do_here' || intent === 'how_to_solve') {
     if (moves.length === 0) {
+      // No steps at all (/quiz). The hint is the right rung when it exists; the
+      // written explanation is the honest second choice for "how do I go about
+      // this", and it is authored, not invented.
+      if (!hint && explanation) return served('hint', explanation, ['explanation'], 0.75);
       // No steps, but a written hint is still this question's own content and
       // is the right rung for "what do I do here".
       if (hint) return served('hint', hint, ['hint'], 0.8);
@@ -306,7 +361,14 @@ ${last}`, ['solution.steps'], 0.8);
     // Only the authored rule line can answer this. It names the formula and
     // the trigger in the question's own wording, which is what "why" means
     // here. Without it the honest answer is prose, and prose is the model's.
-    if (!rule) return unhandled('no_local_content');
+    if (!rule) {
+      // No authored rule line. A /quiz question never has one — it has no
+      // solution at all — but it does carry `explanation.why_correct`, which
+      // is a written answer to "why is it done this way" and is not prose we
+      // invented.
+      if (explanation) return served('why_step', explanation, ['explanation'], 0.8);
+      return unhandled('no_local_content');
+    }
     return served(
       'why_step',
       `${rule}\n\nזאת הסיבה שהצעד הזה נראה כך. תגיד לי איזה נתון בשאלה הפעיל את הכלל.`,

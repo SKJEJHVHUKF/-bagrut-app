@@ -459,6 +459,54 @@ const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is st
  * Exported because `compileTutorResponse` answers `where_from` with exactly
  * this and a second copy would drift.
  */
+/**
+ * The written explanation a question carries, for the thing being asked.
+ *
+ * ⚠️ TWO CONTENT SHAPES, AND ONE OF THEM WAS INVISIBLE.
+ *
+ * A lesson question stores `solution.explanation` as a STRING. A concept-quiz
+ * question (/quiz, 574 of them) stores an OBJECT with four fields —
+ * `why_correct`, `why_wrong`, `concept`, `remember` — and every reader here
+ * did `text(q.explanation)`, which yields '' for an object. So the richest
+ * content in the app was unreachable, and every explanatory ask on /quiz came
+ * back ungrounded and went to the model.
+ *
+ * Found by scripts/measure-quiz-gap: fifteen different phrasings failed on
+ * ALL 574 questions, which is the signature of one systematic cause rather
+ * than 574 missing entries. Counting bank entries could never have shown it.
+ *
+ * The field is chosen by what was asked, because the four are genuinely
+ * different answers and handing over the wrong one is worse than handing over
+ * nothing.
+ */
+export function explanationFor(
+  q: Record<string, unknown> | null | undefined,
+  intent?: CanonicalIntent | null,
+): string {
+  if (!q) return '';
+  const direct = (q.solution as Record<string, unknown> | undefined)?.explanation ?? q.explanation;
+  if (typeof direct === 'string') return direct.trim();
+  if (!direct || typeof direct !== 'object') return '';
+  const e = direct as Record<string, unknown>;
+  const pick = (...keys: string[]): string => {
+    for (const k of keys) if (typeof e[k] === 'string' && (e[k] as string).trim()) return (e[k] as string).trim();
+    return '';
+  };
+  switch (intent) {
+    case 'concept':
+    case 'how_it_works':
+      return pick('concept', 'why_correct', 'remember');
+    case 'check':
+      return pick('remember', 'why_correct', 'concept');
+    case 'why_wrong':
+      return pick('why_wrong', 'why_correct');
+    case 'why_not':
+      return pick('why_wrong', 'concept', 'why_correct');
+    default:
+      return pick('why_correct', 'concept', 'remember');
+  }
+}
+
 export function stepIntroducing(steps: string[], message?: string): string | null {
   if (!message || !steps.length) return null;
   const asked = (message.match(/\d+(?:[.,]\d+)?/g) ?? []).filter((n) => n.length <= 6);
@@ -487,7 +535,7 @@ export function groundingFor(
   if (!q) return null;
 
   const steps = list(q.solution?.steps);
-  const explanation = text(q.solution?.explanation) || text(q.explanation);
+  const explanation = explanationFor(q as Record<string, unknown>, intent);
   const note =
     typeof focus?.chosenIndex === 'number' ? text(list(q.distractorNotes)[focus.chosenIndex]) : '';
   const hint = text(q.hint);

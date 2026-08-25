@@ -580,7 +580,20 @@ function answered(focus: TutorFocus): boolean {
 export async function answerFromFaq(message: string, focus: TutorFocus | null, subject = 'math5'): Promise<FaqAnswer | null> {
   const q = focus?.question;
   if (!q || !focus?.topic) return null;
-  const steps = q.solution.steps;
+  // ⚠️ OPTIONAL, BECAUSE THE TYPE LIES ABOUT THE DATA.
+  //
+  // A concept-quiz question (/quiz) carries no `solution` object at all, so
+  // this line threw on every one of the 574 of them — inside a function whose
+  // own doc comment says "Never throws". The caller wraps it in a try/catch, so
+  // the failure was silent: the FAQ layer simply never ran on /quiz and the
+  // turn went to the model looking like an ordinary miss.
+  //
+  // This is the SECOND time this exact shape has been found. `answerLocally`
+  // had `q.solution.steps` too, and /quiz read 0% coverage for months because
+  // of it — a throw is invisible to a coverage count, which sees "not answered"
+  // either way. Found again by scripts/measure-quiz-gap, which ran the real
+  // chain instead of counting entries.
+  const steps = q.solution?.steps ?? [];
   const step = stepReference(message, steps.length);
 
   const bank = await loadFaqBank(subject, focus.topic);
@@ -682,7 +695,7 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
       }
     }
     // What the student can actually see, for the foreign-number screen.
-    const ownText = `${q.question} ${steps.join(' ')} ${q.solution.finalAnswer}`;
+    const ownText = `${q.question} ${steps.join(' ')} ${q.solution?.finalAnswer ?? ''}`;
     if (nearPool.length > 0) {
       const hit = matchFaq(buildFaqIndex(nearPool, { idf }), message, {
         threshold: FAQ_TRANSFER_THRESHOLD,
@@ -710,7 +723,10 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
   if (step !== null) {
     const text = steps[step];
     if (!text) return null;
-    if (!canReveal && leaksAnswer(text, q.solution.finalAnswer)) return null;
+    // `?? ''` for the same reason as above: a /quiz question has no solution
+    // object, and `leaksAnswer` against an empty string reveals nothing — which
+    // is the correct answer when there is no final answer to leak.
+    if (!canReveal && leaksAnswer(text, q.solution?.finalAnswer ?? '')) return null;
     const rule = steps.find((s) => s.startsWith('**הכלל:**'));
     const ruleLine = rule && step !== 0 ? `\n\nהכלל שעומד מאחורי זה: ${rule.replace(/^\*\*הכלל:\*\*\s*/, '')}` : '';
     return {
