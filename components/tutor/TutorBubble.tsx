@@ -50,6 +50,7 @@ import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
 import { AI_DAILY_LIMIT } from '@/lib/access';
 import { offTopicRedirect } from '@/lib/off-topic';
+import { expectationOf, nextStepAfter, type Pending } from '@/lib/tutor-pending';
 import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
 import { decideFallbackReason } from '@/lib/tutor-telemetry';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
@@ -181,6 +182,15 @@ export default function TutorBubble() {
   // student can feel. `reportedRef` is what stops a re-render from counting
   // the same answer twice.
   const reportedRef = useRef<Set<string>>(new Set());
+  /**
+   * What the tutor's own last message asked the student for.
+   *
+   * ⚠️ Set from the SAME effect that reports a local turn, and for the same
+   * reason: every local layer marks its message `local: true`, so hooking the
+   * flag catches all eight places one is produced — and the next one added,
+   * without anyone remembering. Read and cleared at the top of `send`.
+   */
+  const pendingRef = useRef<Pending | null>(null);
   useEffect(() => {
     const last = msgs[msgs.length - 1];
     if (!last || last.role !== 'assistant' || !last.local) return;
@@ -188,8 +198,22 @@ export default function TutorBubble() {
     reportedRef.current.add(last.id);
 
     const asked = [...msgs].reverse().find((m) => m.role === 'user');
-    if (!asked) return;
     const focus = getTutorFocus();
+
+    // ---- what did this reply ask the student for? ----
+    //
+    // The tutor is Socratic by design: almost every template ends by asking
+    // something back. Recording it here is what stops the NEXT turn from being
+    // graded against the wrong thing — see lib/tutor-pending.
+    const pq = (focus?.question ?? null) as Record<string, unknown> | null;
+    const pSteps = Array.isArray((pq?.solution as Record<string, unknown>)?.steps)
+      ? (((pq!.solution as Record<string, unknown>).steps as unknown[]).filter(
+          (x): x is string => typeof x === 'string',
+        ))
+      : [];
+    pendingRef.current = expectationOf(last.text, nextStepAfter(last.text, pSteps));
+
+    if (!asked) return;
     const q = (focus?.question ?? null) as Record<string, unknown> | null;
     const own = q ? `${String(q.question ?? '')} ${focus?.topic ?? ''}` : (focus?.topic ?? '');
     const intent = canonicalIntent(asked.text, own || undefined);
@@ -270,6 +294,10 @@ export default function TutorBubble() {
       // The generation this send belongs to. If the student moves to the next
       // question mid-stream, the reset bumps genRef and everything below stops
       // touching the (new) chat.
+      // What the tutor asked LAST turn, read before this turn overwrites it.
+      const pendingNow = pendingRef.current;
+      pendingRef.current = null;
+
       const gen = genRef.current;
       const userId = `u-${Date.now()}`;
       setMsgs((m) => [...m, { id: userId, role: 'user', text }]);
@@ -304,6 +332,7 @@ export default function TutorBubble() {
         const route = routeMessage(text, focusNow, {
           lastAsk: lastAskRef.current,
           served: servedRef.current.kinds,
+          pending: pendingNow,
         });
         routeKind = route.kind;
         if (route.kind === 'answer') {

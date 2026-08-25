@@ -41,12 +41,19 @@ import { isParseable, latexToMathjs } from '@/lib/mathscan/solve/parse';
 import { checkAnswer } from '@/lib/answer-check';
 import type { TutorFocus } from '@/lib/tutor-presence';
 import type { AnswerSpec, Verdict } from '@/lib/answer-check';
+import type { Pending } from '@/lib/tutor-pending';
 
 type Ask = NonNullable<ReturnType<typeof classifyAsk>>;
 
 export type Route =
   /** A. the student typed a value to be graded. `spec` is what to grade against. */
-  | { kind: 'answer'; spec: AnswerSpec; typed: string }
+  | {
+      kind: 'answer';
+      spec: AnswerSpec;
+      typed: string;
+      /** Present when the value being graded is a STEP's result, not the final answer. */
+      about?: { step: string };
+    }
   /** B/C. one of the six recurring asks — hint, first step, why wrong, full
    *  solution, formulas, key points — all served from authored content. */
   | { kind: 'ask'; ask: Ask }
@@ -70,6 +77,22 @@ export type TurnState = {
   lastAsk?: Ask | null;
   /** Rungs already handed out for this question (the bubble's `servedRef`). */
   served?: readonly LocalAnswerKind[];
+  /**
+   * What the tutor's OWN last message asked the student for.
+   *
+   * ⚠️ WITHOUT THIS A CORRECT STUDENT IS TOLD THEY ARE WRONG. Every local
+   * template ends by asking something, and most ask for the result of the NEXT
+   * step. The reply is a bare number, `looksLikeAnswer` says yes, and the value
+   * gets graded against `question.expected` — the FINAL answer. On the
+   * sequences question below, a student who correctly computes the middle and
+   * types it is told it is not equivalent to the right answer.
+   *
+   * When this says a specific step's value was asked for, that value is what
+   * the reply is graded against. When it says a value was asked for and we
+   * could not compute it, the reply is NOT GRADED AT ALL — the model answers
+   * it, which costs a call and cannot be wrong.
+   */
+  pending?: Pending | null;
 };
 
 // ------------------------------------------------------------
@@ -227,6 +250,22 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
     return { kind: 'ask', ask: ladderSpent ? 'full' : state.lastAsk };
   }
 
+  // ---- the reply to the tutor's own question -----------------------
+  if (looksLikeAnswer(message)) {
+    // It asked for THIS step's result and we know it. Grade against that.
+    if (state.pending?.kind === 'step-value') {
+      return {
+        kind: 'answer',
+        spec: { kind: 'value', value: state.pending.expected },
+        typed: bareValue(message),
+        about: { step: state.pending.step },
+      };
+    }
+    // It asked for a value we could not compute. Grading against the final
+    // answer here is the bug: the student was asked for something else.
+    if (state.pending?.kind === 'value-unknown') return { kind: 'open' };
+  }
+
   const spec = focus?.question?.expected;
   // `manual` means the content author said this answer cannot be graded
   // mechanically (a proof, a locus, "find all n"). Honour that.
@@ -286,6 +325,36 @@ export function answerGradedLocally(
 ): { text: string; verdict: Verdict } | null {
   const result = checkAnswer(route.typed, route.spec);
   if (result.verdict === 'unparseable' || result.verdict === 'manual') return null;
+
+  if (result.verdict === 'correct' && route.about) {
+    return {
+      verdict: 'correct',
+      text: `כן, \`${route.typed}\` — בדיוק מה שהצעד הזה נותן. 🎯
+
+עכשיו קדימה לצעד הבא.`,
+    };
+  }
+
+  // ⚠️ A WRONG INTERMEDIATE IS NOT A WRONG ANSWER. The student was asked for
+  // one step's result, so the reply is about that step and nothing else —
+  // handing them the why-wrong templates here would discuss a final answer they
+  // never claimed.
+  //
+  // ⚠️ AND THE STEP IS NOT QUOTED BACK. The first version pasted it in, and the
+  // step that produces the value CONTAINS the value: the student got it wrong
+  // and was immediately shown the number they were asked to find. That is the
+  // ladder collapsing at the exact moment it matters. They get told it does not
+  // match and are sent back to the step, which is the rung below.
+  if (result.verdict === 'wrong' && route.about) {
+    return {
+      verdict: 'wrong',
+      text:
+        `בדקתי — הצעד הזה נותן משהו אחר מ-\`${route.typed}\`.
+
+` +
+        'תעבור עליו שוב לאט, ותגיד לי מה יצא הפעם.',
+    };
+  }
 
   if (result.verdict === 'correct') {
     // Deliberately short and specific. The student's own value is echoed in
