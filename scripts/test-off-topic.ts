@@ -112,6 +112,36 @@ for (const m of ['אינדקס', 'דיפרנציאלי', 'מקומות', 'קומ
 }
 ok(offTopicRedirect('אסדגכלדס', Q) === null, 'and single-word mash goes to the model, by choice');
 
+console.log('');
+console.log('=== the widened domains, and the questions they must not touch ===');
+console.log('');
+// ⚠️ Every entry in these categories was checked against the app's own
+// 10,753-word Hebrew vocabulary before being written, because that corpus has
+// surprises: it contains "כדורגל" (probability questions about matches) and it
+// does NOT contain "אינדקס". A word that appears in a real question can never
+// go on the off-topic list.
+for (const m of [
+  'אני רוצה לקנות אופניים', 'מתי הטיסה ליוון', 'מתי אני יכול לעשות טסט',
+  'יש לי כלב חדש', 'כואב לי הראש', 'מתי הגיוס לצבא', 'החברה שלי כועסת עליי',
+  'כמה משכורת מלצר מרוויח', 'מתי פסח השנה', 'מה המזל שלי', 'מי בנה אותך', 'אתה chatgpt',
+]) {
+  ok(offTopicRedirect(m, Q) !== null, `"${m}" → redirected`);
+}
+
+// Real questions that brush against those words and must survive.
+for (const m of [
+  'מה ההסתברות שהקבוצה תנצח במשחק',
+  'כמה זמן לוקח לפתור את השאלה',
+  'אני לחוץ מהבגרות',
+  'מה הסיכוי להוציא כדור אדום',
+  'איך מחשבים את השטח של המלבן',
+  'מה קורה אם מכפילים את הרדיוס',
+  'כמה עולה מנוי',
+  'מה הציון שלי',
+]) {
+  ok(offTopicRedirect(m, Q) === null, `"${m}" survives the widened list`);
+}
+
 console.log(
   failed === 0
     ? '\nOK off-topic: speaks on nine shapes and stays quiet on everything else\n'

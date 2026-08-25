@@ -64,6 +64,24 @@ const OFF_TOPIC: Array<{ re: RegExp; label: string }> = [
   { re: /(בדיחה|בדיחות|תצחיק|משעמם לי|שעמום)/, label: 'סתם' },
   { re: /(מה שלומך|מי אתה|מי את|בן כמה אתה|אתה רובוט|אתה בוט|אתה אדם|אוהב אותך|יש לך רגשות)/, label: 'עליי' },
   { re: /(אנגלית|תנך|תנ"ך|היסטוריה|ספרות|אזרחות|ביולוגיה|גאוגרפיה)/, label: 'מקצוע אחר' },
+
+  // ---- widened on Itay's ask: "סתם כל דבר שלא קשור ללימוד" ----------
+  //
+  // Each entry below was checked against the app's own 10,753-word Hebrew
+  // vocabulary before being added, because that corpus contains surprises: it
+  // has "כדורגל" (probability questions about matches) and does NOT have
+  // "אינדקס". A word that appears in a real question can never go on this list.
+  { re: /(לקנות|חנות|קניון|מחיר של|בזול|מבצע|אמזון|עלי אקספרס|שופינג)/, label: 'קניות' },
+  { re: /(טיסה|חופשה|מלון|לטייל|חול|אילת|יוון|תאילנד|דרכון)/, label: 'טיולים' },
+  { re: /(רכב|אוטו|מכונית|רישיון נהיגה|טסט|טויוטה|מאזדה)/, label: 'רכב' },
+  { re: /(כלב|חתול|תוכי|אוגר|חיית מחמד|וטרינר)/, label: 'חיות' },
+  { re: /(כאב ראש|כואב לי|חולה|רופא|תרופה|מחלה|חיסון|קופת חולים)/, label: 'בריאות' },
+  { re: /(צבא|גיוס|מילואים|קבע|יחידה קרבית|טירונות)/, label: 'צבא' },
+  { re: /(חברה שלי|חבר שלי|דייט|להתחתן|חתונה|להיפרד|מאוהב)/, label: 'אישי' },
+  { re: /(עבודה במשמרות|מלצר|משכורת|מעסיק|ראיון עבודה|קורות חיים)/, label: 'עבודה' },
+  { re: /(שבת|חג|פסח|ראש השנה|יום כיפור|סוכות|בית כנסת)/, label: 'חגים' },
+  { re: /(מזל|הורוסקופ|אסטרולוגיה|קלפי טארוט)/, label: 'אמונות' },
+  { re: /(איך קוראים לך|מי בנה אותך|מאיזה מודל|אתה chatgpt|אתה gpt|מי יצר אותך)/i, label: 'עליי' },
 ];
 
 /** Words shorter than this carry nothing in Hebrew and are not evidence of anything. */
