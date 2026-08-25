@@ -41,7 +41,8 @@ import { isParseable, latexToMathjs } from '@/lib/mathscan/solve/parse';
 import { checkAnswer } from '@/lib/answer-check';
 import type { TutorFocus } from '@/lib/tutor-presence';
 import type { AnswerSpec, Verdict } from '@/lib/answer-check';
-import type { Pending } from '@/lib/tutor-pending';
+import { reportedValue, type Pending } from '@/lib/tutor-pending';
+import { followUp, ladderMove } from '@/lib/tutor-followup';
 
 type Ask = NonNullable<ReturnType<typeof classifyAsk>>;
 
@@ -93,6 +94,16 @@ export type TurnState = {
    * it, which costs a call and cannot be wrong.
    */
   pending?: Pending | null;
+  /**
+   * Was the PREVIOUS turn answered locally?
+   *
+   * ⚠️ This is the permission slip for `tutor-followup`, whose patterns are far
+   * wider than anything else in this file. "לא הבנתי" one message after the
+   * tutor explained something can only mean "not that"; the same words opening
+   * a conversation mean anything at all. Without this flag the wide patterns
+   * would fire on the model's turf and answer the wrong question confidently.
+   */
+  lastWasLocal?: boolean;
 };
 
 // ------------------------------------------------------------
@@ -264,6 +275,43 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
     // It asked for a value we could not compute. Grading against the final
     // answer here is the bug: the student was asked for something else.
     if (state.pending?.kind === 'value-unknown') return { kind: 'open' };
+  }
+
+  // ---- still talking about what the tutor just said ----------------
+  //
+  // The student took a free move — a hint, a formula, "why was I wrong" — and
+  // then kept going: "עוד קצת", "עדיין תקוע", "ניסיתי ולא יצא". Each of those
+  // used to be unrecognised and therefore paid for, on a conversation that had
+  // already been answered from authored content.
+  //
+  // Only when the previous turn was local. The reply is always another rung of
+  // the same ladder, about the exercise already on screen, so the worst case is
+  // a rung they did not want rather than an answer about something else.
+  if (state.lastWasLocal) {
+    const fu = followUp(trimmed);
+    if (fu) {
+      // ⚠️ A REPORT OF A RESULT IS AN ANSWER, NOT A REQUEST FOR HELP.
+      //
+      // "ניסיתי שוב ויצא לי 19" reads as `tried` and was answered with another
+      // hint — while the student was telling us they had got it right.
+      // `looksLikeAnswer` misses it because its lead-in stripper is anchored at
+      // the start, so the same sentence with four words in front of it is
+      // invisible to the grading path.
+      const reported = reportedValue(trimmed);
+      if (reported) {
+        if (state.pending?.kind === 'step-value') {
+          return {
+            kind: 'answer',
+            spec: { kind: 'value', value: state.pending.expected },
+            typed: reported,
+            about: { step: state.pending.step },
+          };
+        }
+        const own = focus?.question?.expected;
+        if (own && own.kind !== 'manual') return { kind: 'answer', spec: own, typed: reported };
+      }
+      return { kind: 'ask', ask: ladderMove(fu, state.served ?? [], state.lastAsk) as Ask };
+    }
   }
 
   const spec = focus?.question?.expected;

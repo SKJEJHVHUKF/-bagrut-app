@@ -191,6 +191,8 @@ export default function TutorBubble() {
    * without anyone remembering. Read and cleared at the top of `send`.
    */
   const pendingRef = useRef<Pending | null>(null);
+  /** Did the tutor answer the previous turn itself? The follow-up router's gate. */
+  const lastLocalRef = useRef(false);
   useEffect(() => {
     const last = msgs[msgs.length - 1];
     if (!last || last.role !== 'assistant' || !last.local) return;
@@ -212,6 +214,7 @@ export default function TutorBubble() {
         ))
       : [];
     pendingRef.current = expectationOf(last.text, nextStepAfter(last.text, pSteps));
+    lastLocalRef.current = true;
 
     if (!asked) return;
     const q = (focus?.question ?? null) as Record<string, unknown> | null;
@@ -296,7 +299,9 @@ export default function TutorBubble() {
       // touching the (new) chat.
       // What the tutor asked LAST turn, read before this turn overwrites it.
       const pendingNow = pendingRef.current;
+      const lastWasLocal = lastLocalRef.current;
       pendingRef.current = null;
+      lastLocalRef.current = false;
 
       const gen = genRef.current;
       const userId = `u-${Date.now()}`;
@@ -333,6 +338,7 @@ export default function TutorBubble() {
           lastAsk: lastAskRef.current,
           served: servedRef.current.kinds,
           pending: pendingNow,
+          lastWasLocal,
         });
         routeKind = route.kind;
         if (route.kind === 'answer') {

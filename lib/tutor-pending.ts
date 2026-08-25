@@ -162,6 +162,24 @@ export function expectationOf(servedText: string, nextStep?: string): Pending | 
   return null;
 }
 
+/**
+ * A value the student REPORTS mid-sentence: "ניסיתי שוב ויצא לי 19".
+ *
+ * ⚠️ `looksLikeAnswer` cannot see this one. Its LEAD_IN stripper is anchored at
+ * the start, so "יצא לי 19" is graded and "ניסיתי שוב ויצא לי 19" is not — the
+ * same report with four words in front of it. That message was being answered
+ * with another hint while the student was telling us they had got it right.
+ *
+ * Only after a result cue, and only a plain number: "יש 19 אפשרויות" reports
+ * nothing.
+ */
+const REPORTED = /(?:יצא|יוצא|קיבלתי|מקבל|התקבל|הגעתי\s*ל)(?:\s*לי)?\s*[:=]?\s*(-?[0-9]+(?:[.,][0-9]+)?)/;
+
+export function reportedValue(message: string): string | null {
+  const m = REPORTED.exec(message);
+  return m ? m[1].replace(',', '.') : null;
+}
+
 const YES = /^\s*(?:כן|נכון|אכן|בדיוק|מתקיים|מתאים|יש|בטח|אמת)\s*[.!]*\s*$/;
 const NO = /^\s*(?:לא|לא\s*נכון|לא\s*מתקיים|לא\s*מתאים|שלילי|אין)\s*[.!]*\s*$/;
 

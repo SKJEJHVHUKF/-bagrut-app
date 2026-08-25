@@ -593,9 +593,18 @@ const TEMPLATES: Record<string, Tpl> = {
   // ---- F · proof / open, self-reported wrong -------------------------
   // The focus here is byte-identical to "not answered yet", so any claim about
   // what the student did would be an invention.
+  // ⚠️ THE PRIMARY NAMES THE VALUE; THE FALLBACK IS THE OLD SELF-REPORT WORDING.
+  //
+  // State F is reached two different ways and said the same thing for both.
+  // When a student TYPES a value and it grades wrong, `studentAnswer` is filled —
+  // and "אתה מדווח שזה לא יצא, ואיני רואה את הדף שלך" is false twice over: they
+  // reported nothing, and the number is right there. Caught by sim-followup-session.
+  //
+  // `t` needs both slots, so a question with no written hint still falls back to
+  // the self-report wording — rare, and merely vague rather than wrong.
   'F:why-wrong': T(
     'why-wrong',
-    'אתה מדווח שזה לא יצא, ואיני רואה את הדף שלך — אז לא אנחש היכן זה נשבר. אבל זה מה שהשאלה נשענת עליו: {hint}\n\nאין צורך להתחיל מחדש — עבור על מה שכתבת ואתר את השורה הראשונה שאינה עומדת במשפט הזה.',
+    'בדקתי את {studentAnswer} והיא לא יוצאת נכונה. אני לא רואה את הדרך שעשית, אז לא אנחש איפה זה נשבר — אבל זה מה שהשאלה נשענת עליו: {hint}\n\nעבור על מה שכתבת ואתר את השורה הראשונה שאינה עומדת במשפט הזה.',
     'אתה מדווח שזה לא יצא, ואיני רואה את הדף שלך — אז לא אנחש היכן זה נשבר. אין צורך להתחיל מחדש: עבור על מה שכתבת, אתר את השורה הראשונה שאינך יכול להצדיק, וכתוב לי אותה.',
   ),
 
