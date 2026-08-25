@@ -78,8 +78,13 @@ export async function loadTopicCards(topic: string): Promise<TopicCard[]> {
   if (banks.has(topic)) return banks.get(topic)!;
   let cards: TopicCard[] = [];
   try {
+    // ⚠️ A LITERAL SWITCH, NOT A TEMPLATE IMPORT. `import(\`…/${topic}\`)` would
+    // need the Hebrew topic name to be a filename and would defeat the
+    // bundler's code splitting, pulling every topic's cards into one chunk.
     if (topic === 'הסתברות') {
       cards = (await import('@/content/topic-cards/math5/probability')).default;
+    } else if (topic === 'סדרות') {
+      cards = (await import('@/content/topic-cards/math5/sequences')).default;
     }
   } catch {
     cards = [];

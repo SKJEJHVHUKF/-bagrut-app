@@ -169,6 +169,13 @@ export const PROBABILITY_CARDS: TopicCard[] = [
     subtopic: '',
     aliases: [
       'איך ממלאים טבלת הסתברות',
+      // From the live trace, verbatim. It reached the model because the card's
+      // aliases were all "how do I fill it in" and the student asked "why is it
+      // built this way" — the same card answers both, and only one of them was
+      // written down.
+      'למה הטבלה בנויה ככה',
+      'למה הטבלה ככה',
+      'למה בונים את הטבלה כך',
       'איך בונים טבלה דו ממדית',
       'איך עובדת טבלת הסתברות',
       'מה זה שוליים בטבלה',

@@ -128,7 +128,15 @@ const fullQuestion = {
     // serve it. A concept question in a topic with no cards must reach the
     // model unchanged — otherwise the inversion becomes a licence to answer
     // any general question from whatever happens to be nearby.
-    for (const q of ['מה זה בכלל נגזרת', 'מה ההבדל בין סדרה חשבונית להנדסית']) {
+    // ⚠️ THESE TWO MUST NOT HAVE CARDS, AND THAT IS THE FIXTURE'S JOB.
+    //
+    // This list used to include "מה ההבדל בין סדרה חשבונית להנדסית", which was
+    // a fine example until ten סדרות cards were written and one of them
+    // answered exactly that. The assertion went red for the right reason: the
+    // premise had expired, not the behaviour. Pick concepts from topics that
+    // still have no card bank at all, and check `content/topic-cards/math5/`
+    // before adding one here.
+    for (const q of ['מה זה בכלל נגזרת', 'מה זה אינטגרל מסוים']) {
       const r = await compileTutorResponse({
         message: q,
         activeQuestion: fullQuestion,
