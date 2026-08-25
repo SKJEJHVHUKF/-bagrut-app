@@ -157,6 +157,33 @@ type Row = { qid: string; topic: string; probe: string };
     console.log(`  ${String(n).padStart(4)}/${questions.length}  "${p}"`);
   }
 
+  // ---- per topic, which is how the content work is actually scoped ----
+  //
+  // The overall number hides the shape: two topics have Topic Cards and the
+  // rest have none, so an average across all of them describes no topic that
+  // exists. Cards are written per topic, so the gap has to be read per topic.
+  const topicTotals = new Map<string, { n: number; miss: number }>();
+  for (const { topic } of questions) {
+    const t = topicTotals.get(topic) ?? { n: 0, miss: 0 };
+    t.n += PROBES.length;
+    topicTotals.set(topic, t);
+  }
+  for (const m of misses) {
+    const t = topicTotals.get(m.topic);
+    if (t) t.miss++;
+  }
+  console.log('=== per topic ===');
+  console.log('');
+  const rows = [...topicTotals.entries()].sort(
+    (x, y) => (x[1].n - x[1].miss) / x[1].n - (y[1].n - y[1].miss) / y[1].n,
+  );
+  for (const [t, v] of rows) {
+    const local = ((v.n - v.miss) / v.n) * 100;
+    const bar = '#'.repeat(Math.round(local / 5)).padEnd(20, '.');
+    console.log(`  ${t.padEnd(22)} ${bar} ${local.toFixed(1)}%   (${v.n / PROBES.length} questions)`);
+  }
+  console.log('');
+
   const byQ = new Map<string, number>();
   for (const m of misses) byQ.set(m.qid, (byQ.get(m.qid) ?? 0) + 1);
   const worst = [...byQ.entries()].sort((a, b) => b[1] - a[1]).slice(0, SHOW);

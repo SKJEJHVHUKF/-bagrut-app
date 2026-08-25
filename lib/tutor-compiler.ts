@@ -31,6 +31,7 @@ import { matchTopicCard, renderTopicCard, cardCanAnswer } from '@/lib/topic-card
 import { coachMistake, type MistakeKind } from '@/lib/error-coach';
 import { leaksAnswer } from '@/lib/help-ladder';
 import { pickExample, renderExample } from '@/lib/example-question';
+import { foreignSubject } from '@/lib/maths-vocabulary';
 import type { AnswerDiagnosis } from '@/lib/answer-check';
 import type { FallbackReason } from '@/lib/tutor-telemetry';
 
@@ -241,9 +242,31 @@ export async function compileTutorResponse(input: CompilerInput): Promise<Compil
     //
     // The cost is real: "מה הכוונה אינדקס" on /quiz goes back to the model
     // until a Topic Card exists for it. That is the honest outcome.
+    // ⚠️ `concept` IS ALLOWED HERE, BUT ONLY WHEN IT NAMES NOTHING FOREIGN.
+    //
+    // The rule that kept it out was right and is still right: `concept` is the
+    // one intent permitted to name its own subject, so answering it from THIS
+    // question's content can answer something nobody asked. "מה זה בכלל נגזרת"
+    // on a sequences question must reach the model.
+    //
+    // But that is a statement about SOME concept questions, not all. When the
+    // message names nothing the question does not itself mention, the subject
+    // IS this question's subject — and every /quiz question carries an authored
+    // `explanation.concept` written for exactly that ask. 574 of them, across
+    // all fourteen topics, with no way to be served until now.
+    //
+    // `foreignSubject` is the same screen the FAQ bank's every stage runs on.
+    // It returns the noun the message names that the question does not; null
+    // means there is nothing foreign to protect against.
+    const conceptIsOurs =
+      intent === 'concept' && q && foreignSubject(input.message ?? '', ownWords) === null;
+
     if (
       q &&
-      (intent === 'explain' || intent === 'didnt_understand' || intent === 'how_it_works') &&
+      (intent === 'explain' ||
+        intent === 'didnt_understand' ||
+        intent === 'how_it_works' ||
+        conceptIsOurs) &&
       explanation
     ) {
       return served('hint', explanation, ['explanation'], 0.7);
