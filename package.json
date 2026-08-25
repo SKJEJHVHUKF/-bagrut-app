@@ -23,6 +23,7 @@
     "test:example": "tsx scripts/test-example-question.ts",
     "sim:followup": "tsx scripts/sim-followup-session.ts",
     "measure:quiz": "tsx scripts/measure-quiz-gap.ts",
+    "measure:concept": "tsx scripts/measure-concept-transfer.ts",
     "measure:intent": "tsx scripts/measure-intent-coverage.ts",
     "test:compiler": "tsx scripts/test-tutor-compiler.ts",
     "test:telemetry": "tsx scripts/test-tutor-telemetry.ts",
