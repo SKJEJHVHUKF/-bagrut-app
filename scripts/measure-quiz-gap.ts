@@ -74,6 +74,19 @@ type Row = { qid: string; topic: string; probe: string };
   console.log(`\n/quiz questions: ${questions.length}   probes each: ${PROBES.length}`);
   console.log(`turns simulated: ${questions.length * PROBES.length}\n`);
 
+  // The quiz screen publishes siblings for "תן תרגיל דוגמה"; the measurement
+  // has to as well, or it reports a gap the app does not have.
+  const byTopic = new Map<string, Array<{ id: string; question?: string; hint?: string }>>();
+  for (const x of questions) {
+    const list = byTopic.get(x.topic) ?? [];
+    list.push({ id: x.id, question: String(x.q.question ?? ''), hint: x.q.hint as string | undefined });
+    byTopic.set(x.topic, list);
+  }
+  const siblingsOf = (id: string) => {
+    for (const list of byTopic.values()) if (list.some((y) => y.id === id)) return list.slice(0, 12);
+    return undefined;
+  };
+
   let localCount = 0;
   const misses: Row[] = [];
   const missByProbe = new Map<string, number>();
@@ -110,7 +123,14 @@ type Row = { qid: string; topic: string; probe: string };
 
       // 4. the compiler: intents, grounding, Topic Cards
       if (!answered) {
-        const c = await compileTutorResponse({ message: probe, activeQuestion: q, topic });
+        const c = await compileTutorResponse({
+          message: probe,
+          activeQuestion: q,
+          topic,
+          // The quiz screen publishes these; the measurement has to as well or
+          // it reports a gap the app does not have.
+          siblings: siblingsOf(id),
+        });
         answered = c.handled;
       }
 

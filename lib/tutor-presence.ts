@@ -77,6 +77,16 @@ export type TutorFocus = {
   question?: PracticeQuestion;
   /** The sub-topic, for its formulas and "must remember" points. */
   subTopic?: SubTopic;
+  /**
+   * Other questions from the same list, for "תן תרגיל דוגמה".
+   *
+   * ⚠️ ONLY id, question and hint — never the answers or the explanation. The
+   * tutor offers a sibling to TRY; a sibling whose answer travels with it is a
+   * second solution handed over, which is what the whole ladder exists to
+   * avoid. Lesson screens already have `subTopic.questions`; /quiz has no
+   * sub-topic at all, which is why this field exists.
+   */
+  siblings?: Array<{ id?: string; question?: string; hint?: string }>;
   /** ORIGINAL (unshuffled) index of the option the student picked and got
    *  wrong — the key into `question.distractorNotes`, where every distractor
    *  already has an authored explanation of the misconception behind it. */

@@ -30,6 +30,7 @@ import { canonicalIntent as classifyIntent, stepIntroducing, explanationFor, typ
 import { matchTopicCard, renderTopicCard, cardCanAnswer } from '@/lib/topic-cards';
 import { coachMistake, type MistakeKind } from '@/lib/error-coach';
 import { leaksAnswer } from '@/lib/help-ladder';
+import { pickExample, renderExample } from '@/lib/example-question';
 import type { AnswerDiagnosis } from '@/lib/answer-check';
 import type { FallbackReason } from '@/lib/tutor-telemetry';
 
@@ -52,7 +53,9 @@ export type GroundedSource =
   | 'keyPoints'
   | 'distractorNotes'
   | 'checkAnswer'
-  | 'topic_card';
+  | 'topic_card'
+  /** Another authored question from the same list, offered to practise on. */
+  | 'sibling-question';
 
 export type CompilerInput = {
   canonicalIntent?: CanonicalIntent | null;
@@ -70,6 +73,11 @@ export type CompilerInput = {
   /** subTopic.formulas / keyPoints, when the screen has them. */
   formulas?: { name?: string; latex?: string; note?: string }[];
   keyPoints?: string[];
+  /**
+   * Other questions from the same list, for "תן תרגיל דוגמה". Id, text and
+   * hint only — never the answers; see lib/example-question.
+   */
+  siblings?: Array<{ id?: string; question?: string; hint?: string }>;
 };
 
 export type CompilerResult = {
@@ -375,6 +383,21 @@ ${last}`, ['solution.steps'], 0.8);
       ['solution.rule'],
       0.85,
     );
+  }
+
+  // ---- "תן תרגיל דוגמה" — a real sibling, not an invented one -------
+  //
+  // The screen is showing one question out of a list; the rest are authored,
+  // verified and level-matched. Paying a model to invent an example while a
+  // real one sits in memory is the least defensible call left in the app.
+  //
+  // The sibling's ANSWER never travels — `siblings` carries id, text and hint
+  // and nothing else. An example whose answer comes with it is a second worked
+  // solution, which is what the ladder exists to prevent.
+  if (intent === 'give_example') {
+    const ex = pickExample(input.siblings, typeof q?.id === 'string' ? q.id : undefined);
+    if (ex) return served('hint', renderExample(ex), ['sibling-question'], 0.85);
+    return unhandled('no_local_content');
   }
 
   // ---- 3. which formula — from the question, then the sub-topic -----

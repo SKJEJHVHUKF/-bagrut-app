@@ -442,6 +442,15 @@ export default function TutorBubble() {
             topic: focusNow.topic ?? '',
             formulas: focusNow.subTopic?.formulas,
             keyPoints: focusNow.subTopic?.keyPoints,
+            // A lesson screen already has its sub-topic's questions; /quiz
+            // publishes `siblings` because it has no sub-topic at all.
+            siblings:
+              focusNow.siblings ??
+              focusNow.subTopic?.questions?.map((x) => ({
+                id: x.id,
+                question: x.question,
+                hint: x.hint,
+              })),
           });
           if (compiled.handled && compiled.safeToServe && compiled.message.trim()) {
             setMsgs((m) => [

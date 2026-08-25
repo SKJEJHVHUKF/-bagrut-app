@@ -273,6 +273,12 @@ function Quiz() {
         // The question object itself, so lib/tutor-local can serve the authored
         // hint / first step / distractor note with no API call at all.
         question: activeQuestion,
+        // Siblings for "תן תרגיל דוגמה" — trimmed to what the tutor may show.
+        // Never the answers: see the field's note in lib/tutor-presence.
+        siblings: questions
+          .filter((x) => x.id !== activeQuestion.id)
+          .slice(0, 12)
+          .map((x) => ({ id: x.id, question: x.question, hint: x.hint })),
         ...(wrong ? { wrongAnswer: wrong, chosenIndex: selectedAnswer ?? undefined } : {}),
         ...(isCorrect !== null && typeof activeQuestion.correct === 'number'
           ? { correctAnswer: activeQuestion.answers?.[activeQuestion.correct] }
