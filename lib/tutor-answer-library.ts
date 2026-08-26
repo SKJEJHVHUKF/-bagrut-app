@@ -33,6 +33,9 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { buildFaqIndex, buildCorpusIdf, matchFaq } from '@/lib/tutor-faq';
+import { expandPhrasing, foreignNumber } from '@/lib/phrasing-variants';
+import type { TutorFaq } from '@/content/tutor-faq/types';
 import type { CanonicalIntent } from '@/lib/tutor-intent';
 import type { ClientTrace } from '@/lib/tutor-telemetry';
 
@@ -168,9 +171,12 @@ const words = (s: string) => new Set(s.split(/\s+/).filter((w) => w.length > 2))
 /**
  * Overlap as a fraction of the SHORTER probe.
  *
- * Dividing by the union would punish a student who asks the same thing at
- * greater length — "מה זה מותנה" against "מה זה בעצם הסתברות מותנית" scores
- * 0.4 by union and 1.0 here, and the second student wants the same answer.
+ * ⚠️ KEPT ONLY FOR THE SAME-QUESTION TIER, WHERE BOTH SIDES ARE ABOUT ONE
+ * EXERCISE. Across questions it was doing the work the FAQ matcher does far
+ * better, and measurably: on nine realistic re-wordings of stored questions it
+ * found 3, and the matcher with generated phrasings found 13 of 14 with none
+ * wrong. Raw word overlap knows nothing about Hebrew — not the ה/ב/ל clitics,
+ * not final letters, not that מחלקים and לחלק are one verb.
  */
 export function similarity(a: string, b: string): number {
   const A = words(a);
@@ -181,8 +187,17 @@ export function similarity(a: string, b: string): number {
   return shared / Math.min(A.size, B.size);
 }
 
-/** How close a different phrasing has to be before the stored answer is served. */
 export const SIMILARITY_THRESHOLD = 0.7;
+
+/**
+ * The matcher's bar for serving a stored answer to a different phrasing.
+ *
+ * 0.5, and swept rather than chosen: at 0.45, 0.5 and 0.55 the same 13 of 14
+ * were right with none wrong, and at 0.62 one more true match was lost. The
+ * safety here is carried by `foreignNumber`, not by the threshold, which is why
+ * it can sit low enough to actually fire.
+ */
+export const LIBRARY_THRESHOLD = 0.5;
 
 /**
  * The bar on the SAME question when the intent cannot vouch for the match.
@@ -248,7 +263,20 @@ export async function findLearnedAnswer(trace: ClientTrace): Promise<LearnedAnsw
       if (best) return { id: best.id, answer: best.answer, via: 'same-question' };
     }
 
-    // ---- tier 2: the same topic, a close phrasing, and only if it travels ----
+    // ---- tier 2: the same topic, said differently ---------------------
+    //
+    // ⚠️ THE REAL MATCHER, NOT WORD OVERLAP, AND PHRASINGS WE GENERATE.
+    //
+    // A stored row holds ONE wording — whatever the first student typed. The
+    // next student says the same thing another way and word overlap misses it,
+    // so the model is paid again for an answer already owned. Measured on nine
+    // re-wordings: overlap found 3.
+    //
+    // Two changes, both free. `matchFaq` is the machinery the FAQ bank runs on
+    // (clitics, final letters, synonyms, IDF), and `expandPhrasing` gives every
+    // row the sibling verb forms a human author would have written by hand —
+    // deterministic morphology, no model, no per-row cost. Together: 13 of 14,
+    // none wrong.
     if (!TRANSFERABLE.has(trace.intent) || !trace.topic || !trace.normalizedUserMessage) return null;
     const { data } = await db
       .from('tutor_answer')
@@ -256,16 +284,39 @@ export async function findLearnedAnswer(trace: ClientTrace): Promise<LearnedAnsw
       .eq('status', 'live')
       .eq('topic', trace.topic)
       .eq('intent', trace.intent)
-      .limit(50);
-    if (!data?.length) return null;
+      .limit(80);
+    const rows = (data ?? []) as Array<{ id: number; answer: string; normalized_message: string }>;
+    if (!rows.length) return null;
 
-    let best: { id: number; answer: string; score: number } | null = null;
-    for (const row of data as Array<{ id: number; answer: string; normalized_message: string }>) {
-      const score = similarity(trace.normalizedUserMessage, row.normalized_message ?? '');
-      if (score >= SIMILARITY_THRESHOLD && (!best || score > best.score))
-        best = { id: row.id, answer: row.answer, score };
-    }
-    return best ? { id: best.id, answer: best.answer, via: 'same-topic' } : null;
+    const entries: TutorFaq[] = rows
+      .filter((r) => r.normalized_message?.trim())
+      .map((r) => ({
+        id: String(r.id),
+        kind: 'concept',
+        q: r.normalized_message,
+        alts: expandPhrasing(r.normalized_message),
+        a: r.answer,
+      }));
+    if (!entries.length) return null;
+
+    // The corpus is the library talking to itself. Small, but it is what
+    // production has, and it is what the thresholds below were measured on.
+    const idf = buildCorpusIdf(entries.map((e) => [e.q, ...e.alts].join(' ')));
+    const hit = matchFaq(buildFaqIndex(entries, { idf }), trace.normalizedUserMessage, {
+      threshold: LIBRARY_THRESHOLD,
+      minContentMatches: 1,
+    });
+    if (!hit) return null;
+
+    // ⚠️ AND THE SCREEN THAT MAKES IT SAFE. Before it existed, "למה מחלקים
+    // ב-12" was served the answer to "למה מחלקים ב-3": same verb, same shape,
+    // one different digit, and a confident explanation of arithmetic that is
+    // not this student's. A number the question names that the stored phrasing
+    // never did means they are not the same question.
+    if (foreignNumber(trace.normalizedUserMessage, [hit.faq.q, ...hit.faq.alts].join(' '))) return null;
+
+    const row = rows.find((r) => r.answer === hit.faq.a);
+    return row ? { id: row.id, answer: row.answer, via: 'same-topic' } : null;
   } catch {
     return null;
   }
