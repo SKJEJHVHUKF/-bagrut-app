@@ -57,7 +57,9 @@ export function PracticeShell({
           to a slim context strip (where am I · back) that sticks right under
           the global bar. */}
       <nav className="sticky top-0 md:top-16 z-50 glass-card border-x-0 border-t-0 rounded-none">
-        <div className={`${measure} mx-auto px-4 py-3 md:py-2 flex items-center justify-between gap-3`}>
+        {/* pl-16 on phones: AppChrome's avatar is fixed top-3 left-3 and would
+            sit on top of the back button. AppHeader reserves the same corner. */}
+        <div className={`${measure} mx-auto pr-4 pl-16 md:pl-4 py-3 md:py-2 flex items-center justify-between gap-3`}>
           <Link href="/" className="flex items-center gap-3 group md:hidden">
             <MathUpLogo size="md" />
             <div>
