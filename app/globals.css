@@ -625,8 +625,10 @@ html {
 /* Icon that does a subtle 3D rotate on hover of the parent.
    Apply this to an icon inside a button or card; combine with the
    parent's :hover state via group selectors in JSX. */
+/* No `display` here: globals.css is unlayered, so it would beat the `flex`
+   utility every call site sets — killing items-center/justify-center and
+   dropping the glyph into the box's inline-start corner. */
 .icon-3d {
-  display: inline-block;
   transform: translateZ(0);
   transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: transform;
