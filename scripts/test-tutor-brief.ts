@@ -595,6 +595,18 @@ assert(huge.length < 1000, `a giant question is clamped (was ${huge.length} char
 
 import { answerLocally, classifyAsk } from '../lib/tutor-local';
 import { getSubTopics as getSTs } from '../content/lessons';
+import { getConceptQuestions, CONCEPT_LEVELS } from '../content/concept-quiz';
+import { conceptAsQuestion } from '../lib/tutor-presence';
+
+/** The six recurring asks lib/tutor-local exists to answer. */
+const ASKS_SIX = [
+  'תן לי רמז',
+  'מאיפה מתחילים?',
+  'למה התשובה שלי שגויה?',
+  'תראה לי את הפתרון',
+  'באיזו נוסחה משתמשים כאן?',
+  'מה הכי חשוב לדעת פה לבגרות?',
+];
 
 section('tutor-local — intent classification');
 
@@ -819,6 +831,90 @@ section('tutor-local — the "which formula and why" line');
       'and it falls through to the generic sub-topic formula sheet',
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// /quiz — the screen where a THROW read as a content gap.
+//
+// ConceptQuestion (content/concept-quiz) keeps its worked material under
+// `explanation.*` and has no `solution` field, and every tutor consumer reads
+// `q.solution.steps`. Publishing it raw threw on all six asks: `answerFromFaq`
+// inside a catch that means "no bank for this topic", and `answerLocally` with
+// no guard at all, which rejected TutorBubble's send() so the student's message
+// appeared and no reply ever did. `npm run check:faq-coverage` reported 0/46 on
+// both topics and it was read as "nobody authored this" for months.
+//
+// Two assertions, because either one alone would have missed it: the mapping
+// must RECOVER the authored material, and the raw shape must no longer be able
+// to crash a consumer.
+// ---------------------------------------------------------------------------
+section('/quiz — the concept-quiz shape reaches the tutor');
+{
+  const cq = getConceptQuestions('math5', 'הסתברות', 1);
+  assert(cq.length > 0, 'fixture: the הסתברות concept bank has level-1 questions');
+
+  const raw = cq[0] as unknown as { solution?: unknown };
+  assert(raw.solution === undefined, 'fixture: a ConceptQuestion really has no `solution`');
+
+  const mapped = conceptAsQuestion(cq[0]);
+  assert(mapped.solution.steps.length > 0, 'the mapping recovers the authored steps');
+  assert(!!mapped.solution.finalAnswer, 'and the final answer');
+  assert(
+    !/\.$/.test(mapped.solution.finalAnswer),
+    'without the sentence full stop that would be echoed to the student',
+  );
+  assert(!!mapped.solution.explanation, 'and the transferable concept line');
+  assert(mapped.id === cq[0].id, 'and never rewrites the id (answer history keys on it)');
+
+  // The whole bank, all six asks — the number that was 0%.
+  let served = 0;
+  let total = 0;
+  let crashed = 0;
+  for (const topic of ['הסתברות', 'סדרות']) {
+    for (const lvl of CONCEPT_LEVELS) {
+      for (const q of getConceptQuestions('math5', topic, lvl)) {
+        const wrongIdx = (q.distractorNotes ?? []).findIndex((n) => !!n && n.trim());
+        for (const ask of ASKS_SIX) {
+          total++;
+          try {
+            if (
+              answerLocally(ask, {
+                where: `בוחן · ${topic}`,
+                topic,
+                questionText: q.question,
+                question: conceptAsQuestion(q),
+                ...(wrongIdx >= 0 ? { chosenIndex: wrongIdx } : {}),
+              })
+            )
+              served++;
+          } catch {
+            crashed++;
+          }
+        }
+      }
+    }
+  }
+  console.log(`      → ${served}/${total} /quiz asks answered with NO API call`);
+  assert(crashed === 0, `no ask crashes on the /quiz shape (${crashed} did)`);
+  assert(
+    served / total >= 0.9,
+    `/quiz is served locally, not sent to the model (${Math.round((served / total) * 100)}%)`,
+  );
+
+  // …and the raw, unmapped shape must not be able to take the tutor down even
+  // if some future screen publishes it by mistake.
+  let threw = false;
+  try {
+    answerLocally('תן לי רמז', {
+      where: 'x',
+      topic: 'הסתברות',
+      questionText: cq[0].question,
+      question: cq[0] as never,
+    });
+  } catch {
+    threw = true;
+  }
+  assert(!threw, 'and an unmapped question abstains instead of throwing');
 }
 
 section('tutor-local — measured coverage over the whole bank');

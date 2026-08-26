@@ -533,7 +533,12 @@ function answered(focus: TutorFocus): boolean {
 export async function answerFromFaq(message: string, focus: TutorFocus | null, subject = 'math5'): Promise<FaqAnswer | null> {
   const q = focus?.question;
   if (!q || !focus?.topic) return null;
-  const steps = q.solution.steps;
+  // ⚠️ `?.steps ?? []` — a question published without a `solution` used to throw
+  // here, and TutorBubble's catch around this call reads "no bank for this
+  // topic yet", so the crash was invisible AND `faqMiss` was never set, keeping
+  // it out of the `[faq-miss]` log that drives authoring. That is what made
+  // /quiz read as 0/46 uncovered. See conceptAsQuestion in lib/tutor-presence.
+  const steps = q.solution?.steps ?? [];
   const step = stepReference(message, steps.length);
 
   const bank = await loadFaqBank(subject, focus.topic);
@@ -618,7 +623,7 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
       }
     }
     // What the student can actually see, for the foreign-number screen.
-    const ownText = `${q.question} ${steps.join(' ')} ${q.solution.finalAnswer}`;
+    const ownText = `${q.question} ${steps.join(' ')} ${q.solution?.finalAnswer ?? ''}`;
     if (nearPool.length > 0) {
       const hit = matchFaq(buildFaqIndex(nearPool, { idf }), message, {
         threshold: FAQ_TRANSFER_THRESHOLD,
@@ -646,7 +651,7 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
   if (step !== null) {
     const text = steps[step];
     if (!text) return null;
-    if (!canReveal && leaksAnswer(text, q.solution.finalAnswer)) return null;
+    if (!canReveal && leaksAnswer(text, q.solution?.finalAnswer ?? '')) return null;
     const rule = steps.find((s) => s.startsWith('**הכלל:**'));
     const ruleLine = rule && step !== 0 ? `\n\nהכלל שעומד מאחורי זה: ${rule.replace(/^\*\*הכלל:\*\*\s*/, '')}` : '';
     return {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { publishTutorFocus, FOCUS_PRIORITY } from '@/lib/tutor-presence';
+import { publishTutorFocus, conceptAsQuestion, FOCUS_PRIORITY } from '@/lib/tutor-presence';
 import { MathText } from '@/components/practice/MathText';
 import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
@@ -272,7 +272,13 @@ function Quiz() {
         questionText: activeQuestion.question,
         // The question object itself, so lib/tutor-local can serve the authored
         // hint / first step / distractor note with no API call at all.
-        question: activeQuestion,
+        //
+        // ⚠️ MAPPED, not passed through. This screen renders ConceptQuestion,
+        // whose worked material is under `explanation.*` and which has no
+        // `solution` field — and every tutor consumer reads `q.solution.steps`.
+        // Publishing it raw threw on all six asks and killed the tutor silently
+        // on this screen; see conceptAsQuestion in lib/tutor-presence.
+        question: conceptAsQuestion(activeQuestion),
         ...(wrong ? { wrongAnswer: wrong, chosenIndex: selectedAnswer ?? undefined } : {}),
         ...(isCorrect !== null && typeof activeQuestion.correct === 'number'
           ? { correctAnswer: activeQuestion.answers?.[activeQuestion.correct] }

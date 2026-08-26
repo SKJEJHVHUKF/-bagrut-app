@@ -243,6 +243,94 @@ export function partAsQuestion(
   };
 }
 
+/**
+ * A /quiz question, seen as a question the local tutor can hold.
+ *
+ * ⚠️ THIS FIXES A SILENT DEAD TUTOR, NOT A CONTENT GAP.
+ * `/quiz` renders `ConceptQuestion` (content/concept-quiz/types.ts), whose
+ * worked material lives under `explanation.{why_correct,concept,remember}` —
+ * there is no `solution` field at all. It published that object straight into
+ * `TutorFocus.question`, which is typed `PracticeQuestion`, and every consumer
+ * reads `q.solution.steps`. VERIFIED by running a real `cq-prob-L1-04` through
+ * the live functions: `answerLocally` and `answerFromFaq` BOTH threw
+ * "Cannot read properties of undefined (reading 'steps')" on all six asks.
+ *
+ * The two throws land differently and both are invisible:
+ *   - `answerFromFaq` is called inside a `try/catch` in TutorBubble whose catch
+ *     means "no bank for this topic" — so the crash was read as a missing bank,
+ *     AND `faqMiss` was never set, so it never appeared in the `[faq-miss]` log
+ *     that is supposed to be the authoring worklist.
+ *   - `answerLocally` is called with NO guard, so the throw rejected `send()`:
+ *     the student's message appeared and nothing else ever did.
+ *
+ * That is why /quiz measured 0/46 in `npm run check:faq-coverage` for both
+ * topics. It was never an authoring problem; authoring 46 entries against it
+ * would have delivered nothing.
+ *
+ * Nothing below is invented. Every field is authored content, moved — the same
+ * approach as `partAsQuestion` above, for the same reason: teach one shape to
+ * the tutor rather than a second shape to every template and every gate.
+ *
+ * The input is declared STRUCTURALLY on purpose. Importing ConceptQuestion
+ * would pull content/concept-quiz behind a module that TutorBubble imports
+ * statically from the root layout.
+ */
+export function conceptAsQuestion(q: {
+  id: string;
+  level?: 1 | 2 | 3;
+  difficulty?: PracticeQuestion['difficulty'];
+  question: string;
+  answers?: string[];
+  correct?: number;
+  hint?: string;
+  distractorNotes?: (string | undefined)[];
+  explanation?: { why_correct?: string; why_wrong?: string; concept?: string; remember?: string };
+}): PracticeQuestion {
+  const why = q.explanation?.why_correct?.trim() ?? '';
+  // `why_correct` is authored as a markdown numbered list, one result per line
+  // ("1. **מה מכסה:** …"), and the bank's own header documents that format. Split
+  // on the numbering so each authored line becomes a step the ladder can serve
+  // one at a time, instead of one wall the tutor can only hand over whole.
+  const steps = why
+    .split(/\n(?=\s*\d+\.\s)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // The bank ends `why_correct` with a bold **התשובה:** line, and the lesson
+  // adapter in app/quiz/page.tsx puts **תשובה סופית:** into `remember`. Take
+  // whichever exists; an empty string is correct when neither does, because
+  // help-ladder's leak check treats a short answer as "cannot leak" rather than
+  // guessing.
+  const answered = (
+    /\*\*התשובה:\*\*\s*(.+?)\s*$/m.exec(why)?.[1] ??
+    /\*\*תשובה סופית:\*\*\s*(.+?)\s*$/m.exec(q.explanation?.remember ?? '')?.[1] ??
+    (typeof q.correct === 'number' ? q.answers?.[q.correct] : undefined) ??
+    ''
+    // The authored line ends the sentence ("**התשובה:** $0.65$."), and that
+    // full stop is not part of the answer — it would be echoed inside the
+    // template's "**התשובה: …**" and shown to the student as "$0.65$.."
+  ).replace(/\s*\.\s*$/, '');
+
+  return {
+    id: q.id,
+    difficulty: q.difficulty ?? (q.level === 3 ? 'hard' : q.level === 2 ? 'mid' : 'easy'),
+    kind: typeof q.correct === 'number' && q.answers?.length ? 'mcq' : 'open',
+    question: q.question,
+    answers: q.answers,
+    correct: q.correct,
+    hint: q.hint?.trim() || undefined,
+    distractorNotes: q.distractorNotes,
+    solution: {
+      steps,
+      finalAnswer: answered,
+      // `concept` is the transferable move ("when to reach for this again"),
+      // which is exactly what the explain/why-wrong templates want. `remember`
+      // is the fallback; it is the one line worth memorising.
+      explanation: q.explanation?.concept?.trim() || q.explanation?.remember?.trim() || '',
+    },
+  };
+}
+
 export function subscribeTutorFocus(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => {};
   window.addEventListener(EVENT, cb);
@@ -283,7 +371,7 @@ export function renderFocusContext(focus: TutorFocus | null): string {
   // disagree with the verified steps in front of the student. With the steps
   // in hand it guides along the written path instead. ~1,200 chars is ~500
   // Haiku input tokens: under $0.001 per turn for the accuracy it buys.
-  const steps = focus.question?.solution.steps ?? [];
+  const steps = focus.question?.solution?.steps ?? [];
   if (steps.length > 0) {
     // Figure fences (a JSON sketch) would eat most of the budget — the model gets a marker instead.
     const body = steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n').slice(0, 1200);
