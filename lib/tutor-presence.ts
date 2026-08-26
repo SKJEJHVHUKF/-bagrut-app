@@ -296,6 +296,19 @@ export function conceptAsQuestion(q: {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  // The app-wide standard: a solution's FIRST step names the rule and why it
+  // applies (`**הכלל:**`), and lib/tutor-local's `rule` slot + the formulas-q
+  // template both key on that exact marker. `explanation.concept` is the same
+  // sentence under a different name — the transferable move — so this is the
+  // bank's own content relabelled, not a new claim.
+  //
+  // ⚠️ scripts/audit-tutor-faq.ts builds the authoring rows for these units
+  // from THIS function, so the step indices an author writes into `faq.step`
+  // are the indices the student's tutor will actually resolve. They were built
+  // separately before and did not line up.
+  const rule = q.explanation?.concept?.trim();
+  if (rule) steps.unshift(`**הכלל:** ${rule}`);
+
   // The bank ends `why_correct` with a bold **התשובה:** line, and the lesson
   // adapter in app/quiz/page.tsx puts **תשובה סופית:** into `remember`. Take
   // whichever exists; an empty string is correct when neither does, because
