@@ -263,14 +263,18 @@ export function subscribeTutorFocus(cb: () => void): () => void {
  */
 export function renderFocusContext(focus: TutorFocus | null): string {
   if (!focus) return '';
-  const lines = [`התלמיד נמצא עכשיו ב: ${focus.where}.`];
-  if (focus.questionText) {
-    lines.push(`השאלה שמוצגת לו על המסך:\n${focus.questionText.slice(0, 600)}`);
-  }
+  // ⚠️ HEADERS AND VALUES, NOT SENTENCES. This block is rebuilt per turn and
+  // rides in the user message, so it is billed at full price every time — while
+  // the instructions that used to be woven through it ("בשבילך בלבד, לא
+  // לתלמיד", "אל תיתן לו את הפתרון") are identical on every request and were
+  // being re-bought each turn. They now live once in TUTOR_CORE's "בלוקי
+  // ההקשר" section, at 0.1x, keyed on the SCREEN / WRONG / SOLUTION headers
+  // below. Adding prose here silently un-does that.
+  const lines = [`SCREEN\nat: ${focus.where}`];
+  if (focus.questionText) lines.push(`q: ${focus.questionText.slice(0, 600)}`);
   if (focus.wrongAnswer) {
-    lines.push(`הוא ענה "${focus.wrongAnswer.slice(0, 80)}" וזה שגוי.`);
-    if (focus.correctAnswer) lines.push(`התשובה הנכונה: "${focus.correctAnswer.slice(0, 80)}".`);
-    lines.push('אל תיתן לו את הפתרון — שאל שאלה אחת שתראה לו איפה זה נשבר.');
+    lines.push(`WRONG\nans: ${focus.wrongAnswer.slice(0, 80)}`);
+    if (focus.correctAnswer) lines.push(`ok: ${focus.correctAnswer.slice(0, 80)}`);
   }
 
   // The authored solution, for the MODEL's eyes only. A free-form ask reaches
@@ -283,11 +287,7 @@ export function renderFocusContext(focus: TutorFocus | null): string {
   if (steps.length > 0) {
     // Figure fences (a JSON sketch) would eat most of the budget — the model gets a marker instead.
     const body = steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n').slice(0, 1200);
-    lines.push(
-      'הפתרון הכתוב והמאומת — בשבילך בלבד, לא לתלמיד. הנחה לפיו ואל תסטה ממנו. ' +
-        'אל תחשוף צעד שהתלמיד עוד לא הגיע אליו, ואל תצטט את התשובה הסופית:\n' +
-        body,
-    );
+    lines.push(`SOLUTION\n${body}`);
   }
   return lines.join('\n');
 }

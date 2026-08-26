@@ -6,11 +6,40 @@
  * ZERO data to do either. All the signals exist client-side (mistakes, level,
  * pacing, spaced-repetition), they were just never sent.
  *
- * buildStudentSnapshot assembles a compact Hebrew brief and the chat page ships
- * it as the request's `context` field. The server injects it into the CURRENT
- * turn only (not persisted, doesn't pollute cache/history) — so the tutor knows
- * the student's #1 mistake type, their level/pace, and what they recently got
+ * buildStudentSnapshot assembles a compact brief and the chat page ships it as
+ * the request's `context` field. The server injects it into the CURRENT turn
+ * only (not persisted, doesn't pollute cache/history) — so the tutor knows the
+ * student's #1 mistake type, their level/pace, and what they recently got
  * wrong, and can open with a targeted diagnosis instead of a generic hint.
+ *
+ * ============================================================
+ * FORMAT: `key: value` LINES, ENGLISH KEYS, NEVER JSON, NEVER PROSE
+ * ============================================================
+ * This block rides in the USER message, so it is re-read at FULL PRICE on every
+ * single turn — it can never sit in the cached prefix, because it is unique to
+ * one student. That makes it the most expensive text the tutor sends per token,
+ * and the only one where shortening is worth real money.
+ *
+ * Three rules, in order of what each saves:
+ *
+ *  1. KEYS IN ENGLISH, VALUES IN HEBREW. Model-facing Hebrew tokenises 3-4x
+ *     worse than English on Haiku (measured in lib/agents/tools.ts: the same
+ *     tool block went 4,753 -> 1,139 tokens on language alone). The keys are
+ *     labels, not content; the values — topic names, misconception titles, the
+ *     student's own words — stay Hebrew because they ARE the content. Output
+ *     language is set by the system prompt, not by this block.
+ *  2. NO PROSE, NO JSON. The previous version wrote full Hebrew sentences
+ *     ("החוליה השבורה: X נשען על Y, והבסיס חלש יותר. אם הוא נתקע — התחל משם"),
+ *     which is ~4x the tokens of `weak: X <- Y`. Nested JSON would be worse
+ *     still: braces, quotes and repeated key names on every object.
+ *  3. THE INSTRUCTIONS MOVED TO THE CACHED PREFIX. Every "אל תאשים אותו בהן" /
+ *     "התחל משם ולא מלמעלה" sentence used to be re-sent per turn. They are now
+ *     stated ONCE in TUTOR_CORE (see the "מצב התלמיד" block, which documents
+ *     these exact keys) and cost 0.1x there. This block is pure DATA.
+ *
+ * ⚠️ The keys are a contract with that TUTOR_CORE block. Renaming one here
+ * without renaming it there leaves the model reading an undocumented field.
+ * scripts/test-tutor-brief.ts asserts on the key names for exactly this reason.
  *
  * Pure client/localStorage. Every piece is guarded so one missing signal never
  * breaks the whole brief. Returns '' when there's nothing useful to say, so the
@@ -24,7 +53,17 @@ import { dueCount } from '@/lib/review';
 import { getCognitiveState, type CognitiveState } from '@/lib/cognition';
 import { cognitionEntries } from '@/content/cognition';
 
-const MAX_LEN = 1800; // server hard-caps context at 2000; stay safely under
+/**
+ * 1200, down from 1800.
+ *
+ * The server caps the WHOLE `context` field at MAX_CONTEXT_LEN (4000) and
+ * truncates from the END, so this block competes with the focus brief (~800)
+ * and the authored solution it carries (≤1200). The compressed format below
+ * fits the same signals in roughly a third of the characters, so the old
+ * headroom is no longer needed — and a tighter cap means the mistake list can
+ * never push the cognitive block out of a turn.
+ */
+const MAX_LEN = 1200;
 
 /** Below this the state is noise, not a diagnosis. Same reasoning as
  *  MIN_CONFIDENCE in lib/cognition: telling a tutor "he's weak at X" off two
@@ -59,9 +98,12 @@ function short(s: string | undefined, n = 60): string {
 }
 
 /**
- * A compact Hebrew snapshot of what the tutor should know about this student
- * right now. `topic` is the current lesson topic (from ?topic=), or '' on the
- * generic /chat entry — the brief adapts to whichever it gets.
+ * A compact snapshot of what the tutor should know about this student right
+ * now. `topic` is the current lesson topic (from ?topic=), or '' on the generic
+ * /chat entry — the brief adapts to whichever it gets.
+ *
+ * Emitted as `key: value` lines under a `STATE` header. See the file header for
+ * why, and TUTOR_CORE's "מצב התלמיד" block for what each key means to the model.
  */
 export function buildStudentSnapshot(subject: string, topic: string): string {
   const lines: string[] = [];
@@ -70,7 +112,7 @@ export function buildStudentSnapshot(subject: string, topic: string): string {
   try {
     const unit = getUnitLevel();
     const band = topic ? tierLabel(studentTier(subject, topic)) : null;
-    lines.push(`רמה: ${unit} יחידות${band ? ` · ${band}` : ''}.`);
+    lines.push(`lvl: ${unit}${band ? ` ${band}` : ''}`);
   } catch {
     /* skip */
   }
@@ -80,7 +122,7 @@ export function buildStudentSnapshot(subject: string, topic: string): string {
     const plan = getPlan();
     if (plan?.bagrutDate) {
       const d = daysUntilBagrut(plan);
-      if (d >= 0) lines.push(`נשארו ${d} ימים לבגרות.`);
+      if (d >= 0) lines.push(`exam_d: ${d}`);
     }
   } catch {
     /* skip */
@@ -98,27 +140,26 @@ export function buildStudentSnapshot(subject: string, topic: string): string {
     if (cog && cog.totalObservations >= MIN_OBSERVATIONS) {
       // On the generic entry the state may describe a topic the student didn't
       // name. Say so, or the tutor reads it as being about whatever comes up.
-      if (!topic) lines.push(`המידע הבא הוא על הנושא "${cog.topic}":`);
-      if (cog.insight) lines.push(cog.insight);
+      // Always emitted when there IS a scoped finding, so the model never has
+      // to infer which topic `weak`/`misc` below are talking about.
+      lines.push(`scope: ${cog.topic}`);
+      if (cog.insight) lines.push(`insight: ${cog.insight}`);
 
       const wl = cog.weakestLink;
-      if (wl) {
-        lines.push(
-          `החוליה השבורה: "${wl.childTitle}" נשען על "${wl.rootTitle}", והבסיס חלש יותר. אם הוא נתקע — התחל משם ולא מלמעלה.`
-        );
-      }
+      // "child leans on root, and the root is the weaker one" — the arrow is
+      // the whole sentence. What to DO about it lives in TUTOR_CORE.
+      if (wl) lines.push(`weak: ${wl.childTitle} <- ${wl.rootTitle}`);
 
       const live = cog.misconceptions
         .filter((m) => m.status === 'active' || m.status === 'suspected')
         .slice(0, 2);
       if (live.length) {
-        const items = live
-          .map((m) => `"${m.title}" (${m.hits} מתוך ${m.opportunities} הזדמנויות)`)
-          .join(' · ');
-        lines.push(`תפיסות שגויות שחוזרות אצלו: ${items}. אל תאשים אותו בהן — בדוק אם הן עדיין שם.`);
+        lines.push(
+          `misc: ${live.map((m) => `${m.title} ${m.hits}/${m.opportunities}`).join(' · ')}`,
+        );
       }
 
-      lines.push(`הצעד שהמערכת ממליצה עליו: ${cog.nextStep.title} — ${cog.nextStep.reason}`);
+      lines.push(`next: ${cog.nextStep.title} — ${cog.nextStep.reason}`);
     }
   } catch {
     /* skip */
@@ -127,14 +168,14 @@ export function buildStudentSnapshot(subject: string, topic: string): string {
   // --- #1 error type (the whole point of "error-focused feedback") --------
   try {
     const top = topCategory(subject);
-    if (top && top.count >= 2) {
-      lines.push(`הטעות הכי שכיחה שלו: ${top.category} (${top.count} פעמים).`);
-    }
+    if (top && top.count >= 2) lines.push(`top_err: ${top.category} x${top.count}`);
   } catch {
     /* skip */
   }
 
   // --- recent wrong answers, prefer this topic ----------------------------
+  // One line per mistake, pipe-separated. `ans`/`ok` are 3 tokens between them;
+  // the Hebrew "ענה:" / "(נכון:" wrappers they replace were ~8, on every turn.
   try {
     const all = getMistakes(subject);
     const scoped = topic ? all.filter((m) => m.topic === topic) : all;
@@ -142,14 +183,14 @@ export function buildStudentSnapshot(subject: string, topic: string): string {
     if (recent.length) {
       const items = recent
         .map((m) => {
-          const q = short(m.questionText, 70);
-          const wrong = m.userAnswer ? ` ענה: "${short(m.userAnswer, 30)}"` : '';
-          const right = m.correctAnswer ? ` (נכון: "${short(m.correctAnswer, 30)}")` : '';
-          const cat = m.category && m.category !== 'אחר' ? ` [${m.category}]` : '';
-          return `• ${q}${wrong}${right}${cat}`;
+          const parts = [short(m.questionText, 70)];
+          if (m.userAnswer) parts.push(`ans ${short(m.userAnswer, 30)}`);
+          if (m.correctAnswer) parts.push(`ok ${short(m.correctAnswer, 30)}`);
+          if (m.category && m.category !== 'אחר') parts.push(m.category);
+          return `- ${parts.join(' | ')}`;
         })
         .join('\n');
-      lines.push(`טעויות אחרונות${topic ? ' בנושא' : ''}:\n${items}`);
+      lines.push(`wrong:\n${items}`);
     }
   } catch {
     /* skip */
@@ -158,12 +199,14 @@ export function buildStudentSnapshot(subject: string, topic: string): string {
   // --- spaced-repetition backlog ------------------------------------------
   try {
     const due = dueCount();
-    if (due > 0) lines.push(`יש לו ${due} שאלות לחזרה שממתינות (Leitner).`);
+    if (due > 0) lines.push(`due: ${due}`);
   } catch {
     /* skip */
   }
 
   if (!lines.length) return '';
-  const brief = lines.join('\n');
+  // The header is what TUTOR_CORE's key legend keys off. Without it the block
+  // is a bare list of English words in the middle of a Hebrew conversation.
+  const brief = `STATE\n${lines.join('\n')}`;
   return brief.length > MAX_LEN ? brief.slice(0, MAX_LEN) : brief;
 }

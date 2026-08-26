@@ -146,7 +146,7 @@ assert(
 assert(buildStudentSnapshot(SUBJECT, '') === '' || true, 'snapshot does not throw on an empty store');
 const emptyBrief = buildStudentSnapshot(SUBJECT, '');
 assert(
-  !emptyBrief.includes('החוליה השבורה'),
+  !emptyBrief.includes('weak:'),
   'empty store produces no weak-link claim',
 );
 
@@ -157,11 +157,11 @@ section('the floor — 2 observations must not become a diagnosis');
 seed(hits(2));
 const thinBrief = buildStudentSnapshot(SUBJECT, TOPIC);
 assert(
-  !thinBrief.includes('תפיסות שגויות שחוזרות'),
+  !thinBrief.includes('misc:'),
   'below MIN_OBSERVATIONS the brief makes no misconception claim',
 );
 assert(
-  !thinBrief.includes('הצעד שהמערכת ממליצה'),
+  !thinBrief.includes('next:'),
   'below MIN_OBSERVATIONS the brief recommends no next step',
 );
 assert(
@@ -176,20 +176,37 @@ section('with real evidence — the brief carries the diagnosis');
 seed(hits(8));
 
 const brief = buildStudentSnapshot(SUBJECT, TOPIC);
-assert(brief.includes('הצעד שהמערכת ממליצה'), 'brief names the recommended next step');
+assert(brief.includes('next:'), 'brief names the recommended next step');
 assert(
-  brief.includes('תפיסות שגויות שחוזרות') || brief.includes('החוליה השבורה'),
+  brief.includes('misc:') || brief.includes('weak:'),
   'brief carries at least one cognitive finding',
 );
-assert(brief.length <= 1800, 'brief stays under the 1800-char server cap');
+assert(brief.length <= 1200, 'brief stays under the 1200-char budget');
 
 // The cognitive block is emitted BEFORE the mistake list precisely so a long
 // mistake list can never truncate it away. Lock the order, not just presence.
-const cogAt = brief.indexOf('הצעד שהמערכת ממליצה');
-const mistakesAt = brief.indexOf('טעויות אחרונות');
+const cogAt = brief.indexOf('next:');
+const mistakesAt = brief.indexOf('wrong:');
 assert(
   cogAt >= 0 && (mistakesAt === -1 || cogAt < mistakesAt),
   'the cognitive block precedes the mistake list (truncation-safe ordering)',
+);
+
+// ---------------------------------------------------------------------------
+// THE FORMAT IS THE COST. This block rides in the user message, so it is billed
+// at full price on every single turn and can never be cached. Prose labels and
+// per-turn instructions are what made it expensive; both moved out (the
+// instructions into TUTOR_CORE, which is cached at 0.1x). These assertions stop
+// either from creeping back in a later edit that "reads better".
+// ---------------------------------------------------------------------------
+assert(brief.startsWith('STATE\n'), 'the brief opens with the STATE header the prompt keys off');
+assert(
+  brief.split('\n').filter((l) => l.trim() && !l.startsWith('-')).every((l) => /^[a-z_]+:/.test(l) || l === 'STATE'),
+  'every line is `key: value` with an ASCII key — no prose, no JSON',
+);
+assert(
+  !/אל תאשים|התחל משם|הזדמנויות|המידע הבא/.test(brief),
+  'no per-turn instruction prose — that lives in the cached prompt, not here',
 );
 
 // ============================================================
@@ -198,12 +215,91 @@ section('the no-topic fallback — /chat is usually opened bare');
 
 const bare = buildStudentSnapshot(SUBJECT, '');
 assert(
-  bare.includes('הצעד שהמערכת ממליצה'),
+  bare.includes('next:'),
   'with no ?topic= the brief still finds the mapped topic',
 );
 assert(
-  bare.includes(TOPIC),
+  bare.includes(`scope: ${TOPIC}`),
   'and names which topic the findings are about, so the tutor cannot misread them',
+);
+
+// ============================================================
+section('context markers — the per-turn blocks and the prompt must agree');
+// ============================================================
+//
+// Every per-turn block is now DATA under a marker, with the instructions for
+// reading it stated once in the cached TUTOR_CORE. That is what took the fresh
+// input down, and it creates a contract that can rot silently in both
+// directions: rename a marker or a key on one side and the model reads an
+// undocumented field — no error, no log line, just a worse hint forever.
+//
+// So this walks what the code ACTUALLY emits and demands the prompt document
+// it, rather than hard-coding a list that can drift from either side.
+
+import { buildTutorSystem } from '../lib/agents/prompts';
+
+/** Local fixture — PART 3's `working` is declared further down the file. */
+const ON_SCREEN = {
+  where: 'תרגול · משוואות ריבועיות',
+  topic: 'אלגברה',
+  questionText: 'פתור: $x^2-9=0$',
+};
+
+const promptText = buildTutorSystem({ unitLevel: 5, formNumber: '572', topic: TOPIC })
+  .map((b) => ('text' in b ? b.text : ''))
+  .join('\n');
+
+const emittedKeys = [...new Set([brief, bare].flatMap((b) =>
+  b.split('\n').map((l) => /^([a-z_]+):/.exec(l)?.[1]).filter((k): k is string => !!k),
+))];
+assert(emittedKeys.length >= 4, `fixture: the brief emits real keys (${emittedKeys.join(', ')})`);
+const undocumentedKeys = emittedKeys.filter((k) => !promptText.includes(k));
+assert(
+  undocumentedKeys.length === 0,
+  `every STATE key is documented in the prompt${undocumentedKeys.length ? ` — missing: ${undocumentedKeys.join(', ')}` : ''}`,
+);
+
+// The block MARKERS, collected from every per-turn producer at once.
+const producedMarkers = [
+  ...new Set(
+    [
+      brief,
+      renderFocusContext({ ...ON_SCREEN, wrongAnswer: 'x=3', correctAnswer: 'x=±3' }),
+      renderMemoryBlock([{ text: 'הבגרות שלו ב-12 במרץ.', ts: 1 }]),
+      ...buildTutorSystem({ unitLevel: 5, formNumber: '572', topic: TOPIC }).map((b) =>
+        'text' in b && !b.cache_control ? b.text : '',
+      ),
+    ]
+      .join('\n')
+      .split('\n')
+      .filter((l) => /^[A-Z]{4,}$/.test(l.trim()))
+      .map((l) => l.trim()),
+  ),
+];
+assert(
+  producedMarkers.length >= 5,
+  `fixture: the per-turn blocks really are marker-headed (${producedMarkers.join(', ')})`,
+);
+const undocumentedMarkers = producedMarkers.filter((m) => !promptText.includes(`**${m}**`));
+assert(
+  undocumentedMarkers.length === 0,
+  `every context marker is explained in the cached prompt${undocumentedMarkers.length ? ` — missing: ${undocumentedMarkers.join(', ')}` : ''}`,
+);
+
+// …and the instructions really did move OUT of the per-turn blocks. Without
+// this, a later edit "clarifying" one of them re-introduces the full-price
+// prose and nothing fails.
+const perTurn = [
+  renderFocusContext({ ...ON_SCREEN, wrongAnswer: 'x=3' }),
+  renderMemoryBlock([{ text: 'הבגרות שלו ב-12 במרץ.', ts: 1 }]),
+  buildTutorSystem({ unitLevel: 5, formNumber: '572', topic: TOPIC })
+    .filter((b) => !b.cache_control)
+    .map((b) => ('text' in b ? b.text : ''))
+    .join('\n'),
+].join('\n');
+assert(
+  !/התאם את|השתמש בהם|אל תציג|התעלם ממנו|בשבילך בלבד|אל תסטה/.test(perTurn),
+  'no instruction prose survives in the uncached per-turn blocks',
 );
 
 // ============================================================
@@ -452,9 +548,18 @@ assert(focusPrompts(working).length > 0, 'a question on screen offers openers ab
 const missed: TutorFocus = { ...working, wrongAnswer: 'x=3' };
 const missedCtx = renderFocusContext(missed);
 assert(missedCtx.includes('x=3'), 'a wrong answer reaches the tutor');
+// The "do not hand over the solution" instruction MOVED into the cached prompt
+// (TUTOR_CORE, "בלוקי ההקשר") — it is identical on every turn, so re-sending it
+// inside this per-turn block was buying the same sentence thousands of times.
+// The property still has to hold end to end, so it is asserted as a CONTRACT:
+// the focus raises the WRONG marker, and the prompt is what that marker means.
 assert(
-  missedCtx.includes('אל תיתן לו את הפתרון'),
-  'and is paired with the instruction NOT to hand over the solution',
+  /(^|\n)WRONG(\n|$)/.test(missedCtx),
+  'and raises the WRONG marker the prompt keys the do-not-solve rule off',
+);
+assert(
+  !/אל תיתן|שאל שאלה אחת/.test(missedCtx),
+  'without re-sending that instruction in the per-turn block',
 );
 assert(
   focusPrompts(missed)[0] === 'למה התשובה שלי שגויה?',
@@ -463,7 +568,7 @@ assert(
 
 // The page decides when the answer is revealed; the focus must not front-run it.
 assert(
-  !missedCtx.includes('התשובה הנכונה'),
+  !/(^|\n)ok:/.test(missedCtx),
   'the correct answer is absent until the page itself reveals it',
 );
 assert(

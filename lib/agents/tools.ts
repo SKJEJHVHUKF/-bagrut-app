@@ -66,15 +66,25 @@ export type ResolvedSuggestion = {
  *
  * The pre-measurement estimate for this whole block was ~350 tokens. It was off
  * by more than 10× on the Haiku path. Do not re-estimate it; re-run the script.
+ *
+ * ⚠️ TRIMMING THIS BLOCK SAVES ALMOST NOTHING, AND CAN COST A LOT.
+ * MEASURED 2026-08-26 after a wording pass: 1,139 → 1,035 on Haiku, i.e. 104
+ * tokens — and the whole block is inside the CACHED prefix, read at 0.1x. That
+ * is ~10 token-equivalents a turn, well under $0.00002. Meanwhile the same 104
+ * tokens count against Haiku's 4,096-token cache minimum, where being short is
+ * not a saving but a 10x loss (see lib/agents/prompts.ts). So the descriptions
+ * below are written for PRECISION, not for brevity: `subTopicTitle` in
+ * particular is the only thing standing between the model and an invented
+ * sub-topic. Shorten nothing here without re-running `npm run measure:cache`
+ * and confirming the ungrounded prefix still clears 4,096.
  */
 export const TUTOR_TOOLS: Tool[] = [
   {
     name: 'suggest_action',
     description:
-      'Offer the student one in-app action, when the conversation reaches a point where practising ' +
-      'would help more than another explanation. This is a suggestion only: the student sees a ' +
-      'button and decides. Use at most once per reply, and only for a concrete reason arising from ' +
-      'the conversation. Never use it instead of answering — answer first, then suggest.',
+      'Offer one in-app action when practising would now help more than another explanation. ' +
+      'A suggestion only: the student sees a button and decides. Answer first, then suggest. ' +
+      'At most once per reply, and only for a reason arising from this conversation.',
     input_schema: {
       type: 'object',
       properties: {
@@ -83,22 +93,24 @@ export const TUTOR_TOOLS: Tool[] = [
           enum: ['practice', 'review', 'replay'],
           description:
             'practice = drill a sub-topic; review = the spaced-repetition queue; ' +
-            'replay = a guided walk through the thinking behind one question (only a few sub-topics have one)',
+            'replay = guided walk through one question (few sub-topics have one)',
         },
         subTopicTitle: {
           type: 'string',
+          // The one description that must NOT be shortened further: it is the
+          // only thing standing between the model and an invented sub-topic,
+          // and resolveSuggestion below drops the whole button when it misses.
           description:
-            'For practice and replay: the sub-topic title in Hebrew, EXACTLY as it appears in the ' +
-            'verified material you were given. Do not invent or rephrase it. Omit for review.',
+            'practice/replay only: the sub-topic title in Hebrew, EXACTLY as written in the ' +
+            'verified material given to you. Never invent or rephrase. Omit for review.',
         },
         label: {
           type: 'string',
-          description: 'Button text, in Hebrew. Max 4 words, imperative. e.g. "נתרגל דה-מואבר"',
+          description: 'Button text, Hebrew, max 4 words, imperative. e.g. "נתרגל דה-מואבר"',
         },
         reason: {
           type: 'string',
-          description:
-            'One sentence in Hebrew, addressed to the student: why this, why now, based on the conversation.',
+          description: 'One Hebrew sentence to the student: why this, why now.',
         },
       },
       required: ['kind', 'label', 'reason'],
@@ -107,18 +119,16 @@ export const TUTOR_TOOLS: Tool[] = [
   {
     name: 'remember',
     description:
-      'Store one durable fact about this student for future conversations — exam date, a topic they ' +
-      'said they find hard, how they prefer to be taught, something their class teacher does ' +
-      'differently. Only facts that will still be true in two weeks. Do NOT store the question they ' +
-      'just asked, an answer they gave, a momentary state ("he is frustrated"), or anything the app ' +
-      'already measures on its own (scores, mistakes, accuracy). The student can see and delete ' +
-      'everything stored.',
+      'Store one durable fact about this student — exam date, a topic they said they find hard, ' +
+      'how they prefer to be taught, what their class teacher does differently. Only facts still ' +
+      'true in two weeks. NOT the current question, an answer they gave, a mood ("he is ' +
+      'frustrated"), or anything the app already measures (scores, mistakes, accuracy).',
     input_schema: {
       type: 'object',
       properties: {
         fact: {
           type: 'string',
-          description: 'One short sentence in Hebrew, third person. e.g. "המבחן שלו במתמטיקה ב-12 במרץ."',
+          description: 'One short Hebrew sentence, third person. e.g. "המבחן שלו ב-12 במרץ."',
         },
       },
       required: ['fact'],

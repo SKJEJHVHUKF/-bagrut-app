@@ -33,7 +33,7 @@ import { validateTranscription } from '../lib/mathscan/validate';
 import { explainSolution } from '../lib/mathscan/explain';
 import { __testables as ocrInternals } from '../lib/mathscan/ocr/tesseract-engine';
 import { checkScope, topicForDomain } from '../lib/mathscan/levels';
-import { summarizeCost } from '../lib/mathscan/cost';
+import { summarizeCost, costOfUsage } from '../lib/mathscan/cost';
 import { matchScannedQuestion } from '../lib/solution-library';
 import { buildMatchIndex, findMatch, __testables } from '../lib/mathscan/match';
 import { ALL_PAST_BAGRUYOT } from '../content/past-bagruyot';
@@ -1255,6 +1255,66 @@ async function run(): Promise<void> {
     eq('one was free', summary.freeScans, 1);
     near('average cost is half a cent', summary.averageCostUsd, 0.005);
     near('free ratio is 50%', summary.freeRatio, 0.5);
+  }
+
+  // ============================================================
+  // 15. cache writes are priced per TTL, not at one flat multiplier
+  // ============================================================
+  //
+  // A 1h write costs 2x and a 5m write 1.25x, and BOTH are live in this repo:
+  // the tutor prefix writes at 1h (lib/agents/prompts.ts), the grader at 5m.
+  // costOfUsage used to apply 1.25x to everything, which under-reported every
+  // cold /api/chat turn by 38% — invisible, because the number it produced was
+  // still plausible. These assertions are the only thing that would catch it
+  // being flattened again.
+  {
+    const RATE = 1 / 1_000_000; // claude-haiku-4-5 input
+    const K = 100_000;
+
+    const oneHour = costOfUsage('claude-haiku-4-5', {
+      input_tokens: 0,
+      output_tokens: 0,
+      cache_creation_input_tokens: K,
+      cache_creation: { ephemeral_5m_input_tokens: 0, ephemeral_1h_input_tokens: K },
+    });
+    near('a 1h cache write is billed at 2x', oneHour, K * RATE * 2);
+
+    const fiveMin = costOfUsage('claude-haiku-4-5', {
+      input_tokens: 0,
+      output_tokens: 0,
+      cache_creation_input_tokens: K,
+      cache_creation: { ephemeral_5m_input_tokens: K, ephemeral_1h_input_tokens: 0 },
+    });
+    near('a 5m cache write is billed at 1.25x', fiveMin, K * RATE * 1.25);
+
+    ok('and the two are not the same number', oneHour > fiveMin * 1.5);
+
+    // Mixed buckets in one call: each half at its own rate, not both at either.
+    const mixed = costOfUsage('claude-haiku-4-5', {
+      input_tokens: 0,
+      output_tokens: 0,
+      cache_creation_input_tokens: 2 * K,
+      cache_creation: { ephemeral_5m_input_tokens: K, ephemeral_1h_input_tokens: K },
+    });
+    near('a mixed write bills each bucket at its own rate', mixed, K * RATE * 3.25);
+
+    // No breakdown (old usage object, or a fixture): assume the EXPENSIVE bucket.
+    // Over-reporting is a choice; under-reporting is a surprise on the invoice.
+    const noBreakdown = costOfUsage('claude-haiku-4-5', {
+      input_tokens: 0,
+      output_tokens: 0,
+      cache_creation_input_tokens: K,
+    });
+    near('with no TTL breakdown it assumes 1h, not 5m', noBreakdown, K * RATE * 2);
+
+    // Reads are the same price whichever TTL wrote the entry — the 1h premium
+    // is paid once, on the write, and that is the whole reason it can pay off.
+    const read = costOfUsage('claude-haiku-4-5', {
+      input_tokens: 0,
+      output_tokens: 0,
+      cache_read_input_tokens: K,
+    });
+    near('a cache read is 0.1x regardless of TTL', read, K * RATE * 0.1);
   }
 
   // ------------------------------------------------------------
