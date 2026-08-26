@@ -41,6 +41,7 @@ import {
 import { classifyAsk } from '../lib/tutor-local';
 import { foreignSubject } from '../lib/maths-vocabulary';
 import { HELD_POSITIONS, type TutorFaq, type TutorFaqBank } from '../content/tutor-faq/types';
+import { faqBankKeys, loadFaqBank } from '../content/tutor-faq';
 
 /** Alts at these 0-based positions are held out (2 of ≥7). Fixed positions in
  *  the MIDDLE, not "the last two": an author told "the last two are the test"
@@ -122,9 +123,19 @@ async function loadBanks(): Promise<Record<string, TutorFaqBank>> {
     }
     return { [file]: raw };
   }
-  const seq = (await import('../content/tutor-faq/math5/sequences')).default;
-  const prob = (await import('../content/tutor-faq/math5/probability')).default;
-  return { 'סדרות': seq, 'הסתברות': prob };
+  // ⚠️ FROM THE REGISTRY, NEVER A LIST HERE.
+  //
+  // This used to name סדרות and הסתברות directly. When trigonometry was
+  // registered in content/tutor-faq/index.ts the bank went live for students
+  // and the gate did not see it — the run returned the identical 2276/2276,
+  // which reads as "nothing changed" rather than "nothing was measured". Any
+  // regression in a new topic's bank would have shipped in silence.
+  const banks: Record<string, TutorFaqBank> = {};
+  for (const [subject, topic] of faqBankKeys()) {
+    const bank = await loadFaqBank(subject, topic);
+    if (bank) banks[topic] = bank;
+  }
+  return banks;
 }
 
 function hebrewInMath(text: string): string | null {

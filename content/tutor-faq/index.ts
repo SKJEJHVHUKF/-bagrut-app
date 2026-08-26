@@ -19,6 +19,24 @@ const LOADERS: Record<string, Loader> = {
   'math5/הסתברות': () => import('./math5/probability'),
 };
 
+/**
+ * Every registered bank, as [subject, topic].
+ *
+ * ⚠️ EXISTS BECAUSE THE GATE WAS BLIND. `scripts/test-tutor-faq` had its own
+ * hardcoded list of two topics while LOADERS was the real registry, so a bank
+ * registered here was live for students and invisible to the test — and the
+ * run came back with the identical count, which reads as "nothing changed".
+ * Found by the session authoring trigonometry, on the day it registered one.
+ *
+ * Anything that wants to iterate every bank must read this, never a copy.
+ */
+export function faqBankKeys(): Array<[string, string]> {
+  return Object.keys(LOADERS).map((k) => {
+    const i = k.indexOf('/');
+    return [k.slice(0, i), k.slice(i + 1)] as [string, string];
+  });
+}
+
 const cache = new Map<string, Promise<TutorFaqBank | null>>();
 
 /** The bank for a topic, or null when none has been authored yet. Never throws. */
