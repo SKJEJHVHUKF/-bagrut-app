@@ -51,8 +51,37 @@ function enabled(): Set<string> {
   }
 }
 
+/**
+ * A default for everyone, set once in the environment.
+ *
+ * ⚠️ WITHOUT THIS THE COMPILER WAS OFF FOR EVERY STUDENT, AND THE MEASUREMENTS
+ * DID NOT SAY SO.
+ *
+ * `measure-quiz-gap` calls `compileTutorResponse` directly, so its 86% is what
+ * a student gets when the layer RUNS. In the browser the layer sits behind a
+ * localStorage key that nobody but the person who set it has, so the number
+ * described a configuration almost no one was in. That is the most expensive
+ * kind of wrong measurement: it is right about the code and wrong about the
+ * product.
+ *
+ * The env var is the honest switch — one value, one deploy, everyone. The
+ * localStorage key stays as a per-browser OVERRIDE in both directions, so a
+ * problem can be turned off for one device without a deploy, and on for one
+ * device before a rollout.
+ *
+ * Fails closed: anything other than 'on' is off.
+ */
+function envDefault(flag: TutorFlag): boolean {
+  if (flag !== 'compiler') return false;
+  return process.env.NEXT_PUBLIC_TUTOR_COMPILER === 'on';
+}
+
 export function tutorFlag(flag: TutorFlag): boolean {
-  return enabled().has(flag);
+  const set = enabled();
+  // An explicit per-browser word wins in both directions: `?flags=off` turns
+  // the layer off even when the environment turns it on for everyone.
+  if (set.has('off')) return false;
+  return set.has(flag) || envDefault(flag);
 }
 
 /** For a report or a debug line: what is on right now. */

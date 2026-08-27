@@ -61,6 +61,13 @@ const ANSWERS = [
   // of it, so "האם צריך להכפיל" and "האם הסדרה חשבונית" stay untouched — and
   // "למה זה 16" stays on the must-NOT-grade list two blocks below.
   'האם התשובה היא 1/3', 'האם זה 0.36', 'אז זה 1/3 נכון?', 'האם 0.36 נכון',
+  // ⚠️ A HEBREW SEPARATOR THAT NEVER WORKED, AND ONE NOBODY WROTE.
+  //
+  // The list read `ו-`, and JavaScript's `` never matches next to a
+  // Hebrew letter — so "2 ו-3 ו-4" was one unparseable token from the day it
+  // was written. And students do not type the maqaf at all: report:worklist
+  // has "2 ו3 ו4" verbatim, three model calls for a list of three values.
+  '2 ו3 ו4', '2 ו-3 ו-4', '3 ו4',
 ];
 let caught = 0;
 for (const msg of ANSWERS) {

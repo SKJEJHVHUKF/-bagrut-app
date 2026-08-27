@@ -241,7 +241,13 @@ export function looksLikeAnswer(message: string): boolean {
   if (!/[0-9]|[a-zA-Z]/.test(bare)) return false;
 
   // A multi-value answer ("d=4, a1=3" / "x=2 או x=3") parses per part.
-  const parts = bare.split(/\s*(?:,|;|\bאו\b|\bו-)\s*/).filter(Boolean);
+  // ⚠️ "ו3" HAS NO DASH, AND THAT COST THREE CALLS.
+  //
+  // The separator list had `ו-`, which needs the maqaf. Students write
+  // "2 ו3 ו4" — the vav glued straight onto the digit — and the whole thing
+  // parsed as one unparseable token, so a list of three values went to the
+  // model. Seen in report:worklist, verbatim.
+  const parts = bare.split(/\s*(?:,|;|\bאו\b|ו-|ו(?=[0-9]))\s*/).filter(Boolean);
   return parts.every((p) => {
     // Grade the right-hand side of "x = 3"; the name is not the value.
     const rhs = p.includes('=') ? p.slice(p.lastIndexOf('=') + 1) : p;
@@ -344,7 +350,17 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
   //
   // Gated on the pending expectation, so a bare "לא" in a fresh conversation —
   // where it means something else entirely, or nothing — is untouched.
-  if (state.pending?.kind === 'yes-no') {
+  // ⚠️ AFTER ANY LOCAL TURN, NOT ONLY AFTER A YES-OR-NO QUESTION.
+  //
+  // The first version required `pending.kind === 'yes-no'`, and report:worklist
+  // then showed a bare "לא" costing three separate model calls. A student who
+  // answers "לא" one message after the tutor said something is answering the
+  // tutor whatever shape the question took: asked "מה יצא לך" and it did not
+  // work out, asked "הוא מתקיים" and it does not. Both mean the same next move.
+  //
+  // Still gated on `lastWasLocal`: a bare "לא" opening a conversation means
+  // nothing, or something else entirely, and is left alone.
+  if (state.lastWasLocal) {
     const v = yesNo(trimmed);
     if (v !== null) {
       return { kind: 'ask', ask: ladderMove(v ? 'more' : 'stuck', state.served ?? [], state.lastAsk) as Ask };

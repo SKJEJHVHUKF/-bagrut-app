@@ -303,7 +303,22 @@ const fullQuestion = {
     };
     const { tutorFlag, activeTutorFlags } = await import('../lib/tutor-flags');
 
-    ok(!tutorFlag('compiler'), 'with nothing set, the compiler is OFF');
+    ok(!tutorFlag('compiler'), 'with nothing set and no env var, the compiler is OFF');
+
+    // ⚠️ THE ENV DEFAULT IS THE ONLY SWITCH THAT REACHES A STUDENT.
+    //
+    // The localStorage key is per browser, so the layer was off for everyone
+    // while `measure-quiz-gap` — which calls the compiler directly — reported
+    // 86%. Right about the code, wrong about the product.
+    process.env.NEXT_PUBLIC_TUTOR_COMPILER = 'on';
+    ok(tutorFlag('compiler'), 'the env var turns it on for everyone');
+    store.set('mathup-flags', 'off');
+    ok(!tutorFlag('compiler'), 'and ONE browser can still turn it back off, without a deploy');
+    store.delete('mathup-flags');
+    process.env.NEXT_PUBLIC_TUTOR_COMPILER = 'anything-else';
+    ok(!tutorFlag('compiler'), 'any value other than "on" fails closed');
+    delete process.env.NEXT_PUBLIC_TUTOR_COMPILER;
+    ok(!tutorFlag('compiler'), 'and removing it returns to off');
     ok(activeTutorFlags().length === 0, 'and nothing reports as active');
 
     store.set('mathup-flags', 'compiler');

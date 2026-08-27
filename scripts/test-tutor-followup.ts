@@ -55,6 +55,11 @@ const cases: Array<[string, string]> = [
   ['תסביר אחרת', 'restate'],
   ['תסביר יותר פשוט', 'restate'],
   ['במילים פשוטות', 'restate'],
+  // "go slower, one at a time" is the same ask as "explain it differently".
+  // From report:worklist, where each cost a model call.
+  ['איבר איבר', 'restate'],
+  ['צעד צעד', 'restate'],
+  ['לאט לאט', 'restate'],
   ['למה דווקא ככה', 'why'],
   ['למה זה עובד', 'why'],
   ['בשביל מה זה', 'why'],
@@ -111,6 +116,26 @@ ok(reportedValue('יש 19 אפשרויות') === null, 'a number with no result 
   });
   ok(r.kind === 'answer', 'and the router grades it instead of offering another hint');
 }
+
+console.log('');
+console.log('=== a bare yes or no after ANY local turn ===');
+console.log('');
+// ⚠️ The first version required a yes-or-no EXPECTATION, and report:worklist
+// then showed a bare "לא" costing three model calls. A student answering one
+// message after the tutor spoke is answering the tutor, whatever shape the
+// question took.
+for (const [msg, ll, want] of [
+  ['לא', true, 'ask'], ['כן', true, 'ask'], ['בטוח', true, 'ask'], ['לא חושב', true, 'ask'],
+  ['לא', false, 'open'], ['כן', false, 'open'],
+] as const) {
+  const r = routeMessage(msg, focus, { lastAsk: 'help', served: ['hint'], lastWasLocal: ll });
+  ok(r.kind === want, `"${msg}" lastWasLocal=${ll} → ${want} (got ${r.kind})`);
+}
+// And a phrase that is not a yes or a no is untouched by it.
+ok(
+  routeMessage('לא הבנתי', focus, { lastAsk: 'help', served: ['hint'], lastWasLocal: true }).kind === 'ask',
+  '"לא הבנתי" still routes as a follow-up, not as a bare no',
+);
 
 console.log(
   failed === 0
