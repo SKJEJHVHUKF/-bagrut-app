@@ -45,7 +45,7 @@ import {
   type TutorFocus,
 } from '@/lib/tutor-presence';
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
-import { routeMessage, answerGradedLocally, canonicalFor } from '@/lib/tutor-router';
+import { routeMessage, answerGradedLocally, canonicalFor, screenMessage } from '@/lib/tutor-router';
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
 // two call sites below, not here. Both pull the whole content corpus behind
@@ -208,6 +208,21 @@ export default function TutorBubble() {
       // the question object. Paying an API call to paraphrase it costs money on
       // every turn and can only make it worse. answerLocally abstains on
       // anything ambiguous, so the real tutor still handles the novel question.
+      // ===== screen out what nothing should pay for — BEFORE the focus check =====
+      // This runs outside `if (focusNow)` deliberately. The router below only
+      // runs when a question is on screen, so "אאאא" or "היי" typed on the home
+      // page used to skip every local layer and reach a billed call. Screening
+      // here also means no daily-quota turn is spent: the quota is charged
+      // server-side on arrival, and this never arrives.
+      const screened = screenMessage(text);
+      if (screened) {
+        setMsgs((m) => [
+          ...m,
+          { id: `a-${Date.now()}`, role: 'assistant', text: screened.text, local: true },
+        ]);
+        return;
+      }
+
       const focusNow = getTutorFocus();
       const qKey = focusNow?.question?.id ?? focusNow?.questionText ?? '';
       if (servedRef.current.key !== qKey) {
@@ -337,7 +352,15 @@ export default function TutorBubble() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: text,
-            topic: f?.topic ?? '',
+            // Every math surface (quiz, roadmap, practice, ghost, thinking)
+            // publishes a focus carrying its real topic, so this falls back
+            // only when the bubble is opened somewhere with no math context at
+            // all. The sentinel says "asked from nowhere" rather than "the
+            // client forgot the field", which is the difference between a
+            // readable [faq-miss] log and a guess. It does NOT affect cost:
+            // an unrecognised topic takes the ungrounded path either way, and
+            // that path now caches on its own (see TUTOR_BASE_CURRICULUM).
+            topic: f?.topic || 'general_math',
             conversationId: convIdRef.current,
             // A question was on screen, the local tutor AND its FAQ bank both
             // abstained — the server logs it as `[faq-miss]`, and that log is

@@ -13,13 +13,24 @@
 
 import type { OcrEngine, OcrEngineId } from '../types';
 import { tesseractEngine } from './tesseract-engine';
+import { mathpixEngine } from './mathpix-engine';
 import { visionEngine } from './vision-engine';
 
 /** Runs on the student's device. $0, always tried first. */
 const FREE_CHAIN: OcrEngine[] = [tesseractEngine];
 
-/** Costs money. Reached only on a validated failure of the free chain. */
-const PAID_CHAIN: OcrEngine[] = [visionEngine];
+/**
+ * Costs money. Reached only on a validated failure of the free chain, and
+ * tried IN ORDER — the pipeline walks this list rather than taking the first
+ * entry, so a Mathpix outage or a missing key degrades to Claude vision
+ * instead of failing the scan.
+ *
+ * Mathpix first: it is trained on mathematical notation and returns formulas
+ * as LaTeX, where Claude vision is a language model inferring a formula from
+ * pixels. It is also cheaper ($0.002/request against ~$0.0032), so the order
+ * needs no cost/accuracy trade-off argument — it wins on both.
+ */
+const PAID_CHAIN: OcrEngine[] = [mathpixEngine, visionEngine];
 
 export type OcrChainOptions = {
   /** Whether the caller is permitted to spend money on this scan. */

@@ -682,7 +682,9 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
                   key={i}
                   initial={{ opacity: 0, x: 12 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.25, delay: 0.1 + i * 0.06, ease: 'easeOut' }}
+                  // Cap the stagger: an uncapped 0.06s/step made a long solution
+                  // take over a second to finish appearing, which reads as lag.
+                  transition={{ duration: 0.25, delay: 0.1 + Math.min(i, 7) * 0.05, ease: 'easeOut' }}
                   className="chat-md text-sm text-slate-800 leading-relaxed"
                 >
                   <span className="text-emerald-700 font-bold">{i + 1}.</span>{' '}

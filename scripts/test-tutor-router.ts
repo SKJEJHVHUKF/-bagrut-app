@@ -17,7 +17,7 @@
  * question that contains a number, and "16" alone is an answer that does not.
  */
 
-import { routeMessage, looksLikeAnswer, bareValue } from '../lib/tutor-router';
+import { routeMessage, looksLikeAnswer, bareValue, screenMessage } from '../lib/tutor-router';
 import type { TutorFocus } from '../lib/tutor-presence';
 import type { PracticeQuestion } from '../content/lessons/types';
 import type { AnswerSpec } from '../lib/answer-check';
@@ -162,6 +162,49 @@ console.log('\n— the conversation after the first chip —');
   // The ladder escalates instead of repeating a spent hint.
   const spent = routeMessage('ואז?', withValue, { lastAsk: 'help', served: ['hint', 'first-step'] });
   ok(spent.kind === 'ask' && spent.ask === 'full', 'a spent hint ladder escalates to the full solution');
+}
+
+// ------------------------------------------------------------
+// screenMessage — the $0 pre-filter
+// ------------------------------------------------------------
+//
+// THE TWO ERRORS ARE NOT EQUAL HERE EITHER, and the counter-examples below are
+// the more important half of this block. Screening a real question is silent
+// and permanent: the student is told "I only do maths" and never reaches the
+// tutor at all. Failing to screen junk costs one warm turn (~$0.0025).
+{
+  const screens = (m: string, reason: string) =>
+    ok(screenMessage(m)?.reason === reason, `"${m}" → ${reason}`);
+  const passes = (m: string) =>
+    ok(screenMessage(m) === null, `"${m}" must reach the tutor`);
+
+  // --- caught, and correctly ---
+  screens('אאאא', 'gibberish');
+  screens('1111', 'gibberish');
+  screens('????', 'gibberish');
+  screens('asdasd', 'gibberish');
+  screens('היי', 'greeting');
+  screens('שלום', 'greeting');
+  screens('מה נשמע?', 'greeting');
+  screens('תכתוב לי קוד שממיין מערך', 'off-topic');
+  screens('תן לי מתכון לעוגת שוקולד', 'off-topic');
+
+  // --- MUST NOT be screened: real bagrut questions that look off-topic ---
+  // "כדורגל" appears 33x and "מתכון" 14x in authored content. Israeli
+  // probability questions are built on football, cards, dice and recipes; a
+  // keyword blocklist would reject the syllabus itself.
+  passes('בקבוצת כדורגל יש 11 שחקנים, מה ההסתברות שנבחר שוער?');
+  passes('מכינים 3 מתכונים ובכל אחד 4 מרכיבים, כמה צירופים יש?');
+  passes('מי ניצח במשחק אם ההסתברות לניצחון היא 0.6?');
+  // Short but real — a one-word maths message is not a greeting.
+  passes('נגזרת');
+  passes('רמז');
+  passes('למה?');
+  // A repeated character INSIDE a sentence is emphasis, not gibberish.
+  passes('אאאא לא הבנתי את השלב הזה');
+  // A typed answer must never be mistaken for a repeat-run.
+  passes('16');
+  passes('x=4');
 }
 
 // ------------------------------------------------------------

@@ -193,6 +193,91 @@ export function looksLikeAnswer(message: string): boolean {
  * value, but "זה 16?" does, and a student asking for a hint while a spec
  * happens to exist must still get the hint.
  */
+// ------------------------------------------------------------
+// Pre-filter: messages that no layer should pay for
+// ------------------------------------------------------------
+
+/** Four or more of the same character: "אאאא", "1111", "????", "!!!!". */
+const REPEAT_RUN = /^(.)\1{3,}$/;
+
+/**
+ * Keyboard mashing, as an EXPLICIT list rather than a cleverness.
+ *
+ * Hebrew writes no vowels, so "a run of consonants" — the usual gibberish
+ * heuristic — describes every Hebrew word ever typed. There is no safe
+ * general rule here; there is only a list of literal keyboard rows.
+ */
+const KEYBOARD_MASH = /^(?:asd|sdf|dfg|qwe|wer|zxc|jkl|asdf|qwer|קראט|טאורק)+\d*$/i;
+
+/** A greeting and nothing else. Distinct from ACK, which closes a turn. */
+const BARE_GREETING =
+  /^\s*(?:היי+|הי|שלום|אהלן|הלו|יו|מה\s*קורה|מה\s*נשמע|מה\s*המצב|בוקר\s*טוב|ערב\s*טוב|צהריים\s*טובים|hi+|hello|hey|yo)\s*[!?.…]*\s*$/i;
+
+/**
+ * Any hint that this message is about mathematics.
+ *
+ * ⚠️ THE OFF-TOPIC GUARD BELOW IS GATED ON THE ABSENCE OF THIS, AND THAT
+ * CONJUNCTION IS THE WHOLE SAFETY MODEL. A plain keyword blocklist would be
+ * catastrophic here and the content proves it: "כדורגל" appears 33 times and
+ * "מתכון" 14 times inside real authored bagrut material (content/lessons/
+ * math5/probability.ts and the FAQ bank). Israeli probability questions ARE
+ * about football teams, card decks, dice and recipes. Blocking those words
+ * would reject the exam syllabus.
+ */
+const MATH_SIGNAL =
+  /[0-9$=+×÷^√∫]|משוואה|פונקצי|נגזרת|אינטגרל|משולש|זווית|הסתברות|סדרה|וקטור|לוגריתם|שורש|גרף|שיפוע|מעגל|ישר|נוסחה|נוסחא|תרגיל|שאלה|סעיף|בגרות|לפתור|פתרון|חשב|הוכח|מצא/;
+
+/**
+ * Off-topic intents, anchored at the START and paired with the math-signal
+ * check above. Deliberately tiny: every entry here is a way to be wrong about
+ * a real student, and the upside of being right is one warm turn (~$0.0025).
+ */
+const OFF_TOPIC_INTENT =
+  /^\s*(?:(?:תכתוב|כתוב|תן)\s+לי\s+(?:קוד|תוכנית|סקריפט|פונקציה\s+ב(?:פייתון|ג'אווה))|(?:איך\s+)?(?:מכינים|להכין)\s|תן\s+לי\s+מתכון|מי\s+(?:ניצח|זכה)\s|מתי\s+(?:נולד|מת)\s|מה\s+דעתך\s+על\s+(?:הממשלה|הפוליטיקה))/;
+
+/** A fixed local reply, or null to let the normal routing continue. */
+export type Screen = { reason: 'gibberish' | 'greeting' | 'off-topic'; text: string };
+
+/**
+ * Runs BEFORE routeMessage and WITHOUT a focus, which is the point: the router
+ * only runs when a question is on screen (TutorBubble `send()`), so a student
+ * typing "אאאא" or "היי" on the home page skipped every local layer and went
+ * straight to a billed call. Gibberish is gibberish with or without context.
+ *
+ * Returning non-null means the message never reaches /api/chat — so it costs
+ * nothing AND consumes no daily quota, because the quota is charged server-side
+ * on arrival.
+ */
+export function screenMessage(message: string): Screen | null {
+  const trimmed = message.trim();
+  if (!trimmed) return null;
+
+  if (REPEAT_RUN.test(trimmed) || KEYBOARD_MASH.test(trimmed)) {
+    return {
+      reason: 'gibberish',
+      text: 'לא הצלחתי לקרוא את זה 🙂 כתוב לי את השאלה, או את הצעד שנתקעת בו, ואני איתך.',
+    };
+  }
+
+  if (BARE_GREETING.test(trimmed)) {
+    return {
+      reason: 'greeting',
+      text: 'היי! אני כאן בשביל הבגרות במתמטיקה 📐 על איזה תרגיל נעבוד?',
+    };
+  }
+
+  // Both conditions, never one: an off-topic phrasing AND no maths anywhere in
+  // the sentence. "בקבוצת כדורגל יש 11 שחקנים" carries a digit and stays.
+  if (!MATH_SIGNAL.test(trimmed) && OFF_TOPIC_INTENT.test(trimmed)) {
+    return {
+      reason: 'off-topic',
+      text: 'אני כאן כדי לעזור לך בהכנה לבגרות במתמטיקה בלבד 📐 במה נוכל להתקדם בתרגיל הנוכחי?',
+    };
+  }
+
+  return null;
+}
+
 export function routeMessage(message: string, focus: TutorFocus | null, state: TurnState = {}): Route {
   const trimmed = message.trim();
 

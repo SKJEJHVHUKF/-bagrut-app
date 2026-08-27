@@ -1,3 +1,4 @@
+import { logCost } from '@/lib/mathscan/cost';
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
@@ -251,6 +252,12 @@ export async function POST(request: Request) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...({ output_config: { format: { type: 'json_schema', schema: AUDIT_SCHEMA } } } as any),
     });
+
+    // The most expensive single call in this app — sonnet-4-5 with vision and
+    // max_tokens 2500 — and until now the only one of the five paid routes
+    // with NO cost line at all. `expectCache: false` because the input is
+    // dominated by one student's handwriting photo, which is unique per call.
+    logCost('analyze-solution', 'claude-sonnet-4-5', message.usage, { expectCache: false });
 
     const content = message.content[0];
     if (content.type !== 'text') throw new Error('Unexpected audit shape');

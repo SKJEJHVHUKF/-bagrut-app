@@ -131,8 +131,14 @@ export function GhostReplayLevel({
 
   return (
     <div className="space-y-4">
-      {/* The problem, always visible */}
-      <div className="rounded-3xl border border-violet-500/25 bg-gradient-to-br from-violet-600/[0.07] to-violet-600/[0.07] p-5">
+      {/* The problem, ACTUALLY always visible.
+          It used to be a plain card at the top: by step 3 the trail of walked
+          steps had pushed it off screen, and the student had to scroll up to
+          re-read the question they were answering. Sticking it under the
+          PracticeShell strip (top-0 mobile / top-16 desktop, plus its own
+          height) keeps it on screen for the whole walkthrough. Opaque
+          background — the trail scrolls underneath it. */}
+      <div className="sticky top-[58px] md:top-[104px] z-30 rounded-3xl border border-violet-500/25 bg-[var(--background)]/95 backdrop-blur-md p-4 shadow-sm max-h-[40vh] overflow-y-auto">
         <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-violet-700">
           <Brain className="h-3 w-3 flex-shrink-0" />
           <span>הליכת חשיבה</span>

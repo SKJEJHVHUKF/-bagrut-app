@@ -30,8 +30,17 @@ const WRITE_1H = 2.0;
 const CACHE_READ = 0.1;
 /** What buildTutorSystem actually declares today. Keep in sync with CACHE_1H. */
 const CACHE_WRITE = WRITE_1H;
-/** Observed answer length. max_tokens is 800; a tutor reply is rarely that long. */
-const TYPICAL_OUTPUT = 380;
+/**
+ * max_tokens is now 220 (route.ts), and TUTOR_CORE asks for 2–4 sentences, so
+ * 220 is both the ceiling AND roughly what a compliant micro-hint costs.
+ * Priced at the ceiling: the honest worst case for a normal turn.
+ *
+ * ⚠️ It is NOT the worst case for the two paths TUTOR_CORE exempts from
+ * brevity (full explanation after two failed hints; an explicit request for a
+ * full solution). Those want more than 220 and will be truncated — watch the
+ * `[truncated]` line in the logs.
+ */
+const TYPICAL_OUTPUT = 220;
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) { console.error('ANTHROPIC_API_KEY missing'); process.exit(1); }
@@ -136,4 +145,24 @@ const count = async (text: string) =>
   console.log(`\n  → output tokens are now the largest single item; the input side is`);
   console.log(`    already down to noise. Cutting cost further means fewer CALLS`);
   console.log(`    (the FAQ bank), not a smaller prompt.\n`);
+
+  // ---- pricing four specific proposals, so the decision is not a hunch ----
+  const hist4 = await count(
+    'תלמיד: לא יודע\nמורה: תסתכל על המילה "מבין" בשאלה. מה היא אומרת על המכנה?',
+  );
+  console.log('PROPOSALS, priced against the warm turn above:');
+  const propose = (name: string, save: number, note: string) =>
+    console.log(`  ${save >= 0 ? '−' : '+'}$${Math.abs(save).toFixed(5)}  ${(Math.abs(save) / read * 100).toFixed(1).padStart(4)}%  ${name}\n            ${note}`);
+
+  propose('MAX_HISTORY 6 → 4 messages', usd(history - hist4),
+    'history sits AFTER the cached prefix, so this is pure token cost and nothing else.');
+  propose('max_tokens 800 → 500', 0,
+    'billing is per token GENERATED, not per cap. Saves nothing unless replies actually reach 800 — and then it truncates them mid-sentence, and a truncated answer costs another question.');
+  for (const target of [300, 250]) {
+    propose(`"answer in 3-4 sentences" → ~${target} output tokens`, usd(0, TYPICAL_OUTPUT - target),
+      `output is ${((usd(0, TYPICAL_OUTPUT) / read) * 100).toFixed(0)}% of the turn, so this is the only lever of the four that moves real money. One-time cost: it lives in the CACHED prefix, so changing it re-writes the cache once for everyone.`);
+  }
+  console.log(`\n  ⚠️ ${TYPICAL_OUTPUT} output tokens is an ASSUMPTION, not a measurement — the real`);
+  console.log(`     figure is in the [cost] lines in the Vercel logs (lib/mathscan/cost.ts).`);
+  console.log(`     Every percentage above scales with it.\n`);
 })();

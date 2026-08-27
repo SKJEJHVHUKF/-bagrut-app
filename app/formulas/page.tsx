@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Search, BookOpen, Printer } from 'lucide-react';
 import { allLessonKeys, getLesson } from '@/content/lessons';
+import { sheetFormulas } from '@/content/formula-sheet';
 import { MathText } from '@/components/practice/MathText';
 import { PageHeader } from '@/components/PageHeader';
 
@@ -19,12 +20,14 @@ import { PageHeader } from '@/components/PageHeader';
 export default function FormulasPage() {
   const [query, setQuery] = useState('');
 
-  // Aggregate all lessons that have at least one formula.
+  // Same curated set, in the same order, as the FormulaSheet drawer — the
+  // drawer links here as "לכל הנוסחאות והדפסה", so the two must not disagree.
   const topicBlocks = allLessonKeys()
     .map(({ subject, topic }) => {
       const lesson = getLesson(subject, topic);
-      if (!lesson || !lesson.formulas?.length) return null;
-      return { subject, topic, title: lesson.title, formulas: lesson.formulas };
+      const formulas = sheetFormulas(lesson, topic);
+      if (!lesson || !formulas.length) return null;
+      return { subject, topic, title: lesson.title, formulas };
     })
     .filter((b): b is NonNullable<typeof b> => b !== null);
 

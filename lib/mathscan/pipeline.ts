@@ -146,33 +146,87 @@ export async function runScanPipeline(
   meter.end('validate', validation ? 'hit' : 'miss', { detail: validation?.verdict });
 
   // ---------- 6. paid vision, only on a validated local failure ----------
-  const needsFallbackOcr = !validation || validation.verdict === 'reject' || validation.confidence < threshold;
+  /**
+   * BUY A BETTER READ FOR ANYTHING THE VALIDATOR DID NOT ACCEPT.
+   *
+   * This used to compare `confidence` against its own constant (0.55) while
+   * `validate.ts` decided the verdict against a different one
+   * (ACCEPT_THRESHOLD = 0.72). Two gates, two numbers, nobody keeping them in
+   * step — and the band between them was a dead zone: the validator called the
+   * read "readable but risky", and the pipeline read the same number as "good
+   * enough, don't spend".
+   *
+   * REPRODUCED 2026-08-26: confidence 0.58 landed in that gap. The paid vision
+   * engine never ran, Tesseract's garbage went straight through, and the
+   * scanner paid to solve a question that did not exist.
+   *
+   * Tying this to the VERDICT closes the gap by construction — one decision,
+   * made in one place, and the two can never drift apart again. `accept` is
+   * defined as "clean enough to solve on-device"; anything less is worth
+   * ~$0.003 of vision to get right, which is a fraction of the solve it
+   * protects and a rounding error against a wrong answer.
+   *
+   * `fallbackThreshold` stays honoured when a caller passes one explicitly,
+   * so tests and tools can still force a specific bar.
+   */
+  const needsFallbackOcr =
+    !validation ||
+    validation.verdict !== 'accept' ||
+    (options.fallbackThreshold !== undefined && validation.confidence < threshold);
   let fallbackBlocked: { message: string; status: number } | null = null;
 
   if (needsFallbackOcr && allowPaid && !options.transcriptionOverride) {
     stage('fallback-vision', 'start');
     meter.begin('fallback-vision');
     const paidChain = await buildOcrChain({ allowPaid: true });
-    const visionEngineInstance = paidChain.find((e) => e.paid);
-    if (visionEngineInstance) {
-      try {
-        const visionResult = await visionEngineInstance.recognize(processed.forVision, {
-          onProgress: options.onOcrProgress,
-          signal: options.signal,
-        });
-        const visionValidation = validateTranscription({ ocr: visionResult });
-        // Keep whichever read the validator scored higher. Usually the paid
-        // one — but not always, and paying for a result is not a reason to
-        // use a worse one.
-        if (!validation || visionValidation.confidence > validation.confidence) {
-          ocr = visionResult;
-          validation = visionValidation;
+    /**
+     * WALK the paid engines, do not pick one.
+     *
+     * This used to be `paidChain.find((e) => e.paid)` — the FIRST paid engine
+     * and no other. That was fine while `PAID_CHAIN` had a single entry, and
+     * it silently became a bug the moment Mathpix went in front of Claude
+     * vision: an unset `MATHPIX_APP_KEY` or a Mathpix outage would have ended
+     * the paid stage entirely, with the perfectly healthy vision engine
+     * sitting unused behind it.
+     *
+     * Failing over is the whole reason the chain is a list. A scan must never
+     * get worse because an OPTIONAL engine was added in front.
+     */
+    const paidEngines = paidChain.filter((e) => e.paid);
+    if (paidEngines.length) {
+      for (const engine of paidEngines) {
+        try {
+          const visionResult = await engine.recognize(processed.forVision, {
+            onProgress: options.onOcrProgress,
+            signal: options.signal,
+          });
+          const visionValidation = validateTranscription({ ocr: visionResult });
+          // Keep whichever read the validator scored higher. Usually the paid
+          // one — but not always, and paying for a result is not a reason to
+          // use a worse one.
+          if (!validation || visionValidation.confidence > validation.confidence) {
+            ocr = visionResult;
+            validation = visionValidation;
+          }
+          meter.end('fallback-vision', 'hit', { costUsd: visionResult.costUsd });
+          fallbackBlocked = null;
+          break;
+        } catch (error) {
+          const status = error instanceof VisionOcrError ? error.status : 0;
+          fallbackBlocked = { message: message(error), status };
+          // 401/402/403/429 are decisions about the USER — sign in, upgrade,
+          // daily cap — and the next engine would hit the identical wall. Only
+          // an engine-specific failure (503 unconfigured, 502 upstream, a
+          // network error) is worth retrying with a different provider.
+          if (status === 401 || status === 402 || status === 403 || status === 429) {
+            meter.end('fallback-vision', 'error', { detail: message(error) });
+            break;
+          }
+          console.warn(`[ocr] ${engine.id} failed (${status}) — trying the next engine`);
+          if (engine === paidEngines[paidEngines.length - 1]) {
+            meter.end('fallback-vision', 'error', { detail: message(error) });
+          }
         }
-        meter.end('fallback-vision', 'hit', { costUsd: visionResult.costUsd });
-      } catch (error) {
-        const status = error instanceof VisionOcrError ? error.status : 0;
-        fallbackBlocked = { message: message(error), status };
-        meter.end('fallback-vision', 'error', { detail: message(error) });
       }
     } else {
       meter.skip('fallback-vision', 'no paid engine available');
@@ -546,6 +600,62 @@ async function escalate(args: {
         status: 401,
         message:
           'פתרון חדש דורש חשבון. התחבר ונפתור את השאלה הזאת עכשיו — שאלות שכבר נמצאות במאגר נשארות חינם וללא הגבלה, גם בלי חשבון.',
+      },
+      inputMode,
+    });
+  }
+
+  /**
+   * A RISKY read never gets a PAID solve. Honour the verdict we already made.
+   *
+   * `ValidationVerdict` defines `review` as "readable but risky — show it to
+   * the student and ask them to confirm" (lib/mathscan/types.ts). The reject
+   * guard further up acts on `reject`. Nothing ever acted on `review`: the
+   * pipeline showed a yellow "זיהוי חלקי" meter, printed "כדאי לעבור על
+   * הטקסט ולתקן לפני שממשיכים", and then paid to solve the unconfirmed text
+   * anyway. The advice and the behaviour disagreed, and the behaviour won.
+   *
+   * REPRODUCED 2026-08-26 on a printed 5-unit question: confidence 58%,
+   * issue `unbalanced-delimiters`, transcription containing `ua = f(x)`,
+   * `NNN`, `DY`, `ON, 8.` and `% שר`. The scan escalated, paid, and returned
+   * a long, confident, beautifully formatted solution to a question that does
+   * not exist. That is the worst possible outcome: it costs money AND it
+   * teaches the student wrong maths, under a badge saying it was solved.
+   *
+   * Why this is not simply a higher DEFAULT_FALLBACK_THRESHOLD: that number
+   * decides whether to buy a better READ, and buying one is often right. This
+   * decides whether to buy a SOLVE of a read nobody has confirmed, and the
+   * answer to that is no — free paths have already had their chance above
+   * (the library matcher is noise-tolerant by design and ran on this text),
+   * and `rerunFromTranscription` re-solves for free the moment the student
+   * fixes the wording. The honest path is also the cheap one here.
+   *
+   * The gate is `inputMode`, not the confidence number. `humanEdited` floors
+   * the verdict at `review`, so a student who typed the question by hand
+   * lands on the same verdict as a bad photo — and blocking THEM would be
+   * absurd, since their text is the most reliable input the app ever gets.
+   * `inputMode === 'photo'` is exactly "a machine read nobody has confirmed",
+   * which is the thing being refused.
+   */
+  if (validation.verdict === 'review' && inputMode === 'photo') {
+    meter.skip('fallback-solve', `verdict=review (${validation.confidence}) — needs the student to confirm the text`);
+    return finalize({
+      question: transcription,
+      validation,
+      problem,
+      outcome,
+      explanations: {},
+      source: 'local-cas',
+      unitLevel,
+      meter,
+      topic,
+      blocked: {
+        // 422: not an error and not a paywall — the text needs confirming.
+        // The UI keys on this to send the student to the editor rather than
+        // to a red box or a sign-in button.
+        status: 422,
+        message:
+          'הקריאה מהתמונה לא מספיק ברורה, ופתרון על טקסט שגוי רק יבלבל. עבור על הטקסט למעלה, תקן מה שצריך, ולחץ "נסח מחדש" — התיקון והפתרון מחדש הם ללא עלות.',
       },
       inputMode,
     });

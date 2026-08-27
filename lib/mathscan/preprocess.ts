@@ -37,6 +37,28 @@ import type {
  *  improving Tesseract and only raised the vision token count. */
 const DEFAULT_MAX_DIM = 1400;
 
+/**
+ * Longest edge fed to the PAID vision call only. The local OCR keeps the full
+ * 1400.
+ *
+ * These two numbers optimise opposite things and must not be merged:
+ *   • Tesseract is FREE and its accuracy decides whether a scan ever reaches a
+ *     paid call at all. Shrinking its input to save vision tokens is a false
+ *     economy — a local read that fails costs a whole transcribe ($0.0035)
+ *     plus a solve, which is ~4x what the smaller image saved.
+ *   • The vision model is charged by pixel area: tokens = w × h / 750. Going
+ *     1400 → 1000 on the longest edge roughly halves it (~1,960 → ~1,000
+ *     tokens, about $0.001 per transcribe on claude-haiku-4-5).
+ *
+ * Both variants are already cropped to the detected content box first, so this
+ * is a downscale of the question itself, not of surrounding desk.
+ *
+ * ⚠️ If transcription accuracy drops, this is the first line to revert — the
+ * paid stage only ever runs when the local read ALREADY failed, i.e. on the
+ * hard photos, which are exactly the ones that need the pixels.
+ */
+const VISION_MAX_DIM = 1000;
+
 /** Skew is estimated on a small copy — the angle is a global property, so a
  *  600px-wide thumbnail gives the same answer ~20× faster. */
 const SKEW_ESTIMATE_WIDTH = 600;
@@ -607,7 +629,17 @@ export async function preprocessImage(
   if (cropRatio < 0.985) operations.push('crop');
 
   // --- encode both variants ---
-  const visionCanvas = planeToCanvas(cropped);
+  // Only the vision variant is downscaled to VISION_MAX_DIM: it is the one
+  // billed per pixel, while the OCR variant stays at full size because a
+  // failed local read costs far more than the pixels saved.
+  const longestEdge = Math.max(cropped.width, cropped.height);
+  const visionPlane =
+    longestEdge > VISION_MAX_DIM
+      ? resamplePlane(cropped, Math.max(1, Math.round(cropped.width * (VISION_MAX_DIM / longestEdge))))
+      : cropped;
+  if (visionPlane !== cropped) operations.push('vision-downscale');
+
+  const visionCanvas = planeToCanvas(visionPlane);
   const visionBlob = await canvasToBlob(visionCanvas, 0.9);
   const ocrCanvas = planeToCanvas(croppedBinary);
   const ocrBlob = await canvasToBlob(ocrCanvas, 0.95);
@@ -624,6 +656,13 @@ export async function preprocessImage(
   return {
     forVision: {
       ...shared,
+      // The vision variant reports ITS OWN dimensions and token estimate, not
+      // the shared pre-downscale ones. Reporting `cropped` here would make the
+      // cost trace overstate every scan by ~2x and hide whether this downscale
+      // is doing anything at all.
+      width: visionPlane.width,
+      height: visionPlane.height,
+      estimatedVisionTokens: estimateVisionTokens(visionPlane.width, visionPlane.height),
       dataUrl: visionCanvas.toDataURL('image/jpeg', 0.9),
       blob: visionBlob,
       byteLength: visionBlob.size,

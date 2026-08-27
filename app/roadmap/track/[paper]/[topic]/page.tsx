@@ -23,7 +23,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, BookOpenCheck, Check, ExternalLink, GraduationCap, Lock, RotateCcw, Star, Zap } from 'lucide-react';
+import { ArrowLeft, Check, ExternalLink, GraduationCap, Lock, RotateCcw, Star, Zap } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { MathText } from '@/components/practice/MathText';
 import { TopicIcon, groupIconFor, levelIconFor } from '@/components/roadmap/TopicIcon';
@@ -33,8 +33,6 @@ import { ladderHref, levelsForNodes, topicGroups, topicNodes, trackEntries, trac
 import { countCompleted, nodeLevelSummary, type NodeLevelSummary } from '@/lib/roadmap-progress';
 import { getResumePoint } from '@/lib/roadmap-resume';
 import { dueCountBySubTopic } from '@/lib/review';
-
-const SUBJECT = 'math5';
 
 export default function TrackTopicPage() {
   const params = useParams();
@@ -108,9 +106,6 @@ function TopicJourneyPage({ paper, topicId }: { paper: BagrutPaper; topicId: str
   );
 
   const ctx = { paper, topicId: topic.id };
-  // The lesson-topic reference page (formulas, worked examples, Pro course) of
-  // the first ladder in this topic — the classic "חומרי עזר" link.
-  const firstLessonTopic = nodes[0]?.topic ?? null;
   const soonCount = topic.tiles.filter((t) => t.kind === 'soon').length;
 
   // Which sub-track is open: the student's explicit choice, else the URL, else
@@ -306,15 +301,6 @@ function TopicJourneyPage({ paper, topicId }: { paper: BagrutPaper; topicId: str
                 </span>
               </span>
               <ArrowLeft className="w-4 h-4 text-violet-700 group-hover:-translate-x-1 transition-transform" />
-            </Link>
-          )}
-          {firstLessonTopic && (
-            <Link
-              href={`/practice/${SUBJECT}/${encodeURIComponent(firstLessonTopic)}`}
-              className="flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-violet-700 transition-colors pt-1"
-            >
-              <BookOpenCheck aria-hidden="true" className="w-3.5 h-3.5" />
-              חומרי עזר וקורס מתקדם בנושא
             </Link>
           )}
         </div>

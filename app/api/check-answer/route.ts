@@ -1,3 +1,4 @@
+import { logCost } from '@/lib/mathscan/cost';
 import Anthropic from '@anthropic-ai/sdk';
 import { buildPilotGrounding } from '@/lib/tutor-grounding';
 // One copy of the injection guard, in one place. This file used to keep its
@@ -150,6 +151,7 @@ ${userAnswer}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...({ output_config: { format: { type: 'json_schema', schema: RESPONSE_SCHEMA } } } as any),
     });
+    logCost('check-answer', 'claude-haiku-4-5', message.usage, { expectCache: false });
     // Charge the durable daily quota only once the model actually answered.
     await logAgentUsage(supabase, user.id, 'check');
 

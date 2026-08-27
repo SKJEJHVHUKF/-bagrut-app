@@ -58,13 +58,15 @@ export function WorkedExampleCard({ example, index }: { example: WorkedExample; 
         <div className="px-4 pb-4 space-y-3">
           {/* Full solution at once — like the bagrut archive, not gated. */}
           <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase">הפתרון, צעד אחר צעד</div>
-          <ol className="space-y-2">
+          {/* space-y-4, not space-y-2: the steps are full sentences of maths and
+              at the tighter rhythm they read as one paragraph. */}
+          <ol className="space-y-4">
             {example.steps.map((step, i) => (
               <li key={i} className="flex gap-3">
                 <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white border border-violet-400/60 flex items-center justify-center text-[11px] font-black text-violet-800">
                   {i + 1}
                 </div>
-                <div className="flex-1 min-w-0 chat-md text-sm text-slate-800 pt-0.5">
+                <div className="flex-1 min-w-0 chat-md text-sm leading-relaxed text-slate-800 pt-0.5">
                   <MathText>{step}</MathText>
                 </div>
               </li>

@@ -26,6 +26,7 @@
 // The turn cap is the one that needs no database: the client sends the
 // history, so the server can count the assistant turns in it and refuse.
 
+import { logCost } from '@/lib/mathscan/cost';
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
@@ -237,6 +238,7 @@ export async function POST(request: Request) {
           return;
         }
 
+        logCost('scan-tutor', MODEL, { input_tokens: usageIn, output_tokens: usageOut }, { expectCache: false });
         const costUsd = usageIn * RATE.input + usageOut * RATE.output;
         // Cost is MEASURED from the usage block, then handed to the client's
         // meter — the same discipline the rest of the scanner uses.

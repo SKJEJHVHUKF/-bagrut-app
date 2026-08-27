@@ -67,6 +67,9 @@ export type PreprocessedImage = {
 
 export type PreprocessOperation =
   | 'downscale'
+  /** An EXTRA downscale applied to the vision variant only, so the paid call
+   *  is billed on fewer pixels while the free local OCR keeps full size. */
+  | 'vision-downscale'
   | 'grayscale'
   | 'contrast'
   | 'denoise'
@@ -113,7 +116,7 @@ export type OcrResult = {
   costUsd: number;
 };
 
-export type OcrEngineId = 'tesseract-local' | 'claude-vision' | 'manual';
+export type OcrEngineId = 'tesseract-local' | 'mathpix' | 'claude-vision' | 'manual';
 
 /** The contract every OCR backend implements. Add a math-trained model
  *  (Texify/pix2tex/an ONNX checkpoint) by writing one of these. */

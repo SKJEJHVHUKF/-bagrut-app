@@ -14,10 +14,23 @@
 // first, and any non-zero value is a failure regardless of recall.
 
 import { buildMatchIndex, findMatch, MATCH_THRESHOLD, MATCH_MARGIN } from '../lib/mathscan/match';
+
 import { ALL_PAST_BAGRUYOT } from '../content/past-bagruyot';
 import { allLessonKeys, getLesson } from '../content/lessons';
 import { normalizeQuestionText } from '../lib/question-match';
 import { corpusIdf } from '../lib/solution-library';
+
+/**
+ * Optional threshold sweep: `npx tsx scripts/bench-match.ts 0.85`
+ *
+ * Added because "raise the match threshold to 85%" sounds like a safety
+ * improvement and is measurably the opposite here: WRONG is already 0 at the
+ * shipped 0.55, so a higher bar cannot buy correctness — it can only convert
+ * free bank hits into paid API calls. This flag makes that trade visible in
+ * numbers instead of arguments. Omit it to bench what actually ships.
+ */
+const THRESHOLD = Number(process.argv[2]) || MATCH_THRESHOLD;
+const OPTS = { threshold: THRESHOLD };
 
 type Entry = { id: string; topic: string; text: string };
 
@@ -81,7 +94,7 @@ for (const dropRate of [0, 4, 10]) {
   const sample = all.filter((_, i) => i % 3 === 0); // every third, ~285 queries
   for (const entry of sample) {
     const noisy = ocrNoise(entry.text, entry.text.length, dropRate);
-    const found = findMatch(index, noisy, { topicHint: entry.topic });
+    const found = findMatch(index, noisy, { topicHint: entry.topic, ...OPTS });
     if (!found) miss++;
     else if (found.entry.id === entry.id) hit++;
     else {
@@ -119,14 +132,14 @@ const strangers = [
 ];
 let falsePositives = 0;
 for (const stranger of strangers) {
-  const found = findMatch(index, stranger);
+  const found = findMatch(index, stranger, OPTS);
   if (found) {
     falsePositives++;
     console.log(`  FALSE POSITIVE: "${stranger.slice(0, 40)}…" → ${found.entry.id} (${found.score.toFixed(3)})`);
   }
 }
 console.log(`\nout-of-library queries: ${strangers.length}, false positives: ${falsePositives}`);
-console.log(`thresholds in use: score >= ${MATCH_THRESHOLD}, margin >= ${MATCH_MARGIN}`);
+console.log(`thresholds in use: score >= ${THRESHOLD}, margin >= ${MATCH_MARGIN}`);
 
 // ============================================================
 // The COMBINED source: what the numbers above become once the bank fills up.
@@ -170,7 +183,7 @@ console.log(`thresholds in use: score >= ${MATCH_THRESHOLD}, margin >= ${MATCH_M
     const b = normalizeQuestionText(entry.text).length >= 200 ? buckets.long : buckets.short;
     b.n++;
     const noisy = ocrNoise(entry.text, entry.text.length * 3 + 1, 5);
-    const found = findMatch(bankIndex, noisy, { topicHint: entry.topic });
+    const found = findMatch(bankIndex, noisy, { topicHint: entry.topic, ...OPTS });
     if (!found) b.miss++;
     else if (found.entry.id === `${entry.id}#a` || found.entry.id === `${entry.id}#b`) b.hit++;
     else {

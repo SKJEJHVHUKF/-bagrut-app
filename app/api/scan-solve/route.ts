@@ -28,11 +28,15 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isProUser } from '@/lib/access';
 import { MATH5 } from '@/content/bagrut-context';
+import { MATH_FORMAT_RULES } from '@/lib/agents/prompts';
 import { matchScannedQuestion } from '@/lib/solution-library';
 import { normalizeQuestionText, fingerprint } from '@/lib/question-match';
 import { findSimilarCached, getCachedSolution, putCachedSolution } from '@/lib/solution-cache';
 import { bumpServed, reportWrong, searchBank, upsertIntoBank } from '@/lib/mathscan/bank';
 import { decideSolveQuota } from '@/lib/mathscan/quota';
+import { logCost } from '@/lib/mathscan/cost';
+import { findUniversityNotation } from '@/lib/tichon-notation';
+import { solveWithCas, compareWithCas } from '@/lib/mathscan/verify-solution';
 
 // Vercel Hobby caps a serverless function at 60s (CLAUDE.md #3). Both model
 // calls below carry a `max_tokens` that fits well inside it — a call that
@@ -49,36 +53,35 @@ const PRO_DAILY_SCANS = 150;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
-const TRANSCRIBE_MODEL = 'claude-sonnet-4-5';
-const SOLVE_MODEL = 'claude-sonnet-4-5';
+// claude-haiku-4-5, down from claude-sonnet-4-5 on both stages: $1/$5 per
+// MTok against $3/$15, so every paid scan is 3x cheaper across input, output
+// and image tokens alike.
+//
+// ⚠️ WHAT THIS TRADES. The transcribe stage reads Hebrew maths off a PHOTO —
+// often handwriting, often bad light — and that is exactly the task where a
+// smaller model degrades first. The pipeline has a net under it (validate.ts
+// scores the read, repair.ts fixes it, and the student can edit the
+// transcription by hand), but if scan quality drops, THIS is the line that
+// did it. Reverting is one word, per stage: they are separate constants
+// precisely so the vision stage can go back to Sonnet without the solve stage
+// following it.
+//
+// The cache_control on SOLVE_STREAM_SYSTEM was NOT a consideration: that
+// prompt is ~720 tokens, under Sonnet 4.5's own 1,024 minimum, so it has
+// never cached on either model. See the note at its call site.
+const TRANSCRIBE_MODEL = 'claude-haiku-4-5';
+const SOLVE_MODEL = 'claude-haiku-4-5';
 
-// Published rates, checked 2026-08-05. The only un-measured numbers here.
-const RATES: Record<string, { input: number; output: number }> = {
-  'claude-sonnet-4-5': { input: 3 / 1_000_000, output: 15 / 1_000_000 },
-};
-
-type Usage = {
-  input_tokens?: number;
-  output_tokens?: number;
-  cache_read_input_tokens?: number;
-  cache_creation_input_tokens?: number;
-};
-
-function costOf(model: string, usage: Usage | undefined): number {
-  const rate = RATES[model];
-  if (!rate || !usage) return 0;
-  // Cache reads bill at 10% of input and cache WRITES at 125%. Both arrive
-  // as separate fields already excluded from `input_tokens`, so they are
-  // added — folding them into input would under-report a cold call.
-  const read = (usage.cache_read_input_tokens ?? 0) * rate.input * 0.1;
-  const write = (usage.cache_creation_input_tokens ?? 0) * rate.input * 1.25;
-  return (
-    (usage.input_tokens ?? 0) * rate.input +
-    (usage.output_tokens ?? 0) * rate.output +
-    read +
-    write
-  );
-}
+// The rate card and the cost maths now come from lib/mathscan/cost.ts, which
+// is where they already lived. This file used to keep its own copy of both —
+// and cost.ts's own header says that copy is the reason it exists ("a
+// `costOfCall` used to live here … /api/scan-solve kept a correct inline
+// copy"). Two rate tables means adding a model to one and not the other, which
+// is precisely what this change would have done.
+// The local `Usage` type and `costOf` wrapper are gone with the rate table:
+// both call sites now use `logCost`, which prices the call AND prints the
+// token line this route is required to emit. `UsageLike` in cost.ts is the
+// one remaining shape.
 
 const KNOWN_TOPICS = [
   'אלגברה', 'גיאומטריה אוקלידית', 'פונקציות', 'חשבון דיפרנציאלי',
@@ -204,6 +207,18 @@ const TRANSCRIBE_SCHEMA = {
 const SOLVE_STREAM_SYSTEM = [
   MATH5.identity,
   MATH5.styleGuide,
+  // ⚠️ THE ONE AGENT THAT WAS MISSING THESE. lib/agents/prompts.ts exports
+  // MATH_FORMAT_RULES with the note "so every agent that emits Hebrew+KaTeX
+  // shares ONE copy of these rules" — and this solver, the one whose output a
+  // stuck student reads most closely, was built from `identity + styleGuide`
+  // alone. `styleGuide` is about how a bagrut QUESTION is phrased; it says
+  // nothing about notation.
+  //
+  // The cost was visible in production on 2026-08-26: a scanned solution
+  // rendered "$x \in \mathbb{R}$" and "$x \in \mathbb{R} \setminus \{0\}$" to
+  // a 5-unit student. `npm run check:notation` cannot catch that — it scans
+  // content/, and this text is generated at request time.
+  MATH_FORMAT_RULES,
   `## המשימה
 
 תקבל שאלת בגרות במתמטיקה שתלמיד צילם ולא הצליח לפתור. כתוב פתרון מלא ומוסבר.
@@ -534,6 +549,17 @@ data: ${JSON.stringify(data)}
       let cacheRead = 0;
       let cacheWrite = 0;
 
+      // Fire the free CAS chain NOW, in parallel with the model. The question
+      // text is already known and the engines are free (local mathjs, then
+      // self-hosted SymPy), so a second, independent solution costs no money
+      // and — because the model stream runs for seconds — no wall-clock
+      // either. Only the COMPARISON needs the model's markdown, and that
+      // happens once the stream has settled, far below.
+      //
+      // `solveWithCas` never rejects, so this floating promise cannot produce
+      // an unhandled rejection while the stream is running.
+      const casPromise = solveWithCas(question);
+
       try {
         const modelStream = client.messages.stream({
           model: SOLVE_MODEL,
@@ -542,6 +568,13 @@ data: ${JSON.stringify(data)}
             {
               type: 'text' as const,
               text: SOLVE_STREAM_SYSTEM,
+              // ⚠️ DEAD MARKER, kept deliberately. SOLVE_STREAM_SYSTEM is
+              // ~720 tokens (scripts/estimate-scan-prefix.ts), and the minimum
+              // cacheable prefix is 1,024 on Sonnet 4.5 and 4,096 on Haiku
+              // 4.5. It has therefore never cached on either model — no error,
+              // no charge, no saving. Left in place because it costs nothing
+              // and starts working the moment this prompt grows past the
+              // minimum; documented so nobody counts a saving that isn't real.
               cache_control: { type: 'ephemeral' as const },
             },
           ],
@@ -574,12 +607,21 @@ ${question}`,
         return;
       }
 
-      const costUsd = costOf(SOLVE_MODEL, {
-        input_tokens: usageIn,
-        output_tokens: usageOut,
-        cache_read_input_tokens: cacheRead,
-        cache_creation_input_tokens: cacheWrite,
-      });
+      // `expectCache: false` — SOLVE_STREAM_SYSTEM is ~720 tokens, under even
+      // Sonnet 4.5's 1,024 minimum, so the cache_control marker on it has
+      // never formed an entry on either model. Warning about it every call
+      // would be noise; the marker is documented as dead at its call site.
+      const costUsd = logCost(
+        'scan-solve',
+        SOLVE_MODEL,
+        {
+          input_tokens: usageIn,
+          output_tokens: usageOut,
+          cache_read_input_tokens: cacheRead,
+          cache_creation_input_tokens: cacheWrite,
+        },
+        { expectCache: false }
+      );
       send('done', { costUsd, topic: topicHint ?? '' });
 
       // Awaited BEFORE close(): a serverless function may be frozen the
@@ -589,8 +631,37 @@ ${question}`,
           // Shared tables → service role. The student's client has no write
           // access to the bank or the cache any more (and must not: with it,
           // every student could rewrite every other student's solutions).
+          // The CAS has been running since before the model started. Compare
+          // now that the markdown exists.
+          // University notation reaching a תיכון student. The build-time gate
+          // cannot see this text — it is generated per request — so the check
+          // runs here, on the real output, and is the only thing that will
+          // ever tell us the prompt rules stopped working.
+          const badNotation = findUniversityNotation(markdown);
+          if (badNotation.length) {
+            console.warn(
+              `[notation] scan solution contains university notation: ${badNotation.join(' ')} — ` +
+                'MATH_FORMAT_RULES is in SOLVE_STREAM_SYSTEM; if this keeps firing the rule needs strengthening. Not banked.'
+            );
+          }
+
+          const verdict = compareWithCas(await casPromise, markdown);
+          if (verdict.status === 'contradicted') {
+            // TWO INDEPENDENT SOLVERS DISAGREE ON THE FINAL ANSWER, and the
+            // symbolic one verified itself by substitution. The model is very
+            // likely wrong. It is NOT banked: a wrong solution in the shared
+            // bank is served free and confidently to every later student who
+            // photographs the same question, which is worse than the ~$0.009
+            // of solving it again.
+            console.warn(
+              `[scan-verify] CONTRADICTED by ${verdict.engine} — cas=${verdict.casAnswer} ai=${verdict.aiAnswer} · not banked`
+            );
+          } else if (verdict.status === 'verified') {
+            console.log(`[scan-verify] verified by ${verdict.engine} (${verdict.casAnswer})`);
+          }
+
           const admin = createAdminClient();
-          if (admin) {
+          if (admin && verdict.status !== 'contradicted' && badNotation.length === 0) {
             // The bank is the durable store: it deduplicates by fuzzy match, so
             // a question a previous student photographed MERGES instead of
             // adding a second near-identical row. That matters more than it
@@ -601,6 +672,12 @@ ${question}`,
               question,
               solutionMarkdown: markdown,
               topic: topicHint,
+              // The flag `upsertIntoBank` has always accepted and no call site
+              // ever passed, which is why nothing in this database has ever
+              // reached the 'verified' tier. A row verified here skips the
+              // "wait for N students to scan the same question" corroboration
+              // path entirely and is trustworthy from the first scan.
+              casVerified: verdict.status === 'verified',
             });
             // The exact-hash cache is kept alongside it: free, indexed, and it
             // short-circuits a literal re-submission of the same text without
@@ -634,6 +711,89 @@ ${question}`,
 // ------------------------------------------------------------
 // mode=transcribe  (multipart)
 // ------------------------------------------------------------
+
+/**
+ * Mathpix v3/text — https://docs.mathpix.com/reference/authentication
+ *
+ * Two headers (`app_id`, `app_key`), one multipart file, and a JSON body of
+ * options. We ask for `text`, which returns prose with the maths inline as
+ * `\( … \)` / `\[ … \]`; those are rewritten to the `$…$` the whole app uses.
+ *
+ * ⚠️ NO KEY IS NOT AN ERROR. It returns 503, the client engine throws, and the
+ * chain falls through to Claude vision. A scanner that stops working because
+ * an optional key is unset would be a worse product than one without Mathpix
+ * at all, so this path is a soft degrade by design.
+ */
+async function mathpixTranscribe(
+  file: File,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  const appId = process.env.MATHPIX_APP_ID;
+  const appKey = process.env.MATHPIX_APP_KEY;
+  if (!appId || !appKey) {
+    return json({ error: 'Mathpix is not configured' }, { status: 503 });
+  }
+
+  const upstream = new FormData();
+  upstream.append('file', file, 'question.jpg');
+  upstream.append(
+    'options_json',
+    JSON.stringify({
+      // `text` gives prose + inline maths, which is what a bagrut question is.
+      // `latex_styled` alone would drop the Hebrew around the formulas.
+      formats: ['text'],
+      // Ask for the delimiters we already use, so no rewriting is needed for
+      // the common case.
+      math_inline_delimiters: ['$', '$'],
+      math_display_delimiters: ['$$', '$$'],
+      // The app is Hebrew-first; without this Mathpix can decide the page is
+      // Latin and drop the prose.
+      rm_spaces: true,
+    })
+  );
+
+  let data: Record<string, unknown>;
+  try {
+    const res = await fetch('https://api.mathpix.com/v3/text', {
+      method: 'POST',
+      headers: { app_id: appId, app_key: appKey },
+      body: upstream,
+      signal: AbortSignal.timeout(20_000),
+    });
+    data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) {
+      console.error('[mathpix] http', res.status, JSON.stringify(data).slice(0, 300));
+      return json({ error: 'זיהוי הנוסחאות נכשל' }, { status: 502 });
+    }
+  } catch (error) {
+    console.error('[mathpix] request failed:', error);
+    return json({ error: 'זיהוי הנוסחאות לא זמין כרגע' }, { status: 502 });
+  }
+
+  // Mathpix reports its own errors inside a 200.
+  if (typeof data.error === 'string' && data.error) {
+    console.warn('[mathpix] api error:', data.error);
+    return json({ error: 'לא זוהה טקסט מתמטי בתמונה' }, { status: 200 });
+  }
+
+  const text = typeof data.text === 'string' ? data.text : '';
+  // `confidence` is 0..1 and is the reason this engine is worth preferring:
+  // it is a MEASURED figure, where the Claude vision engine has to invent one.
+  const confidence = typeof data.confidence === 'number' ? data.confidence : null;
+
+  // Flat per-request price. Logged like every other paid call so the scanner's
+  // cost trace stays a measurement rather than a story.
+  const costUsd = 0.002;
+  console.log(
+    `[cost] scan-mathpix mathpix-v3-text chars=${text.length} confidence=${confidence ?? 'n/a'} usd=${costUsd.toFixed(5)}`
+  );
+
+  void supabase.from('scan_log').insert({ source: 'transcribe' }).then(({ error }) => {
+    if (error) console.error('[scan_log] mathpix insert failed:', error.message);
+  });
+
+  return json({ transcribedQuestion: text, confidence, costUsd });
+}
 
 async function handleTranscribe(request: Request) {
   const supabase = await createClient();
@@ -678,6 +838,13 @@ async function handleTranscribe(request: Request) {
     return json({ error: 'פורמט לא נתמך' }, { status: 415 });
   }
 
+  // Mathpix branch. Purpose-built maths OCR, tried before Claude vision
+  // because it returns formulas as LaTeX instead of as characters that
+  // resemble a formula — see lib/mathscan/ocr/mathpix-engine.ts.
+  if (formData.get('engine') === 'mathpix') {
+    return await mathpixTranscribe(file, supabase);
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return json({ error: 'Server configuration error' }, { status: 500 });
 
@@ -708,7 +875,10 @@ async function handleTranscribe(request: Request) {
     ...({ output_config: { format: { type: 'json_schema', schema: TRANSCRIBE_SCHEMA } } } as any),
   });
 
-  const costUsd = costOf(TRANSCRIBE_MODEL, message.usage as Usage);
+  // `expectCache: false` — the input here is mostly the photo, which is unique
+  // to this scan. There is nothing reusable to cache, so the silent-miss
+  // warning would fire every single time and train everyone to ignore it.
+  const costUsd = logCost('scan-transcribe', TRANSCRIBE_MODEL, message.usage, { expectCache: false });
   void supabase
     .from('scan_log')
     .insert({ source: 'transcribe' })

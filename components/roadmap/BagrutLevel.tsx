@@ -113,8 +113,12 @@ export function BagrutLevel({
               שאלה {qi + 1} מתוך {level.bagrut.length}
             </div>
           )}
+          {/* Sticky, same reason as the ghost rung: the question sat at the top
+              and scrolled away as soon as the student opened a part, so working
+              on סעיף ג meant scrolling back up to re-read the givens. */}
           {q.context && (
-            <div className="surface-premium rounded-2xl p-4 chat-md text-sm text-slate-900 leading-relaxed">
+            <div className="sticky top-[58px] md:top-[104px] z-30 rounded-2xl border border-slate-900/10 bg-[var(--background)]/95 backdrop-blur-md p-4 chat-md text-sm text-slate-900 leading-relaxed shadow-sm max-h-[35vh] overflow-y-auto">
+              <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase mb-1">השאלה</div>
               <MathText>{q.context}</MathText>
             </div>
           )}

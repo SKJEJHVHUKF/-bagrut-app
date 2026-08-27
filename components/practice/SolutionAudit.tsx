@@ -67,8 +67,33 @@ export function SolutionAudit({
     setResult(null);
     setProUpsell(false);
     try {
+      // Preprocess before upload. This route was posting the RAW camera file —
+      // a multi-megabyte phone photo — to the most expensive call in the app
+      // (claude-sonnet-4-5 vision, $3/MTok in). Three things change:
+      //
+      //   COST      a raw photo is downscaled by the API to its 1568px cap,
+      //             ~2,460 vision tokens. `forVision` is capped at 1000px and
+      //             auto-cropped to the content box: ~1,000 tokens, so about
+      //             $0.0074 → $0.0030 of image on every audit.
+      //   ACCURACY  deskew, contrast and crop, on HANDWRITING — the hardest
+      //             input the app sends anywhere, and the one the model has to
+      //             read line by line to find the first wrong step.
+      //   UPLOAD    megabytes → ~150KB, which on mobile data is most of the
+      //             wait the student currently sits through.
+      //
+      // Dynamically imported so the preprocessing module stays out of this
+      // page's initial bundle, and wrapped so a failure costs the optimisation
+      // and never the feature.
+      let upload: Blob = file;
+      try {
+        const { preprocessImage } = await import('@/lib/mathscan/preprocess');
+        upload = (await preprocessImage(file)).forVision.blob;
+      } catch {
+        /* keep the original file — a worse photo beats no audit */
+      }
+
       const fd = new FormData();
-      fd.append('image', file);
+      fd.append('image', upload, 'solution.jpg');
       if (questionText) fd.append('question', questionText);
       const res = await fetch('/api/analyze-solution', { method: 'POST', body: fd });
       const data = await res.json().catch(() => ({}));

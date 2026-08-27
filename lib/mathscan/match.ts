@@ -144,11 +144,89 @@ const MIN_INDEX_LENGTH = 20;
 const DUPLICATE_TRIGRAM_OVERLAP = 0.5;
 const DUPLICATE_MIN_LENGTH = 200;
 
-function isSameQuestion(a: IndexedEntry<MatchEntry>, b: IndexedEntry<MatchEntry>): boolean {
-  if (a.normalized.length < DUPLICATE_MIN_LENGTH || b.normalized.length < DUPLICATE_MIN_LENGTH) {
-    return false;
+/**
+ * EXPRESSION FINGERPRINT — what separates two SHORT questions.
+ *
+ * The comment above ends with "below 200 characters the guard is OFF", and
+ * `bench-match.ts` prices that honestly: short questions in a duplicated bank
+ * hit 38% against 98% for long ones. The mechanism is not scoring. It is
+ * `findMatch`'s margin rule: with the guard off, the SAME question stored
+ * twice counts as its own rival, the gap collapses below MATCH_MARGIN, and a
+ * correct match is refused.
+ *
+ * Length was used as the separator because prose alone cannot tell two short
+ * questions apart — the guard's own counter-example is `f(x) = e^x - 1`
+ * versus `f(x) = e^{2x} - 1`, identical for 140 characters. But that example
+ * is precisely the point: they differ in the MATHS, and the maths survives
+ * normalisation (`normalizeQuestionText` keeps digits, latin letters and
+ * operators; only `$` delimiters are stripped). Prose was never the signal
+ * that could separate them; the expression was, and it was being diluted by
+ * boilerplate instead of read on its own.
+ *
+ * So: atoms are the operand-level pieces of every math run — identifiers and
+ * numbers, with operators used only as separators.
+ *
+ * ⚠️ 0.85 IS A FLOOR, NOT A PREFERENCE. The guard's own counter-example
+ * scores EXACTLY 0.8: `f(x) = e^x - 1` gives {f, x, e, 1} and
+ * `f(x) = e^{2x} - 1` gives {f, x, e, 2x, 1}, a Jaccard of 4/5. Any bar at or
+ * below 0.8 merges them, which is the precise false merge this file exists to
+ * prevent — `scripts/test-mathscan.ts` fails on it by name. Do not lower this
+ * number; `bench-match.ts` cannot see that failure (it reports WRONG=0 at
+ * every value), so the bench alone will happily talk you into it.
+ *
+ * MEASURED at 0.85, against the shipped baseline:
+ *   short questions, duplicated bank   38% → 40%
+ *   noisy library, 4% char drop      94.8% → 95.5%
+ *   noisy library, 10% char drop     75.3% → 76.3%
+ *   WRONG / false positives              0 → 0
+ *
+ * A small gain, honestly. The bulk of what remains is not this guard:
+ * measured over the 100 short questions, 12 fall under MIN_QUERY_LENGTH once
+ * OCR noise shortens them and 6 land within 0.03 of MATCH_THRESHOLD. Both are
+ * floors that exist to stop documented false positives.
+ *
+ * ⚠️ ASYMMETRY, unchanged from the rest of this file: a duplicate we fail to
+ * merge costs an API call; two different questions we DO merge suppress the
+ * rival that was protecting the student and serve the wrong worked solution.
+ * So this path is additive — it can only recognise duplicates that the
+ * trigram bar ALREADY accepted, never loosen that bar.
+ */
+const DUPLICATE_EXPR_OVERLAP = 0.85;
+
+/** Operators and delimiters separate operands; they are not atoms themselves. */
+const EXPR_SPLIT = /[+\-=/^_\\().,<>\s]+/;
+
+function exprAtomsOf(normalized: string): Set<string> {
+  const atoms = new Set<string>();
+  for (const piece of normalized.split(EXPR_SPLIT)) {
+    // A math atom carries a digit or a latin letter. Hebrew prose tokens are
+    // exactly what must NOT dilute this signal, so they are excluded.
+    if (piece && /[0-9a-z]/.test(piece)) atoms.add(piece);
   }
-  return jaccardSets(a.trigrams, b.trigrams) >= DUPLICATE_TRIGRAM_OVERLAP;
+  return atoms;
+}
+
+function isSameQuestion(a: IndexedEntry<MatchEntry>, b: IndexedEntry<MatchEntry>): boolean {
+  // The trigram bar is required on BOTH paths. Nothing below only widens what
+  // counts as a duplicate among candidates that already look alike.
+  if (jaccardSets(a.trigrams, b.trigrams) < DUPLICATE_TRIGRAM_OVERLAP) return false;
+
+  // Long enough for prose to separate the populations on its own — the
+  // measured rule this file shipped with, untouched.
+  if (a.normalized.length >= DUPLICATE_MIN_LENGTH && b.normalized.length >= DUPLICATE_MIN_LENGTH) {
+    return true;
+  }
+
+  // Short. Prose cannot decide, so the expression must — and only when both
+  // sides actually HAVE one. No expression means no evidence, which is a
+  // miss, which is the safe direction.
+  if (!a.exprAtoms.size || !b.exprAtoms.size) return false;
+  // A topic disagreement is cheap, decisive evidence of two different
+  // questions. Applied ONLY on this new short path: the topic is itself an
+  // OCR guess, and letting it veto the long path could regress a rule that
+  // measures well today.
+  if (a.entry.topic !== b.entry.topic) return false;
+  return jaccardSets(a.exprAtoms, b.exprAtoms) >= DUPLICATE_EXPR_OVERLAP;
 }
 
 /**
@@ -174,6 +252,9 @@ type IndexedEntry<T extends MatchEntry> = {
   normalized: string;
   trigrams: Set<string>;
   tokens: Set<string>;
+  /** Operand-level pieces of the maths — see `exprAtomsOf`. Computed once at
+   *  index time because `isSameQuestion` is called per rival, per query. */
+  exprAtoms: Set<string>;
 };
 
 export type MatchIndex<T extends MatchEntry> = {
@@ -226,7 +307,13 @@ export function buildMatchIndex<T extends MatchEntry>(
     const normalized = normalizeQuestionText(entry.text);
     if (normalized.length < MIN_INDEX_LENGTH) continue;
     const tokens = tokensOf(normalized);
-    indexed.push({ entry, normalized, trigrams: trigramsOf(normalized), tokens });
+    indexed.push({
+      entry,
+      normalized,
+      trigrams: trigramsOf(normalized),
+      tokens,
+      exprAtoms: exprAtomsOf(normalized),
+    });
     for (const token of tokens) {
       documentFrequency.set(token, (documentFrequency.get(token) ?? 0) + 1);
     }
