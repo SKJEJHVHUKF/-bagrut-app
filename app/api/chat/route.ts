@@ -12,6 +12,7 @@ import { normalizeUnitLevel, normalizeFormNumber, MAX_CONTEXT_LEN } from '@/lib/
 import { logCost } from '@/lib/mathscan/cost';
 import { recordTutorTrace } from '@/lib/tutor-trace-store';
 import { findLearnedAnswer, captureAnswer, countHit } from '@/lib/tutor-answer-library';
+import { isQuestion, NOT_A_QUESTION_REPLY } from '@/lib/is-question';
 import { sanitizeClientTrace } from '@/lib/tutor-telemetry';
 import { TUTOR_TOOLS, resolveSuggestion } from '@/lib/agents/tools';
 import { readFacts, writeFacts, mergeFact, renderMemoryBlock } from '@/lib/tutor-memory';
@@ -296,6 +297,76 @@ export async function POST(request: Request) {
     // exists, and the reply will stream through the same events. The only
     // difference a hit makes is that no model is called.
     const clientTrace = sanitizeClientTrace(body.trace);
+    // ===== 9b-i. IS THERE A QUESTION HERE AT ALL? =====
+    //
+    // ⚠️ SERVER-SIDE, AND THAT IS THE ARCHITECTURE, NOT A CONVENIENCE.
+    //
+    // The evidence it needs is a 214 KB lexicon built from every word this app
+    // has written — fine here, unacceptable in a browser bundle. Shipping a
+    // smaller client-side copy would mean a worse lexicon, and a worse lexicon
+    // means telling a student their real question is not a question. The round
+    // trip still happens and costs nothing; the model call is the entire cost
+    // and it is what this prevents.
+    //
+    // Measured on the twelve rows that cost $0.06: "ייעיעעיעי", "י", "אוקקי"
+    // and a keyboard mash are blocked, and all thirty real messages tested —
+    // including "אינדקס", "19", "x=3" and one-word maths terms — pass.
+    const asked = isQuestion(message, attemptContext || undefined);
+    if (!asked.isQuestion) {
+      void recordTutorTrace(
+        { ...clientTrace, fallbackReason: 'no_fallback' },
+        {
+          durationMs: Date.now() - startedAt,
+          model: 'gate:not-a-question',
+          inputTokens: 0, outputTokens: 0, cachedRead: 0, cachedWrite: 0,
+          usedLlm: false,
+        },
+      );
+      // ⚠️ AN SSE STREAM, NOT JSON. The client reads `event:`/`data:` lines and
+      // would see a JSON body as an empty stream — a silent blank reply, which
+      // is worse than the model call this saves. Same three events a real turn
+      // sends, so nothing on the client has to know this path exists.
+      // ⚠️ THE REPLY GOES INTO HISTORY TOO.
+      //
+      // The student's message was already persisted a few lines up. Returning
+      // without persisting the answer leaves an orphan question in the thread —
+      // on reload they see what they asked and nothing back, which reads as the
+      // tutor having failed rather than having answered.
+      const gateRow: Record<string, unknown> = {
+        role: 'assistant',
+        content: NOT_A_QUESTION_REPLY,
+        tokens_in: 0,
+        tokens_out: 0,
+      };
+      if (convEnabled && convId) gateRow.conversation_id = convId;
+      const { error: gateInsertError } = await supabase.from('chat_messages').insert(gateRow);
+      if (gateInsertError) console.error('insert gate reply error:', gateInsertError.message);
+
+      const enc = new TextEncoder();
+      const frame = (event: string, data: unknown) =>
+        enc.encode(`event: ${event}
+data: ${JSON.stringify(data)}
+
+`);
+      return new Response(
+        new ReadableStream({
+          start(c) {
+            // ⚠️ NOT `remaining` — that const is declared 130 lines below and
+            // this closure runs immediately, which is a ReferenceError at
+            // runtime. TypeScript does not flag a temporal-dead-zone use
+            // inside a callback, because it cannot know when the callback
+            // runs. Nothing was spent here, so the honest number is what the
+            // student had on the way in.
+            c.enqueue(frame('meta', { conversationId: convEnabled ? convId : null, remaining: Math.max(0, dailyCap - used) }));
+            c.enqueue(frame('delta', { text: NOT_A_QUESTION_REPLY }));
+            c.enqueue(frame('done', { reply: NOT_A_QUESTION_REPLY }));
+            c.close();
+          },
+        }),
+        { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache' } },
+      );
+    }
+
     const learned = await findLearnedAnswer(clientTrace);
 
     // ===== 9c. TAKE ONE AI CREDIT =====
