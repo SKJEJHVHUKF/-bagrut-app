@@ -825,6 +825,23 @@ function EmptyState({ topic, onPick }: { topic: string; onPick: (text: string) =
         )}
       </div>
 
+      {/* The cross-topic pattern. Placed BEFORE the next-step button because it
+          is the one observation on this screen the student could not have made
+          themselves: lib/cognition's insight is scoped to a topic, and a mistake
+          that repeats across three of them is invisible from inside any one. */}
+      {greeting?.pattern && (
+        <Link
+          href={greeting.pattern.href}
+          className="mb-6 block max-w-md rounded-2xl border border-amber-200 bg-amber-50 p-4 text-right transition-colors hover:bg-amber-100"
+        >
+          <p className="text-sm text-amber-950 leading-relaxed">{greeting.pattern.sentence}</p>
+          <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-black text-amber-800">
+            לדוח המעקב
+            <ArrowLeft aria-hidden="true" className="w-3.5 h-3.5" />
+          </span>
+        </Link>
+      )}
+
       {/* The next step lib/cognition already picked, with the route it chose.
           Safe as the only CTA here — unlike /roadmap, this screen has none. */}
       {greeting?.action && (

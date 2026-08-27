@@ -67,14 +67,33 @@ export type Weakness = {
   /** Times they were in a position to. `hits/opportunities` is the honest rate. */
   opportunities: number;
   lastTs: number;
+  /**
+   * This weakness was repaired before and the evidence since says it is back.
+   *
+   * A chronic weakness is not a bigger version of a normal one — it is a
+   * different finding. The ordinary repair path has already been run on it and
+   * did not hold, so it outranks a first-time weakness of equal size and the
+   * report names it separately.
+   */
+  chronic?: boolean;
+  /** How many times it has been repaired. Only set when `chronic`. */
+  relapses?: number;
   /** Present only for `kind: 'misconception'`. */
   misconceptionId?: string;
   /** Present only for `kind: 'subtopic'`, when the notebook has enough signal. */
   category?: ErrorCategory;
 };
 
-/** Where a fix-path question came from. Recorded so the gate can prove supply. */
-export type FixStepOrigin = 'subtopic-bank' | 'lesson-drill' | 'concept-bank';
+/**
+ * Where a fix-path question came from. Recorded so the gate can prove supply.
+ *
+ * `generated` is the one origin whose questions the student has provably never
+ * seen: it is built on demand by `lib/generator` from a parameterised template,
+ * and its id carries the seed that rebuilds it. The other three all draw from
+ * material the learning path already walked them through — which is exactly the
+ * problem `generated` exists to fix, so it outranks them in `supply.ts`.
+ */
+export type FixStepOrigin = 'generated' | 'subtopic-bank' | 'lesson-drill' | 'concept-bank';
 
 export type FixStep = {
   questionId: string;

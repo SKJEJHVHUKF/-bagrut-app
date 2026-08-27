@@ -28,7 +28,16 @@ import { buildTriggerIndex, getCognitionMap } from '@/content/cognition';
 import { getSubTopic } from '@/content/lessons';
 import type { PracticeQuestion } from '@/content/lessons/types';
 import { conceptPracticeQuestions, findConceptQuestion } from '@/lib/concept-adapt';
-import { rankOf, type Difficulty, type FixPath, type FixStep, type FixStepOrigin, type Weakness } from './types';
+import { generateBatch, generateById } from '@/lib/generator';
+import {
+  rankOf,
+  RANK_DIFFICULTY,
+  type Difficulty,
+  type FixPath,
+  type FixStep,
+  type FixStepOrigin,
+  type Weakness,
+} from './types';
 
 export type SupplyItem = {
   question: PracticeQuestion;
@@ -42,10 +51,21 @@ export type SupplyItem = {
 
 /** Preference order between the banks. Lower wins. */
 const TIER: Record<FixStepOrigin, number> = {
-  'subtopic-bank': 0,
-  'lesson-drill': 1,
-  'concept-bank': 2,
+  generated: 0,
+  'subtopic-bank': 1,
+  'lesson-drill': 2,
+  'concept-bank': 3,
 };
+
+/**
+ * Generated variants offered per difficulty rung.
+ *
+ * Three is deliberate. `rankQuota` in ./path never asks for more than two at a
+ * single rung, so three guarantees the ladder can be built entirely from unseen
+ * material while still leaving the authored bank in the pool as a fallback for
+ * sub-topics with no template.
+ */
+const GENERATED_PER_RANK = 3;
 
 export type SupplyOptions = {
   /** Question ids the student has already answered (any source). */
@@ -57,6 +77,13 @@ export type SupplyOptions = {
    * thin sub-topic it may be the only supply left.
    */
   deprioritise?: Set<string>;
+  /**
+   * Seed for the generated variants. Pass something STABLE for a given repair
+   * session (the fix path's `createdAt`), so rebuilding the supply mid-session
+   * yields the same questions rather than silently swapping the ladder out from
+   * under a student who is halfway up it.
+   */
+  seed?: number;
 };
 
 /**
@@ -100,6 +127,22 @@ export function buildSupply(w: Weakness, opts: SupplyOptions = {}): SupplyItem[]
     });
   };
 
+  // Generated first, so a collision with an authored id (which cannot happen —
+  // generated ids are namespaced `gen:` — would still resolve in this order).
+  for (const rank of RANK_DIFFICULTY) {
+    for (const g of generateBatch(
+      w.subject,
+      w.topic,
+      w.subTopicId,
+      rank,
+      GENERATED_PER_RANK,
+      (opts.seed ?? 0) + rankOf(rank) * 10007,
+      answered,
+    )) {
+      add(g.question, 'generated');
+    }
+  }
+
   if (st) {
     for (const q of st.questions ?? []) add(q, 'subtopic-bank');
     for (const step of st.lesson ?? []) if (step.drill) add(step.drill, 'lesson-drill');
@@ -126,6 +169,11 @@ export function buildSupply(w: Weakness, opts: SupplyOptions = {}): SupplyItem[]
  * no longer exists" and moves on, which is the only honest option.
  */
 export function resolveFixQuestion(path: FixPath, step: FixStep): PracticeQuestion | null {
+  // A generated question is rebuilt from its id, not looked up. That is the
+  // whole point of encoding the seed there: nothing about it is stored.
+  if (step.origin === 'generated') {
+    return generateById(step.questionId)?.question ?? null;
+  }
   if (step.origin === 'concept-bank') {
     return findConceptQuestion(path.subject, path.topic, step.questionId);
   }

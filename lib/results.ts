@@ -12,6 +12,7 @@
 
 // lib/review.ts is a pure localStorage store with no runtime imports of its
 // own — safe to pull in from here, which almost every page imports.
+import type { AnswerDiagnosis } from '@/lib/answer-check';
 import { seedFromMiss, gradeReview } from '@/lib/review';
 import { safeSetJSON } from '@/lib/storage';
 
@@ -74,6 +75,25 @@ export type ResultEvent = {
    *  The gap matters: "I solved it right" is much weaker evidence than a
    *  machine-checked answer, and the tracer prices them differently. */
   selfReported?: boolean;
+  /**
+   * Open questions only: the SHAPE of the wrong answer, as `lib/answer-check`
+   * read it — a sign flip, a conjugate, roots the domain should have rejected,
+   * two right values in swapped boxes, or a match against an authored
+   * predictable mistake.
+   *
+   * This is the open-question twin of `chosenIndex`, and it exists for the same
+   * reason: `correct: false` throws away the most informative thing the student
+   * did. It is computed with no API call and no self-reporting, which is what
+   * makes `lib/patterns` able to say "this mistake keeps coming back" without
+   * ever asking the student to classify their own error — the error notebook's
+   * `category` can only be filled by an API call, so it is silent for most
+   * students and cannot carry that claim.
+   *
+   * Optional and ignored by every aggregation: events written before this
+   * existed still read correctly, and nothing here can change a grade
+   * prediction.
+   */
+  answerDiagnosis?: AnswerDiagnosis;
 };
 
 export type Stats = {

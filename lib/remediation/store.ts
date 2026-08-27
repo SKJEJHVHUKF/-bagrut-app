@@ -30,10 +30,25 @@ type FixStore = {
   active: { path: FixPath; progress: FixProgress } | null;
   /** targetId → healedAt. Read by the detector to suppress repaired weaknesses. */
   healed: Record<string, number>;
+  /**
+   * targetId → how many times this weakness has been repaired.
+   *
+   * `history` cannot answer this: it keeps one record per target so the board
+   * shows current state, so a weakness repaired three times looks exactly like
+   * one repaired once. That difference is the whole point — a weakness that
+   * keeps coming back is a different problem from one that was fixed, and until
+   * this counter existed the app threw the distinction away every time it
+   * repaired something.
+   */
+  healCount: Record<string, number>;
   history: HealedRecord[];
 };
 
-const EMPTY: FixStore = { version: 1, active: null, healed: {}, history: [] };
+const EMPTY: FixStore = { version: 1, active: null, healed: {}, healCount: {}, history: [] };
+
+function mapValues<T, U>(o: Record<string, T>, f: (v: T) => U): Record<string, U> {
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v)]));
+}
 
 function isBrowser() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -50,6 +65,11 @@ function readStore(): FixStore {
       version: 1,
       active: parsed.active ?? null,
       healed: parsed.healed ?? {},
+      // Absent for anyone who repaired something before this field existed.
+      // Seeding from `healed` rather than `{}` keeps their history true: those
+      // repairs happened, and starting them at zero would report a relapse as a
+      // first-time weakness.
+      healCount: parsed.healCount ?? mapValues(parsed.healed ?? {}, () => 1),
       history: Array.isArray(parsed.history) ? parsed.history : [],
     };
   } catch {
@@ -90,7 +110,12 @@ export function getHealedMap(): Record<string, number> {
   return readStore().healed;
 }
 
-/** Close a repaired weakness: suppress it, log it, and end the session. */
+/** targetId → number of times repaired. Two or more means it came back. */
+export function getHealCountMap(): Record<string, number> {
+  return readStore().healCount;
+}
+
+/** Close a repaired weakness: suppress it, log it, count it, and end the session. */
 export function markHealed(record: HealedRecord): void {
   const store = readStore();
   const history = [record, ...store.history.filter((h) => h.targetId !== record.targetId)];
@@ -98,6 +123,10 @@ export function markHealed(record: HealedRecord): void {
     version: 1,
     active: null,
     healed: { ...store.healed, [record.targetId]: record.healedAt },
+    healCount: {
+      ...store.healCount,
+      [record.targetId]: (store.healCount[record.targetId] ?? 0) + 1,
+    },
     history: history.slice(0, MAX_HISTORY),
   });
 }

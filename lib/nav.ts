@@ -26,6 +26,7 @@ import {
   BarChart3,
   NotebookPen,
   History,
+  Activity,
 } from 'lucide-react';
 
 export type NavItem = {
@@ -122,6 +123,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'התמונה שלי',
         icon: BarChart3,
         blurb: 'החוזקות, החולשות והציון החזוי',
+      },
+      {
+        href: '/report',
+        label: 'דוח המעקב',
+        icon: Activity,
+        blurb: 'איפה הטעויות שלך חוזרות, ומה שתיקנת החזיק',
       },
       {
         href: '/errors',

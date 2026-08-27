@@ -188,6 +188,48 @@ section('detection — replays, healing and determinism');
     `the suppression expires after ${HEAL_SUPPRESSION_DAYS} days`,
   );
 
+  // --- relapse: past the quiet period, only POST-REPAIR evidence counts ------
+  //
+  // The all-time stats that raised the weakness still hold every pre-repair
+  // miss, so without this rule a student who fixed something and has been fine
+  // since would be re-flagged forever on mistakes they no longer make.
+  const longAgo = NOW - (HEAL_SUPPRESSION_DAYS + 30) * DAY;
+
+  const untouched = detectWeaknesses({
+    // Evidence is 40 days old — all of it BEFORE the repair.
+    ...input(coarseEvents(4, 1).map((e) => ({ ...e, ts: longAgo - DAY }))),
+    healed: { [target]: longAgo },
+  });
+  assert(
+    !untouched.some((w) => w.id === target),
+    'repaired long ago with no practice since — stays silent, never "you are weak" from "we did not measure"',
+  );
+
+  const holding = detectWeaknesses({
+    ...input(coarseEvents(6, 6)),
+    healed: { [target]: longAgo },
+  });
+  assert(
+    !holding.some((w) => w.id === target),
+    'repaired long ago and answered correctly since — the repair is holding, so it is not recommended',
+  );
+
+  const relapsed = detectWeaknesses({
+    ...input(coarseEvents(6, 1)),
+    healed: { [target]: longAgo },
+    healCount: { [target]: 2 },
+  });
+  const back = relapsed.find((w) => w.id === target);
+  assert(!!back, 'repaired long ago and failing again since — it comes back');
+  assert(back?.chronic === true, 'a returning weakness is marked chronic, not reported as brand new');
+  assert(back?.relapses === 2, 'the number of previous repairs is carried through');
+
+  const firstTime = detectWeaknesses(input(coarseEvents(6, 1))).find((w) => w.id === target);
+  assert(
+    !!firstTime && !!back && back.score > firstTime.score,
+    'a chronic weakness outranks a first-time one built on identical evidence',
+  );
+
   const a = detectWeaknesses(input(coarseEvents(8, 2))).map((w) => w.id).join('|');
   const b = detectWeaknesses(input(coarseEvents(8, 2))).map((w) => w.id).join('|');
   assert(a === b && a.length > 0, 'the ranking is deterministic — same state, same order');

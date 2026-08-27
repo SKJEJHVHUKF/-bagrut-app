@@ -44,8 +44,30 @@ export const MIN_ATTEMPTS = 3;
 export const MAX_ACCURACY = 0.65;
 /** Below this we stay silent, whatever the score says. */
 export const MIN_CONFIDENCE = 0.5;
-/** A repaired weakness is not recommended again for this long. */
+/**
+ * A repaired weakness is not recommended again for this long, whatever the
+ * evidence says. A student who repairs something and then misses it twice the
+ * next evening should not be dragged straight back into it.
+ */
 export const HEAL_SUPPRESSION_DAYS = 14;
+/**
+ * Answers SINCE the repair before a returning weakness can be called back.
+ *
+ * Past the quiet period, a repaired weakness is judged on post-repair evidence
+ * ONLY. This matters more than it looks: the all-time stats that raised the
+ * weakness in the first place still contain every pre-repair miss, so a student
+ * who fixed something and has been fine since would be re-flagged forever on
+ * the strength of mistakes they no longer make. Restarting the window at the
+ * repair is the only reading of "did it come back?" that the word means.
+ */
+export const RELAPSE_MIN_ATTEMPTS = 3;
+/**
+ * A weakness that has been repaired and broke again outranks a first-time one
+ * of equal size. It is strictly more informative: the ordinary repair path has
+ * already been tried on it and did not hold, so it needs attention sooner and a
+ * different treatment — which is exactly what the report is for.
+ */
+const CHRONIC_PRIORITY = 1.5;
 /**
  * A named misconception outranks an equally-scored sub-topic weakness. It is a
  * strictly sharper finding: it names the wrong idea rather than the area, so the
@@ -80,8 +102,10 @@ export type DetectInput = {
   /** The error notebook, for the dominant category of a coarse weakness. */
   mistakes: MistakeRecord[];
   now: number;
-  /** targetId → healedAt. Suppressed for HEAL_SUPPRESSION_DAYS. */
+  /** targetId → healedAt. Suppressed for HEAL_SUPPRESSION_DAYS, then re-judged. */
   healed?: Record<string, number>;
+  /** targetId → how many times it has been repaired. Drives `chronic`. */
+  healCount?: Record<string, number>;
 };
 
 // ---------------------------------------------------------------------------
@@ -309,15 +333,70 @@ export function detectWeaknesses(input: DetectInput): Weakness[] {
   const claimed = new Set(sharp.map((w) => w.subTopicId));
   const all = [...sharp, ...coarseWeaknesses(input, claimed)];
 
-  const healed = input.healed ?? {};
-  const cutoff = input.now - HEAL_SUPPRESSION_DAYS * DAY;
-
   return all
-    .filter((w) => !((healed[w.id] ?? 0) > cutoff))
+    .map((w) => applyHealHistory(w, input))
+    .filter((w): w is Weakness => w !== null)
     // Fully deterministic ordering: the same state must always produce the same
     // recommendation. A list that reshuffles on reload reads as broken even when
     // every individual answer is defensible.
     .sort((a, b) => b.score - a.score || rankOf(b.band) - rankOf(a.band) || a.id.localeCompare(b.id));
+}
+
+/**
+ * Accuracy in this weakness's sub-topic SINCE a given moment.
+ *
+ * Replays are excluded for the same reason they are excluded everywhere else in
+ * this file: re-answering a question whose solution you have already seen is
+ * practice, not a measurement.
+ */
+function statsSince(
+  input: DetectInput,
+  subTopicId: string,
+  since: number,
+): { attempts: number; wrong: number } {
+  let attempts = 0;
+  let wrong = 0;
+  for (const e of input.events) {
+    if (e.subject !== input.subject || e.subTopicId !== subTopicId) continue;
+    if (e.repeat || e.ts <= since) continue;
+    attempts += 1;
+    if (!e.correct) wrong += 1;
+  }
+  return { attempts, wrong };
+}
+
+/**
+ * Decide what a previously-repaired weakness is now: suppressed, or back.
+ *
+ * Returns null to suppress. Returns the weakness marked `chronic` when the
+ * evidence gathered SINCE the repair independently clears the same bars that
+ * raise a weakness in the first place — which is the honest test for "it came
+ * back", and the reason the pre-repair misses are deliberately not counted.
+ */
+function applyHealHistory(w: Weakness, input: DetectInput): Weakness | null {
+  const healedAt = input.healed?.[w.id];
+  if (!healedAt) return w;
+
+  // Quiet period: never re-recommend something just repaired, at any evidence.
+  if (input.now - healedAt <= HEAL_SUPPRESSION_DAYS * DAY) return null;
+
+  const since = statsSince(input, w.subTopicId, healedAt);
+  // Not enough practice since the repair to say anything either way. Silence is
+  // the only honest answer; the report shows it as "תוקן, טרם נבדק מאז".
+  if (since.attempts < RELAPSE_MIN_ATTEMPTS) return null;
+  // The repair is holding.
+  if ((since.attempts - since.wrong) / since.attempts > MAX_ACCURACY) return null;
+
+  const relapses = input.healCount?.[w.id] ?? 1;
+  return {
+    ...w,
+    chronic: true,
+    relapses,
+    score: w.score * CHRONIC_PRIORITY,
+    detail:
+      `${w.detail} תיקנת את זה כבר ${relapses === 1 ? 'פעם אחת' : `${relapses} פעמים`}, ` +
+      `ומאז חזרו ${since.wrong} שגיאות מתוך ${since.attempts} שאלות כאן.`,
+  };
 }
 
 /** The single most worthwhile repair, or null when the evidence is too thin. */

@@ -22,6 +22,7 @@ import { dueCount } from '@/lib/review';
 import { getPlan, daysUntilBagrut } from '@/lib/study-plan';
 import { resolveCognitive } from '@/lib/tutor-context';
 import { buildTodayPlan } from '@/lib/daily-plan-client';
+import { getPatternProfile, topPattern, TAG_INFO } from '@/lib/patterns';
 
 /** A destination lib/cognition already chose. We never invent one here. */
 export type GreetingAction = { label: string; href: string; reason: string };
@@ -44,6 +45,19 @@ export type TutorGreeting = {
   chips: string[];
   /** The one Hebrew sentence from lib/cognition, or null when evidence is thin. */
   insight: string | null;
+  /**
+   * The one mistake that keeps coming back ACROSS topics, or null.
+   *
+   * Distinct from `insight`, which lib/cognition scopes to the current topic.
+   * This is the thing a human tutor notices that a per-topic view structurally
+   * cannot: the same slip in סדרות, in הסתברות and in the bagrut paper is one
+   * problem, and until it is named the student repairs it three times.
+   *
+   * It points at /report rather than opening a conversation. The full "what to
+   * do about it" is written once, there; a chat prompt would either duplicate
+   * it or fall through to the API on a screen that renders on every visit.
+   */
+  pattern: { label: string; sentence: string; href: string } | null;
   /** 2–4 opening lines, the personal ones first. */
   prompts: string[];
   action: GreetingAction | null;
@@ -81,6 +95,7 @@ export function buildTutorGreeting(
   const chips: string[] = [];
   const personal: string[] = [];
   let insight: string | null = null;
+  let pattern: TutorGreeting['pattern'] = null;
   let action: GreetingAction | null = null;
   let today: TodayBrief | null = null;
 
@@ -152,6 +167,25 @@ export function buildTutorGreeting(
     /* skip */
   }
 
+  // --- the mistake that keeps coming back, across topics -------------------
+  // Independently guarded like every other block: a pattern failure must not
+  // cost the student their greeting.
+  try {
+    const top = topPattern(getPatternProfile(subject, now));
+    if (top) {
+      const info = TAG_INFO[top.tag];
+      pattern = {
+        label: info.label,
+        sentence:
+          `שמתי לב שהטעות "${info.label}" חוזרת אצלך ב-${top.spread} תתי-נושא ` +
+          `(${top.topics.map((t) => t.topic).join(', ')}), ${top.hits} פעמים בסך הכול.`,
+        href: '/report',
+      };
+    }
+  } catch {
+    /* skip */
+  }
+
   // --- today's work, in one sentence and one button ------------------------
   // Placed after the cognitive block so a plan failure cannot cost the insight.
   try {
@@ -178,5 +212,5 @@ export function buildTutorGreeting(
 
   const prompts = [...new Set([...personal, ...GENERIC_PROMPTS])].slice(0, MAX_PROMPTS);
 
-  return { headline, chips, insight, prompts, action, today };
+  return { headline, chips, insight, pattern, prompts, action, today };
 }

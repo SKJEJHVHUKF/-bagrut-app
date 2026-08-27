@@ -27,6 +27,7 @@ import { buildSupply } from './supply';
 import {
   clearActiveFix,
   getActiveFix,
+  getHealCountMap,
   getHealedMap,
   markHealed,
   setActiveFix,
@@ -45,6 +46,7 @@ export {
   MAX_ACCURACY,
   MIN_CONFIDENCE,
   HEAL_SUPPRESSION_DAYS,
+  RELAPSE_MIN_ATTEMPTS,
 } from './detect';
 export {
   buildFixPath,
@@ -64,6 +66,7 @@ export { buildSupply, resolveFixQuestion, type SupplyItem } from './supply';
 export {
   clearActiveFix,
   getActiveFix,
+  getHealCountMap,
   getHealedMap,
   healedCountSince,
   healedHistory,
@@ -86,6 +89,7 @@ function detectInput(subject: string, now: number): DetectInput {
     mistakes: getMistakes(subject),
     now,
     healed: getHealedMap(),
+    healCount: getHealCountMap(),
   };
 }
 
@@ -129,6 +133,10 @@ export function startFix(
   const supply = buildSupply(weakness, {
     answeredIds: answeredIds(input.events),
     deprioritise: triggeredBy ? new Set([triggeredBy]) : undefined,
+    // The path is built once and then stored, so `now` is stable for the whole
+    // session: the generated variants a student sees on step 4 are the ones
+    // chosen when they started, not a fresh draw.
+    seed: now,
   });
   const path = buildFixPath(weakness, supply, now);
   if (!path) return { ok: false, reason: 'no-supply' };
