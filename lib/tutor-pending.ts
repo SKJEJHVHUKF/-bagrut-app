@@ -180,8 +180,11 @@ export function reportedValue(message: string): string | null {
   return m ? m[1].replace(',', '.') : null;
 }
 
-const YES = /^\s*(?:כן|נכון|אכן|בדיוק|מתקיים|מתאים|יש|בטח|אמת)\s*[.!]*\s*$/;
-const NO = /^\s*(?:לא|לא\s*נכון|לא\s*מתקיים|לא\s*מתאים|שלילי|אין)\s*[.!]*\s*$/;
+// ⚠️ "בטוח" and "לא חושב" are here because report:worklist found them
+// costing model calls — a student answering the tutor's own yes-or-no question
+// in the words people actually use rather than the ones a list-writer imagines.
+const YES = /^\s*(?:כן|נכון|אכן|בדיוק|מתקיים|מתאים|יש|בטח|בטוח|נראה\s*לי\s*שכן|חושב\s*שכן|אמת)\s*[.!]*\s*$/;
+const NO = /^\s*(?:לא|לא\s*נכון|לא\s*מתקיים|לא\s*מתאים|לא\s*חושב|לא\s*נראה\s*לי|שלילי|אין)\s*[.!]*\s*$/;
 
 /** A bare yes or no, or null when the reply is anything richer. */
 export function yesNo(message: string): boolean | null {

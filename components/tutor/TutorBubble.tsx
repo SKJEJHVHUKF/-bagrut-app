@@ -51,6 +51,7 @@ import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
 import { AI_DAILY_LIMIT } from '@/lib/access';
 import { offTopicRedirect } from '@/lib/off-topic';
 import { planAnswer } from '@/lib/tutor-plan-answer';
+import { metaAnswer } from '@/lib/tutor-meta-asks';
 import { expectationOf, nextStepAfter, type Pending } from '@/lib/tutor-pending';
 import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
 import { decideFallbackReason } from '@/lib/tutor-telemetry';
@@ -194,6 +195,8 @@ export default function TutorBubble() {
   const pendingRef = useRef<Pending | null>(null);
   /** Did the tutor answer the previous turn itself? The follow-up router's gate. */
   const lastLocalRef = useRef(false);
+  /** Was the PREVIOUS turn a complaint we answered with the stock sentence? */
+  const lastComplaintRef = useRef(false);
   useEffect(() => {
     const last = msgs[msgs.length - 1];
     if (!last || last.role !== 'assistant' || !last.local) return;
@@ -365,6 +368,32 @@ export default function TutorBubble() {
           probe = canonicalFor(route.ask);
           lastAskRef.current = route.ask;
         }
+      }
+
+      // ===== about the TUTOR, or about studying — not about the exercise =====
+      //
+      // Placed here, early, because none of the layers below can ever catch
+      // these: they are not maths questions, so no bank entry and no intent
+      // rule would match them however much content is written. Found by
+      // report:worklist in real traffic, in the students' own words.
+      //
+      // ⚠️ A SECOND COMPLAINT IN A ROW IS HANDED TO THE MODEL. `metaAnswer`
+      // returns null for it deliberately: a student who has told us twice that
+      // we answered the wrong thing, and gets the same stock sentence back, has
+      // been shown that the tutor is not listening — which is what they said.
+      // One paid call is far cheaper than that.
+      const metaAsk = metaAnswer(text, {
+        lastWasComplaint: lastComplaintRef.current,
+        hasQuestion: Boolean(focusNow?.question),
+      });
+      lastComplaintRef.current = metaAsk?.kind === 'complaint';
+      if (metaAsk) {
+        setMsgs((m) => [
+          ...m,
+          { id: `a-${Date.now()}`, role: 'assistant', text: metaAsk.text, local: true },
+        ]);
+        setSending(false);
+        return;
       }
 
       // "זה יבוא בבגרות?" / "כמה נקודות זה שווה?" — exact answers that already
