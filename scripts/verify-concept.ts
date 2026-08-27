@@ -274,4 +274,4 @@ if (!INVENTORY_RULE_IS_ERROR) {
       'flip INVENTORY_RULE_IS_ERROR once every in-syllabus topic reaches it. Hint coverage is already an error.',
   );
 }
-process.exit(errors.length > 0 || (STRICT && warnings.length > 0) ? 1 : 0);
+process.exitCode = errors.length > 0 || (STRICT && warnings.length > 0) ? 1 : 0;

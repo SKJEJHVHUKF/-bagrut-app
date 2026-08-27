@@ -450,4 +450,4 @@ console.log(`  סה"כ סעיפים: ${partsRendered}/${partsTotal} מקומי (
 
 console.log(`\nרונדרו ${rendered} תשובות · ${checks} בדיקות · ${missing} נפילות ל-API`);
 console.log(`${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
-process.exit(failures === 0 ? 0 : 1);
+process.exitCode = failures === 0 ? 0 : 1;

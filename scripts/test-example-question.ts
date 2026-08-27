@@ -56,4 +56,4 @@ console.log(
     ? '\nOK example: a real authored sibling, without its answer\n'
     : `\nFAILED: ${failed}\n`,
 );
-process.exit(failed === 0 ? 0 : 1);
+process.exitCode = failed === 0 ? 0 : 1;

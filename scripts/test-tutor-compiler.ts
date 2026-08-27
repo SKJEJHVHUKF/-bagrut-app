@@ -414,5 +414,5 @@ const fullQuestion = {
   }
 
   console.log(`\n${failures === 0 ? 'PASS' : 'FAILED'}  ${checks - failures}/${checks} passed`);
-  process.exit(failures === 0 ? 0 : 1);
+  process.exitCode = failures === 0 ? 0 : 1;
 })();

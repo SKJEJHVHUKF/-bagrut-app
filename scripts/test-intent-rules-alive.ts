@@ -71,4 +71,4 @@ for (const rule of rules) {
 if (failures === 0) console.log('  ok  every rule is written against the canonical form\n');
 else console.log('\n  Rewrite the pattern without the filler word: it is already gone by the\n  time the rule runs, so simply deleting it from the pattern is the fix.\n');
 
-process.exit(failures === 0 ? 0 : 1);
+process.exitCode = failures === 0 ? 0 : 1;

@@ -117,4 +117,4 @@ console.log(
     ? '\nOK phrasings: the next student gets it free, and never gets the wrong one\n'
     : `\nFAILED: ${failed}\n`,
 );
-process.exit(failed === 0 ? 0 : 1);
+process.exitCode = failed === 0 ? 0 : 1;

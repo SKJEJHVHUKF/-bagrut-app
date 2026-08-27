@@ -83,4 +83,4 @@ console.log(
     ? '\nOK meta asks: caught early, conceded once, and handed over the second time\n'
     : `\nFAILED: ${failed}\n`,
 );
-process.exit(failed === 0 ? 0 : 1);
+process.exitCode = failed === 0 ? 0 : 1;

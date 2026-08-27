@@ -55,4 +55,4 @@ console.log(
     ? '\nOK plan answer: recognises the study ask and leaves the exercise alone\n'
     : `\nFAILED: ${failed}\n`,
 );
-process.exit(failed === 0 ? 0 : 1);
+process.exitCode = failed === 0 ? 0 : 1;

@@ -177,4 +177,4 @@ console.log(
     ? '\nOK telemetry: every bucket is reachable and every claim is checked\n'
     : `\nFAILED: ${failed}\n`,
 );
-process.exit(failed === 0 ? 0 : 1);
+process.exitCode = failed === 0 ? 0 : 1;

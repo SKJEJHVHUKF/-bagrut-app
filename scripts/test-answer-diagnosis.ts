@@ -115,4 +115,4 @@ assert(matchKnownMistake(['3', '8'], wrongs) === null, 'and NOT as an unordered 
 assert(matchKnownMistake(['', ''], wrongs) === null, 'empty boxes match nothing');
 
 console.log(`\n${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
-process.exit(failures === 0 ? 0 : 1);
+process.exitCode = failures === 0 ? 0 : 1;

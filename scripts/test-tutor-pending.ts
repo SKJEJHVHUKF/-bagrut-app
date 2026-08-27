@@ -75,4 +75,4 @@ console.log(
     ? '\nOK pending: a value is graded only when the step really produces one\n'
     : `\nFAILED: ${failed}\n`,
 );
-process.exit(failed === 0 ? 0 : 1);
+process.exitCode = failed === 0 ? 0 : 1;

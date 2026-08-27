@@ -147,4 +147,4 @@ console.log(
     ? '\nOK off-topic: speaks on nine shapes and stays quiet on everything else\n'
     : `\nFAILED: ${failed}\n`,
 );
-process.exit(failed === 0 ? 0 : 1);
+process.exitCode = failed === 0 ? 0 : 1;

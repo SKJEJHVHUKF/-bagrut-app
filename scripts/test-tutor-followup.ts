@@ -142,4 +142,4 @@ console.log(
     ? '\nOK follow-up: the conversation after a free move stays free\n'
     : `\nFAILED: ${failed}\n`,
 );
-process.exit(failed === 0 ? 0 : 1);
+process.exitCode = failed === 0 ? 0 : 1;

@@ -108,5 +108,5 @@ const NEGATIVES = ['רמז', 'מה השלב הבא', 'מה זה נגזרת', 'ת
       ? '\nOK topic cards: each reachable, none stealing, none serving an exercise ask\n'
       : `\nFAILED: ${failed}\n`,
   );
-  process.exit(failed === 0 ? 0 : 1);
+  process.exitCode = failed === 0 ? 0 : 1;
 })();

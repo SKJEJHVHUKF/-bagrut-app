@@ -129,5 +129,5 @@ const ok = (cond: boolean, name: string) => {
   }
 
   console.log(failed === 0 ? '\nOK ai quota: reserved atomically, returned on failure, Israeli midnight\n' : `\nFAILED: ${failed}\n`);
-  process.exit(failed === 0 ? 0 : 1);
+  process.exitCode = failed === 0 ? 0 : 1;
 })();

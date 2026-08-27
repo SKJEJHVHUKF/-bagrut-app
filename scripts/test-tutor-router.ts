@@ -187,4 +187,4 @@ if (misrouted > 0) bad(`${misrouted} question(s) routed to grading — this must
 if (recall < MIN_ANSWER_RECALL) bad(`answer recall ${(recall * 100).toFixed(0)}% < ${MIN_ANSWER_RECALL * 100}%`);
 
 console.log(`\n${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
-process.exit(failures === 0 ? 0 : 1);
+process.exitCode = failures === 0 ? 0 : 1;
