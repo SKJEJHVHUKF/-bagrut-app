@@ -1,0 +1,86 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>frame</title>
+<style>
+  :root{--neon:#5ce1e6;--v:#8b5cf6;--v2:#a06bff;--pink:#ff5cd6}
+  *{margin:0;box-sizing:border-box}
+  html,body{width:1080px;height:1920px;overflow:hidden}
+  body{background:#0a0a1f;color:#eaf2ff;direction:rtl;
+    font-family:"Segoe UI","Arial",sans-serif;
+    display:grid;grid-template-rows:150px 1fr auto;justify-items:center;
+    padding:56px 60px 96px}
+  body::before{content:"";position:fixed;inset:-10%;z-index:0;
+    background:
+      radial-gradient(40% 24% at 18% 12%,rgba(139,92,246,.55),transparent 70%),
+      radial-gradient(44% 26% at 84% 76%,rgba(92,225,230,.34),transparent 70%),
+      linear-gradient(180deg,#0d0b26,#07091a 55%,#0a0a1f);
+    filter:blur(6px)}
+  body::after{content:"";position:fixed;inset:0;z-index:0;opacity:.10;
+    background:linear-gradient(#5ce1e6 1px,transparent 1px) 0 0/64px 64px,
+               linear-gradient(90deg,#5ce1e6 1px,transparent 1px) 0 0/64px 64px;
+    mask:radial-gradient(70% 55% at 50% 42%,#000,transparent 78%)}
+  header,main,footer{position:relative;z-index:1}
+
+  header{display:flex;align-items:center;gap:20px;font-weight:800;font-size:44px;
+    letter-spacing:-.5px}
+  header .dot{width:46px;height:46px;border-radius:14px;
+    background:linear-gradient(135deg,var(--neon),var(--v2) 60%,var(--pink));
+    box-shadow:0 0 34px rgba(92,225,230,.55)}
+
+  /* device frame holding the real app screenshot */
+  .device{width:820px;height:1050px;border-radius:38px;overflow:hidden;
+    background:#fff;border:3px solid rgba(255,255,255,.14);
+    box-shadow:0 40px 120px rgba(0,0,0,.6),0 0 90px rgba(139,92,246,.28)}
+  .device img{width:100%;display:block}
+
+  footer{text-align:center;max-width:940px}
+  .kicker{font-size:32px;letter-spacing:8px;font-weight:700;color:var(--neon);
+    margin-bottom:22px}
+  h1{font-size:82px;line-height:1.12;font-weight:800;letter-spacing:-1.5px}
+  h1 em{font-style:normal;
+    background:linear-gradient(100deg,var(--neon),var(--v2) 55%,var(--pink));
+    -webkit-background-clip:text;color:transparent}
+  p{font-size:40px;line-height:1.4;color:#9db0d6;margin-top:22px}
+
+  /* title / end cards: no device */
+  body.card{grid-template-rows:1fr;place-items:center}
+  body.card header,body.card .device{display:none}
+  body.card footer{max-width:900px}
+  body.card h1{font-size:150px}
+  body.card p{font-size:52px;margin-top:34px}
+  .mark{width:280px;height:280px;margin:0 auto 56px;border-radius:74px;
+    background:linear-gradient(135deg,var(--neon),var(--v2) 58%,var(--pink));
+    box-shadow:0 0 120px rgba(139,92,246,.6);
+    display:grid;place-items:center;font-size:150px}
+  .cta{display:inline-block;margin-top:52px;font-size:52px;font-weight:800;
+    padding:32px 72px;border-radius:999px;color:#06121c;
+    background:linear-gradient(100deg,var(--neon),var(--v2));
+    box-shadow:0 0 80px rgba(92,225,230,.5)}
+</style>
+<header><span class="dot"></span>MathUp</header>
+<main><div class="device"><img id="shot"></div></main>
+<footer>
+  <div class="kicker" id="k"></div>
+  <h1 id="t"></h1>
+  <p id="s"></p>
+  <div class="cta" id="c" style="display:none"></div>
+</footer>
+<script>
+  const q = new URLSearchParams(location.search);
+  const set = (id, v, html) => {
+    const el = document.getElementById(id);
+    if (!v) { el.style.display = 'none'; return; }
+    el[html ? 'innerHTML' : 'textContent'] = v;
+  };
+  if (q.get('card')) document.body.classList.add('card');
+  if (q.get('mark')) document.querySelector('footer').insertAdjacentHTML(
+    'afterbegin', '<div class="mark">∑</div>');
+  const img = document.getElementById('shot');
+  if (q.get('img')) img.src = q.get('img'); else img.style.display = 'none';
+  // shift the screenshot up so the interesting part fills the device window
+  if (q.get('top')) img.style.marginTop = '-' + q.get('top') + 'px';
+  set('k', q.get('k'));
+  set('t', q.get('t'), true);
+  set('s', q.get('s'));
+  if (q.get('c')) { const c = document.getElementById('c'); c.style.display = 'inline-block'; c.textContent = q.get('c'); }
+</script>
