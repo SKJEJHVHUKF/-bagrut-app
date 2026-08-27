@@ -821,6 +821,8 @@ $$N_0 e^{kt} = N \\;\\Rightarrow\\; e^{kt} = \\frac{N}{N_0} \\;\\Rightarrow\\; k
           question:
             'אוכלוסייה מצייתת ל-$N(t) = N_0 e^{kt}$. ידוע ש-$N(2) = 300$ ו-$N(6) = 2700$. מצא את $k$ ואת $N_0$.',
           hint: 'חלק את המשוואה של $t = 6$ במשוואה של $t = 2$ כדי לבטל את $N_0$.',
+          expected: { kind: 'set', values: ['log(3)/2', '100'] },
+          answerLabels: ['k', 'N₀'],
           solution: {
             steps: [
               'כותבים שתי משוואות: $\\;N_0 e^{2k} = 300$ ו-$N_0 e^{6k} = 2700$.',

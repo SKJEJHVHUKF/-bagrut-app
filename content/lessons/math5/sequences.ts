@@ -1093,6 +1093,37 @@ $$(1 + r)^n = \\frac{A}{P} \\quad\\Longrightarrow\\quad 1 + r = \\sqrt[n]{\\frac
           ],
           note: 'שני השלבים יחד, בסיס וצעד, נותנים שהטענה נכונה לכל $n$ טבעי. כל אחד לבדו אינו מספיק.',
         },
+        // The four stages, as sheet cards. Induction is the one sub-topic where
+        // the reference a student needs mid-question is not a formula at all but
+        // the SHAPE of the proof — and the bagrut marks the stages, not the
+        // algebra. Opening the drawer here used to hand over 19 sequence
+        // formulas and none of this; see SUBTOPIC_FORMULAS in formula-sheet.ts.
+        {
+          name: 'שלב 1 · בסיס האינדוקציה',
+          latex: 'n = 1',
+          variables: [{ sym: 'n = 1', meaning: 'מציבים את המספר הראשון בטענה ומראים שהיא מתקיימת' }],
+          note: 'מחשבים את שני האגפים בנפרד ומראים שהם שווים. בלי הבסיס אין הוכחה, גם אם כל השאר נכון.',
+        },
+        {
+          name: 'שלב 2 · הנחת האינדוקציה',
+          latex: 'n = k',
+          variables: [{ sym: 'k', meaning: 'מספר טבעי כלשהו — לא מספר מסוים' }],
+          note: 'כותבים במפורש: "נניח שהטענה נכונה עבור $n = k$", ומעתיקים את הטענה עם $k$ במקום $n$. זו השורה שתוצב בשלב הבא.',
+        },
+        {
+          name: 'שלב 3 · צעד האינדוקציה',
+          latex: 'n = k \\;\\Longrightarrow\\; n = k+1',
+          variables: [{ sym: 'k+1', meaning: 'המספר הבא — מה שצריך להוכיח מתוך ההנחה' }],
+          note: 'כותבים את הטענה עבור $k+1$, מחלצים מתוכה את הביטוי של $k$, ומציבים את ההנחה. אם לא השתמשת בהנחה, לא הוכחת באינדוקציה.',
+        },
+        {
+          // Distinct latex on purpose: sheetFormulas de-dupes by latex and the
+          // principle's own card (above) would otherwise swallow this one.
+          name: 'שלב 4 · המסקנה',
+          latex: 'n = 1,\\, 2,\\, 3,\\, \\ldots',
+          variables: [{ sym: 'n', meaning: 'כל מספר טבעי — לשם הגיעו שני השלבים הקודמים יחד' }],
+          note: 'מסכמים במשפט: "לפי עקרון האינדוקציה, הטענה נכונה לכל $n$ טבעי". כותבים אותו תמיד, גם כשהחשבון היה קצר — הוא מזכה בניקוד.',
+        },
         {
           name: 'סכום המספרים הטבעיים',
           latex: '1 + 2 + \\ldots + n = \\dfrac{n(n+1)}{2}',

@@ -118,7 +118,7 @@ export function QuestionPartCard({
   // key" from "I looked at the solution and said I got it" — the tracer in
   // lib/cognition prices those very differently, and a bagrut part is the one
   // place in the app where both paths lead to the same recordResult call.
-  function recordOutcome(correct: boolean, selfReported: boolean) {
+  function recordOutcome(correct: boolean, selfReported: boolean, shape?: AnswerDiagnosis) {
     if (recorded) return;
     setRecorded(true);
     recordResult({
@@ -132,6 +132,13 @@ export function QuestionPartCard({
       kind: 'open',
       selfReported,
       ...(hintsShown > 0 ? { hintUsed: true } : {}),
+      // The SHAPE of the wrong answer, for lib/patterns. `checkAnswer` already
+      // derives it and this component already shows it — it was reaching the
+      // tutor and the screen but not the answer log, so a bagrut part could
+      // never contribute to the cross-topic mistake profile. Passed in rather
+      // than read from `diagnosis` state, which has not committed yet when
+      // recordOutcome runs inside the same handler.
+      ...(!correct && shape ? { answerDiagnosis: shape } : {}),
     });
   }
 
@@ -275,7 +282,9 @@ export function QuestionPartCard({
 
   // Apply a verdict to the UI — toasts, completion, confetti. Shared by the
   // deterministic path and the LLM fallback so they behave identically.
-  function applyResult(data: CheckResult) {
+  // `shape` is present only on the deterministic path — the LLM fallback judges
+  // proofs and free text, where no machine-readable diagnosis exists.
+  function applyResult(data: CheckResult, shape?: AnswerDiagnosis) {
     setCheckResult(data);
     // A correct answer counts as "done" — bump the parent so the question
     // gets marked complete even if the student didn't reveal the solution.
@@ -296,7 +305,7 @@ export function QuestionPartCard({
         duration: 2500,
       });
     } else if (data.verdict === 'wrong') {
-      recordOutcome(false, false);
+      recordOutcome(false, false, shape);
       toast.error('לא נכון', {
         description: 'אל תוותר — נסה רמז או בקש "למה טעיתי?"',
         duration: 2500,
@@ -356,7 +365,7 @@ export function QuestionPartCard({
                 ? `קראתי את התשובה שלך כ-$${det.readAs}$ — היא אינה שקולה לתשובה הנכונה. בדוק אם פספסת חלק מהפתרון או טעית בסימן.`
                 : 'התשובה אינה שקולה לתשובה הנכונה. בדוק אם פספסת חלק מהפתרון או טעית בסימן.',
           tip: '',
-        });
+        }, det.diagnosis);
         logWrong(typed);
         setChecking(false);
         return;
@@ -607,7 +616,10 @@ export function QuestionPartCard({
                   <KeyRound className="w-3 h-3" />
                   <span>פתרון</span>
                 </div>
-                <ol className="space-y-2.5">
+                {/* Matches the ladder's step spacing (QuestionRunnerCard): at
+                    space-y-2.5 a multi-line step and the next step's number sat
+                    the same distance apart, so the list read as one paragraph. */}
+                <ol className="space-y-6">
                   {part.solution.steps.slice(0, stepsShown + 1).map((step, i) => (
                     <motion.li
                       key={i}

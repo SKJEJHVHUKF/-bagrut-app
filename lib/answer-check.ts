@@ -176,6 +176,14 @@ function normalizeExpr(raw: string): string {
   s = s.replace(/\\ln\b/g, 'log');
   s = s.replace(/\bln\b/g, 'log');
 
+  // "\ln 3" — a bare argument, no parentheses. That is how it is printed in
+  // every textbook and how students type it, but mathjs needs `log(3)`, so the
+  // whole answer came back 'unparseable' (a re-ask, not a wrong verdict — but
+  // a re-ask nobody could satisfy). Deliberately narrow: log only, a plain
+  // number only, and not when a letter follows, so `log 2x` is left alone
+  // rather than silently becoming `log(2)*x`.
+  s = s.replace(/\blog\s+(\d+(?:\.\d+)?)(?![\w.])/g, 'log($1)');
+
   // Implicit multiplication the mathjs parser doesn't always infer:
   //   2sqrt(3) → 2*sqrt(3) · 3√.. handled above · )(  → )*( · 2cis → 2*cis
   s = s.replace(/(\d)\s*(sqrt|nthRoot|cis|pi|log|e)\b/g, '$1*$2');
