@@ -4085,6 +4085,10 @@ $$\\lim_{x \\to 0^+} x\\ln x = 0, \\qquad \\lim_{x \\to \\infty} \\dfrac{\\ln x}
           question:
             'נתונה $g(x) = (\\ln x)^2 - 4$ בתחום $x > 0$. מצא את נקודות החיתוך עם ציר $x$ ואת נקודת המינימום.',
           hint: 'לחיתוכים פתור $(\\ln x)^2 = 4$. למינימום — הצבה $u = \\ln x$.',
+          // A point is two boxes, one per coordinate: checkAnswer grades a
+          // single value per box, so "(1, -4)" in one box would never parse.
+          expected: { kind: 'set', values: ['e^2', 'e^(-2)', '1', '-4'] },
+          answerLabels: ['חיתוך — x הגדול', 'חיתוך — x הקטן', 'מינימום — x', 'מינימום — y'],
           solution: {
             steps: [
               'חיתוכים: $(\\ln x)^2 - 4 = 0$, כלומר $(\\ln x)^2 = 4$, אז $\\ln x = \\pm 2$',

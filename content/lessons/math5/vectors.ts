@@ -2026,6 +2026,10 @@ $$P = A + k\\,\\vec{AB} = A + k\\,(B - A).$$
           kind: 'open',
           question: 'נתונות נקודות $A(0, 1, -2)$ ו-$B(4, -1, 2)$. מצא את אמצע הקטע $AB$ ואת $|\\vec{AB}|$.',
           hint: 'אמצע: ממוצע רכיב-רכיב. אורך: שורש סכום ריבועים.',
+          // One box per COORDINATE: checkAnswer grades a single value per box,
+          // so a point typed as "(2, 0, 0)" would never parse.
+          expected: { kind: 'set', values: ['2', '0', '0', '6'] },
+          answerLabels: ['M — x', 'M — y', 'M — z', '|AB|'],
           solution: {
             steps: [
               'נקודת אמצע היא ממוצע של שתי הנקודות, רכיב-רכיב: $M = \\left(\\dfrac{0+4}{2}, \\dfrac{1+(-1)}{2}, \\dfrac{-2+2}{2}\\right) = (2, 0, 0)$.',
@@ -2044,6 +2048,8 @@ $$P = A + k\\,\\vec{AB} = A + k\\,(B - A).$$
             'נתונה תיבה $ABCDA\'B\'C\'D\'$ עם $A(0,0,0), B(3,0,0), D(0,2,0), A\'(0,0,5)$. מצא את שיעורי $C$ ואת $\\vec{AC\'}$.',
           hint:
             'בתיבה: $C = B + \\vec{AD}$ (כי $ABCD$ מקבילית). $C\' = C + \\vec{AA\'}$.',
+          expected: { kind: 'set', values: ['3', '2', '0', '3', '2', '5'] },
+          answerLabels: ['C — x', 'C — y', 'C — z', 'AC′ — x', 'AC′ — y', 'AC′ — z'],
           solution: {
             steps: [
               'מוציאים שתי מקצועות היוצאות מ-$A$, כל אחת ראש פחות זנב: $\\vec{AD} = D - A = (0, 2, 0)$ ו-$\\vec{AA\'} = A\' - A = (0, 0, 5)$.',
@@ -3414,6 +3420,8 @@ $$S_{\\triangle} = \\tfrac{1}{2}\\,|\\vec{a} \\times \\vec{b}|.$$
           question:
             'נתונות $A(2, 1, 0)$, $B(5, 1, 0)$ ו-$D(2, 4, 3)$ שהן שלושה קודקודים של מקבילית $ABCD$. מצא את הקודקוד $C$ ואת שטח המקבילית.',
           hint: 'במקבילית $C = B + \\vec{AD}$. השטח הוא $|\\vec{AB} \\times \\vec{AD}|$.',
+          expected: { kind: 'set', values: ['5', '4', '3', '9*sqrt(2)'] },
+          answerLabels: ['C — x', 'C — y', 'C — z', 'שטח המקבילית'],
           solution: {
             steps: [
               'שתי הצלעות היוצאות מ-$A$: $\\vec{AB} = (3, 0, 0)$ ו-$\\vec{AD} = (0, 3, 3)$.',
@@ -3432,6 +3440,8 @@ $$S_{\\triangle} = \\tfrac{1}{2}\\,|\\vec{a} \\times \\vec{b}|.$$
           question:
             'במנסרה ישרה שבסיסה משולש $AOB$ ישר-זווית ב-$O$, מסמנים $\\vec{u} = \\vec{OA}$ ו-$\\vec{v} = \\vec{OB}$ (ולכן $\\vec{u} \\perp \\vec{v}$). נתון $|\\vec{u}| = 12$ ו-$|\\vec{v}| = 9$. חשב את $|\\vec{u} \\times \\vec{v}|$ ואת שטח הבסיס $AOB$.',
           hint: '$|\\vec{u} \\times \\vec{v}| = |\\vec{u}|\\,|\\vec{v}|\\sin\\theta$. הבסיס ישר-זווית, אז $\\theta = 90°$.',
+          expected: { kind: 'set', values: ['108', '54'] },
+          answerLabels: ['|u × v|', 'שטח AOB'],
           solution: {
             steps: [
               'הבסיס ישר-זווית ב-$O$, ולכן הזווית בין $\\vec{u}$ ל-$\\vec{v}$ היא $90°$ ו-$\\sin 90° = 1$.',
