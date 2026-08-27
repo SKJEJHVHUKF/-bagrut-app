@@ -72,10 +72,42 @@ function promoteDisplayMath(s: string) {
   return s.replace(/^[ \t]*\$\$([^\n$]+(?:\$(?!\$)[^\n$]*)*)\$\$[ \t]*$/gm, (_m, inner: string) => `\n$$\n${inner}\n$$\n`);
 }
 
+/**
+ * A table cell wrapped in `((…))` is THE ANSWER — drawn ringed, the way a
+ * teacher circles it on the board.
+ *
+ * A probability table is a grid of near-identical numbers, and a solution that
+ * ends "…ולכן 0.4" leaves the student hunting for which 0.4 that was. Marking it
+ * in the table itself is the whole point of drawing the table.
+ *
+ * `((` is a convention on the EXISTING markdown table, not a new fence: the
+ * tables are already authored as GFM and already render — this only changes how
+ * one cell is painted. The marker may sit on a plain cell (`((0.4))`) or around
+ * a math island (`(($0.4$))`), so the strip happens on the first and last string
+ * children and everything between is passed through untouched.
+ */
+function ringedCell(children: ReactNode): ReactNode | null {
+  const kids = Array.isArray(children) ? [...children] : [children];
+  const first = kids[0];
+  const last = kids[kids.length - 1];
+  if (typeof first !== 'string' || typeof last !== 'string') return null;
+  if (!first.trimStart().startsWith('((') || !last.trimEnd().endsWith('))')) return null;
+  kids[0] = first.trimStart().slice(2);
+  kids[kids.length - 1] = (kids[kids.length - 1] as string).trimEnd().slice(0, -2);
+  return (
+    <span className="inline-flex items-center justify-center rounded-full border-2 border-orange-500 px-3 py-0.5 font-bold text-orange-700">
+      {kids}
+    </span>
+  );
+}
+
 const BLOCK_COMPONENTS = {
   p: ({ children }: { children?: ReactNode }) => <p dir="rtl">{children}</p>,
   li: ({ children }: { children?: ReactNode }) => <li dir="rtl">{children}</li>,
-  td: ({ children }: { children?: ReactNode }) => <td dir="rtl">{children}</td>,
+  td: ({ children }: { children?: ReactNode }) => {
+    const ringed = ringedCell(children);
+    return <td dir="rtl">{ringed ?? children}</td>;
+  },
   th: ({ children }: { children?: ReactNode }) => <th dir="rtl">{children}</th>,
   h1: ({ children }: { children?: ReactNode }) => <h1 dir="rtl">{children}</h1>,
   h2: ({ children }: { children?: ReactNode }) => <h2 dir="rtl">{children}</h2>,

@@ -23,6 +23,7 @@ import type { Formula } from '@/content/lessons/types';
 // including /login, for a drawer most sessions never open. It is fetched when
 // the drawer opens instead.
 import type { getLesson as GetLesson, allLessonKeys as AllLessonKeys } from '@/content/lessons';
+import type { sheetFormulas as SheetFormulas } from '@/content/formula-sheet';
 import type { TrackTile } from '@/content/tracks';
 import { getPaper } from '@/lib/study-plan';
 
@@ -79,25 +80,30 @@ async function resolveCurrentTopic(path: string): Promise<string | null> {
   }
 }
 
-/** Lesson-level + sub-topic-level formulas for a topic, de-duped by latex. */
+/** The sub-topic the URL is on, when it names one. Only `/roadmap/<subId>` does
+ *  — that is the level ladder, which is where a student opens the sheet while
+ *  working. Everything else returns null and gets the topic sheet as before.
+ *  Used for the handful of sub-topics with their own sheet (SUBTOPIC_FORMULAS):
+ *  אינדוקציה under סדרות showed 19 sequence formulas and none of its own steps. */
+function resolveCurrentSubTopic(path: string): string | null {
+  const segs = path.split('/').filter(Boolean);
+  if (segs[0] !== 'roadmap' || !segs[1] || segs[1] === 'track' || segs[1] === 'review') return null;
+  try {
+    return decodeURIComponent(segs[1]);
+  } catch {
+    return segs[1];
+  }
+}
+
+/** The sheet's formulas for a topic — curated + ordered by content/formula-sheet. */
 function formulasForTopic(
   getLesson: typeof GetLesson,
+  sheetFormulas: typeof SheetFormulas,
   subject: string,
   topic: string,
+  subId?: string,
 ): Formula[] {
-  const lesson = getLesson(subject, topic);
-  if (!lesson) return [];
-  const seen = new Set<string>();
-  const out: Formula[] = [];
-  const push = (f: Formula) => {
-    const key = f.latex.trim();
-    if (seen.has(key)) return;
-    seen.add(key);
-    out.push(f);
-  };
-  lesson.formulas?.forEach(push);
-  lesson.subTopics?.forEach((st) => st.formulas?.forEach(push));
-  return out;
+  return sheetFormulas(getLesson(subject, topic), topic, subId);
 }
 
 type TopicFormulas = { topic: string; emoji: string; formulas: Formula[] };
@@ -133,10 +139,16 @@ export default function FormulaSheet() {
       import('@/content/lessons'),
       import('@/content/bagrut-curriculum'),
       resolveCurrentTopic(pathname),
-    ]).then(([lessons, curriculum, topicName]) => {
+      import('@/content/formula-sheet'),
+    ]).then(([lessons, curriculum, topicName, sheet]) => {
       if (cancelled) return;
       const { allLessonKeys, getLesson } = lessons;
       const { curriculumIndex, isTopicInActivePaper, getTopicMapping } = curriculum;
+      const { sheetFormulas } = sheet;
+      // Only the topic the student is actually inside gets the sub-topic sheet.
+      // The other topics in the drawer are reference; overriding them by a
+      // sub-topic id from a different topic would be nonsense.
+      const subId = resolveCurrentSubTopic(pathname);
       const built = (allLessonKeys as typeof AllLessonKeys)()
         .filter((k) => k.subject === 'math5')
         .filter(
@@ -149,7 +161,13 @@ export default function FormulaSheet() {
         .map((k) => ({
           topic: k.topic,
           emoji: getTopicMapping(k.topic)?.emoji ?? '📐',
-          formulas: formulasForTopic(getLesson, k.subject, k.topic),
+          formulas: formulasForTopic(
+            getLesson,
+            sheetFormulas,
+            k.subject,
+            k.topic,
+            k.topic === topicName ? (subId ?? undefined) : undefined,
+          ),
         }))
         .filter((t) => t.formulas.length > 0);
       setCurrentTopic(topicName);
@@ -252,21 +270,20 @@ function FormulaDrawer({
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[70] bg-slate-900/30 backdrop-blur-[2px]"
-      />
+      {/* No backdrop by design: the sheet is a non-modal side panel, so the
+          exercise stays visible AND interactive while formulas are open.
+          Closing is via the X button or ESC — an outside click must NOT close,
+          because clicking the exercise to keep solving is the whole point. */}
       <motion.aside
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'tween', duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
         dir="rtl"
-        className="fixed top-0 bottom-0 right-0 z-[71] w-[380px] max-w-[92vw] bg-[var(--background)] border-r border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
+        // z-[91] tops AppHeader's z-[90]: both are top-0, and with no backdrop
+        // the X in this drawer's header is the main way to close — under the
+        // navbar it was unreachable and the drawer looked impossible to close.
+        className="fixed top-0 bottom-0 right-0 z-[91] w-[380px] max-w-[92vw] bg-[var(--background)] border-r border-slate-900/10 shadow-2xl shadow-slate-900/20 flex flex-col"
       >
         {/* Header */}
         <div className="p-4 border-b border-slate-900/[0.08] flex items-center justify-between">
