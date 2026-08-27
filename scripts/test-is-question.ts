@@ -26,6 +26,7 @@
  * built from real trace messages and from every trap the earlier attempts hit.
  */
 
+import { readFileSync, readdirSync, existsSync } from 'fs';
 import { isQuestion, NOT_A_QUESTION_REPLY } from '../lib/is-question';
 
 let failed = 0;
@@ -91,6 +92,50 @@ console.log('\n=== the screen matters ===\n');
 // A word from the exercise is evidence even when nothing else is.
 ok(isQuestion('ועדות', 'כמה ועדות אפשריות').isQuestion, 'a word echoed from the question passes');
 ok(!isQuestion('ועדות', undefined).isQuestion || true, 'and without a screen it falls to the other signals');
+
+console.log('');
+console.log('=== EVERY tutor route is behind the gate, and a new one cannot slip past ===');
+console.log('');
+// ⚠️ /api/chat WAS GATED FIRST AND IT LOOKED COMPLETE.
+//
+// /api/scan-tutor is a whole second tutor — its own free text from the student,
+// its own model call, its own spend controls — and it was not behind the gate
+// at all. A student who typed "י" there still paid for it. One endpoint being
+// covered says nothing about the others, so this asserts the list rather than
+// trusting that somebody remembered.
+const TUTOR_ROUTES = ['app/api/chat/route.ts', 'app/api/scan-tutor/route.ts'];
+for (const route of TUTOR_ROUTES) {
+  const src = existsSync(route) ? readFileSync(route, 'utf8') : '';
+  ok(src.includes('isQuestion('), `${route} calls the gate`);
+  ok(/if \(!\w+\.isQuestion\)/.test(src), `${route} returns early when it is not a question`);
+}
+
+// And the trap that would defeat the list: somebody adds a THIRD chat-shaped
+// route. Any route reading `body.messages` is a conversation endpoint, and a
+// conversation endpoint that is not on the list above is ungated.
+{
+  const apiDir = 'app/api';
+  const found: string[] = [];
+  const walk = (dir: string) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const full = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(full);
+      else if (e.name === 'route.ts') {
+        const src = readFileSync(full, 'utf8');
+        const takesChat = /body\.messages/.test(src);
+        const callsModel = /messages\.(?:create|stream)\(/.test(src);
+        if (takesChat && callsModel && !TUTOR_ROUTES.includes(full)) found.push(full);
+      }
+    }
+  };
+  if (existsSync(apiDir)) walk(apiDir);
+  ok(
+    found.length === 0,
+    found.length === 0
+      ? 'no ungated conversation endpoint exists'
+      : `UNGATED conversation endpoint(s): ${found.join(', ')} — add the gate, then add it to TUTOR_ROUTES`,
+  );
+}
 
 console.log(
   failed === 0
