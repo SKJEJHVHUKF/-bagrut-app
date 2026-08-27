@@ -28,11 +28,11 @@
  * ============================================================
  * USAGE
  * ============================================================
- *   # see what it would do, spend nothing
- *   npx tsx scripts/generate-faq-from-logs.ts --dry-run
+ *   # the default: see what it would do, call nothing, spend nothing
+ *   npx tsx scripts/generate-faq-from-logs.ts
  *
- *   # draft the top 5 units, real API calls
- *   npx tsx scripts/generate-faq-from-logs.ts --rows audit/rows.json --limit 5
+ *   # the ONLY form that spends money, and it has to be said out loud
+ *   npx tsx scripts/generate-faq-from-logs.ts --rows audit/rows.json --limit 5 --spend-api
  *
  *   # then, always:
  *   npm run merge:faq -- --rows audit/rows.json --in slices --out content/tutor-faq/math5/sequences.ts
@@ -46,7 +46,8 @@
  *   --limit <n>      only the n most-missed units (default 3; cost control)
  *   --out <dir>      slice directory, default slices/
  *   --model <id>     default claude-sonnet-5
- *   --dry-run        print the plan and the prompt, call nothing, write nothing
+ *   --spend-api      actually call the model. WITHOUT IT NOTHING IS SPENT.
+ *   --dry-run        the default, kept so the word still works
  *
  * ============================================================
  * GROUNDING — why --rows is not optional
@@ -80,7 +81,22 @@ const ROWS = opt('--rows');
 const TOPIC = opt('--topic');
 const LIMIT = Number(opt('--limit', '3'));
 const OUT = opt('--out', 'slices')!;
-const DRY = argv.includes('--dry-run');
+/**
+ * ⚠️ DRY BY DEFAULT, AND SPENDING NEEDS AN EXPLICIT WORD.
+ *
+ * Itay, after a $0.055 sample run: "לא להשתמש לי ב-API בשביל בדיקות". He is
+ * right, and a flag named --dry-run puts the burden on the person to remember
+ * it — which is the wrong way round for the only script here that can spend
+ * money. So the default is to call nothing, and a real run has to say
+ * --spend-api out loud. --dry-run still works and means the same thing.
+ */
+const DRY = !argv.includes('--spend-api');
+if (!DRY && argv.includes('--dry-run')) {
+  console.error();
+  console.error('--dry-run and --spend-api contradict each other. Pick one.');
+  console.error();
+  process.exit(2);
+}
 
 /**
  * ⚠️ NOT claude-3-5-sonnet, and the substitution is measured rather than a
