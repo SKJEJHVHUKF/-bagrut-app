@@ -120,14 +120,22 @@ export async function writeFacts(
 /**
  * The prompt block. Returns '' for an empty memory so the caller can skip the
  * block entirely rather than send the model an empty heading to reason about.
+ *
+ * ⚠️ DATA ONLY — NO INSTRUCTIONS. This block is per-student, so it can never
+ * sit in the cached prefix (see PromptContext.memory in lib/agents/prompts.ts):
+ * every token is billed at full price on every single turn.
+ *
+ * MEASURED 2026-08-26: three short facts rendered as **203 fresh tokens**, of
+ * which the facts themselves were ~45. The other ~160 were three lines of
+ * Hebrew instruction — "השתמש בהם כדי להתאים את ההסבר", "אל תציג אותם כרשימה",
+ * "אם משהו לא רלוונטי התעלם ממנו" — which are identical on every request for
+ * every student, and were therefore being re-bought thousands of times over.
+ * They now live once in TUTOR_CORE's "בלוקי ההקשר" section, at 0.1x.
+ *
+ * The `MEMORY` header is what that section keys off, so it stays. Anything
+ * longer than a bare fact list does not belong here.
  */
 export function renderMemoryBlock(facts: TutorFact[]): string {
   if (!facts.length) return '';
-  const lines = facts.map((f) => `- ${f.text}`).join('\n');
-  return [
-    '# מה שאתה כבר יודע על התלמיד הזה',
-    'דברים שהוא סיפר לך בשיחות קודמות. השתמש בהם כדי להתאים את ההסבר, ואל תציג אותם כרשימה.',
-    'אם משהו כאן נראה לא רלוונטי יותר — התעלם ממנו במקום לתקן אותו.',
-    lines,
-  ].join('\n');
+  return `MEMORY\n${facts.map((f) => `- ${f.text}`).join('\n')}`;
 }

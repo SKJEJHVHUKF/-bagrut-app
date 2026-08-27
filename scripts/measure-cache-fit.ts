@@ -33,6 +33,7 @@ config({ path: '.env.local' });
 
 import Anthropic from '@anthropic-ai/sdk';
 import { buildTutorSystem } from '@/lib/agents/prompts';
+import { TUTOR_TOOLS } from '@/lib/agents/tools';
 
 const client = new Anthropic();
 
@@ -46,10 +47,26 @@ const MINIMUM: Record<string, number> = {
   'claude-opus-5': 512,
 };
 
+/**
+ * ⚠️ TOOLS ARE PART OF THE CACHED PREFIX AND THIS SCRIPT USED TO OMIT THEM.
+ *
+ * Anthropic serialises tool definitions BEFORE the system blocks, so the prefix
+ * a `cache_control` marker actually covers is tools + system — and TUTOR_TOOLS
+ * is ~1,100 tokens on Haiku (lib/agents/tools.ts measures it). Counting the
+ * system blocks alone under-reports the prefix by that much, which on the Haiku
+ * path is a quarter of the 4,096 minimum: enough to report a live cache as a
+ * no-op, or worse, to bless a trim that pushes a real prefix under the floor.
+ *
+ * Counting through `tools` + `system` rather than as one user string also means
+ * the per-block and tool-use overheads are counted the way the API counts them,
+ * instead of being lost in a flat concatenation.
+ */
 async function count(model: string, text: string): Promise<number> {
   const r = await client.messages.countTokens({
     model,
-    messages: [{ role: 'user', content: text }],
+    tools: TUTOR_TOOLS,
+    system: [{ type: 'text', text }],
+    messages: [{ role: 'user', content: '.' }],
   });
   return r.input_tokens;
 }
@@ -68,7 +85,10 @@ const hebrewShare = (s: string) => {
  * dead only on the ungrounded path, which lib/agents/prompts.ts already
  * documents as an accepted no-op. This list covers both kinds.
  */
-const TOPICS = ['מספרים מרוכבים', 'וקטורים במרחב', 'טריגונומטריה', 'אלגברה', ''];
+// סדרות and הסתברות lead the list on purpose: they carry the FAQ banks, so they
+// are the two highest-volume topics in the tutor and the ones any prompt or
+// tool trim has to be measured against first.
+const TOPICS = ['סדרות', 'הסתברות', 'מספרים מרוכבים', 'וקטורים במרחב', 'טריגונומטריה', 'אלגברה', ''];
 
 (async () => {
   // Which model actually serves this? The route picks Sonnet only for topics in

@@ -57,6 +57,7 @@
     "verify:clarity": "tsx scripts/verify-lesson-clarity.ts",
     "measure:cache": "tsx scripts/measure-cache-fit.ts",
     "measure:ttl": "tsx scripts/measure-cache-ttl.ts",
+    "measure:budget": "tsx scripts/measure-reply-budget.ts",
     "verify:cognition": "tsx scripts/verify-cognition.ts",
     "test:cognition": "tsx scripts/test-cognition.ts",
     "test:sync": "tsx scripts/test-sync.ts",

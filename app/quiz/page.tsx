@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { publishTutorFocus, FOCUS_PRIORITY } from '@/lib/tutor-presence';
+import { publishTutorFocus, conceptAsQuestion, FOCUS_PRIORITY } from '@/lib/tutor-presence';
 import { MathText } from '@/components/practice/MathText';
 import { createClient } from '@/lib/supabase/client';
 import { hasQuestionBank, getQuestions } from '@/content/lessons';
@@ -272,7 +272,17 @@ function Quiz() {
         questionText: activeQuestion.question,
         // The question object itself, so lib/tutor-local can serve the authored
         // hint / first step / distractor note with no API call at all.
-        question: activeQuestion,
+        //
+        // ⚠️ MAPPED, not passed through. This screen renders ConceptQuestion,
+        // whose worked material lives under `explanation.*` and which has no
+        // `solution` field at all. The consumers are guarded against the throw
+        // that used to cause, but a guard only stops the crash — it does not
+        // give the tutor anything to say. MEASURED on this branch: 4 of the 6
+        // built-in asks (why-wrong, full solution, formulas, key points) fell
+        // back on 100% of /quiz questions, 184 of 276 asks per topic, while the
+        // authored worked solution sat one field away. conceptAsQuestion moves
+        // it across; see its note in lib/tutor-presence.
+        question: conceptAsQuestion(activeQuestion),
         // Siblings for "תן תרגיל דוגמה" — trimmed to what the tutor may show.
         // Never the answers: see the field's note in lib/tutor-presence.
         siblings: questions

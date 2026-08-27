@@ -36,8 +36,55 @@ export type UsageLike = {
   output_tokens?: number | null;
   /** The SDK types these two as `number | null`, not `undefined`. */
   cache_read_input_tokens?: number | null;
+  /** TOTAL tokens written, across both TTL buckets. Priced at two different
+   *  multipliers, so this number alone cannot produce a correct cost. */
   cache_creation_input_tokens?: number | null;
+  /** The same write, broken down by TTL. This is the only field that can. */
+  cache_creation?: {
+    ephemeral_5m_input_tokens?: number | null;
+    ephemeral_1h_input_tokens?: number | null;
+  } | null;
 };
+
+/**
+ * Cache-write multipliers, per TTL. A longer TTL costs more to write and the
+ * same to read, which is the whole trade lib/agents/prompts.ts reasons about.
+ */
+export const CACHE_WRITE_5M = 1.25;
+export const CACHE_WRITE_1H = 2;
+/** Reads are the same price whichever TTL wrote the entry. */
+export const CACHE_READ = 0.1;
+
+/**
+ * USD for the cache WRITE on one call, at the right multiplier per TTL.
+ *
+ * ⚠️ THIS USED TO BE `cache_creation_input_tokens * 1.25`, FLAT — and that is
+ * wrong for the busiest route in the app. `/api/chat` writes its prefix with
+ * `ttl: '1h'` (CACHE_1H in lib/agents/prompts.ts), which costs 2x, not 1.25x.
+ * MEASURED on a real cold turn (2026-08-26, הסתברות, Haiku 4.5): write=3,796
+ * tokens, i.e. $0.0076 actual against $0.0047 reported — every `[cost]` line
+ * for a cold chat turn was UNDER-REPORTING BY 38%.
+ *
+ * Both multipliers are live in this codebase and neither is "the" default: the
+ * tutor writes at 1h, the grader deliberately writes at 5m (a one-shot call
+ * cannot earn a 1h premium). So the TTL has to be read, not assumed.
+ *
+ * `usage.cache_creation` is the per-bucket breakdown and is authoritative when
+ * present. The fallback exists for a usage object that predates the field or
+ * comes from a test fixture, and it deliberately assumes 1h — over-reporting a
+ * cost is a decision made with open eyes, under-reporting one is a surprise on
+ * the invoice.
+ */
+export function cacheWriteCost(usage: UsageLike, inputRate: number): number {
+  const bucket = usage.cache_creation;
+  if (bucket) {
+    return (
+      (bucket.ephemeral_5m_input_tokens ?? 0) * inputRate * CACHE_WRITE_5M +
+      (bucket.ephemeral_1h_input_tokens ?? 0) * inputRate * CACHE_WRITE_1H
+    );
+  }
+  return (usage.cache_creation_input_tokens ?? 0) * inputRate * CACHE_WRITE_1H;
+}
 
 /**
  * USD for one call, CACHE-AWARE.
@@ -51,7 +98,7 @@ export type UsageLike = {
  *
  * A `costOfCall` used to live here, omitted the cache fields, and had zero
  * call sites; /api/scan-solve kept a correct inline copy. This is that copy,
- * shared. Rates: 5-minute cache write 1.25x, read 0.1x.
+ * shared. Write is priced per TTL by `cacheWriteCost` above; read is 0.1x.
  */
 export function costOfUsage(model: string, usage: UsageLike | undefined | null): number {
   const rate = RATES[model as ModelId];
@@ -59,8 +106,8 @@ export function costOfUsage(model: string, usage: UsageLike | undefined | null):
   return (
     (usage.input_tokens ?? 0) * rate.input +
     (usage.output_tokens ?? 0) * rate.output +
-    (usage.cache_read_input_tokens ?? 0) * rate.input * 0.1 +
-    (usage.cache_creation_input_tokens ?? 0) * rate.input * 1.25
+    (usage.cache_read_input_tokens ?? 0) * rate.input * CACHE_READ +
+    cacheWriteCost(usage, rate.input)
   );
 }
 
@@ -73,13 +120,65 @@ export function costOfUsage(model: string, usage: UsageLike | undefined | null):
  * spend is the Anthropic console, which cannot say WHICH route spent it.
  * Until the migration is applied, this line is the audit trail.
  */
-export function logCost(label: string, model: string, usage: UsageLike | undefined | null): number {
+export function logCost(
+  label: string,
+  model: string,
+  usage: UsageLike | undefined | null,
+  options: {
+    /**
+     * Whether this call was SUPPOSED to hit a cache. Default true.
+     *
+     * Pass false for a call whose input is inherently per-request and has
+     * nothing reusable in it — a one-off image transcription, for instance,
+     * where the bulk of `input_tokens` is the photo itself. Without this the
+     * silent-miss warning below fires on every such call and becomes noise,
+     * which is how a real warning stops being read.
+     */
+    expectCache?: boolean;
+  } = {}
+): number {
   const usd = costOfUsage(model, usage);
+  // The write is split by TTL because the two buckets are priced 1.25x and 2x.
+  // Printing only the total hides which one was billed — and hides the failure
+  // mode where a `ttl: '1h'` request is silently served as a 5-minute entry,
+  // which no derived cost number can reveal.
+  const w5 = usage?.cache_creation?.ephemeral_5m_input_tokens ?? 0;
+  const w1h = usage?.cache_creation?.ephemeral_1h_input_tokens ?? 0;
+  const writeTotal = usage?.cache_creation_input_tokens ?? 0;
+  const writeDetail = usage?.cache_creation
+    ? `${writeTotal}(5m=${w5},1h=${w1h})`
+    : `${writeTotal}(ttl=?)`;
   console.log(
     `[cost] ${label} ${model} in=${usage?.input_tokens ?? 0} out=${usage?.output_tokens ?? 0} ` +
-      `cache_read=${usage?.cache_read_input_tokens ?? 0} cache_write=${usage?.cache_creation_input_tokens ?? 0} ` +
+      `cache_read=${usage?.cache_read_input_tokens ?? 0} cache_write=${writeDetail} ` +
       `usd=${usd.toFixed(5)}`
   );
+
+  // ⚠️ SILENT CACHE MISS.
+  //
+  // A `cache_control` marker on a prefix shorter than the model's minimum does
+  // nothing at all: no error, no write, no read, no extra charge — and no
+  // saving. VERIFIED on the live API (scripts/probe-chat-cache.ts,
+  // 2026-08-25): /api/chat with no `topic` builds a 3,490-token prefix against
+  // Haiku 4.5's 4,096 minimum, and BOTH cache fields came back 0 on two
+  // consecutive identical-prefix calls. It had never cached once.
+  //
+  // Minimum cacheable prefix, by model — not monotonic across generations:
+  //   claude-haiku-4-5, claude-opus-4-6   4096
+  //   claude-sonnet-4-6, claude-sonnet-5  1024
+  //
+  // Both fields zero on a large prompt means one of three things, and this line
+  // is how you find out which: the prefix is under the minimum, something in it
+  // drifts between calls, or the entry expired. `cache_write > 0` on every turn
+  // is the drift case; `write=0, read=0` on every turn is this one.
+  const cached = (usage?.cache_read_input_tokens ?? 0) + (usage?.cache_creation_input_tokens ?? 0);
+  if ((options.expectCache ?? true) && cached === 0 && (usage?.input_tokens ?? 0) > 2000) {
+    console.warn(
+      `[cache-miss] ${label} ${model} sent ${usage?.input_tokens} uncached input tokens and cached NOTHING. ` +
+        'Either the marked prefix is under the model minimum (silent no-op) or it drifts between calls. ' +
+        'Run scripts/probe-chat-cache.ts.'
+    );
+  }
   return usd;
 }
 

@@ -13,6 +13,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { allLessonKeys, getLesson } from '../content/lessons';
 import { conceptBankEntries, getConceptQuestions, CONCEPT_LEVELS } from '../content/concept-quiz';
+import { conceptAsQuestion } from '../lib/tutor-presence';
 
 const [topicArg, outDir, sliceArg = '15'] = process.argv.slice(2);
 if (!topicArg || !outDir) {
@@ -114,11 +115,14 @@ for (const e of conceptBankEntries()) {
   if (e.topic !== topicArg) continue;
   for (const lvl of CONCEPT_LEVELS) {
     for (const q of getConceptQuestions(e.subject, e.topic, lvl)) {
-      const steps = [
-        q.explanation.concept && `**הכלל:** ${q.explanation.concept}`,
-        q.explanation.why_correct,
-        q.explanation.why_wrong,
-      ].filter((s): s is string => !!s);
+      // ⚠️ THE SAME MAPPING THE STUDENT'S TUTOR USES, not a second one.
+      // These rows tell an author which step to attach `faq.step` to, and the
+      // merge gate range-checks that index against them — so if this list is
+      // built differently from what /quiz actually publishes, every authored
+      // step reference is silently off by one, or dropped. It WAS built
+      // differently: three entries here (rule, the whole why_correct block,
+      // why_wrong) against the runtime's rule + one step per numbered line.
+      const steps = conceptAsQuestion(q).solution.steps;
       if (!steps.length) continue;
       rows.push({
         unit: q.id,

@@ -47,6 +47,71 @@ const MIN_MESSAGE_LEN = 1;
  */
 const CONTEXT_MESSAGE_COUNT = 4;
 
+// ===== REPLY BUDGET — per turn, not one flat number =====
+//
+// ⚠️ READ THIS BEFORE LOWERING ANY NUMBER BELOW. IT WAS TRIED AND MEASURED.
+//
+// HAIKU 4.5 WRITES UNTIL IT IS STOPPED. It has no natural reply length that a
+// prompt can shrink — it expands to fill whatever `max_tokens` allows and is
+// then cut off mid-sentence. MEASURED on real סדרות/הסתברות turns (2026-08-27):
+// the same question produced 80 output tokens at a 140 cap and 376 at a 400
+// cap, both ending naturally. Two attempts to make the prompt bind instead:
+//
+//   TUTOR_CORE brevity rules, list ban, "פסקה אחת"    5/9 nudge turns truncated
+//   + an explicit "עד 45 מילים" budget, restated as
+//     the LAST block in the system prompt              7/9 nudge turns truncated
+//
+// The prompt DOES control the SHAPE — no greetings, no bullet lists, ends on a
+// guiding question. It does not control the LENGTH.
+//
+// So a low cap is not a saving, it is a truncation: a cut-off answer makes the
+// student ask again, costing a whole extra turn (~$0.0013) to save ~$0.0004.
+// These numbers are sized NOT to bind, which took truncation from 10/18 to 3/18.
+//
+// The reason a flat number is wrong at all is architectural: by the time a
+// message reaches this route the client has already answered every
+// "אני תקוע / רמז / למה טעיתי / איזו נוסחה" from authored content
+// (lib/tutor-local, then the FAQ bank). What arrives here is SELECTED FOR being
+// what local content could not answer — disproportionately concept questions,
+// which legitimately need length. Sizing the whole route for the nudge case
+// starves exactly the traffic it gets.
+
+/** A NUDGE on an exercise the student is looking at: one point, one question. */
+const REPLY_TOKENS_NUDGE = 200;
+/** A CONCEPT question with no exercise on screen — "מה זה הסתברות מותנית". */
+const REPLY_TOKENS_CONCEPT = 400;
+/** The two long-path exceptions TUTOR_CORE names. */
+const REPLY_TOKENS_FULL = 500;
+
+/**
+ * The student has stopped working and wants it laid out. Mirrors GIVE_UP and
+ * the `full` ask in lib/tutor-router — the client normally answers these from
+ * authored content, so what reaches here is the case with no question object.
+ */
+const WANTS_FULL =
+  /פתרון\s*מלא|הפתרון\s*המלא|תפתור|תפתרי|תראה\s*לי\s*את\s*הפתרון|כל\s*הצעדים|צעד\s*אחר\s*צעד|הסבר\s*מלא|אני\s*מוותר|פשוט\s*תגיד|תגיד\s*לי\s*כבר|נמאס|אין\s*לי\s*כוח/;
+
+/**
+ * How many tokens this reply may take.
+ *
+ * `hasQuestionOnScreen` comes from `faqMiss`, which the bubble sets ONLY when a
+ * real question object was in focus and both local layers abstained. /chat and
+ * the bubble-opened-away-from-a-question case never send it, and those are
+ * precisely the concept-question surfaces.
+ *
+ * `priorAssistantTurns` counts assistant messages in the replayed window, capped
+ * at CONTEXT_MESSAGE_COUNT / 2 = 2 pairs. `>= 2` means two hints have already
+ * been given — the exact trigger TUTOR_CORE names for a direct, full explanation.
+ */
+function replyBudget(
+  message: string,
+  priorAssistantTurns: number,
+  hasQuestionOnScreen: boolean,
+): number {
+  if (WANTS_FULL.test(message) || priorAssistantTurns >= 2) return REPLY_TOKENS_FULL;
+  return hasQuestionOnScreen ? REPLY_TOKENS_NUDGE : REPLY_TOKENS_CONCEPT;
+}
+
 // Block obvious prompt-injection / abuse markers — same lightweight check
 // we run on the quiz topic input.
 
@@ -170,8 +235,15 @@ export async function POST(request: Request) {
     // both abstained. Logged with the unit id so `grep '[faq-miss]'` in the
     // Vercel logs is literally the list of what to author next — the bank
     // grows from what students actually ask, not from what we guess.
-    if (typeof body.faqMiss === 'string' && body.faqMiss.length <= 80) {
-      console.log(`[faq-miss] topic=${topic} unit=${body.faqMiss.replace(/\s/g, '_')} msg=${JSON.stringify(message.slice(0, 160))}`);
+    // Also the "a real question is on screen" signal for replyBudget below: the
+    // bubble sets it only when a question OBJECT was in focus and both local
+    // layers abstained, which is exactly the nudge case.
+    const faqMiss =
+      typeof body.faqMiss === 'string' && body.faqMiss.length > 0 && body.faqMiss.length <= 80
+        ? body.faqMiss
+        : null;
+    if (faqMiss) {
+      console.log(`[faq-miss] topic=${topic} unit=${faqMiss.replace(/\s/g, '_')} msg=${JSON.stringify(message.slice(0, 160))}`);
     }
 
     // ===== 7. DAILY QUOTA CHECK =====
@@ -485,6 +557,13 @@ data: ${JSON.stringify(data)}
     // we don't; we do it before controller.close()).
     const encoder = new TextEncoder();
     const remaining = v2Remaining ?? Math.max(0, dailyCap - (used + 1));
+    // Counted off the window that was actually replayed to the model, not off
+    // the conversation as a whole — two hints ago is what TUTOR_CORE reacts to.
+    const maxTokens = replyBudget(
+      message,
+      context.filter((m) => m.role === 'assistant').length,
+      !!faqMiss,
+    );
 
     const sseStream = new ReadableStream({
       async start(controller) {
@@ -546,13 +625,12 @@ data: ${JSON.stringify(data)}
           if (!learned) {
             const stream = client.messages.stream({
               model,
-              // 500, down from 800. This is a SAFETY RAIL, not a saving:
-              // billing is per token generated, so a cap only costs money when
-              // it is hit — and then it truncates the answer mid-sentence and
-              // the student asks again. The `[truncated]` warning below is how
-              // we find out whether that is happening; if it appears in the
-              // logs, raise this rather than leaving replies cut off.
-              max_tokens: 500,
+              // Per-turn, not flat — see replyBudget() at the top of this file.
+              // 200 nudge / 400 concept / 500 full. Billing is per token
+              // GENERATED, so the high branches cost nothing on the turns that
+              // do not use them, and the low branch stops a one-line nudge from
+              // being budgeted like a full derivation.
+              max_tokens: maxTokens,
               system,
               messages: claudeMessages,
               // The tutor may suggest an in-app action and may remember a fact.
@@ -623,8 +701,13 @@ data: ${JSON.stringify(data)}
             });
             if (final.stop_reason === 'max_tokens') {
               console.warn(
-                `[truncated] chat reply hit max_tokens (out=${usageOut}) — the student got a cut-off ` +
-                  'answer and will likely ask again, which costs more than the cap saves. Raise max_tokens.'
+                `[truncated] chat reply hit max_tokens (out=${usageOut} cap=${maxTokens}) — the student ` +
+                  'got a cut-off answer and will likely ask again, which costs more than the cap saves. ' +
+                  // Every branch says "raise it" on purpose. The caps are sized
+                  // NOT to bind (measured 3/18), so a hit here means this shape
+                  // of turn is genuinely longer than the sample it was
+                  // calibrated on — not that the student should have got less.
+                  `raise ${maxTokens === REPLY_TOKENS_NUDGE ? 'REPLY_TOKENS_NUDGE' : maxTokens === REPLY_TOKENS_CONCEPT ? 'REPLY_TOKENS_CONCEPT' : 'REPLY_TOKENS_FULL'}.`
               );
             }
 
