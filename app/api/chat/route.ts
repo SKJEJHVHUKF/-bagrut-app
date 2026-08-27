@@ -451,6 +451,19 @@ export async function POST(request: Request) {
               outputTokens: 0,
               cachedRead: 0,
               cachedWrite: 0,
+              // ⚠️ THE WHOLE POINT OF THIS BRANCH IS THAT NOTHING WAS PAID.
+              //
+              // Omitted at first, and the stamp defaults to true — so every
+              // library hit was recorded as a model call. Two consequences,
+              // both silent: the local rate read LOWER than it was, and
+              // report:worklist listed the saved turns as work still to do,
+              // labelled "BUG — the trace arrived malformed" because
+              // `no_fallback` on a paid row can only mean that.
+              //
+              // Caught in the first production hit, at 20:41:54, reading
+              // `llm=true model=library:same-question in=0`. Zero input tokens
+              // and a model called `library` cannot both be a paid call.
+              usedLlm: false,
             },
           );
         }

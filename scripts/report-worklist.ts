@@ -111,10 +111,28 @@ const cost = (t: Trace) =>
   }
 
   const all = (data ?? []) as Trace[];
+  // ⚠️ TWO CONDITIONS, BECAUSE THE FLAG WAS WRONG ONCE AND SAID NOTHING.
+  //
+  // A library hit was stamped `used_llm = true` for a while, so free turns were
+  // counted as paid, the local rate read low, and the work-list listed saved
+  // turns as work to do. The flag is fixed — and a row that spent no tokens at
+  // all is not a model call whatever the flag says, so the report no longer
+  // depends on one field being right.
+  const spentNothing = (t: Trace) =>
+    (t.input_tokens ?? 0) === 0 && (t.output_tokens ?? 0) === 0 && (t.cached_read ?? 0) === 0;
+  const isPaid = (t: Trace) => t.used_llm !== false && !spentNothing(t);
+
   const paid = all.filter(
-    (t) => t.used_llm !== false && (!SCREEN || t.screen === SCREEN) && (!TOPIC || t.topic === TOPIC),
+    (t) => isPaid(t) && (!SCREEN || t.screen === SCREEN) && (!TOPIC || t.topic === TOPIC),
   );
-  const local = all.filter((t) => t.used_llm === false);
+  const local = all.filter((t) => !isPaid(t));
+  const mislabelled = all.filter((t) => t.used_llm !== false && spentNothing(t)).length;
+  if (mislabelled) {
+    console.log(`
+⚠️ ${mislabelled} row(s) are flagged as a model call but spent no tokens.`);
+    console.log('   Counted as local here. They predate the fix in app/api/chat that stamps');
+    console.log('   a library hit `usedLlm: false`, and they will stop appearing on their own.');
+  }
 
   console.log(`\nlast ${DAYS} days${SCREEN ? ` · screen ${SCREEN}` : ''}${TOPIC ? ` · topic ${TOPIC}` : ''}`);
   console.log(`  answered locally  ${local.length}`);

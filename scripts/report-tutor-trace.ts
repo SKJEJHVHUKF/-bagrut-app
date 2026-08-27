@@ -96,8 +96,14 @@ function table(title: string, rows: Map<string, Trace[]>, total: number) {
   // This report used to open with "turns that reached the model: 5", which is
   // a number nobody can act on: five out of eight is an emergency and five out
   // of eighty is a finished job. The local rows exist so the denominator does.
-  const rows = all.filter((r) => r.used_llm !== false);
-  const localRows = all.filter((r) => r.used_llm === false);
+  // ⚠️ THE SAME TWO CONDITIONS report:worklist USES, AND THEY MUST STAY THE
+  // SAME. A library hit was stamped `used_llm = true` for a while; if the two
+  // reports disagreed about what counts as paid, one of them would be quietly
+  // wrong and there would be no way to tell which.
+  const spentNothing = (r: Trace) =>
+    (r.input_tokens ?? 0) === 0 && (r.output_tokens ?? 0) === 0 && (r.cached_read ?? 0) === 0;
+  const rows = all.filter((r) => r.used_llm !== false && !spentNothing(r));
+  const localRows = all.filter((r) => r.used_llm === false || spentNothing(r));
   const total = all.length;
   console.log(`\ntutor turns, last ${DAYS} days: ${total}\n`);
   if (total > 0) {
