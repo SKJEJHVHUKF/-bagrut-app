@@ -80,14 +80,30 @@ async function resolveCurrentTopic(path: string): Promise<string | null> {
   }
 }
 
+/** The sub-topic the URL is on, when it names one. Only `/roadmap/<subId>` does
+ *  — that is the level ladder, which is where a student opens the sheet while
+ *  working. Everything else returns null and gets the topic sheet as before.
+ *  Used for the handful of sub-topics with their own sheet (SUBTOPIC_FORMULAS):
+ *  אינדוקציה under סדרות showed 19 sequence formulas and none of its own steps. */
+function resolveCurrentSubTopic(path: string): string | null {
+  const segs = path.split('/').filter(Boolean);
+  if (segs[0] !== 'roadmap' || !segs[1] || segs[1] === 'track' || segs[1] === 'review') return null;
+  try {
+    return decodeURIComponent(segs[1]);
+  } catch {
+    return segs[1];
+  }
+}
+
 /** The sheet's formulas for a topic — curated + ordered by content/formula-sheet. */
 function formulasForTopic(
   getLesson: typeof GetLesson,
   sheetFormulas: typeof SheetFormulas,
   subject: string,
   topic: string,
+  subId?: string,
 ): Formula[] {
-  return sheetFormulas(getLesson(subject, topic), topic);
+  return sheetFormulas(getLesson(subject, topic), topic, subId);
 }
 
 type TopicFormulas = { topic: string; emoji: string; formulas: Formula[] };
@@ -129,6 +145,10 @@ export default function FormulaSheet() {
       const { allLessonKeys, getLesson } = lessons;
       const { curriculumIndex, isTopicInActivePaper, getTopicMapping } = curriculum;
       const { sheetFormulas } = sheet;
+      // Only the topic the student is actually inside gets the sub-topic sheet.
+      // The other topics in the drawer are reference; overriding them by a
+      // sub-topic id from a different topic would be nonsense.
+      const subId = resolveCurrentSubTopic(pathname);
       const built = (allLessonKeys as typeof AllLessonKeys)()
         .filter((k) => k.subject === 'math5')
         .filter(
@@ -141,7 +161,13 @@ export default function FormulaSheet() {
         .map((k) => ({
           topic: k.topic,
           emoji: getTopicMapping(k.topic)?.emoji ?? '📐',
-          formulas: formulasForTopic(getLesson, sheetFormulas, k.subject, k.topic),
+          formulas: formulasForTopic(
+            getLesson,
+            sheetFormulas,
+            k.subject,
+            k.topic,
+            k.topic === topicName ? (subId ?? undefined) : undefined,
+          ),
         }))
         .filter((t) => t.formulas.length > 0);
       setCurrentTopic(topicName);

@@ -67,15 +67,22 @@ export const CORE_FORMULAS: Record<string, string[]> = {
     'סכום ריבועים',
   ],
 
+  // הסתברות is deliberately SHORT. בייס, מקרי קצה, צירוף and שוליים ותאים were
+  // dropped on the owner's call (2026-08-27): none of them is a formula a
+  // student looks up mid-question — בייס is off-syllabus at this level, and the
+  // other three are counting/reading moves that the lesson teaches in words and
+  // that a card only makes look harder than they are. What a student DOES reach
+  // for is the pair the whole topic rests on: "וגם" is multiply, "או" is add.
   הסתברות: [
-    'הסתברות מותנית',
+    'הסתברות — מה שרוצים חלקי כל האופציות',
+    '"וגם", כפל; "או", חיבור',
     'מאורע משלים',
-    'אי-תלות',
-    'שוליים ותאים',
+    'הסתברות מותנית',
+    // 'אי-תלות' is NOT here: its latex is character-for-character the first
+    // half of the "וגם" card above, so on a six-item sheet it read as the same
+    // formula printed twice. Independence is still taught (and tested) in the
+    // lesson — it just isn't a second card.
     'נוסחת ברנולי',
-    'מקרי קצה',
-    'צירוף',
-    'נוסחת בייס',
   ],
 
   טריגונומטריה: [
@@ -225,11 +232,33 @@ export const CORE_FORMULAS: Record<string, string[]> = {
   סטטיסטיקה: ['ממוצע וסטיית תקן', 'ציון תקן'],
 };
 
+/**
+ * Sub-topic id → formula names, for the few sub-topics whose sheet is NOT the
+ * topic's sheet.
+ *
+ * אינדוקציה is the case that forced this. It lives under סדרות, so the drawer
+ * opened inside it handed the student all 19 sequence formulas and not one of
+ * the four stages the proof is actually marked on — the reference they need
+ * there is the SHAPE of the proof, not an identity. A sub-topic listed here
+ * gets its own sheet, resolved against its own taught formulas; every other
+ * sub-topic keeps showing its topic's sheet, unchanged.
+ */
+export const SUBTOPIC_FORMULAS: Record<string, string[]> = {
+  induction: [
+    'שלב 1 · בסיס האינדוקציה',
+    'שלב 2 · הנחת האינדוקציה',
+    'שלב 3 · צעד האינדוקציה',
+    'שלב 4 · המסקנה',
+    'סכום המספרים הטבעיים',
+    'סכום ריבועים',
+  ],
+};
+
 /** The shape this module needs from a lesson — structural, so callers can pass
  *  a Lesson straight through without this file importing the lesson registry. */
 type LessonLike = {
   formulas?: Formula[];
-  subTopics?: { formulas?: Formula[] }[];
+  subTopics?: { id?: string; formulas?: Formula[] }[];
 } | null | undefined;
 
 /**
@@ -237,8 +266,25 @@ type LessonLike = {
  * sub-topics teach, deduped by latex, narrowed to CORE_FORMULAS and ordered by
  * it. Unknown topic → the full taught set (see the fail-open note above).
  */
-export function sheetFormulas(lesson: LessonLike, topic: string): Formula[] {
+export function sheetFormulas(lesson: LessonLike, topic: string, subId?: string): Formula[] {
   if (!lesson) return [];
+
+  // A sub-topic with its own sheet resolves against ITS OWN taught formulas —
+  // not the topic's pooled set — so a name it shares with the parent topic
+  // can't resolve to the parent's version. Falls through to the topic sheet
+  // when the sub-topic isn't listed or can't be found.
+  if (subId) {
+    const names = SUBTOPIC_FORMULAS[subId];
+    const st = lesson.subTopics?.find((s) => s.id === subId);
+    if (names && st?.formulas) {
+      const out: Formula[] = [];
+      for (const name of names) {
+        const found = st.formulas.find((f) => f.name === name);
+        if (found) out.push(found);
+      }
+      if (out.length) return out;
+    }
+  }
 
   const seen = new Set<string>();
   const taught: Formula[] = [];
