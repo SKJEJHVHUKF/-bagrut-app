@@ -1454,6 +1454,11 @@ $$d = \\frac{|ax_0 + by_0 + c|}{\\sqrt{a^2 + b^2}}$$
           question:
             'הישרים $y = 2x - 1$ ו-$y = -x + 8$ נחתכים בנקודה $A$, וחותכים את ציר ה-$x$ בנקודות $B$ ו-$C$ בהתאמה. מצא את שיעורי שלוש הנקודות ואת שטח המשולש $ABC$.',
           hint: 'חיתוך הישרים — השוואה. חיתוך עם ציר $x$ — הצבת $y = 0$. השטח: בסיס על ציר $x$ וגובה שהוא שיעור ה-$y$ של $A$.',
+          // $B$ and $C$ are GIVEN as being on the x-axis, so their $y$ is a
+          // given and not an answer — boxes for them would be asking the
+          // student to copy the question back.
+          expected: { kind: 'set', values: ['3', '5', '1/2', '8', '75/4'] },
+          answerLabels: ['A — x', 'A — y', 'B — x', 'C — x', 'שטח המשולש ABC'],
           solution: {
             steps: [
               'חיתוך הישרים — משווים: $\\;2x - 1 = -x + 8$.',
@@ -2634,6 +2639,10 @@ $$y y_1 = p(x + x_1)$$
           kind: 'open',
           question: 'מצא את המוקד ואת המדריך של הפרבולה $y^2 = -10x$.',
           hint: 'הצורה $y^2 = -2px$ פותחת שמאלה. זהה $p$, ושים לב שהמוקד משמאל לקודקוד והמדריך מימינו.',
+          // The directrix is a vertical line, so the only number it carries is
+          // its $x$ — one box, labelled so nobody types "x = 2.5" into it.
+          expected: { kind: 'set', values: ['-2.5', '0', '2.5'] },
+          answerLabels: ['מוקד — x', 'מוקד — y', 'מדריך — x ='],
           solution: {
             steps: [
               'הצורה $y^2 = -2px$ (פותחת שמאלה), עם $2p = 10$, כלומר $p = 5$.',
@@ -2700,6 +2709,14 @@ $$y y_1 = p(x + x_1)$$
           kind: 'open',
           question: 'מצא את נקודות החיתוך של הישר $y = x - 3$ עם הפרבולה $y^2 = 4x$, ואת אורך המיתר הנוצר.',
           hint: 'הצב $y = x - 3$ במשוואת הפרבולה, פתור את הריבועית, ואז חשב את המרחק בין שתי הנקודות.',
+          expected: { kind: 'set', values: ['1', '-2', '9', '6', '8*sqrt(2)'] },
+          answerLabels: [
+            'נקודה ראשונה — x',
+            'נקודה ראשונה — y',
+            'נקודה שנייה — x',
+            'נקודה שנייה — y',
+            'אורך המיתר',
+          ],
           solution: {
             steps: [
               'מציבים $y = x - 3$ בפרבולה: $\\;(x - 3)^2 = 4x$.',
@@ -3288,6 +3305,10 @@ $$S_{\\triangle} = \\frac{1}{2}\\cdot 2c \\cdot |y_C| = c\\,|y_C|$$
           kind: 'open',
           question: 'עבור האליפסה $\\dfrac{x^2}{25} + \\dfrac{y^2}{16} = 1$, מצא את המוקדים, את האקסצנטריות, ואת היקף המשולש שקודקודיו נקודה על האליפסה ושני המוקדים.',
           hint: 'מצא $c$ מ-$c^2 = a^2 - b^2$, ואז $e = c/a$. ההיקף הוא $2a + 2c$.',
+          // The foci are symmetric about the origin, so one box (the right-hand
+          // one) pins both — asking for $-3$ as well would be asking twice.
+          expected: { kind: 'set', values: ['3', '3/5', '16'] },
+          answerLabels: ['המוקד הימני — x', 'אקסצנטריות e', 'היקף המשולש'],
           solution: {
             steps: [
               '$a^2 = 25$ ו-$b^2 = 16$, ולכן $a = 5$.',

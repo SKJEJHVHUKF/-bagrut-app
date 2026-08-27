@@ -31,7 +31,13 @@ import { buttonTap } from '@/lib/animations';
 import { celebrateCorrect } from '@/lib/confetti';
 import { seededOrder } from '@/lib/shuffle';
 import { announce } from '@/lib/a11y/announce';
-import { checkAnswer, checkAnswerParts, matchKnownMistake, type CheckResult } from '@/lib/answer-check';
+import {
+  checkAnswer,
+  checkAnswerParts,
+  matchKnownMistake,
+  type AnswerDiagnosis,
+  type CheckResult,
+} from '@/lib/answer-check';
 import { recordResult, type ResultSource } from '@/lib/results';
 import { recordMistake } from '@/lib/mistakes';
 import type { ErrorCategory } from '@/lib/mistakes';
@@ -95,6 +101,14 @@ export function QuestionRunnerCard({
   const [tries, setTries] = useState(0);
   const [firstTryCorrect, setFirstTryCorrect] = useState<boolean | null>(null);
   const [revealed, setRevealed] = useState(false);
+  /** The student got there IN THE END — on the first try or a later one. The
+   *  rung still scores `firstTryCorrect`, but the screen must not tell someone
+   *  who fixed their own mistake that they were wrong: that is the one message
+   *  guaranteed to stop them from retrying next time. */
+  const [solved, setSolved] = useState(false);
+  /** A student who solved it can still open the worked solution — on request.
+   *  It is not pushed at them, which is what "הסבר מלא רק אחרי כישלון" means. */
+  const [showSolution, setShowSolution] = useState(false);
   /** The answer the student actually gave on a wrong FIRST attempt, captured at
    *  the moment it happened. The render state it used to be derived from is
    *  cleared by retryMCQ, so it could not survive to the tutor. */
@@ -174,6 +188,10 @@ export function QuestionRunnerCard({
     userAnswer?: string,
     chosenIndex?: number,
     selfReported?: boolean,
+    // Passed in rather than read from `check`: the state setter has not
+    // committed yet when this runs, and reading it here would silently log the
+    // PREVIOUS question's diagnosis on every open answer.
+    diagnosis?: AnswerDiagnosis,
   ) {
     // Every path that can register a wrong first attempt funnels through here
     // — MCQ, machine-graded open, and self-report — so this is the one place
@@ -198,6 +216,8 @@ export function QuestionRunnerCard({
       // attempt — the auto-open on a miss happens after `logFirst` has already
       // run, so it can't retro-poison the measured attempt.
       ...(helpTaken ? { hintUsed: true } : {}),
+      // The shape of the wrong answer, for the cross-topic pattern report.
+      ...(!correct && diagnosis ? { answerDiagnosis: diagnosis } : {}),
     });
     // Spaced repetition is handled inside recordResult (lib/results.ts) for
     // every surface, so it can't be forgotten by a new caller.
@@ -235,6 +255,7 @@ export function QuestionRunnerCard({
   function gradeCorrect() {
     celebrateCorrect();
     announce('תשובה נכונה');
+    setSolved(true);
     setRevealed(true);
   }
 
@@ -320,7 +341,7 @@ export function QuestionRunnerCard({
       setFirstTryCorrect(correct);
       // submitOpen only runs when `expected` exists and isn't 'manual', so this
       // verdict came from lib/answer-check, not from the student.
-      logFirst(correct, typed, undefined, false);
+      logFirst(correct, typed, undefined, false, res.diagnosis);
     }
     if (correct) gradeCorrect();
     else gradeWrong(progressed);
@@ -336,7 +357,10 @@ export function QuestionRunnerCard({
     setFirstTryCorrect(correct);
     logFirst(correct, input || undefined, undefined, true);
     setRevealed(true);
-    if (correct) celebrateCorrect();
+    if (correct) {
+      setSolved(true);
+      celebrateCorrect();
+    }
   }
 
   const wrong = firstTryCorrect === false;
@@ -473,7 +497,7 @@ export function QuestionRunnerCard({
       {/* 2 · Open answer — no machine-checkable spec → solve on paper, self-report */}
       {q.kind === 'open' && !autoGradable && !revealed && (
         <button
-          onClick={() => setRevealed(true)}
+          onClick={() => { setShowSolution(true); setRevealed(true); }}
           className="w-full inline-flex items-center justify-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/40 px-4 py-3 rounded-xl font-bold text-violet-800 text-sm transition-colors"
         >
           <KeyRound className="w-4 h-4" />
@@ -506,11 +530,15 @@ export function QuestionRunnerCard({
         </motion.div>
       )}
 
-      {/* Correct banner */}
-      {revealed && firstTryCorrect === true && (
+      {/* Correct banner — also for a student who missed first and then fixed it.
+          That case used to fall through to the rose "טעית" banner below, which
+          reported a wrong answer to someone looking at their own correct one. */}
+      {revealed && solved && (
         <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-700">
           <CheckCircle className="w-4 h-4" />
-          {voiceCorrect(q.id, { source, firstTry: tries <= 1 })}
+          {firstTryCorrect === true
+            ? voiceCorrect(q.id, { source, firstTry: tries <= 1 })
+            : 'תיקנת בעצמך והגעת לתשובה הנכונה — בדיוק ככה לומדים.'}
         </div>
       )}
 
@@ -525,6 +553,21 @@ export function QuestionRunnerCard({
             style={{ overflow: 'hidden' }}
             className="space-y-3"
           >
+            {/* The worked solution is PUSHED only at a student who did not get
+                there. Someone who answered correctly (first try or after a
+                retry) gets a button instead — handing them a full explanation
+                they did not ask for reads as "you failed", and buries the one
+                line that matters: they were right. */}
+            {solved && !showSolution && (
+              <button
+                onClick={() => setShowSolution(true)}
+                className="w-full inline-flex items-center justify-center gap-2 bg-slate-900/[0.04] hover:bg-slate-900/[0.07] border border-slate-900/10 px-4 py-2.5 rounded-xl font-bold text-slate-700 text-sm transition-colors"
+              >
+                <KeyRound className="w-4 h-4" /> הצג את הפתרון המלא
+              </button>
+            )}
+
+            {(!solved || showSolution) && (<>
             {/* FREE, static "why did I get it wrong?" for MCQ — no API. Names the
                 specific wrong option the student picked vs the correct one, plus
                 an authored per-distractor note when available. */}
@@ -561,7 +604,7 @@ export function QuestionRunnerCard({
                 </div>
               </div>
             )}
-            {wrong && (
+            {wrong && !solved && (
               <div className="flex items-center gap-1.5 text-sm font-bold text-rose-700">
                 <XCircle className="w-4 h-4" /> {voiceWrong(q.id)}
               </div>
@@ -570,27 +613,32 @@ export function QuestionRunnerCard({
               <div className="text-[10px] font-black tracking-widest text-violet-700 mb-2 uppercase flex items-center gap-1.5">
                 <KeyRound className="w-3 h-3" /> פתרון
               </div>
-              <ol className="space-y-2.5">
+              {/* Roomier, twice over: space-y-2.5 ran the steps together, and
+                  space-y-4 was still read as one block on a phone. Each step is
+                  a separate thought and has to LOOK like one — the gap is the
+                  only thing separating them, since they share size and colour. */}
+              <ol className="space-y-6">
                 {q.solution.steps.map((step, i) => (
-                  <li key={i} className="flex gap-2.5">
+                  <li key={i} className="flex gap-3">
                     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center text-[11px] font-black text-white shadow-sm shadow-violet-500/30">
                       {i + 1}
                     </div>
-                    <div className="flex-1 min-w-0 chat-md text-sm text-slate-800 pt-0.5"><MathText>{step}</MathText></div>
+                    <div className="flex-1 min-w-0 chat-md text-sm leading-relaxed text-slate-800 pt-0.5"><MathText>{step}</MathText></div>
                   </li>
                 ))}
               </ol>
-              <div className="mt-3 bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2">
+              <div className="mt-4 bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2.5">
                 <div className="text-[10px] font-black tracking-widest text-emerald-700 mb-0.5 uppercase">תשובה סופית</div>
                 <div className="text-sm font-bold text-emerald-900 chat-md"><MathText inline>{q.solution.finalAnswer}</MathText></div>
               </div>
               {q.solution.explanation && (
-                <div className="mt-2 bg-sky-500/[0.06] border border-sky-500/25 rounded-lg px-3 py-2">
+                <div className="mt-3 bg-sky-500/[0.06] border border-sky-500/25 rounded-lg px-3 py-2.5">
                   <div className="text-[10px] font-black tracking-widest text-sky-700 mb-0.5 uppercase">למה זה עובד</div>
                   <div className="text-xs text-slate-700 chat-md leading-relaxed"><MathText>{q.solution.explanation}</MathText></div>
                 </div>
               )}
             </div>
+            </>)}
 
             {/* Self-report for un-gradable open questions */}
             {q.kind === 'open' && !autoGradable && firstTryCorrect === null && (
@@ -610,8 +658,10 @@ export function QuestionRunnerCard({
               </div>
             )}
 
-            {/* The repair path — the one CTA that leads somewhere new. */}
-            {wrong && fixTarget && (
+            {/* The repair path — the one CTA that leads somewhere new. Not for
+                a student who fixed it themselves: an orange "תקן את זה עכשיו"
+                under an emerald "you got it" is two verdicts on one answer. */}
+            {wrong && !solved && fixTarget && (
               <Link
                 href={`/fix/${encodeURIComponent(fixTarget.id)}`}
                 className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-rose-600 to-orange-500 hover:from-rose-500 hover:to-orange-400 px-4 py-3.5 rounded-2xl font-black text-white text-sm shadow-lg shadow-rose-500/20 transition-colors"
@@ -621,8 +671,10 @@ export function QuestionRunnerCard({
               </Link>
             )}
 
-            {/* When they got it wrong: tag the mistake + optional AI "why?" */}
-            {wrong && firstTryCorrect !== null && (
+            {/* When they got it wrong AND never got there: tag the mistake +
+                optional AI "why?". A self-corrected answer skips it — they
+                already answered "why". */}
+            {wrong && !solved && firstTryCorrect !== null && (
               <>
                 {mistakeId && (
                   <MistakeTagger mistakeId={mistakeId} initial={aiCategory} />
