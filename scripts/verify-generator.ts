@@ -35,6 +35,7 @@
 
 import { checkAnswer, checkAnswerParts } from '../lib/answer-check';
 import { getSubTopic } from '../content/lessons';
+import { checkGeoFences } from '../lib/geo-figure';
 import { leaksAnswer } from '../lib/help-ladder';
 import { allTemplates, generate, generateById, getTemplate } from '../lib/generator';
 import type { GeneratedQuestion } from '../lib/generator';
@@ -118,6 +119,19 @@ const digitsOf = (s: string) => (s.match(/\d/g) ?? []).join('');
 
 function checkInstance(where: string, g: GeneratedQuestion) {
   const q = g.question;
+
+  // Every ```geo fence, validated as a geometric MODEL by the real validator —
+  // the same one `verify-content` runs over authored figures. A generated
+  // figure computes its coordinates from the question's parameters, so this is
+  // what proves the drawing and the numbers cannot drift apart: a label that
+  // says 4 on a segment of length 5, a "parallel" pair that is not parallel, an
+  // angle marked 50° that measures 47°, a point drawn off its own circle.
+  for (const [label, text] of [
+    ['question', q.question],
+    ['solution', q.solution.steps.join('\n')],
+  ] as const) {
+    for (const e of checkGeoFences(text)) fail(where, `${label}: ${e}`);
+  }
 
   checkText(where, 'question', q.question);
   for (const [i, s] of q.solution.steps.entries()) checkText(where, `step[${i}]`, s);

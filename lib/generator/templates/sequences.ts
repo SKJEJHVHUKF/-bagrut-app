@@ -27,7 +27,6 @@
  * something other than what they teach.
  */
 
-import type { PracticeQuestion } from '@/content/lessons/types';
 import { Frac, type Rng } from '../rng';
 import { mcq, open } from './shared';
 import type { GenTemplate } from '../types';

@@ -19,7 +19,6 @@
  * carry. It falls back to the authored bank.
  */
 
-import type { PracticeQuestion } from '@/content/lessons/types';
 import { choose, Frac, type Rng } from '../rng';
 import { mcq } from './shared';
 import type { GenTemplate } from '../types';
