@@ -364,6 +364,172 @@ check('ghost calc-005 branch: "sin^3/3" would give 1/3 ~= 0.333, well below pi/4
 check('ghost calc-005 branch: pi/2 ~= 1.571 is the interval width, i.e. the unreachable ceiling',
   Math.PI / 2 > Math.PI / 4 ? 1 : 0, 1);
 
+// ---------------------------------------------------------------------
+// Ghost Replay — the four-level plane track (571).
+//
+// Five replays added 2026-08-29, one per level rung. Everything below is
+// re-derived here, INCLUDING the numbers invented inside failure branches: a
+// branch that quotes a wrong value has to be right about what the wrong value
+// actually is, or it teaches a second error while correcting the first.
+// ---------------------------------------------------------------------
+const sinD = (d: number) => Math.sin(deg(d));
+const cosD = (d: number) => Math.cos(deg(d));
+const tanD = (d: number) => Math.tan(deg(d));
+
+// --- gr-trig-pb-006 · circle theorems + the 180-alpha identity -------------
+check('ghost pb-006: inscribed angle is half the central one', 130 / 2, 65);
+check('ghost pb-006: opposite angles in the cyclic quadrilateral', 180 - 65, 115);
+// The independent second road: D leans on the MAJOR arc, whose central angle
+// is the reflex 360-130. Two unrelated theorems landing on 115 is the check.
+check('ghost pb-006: the reflex central angle on the major arc', 360 - 130, 230);
+check('ghost pb-006: half the reflex angle agrees with the quadrilateral', (360 - 130) / 2, 115);
+check('ghost pb-006: cos flips sign across 180-alpha', cosD(115) + cosD(65), 0);
+check('ghost pb-006: ...but sin does NOT — this is the trap in step 4', sinD(115) - sinD(65), 0);
+check('ghost pb-006 branch: cos 65 ~= 0.4226', cosD(65), 0.42261826174069944);
+check('ghost pb-006 branch: cos 115 ~= -0.4226', cosD(115), -0.42261826174069944);
+check('ghost pb-006 branch: "supplement the CENTRAL angle" gives 50, not 115', 180 - 130, 50);
+// The distractor "D sees the chord at 65 too" has to be wrong for EVERY position
+// of D, not just the one in the figure — otherwise it is a distractor that is
+// secretly right somewhere. There is nothing to re-derive symbolically here, so
+// this is checked against a coordinate model: A and B fixed on the unit circle
+// 130 degrees apart, then C swept along the major arc and D along the minor arc.
+// A model cannot prove the theorem, but it kills a wrong one.
+{
+  const ang = (px: number, py: number, qx: number, qy: number, rx: number, ry: number) => {
+    const v1x = qx - px, v1y = qy - py, v2x = rx - px, v2y = ry - py;
+    const dot = v1x * v2x + v1y * v2y;
+    const m1 = Math.sqrt(v1x * v1x + v1y * v1y), m2 = Math.sqrt(v2x * v2x + v2y * v2y);
+    return (Math.acos(dot / (m1 * m2)) * 180) / Math.PI;
+  };
+  // A at -65 degrees, B at +65 degrees: the central angle AOB is 130.
+  const A = [Math.cos(deg(-65)), Math.sin(deg(-65))];
+  const B = [Math.cos(deg(65)), Math.sin(deg(65))];
+  let majorWorst = 0, minorWorst = 0, sumWorst = 0;
+  for (let k = 1; k < 120; k++) {
+    // C on the MAJOR arc: the long way round, from 65 to 295 degrees.
+    const tc = 65 + (230 * k) / 120;
+    const C = [Math.cos(deg(tc)), Math.sin(deg(tc))];
+    const acb = ang(C[0], C[1], A[0], A[1], B[0], B[1]);
+    majorWorst = Math.max(majorWorst, Math.abs(acb - 65));
+    // D on the MINOR arc: from -65 to 65 degrees.
+    const td = -65 + (130 * k) / 120;
+    const D = [Math.cos(deg(td)), Math.sin(deg(td))];
+    const adb = ang(D[0], D[1], A[0], A[1], B[0], B[1]);
+    minorWorst = Math.max(minorWorst, Math.abs(adb - 115));
+    sumWorst = Math.max(sumWorst, Math.abs(acb + adb - 180));
+  }
+  check('ghost pb-006 model: every C on the major arc sees the chord at 65', majorWorst < 1e-9 ? 1 : 0, 1);
+  check('ghost pb-006 model: every D on the minor arc sees it at 115, never 65', minorWorst < 1e-9 ? 1 : 0, 1);
+  check('ghost pb-006 model: the two are supplementary at every position', sumWorst < 1e-9 ? 1 : 0, 1);
+}
+
+// --- gr-trig-rt-007 · two elevation angles --------------------------------
+const poleH = 25 / (1 / tanD(31) - 1 / tanD(52));
+check('ghost rt-007: the pole is 28.31 m', Math.round(poleH * 100) / 100, 28.31);
+check('ghost rt-007: the near distance', Math.round((poleH / tanD(52)) * 100) / 100, 22.12);
+check('ghost rt-007: the far distance', Math.round((poleH / tanD(31)) * 100) / 100, 47.12);
+// The check the replay actually asks for: the UNUSED datum comes back out.
+check('ghost rt-007: the two distances differ by exactly the given 25',
+  Math.round((poleH / tanD(31) - poleH / tanD(52)) * 100) / 100, 25);
+check('ghost rt-007: the smaller elevation belongs to the farther observer',
+  poleH / tanD(31) > poleH / tanD(52) ? 1 : 0, 1);
+check('ghost rt-007 branch: reading 25 as the near distance gives 32.00',
+  Math.round(25 * tanD(52) * 100) / 100, 32);
+check('ghost rt-007 branch: reading 25 as the far distance gives 15.02',
+  Math.round(25 * tanD(31) * 100) / 100, 15.02);
+check('ghost rt-007 branch: subtracting the TANGENTS gives 36.81',
+  Math.round((25 / (tanD(52) - tanD(31))) * 100) / 100, 36.81);
+check('ghost rt-007 branch: reading 25 as the hypotenuse gives 19.70',
+  Math.round(25 * sinD(52) * 100) / 100, 19.7);
+check('ghost rt-007 branch: the reversed subtraction really is negative',
+  poleH / tanD(52) - poleH / tanD(31) < 0 ? 1 : 0, 1);
+
+// --- gr-trig-law-006 · cosine law, then the extended sine law -------------
+check('ghost law-006: c^2 = 89 - 40', 8 ** 2 + 5 ** 2 - 2 * 8 * 5 * cosD(60), 49);
+check('ghost law-006: c = 7', Math.sqrt(49), 7);
+check('ghost law-006: 2R = 14 sqrt3 / 3', 7 / sinD(60), (14 * Math.sqrt(3)) / 3);
+check('ghost law-006: R = 7 sqrt3 / 3 ~= 4.04', Math.round((7 / sinD(60) / 2) * 100) / 100, 4.04);
+// The replay's closing check: the circumcircle must contain the triangle, so
+// its diameter is at least the longest side. This is what kills two branches.
+check('ghost law-006: the diameter 8.08 exceeds the longest side 8',
+  Math.round((7 / sinD(60)) * 100) / 100 > 8 ? 1 : 0, 1);
+check('ghost law-006 branch: the sign error gives c ~= 11.36',
+  Math.round(Math.sqrt(8 ** 2 + 5 ** 2 + 2 * 8 * 5 * cosD(60)) * 100) / 100, 11.36);
+check('ghost law-006 branch: ...and an obtuse-looking c exceeds sqrt(89)',
+  Math.sqrt(129) > Math.sqrt(89) ? 1 : 0, 1);
+check('ghost law-006 branch: forgetting the halving reports the diameter 8.08',
+  Math.round((7 / sinD(60)) * 100) / 100, 8.08);
+check('ghost law-006 branch: dropping cos entirely gives c^2 = 9', 8 ** 2 + 5 ** 2 - 2 * 8 * 5, 9);
+check('ghost law-006 branch: ...and c = 3 collapses the triangle, since 3 + 5 = 8 exactly',
+  3 + 5 === 8 ? 1 : 0, 1);
+check('ghost law-006 branch: "b paired with gamma" gives a diameter 5.77, SHORTER than side 8',
+  Math.round((5 / sinD(60)) * 100) / 100 < 8 ? 1 : 0, 1);
+check('ghost law-006 branch: the triangle is not right-angled, so c/2 is not R',
+  5 ** 2 + 7 ** 2 === 8 ** 2 ? 1 : 0, 0);
+
+// --- gr-trig-area-006 · three sides -> area --------------------------------
+const cosG = (7 ** 2 + 8 ** 2 - 9 ** 2) / (2 * 7 * 8);
+const sinG = Math.sqrt(1 - cosG * cosG);
+check('ghost area-006: cos gamma = 2/7', cosG, 2 / 7);
+check('ghost area-006: sin gamma = 3 sqrt5 / 7', sinG, (3 * Math.sqrt(5)) / 7);
+check('ghost area-006: S = 12 sqrt5', 0.5 * 7 * 8 * sinG, 12 * Math.sqrt(5));
+// Heron does NOT go through the cosine law, so it is a genuinely independent
+// confirmation of the area even though the replay itself stays in-syllabus.
+check('ghost area-006: Heron agrees without using the cosine law',
+  Math.sqrt(12 * 5 * 4 * 3), 12 * Math.sqrt(5));
+// The in-syllabus check the replay actually teaches: the 1/2*a*b ceiling.
+check('ghost area-006: S < the right-angle ceiling of 28', 12 * Math.sqrt(5) < 28 ? 1 : 0, 1);
+check('ghost area-006: ...and close to it, so gamma is acute and near 90',
+  Math.round((Math.acos(cosG) * 180) / Math.PI * 10) / 10, 73.4);
+check('ghost area-006: 7-8-9 is NOT right-angled, so the "obvious" 28 is wrong',
+  7 ** 2 + 8 ** 2 === 9 ** 2 ? 1 : 0, 0);
+check('ghost area-006 branch: pairing 8 and 9 with gamma gives 34.50',
+  Math.round(0.5 * 8 * 9 * sinG * 100) / 100, 34.5);
+check('ghost area-006 branch: pairing 7 and 9 with gamma gives 30.19',
+  Math.round(0.5 * 7 * 9 * sinG * 100) / 100, 30.19);
+check('ghost area-006 branch: the 34.50 branch DOES break the 28 ceiling',
+  0.5 * 8 * 9 * sinG > 28 ? 1 : 0, 1);
+check('ghost area-006 branch: a loose ceiling of 56 would NOT catch it — why the half matters',
+  0.5 * 8 * 9 * sinG > 56 ? 1 : 0, 0);
+check('ghost area-006 branch: "sin = 1 - cos" would give 5/7, not 3sqrt5/7',
+  1 - cosG, 5 / 7);
+check('ghost area-006 branch: sin + cos = 1 is false at 45 degrees',
+  Math.abs(sinD(45) + cosD(45) - 1) > 0.4 ? 1 : 0, 1);
+
+// --- gr-trig-mix-006 · the cyclic quadrilateral ----------------------------
+const diagAC = Math.sqrt(5 ** 2 + 8 ** 2 - 2 * 5 * 8 * cosD(60));
+check('ghost mix-006: the diagonal AC = 7', diagAC, 7);
+check('ghost mix-006: the opposite angle ADC = 120', 180 - 60, 120);
+// 49 = AD^2 + 9 + 3AD  ->  AD^2 + 3AD - 40 = 0
+check('ghost mix-006: the positive root is AD = 5', (-3 + Math.sqrt(9 + 160)) / 2, 5);
+check('ghost mix-006: the rejected root is -8', (-3 - Math.sqrt(9 + 160)) / 2, -8);
+check('ghost mix-006: AD = 5 really closes the triangle back onto AC = 7',
+  Math.sqrt(5 ** 2 + 3 ** 2 - 2 * 5 * 3 * cosD(120)), 7);
+check('ghost mix-006: the quadrilateral area is 23.8',
+  Math.round((0.5 * 5 * 8 * sinD(60) + 0.5 * 5 * 3 * sinD(120)) * 10) / 10, 23.8);
+check('ghost mix-006: sin 120 = sin 60, tying back to the base level', sinD(120), sinD(60));
+check('ghost mix-006: cos 120 = -1/2, which is why the correction term ADDS', cosD(120), -0.5);
+// The step-3 trap is dangerous precisely because it stays self-consistent:
+// assuming EQUAL opposite angles yields a clean single positive root.
+check('ghost mix-006 branch: assuming ADC = 60 gives the tidy root AD = 8',
+  (3 + Math.sqrt(9 + 160)) / 2, 8);
+check('ghost mix-006 branch: ...whose other root is -5, so nothing looks wrong',
+  (3 - Math.sqrt(9 + 160)) / 2, -5);
+// ...but AD = 8 does not close the triangle. This is the check that kills it.
+check('ghost mix-006 branch: AD = 8 with 120 degrees gives 9.85, not 7',
+  Math.round(Math.sqrt(8 ** 2 + 3 ** 2 - 2 * 8 * 3 * cosD(120)) * 100) / 100, 9.85);
+check('ghost mix-006 branch: carrying AD = 8 into the area gives 27.7',
+  Math.round((0.5 * 5 * 8 * sinD(60) + 0.5 * 8 * 3 * sinD(120)) * 10) / 10, 27.7);
+check('ghost mix-006 branch: stopping at triangle ABC alone gives 17.3',
+  Math.round(0.5 * 5 * 8 * sinD(60) * 10) / 10, 17.3);
+check('ghost mix-006 branch: the sign error on AC gives 11.36, not 7',
+  Math.round(Math.sqrt(5 ** 2 + 8 ** 2 + 2 * 5 * 8 * cosD(60)) * 100) / 100, 11.36);
+check('ghost mix-006 branch: the invented "(5+3)(8+5)/2 * sin60" overshoots the 27.5 ceiling',
+  0.5 * (5 + 3) * (8 + 5) * sinD(60) > 0.5 * 5 * 8 + 0.5 * 5 * 3 ? 1 : 0, 1);
+// AC = 7 cannot be a diameter: BC = 8 is a chord, and no chord beats the diameter.
+check('ghost mix-006 branch: AC = 7 is not a diameter, since the chord BC = 8 is longer',
+  8 > 7 ? 1 : 0, 1);
+
 // =====================================================================
 console.log(`\nTRIG VERIFY: ${pass}/${pass + fail} passed.`);
 if (fail > 0) {
