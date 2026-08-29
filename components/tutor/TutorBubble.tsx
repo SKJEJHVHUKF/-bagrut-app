@@ -244,6 +244,15 @@ export default function TutorBubble() {
           // change at all six sites — worth doing once the denominator has
           // shown it is worth doing.
           localRouterMatched: true,
+          // ⚠️ IT WAS MISSING HERE, AND THAT MADE THE WHOLE COLUMN UNREADABLE.
+          //
+          // The paid beacon records the flag and this one did not, so every
+          // local turn stored `false` regardless. Cross-tabulated: 136 local
+          // turns, 136 of them "compiler off" — a perfect correlation that
+          // was an artefact of this line, not a fact about the rollout. The
+          // question "is the compiler actually on for students" could not be
+          // answered from the one column built to answer it.
+          compilerFlagOn: tutorFlag('compiler'),
           fallbackReason: 'no_fallback',
         },
       }),
@@ -533,6 +542,30 @@ export default function TutorBubble() {
         setMsgs((m) => [
           ...m,
           { id: `a-${Date.now()}`, role: 'assistant', text: fromPlan, local: true },
+        ]);
+        setSending(false);
+        return;
+      }
+
+      // ===== "יש לך טיפים?" — the one ask no screen can improve =====
+      //
+      // The compiler serves this too, but only behind a focus and behind the
+      // rollout flag, and the screen where a student asks for exam tips is
+      // usually the one with no question on it at all. Same answer either way,
+      // so serving it here costs nothing and closes the gap.
+      //
+      // AFTER the plan layer, because "על מה כדאי לעבוד" is a better answer
+      // than five general tips when there is a plan to name.
+      if (canonicalIntent(text, undefined).intent === 'study_tips') {
+        const { studyTips } = await import('@/lib/study-tips');
+        setMsgs((m) => [
+          ...m,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            text: studyTips(focusNow?.topic || undefined),
+            local: true,
+          },
         ]);
         setSending(false);
         return;

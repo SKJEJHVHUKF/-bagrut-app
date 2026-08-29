@@ -76,6 +76,15 @@ export const CANONICAL_INTENTS = [
   // an authored Topic Card and by nothing else — no ladder rung, no FAQ entry,
   // no derived step. If no card matches, it goes to the model unchanged.
   'concept',
+  // ⚠️ THE SECOND INTENT THAT IS NOT ABOUT THE QUESTION ON SCREEN, AND THE
+  // ONLY ONE WHOSE ANSWER IS THE SAME FOR EVERY STUDENT.
+  //
+  // Four paid turns in fourteen days asked for study tips in four different
+  // phrasings. Everything else in this router is grounded in the exercise,
+  // because a general answer about a specific question is the failure mode —
+  // here the general answer is the correct one, and lib/study-tips is where it
+  // is written down. It never touches the question, so no veto applies to it.
+  'study_tips',
 ] as const;
 
 export type CanonicalIntent = (typeof CANONICAL_INTENTS)[number];
@@ -237,6 +246,13 @@ const TAIL = `(?:\\s*${HERE})?(?:\\s*${JUST})?\\s*$`;
 // `טעות שלי` (שלי is filler). `npm run test:intent` now fails on any pattern
 // containing a filler word, so the next one is caught at authoring time.
 const RULES: Rule[] = [
+  // --- "יש לך טיפים?" -----------------------------------------------
+    // ⚠️ `טיפ` NEEDS A RIGHT BOUNDARY. "טיפה יותר ברור" is ordinary Hebrew and
+    // starts with the same three letters; without the boundary every "טיפה"
+    // in the app would be answered with five study tips.
+    R('study_tips', `(?:^|[^א-ת])טיפ(?:ים)?(?:[^א-ת]|$)|(?:^|[^א-ת])עצה|עצות`, 0.9),
+    R('study_tips', `איך\\s*(?:כדאי\\s*)?(?:ללמוד|להתכונן|לחזור)\\s*(?:ל|למבחן|לבגרות)?`, 0.85),
+
   // --- "איך מחשבים?" ------------------------------------------------
     R('how_to_compute', `(?:איך|כיצד)\\s*(?:מחשבים|לחשב|חישבת|מחשב)`, 0.9),
     R('how_to_compute', `${OPEN}(?:איך|כיצד)${TAIL}`, 0.7),
@@ -248,6 +264,12 @@ const RULES: Rule[] = [
     R('how_to_solve', `(?:איך|כיצד)\\s*(?:[א-ת]+\\s+)?(?:פותרים|לפתור|ניגשים|לגשת|מתחילים|להתחיל|ממשיכים)`, 0.9),
     R('how_to_solve', `(?:מאיפה|מהיכן)\\s*(?:מתחילים|מתחיל(?:ה)?|להתחיל)`, 0.9),
     R('how_to_solve', `יש\\s*(?:עוד\\s*)?דרך`, 0.8),
+  // From replay-trace: three shapes that all cost a call and all mean the same
+  // thing — do this one with me. They land on the first step like every other
+  // how_to_solve, which is the ladder's answer and not the whole solution.
+    R('how_to_solve', `(?:אתה\\s*)?(?:יכול|תוכל|מוכן)\\s*(?:[א-ת]+\\s+)?לפתור`, 0.85),
+    R('how_to_solve', `מה\\s*(?:ה)?פתרונ(?:ות)?|מה\\s*הפתרון`, 0.85),
+    R('how_to_solve', `(?:תעבור|לעבור|נעבור)\\s*(?:איתי\\s*)?על`, 0.85),
 
   // --- "תסביר לי" ---------------------------------------------------
     R('explain', `(?:תסביר|הסבר|להסביר)`, 0.9),
@@ -262,7 +284,7 @@ const RULES: Rule[] = [
 
   // --- "למה עושים את זה?" -------------------------------------------
     R('why_this_step', `(?:למה|מדוע|בשביל\\s*מה)\\s*(?:עושים|מציבים|מחלקים|מכפילים|מחברים|מחסרים|בוחרים|צריך|לוקחים)`, 0.85),
-    R('why_this_step', `${OPEN}(?:למה|מדוע)${TAIL}`, 0.7),
+    R('why_this_step', `${OPEN}(?:למה|מדוע)${TAIL}`, 0.75),
 
   // --- "תן דוגמה" ---------------------------------------------------
     R('give_example', `דוגמה`, 0.9),
@@ -365,9 +387,18 @@ const RULES: Rule[] = [
   // Placed after EVERY other rule so each specific one gets first refusal:
   // "למה לא" is still why_not, "למה טעיתי" is still why_wrong, "למה זה עובד"
   // is still how_it_works. Only a "למה" that nothing else claimed lands here.
-  // Confidence 0.7 says so — below the 0.75 line, so `decideFallbackReason`
-  // reports `low_confidence` rather than pretending to be sure.
-    R('why_this_step', `(?:^|[^א-ת])(?:למה|מדוע|מדוע)(?:[^א-ת]|$)`, 0.7),
+  //
+  // ⚠️ IT WAS 0.7 — DELIBERATELY BELOW THE SERVE LINE — AND THAT COST REAL
+  // MONEY. Five paid turns in fourteen days were "למה", "למה זה ככה",
+  // "למה זה לא 6", "אבל למה דווקא זאת התשובה": a rule matched every one of
+  // them and the router refused to serve on it. The uncertainty 0.7 encoded is
+  // about WHICH why, not about whether the message is on-subject — and this
+  // intent grounds on the CURRENT question's own explanation, so being wrong
+  // about which why costs a student the general explanation instead of a
+  // specific one. That is a worse answer, not a wrong one, and the follow-up
+  // layer catches it for free. Costing a model call for it was the expensive
+  // choice all along.
+    R('why_this_step', `(?:^|[^א-ת])(?:למה|מדוע|מדוע)(?:[^א-ת]|$)`, 0.75),
 ];
 
 /**
@@ -423,7 +454,11 @@ export function canonicalIntent(message: string, ownText?: string): IntentMatch 
     // stand in for that: "מה זה בלי החזרה" names a real concept that no
     // noun list will ever contain in full. Gating concept on the list made
     // every card unreachable — measured, all ten card phrasings returned null.
-    if (rule.intent !== 'concept' && namesSubject) continue;
+    // `study_tips` is exempt for a different reason than `concept`: its answer
+    // is the same five bullets whatever the message names, so "טיפים לזכור
+    // נוסחאות בטריגונומטריה" asked from a sequences question is not a general
+    // answer about the wrong subject — it is the only answer there is.
+    if (rule.intent !== 'concept' && rule.intent !== 'study_tips' && namesSubject) continue;
     if (!rule.re.test(folded)) continue;
     if (!best || rule.weight > best.weight) best = rule;
   }
@@ -627,5 +662,11 @@ export function groundingFor(
       // specific artefact; offering prose instead and calling it a table is
       // how a local answer earns a reputation for missing the point.
       return keyPoints.length ? { kind: 'key-points', text: keyPoints.join('\n') } : null;
+
+    case 'study_tips':
+      // Nothing in the question grounds it and nothing should try. The answer
+      // lives in lib/study-tips and the compiler serves it directly — same
+      // shape as `concept`, which is grounded by a Topic Card and not here.
+      return null;
   }
 }

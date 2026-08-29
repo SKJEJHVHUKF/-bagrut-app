@@ -32,6 +32,7 @@ import { coachMistake, type MistakeKind } from '@/lib/error-coach';
 import { leaksAnswer } from '@/lib/help-ladder';
 import { pickExample, renderExample } from '@/lib/example-question';
 import { foreignSubject } from '@/lib/maths-vocabulary';
+import { studyTips } from '@/lib/study-tips';
 import type { AnswerDiagnosis } from '@/lib/answer-check';
 import type { FallbackReason } from '@/lib/tutor-telemetry';
 
@@ -56,7 +57,9 @@ export type GroundedSource =
   | 'checkAnswer'
   | 'topic_card'
   /** Another authored question from the same list, offered to practise on. */
-  | 'sibling-question';
+  | 'sibling-question'
+  /** The one answer in this app written for every student at once. */
+  | 'study-tips';
 
 export type CompilerInput = {
   canonicalIntent?: CanonicalIntent | null;
@@ -205,6 +208,16 @@ export async function compileTutorResponse(input: CompilerInput): Promise<Compil
   }
 
   if (!intent) return unhandled(q ? 'unknown_intent' : 'missing_question_context');
+
+  // ---- 1b. study tips need NOTHING ----------------------------------
+  //
+  // Before the topic-card lookup and before the `!q` guard, because it is the
+  // one ask in this router that no screen state can improve. "יש לך טיפים
+  // לפני המבחן" is the same question on a lesson page, on an exercise, and on
+  // an empty roadmap, and it has the same answer in all three.
+  if (intent === 'study_tips') {
+    return served('clarification', studyTips(input.topic || undefined), ['study-tips'], 0.9);
+  }
 
   // ---- 2. topic cards need only the TOPIC ---------------------------
   //

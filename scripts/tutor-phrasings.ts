@@ -172,6 +172,25 @@ export const PHRASINGS: Phrasing[] = [
   { text: 'תסביר לי את זה יותר פשוט בבקשה', expect: 'explain' },
 
   // ==================================================================
+  // "יש לך טיפים?" — four phrasings, four paid calls, one answer.
+  //
+  // All four are from scripts/replay-trace, which is to say each was a real
+  // model call. They are asserted separately from the rest because this is the
+  // one intent whose answer is the same for every student and every screen,
+  // and a rule that stopped firing on any of them would go unnoticed —
+  // nothing else in the router would take them.
+  // ==================================================================
+  { text: 'תן טיפים לזכור', expect: 'study_tips', reported: true },
+  { text: 'יש לך טיפים לתת לפני המבחן', expect: 'study_tips', reported: true },
+  { text: 'רוצה ממך טיפים לבגרות', expect: 'study_tips', reported: true },
+  { text: 'אתה יכול להביא טיפים להבנה של החומר', expect: 'study_tips', reported: true },
+  // ⚠️ THE TRAP THE RULE IS WRITTEN AROUND. "טיפה" starts with the same three
+  // letters as "טיפ" and is ordinary Hebrew for "a bit" — without a right
+  // boundary on the rule, every "טיפה יותר" in the app answers with five
+  // study tips instead of what was asked.
+  { text: 'תסביר את זה טיפה יותר ברור', expect: 'explain' },
+
+  // ==================================================================
   // MUST STAY WITH THE MODEL — each names a subject of its own.
   //
   // These are the reason every rule is anchored at both ends. A rule that
