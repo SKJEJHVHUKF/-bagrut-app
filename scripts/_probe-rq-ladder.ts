@@ -1,9 +1,12 @@
 // Throwaway probe: run the REAL ladder builder over the eight מנה ושורש stages
 // and print what a student would actually get on each rung. A gate that says
 // "0 errors" only means nothing it examined failed — this proves the content
-// reaches the UI. Run: npx tsx scripts/_probe-rq-ladder.ts
+// reaches the UI. It also asserts the track topic holds those eight tiles and
+// NOTHING else, which is what the owner asked for (2026-08-29).
+// Run: npx tsx scripts/_probe-rq-ladder.ts
 import { getSubTopic } from '../content/lessons';
 import { buildSubTopicLevels } from '../lib/roadmap-levels';
+import { getTrack } from '../content/tracks';
 
 const TOPIC = 'פונקציות';
 const STAGES = [
@@ -37,12 +40,37 @@ for (const id of STAGES) {
       `${figs} figs · ${String(qs).padStart(2)} questions · ${bag} bagrut → ${rungs}`,
   );
   // The rungs that must exist for the ladder to be a ladder at all.
-  for (const need of ['learn', 'easy', 'mid', 'hard', 'bagrut']) {
+  for (const need of ['learn', 'easy', 'mid', 'hard', 'ghost', 'bagrut']) {
     if (!levels.some((l) => l.kind === need)) {
       console.log(`   ✗ missing rung: ${need}`);
       bad++;
     }
   }
 }
-console.log(bad === 0 ? '\n✅ all eight stages build a full ladder' : `\n❌ ${bad} problem(s)`);
+
+// The track topic must hold these eight and nothing else — no leftover module
+// from חשבון דיפרנציאלי / אינטגרלי whose examples are full of sin, cos and e^x.
+const topic = getTrack('571').topics.find((t) => t.id === 'functions-rational-root');
+if (!topic) {
+  console.log('✗ functions-rational-root is not on the 571 track');
+  bad++;
+} else {
+  const ids = topic.tiles.map((t) => ('subId' in t ? t.subId : `[${t.kind}] ${t.title}`));
+  const extra = ids.filter((i) => !STAGES.includes(i));
+  console.log(`\ntrack tiles: ${ids.length}`);
+  if (extra.length) {
+    console.log(`   ✗ tiles that are NOT one of the eight levels: ${extra.join(', ')}`);
+    bad++;
+  }
+  if (ids.join(',') !== STAGES.join(',')) {
+    console.log(`   ✗ tile order does not match the owner's level order`);
+    bad++;
+  }
+}
+
+console.log(
+  bad === 0
+    ? '\n✅ eight stages, full ladder each, and the track holds only them'
+    : `\n❌ ${bad} problem(s)`,
+);
 process.exit(bad === 0 ? 0 : 1);
