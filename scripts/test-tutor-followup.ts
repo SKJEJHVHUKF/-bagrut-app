@@ -79,8 +79,8 @@ ok(ladderMove('tried', ['hint', 'key-points']) === 'full', 'tried, ladder spent 
 
 console.log('\n=== the gate: only after a LOCAL turn ===\n');
 for (const msg of ['לא הבנתי', 'עוד קצת', 'ניסיתי ולא יצא', 'תסביר אחרת']) {
-  const after = routeMessage(msg, focus, { lastAsk: 'help', served: ['hint'], lastWasLocal: true });
-  const cold = routeMessage(msg, focus, { lastAsk: null, served: [], lastWasLocal: false });
+  const after = routeMessage(msg, focus, { lastAsk: 'help', served: ['hint'], tutorSpoke: true });
+  const cold = routeMessage(msg, focus, { lastAsk: null, served: [], tutorSpoke: false });
   ok(after.kind === 'ask', `"${msg}" after a local turn → answered locally (${after.kind})`);
   // Without the gate these must fall through to whatever the normal rules say —
   // and crucially must not be routed by the WIDE patterns.
@@ -112,7 +112,7 @@ ok(reportedValue('ניסיתי ולא יצא') === null, 'a failure report carri
 ok(reportedValue('יש 19 אפשרויות') === null, 'a number with no result cue is not a report');
 {
   const r = routeMessage('ניסיתי שוב ויצא לי 19', focus, {
-    lastAsk: 'help', served: ['hint'], lastWasLocal: true,
+    lastAsk: 'help', served: ['hint'], tutorSpoke: true,
   });
   ok(r.kind === 'answer', 'and the router grades it instead of offering another hint');
 }
@@ -128,14 +128,53 @@ for (const [msg, ll, want] of [
   ['לא', true, 'ask'], ['כן', true, 'ask'], ['בטוח', true, 'ask'], ['לא חושב', true, 'ask'],
   ['לא', false, 'open'], ['כן', false, 'open'],
 ] as const) {
-  const r = routeMessage(msg, focus, { lastAsk: 'help', served: ['hint'], lastWasLocal: ll });
-  ok(r.kind === want, `"${msg}" lastWasLocal=${ll} → ${want} (got ${r.kind})`);
+  const r = routeMessage(msg, focus, { lastAsk: 'help', served: ['hint'], tutorSpoke: ll });
+  ok(r.kind === want, `"${msg}" tutorSpoke=${ll} → ${want} (got ${r.kind})`);
 }
 // And a phrase that is not a yes or a no is untouched by it.
 ok(
-  routeMessage('לא הבנתי', focus, { lastAsk: 'help', served: ['hint'], lastWasLocal: true }).kind === 'ask',
+  routeMessage('לא הבנתי', focus, { lastAsk: 'help', served: ['hint'], tutorSpoke: true }).kind === 'ask',
   '"לא הבנתי" still routes as a follow-up, not as a bare no',
 );
+
+// ============================================================
+console.log('\n=== the paid turn must not lock the free layers ===\n');
+// ============================================================
+//
+// ⚠️ THE REGRESSION THIS FILE EXISTS FOR NOW.
+//
+// The gate used to be "was the PREVIOUS turn answered LOCALLY", so the moment
+// one turn reached the model every follow-up after it was locked out too — one
+// paid call became three. A real trigonometry session (trace, 2026-08-29):
+//
+//   "יצא 16 69"   paid    → and because it was paid,
+//   "לא זוכר"     paid    → these two could not reach
+//   "ביחס ישר"    paid    → the free layers at all
+//
+// `tutorSpoke` is true after ANY assistant message, so a model answer no longer
+// disables the ladder. Asserted as the FLAG, not as the wiring, because the
+// wiring lives in a React ref in TutorBubble that this file cannot reach.
+for (const msg of ['לא זוכר', 'לא בטוח', 'אין לי מושג', 'שכחתי', 'לא יודע']) {
+  const r = routeMessage(msg, focus, { lastAsk: 'help', served: ['hint'], tutorSpoke: true });
+  ok(r.kind === 'ask', `"${msg}" after the model spoke → ask (got ${r.kind})`);
+  const cold = routeMessage(msg, focus, { tutorSpoke: false });
+  ok(cold.kind === 'open', `"${msg}" opening a conversation → open (got ${cold.kind})`);
+}
+
+// A reported result is graded wherever it appears in the sentence — it used to
+// need the message to ALSO read as a follow-up, so "יצא לי 19" was paid for
+// while "ניסיתי שוב ויצא לי 19" was free.
+{
+  const r = routeMessage('יצא לי 19', focus, { served: [], tutorSpoke: true });
+  ok(r.kind === 'answer', `"יצא לי 19" is graded, not sent to the model (got ${r.kind})`);
+}
+// ⚠️ AND THE ONE THAT MUST STILL BE PAID FOR. Two numbers means we would be
+// guessing which one the student meant, and telling a correct student they are
+// wrong is worse than paying for the turn.
+{
+  const r = routeMessage('יצא 16 69', focus, { served: [], tutorSpoke: true });
+  ok(r.kind !== 'answer', `"יצא 16 69" is ambiguous and is NOT graded (got ${r.kind})`);
+}
 
 console.log(
   failed === 0

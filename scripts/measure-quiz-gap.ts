@@ -109,7 +109,7 @@ type Row = { qid: string; topic: string; probe: string };
       const route = routeMessage(probe, focus, {
         lastAsk: isContinuation ? 'help' : null,
         served: isContinuation ? ['hint'] : [],
-        lastWasLocal: isContinuation,
+        tutorSpoke: isContinuation,
       });
       if (route.kind === 'ack') answered = true;
       else if (route.kind === 'answer') answered = answerGradedLocally(route, focus) !== null;

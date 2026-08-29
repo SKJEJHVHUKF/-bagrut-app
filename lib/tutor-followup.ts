@@ -43,7 +43,11 @@ const RULES: Array<[FollowUp, RegExp]> = [
   // and answering it with the same rung again ignores that they already used it.
   ['tried', /(?:ניסיתי|עשיתי|הצבתי|חישבתי|פתרתי).{0,20}(?:ולא|אבל|ויצא|לא יצא)|יצא\s*(?:לי\s*)?(?:משהו\s*)?אחר|לא\s*יצא\s*(?:לי)?|קיבלתי\s*משהו\s*אחר/],
 
-  ['stuck', /לא\s*(?:הבנתי|מבין|מבינה|ברור|מובן|תפסתי|קלטתי|הצלחתי|מצליח|מצליחה|יודע|יודעת\s*מה)|עדיין\s*(?:לא|תקוע)|תקוע|תקועה|נתקעתי|אבוד|מבולבל|מסובך|קשה\s*מדי|לא\s*עוזר/],
+  // ⚠️ "לא זוכר" COST A MODEL CALL WHILE "לא יודע" WAS FREE IN THE SAME SESSION.
+  // From the trace, 2026-08-29, trigonometry. The list was written from the
+  // phrasings a list-writer imagines; these are the ones students type for the
+  // identical move — I do not have it, give me the next rung.
+  ['stuck', /לא\s*(?:הבנתי|מבין|מבינה|ברור|מובן|תפסתי|קלטתי|הצלחתי|מצליח|מצליחה|יודע|יודעת\s*מה|זוכר|זוכרת|בטוח|בטוחה|רואה)|אין\s*לי\s*(?:מושג|רעיון)|שכחתי|עדיין\s*(?:לא|תקוע)|תקוע|תקועה|נתקעתי|אבוד|מבולבל|מסובך|קשה\s*מדי|לא\s*עוזר/],
 
   // "איבר איבר" and "אחד אחד" are the same ask as "תסביר אחרת": go slower and
   // take it in pieces. From report:worklist, where it cost a model call.

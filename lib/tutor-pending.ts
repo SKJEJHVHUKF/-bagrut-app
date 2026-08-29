@@ -180,6 +180,30 @@ export function reportedValue(message: string): string | null {
   return m ? m[1].replace(',', '.') : null;
 }
 
+/**
+ * The same report, but only when there is nothing to misread.
+ *
+ * ⚠️ `reportedValue` TAKES THE FIRST NUMBER AND IGNORES THE REST, which is fine
+ * inside the follow-up branch (the student has just been asked for one value)
+ * and NOT fine as a general grading trigger. A real message from the trace:
+ *
+ *   "יצא 16 69"   →  reportedValue = "16"
+ *
+ * Two numbers, one of them possibly the decimal part of the other. Grading 16
+ * against the authored answer would tell a student their answer is wrong on a
+ * guess about which number they meant — the one failure this whole local layer
+ * exists to avoid, and worse than paying for the turn.
+ *
+ * So a message carrying more than one number is not a report. It goes to the
+ * model, which can ask.
+ */
+export function unambiguousReport(message: string): string | null {
+  const v = reportedValue(message);
+  if (!v) return null;
+  const numbers = message.match(/-?[0-9]+(?:[.,][0-9]+)?/g) ?? [];
+  return numbers.length === 1 ? v : null;
+}
+
 // ⚠️ "בטוח" and "לא חושב" are here because report:worklist found them
 // costing model calls — a student answering the tutor's own yes-or-no question
 // in the words people actually use rather than the ones a list-writer imagines.

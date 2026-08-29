@@ -193,8 +193,24 @@ export default function TutorBubble() {
    * without anyone remembering. Read and cleared at the top of `send`.
    */
   const pendingRef = useRef<Pending | null>(null);
-  /** Did the tutor answer the previous turn itself? The follow-up router's gate. */
-  const lastLocalRef = useRef(false);
+  /**
+   * Has the tutor said anything yet in this conversation? The follow-up
+   * router's gate.
+   *
+   * ⚠️ ANY assistant message, local OR from the model. It used to be
+   * "did the tutor answer LOCALLY", which locked every follow-up out of the
+   * free layers as soon as one turn reached the model — see TurnState.tutorSpoke
+   * in lib/tutor-router for the session where that turned one paid turn into
+   * three.
+   *
+   * Set from its own effect rather than inside the local-answer effect below,
+   * because that one returns early on `!last.local` — which is exactly the case
+   * this flag has to cover.
+   */
+  const tutorSpokeRef = useRef(false);
+  useEffect(() => {
+    if (msgs.some((m) => m.role === 'assistant')) tutorSpokeRef.current = true;
+  }, [msgs]);
   /** Was the PREVIOUS turn a complaint we answered with the stock sentence? */
   const lastComplaintRef = useRef(false);
   useEffect(() => {
@@ -218,7 +234,6 @@ export default function TutorBubble() {
         ))
       : [];
     pendingRef.current = expectationOf(last.text, nextStepAfter(last.text, pSteps));
-    lastLocalRef.current = true;
 
     if (!asked) return;
     const q = (focus?.question ?? null) as Record<string, unknown> | null;
@@ -312,9 +327,12 @@ export default function TutorBubble() {
       // touching the (new) chat.
       // What the tutor asked LAST turn, read before this turn overwrites it.
       const pendingNow = pendingRef.current;
-      const lastWasLocal = lastLocalRef.current;
+      // ⚠️ NOT cleared here. `pending` is about the LAST reply and is consumed
+      // once; "the tutor has spoken" is about the whole conversation and only
+      // ever becomes true. Clearing it here is what made one paid turn lock the
+      // free layers for every turn after it.
+      const tutorSpoke = tutorSpokeRef.current;
       pendingRef.current = null;
-      lastLocalRef.current = false;
 
       const gen = genRef.current;
       const userId = `u-${Date.now()}`;
@@ -351,7 +369,7 @@ export default function TutorBubble() {
           lastAsk: lastAskRef.current,
           served: servedRef.current.kinds,
           pending: pendingNow,
-          lastWasLocal,
+          tutorSpoke,
         });
         routeKind = route.kind;
         if (route.kind === 'answer') {

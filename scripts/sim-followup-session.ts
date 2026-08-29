@@ -54,7 +54,7 @@ const misses: string[] = [];
 
 for (const session of SESSIONS) {
   let pending: Pending | null = null;
-  let lastWasLocal = false;
+  let tutorSpoke = false;
   let lastAsk: string | null = null;
   const served: string[] = [];
   console.log(`\n--- ${session[0]} …`);
@@ -65,7 +65,7 @@ for (const session of SESSIONS) {
       lastAsk: lastAsk as never,
       served: served as never,
       pending,
-      lastWasLocal: BEFORE ? false : lastWasLocal,
+      tutorSpoke: BEFORE ? false : tutorSpoke,
     });
 
     let reply: string | null = null;
@@ -83,11 +83,11 @@ for (const session of SESSIONS) {
     if (reply) {
       local++;
       pending = expectationOf(reply, nextStepAfter(reply, steps));
-      lastWasLocal = true;
+      tutorSpoke = true;
       console.log(`  ✓ "${msg}"  →  ${reply.replace(/\s+/g, ' ').slice(0, 62)}…`);
     } else {
       pending = null;
-      lastWasLocal = false;
+      tutorSpoke = false;
       misses.push(msg);
       console.log(`  $ "${msg}"  →  THE MODEL`);
     }

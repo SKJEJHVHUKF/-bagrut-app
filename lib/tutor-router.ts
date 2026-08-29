@@ -41,7 +41,7 @@ import { isParseable, latexToMathjs } from '@/lib/mathscan/solve/parse';
 import { checkAnswer } from '@/lib/answer-check';
 import type { TutorFocus } from '@/lib/tutor-presence';
 import type { AnswerSpec, Verdict } from '@/lib/answer-check';
-import { reportedValue, yesNo, type Pending } from '@/lib/tutor-pending';
+import { reportedValue, unambiguousReport, yesNo, type Pending } from '@/lib/tutor-pending';
 import { followUp, ladderMove } from '@/lib/tutor-followup';
 
 type Ask = NonNullable<ReturnType<typeof classifyAsk>>;
@@ -95,15 +95,32 @@ export type TurnState = {
    */
   pending?: Pending | null;
   /**
-   * Was the PREVIOUS turn answered locally?
+   * Has the tutor already said something in this conversation?
    *
    * ⚠️ This is the permission slip for `tutor-followup`, whose patterns are far
    * wider than anything else in this file. "לא הבנתי" one message after the
    * tutor explained something can only mean "not that"; the same words opening
    * a conversation mean anything at all. Without this flag the wide patterns
-   * would fire on the model's turf and answer the wrong question confidently.
+   * would fire on nothing and answer the wrong question confidently.
+   *
+   * ⚠️ IT USED TO BE `lastWasLocal` — "was the PREVIOUS turn answered locally" —
+   * AND THAT WAS NARROWER THAN ITS OWN JUSTIFICATION, WHICH COST REAL MONEY.
+   *
+   * The reason above says "after the tutor explained something". It does not
+   * say "explained something LOCALLY", and it never needed to: a student
+   * replying to the model is replying to the tutor. Under the old flag the
+   * first paid turn locked every follow-up out of the free layers for the rest
+   * of the conversation, so one model call became three. Observed on a real
+   * trigonometry session (2026-08-29):
+   *
+   *   "יצא 16 69"   paid   a REPORTED VALUE, which the grader answers for free
+   *   "לא זוכר"     paid   `stuck` — the same shape as "לא יודע", free a minute
+   *                        earlier in the same session
+   *   "ביחס ישר"    paid
+   *
+   * Three turns, $0.020, and the first one is why the other two cost anything.
    */
-  lastWasLocal?: boolean;
+  tutorSpoke?: boolean;
 };
 
 // ------------------------------------------------------------
@@ -358,9 +375,10 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
   // tutor whatever shape the question took: asked "מה יצא לך" and it did not
   // work out, asked "הוא מתקיים" and it does not. Both mean the same next move.
   //
-  // Still gated on `lastWasLocal`: a bare "לא" opening a conversation means
-  // nothing, or something else entirely, and is left alone.
-  if (state.lastWasLocal) {
+  // Still gated: a bare "לא" OPENING a conversation means nothing, or
+  // something else entirely, and is left alone. Once the tutor has spoken —
+  // by any means — "לא" is an answer to it.
+  if (state.tutorSpoke) {
     const v = yesNo(trimmed);
     if (v !== null) {
       return { kind: 'ask', ask: ladderMove(v ? 'more' : 'stuck', state.served ?? [], state.lastAsk) as Ask };
@@ -374,10 +392,13 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
   // used to be unrecognised and therefore paid for, on a conversation that had
   // already been answered from authored content.
   //
-  // Only when the previous turn was local. The reply is always another rung of
-  // the same ladder, about the exercise already on screen, so the worst case is
-  // a rung they did not want rather than an answer about something else.
-  if (state.lastWasLocal) {
+  // Only once the tutor has spoken. The reply is always another rung of the
+  // same ladder, about the exercise already on screen, so the worst case is a
+  // rung they did not want rather than an answer about something else — and
+  // that worst case does not get worse when the previous speaker was the model:
+  // `served` still records which rungs this app has handed out, so `ladderMove`
+  // still picks one the student has not seen.
+  if (state.tutorSpoke) {
     const fu = followUp(trimmed);
     if (fu) {
       // ⚠️ A REPORT OF A RESULT IS AN ANSWER, NOT A REQUEST FOR HELP.
@@ -405,6 +426,31 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
   }
 
   const spec = focus?.question?.expected;
+
+  // ---- a reported result, whatever else the sentence is doing ------
+  //
+  // ⚠️ THIS USED TO LIVE INSIDE THE FOLLOW-UP BRANCH, so it only ran on a
+  // message that ALSO read as a follow-up. "יצא לי 19" reports a result and
+  // matches no follow-up pattern, so it was paid for — while the same words
+  // wrapped in "ניסיתי שוב ו..." were free.
+  //
+  // `unambiguousReport`, not `reportedValue`: a message with two numbers in it
+  // is not graded on a guess about which one was meant. See lib/tutor-pending.
+  if (state.tutorSpoke && spec && spec.kind !== 'manual') {
+    const reported = unambiguousReport(trimmed);
+    if (reported) {
+      if (state.pending?.kind === 'step-value') {
+        return {
+          kind: 'answer',
+          spec: { kind: 'value', value: state.pending.expected },
+          typed: reported,
+          about: { step: state.pending.step },
+        };
+      }
+      return { kind: 'answer', spec, typed: reported };
+    }
+  }
+
   // `manual` means the content author said this answer cannot be graded
   // mechanically (a proof, a locus, "find all n"). Honour that.
   if (spec && spec.kind !== 'manual' && looksLikeAnswer(message)) {
