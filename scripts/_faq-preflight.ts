@@ -1,4 +1,10 @@
-// Preflight over the 15 authored slices, BEFORE merging.
+// Preflight over the authored slices, BEFORE merging.
+//
+// ⚠️ PRE-MERGE ONLY. It reads authoring slices — `.faq-work/out/faq-NN.json`,
+// each `[{ unit, faqs }]` — not a merged bank and not a bank dumped by
+// _dump-trig-faq. Pointed at a finished bank it finds nothing and looks broken.
+// To check an already-merged bank, dump it and assert the same three properties
+// (id present, unique, matching its unit) over the object directly.
 //
 // The one that matters: an entry without `id` makes test-tutor-faq compare
 // `undefined === undefined` and score a fake 100% recall. One slice author
@@ -13,8 +19,21 @@ import { HELD_POSITIONS } from '../content/tutor-faq/types';
 // collapsing that decide whether two phrasings are actually the same tokens.
 import { tokens as realTokens } from '../lib/tutor-faq';
 
-const DIR = '.faq-work/out';
-const files = readdirSync(DIR).filter((f) => /^faq-\d+\.json$/.test(f)).sort();
+const DIR = process.argv[2] ?? '.faq-work/out';
+let files: string[] = [];
+try {
+  files = readdirSync(DIR).filter((f) => /^faq-\d+\.json$/.test(f)).sort();
+} catch {
+  console.error(`no such directory: ${DIR}`);
+  console.error('usage: _faq-preflight.ts [slice-dir]   (default .faq-work/out)');
+  console.error('This is a PRE-MERGE check over authoring slices, not a merged bank.');
+  process.exit(2);
+}
+if (!files.length) {
+  console.error(`${DIR} holds no faq-NN.json slices.`);
+  console.error('This is a PRE-MERGE check: run it on the authoring output, before merge-tutor-faq.');
+  process.exit(2);
+}
 
 let units = 0, entries = 0;
 const bad: string[] = [];
