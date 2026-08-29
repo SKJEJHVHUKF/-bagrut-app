@@ -504,6 +504,11 @@ data: ${JSON.stringify(data)}
       formNumber,
       topic: topic || undefined,
       memory: renderMemoryBlock(facts),
+      // The student's own question and its authored solution ride in
+      // `attemptContext`. When they are there, the six generic worked examples
+      // are a second copy of what the model already has — and the most
+      // expensive block in the prompt. See PromptContext.hasQuestion.
+      hasQuestion: Boolean(attemptContext),
     });
     // ===== MODEL: Haiku by default, Sonnet only for topics listed in env =====
     //

@@ -37,6 +37,15 @@ export const PILOT_TOPIC = 'מספרים מרוכבים';
 const MAX_EXAMPLES = 6;
 const MAX_PITFALLS = 12;
 
+/**
+ * What to put in the grounding block.
+ *
+ * `examples: false` leaves the worked examples out — see `buildWorkedExamples`
+ * for why that is the right default on any call that already carries the
+ * student's own question and its authored solution.
+ */
+export type GroundingOptions = { examples?: boolean };
+
 /** True iff this topic has an authored lesson to ground the tutor in. */
 export function isGroundedTopic(topic?: string | null): boolean {
   const t = (topic ?? '').trim();
@@ -65,10 +74,11 @@ export function isPilotTopic(topic?: string | null): boolean {
  * Returns '' if the lesson is missing, so callers can detect the
  * "no grounding available" case and fall back rather than fabricate.
  */
-export function buildTopicContext(topic: string): string {
+export function buildTopicContext(topic: string, opts?: GroundingOptions): string {
   const t = (topic ?? '').trim();
   const lesson = getLesson('math5', t);
   if (!lesson) return '';
+  const withExamples = opts?.examples !== false;
 
   const parts: string[] = [];
 
@@ -98,17 +108,8 @@ export function buildTopicContext(topic: string): string {
     );
   }
 
-  if (lesson.examples?.length) {
-    parts.push('### דוגמאות פתורות (מאומתות — העדף לשלוף מכאן)');
-    parts.push(
-      lesson.examples
-        .slice(0, MAX_EXAMPLES)
-        .map((ex) => {
-          const steps = ex.steps.map((st, i) => `   ${i + 1}. ${st}`).join('\n');
-          return `**${ex.problem}**\n${steps}\n   ⟹ ${ex.answer}`;
-        })
-        .join('\n\n')
-    );
+  if (withExamples && lesson.examples?.length) {
+    parts.push(buildWorkedExamples(t));
   }
 
   if (lesson.pitfalls?.length) {
@@ -122,6 +123,48 @@ export function buildTopicContext(topic: string): string {
   }
 
   return parts.join('\n\n');
+}
+
+/**
+ * The worked-examples section on its own.
+ *
+ * ============================================================
+ * WHY IT IS SEPARABLE, AND WHY THAT IS THE SECOND-BIGGEST SAVING IN THE TUTOR
+ * ============================================================
+ * MEASURED with messages.countTokens on claude-haiku-4-5 (2026-08-29): the six
+ * worked examples are 41-56% of the entire grounding block.
+ *
+ *   טריגונומטריה        3,353 of 6,384   53%
+ *   גיאומטריה אוקלידית  2,899 of 5,154   56%
+ *   סדרות               1,349 of 3,069   44%
+ *   הסתברות               952 of 2,309   41%
+ *
+ * And they are REDUNDANT on the turn that pays for them. When a student has a
+ * question on screen, `renderFocusContext` already puts that question's own
+ * authored solution in the user message under a `SOLUTION` header — the exact
+ * worked example that matters, for the exact question being asked. Six generic
+ * examples of the same topic are a second, worse copy of what the model already
+ * has, bought at 2x on the cache write.
+ *
+ * They earn their keep on the OTHER turn: a free chat about the topic with
+ * nothing on screen, where there is no specific solution to lean on. So they
+ * are emitted there, uncached, and never enter the cached prefix at all — one
+ * cache entry per topic instead of two, and the common turn stops paying for
+ * the rare one.
+ */
+export function buildWorkedExamples(topic: string): string {
+  const lesson = getLesson('math5', (topic ?? '').trim());
+  if (!lesson?.examples?.length) return '';
+  return [
+    '### דוגמאות פתורות (מאומתות — העדף לשלוף מכאן)',
+    lesson.examples
+      .slice(0, MAX_EXAMPLES)
+      .map((ex) => {
+        const steps = ex.steps.map((st, i) => `   ${i + 1}. ${st}`).join('\n');
+        return `**${ex.problem}**\n${steps}\n   ⟹ ${ex.answer}`;
+      })
+      .join('\n\n'),
+  ].join('\n\n');
 }
 
 /** Back-compat: the original pilot builder, now a thin wrapper. */
@@ -184,7 +227,10 @@ export function buildTutorSystemPrompt(topic?: string | null): string | null {
  * hint-help, explain-simpler). Same verified content; returns null for
  * ungrounded topics so callers append nothing.
  */
-export function buildPilotGrounding(topic?: string | null): string | null {
+export function buildPilotGrounding(
+  topic?: string | null,
+  opts?: GroundingOptions,
+): string | null {
   if (!isGroundedTopic(topic)) return null;
-  return buildTopicContext(topic!) || null;
+  return buildTopicContext(topic!, opts) || null;
 }

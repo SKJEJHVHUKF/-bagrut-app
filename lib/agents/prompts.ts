@@ -124,7 +124,7 @@ import type { TextBlockParam } from '@anthropic-ai/sdk/resources/messages';
  * invalidating the prefix and the TTL is not the problem.
  */
 const CACHE_1H = { type: 'ephemeral', ttl: '1h' } as const;
-import { buildPilotGrounding } from '@/lib/tutor-grounding';
+import { buildPilotGrounding, buildWorkedExamples } from '@/lib/tutor-grounding';
 import type { UnitLevel } from './config';
 
 export type PromptContext = {
@@ -143,6 +143,17 @@ export type PromptContext = {
    * on every single turn.
    */
   memory?: string;
+  /**
+   * True when the student's message carries their own question AND its authored
+   * solution (see `renderFocusContext`, the `SOLUTION` header).
+   *
+   * ⚠️ IT DECIDES WHETHER THE SIX WORKED EXAMPLES ARE SENT AT ALL, and that is
+   * 41-56% of the grounding block. With a question on screen they are a second,
+   * generic copy of a solution the model already has for the exact question
+   * being asked. Without one there is nothing else to teach from, so they are
+   * emitted — uncached, since that turn is the rare one.
+   */
+  hasQuestion?: boolean;
 };
 
 // ============================================================
@@ -315,7 +326,18 @@ const TUTOR_BASE_CURRICULUM = `# מפת החומר לבגרות 5 יחידות
  * "elite Israeli Math Tutor for level {unitLevel} units (form {formNumber})".
  */
 export function buildTutorSystem(ctx: PromptContext): TextBlockParam[] {
-  const grounding = buildPilotGrounding(ctx.topic);
+  // ⚠️ `examples: false` KEEPS THE WORKED EXAMPLES OUT OF THE CACHED PREFIX.
+  //
+  // They are 41-56% of this block (measured, see buildWorkedExamples) and the
+  // cache WRITE bills at 2x, so they were the most expensive thing in the
+  // tutor — and on any turn with a question on screen they duplicate the
+  // authored solution that already rides in the user message.
+  //
+  // They are NOT simply deleted: the no-question turn still gets them, below,
+  // as an uncached block. Putting them in the cached block conditionally would
+  // be worse than either — two cache entries per topic, each written at 2x,
+  // which is the breakpoint-on-a-varying-block trap.
+  const grounding = buildPilotGrounding(ctx.topic, { examples: false });
 
   // TWO breakpoints, because the two static blocks are shared by different
   // populations: the core by every student on every topic, the grounding only
@@ -367,6 +389,18 @@ export function buildTutorSystem(ctx: PromptContext): TextBlockParam[] {
     // cache floor this path was silently falling under. See the block's own
     // comment; it is why this branch exists at all.
     blocks.push({ type: 'text', text: TUTOR_BASE_CURRICULUM, cache_control: CACHE_1H });
+  }
+
+  // ---- worked examples: only when nothing else can teach from ----
+  //
+  // AFTER the last cache_control marker, so they are billed at 1x on the turns
+  // that need them and are absent from the cached prefix on every other turn.
+  // A student chatting about a topic with no exercise open has no `SOLUTION`
+  // block in their message, and this is the only verified worked material the
+  // model would otherwise have.
+  if (!ctx.hasQuestion) {
+    const examples = ctx.topic ? buildWorkedExamples(ctx.topic) : '';
+    if (examples) blocks.push({ type: 'text', text: examples });
   }
 
   blocks.push({ type: 'text', text: levelBlock(ctx) });
