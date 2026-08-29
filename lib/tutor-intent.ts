@@ -294,6 +294,25 @@ const RULES: Rule[] = [
     R('check', `איך\\s*(?:יודע|בודק|לבדוק|לוודא|מוודא|אדע)`, 0.85),
     R('check', `(?:מה\\s*ה?בדיקה|איך\\s*מאמתים|(?:יש\\s*)?דרך\\s*לבדוק|לבדוק\\s*את\\s*ה?תשובה)`, 0.85),
 
+  // ⚠️ THE VERB LIST ABOVE GREW FROM A REAL TURN, AND THE POINT IS THE LABEL.
+  //
+  // A test account asked "ואיך בודקים פונקציה" on /roadmap and it came back
+  // `unknown_intent`. The vav was not the problem — "איך בודקים פונקציה" fails
+  // too. "פונקציה" is a maths noun, so the veto correctly refuses every rule
+  // except `concept`, and `concept` did not know "איך בודקים".
+  //
+  // It still reaches the model, because no card answers it yet. What changes is
+  // what the work-list SAYS: `unknown_intent` sends someone to write a rule
+  // that already exists, `no_local_content` sends them to write the card that
+  // does not. A report that names the wrong job is worse than a slow one.
+  //
+  // ⚠️ AND `מחשבים` / `מוצאים` ARE DELIBERATELY NOT HERE. They were, for about a
+  // minute, and test:intent failed on two of the fourteen phrasings the corpus
+  // marks as must-reach-the-model: "איך מחשבים סטיית תקן" and "איך מחשבים
+  // נגזרת של ln בכלל". The distinction is real — "how do you CHECK a function"
+  // asks what the idea is, "how do you COMPUTE a standard deviation" asks to be
+  // walked through it, and a card cannot walk anyone through anything.
+
   // --- "מה הנוסחה?" -------------------------------------------------
     R('which_formula', `נוסחה`, 0.85),
 
@@ -331,7 +350,7 @@ const RULES: Rule[] = [
     // `\\S` and not `[א-ת]`: the subject is often written in maths notation —
     // "איך מזהים n p k בבינומית" is a concept question whose subject starts on
     // a latin letter, and requiring Hebrew there dropped it silently.
-    R('concept', `${OPEN}(?:איך|כיצד)\\s*(?:קוראים|בונים|ממלאים|מזהים)\\s+\\S.{2,}$`, 0.85),
+    R('concept', `${OPEN}(?:איך|כיצד)\\s*(?:קוראים|בונים|ממלאים|מזהים|בודקים|קובעים|מגדירים)\\s+\\S.{2,}$`, 0.85),
 
   // --- the catch-all "למה" ------------------------------------------
   //
