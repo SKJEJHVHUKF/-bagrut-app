@@ -38,6 +38,7 @@
     "report:answers": "tsx scripts/report-tutor-answers.ts",
     "report:worklist": "tsx scripts/report-worklist.ts",
     "report:replay": "tsx scripts/replay-trace.ts",
+    "probe:core": "tsx scripts/probe-core-ab.ts",
     "gen:faq": "tsx scripts/generate-faq-from-logs.ts",
     "report:tutor": "tsx scripts/report-tutor-usage.ts",
     "report:trace": "tsx scripts/report-tutor-trace.ts",

@@ -89,10 +89,10 @@ ${userAnswer}
 
     // Ground the feedback in the verified content (incl. the common-mistake
     // bank) for the pilot topic, so the diagnosis names a real misconception.
-    // No worked examples: the prompt above already carries this question and
-    // its solution, and NOTHING here is cached — every token is billed at 1x on
-    // every press. See buildWorkedExamples for the measurement.
-    const grounding = buildPilotGrounding(topic, { examples: false });
+    // Essentials only — נוסחאות + טעויות נפוצות. The prompt above already carries
+    // this question and its solution, and NOTHING here is cached: every token is
+    // billed at 1x on every press. See buildTopicExtras for what is dropped and why.
+    const grounding = buildPilotGrounding(topic, { essentialsOnly: true });
     const system = grounding ? `${SYSTEM_PROMPT}\n\n---\n\n${grounding}` : SYSTEM_PROMPT;
 
     const { data } = await callTutor<WhyWrongResponse>({

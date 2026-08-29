@@ -136,10 +136,10 @@ ${userAnswer}
     // unparseable input) — numeric/complex answers are decided by the
     // deterministic checker client-side. Ground the judgement in the
     // verified content for the pilot topic so it stays in the curriculum.
-    // No worked examples: the prompt above already carries this question and
-    // its solution, and NOTHING here is cached — every token is billed at 1x on
-    // every press. See buildWorkedExamples for the measurement.
-    const grounding = buildPilotGrounding(topic, { examples: false });
+    // Essentials only — נוסחאות + טעויות נפוצות. The prompt above already carries
+    // this question and its solution, and NOTHING here is cached: every token is
+    // billed at 1x on every press. See buildTopicExtras for what is dropped and why.
+    const grounding = buildPilotGrounding(topic, { essentialsOnly: true });
     const system = grounding ? `${SYSTEM_PROMPT}\n\n---\n\n${grounding}` : SYSTEM_PROMPT;
 
     const client = new Anthropic({ apiKey });

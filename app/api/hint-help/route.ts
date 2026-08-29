@@ -72,10 +72,10 @@ ${cleanHints.map((h, i) => `${i + 1}. ${h}`).join('\n')}
 
     // Ground in the verified content so the unpacked hint stays inside the
     // curriculum (and within 582 conventions) for the pilot topic.
-    // No worked examples: the prompt above already carries this question and
-    // its solution, and NOTHING here is cached — every token is billed at 1x on
-    // every press. See buildWorkedExamples for the measurement.
-    const grounding = buildPilotGrounding(topic, { examples: false });
+    // Essentials only — נוסחאות + טעויות נפוצות. The prompt above already carries
+    // this question and its solution, and NOTHING here is cached: every token is
+    // billed at 1x on every press. See buildTopicExtras for what is dropped and why.
+    const grounding = buildPilotGrounding(topic, { essentialsOnly: true });
     const system = grounding ? `${SYSTEM_PROMPT}\n\n---\n\n${grounding}` : SYSTEM_PROMPT;
 
     const { data } = await callTutor<HintHelpResponse>({

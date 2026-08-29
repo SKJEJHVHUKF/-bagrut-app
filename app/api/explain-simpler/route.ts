@@ -57,10 +57,10 @@ ${solution}
 
     // Ground the plain-language gloss in the verified content for the pilot
     // topic so the simpler explanation can't drift from the curriculum.
-    // No worked examples: the prompt above already carries this question and
-    // its solution, and NOTHING here is cached — every token is billed at 1x on
-    // every press. See buildWorkedExamples for the measurement.
-    const grounding = buildPilotGrounding(topic, { examples: false });
+    // Essentials only — נוסחאות + טעויות נפוצות. The prompt above already carries
+    // this question and its solution, and NOTHING here is cached: every token is
+    // billed at 1x on every press. See buildTopicExtras for what is dropped and why.
+    const grounding = buildPilotGrounding(topic, { essentialsOnly: true });
     const system = grounding ? `${SYSTEM_PROMPT}\n\n---\n\n${grounding}` : SYSTEM_PROMPT;
 
     const { data } = await callTutor<ExplainResponse>({

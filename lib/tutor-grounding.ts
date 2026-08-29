@@ -40,11 +40,16 @@ const MAX_PITFALLS = 12;
 /**
  * What to put in the grounding block.
  *
- * `examples: false` leaves the worked examples out — see `buildWorkedExamples`
- * for why that is the right default on any call that already carries the
- * student's own question and its authored solution.
+ * `essentialsOnly: true` keeps the two sections the tutor's own rules actually
+ * name — **נוסחאות** and **טעויות נפוצות** — and drops the three that are
+ * background: תמצית הנושא, the worked examples, and טיפים לבגרות.
+ *
+ * It is the right setting on every call that already carries the student's own
+ * question and its authored solution, which is every call this app makes except
+ * a free chat with nothing on screen. See `buildTopicExtras` for the
+ * measurement and for where the dropped sections go instead.
  */
-export type GroundingOptions = { examples?: boolean };
+export type GroundingOptions = { essentialsOnly?: boolean };
 
 /** True iff this topic has an authored lesson to ground the tutor in. */
 export function isGroundedTopic(topic?: string | null): boolean {
@@ -78,7 +83,7 @@ export function buildTopicContext(topic: string, opts?: GroundingOptions): strin
   const t = (topic ?? '').trim();
   const lesson = getLesson('math5', t);
   if (!lesson) return '';
-  const withExamples = opts?.examples !== false;
+  const full = !opts?.essentialsOnly;
 
   const parts: string[] = [];
 
@@ -91,7 +96,7 @@ export function buildTopicContext(topic: string, opts?: GroundingOptions): strin
         : 'שמור על מוסכמות הבגרות הישראלית: זוויות במעלות (לא רדיאנים), סימונים כפי שמופיעים בחומר.')
   );
 
-  if (lesson.summary?.length) {
+  if (full && lesson.summary?.length) {
     parts.push('### תמצית הנושא');
     parts.push(lesson.summary.map((s) => `- ${s}`).join('\n'));
   }
@@ -108,7 +113,7 @@ export function buildTopicContext(topic: string, opts?: GroundingOptions): strin
     );
   }
 
-  if (withExamples && lesson.examples?.length) {
+  if (full && lesson.examples?.length) {
     parts.push(buildWorkedExamples(t));
   }
 
@@ -117,7 +122,7 @@ export function buildTopicContext(topic: string, opts?: GroundingOptions): strin
     parts.push(lesson.pitfalls.slice(0, MAX_PITFALLS).map((p) => `- ${p}`).join('\n'));
   }
 
-  if (lesson.examTips?.length) {
+  if (full && lesson.examTips?.length) {
     parts.push('### טיפים לבגרות');
     parts.push(lesson.examTips.map((t2) => `- ${t2}`).join('\n'));
   }
@@ -126,10 +131,10 @@ export function buildTopicContext(topic: string, opts?: GroundingOptions): strin
 }
 
 /**
- * The worked-examples section on its own.
+ * The three background sections, for the turn that has nothing on screen.
  *
  * ============================================================
- * WHY IT IS SEPARABLE, AND WHY THAT IS THE SECOND-BIGGEST SAVING IN THE TUTOR
+ * WHY THEY ARE SEPARABLE, AND WHY THAT IS THE SECOND-BIGGEST SAVING IN THE TUTOR
  * ============================================================
  * MEASURED with messages.countTokens on claude-haiku-4-5 (2026-08-29): the six
  * worked examples are 41-56% of the entire grounding block.
@@ -151,7 +156,36 @@ export function buildTopicContext(topic: string, opts?: GroundingOptions): strin
  * are emitted there, uncached, and never enter the cached prefix at all — one
  * cache entry per topic instead of two, and the common turn stops paying for
  * the rare one.
+ *
+ * ⚠️ תמצית הנושא AND טיפים לבגרות TRAVEL WITH THEM, for the same reason and on
+ * weaker grounds still: no rule in TUTOR_CORE refers to either. The prompt tells
+ * the tutor to teach from the material's METHODS and FORMULAS and to use its
+ * טעויות נפוצות for error-focused feedback — so those two sections stay cached,
+ * and the summary and the exam tips ride here. A student who asks for tips is
+ * now answered by lib/study-tips before any of this is reached.
  */
+export function buildTopicExtras(topic: string): string {
+  const t = (topic ?? '').trim();
+  const lesson = getLesson('math5', t);
+  if (!lesson) return '';
+  const parts: string[] = [];
+
+  if (lesson.summary?.length) {
+    parts.push('### תמצית הנושא');
+    parts.push(lesson.summary.map((s) => `- ${s}`).join('\n'));
+  }
+  const examples = buildWorkedExamples(t);
+  if (examples) parts.push(examples);
+  if (lesson.examTips?.length) {
+    parts.push('### טיפים לבגרות');
+    parts.push(lesson.examTips.map((x) => `- ${x}`).join('\n'));
+  }
+
+  return parts.join('\n\n');
+}
+
+/** The worked-examples section on its own. Used by `buildTopicExtras` and by
+ *  `buildTopicContext` on the full path, so the two cannot drift apart. */
 export function buildWorkedExamples(topic: string): string {
   const lesson = getLesson('math5', (topic ?? '').trim());
   if (!lesson?.examples?.length) return '';
