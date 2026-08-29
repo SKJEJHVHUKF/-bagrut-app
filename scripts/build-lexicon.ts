@@ -40,8 +40,20 @@
 
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { conceptBankEntries, getConceptQuestions, CONCEPT_LEVELS } from '../content/concept-quiz';
+import { faqBankKeys, loadFaqBank } from '../content/tutor-faq';
 
-const FAQ_TOPICS = ['probability', 'sequences', 'trigonometry', 'geometry'];
+// ⚠️ This used to be a hardcoded list of module basenames:
+//   ['probability', 'sequences', 'trigonometry', 'geometry']
+// Two banks were silently missing from the lexicon because of it. 'geometry'
+// never matched — the module is euclidean-geometry.ts — and the import sits in
+// a try/catch, so the failure was swallowed and the run still reported success.
+// A newly registered bank (functions) was invisible for the same reason: adding
+// 1,734 student-voiced entries produced a byte-identical lexicon, which reads
+// as "nothing to do" rather than "nothing was read".
+//
+// Same class of bug that test-tutor-faq already fixed by enumerating
+// faqBankKeys(). Enumerate the registry here too, so registering a bank is the
+// only step there is.
 
 /** Words shorter than this are function words: they are evidence of nothing. */
 const MIN_LEN = 3;
@@ -94,11 +106,10 @@ const MIN_LEN = 3;
 
   // ---- source 2: the FAQ banks — the largest body of student-voiced Hebrew ----
   let faq = 0;
-  for (const topic of FAQ_TOPICS) {
-    let bank: Record<string, Array<{ q: string; alts: string[]; a: string }>>;
-    try {
-      bank = (await import(`../content/tutor-faq/math5/${topic}`)).default;
-    } catch {
+  for (const [subject, topic] of faqBankKeys()) {
+    const bank = await loadFaqBank(subject, topic);
+    if (!bank) {
+      console.log(`  ⚠ registered bank ${subject}/${topic} did not load`);
       continue;
     }
     for (const list of Object.values(bank)) {
