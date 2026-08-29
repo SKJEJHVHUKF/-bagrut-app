@@ -488,7 +488,14 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
                                 : 'bg-emerald-100 border-emerald-300 text-emerald-700'
                             }`}
                           >
-                            {u.quotaToday.used}/{u.quotaToday.cap}
+                            {/* ⚠️ The exempt owner reserves against
+                                ADMIN_DAILY_CAP so the counter keeps moving
+                                (see /api/chat). Rendering "4/100000" would be
+                                honest and unreadable; the usage is what
+                                matters and the ceiling is not real. */}
+                            {u.quotaToday.cap >= 1000
+                              ? `${u.quotaToday.used} · ללא הגבלה`
+                              : `${u.quotaToday.used}/${u.quotaToday.cap}`}
                           </span>
                         ) : (
                           // ⚠️ NOT "0/10". A student with no row is a student the

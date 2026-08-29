@@ -2,9 +2,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { isGroundedTopic } from '@/lib/tutor-grounding';
-import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
+import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT, ADMIN_DAILY_CAP } from '@/lib/access';
 import {
-  AI_DAILY_LIMIT, QUOTA_EXHAUSTED_MESSAGE, quotaEnforced, quotaShadowed,
+  AI_DAILY_LIMIT, QUOTA_EXHAUSTED_MESSAGE, quotaEnforced, quotaShadowed, quotaExempt,
   reserveAiCall, releaseAiCall,
 } from '@/lib/ai-quota';
 import { buildTutorSystem } from '@/lib/agents/prompts';
@@ -291,11 +291,21 @@ export async function POST(request: Request) {
     // call produces nothing. While `quotaEnforced` is false the old gate is
     // still the one that blocks — the new counters move in the background so
     // the mechanism can be watched before it is allowed to lock anyone out.
-    const enforceV2 = quotaEnforced(user.email);
+    // ⚠️ THE OWNER IS NEVER BLOCKED, AND IS STILL COUNTED.
+    //
+    // `AI_QUOTA_V2=on` applies the ten-a-day limit to everyone, which is
+    // correct for students and wrong for the one account that has to be able to
+    // test the tutor for an hour straight. Exempt skips BOTH gates — the new
+    // reserve and the old row count — while the counters keep moving, so
+    // /admin still shows exactly what this account spent.
+    //
+    // Server-side and env-driven: the browser cannot put anybody on this list.
+    const exempt = quotaExempt(user.email);
+    const enforceV2 = quotaEnforced(user.email) && !exempt;
     const shadowV2 = quotaShadowed(user.email);
     const dailyCap = enforceV2 ? AI_DAILY_LIMIT : isProUser(user) ? PRO_DAILY_CHAT : FREE_DAILY_CHAT;
     const used = countError ? 0 : (todayCount ?? 0);
-    if (!enforceV2 && used >= dailyCap) {
+    if (!exempt && !enforceV2 && used >= dailyCap) {
       return Response.json(
         {
           error: isProUser(user)
@@ -512,7 +522,13 @@ data: ${JSON.stringify(data)}
     let creditTaken = false;
     let v2Remaining: number | null = null;
     if (!learned && (enforceV2 || shadowV2)) {
-      const q = await reserveAiCall(user.id, AI_DAILY_LIMIT);
+      // ⚠️ THE EXEMPT ACCOUNT RESERVES AGAINST A CEILING IT CANNOT REACH, and
+      // that is what keeps it COUNTED. The reserve is `... WHERE
+      // successful_ai_calls < daily_limit`, so with the student cap the row
+      // would freeze at 10/10 and stop recording the owner's real usage —
+      // "unlimited" would have quietly meant "invisible in /admin", which is
+      // the opposite of what it is for.
+      const q = await reserveAiCall(user.id, exempt ? ADMIN_DAILY_CAP : AI_DAILY_LIMIT);
       creditTaken = q.allowed && q.degraded !== true;
       v2Remaining = q.remaining;
       if (!q.allowed && enforceV2) {
@@ -620,7 +636,10 @@ data: ${JSON.stringify(data)}
     // Vercel-serverless trap is doing async work AFTER the response finishes —
     // we don't; we do it before controller.close()).
     const encoder = new TextEncoder();
-    const remaining = v2Remaining ?? Math.max(0, dailyCap - (used + 1));
+    // `null` for the exempt account, not a big number: the bubble only renders
+    // "נותרו לך X מתוך 10" when it receives a number, so null is how the
+    // counter disappears for somebody who does not have one.
+    const remaining = exempt ? null : (v2Remaining ?? Math.max(0, dailyCap - (used + 1)));
     // Counted off the window that was actually replayed to the model, not off
     // the conversation as a whole — two hints ago is what TUTOR_CORE reacts to.
     const maxTokens = replyBudget(

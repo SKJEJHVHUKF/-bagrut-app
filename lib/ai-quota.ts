@@ -67,6 +67,28 @@ export function quotaEnforced(email: string | null | undefined): boolean {
   return admins.includes(email.trim().toLowerCase()) && process.env.AI_QUOTA_V2 === 'admin';
 }
 
+/**
+ * Is this account never blocked, whatever the counters say?
+ *
+ * ⚠️ IT STILL COUNTS. Exempt means "not stopped", not "not measured" — the
+ * reserve and the release run exactly as they do for a student, so the admin
+ * dashboard keeps showing what this account actually spent. An owner who
+ * cannot see their own usage is the one person who most needs to.
+ *
+ * The list is the same server-side admin allowlist as everywhere else, read
+ * from the environment. A student cannot put themselves on it, and there is
+ * deliberately no client-side switch: `AI_QUOTA_V2=on` turns the limit on for
+ * everyone, and this is the one carve-out.
+ */
+export function quotaExempt(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const admins = (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? process.env.ADMIN_EMAIL ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return admins.includes(email.trim().toLowerCase());
+}
+
 /** Should the counters move at all for this user, even when the old gate still decides? */
 export function quotaShadowed(email: string | null | undefined): boolean {
   if (process.env.AI_QUOTA_V2 === 'on') return true;

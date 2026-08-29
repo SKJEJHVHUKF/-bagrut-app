@@ -114,10 +114,46 @@ const ok = (cond: boolean, name: string) => {
     const route = readFileSync('app/api/chat/route.ts', 'utf8');
     const calls = (route.match(/reserveAiCall\(/g) ?? []).length;
     ok(calls === 1, `reserveAiCall has exactly one call site (found ${calls})`);
-    const guarded = /if \(!learned && \(enforceV2 \|\| shadowV2\)\) \{[\s\S]{0,400}?reserveAiCall\(/.test(route);
+    const guarded = /if \(!learned && \(enforceV2 \|\| shadowV2\)\) \{[\s\S]{0,1200}?reserveAiCall\(/.test(route);
     ok(guarded, 'and it sits inside `if (!learned && …)` — a library hit cannot spend a credit');
     const releases = (route.match(/releaseAiCall\(/g) ?? []).length;
     ok(releases >= 3, `every failure path gives the credit back (${releases} release sites)`);
+
+    console.log('\n=== 4. the owner is never blocked, and is still counted ===\n');
+    // ⚠️ ASSERTED ON THE SOURCE, because the alternative is asserting on an
+    // env var this test cannot set. Three things have to be true together, and
+    // any one of them alone is a bug:
+    //   · the exemption exists and is read SERVER-side
+    //   · it turns the gate off — BOTH gates, old and new
+    //   · it does NOT turn the counting off, or /admin goes blind on the one
+    //     account whose spending the owner most needs to see
+    ok(/quotaExempt\(user\.email\)/.test(route), 'the route asks whether this account is exempt');
+    ok(
+      /const enforceV2 = quotaEnforced\(user\.email\) && !exempt/.test(route),
+      'exempt turns the new gate off',
+    );
+    ok(/if \(!exempt && !enforceV2 && used >= dailyCap\)/.test(route), 'and the old row-count gate too');
+    ok(
+      /reserveAiCall\(user\.id, exempt \? ADMIN_DAILY_CAP : AI_DAILY_LIMIT\)/.test(route),
+      'but it still RESERVES — against a ceiling it cannot reach, so the counter keeps moving',
+    );
+    ok(
+      /const remaining = exempt \? null :/.test(route),
+      'and reports `remaining: null`, so the bubble shows no counter instead of a fake one',
+    );
+    // The list itself must not be readable from the browser as a switch.
+    const quota = readFileSync('lib/ai-quota.ts', 'utf8');
+    // ⚠️ Checked on CODE, not on the word. The first version searched for
+    // "localStorage" anywhere in the file and failed on the comment that
+    // explains why localStorage is deliberately NOT used here — an assertion
+    // that fires on its own documentation teaches the next person to delete
+    // the documentation.
+    const code = quota.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+    ok(/export function quotaExempt/.test(quota), 'the exemption exists');
+    ok(
+      !/localStorage\s*\.|window\s*\./.test(code),
+      'and nothing in the browser can grant it — the list is read from the environment',
+    );
   } catch (e) {
     failed++;
     const msg = e instanceof Error ? e.message : String(e);

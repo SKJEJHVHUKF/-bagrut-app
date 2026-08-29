@@ -124,6 +124,15 @@ export function canUseFeature(user: UserLike, feature: ProFeature): boolean {
  * importing that module drags a server-only file into the browser bundle.
  */
 export const AI_DAILY_LIMIT = 10;
+/**
+ * The ceiling the exempt admin account reserves against.
+ *
+ * Not Infinity and not MAX_SAFE_INTEGER: it is written into ai_daily_usage.
+ * daily_limit and read back by /admin, so it has to be a number a person can
+ * look at. Large enough that no amount of testing reaches it, small enough to
+ * read as "no limit" at a glance.
+ */
+export const ADMIN_DAILY_CAP = 100000;
 
 export const FREE_DAILY_CHAT = 10;
 export const PRO_DAILY_CHAT = 200; // effectively unlimited, keeps a sane ceiling
