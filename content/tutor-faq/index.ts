@@ -17,6 +17,8 @@ type Loader = () => Promise<{ default: TutorFaqBank }>;
 const LOADERS: Record<string, Loader> = {
   'math5/סדרות': () => import('./math5/sequences'),
   'math5/הסתברות': () => import('./math5/probability'),
+  'math5/טריגונומטריה': () => import('./math5/trigonometry'),
+  'math5/גיאומטריה אוקלידית': () => import('./math5/euclidean-geometry'),
 };
 
 /**
