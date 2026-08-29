@@ -33,7 +33,7 @@ const store = new Map<string, string>();
 
 import { allLessonKeys, getSubTopics, getLesson, getSubTopic } from '../content/lessons';
 import { CONCEPT_MATH5 } from '../content/concept-quiz/math5';
-import { answerLocally, classifyAsk, type LocalAnswerKind } from '../lib/tutor-local';
+import { answerLocally, classifyAsk, formulaBlock, type LocalAnswerKind } from '../lib/tutor-local';
 import { focusPrompts, partAsQuestion, type TutorFocus } from '../lib/tutor-presence';
 import type { AnswerDiagnosis } from '../lib/answer-check';
 
@@ -44,6 +44,47 @@ function bad(msg: string) {
   failures++;
   if (failures <= 12) console.log(`FAIL  ${msg}`);
 }
+
+/**
+ * formulaBlock splits a multi-identity island on `\quad` / `\;,\;`. The split
+ * is a parser, and the two ways it can break are both silent: swallowing an
+ * implication arrow (`\;\Rightarrow\;` differs from `\;,\;` by one character),
+ * or emitting `$$…$$` that is NOT alone on its line, which stops MathText's
+ * promoteDisplayMath from promoting it and drops the maths back to inline.
+ */
+function checkFormulaBlock() {
+  const cases: Array<[string, { name: string; latex: string; note?: string }, number]> = [
+    ['splits a comma-quad list', { name: 'n', latex: 'a = 1, \\quad b = 2, \\quad c = 3' }, 3],
+    ['splits \\;,\\;', { name: 'n', latex: 'x = 1 \\;,\\; y = 2' }, 2],
+    ['splits \\qquad', { name: 'n', latex: 'a + b = 90°,\\qquad s = c' }, 2],
+    ['keeps an implication whole', { name: 'n', latex: 'x = k \\;\\Rightarrow\\; y = 2' }, 1],
+    ['keeps a chain of equals whole', { name: 'n', latex: 'a = b = c = 2R' }, 1],
+  ];
+  for (const [label, input, wantLines] of cases) {
+    checks++;
+    const out = formulaBlock(input);
+    const mathLines = out.split('\n').filter((l) => l.startsWith('$$'));
+    if (mathLines.length !== wantLines) {
+      bad(`formulaBlock ${label}: ${mathLines.length} maths lines, expected ${wantLines}`);
+    }
+    checks++;
+    // Every maths line must be exactly one island alone on its line, or
+    // promoteDisplayMath (anchored ^…$ per line) will not fire.
+    if (!mathLines.every((l) => /^\$\$.+\$\$$/.test(l))) {
+      bad(`formulaBlock ${label}: a $$…$$ line is not alone on its line`);
+    }
+  }
+  checks++;
+  const withNote = formulaBlock({ name: 'שם', latex: 'a = 1', note: 'הערה' });
+  if (withNote !== '**שם**\n$$a = 1$$\nהערה') {
+    bad(`formulaBlock layout drifted: ${JSON.stringify(withNote)}`);
+  }
+  checks++;
+  // The whole point of the rewrite: no em-dash touching a maths island, which
+  // renders as a minus sign in RTL.
+  if (/—\s*\$/.test(withNote)) bad('formulaBlock put an em-dash next to maths again');
+}
+checkFormulaBlock();
 
 /**
  * Hebrew inside a $…$ span — KaTeX has no bidi support and renders it reversed.

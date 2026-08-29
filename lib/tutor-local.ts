@@ -337,6 +337,41 @@ function detectState(f: TutorFocus): State {
 
 type Slots = Record<string, string | undefined>;
 
+/**
+ * A formula entry often carries SEVERAL identities in one maths island, joined
+ * by `\quad` (or `\;,\;`). That is right for a printed formula sheet and wrong
+ * for a chat bubble: on a phone in RTL the line wraps mid-identity and the
+ * student cannot tell where one ends and the next begins.
+ *
+ * Split only on those separators. `\;\Rightarrow\;` must survive — the comma is
+ * what distinguishes a list from an implication, so it is required in the
+ * pattern.
+ */
+const FORMULA_SEP = /\s*,?\s*(?:\\qquad|\\quad|\\;\s*,\s*\\;)\s*/;
+
+/**
+ * One formula, laid out as a block: the name, then each identity as display
+ * maths on a line of its own, then the note.
+ *
+ * It used to be one line — `- **name** — $latex$ — note` — which read badly
+ * twice over. The lines ran to 250+ characters, and an em-dash flanking a
+ * maths island renders as a MINUS SIGN in Hebrew (see the RTL dash rule), so
+ * "**שטח משולש** — $S = ...$" looked like it was negating the formula.
+ *
+ * `$$…$$` must sit alone on its line or MathText's promoteDisplayMath will not
+ * promote it, which is why the maths lines are joined with `\n` and never
+ * folded into the name line.
+ */
+export function formulaBlock(x: { name: string; latex: string; note?: string }): string {
+  const maths = x.latex
+    .split(FORMULA_SEP)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `$$${p}$$`)
+    .join('\n');
+  return `**${x.name}**\n${maths}${x.note ? `\n${x.note.trim()}` : ''}`;
+}
+
 function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
   const q = f.question;
   const st = f.subTopic;
@@ -355,11 +390,7 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
     // The sub-topic's authored overview — the closest thing to "explain this
     // to me from the top" that exists in writing.
     summary: st?.summary?.trim() || undefined,
-    formulas: st?.formulas?.length
-      ? st.formulas
-          .map((x) => `- **${x.name}** — $${x.latex}$${x.note ? ` — ${x.note}` : ''}`)
-          .join('\n')
-      : undefined,
+    formulas: st?.formulas?.length ? st.formulas.map(formulaBlock).join('\n\n') : undefined,
     steps: q?.solution?.steps.length
       ? q.solution!.steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n')
       : undefined,
