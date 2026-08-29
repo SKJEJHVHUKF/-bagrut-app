@@ -41,9 +41,16 @@ export const EXCLUDED_TOPICS: Record<BagrutPaper, readonly string[]> = {
  *  what these four taught, in root-and-quotient flavour and in his order, so
  *  keeping both would put the same material on the track twice. (The ln part
  *  of domain-definition is not lost: פונקציית ln is not a 571 topic at all.)
- *  The five siblings that carry something the stages do NOT — סימן הפונקציה,
- *  קיצון בקצה, תנאי התחלה, שחזור פונקציה מהנגזרת, פונקציה הפכית — stayed on
- *  the track as "עוד בנושא" tiles rather than being excluded. */
+ *  Their six siblings were kept as "עוד בנושא" tiles for one day and then
+ *  removed too, on the owner's instruction (2026-08-29): "שרק את הנושאים
+ *  האלה יהיו לפי איך ששלחתי לך ושלא יהיה מעורבב עם פונקציות טריגונומטריה".
+ *  He is right about the mixing — tangent-line, extrema-monotonicity,
+ *  basic-integration, definite-integral, even-odd-inverse and
+ *  intersections-signs are authored inside חשבון דיפרנציאלי / אינטגרלי /
+ *  פונקציות, and their worked examples are full of sin, cos, e^x and ln. A
+ *  student on the מנה ושורש path who opened one landed in another topic.
+ *  All of them stay authored and reachable from /practice and the quiz; only
+ *  this track stops pointing at them. */
 export const EXCLUDED_571: readonly string[] = [
   'volume-revolution',
   'sequences-applications',
@@ -51,6 +58,12 @@ export const EXCLUDED_571: readonly string[] = [
   'asymptotes-rational',
   'derivative-rules',
   'area-between-curves',
+  'tangent-line',
+  'extrema-monotonicity',
+  'basic-integration',
+  'definite-integral',
+  'even-odd-inverse',
+  'intersections-signs',
 ];
 
 /** Every sub-topic a paper's track leaves out on purpose — the sub-topic list

@@ -432,49 +432,16 @@ export const TRACK_571: TrackTree = {
           title: 'רמה 8 · תרגול בגרות שמערב הכול',
           bullets: ['שאלות חקירה מלאות', 'רשימת הבדיקה שמונעת פספוס סעיפים'],
         },
-        // Not part of the eight levels. Each of these existing ladders carries
-        // something the stages deliberately do not, so it stays reachable here
-        // instead of going into EXCLUDED_571 (see content/tracks/index.ts).
-        {
-          kind: 'ladder',
-          subId: 'tangent-line',
-          title: 'עוד בנושא · משוואת המשיק',
-        },
-        {
-          kind: 'ladder',
-          subId: 'intersections-signs',
-          title: 'עוד בנושא · סימן הפונקציה',
-          bullets: ['מתי הפונקציה מעל ציר $x$ ומתי מתחתיו'],
-        },
-        {
-          kind: 'ladder',
-          subId: 'extrema-monotonicity',
-          title: 'עוד בנושא · קיצון בקצה בקטע סגור',
-          bullets: ['קיצון מוחלט, כשהשאלה מגבילה לקטע'],
-        },
-        {
-          kind: 'ladder',
-          subId: 'basic-integration',
-          title: 'עוד בנושא · אינטגרל ותנאי התחלה',
-          bullets: ['המקרה החריג, וקביעת הקבוע מנקודה נתונה'],
-        },
-        {
-          kind: 'ladder',
-          subId: 'definite-integral',
-          title: 'עוד בנושא · שחזור פונקציה מהנגזרת',
-        },
-        {
-          kind: 'ladder',
-          subId: 'even-odd-inverse',
-          title: 'עוד בנושא · פונקציה הפכית',
-          bullets: ['היפוך פונקציה דרך החלפת התפקידים בין $x$ לבין $y$'],
-        },
-        {
-          kind: 'link',
-          title: 'עוד תרגול בגרויות',
-          href: bagrutPractice('חשבון דיפרנציאלי'),
-          emoji: '🎓',
-        },
+        // Nothing else. The owner asked (2026-08-29) that this topic hold his
+        // eight levels and ONLY them: "שרק את הנושאים האלה יהיו לפי איך
+        // ששלחתי לך ושלא יהיה מעורבב עם פונקציות טריגונומטריה". The older
+        // ladders that used to sit here as extras (tangent-line,
+        // extrema-monotonicity, basic-integration, definite-integral,
+        // even-odd-inverse, intersections-signs) all live in חשבון דיפרנציאלי /
+        // אינטגרלי / פונקציות, where their examples are full of sin, cos and
+        // e^x — which is exactly the mixing he is objecting to. They are in
+        // EXCLUDED_571 now; the modules stay authored and reachable from
+        // /practice, only this track no longer points at them.
       ],
     },
     {
