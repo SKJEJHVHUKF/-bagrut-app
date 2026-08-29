@@ -30,6 +30,49 @@ type Row = {
   pro: boolean;
 };
 
+/**
+ * What one student did, from the six tables that carry a user id.
+ *
+ * ⚠️ NOT named `Activity` — that identifier is already the lucide icon imported
+ * above, and shadowing it renders a type where a component is expected.
+ */
+type Usage = {
+  userId: string;
+  aiCalls: number;
+  tokensIn: number;
+  tokensOut: number;
+  costUsd: number;
+  messages: number;
+  conversations: number;
+  scans: number;
+  answered: number;
+  correct: number;
+  topics: Record<string, { answered: number; correct: number }>;
+  quotaToday: { used: number; cap: number } | null;
+  lastActivity: string | null;
+};
+
+type AppWide = {
+  turns: number;
+  local: number;
+  paid: number;
+  localRate: number;
+  costUsdIncludingCache: number;
+  reasons: Record<string, number>;
+  note: string;
+};
+
+type ResultRow = {
+  ts?: number;
+  topic?: string;
+  source?: string;
+  correct?: boolean;
+  difficulty?: string;
+  questionId?: string;
+};
+
+const usd = (n: number) => `$${n < 0.01 && n > 0 ? n.toFixed(4) : n.toFixed(2)}`;
+
 const dateFmt = new Intl.DateTimeFormat('he-IL', {
   day: 'numeric',
   month: 'short',
@@ -54,6 +97,10 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState('');
+  const [usage, setUsage] = useState<Record<string, Usage>>({});
+  const [appWide, setAppWide] = useState<AppWide | null>(null);
+  const [openId, setOpenId] = useState('');
+  const [detail, setDetail] = useState<{ recent: ResultRow[] } | null>(null);
 
   // Add-account form
   const [email, setEmail] = useState('');
@@ -68,6 +115,22 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
       setRows(data.users);
+
+      // Activity is fetched separately and is allowed to fail on its own: the
+      // account list is the page's job, and a missing table or a slow query
+      // must not blank it out.
+      try {
+        const act = await fetch('/api/admin/activity');
+        const a = await act.json();
+        if (act.ok) {
+          const map: Record<string, Usage> = {};
+          for (const u of (a.rows ?? []) as Usage[]) map[u.userId] = u;
+          setUsage(map);
+          setAppWide(a.appWide ?? null);
+        }
+      } catch {
+        /* the table still renders; the activity columns just stay empty */
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'טעינת המשתמשים נכשלה');
       setRows((prev) => prev ?? []);
@@ -77,6 +140,19 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const toggleDetail = useCallback(async (id: string) => {
+    if (openId === id) { setOpenId(''); setDetail(null); return; }
+    setOpenId(id);
+    setDetail(null);
+    try {
+      const res = await fetch(`/api/admin/activity?userId=${encodeURIComponent(id)}`);
+      const d = await res.json();
+      if (res.ok) setDetail({ recent: (d.recent ?? []) as ResultRow[] });
+    } catch {
+      /* the summary row stays; only the expanded detail is missing */
+    }
+  }, [openId]);
 
   async function mutate(method: 'POST' | 'PATCH' | 'DELETE', body: unknown) {
     setError('');
@@ -265,6 +341,53 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
         </form>
 
         {/* Accounts table */}
+        {/* ⚠️ APP-WIDE, NOT PER STUDENT, AND THE CARD SAYS SO.
+            tutor_trace carries no user id by design, so "why did turns reach
+            the model" and the cache half of the bill exist only in aggregate.
+            A per-student breakdown of these numbers would be invented. */}
+        {appWide && (
+          <div className="glass-card rounded-2xl p-4 mb-4">
+            <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+              <div>
+                <div className="text-[11px] font-black text-slate-500">תורים של המורה</div>
+                <div className="text-lg font-black text-slate-800">{appWide.turns}</div>
+              </div>
+              <div>
+                <div className="text-[11px] font-black text-slate-500">נענו מקומית</div>
+                <div className="text-lg font-black text-emerald-700">
+                  {Math.round(appWide.localRate * 100)}%
+                  <span className="text-xs font-bold text-slate-500"> ({appWide.local})</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-black text-slate-500">עלו קריאה למודל</div>
+                <div className="text-lg font-black text-slate-800">{appWide.paid}</div>
+              </div>
+              <div>
+                <div className="text-[11px] font-black text-slate-500">עלות כוללת (כולל מטמון)</div>
+                <div className="text-lg font-black text-slate-800">
+                  {usd(appWide.costUsdIncludingCache)}
+                </div>
+              </div>
+            </div>
+            {Object.keys(appWide.reasons).length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {Object.entries(appWide.reasons)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([reason, n]) => (
+                    <span
+                      key={reason}
+                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-600"
+                    >
+                      {reason} · {n}
+                    </span>
+                  ))}
+              </div>
+            )}
+            <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">{appWide.note}</p>
+          </div>
+        )}
+
         <div className="glass-card rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -273,6 +396,9 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
                   <th className="px-4 py-3 font-bold">משתמש</th>
                   <th className="px-4 py-3 font-bold whitespace-nowrap">התחברות אחרונה</th>
                   <th className="px-4 py-3 font-bold whitespace-nowrap">נרשם</th>
+                  <th className="px-4 py-3 font-bold whitespace-nowrap">פעילות</th>
+                  <th className="px-4 py-3 font-bold whitespace-nowrap">API</th>
+                  <th className="px-4 py-3 font-bold whitespace-nowrap">מכסה היום</th>
                   <th className="px-4 py-3 font-bold">Pro</th>
                   <th className="px-4 py-3 font-bold">
                     <span className="sr-only">פעולות</span>
@@ -282,20 +408,21 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
               <tbody>
                 {rows === null && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                       טוען משתמשים…
                     </td>
                   </tr>
                 )}
                 {rows?.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                       אין עדיין נרשמים.
                     </td>
                   </tr>
                 )}
                 {rows?.map((row) => {
                   const busy = busyId === row.id;
+                  const u = usage[row.id];
                   const self = row.id === selfId;
                   return (
                     <tr key={row.id} className="border-b border-slate-100 last:border-0">
@@ -324,6 +451,58 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
                       <td className="px-4 py-3 whitespace-nowrap text-slate-600">
                         {dateFmt.format(new Date(row.createdAt))}
                       </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-slate-600">
+                        {u ? (
+                          <button
+                            onClick={() => void toggleDetail(row.id)}
+                            className="text-right hover:text-violet-700 transition-colors"
+                            title="לחיצה פותחת את הפירוט"
+                          >
+                            <span className="font-bold">{u.answered}</span> שאלות
+                            {u.answered > 0 && (
+                              <span className="text-xs text-slate-500">
+                                {' '}· {Math.round((u.correct / u.answered) * 100)}% נכון
+                              </span>
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-slate-600">
+                        {u && u.aiCalls > 0 ? (
+                          <>
+                            <span className="font-bold">{u.aiCalls}</span> קריאות
+                            <span className="text-xs text-slate-500"> · {usd(u.costUsd)}</span>
+                          </>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {u?.quotaToday ? (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[11px] font-black border ${
+                              u.quotaToday.used >= u.quotaToday.cap
+                                ? 'bg-red-100 border-red-300 text-red-700'
+                                : 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                            }`}
+                          >
+                            {u.quotaToday.used}/{u.quotaToday.cap}
+                          </span>
+                        ) : (
+                          // ⚠️ NOT "0/10". A student with no row is a student the
+                          // quota is not counting AT ALL — which is what
+                          // AI_QUOTA_V2=admin does to everyone but the owner. A
+                          // zero would read as "used none of ten" and hide it.
+                          <span
+                            className="rounded-full px-2 py-0.5 text-[11px] font-black border bg-slate-100 border-slate-300 text-slate-500"
+                            title="לא נספר במכסה בכלל"
+                          >
+                            ללא מגבלה
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <button
                           onClick={() => void togglePro(row)}
@@ -350,6 +529,90 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
                             <Trash2 aria-hidden="true" className="w-4 h-4" />
                           </button>
                         )}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {rows?.map((row) => {
+                  if (openId !== row.id) return null;
+                  const u = usage[row.id];
+                  const byTopic = Object.entries(u?.topics ?? {}).sort(
+                    (a, b) => b[1].answered - a[1].answered,
+                  );
+                  return (
+                    <tr key={`${row.id}-detail`} className="border-b border-slate-100 bg-slate-50/70">
+                      <td colSpan={8} className="px-4 py-4">
+                        <div className="grid gap-4 md:grid-cols-3">
+                          <div>
+                            <div className="text-[11px] font-black text-slate-500 mb-2">מה נעשה</div>
+                            <ul className="text-sm text-slate-700 space-y-1">
+                              <li>שאלות שנענו: <b>{u?.answered ?? 0}</b>{u?.answered ? ` · ${Math.round(((u.correct) / u.answered) * 100)}% נכון` : ''}</li>
+                              <li>שיחות עם המורה: <b>{u?.conversations ?? 0}</b></li>
+                              <li>הודעות בצ׳אט: <b>{u?.messages ?? 0}</b></li>
+                              <li>שאלות שצולמו: <b>{u?.scans ?? 0}</b></li>
+                              <li>פעילות אחרונה: <b>{timeAgo(u?.lastActivity ?? null)}</b></li>
+                            </ul>
+                          </div>
+                          <div>
+                            <div className="text-[11px] font-black text-slate-500 mb-2">מה זה עלה</div>
+                            <ul className="text-sm text-slate-700 space-y-1">
+                              <li>קריאות למודל: <b>{u?.aiCalls ?? 0}</b></li>
+                              <li>טוקנים: <b>{(u?.tokensIn ?? 0).toLocaleString('he-IL')}</b> נכנס · <b>{(u?.tokensOut ?? 0).toLocaleString('he-IL')}</b> יוצא</li>
+                              <li>עלות: <b>{usd(u?.costUsd ?? 0)}</b></li>
+                            </ul>
+                            {/* ⚠️ chat_messages stores input_tokens, which EXCLUDES the
+                                cached prefix — so this figure is a floor, not the bill.
+                                Saying so beats a confident number that is quietly low. */}
+                            <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                              המספר אינו כולל את עלות המטמון, שאינה נשמרת לכל הודעה. הסכום
+                              המלא של האפליקציה מופיע למעלה.
+                            </p>
+                          </div>
+                          <div>
+                            <div className="text-[11px] font-black text-slate-500 mb-2">לפי נושא</div>
+                            {byTopic.length === 0 ? (
+                              <p className="text-sm text-slate-500">עוד לא ענה על שאלות.</p>
+                            ) : (
+                              <ul className="text-sm text-slate-700 space-y-1">
+                                {byTopic.slice(0, 8).map(([topic, t]) => (
+                                  <li key={topic}>
+                                    {topic}: <b>{t.answered}</b>
+                                    <span className="text-xs text-slate-500">
+                                      {' '}· {Math.round((t.correct / t.answered) * 100)}% נכון
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <div className="text-[11px] font-black text-slate-500 mb-2">
+                            השאלות האחרונות
+                          </div>
+                          {detail === null ? (
+                            <p className="text-sm text-slate-500">טוען…</p>
+                          ) : detail.recent.length === 0 ? (
+                            <p className="text-sm text-slate-500">אין רשומות.</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-1.5">
+                              {detail.recent.slice(0, 40).map((r, i) => (
+                                <span
+                                  key={`${r.questionId ?? i}-${r.ts ?? i}`}
+                                  title={`${r.topic ?? ''} · ${r.source ?? ''} · ${r.questionId ?? ''}`}
+                                  className={`rounded-lg px-2 py-1 text-[11px] font-bold border ${
+                                    r.correct
+                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                      : 'bg-red-50 border-red-200 text-red-700'
+                                  }`}
+                                >
+                                  {r.topic ?? '—'}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
