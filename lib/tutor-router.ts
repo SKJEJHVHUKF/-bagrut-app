@@ -43,6 +43,7 @@ import type { TutorFocus } from '@/lib/tutor-presence';
 import type { AnswerSpec, Verdict } from '@/lib/answer-check';
 import { reportedValue, unambiguousReport, yesNo, type Pending } from '@/lib/tutor-pending';
 import { followUp, ladderMove } from '@/lib/tutor-followup';
+import { deriveExpected } from '@/lib/derive-expected';
 
 type Ask = NonNullable<ReturnType<typeof classifyAsk>>;
 
@@ -273,6 +274,28 @@ export function looksLikeAnswer(message: string): boolean {
   });
 }
 
+/**
+ * What this question's typed answer is graded against.
+ *
+ * ⚠️ THE AUTHORED SPEC FIRST, AND A DERIVED ONE ONLY WHERE THERE IS NONE.
+ *
+ * MEASURED (`npm run report:gradable`): 199 of 1,214 questions carry an
+ * `expected`. On the other 84%, a student typing "15" could not be graded at
+ * all, so the turn went to the model — which costs money and, worse, makes
+ * claude-haiku-4-5 write the reply itself. That is where it invents Hebrew:
+ * "בטעות הנתת", "והקבלן לך 2.3", "בוגדר לרדיאנים". A graded turn answers from
+ * an authored template, so the Hebrew is a human's.
+ *
+ * `deriveExpected` reads the answer the content already states in
+ * `solution.finalAnswer` and refuses anything it cannot grade unambiguously —
+ * including every question an author marked `manual`. 319 of the 942 qualify;
+ * the rest still go to the model, on purpose.
+ */
+function specOf(focus: TutorFocus | null): AnswerSpec | undefined {
+  const q = focus?.question as { expected?: AnswerSpec } | undefined;
+  return q?.expected ?? deriveExpected(q) ?? undefined;
+}
+
 // ------------------------------------------------------------
 // The single decision
 // ------------------------------------------------------------
@@ -351,7 +374,7 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
           about: { step: state.pending.step },
         };
       }
-      const own = focus?.question?.expected;
+      const own = specOf(focus);
       if (own && own.kind !== 'manual') return { kind: 'answer', spec: own, typed: checking };
     }
   }
@@ -418,14 +441,14 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
             about: { step: state.pending.step },
           };
         }
-        const own = focus?.question?.expected;
+        const own = specOf(focus);
         if (own && own.kind !== 'manual') return { kind: 'answer', spec: own, typed: reported };
       }
       return { kind: 'ask', ask: ladderMove(fu, state.served ?? [], state.lastAsk) as Ask };
     }
   }
 
-  const spec = focus?.question?.expected;
+  const spec = specOf(focus);
 
   // ---- a reported result, whatever else the sentence is doing ------
   //

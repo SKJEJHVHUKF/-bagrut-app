@@ -636,6 +636,26 @@ data: ${JSON.stringify(data)}
               // do not use them, and the low branch stops a one-line nudge from
               // being budgeted like a full derivation.
               max_tokens: maxTokens,
+              // ⚠️ NOT THE DEFAULT 1.0, AND THE REASON IS HEBREW, NOT VARIETY.
+              //
+              // claude-haiku-4-5 fabricates Hebrew verb forms when it samples
+              // freely. Real replies from the live tutor, all of them words
+              // that do not exist:
+              //
+              //   "בטעות הנתת 14 חלקי משהו"      (הזנת)
+              //   "אתה חישבת ... והקבלן לך 2.3"   (והתקבל)
+              //   "אם המחשבון שלך בוגדר"          (מוגדר)
+              //   "בואנו נבנה זאת מחדש"           (בוא נבנה את זה)
+              //
+              // Hebrew morphology is where a small model's sampling noise
+              // shows first: the binyan is almost right and the word is not a
+              // word. A/B'd at 0.2 against the default on the same six turns —
+              // visibly fewer invented forms, same Socratic behaviour.
+              //
+              // 0.3 rather than 0: this tutor is told never to repeat an
+              // explanation in other words, and greedy decoding is exactly how
+              // a model repeats itself.
+              temperature: 0.3,
               system,
               messages: claudeMessages,
               // The tutor may suggest an in-app action and may remember a fact.
