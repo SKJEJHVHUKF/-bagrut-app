@@ -51,6 +51,57 @@ ok(!rendered.includes('35') && !rendered.includes('21'), 'even if a caller passe
 ok(renderExample({ question: 'שאלה בלי רמז בכלל כאן' }).includes('נסה אותו'), 'a sibling with no hint still renders');
 ok(!renderExample({ question: 'שאלה בלי רמז בכלל כאן' }).includes('הכיוון'), 'and does not invent one');
 
+// ============================================================
+console.log('\n=== a drawing the chat cannot draw ===\n');
+// ============================================================
+//
+// ⚠️ REPORTED FROM PRODUCTION, WITH A SCREENSHOT. Asking for an example on a
+// geometry question put this in the student's chat:
+//
+//   "":"AC","text":"6"}],"width":240}
+//   **''''
+//
+// The sibling's question carried its sketch as a ```geo fence. The exercise
+// cards render that as a figure; the chat renders markdown and does not. And
+// the `**...**` this function used for emphasis ran straight across the fence,
+// so the code block never closed and ate the rest of the message.
+const WITH_FIGURE = `במשולש שווה-שוקיים השוקיים הן 6 וזווית הראש $60°$. מהו שטח המשולש?
+
+\`\`\`geo
+{"shapes":[{"type":"segment","from":"A","to":"C","text":"6"}],"width":240}
+\`\`\``;
+
+{
+  // 1. it is not offered at all when a sibling without a drawing exists.
+  const picked = pickExample(
+    [
+      { id: 'a', question: WITH_FIGURE, hint: 'רמז' },
+      { id: 'b', question: 'בסדרה חשבונית נתון האיבר הראשון וההפרש, חשב את החמישי', hint: 'רמז' },
+    ],
+    'current',
+  );
+  ok(picked?.id === 'b', 'a sibling that needs a drawing is skipped in favour of one that does not');
+
+  // 2. when EVERY sibling needs one, nothing is offered — the model answers.
+  ok(
+    pickExample([{ id: 'a', question: WITH_FIGURE }], 'current') === null,
+    'when every sibling needs a drawing, no example is offered at all',
+  );
+
+  // 3. and if a future caller renders one anyway, no JSON reaches the student.
+  const out = renderExample({ question: WITH_FIGURE, hint: 'רמז' });
+  ok(!out.includes('"width"') && !out.includes('shapes'), 'rendering one directly still strips the figure JSON');
+  ok(!out.includes('```'), 'and leaves no unclosed code fence behind');
+  ok(out.includes('שווה-שוקיים'), 'while keeping the question text itself');
+}
+
+// The emphasis must survive a multi-line question — `**` across newlines is
+// broken markdown, which is half of what produced the screenshot above.
+{
+  const out = renderExample({ question: 'שורה ראשונה של השאלה\nושורה שנייה שלה' });
+  ok(!/\*\*[\s\S]*\n[\s\S]*\*\*/.test(out), 'no bold marker spans a newline');
+}
+
 console.log(
   failed === 0
     ? '\nOK example: a real authored sibling, without its answer\n'
