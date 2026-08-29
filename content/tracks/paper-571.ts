@@ -358,54 +358,120 @@ export const TRACK_571: TrackTree = {
       id: 'functions-rational-root',
       title: 'פונקציות מנה ושורש',
       emoji: '📈',
+      // Rebuilt 2026-08-29 to the owner's own eight-level spec. The tiles now
+      // point at the dedicated rq-* STAGES (content/lessons/math5/
+      // functions-root-quotient.ts), authored root-and-quotient-flavoured and
+      // in this exact teaching order, the same way סדרות / הסתברות got theirs.
+      // The generic modules the tiles used to point at (domain-definition,
+      // asymptotes-rational, derivative-rules, basic-integration …) still exist
+      // and still serve the פונקציות / דיפרנציאלי / אינטגרלי topics.
       tiles: [
-        { kind: 'ladder', subId: 'domain-definition', title: 'תחום הגדרה במנה ושורש' },
+        {
+          kind: 'ladder',
+          subId: 'rq-domain',
+          title: 'רמה 1 · תחום הגדרה',
+          bullets: ['מכנה שאינו מתאפס, ושורש עם אי-שוויון', 'ביטוי ריבועי מתחת לשורש, בעזרת הפרבולה'],
+        },
+        {
+          kind: 'ladder',
+          subId: 'rq-intersections',
+          title: 'רמה 2 · נקודות חיתוך עם הצירים',
+          bullets: [
+            'מציבים $y=0$ לציר $x$, ומציבים $x=0$ לציר $y$',
+            'במנה מאפסים את המונה, בשורש את מה שמתחתיו',
+          ],
+        },
+        {
+          kind: 'ladder',
+          subId: 'rq-asymptotes',
+          title: 'רמה 3 · אסימפטוטות',
+          bullets: [
+            'אנכית מאיפוס המכנה, ומלכודת החור',
+            'אופקית לפי השוואת החזקות של המונה והמכנה',
+          ],
+        },
+        {
+          kind: 'ladder',
+          subId: 'rq-derivative',
+          title: 'רמה 4 · נגזרת, קיצון, עלייה וירידה',
+          bullets: [
+            'כל כללי הגזירה, כולל פונקציה מורכבת',
+            'הנגזרת היא שיפוע המשיק, ולכן מאפסים אותה בקיצון',
+          ],
+        },
+        {
+          kind: 'ladder',
+          subId: 'rq-sketch',
+          title: 'רמה 5 · שרטוט הגרף',
+          bullets: [
+            'אסימפטוטות, ואז חיתוכים וקיצון, ואז חיבור',
+            'הקשר בין גרף הפונקציה לגרף הנגזרת',
+          ],
+        },
+        {
+          kind: 'ladder',
+          subId: 'rq-transformations',
+          title: 'רמה 6 · טרנספורמציות, זוגיות וסעיפי חשיבה',
+          bullets: [
+            'הזזות, שיקופים, ערך מוחלט וזוגיות',
+            'סעיפי חשיבה: כמה נקודות משותפות יש עם ציר $x$',
+          ],
+        },
+        {
+          kind: 'ladder',
+          subId: 'rq-integral',
+          title: 'רמה 7 · חשבון אינטגרלי וחישובי שטחים',
+          bullets: [
+            'זיהוי אינטגרל לפי הנגזרת הפנימית',
+            'כל הפרוצדורה של חישוב שטח, כולל בין שני גרפים',
+          ],
+        },
+        {
+          kind: 'ladder',
+          subId: 'rq-bagrut-mixed',
+          title: 'רמה 8 · תרגול בגרות שמערב הכול',
+          bullets: ['שאלות חקירה מלאות', 'רשימת הבדיקה שמונעת פספוס סעיפים'],
+        },
+        // Not part of the eight levels. Each of these existing ladders carries
+        // something the stages deliberately do not, so it stays reachable here
+        // instead of going into EXCLUDED_571 (see content/tracks/index.ts).
+        {
+          kind: 'ladder',
+          subId: 'tangent-line',
+          title: 'עוד בנושא · משוואת המשיק',
+        },
         {
           kind: 'ladder',
           subId: 'intersections-signs',
-          title: 'נקודות חיתוך עם הצירים',
-          bullets: ['חיתוך עם הצירים', 'סימן הפונקציה'],
-        },
-        {
-          kind: 'ladder',
-          subId: 'derivative-rules',
-          title: 'גזירה — פולינום, פונקציה מורכבת, מנה ושורש',
-        },
-        {
-          // Not in the syllabus — existing ladder, required for every function investigation.
-          kind: 'ladder',
-          subId: 'tangent-line',
-          title: 'משוואת המשיק',
+          title: 'עוד בנושא · סימן הפונקציה',
+          bullets: ['מתי הפונקציה מעל ציר $x$ ומתי מתחתיו'],
         },
         {
           kind: 'ladder',
           subId: 'extrema-monotonicity',
-          title: 'נקודות קיצון — כולל קיצון בקצה, טבלה ונגזרת שנייה',
+          title: 'עוד בנושא · קיצון בקצה בקטע סגור',
+          bullets: ['קיצון מוחלט, כשהשאלה מגבילה לקטע'],
         },
-        {
-          kind: 'ladder',
-          subId: 'asymptotes-rational',
-          title: 'אסימפטוטות — אופקיות, אנכיות ונקודת חור',
-        },
-        { kind: 'soon', title: 'שרטוט הפונקציה והקשר בין גרף הפונקציה לגרף הנגזרת' },
         {
           kind: 'ladder',
           subId: 'basic-integration',
-          title: 'אינטגרלים — זיהוי אינטגרל לפי נגזרת פנימית',
+          title: 'עוד בנושא · אינטגרל ותנאי התחלה',
+          bullets: ['המקרה החריג, וקביעת הקבוע מנקודה נתונה'],
         },
-        // The syllabus says "אינטגרלים" once; the existing content splits it in three.
-        { kind: 'ladder', subId: 'definite-integral', title: 'אינטגרל מסוים' },
-        { kind: 'ladder', subId: 'area-between-curves', title: 'חישוב שטחים' },
-        { kind: 'soon', title: 'עבודה עם פרמטרים' },
+        {
+          kind: 'ladder',
+          subId: 'definite-integral',
+          title: 'עוד בנושא · שחזור פונקציה מהנגזרת',
+        },
         {
           kind: 'ladder',
           subId: 'even-odd-inverse',
-          title: 'פונקציה זוגית ואי-זוגית',
-          bullets: ['זוגיות ואי-זוגיות', 'פונקציה הפכית'],
+          title: 'עוד בנושא · פונקציה הפכית',
+          bullets: ['היפוך פונקציה דרך החלפת התפקידים בין $x$ לבין $y$'],
         },
         {
           kind: 'link',
-          title: 'סעיפי חשיבה ותרגול בגרויות',
+          title: 'עוד תרגול בגרויות',
           href: bagrutPractice('חשבון דיפרנציאלי'),
           emoji: '🎓',
         },

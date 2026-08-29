@@ -34,8 +34,24 @@ export const EXCLUDED_TOPICS: Record<BagrutPaper, readonly string[]> = {
  *  `sequences-applications` (ריבית ונסיגה): the owner's סדרות structure
  *  (2026-08-19) is two groups of four stages and does not include an interest
  *  module; recursion moved into ar-recursion-sums. The module stays authored
- *  (lesson page, quiz, cognition, ghost) — only the track skips it. */
-export const EXCLUDED_571: readonly string[] = ['volume-revolution', 'sequences-applications'];
+ *  (lesson page, quiz, cognition, ghost) — only the track skips it.
+ *  `domain-definition` / `asymptotes-rational` / `derivative-rules` /
+ *  `area-between-curves`: same situation after the owner's eight-level
+ *  פונקציות מנה ושורש structure (2026-08-29). The rq-* stages cover exactly
+ *  what these four taught, in root-and-quotient flavour and in his order, so
+ *  keeping both would put the same material on the track twice. (The ln part
+ *  of domain-definition is not lost: פונקציית ln is not a 571 topic at all.)
+ *  The five siblings that carry something the stages do NOT — סימן הפונקציה,
+ *  קיצון בקצה, תנאי התחלה, שחזור פונקציה מהנגזרת, פונקציה הפכית — stayed on
+ *  the track as "עוד בנושא" tiles rather than being excluded. */
+export const EXCLUDED_571: readonly string[] = [
+  'volume-revolution',
+  'sequences-applications',
+  'domain-definition',
+  'asymptotes-rational',
+  'derivative-rules',
+  'area-between-curves',
+];
 
 /** Every sub-topic a paper's track leaves out on purpose — the sub-topic list
  *  above plus every sub-topic of the excluded topics. verify-tracks treats

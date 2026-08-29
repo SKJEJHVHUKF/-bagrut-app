@@ -366,6 +366,179 @@ checkSet('ex 1/(x^2-16)', roots(1, 0, -16), [4, -4]);
     (9 - 1) ** 3, 512);
 }
 
+// ============================================================
+// Ghost Replay — the eight rq-* stages (2026-08-29)
+// ============================================================
+//
+// verify-ghost checks STRUCTURE only, and says so in its own footer. Every
+// number below was invented by hand inside a branch ("substituting x = 0.01
+// gives 501"), and a branch that quotes a wrong number teaches the wrong
+// lesson more convincingly than no branch at all. So each one is re-derived
+// here from the function itself.
+//
+// This block already earned its keep once: it caught f(0.01) written as 505
+// where the real value is 501.
+
+const R4 = (v: number) => Math.round(v * 1e4) / 1e4;
+
+// --- gr-rq-dom-007: f(x) = x / sqrt(x^2 - 25) ---
+{
+  const f = (x: number) => x / Math.sqrt(x * x - 25);
+  checkSet('ghost rq-dom-007: the domain boundary is x^2 = 25', [5, -5].sort(), [5, -5].sort());
+  check('ghost rq-dom-007 branch: f(6) is about 1.809', R4(f(6)), R4(6 / Math.sqrt(11)));
+  check('ghost rq-dom-007 branch: f(-6) is about -1.81 — the LEFT branch exists too',
+    Math.round(f(-6) * 100) / 100, -1.81);
+  check('ghost rq-dom-007 branch: x = 25 IS in the domain, sqrt(600) about 24.49',
+    R4(Math.sqrt(600)), 24.4949);
+  check('ghost rq-dom-007 branch: f(5.01) is about 15.8 — the graph blows up',
+    Math.round(f(5.01) * 10) / 10, 15.8);
+  check('ghost rq-dom-007 branch: and the denominator there is about 0.316',
+    Math.round(Math.sqrt(5.01 * 5.01 - 25) * 1000) / 1000, 0.316);
+  check('ghost rq-dom-007 branch: f(5.001) is about 50', Math.round(f(5.001)), 50);
+  check('ghost rq-dom-007 branch: at x = 1 the radicand is -24, so a square minus 25 IS negative',
+    1 * 1 - 25, -24);
+  check('ghost rq-dom-007 branch: at x = 0 the radicand is -25 — the "between" answer is empty',
+    0 - 25, -25);
+}
+
+// --- gr-rq-int-008: f(x) = (x^2 - 2x - 8) / (x + 2) ---
+{
+  const f = (x: number) => (x * x - 2 * x - 8) / (x + 2);
+  for (const x of [-3, 0, 1, 5, 7.5]) {
+    check(`ghost rq-int-008: (x-4)(x+2) = x^2-2x-8 at x=${x}`,
+      (x - 4) * (x + 2), x * x - 2 * x - 8);
+  }
+  check('ghost rq-int-008: the surviving intercept is x = 4', f(4), 0);
+  check('ghost rq-int-008: the denominator at x = 4 is 6, so the root survives', 4 + 2, 6);
+  check('ghost rq-int-008 branch: f(0) = -4, the y-intercept the wrong option confuses it with',
+    f(0), -4);
+  check('ghost rq-int-008: the hole sits at height -6, NOT on the axis', -2 - 4, -6);
+  check('ghost rq-int-008 branch: f(-2.01) is about -6.01 — approaching, not exploding',
+    R4(f(-2.01)), -6.01);
+  check('ghost rq-int-008 branch: f(-1.99) is about -5.99 — same from the other side',
+    R4(f(-1.99)), -5.99);
+}
+
+// --- gr-rq-asy-008: f(x) = (x^2 - 25) / (x^2 - 5x) ---
+{
+  const f = (x: number) => (x * x - 25) / (x * x - 5 * x);
+  check('ghost rq-asy-008: the numerator at x = 0 is -25, so x = 0 IS an asymptote',
+    0 - 25, -25);
+  check('ghost rq-asy-008: the numerator at x = 5 is 0, so x = 5 is a HOLE', 25 - 25, 0);
+  check('ghost rq-asy-008: the hole height comes from the reduced form, 10/5', 10 / 5, 2);
+  check('ghost rq-asy-008 branch: f(0.1) = 51', R4(f(0.1)), 51);
+  check('ghost rq-asy-008 branch: f(0.01) = 501 (was authored as 505 — caught here)',
+    R4(f(0.01)), 501);
+  check('ghost rq-asy-008 branch: f(-0.1) = -49 — opposite sides run opposite ways',
+    R4(f(-0.1)), -49);
+  check('ghost rq-asy-008 branch: f(4.9) is about 2.02, an ordinary value near the hole',
+    R4(f(4.9)), 2.0204);
+  check('ghost rq-asy-008 branch: f(5.01) is about 1.998 — the graph tends to 2 there',
+    R4(f(5.01)), 1.998);
+  check('ghost rq-asy-008 branch: f(2) = 3.5, so the point (2,5) has nothing to do with it',
+    R4(f(2)), 3.5);
+  check('ghost rq-asy-008 branch: f(100) = 1.05 — heading for y = 1, not y = 0', R4(f(100)), 1.05);
+  check('ghost rq-asy-008 branch: f(1000) = 1.005 — and certainly not y = -5',
+    R4(f(1000)), 1.005);
+}
+
+// --- gr-rq-der-009: f(x) = (x^2 + 3) / x ---
+{
+  const f = (x: number) => (x * x + 3) / x;
+  const d1 = (x: number) => 1 - 3 / (x * x);
+  const d2 = (x: number) => 6 / (x * x * x);
+  const s3 = Math.sqrt(3);
+  check('ghost rq-der-009: simplifying and the quotient rule agree at x = 1',
+    d1(1), (2 * 1 * 1 - (1 * 1 + 3)) / (1 * 1));
+  check('ghost rq-der-009: and at x = 2', R4(d1(2)), R4((2 * 2 * 2 - (4 + 3)) / 4));
+  check('ghost rq-der-009 branch: f\'(1) = -2, while "derive top over bottom" would say 2',
+    d1(1), -2);
+  check('ghost rq-der-009: the derivative vanishes at sqrt(3)', R4(d1(s3)), 0);
+  check('ghost rq-der-009: 3/sqrt(3) = sqrt(3), which is why the height doubles',
+    R4(3 / s3), R4(s3));
+  check('ghost rq-der-009: the height is 2*sqrt(3), about 3.4641', R4(f(s3)), R4(2 * s3));
+  check('ghost rq-der-009 branch: f(1) = 4 and f(2) = 3.5 — both ABOVE the candidate',
+    R4(f(1)), 4);
+  check('ghost rq-der-009 branch: f(2) = 3.5 confirms a minimum, not a maximum', R4(f(2)), 3.5);
+  check('ghost rq-der-009: the second derivative there is about 1.1547, positive',
+    R4(d2(s3)), R4(2 / s3));
+  check('ghost rq-der-009 branch: f\'(3) = 2/3, so x = 3 is NOT a candidate',
+    R4(d1(3)), R4(2 / 3));
+}
+
+// --- gr-rq-tr-005: f(x) = x + a/x, g = f + 10, exactly one point with the x-axis ---
+{
+  const fa = (a: number) => (x: number) => x + a / x;
+  const extremaOf = (a: number) => [2 * Math.sqrt(a), -2 * Math.sqrt(a)];
+  // The answer: a = 25 puts the LEFT branch's maximum exactly on height -10.
+  check('ghost rq-tr-005: with a = 25 the extremum x-values are +-5', R4(Math.sqrt(25)), 5);
+  check('ghost rq-tr-005: the maximum of the left branch is -10', R4(fa(25)(-5)), -10);
+  check('ghost rq-tr-005: so g(-5) = 0 — exactly one common point', R4(fa(25)(-5) + 10), 0);
+  check('ghost rq-tr-005: the other extremum is +10, which is why the WRONG sign gives the same a',
+    R4(fa(25)(5)), 10);
+  // Every rejected value of a, by the number of solutions of f(x) = -10.
+  // x + a/x = -10  <=>  x^2 + 10x + a = 0, so the discriminant is 100 - 4a.
+  const disc = (a: number) => 100 - 4 * a;
+  check('ghost rq-tr-005: a = 25 gives a double root — exactly one solution', disc(25), 0);
+  check('ghost rq-tr-005 branch: a = 5 gives discriminant 80, so TWO solutions', disc(5), 80);
+  check('ghost rq-tr-005 branch: a = 10 gives discriminant 60, so TWO solutions', disc(10), 60);
+  check('ghost rq-tr-005 branch: a = 100 gives discriminant -300, so NO solutions', disc(100), -300);
+  check('ghost rq-tr-005 branch: with a = 5 the extrema are about +-4.47, below -10',
+    R4(extremaOf(5)[0]), 4.4721);
+  check('ghost rq-tr-005 branch: with a = 10 the extrema are about +-6.32',
+    R4(extremaOf(10)[0]), 6.3246);
+  check('ghost rq-tr-005 branch: with a = 100 the extrema are +-20, so -10 falls in the gap',
+    R4(extremaOf(100)[0]), 20);
+  check('ghost rq-tr-005 branch: with a = 25, f(x) = 26 has TWO solutions, x = 1 and x = 25',
+    R4(fa(25)(1)), 26);
+  check('ghost rq-tr-005 branch: the second of them', R4(fa(25)(25)), 26);
+  check('ghost rq-tr-005 branch: f\'(25) = 0.96, so x = 25 is not an extremum',
+    R4(1 - 25 / (25 * 25)), 0.96);
+}
+
+// --- gr-rq-in-006: area between f(x) = x^2 and g(x) = 2x + 3 ---
+{
+  const par = (x: number) => x * x;
+  const lin = (x: number) => 2 * x + 3;
+  const F = (x: number) => x * x + 3 * x - (x * x * x) / 3;
+  checkSet('ghost rq-in-006: the limits are the intersection points, -1 and 3',
+    [3, -1], [3, -1]);
+  check('ghost rq-in-006: the curves really do meet at x = -1', par(-1), lin(-1));
+  check('ghost rq-in-006: and at x = 3', par(3), lin(3));
+  check('ghost rq-in-006: at x = 0 the LINE is higher — 3 against 0', lin(0) - par(0), 3);
+  check('ghost rq-in-006 branch: at x = 4 the parabola overtakes, 16 against 11 — outside the range',
+    par(4) - lin(4), 5);
+  check('ghost rq-in-006: the upper limit substitution gives 9', R4(F(3)), 9);
+  check('ghost rq-in-006: the lower limit substitution gives -5/3', R4(F(-1)), R4(-5 / 3));
+  check('ghost rq-in-006: the area is 32/3, about 10.67', R4(F(3) - F(-1)), R4(32 / 3));
+  check('ghost rq-in-006 branch: the line alone against the axis gives 20',
+    R4((3 * 3 + 3 * 3) - (1 - 3)), 20);
+  check('ghost rq-in-006 branch: limits 0 to 3 instead of -1 to 3 give 9', R4(F(3) - F(0)), 9);
+  check('ghost rq-in-006: the sanity box is 4 wide and 4 tall, and 32/3 is smaller',
+    R4(lin(1) - par(1)), 4);
+}
+
+// --- gr-rq-bg-005: f(x) = (x^2 + b)/x with a minimum at x = 5 ---
+{
+  const d1 = (b: number) => (x: number) => 1 - b / (x * x);
+  const d2 = (b: number) => (x: number) => (2 * b) / (x * x * x);
+  const fb = (b: number) => (x: number) => (x * x + b) / x;
+  check('ghost rq-bg-005: b = 25 is what makes the derivative vanish at x = 5', d1(25)(5), 0);
+  check('ghost rq-bg-005: and the second derivative there is 0.4, positive — a minimum',
+    R4(d2(25)(5)), 0.4);
+  check('ghost rq-bg-005: the height is f(5) = 10', R4(fb(25)(5)), 10);
+  check('ghost rq-bg-005 branch: 25 + 25 = 50, and 50/5 = 10 — the "30" answer stops early',
+    (25 + 25) / 5, 10);
+  check('ghost rq-bg-005 branch: b = 5 leaves f\'(5) = 0.8, not zero', R4(d1(5)(5)), 0.8);
+  check('ghost rq-bg-005 branch: b = -25 leaves f\'(5) = 2, not zero', R4(d1(-25)(5)), 2);
+  check('ghost rq-bg-005 branch: and with b = -25 the derivative is positive EVERYWHERE — no extremum',
+    R4(d1(-25)(1)), 26);
+  check('ghost rq-bg-005 branch: b = 1/25 leaves f\'(5) about 0.998', R4(d1(1 / 25)(5)), 0.9984);
+  check('ghost rq-bg-005 branch: b = 0 collapses the function to the line y = x', fb(0)(7), 7);
+  check('ghost rq-bg-005 branch: f\'(1) = -24 with b = 25, so "2x" is not the derivative',
+    d1(25)(1), -24);
+}
+
 console.log(`\nFUNCTIONS VERIFY: ${pass}/${pass + fail} passed.`);
 if (fail > 0) {
   console.log('\n' + failures.join('\n'));
