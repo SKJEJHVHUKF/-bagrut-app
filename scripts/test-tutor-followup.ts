@@ -16,7 +16,7 @@
  */
 
 import { followUp, ladderMove } from '../lib/tutor-followup';
-import { reportedValue } from '../lib/tutor-pending';
+import { reportedValue, yesNo } from '../lib/tutor-pending';
 import { routeMessage } from '../lib/tutor-router';
 
 let failed = 0;
@@ -160,6 +160,28 @@ for (const msg of ['לא זוכר', 'לא בטוח', 'אין לי מושג', 'ש
   const cold = routeMessage(msg, focus, { tutorSpoke: false });
   ok(cold.kind === 'open', `"${msg}" opening a conversation → open (got ${cold.kind})`);
 }
+
+// ============================================================
+// ⚠️ A QUESTION MARK REVERSES THE MEANING, AND THE REPORTS CANNOT SEE IT.
+// ============================================================
+// `yesNo`'s anchor allows "." and "!" but not "?", so "בטוח?" fell through to
+// the model — while the trace, which stores the message with punctuation
+// stripped, showed a row reading "בטוח" that looked identical to the free one.
+// Two sessions were read as "the fix did not deploy" before this was found.
+//
+// And the fix is NOT to let `yesNo` ignore the mark: "בטוח" is the student
+// saying yes, "בטוח?" is the student saying they do not believe you.
+for (const [msg, want] of [
+  ['בטוח', 'ask'], ['בטוח?', 'ask'], ['אתה בטוח?', 'ask'],
+  ['כן', 'ask'], ['כן?', 'ask'], ['נכון?', 'ask'], ['באמת?', 'ask'],
+] as const) {
+  const r = routeMessage(msg, focus, { lastAsk: 'help', served: ['hint'], tutorSpoke: true });
+  ok(r.kind === want, `"${msg}" → ${want} (got ${r.kind})`);
+}
+// The two are handled by DIFFERENT layers, and that is the point.
+ok(yesNo('בטוח') === true, '"בטוח" is a yes');
+ok(yesNo('בטוח?') === null, '"בטוח?" is NOT a yes — it is a challenge');
+ok(followUp('בטוח?') === 'why', 'and it asks for the reasoning');
 
 // A reported result is graded wherever it appears in the sentence — it used to
 // need the message to ALSO read as a follow-up, so "יצא לי 19" was paid for

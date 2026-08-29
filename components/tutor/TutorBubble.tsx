@@ -208,7 +208,26 @@ export default function TutorBubble() {
    * this flag has to cover.
    */
   const tutorSpokeRef = useRef(false);
+  /**
+   * What the last GRADE said, or null when the last turn was not a grade.
+   *
+   * ⚠️ The tutor contradicted itself in two messages without it: "10" was
+   * graded correct from authored content, "בטוח?" went to the model, and the
+   * model said "לא, טעות" because nothing told it the answer had already been
+   * verified. See TurnState.lastVerdict in lib/tutor-router.
+   */
+  const lastVerdictRef = useRef<'correct' | 'wrong' | null>(null);
+  /**
+   * The visible conversation, for `send` to read.
+   *
+   * ⚠️ A REF AND NOT `msgs`. `send` is a useCallback that does not list `msgs`
+   * in its dependencies, so reading the state inside it returns whatever it was
+   * when the callback was last built — the same stale-closure bug that once
+   * made every turn report its screen as "login".
+   */
+  const msgsRef = useRef<Msg[]>([]);
   useEffect(() => {
+    msgsRef.current = msgs;
     if (msgs.some((m) => m.role === 'assistant')) tutorSpokeRef.current = true;
   }, [msgs]);
   /** Was the PREVIOUS turn a complaint we answered with the stock sentence? */
@@ -332,6 +351,11 @@ export default function TutorBubble() {
       // ever becomes true. Clearing it here is what made one paid turn lock the
       // free layers for every turn after it.
       const tutorSpoke = tutorSpokeRef.current;
+      // Read and CLEARED: a verdict is about the turn that produced it, so the
+      // challenge has to be the very next message. Two turns later "בטוח?" is
+      // about something else.
+      const lastVerdictNow = lastVerdictRef.current;
+      lastVerdictRef.current = null;
       pendingRef.current = null;
 
       const gen = genRef.current;
@@ -370,11 +394,16 @@ export default function TutorBubble() {
           served: servedRef.current.kinds,
           pending: pendingNow,
           tutorSpoke,
+          lastVerdict: lastVerdictNow,
         });
         routeKind = route.kind;
         if (route.kind === 'answer') {
           const graded = answerGradedLocally(route, focusNow);
           if (graded) {
+            // Remembered so that a challenge to THIS verdict is answered by the
+            // layer that made it, instead of by a model that cannot see it.
+            // See TurnState.lastVerdict in lib/tutor-router.
+            lastVerdictRef.current = graded.verdict === 'correct' ? 'correct' : 'wrong';
             setMsgs((m) => [
               ...m,
               { id: `a-${Date.now()}`, role: 'assistant', text: graded.text, local: true },
@@ -692,6 +721,20 @@ export default function TutorBubble() {
             // anything shaped like contact detail. The server validates every
             // field against the enums before storing any of it.
             trace,
+            // ⚠️ THE TURNS THE SERVER HAS NEVER SEEN.
+            //
+            // `chat_messages` stores only what reached /api/chat, and about
+            // three quarters of this tutor's replies are local — so the model
+            // has been reasoning with most of the conversation missing. It told
+            // a student "נכון! 10 היא התשובה", was asked "בטוח?", and answered
+            // "לא, טעות", because the first message was never stored.
+            //
+            // The server REPLACES its own history window with this one rather
+            // than appending, and caps each turn, so the prompt does not grow.
+            recent: msgsRef.current.slice(-4).map((m) => ({
+              role: m.role,
+              content: m.text.slice(0, 500),
+            })),
             ...(context ? { context } : {}),
             ...(unitLevel ? { unitLevel } : {}),
             ...(formNumber ? { formNumber } : {}),

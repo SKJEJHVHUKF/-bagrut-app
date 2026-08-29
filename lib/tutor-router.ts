@@ -122,6 +122,28 @@ export type TurnState = {
    * Three turns, $0.020, and the first one is why the other two cost anything.
    */
   tutorSpoke?: boolean;
+  /**
+   * What the PREVIOUS turn's grading said, when the previous turn was a grade.
+   *
+   * ⚠️ WITHOUT IT THE TUTOR CONTRADICTS ITSELF IN TWO MESSAGES, AND A STUDENT
+   * SAW IT. Reported with a screenshot:
+   *
+   *   student   10
+   *   tutor     נכון! 10 היא התשובה. 🎯          ← graded here, deterministically
+   *   student   בטוח?
+   *   tutor     לא, טעות. חשב שוב: ...            ← answered by the MODEL
+   *
+   * Neither layer was broken on its own. `checkAnswer` compared 10 against the
+   * authored answer and was right. The model was obeying its own rule — never
+   * confirm a final answer thrown at you, hand the check back — and had no way
+   * to know the answer had already been verified against written content.
+   *
+   * Two layers answered and neither knew about the other. This is the missing
+   * fact: a challenge to a verdict is answered by standing behind the verdict,
+   * from a template, and never by re-litigating it with a model that cannot see
+   * it.
+   */
+  lastVerdict?: Verdict | null;
 };
 
 // ------------------------------------------------------------
@@ -275,6 +297,31 @@ export function looksLikeAnswer(message: string): boolean {
 }
 
 /**
+ * The replies to "בטוח?" — one per verdict, and both of them stand.
+ *
+ * They say WHY the tutor is sure, because "כן, בטוח" on its own is the same
+ * confident noise the model was producing. The grader compared the student's
+ * value to the answer written in the content; saying so is both the honest
+ * reason and the strongest one.
+ *
+ * Neither ends the conversation: a student who doubts a verdict usually has a
+ * real disagreement one step earlier, and the last line goes looking for it.
+ */
+const STANDS_CORRECT = `כן, בטוח. השוויתי את מה שכתבת לתשובה שרשומה בפתרון של השאלה, והן זהות.
+
+אם יש צעד בדרך שלא הסתדר לך, תגיד לי איזה ונעבור עליו יחד.`;
+
+const STANDS_WRONG = `כן. השוויתי את מה שכתבת לתשובה שרשומה בפתרון, והן לא יוצאות אותו דבר.
+
+זה כמעט תמיד צעד אחד שהחליק. תכתוב לי איך הגעת לזה, ונמצא איפה.`;
+
+/** Anything numeric or algebraic: then the message is about the maths, not
+ *  about whether we meant the verdict. */
+function hasMaths(s: string): boolean {
+  return /[0-9]|[a-zA-Z]\s*=/.test(s);
+}
+
+/**
  * What this question's typed answer is graded against.
  *
  * ⚠️ THE AUTHORED SPEC FIRST, AND A DERIVED ONE ONLY WHERE THERE IS NONE.
@@ -401,6 +448,17 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
   // Still gated: a bare "לא" OPENING a conversation means nothing, or
   // something else entirely, and is left alone. Once the tutor has spoken —
   // by any means — "לא" is an answer to it.
+  // ---- "בטוח?" after a verdict: stand behind it -------------------
+  //
+  // ⚠️ THIS RUNS BEFORE EVERYTHING ELSE THAT COULD CLAIM THE MESSAGE, because
+  // being second here is what produced the contradiction in `lastVerdict`.
+  // A challenge to a grade is not a question about the maths; it is a question
+  // about whether we meant it, and only the layer that graded knows the answer.
+  if (state.tutorSpoke && state.lastVerdict && followUp(trimmed) === 'why' && !hasMaths(trimmed)) {
+    if (state.lastVerdict === 'correct') return { kind: 'ack', text: STANDS_CORRECT };
+    if (state.lastVerdict === 'wrong') return { kind: 'ack', text: STANDS_WRONG };
+  }
+
   if (state.tutorSpoke) {
     const v = yesNo(trimmed);
     if (v !== null) {

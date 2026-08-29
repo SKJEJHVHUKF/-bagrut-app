@@ -53,7 +53,19 @@ const RULES: Array<[FollowUp, RegExp]> = [
   // take it in pieces. From report:worklist, where it cost a model call.
   ['restate', /(?:תסביר|הסבר|תגיד).{0,12}(?:אחרת|שוב|יותר\s*פשוט|במילים)|יותר\s*פשוט|במילים\s*פשוטות|בפשטות|פשוט\s*יותר|לא\s*ברור\s*מה\s*זה|(איבר|צעד|שלב|אחד|שורה)\s+\1|לאט\s*לאט|בקצב\s*איטי/],
 
-  ['why', /(?:^|[^א-ת])(?:למה|מדוע)(?:[^א-ת]|$)|בשביל\s*מה|מה\s*הקשר|למה\s*דווקא/],
+  // ⚠️ "בטוח?" IS NOT "בטוח". THE QUESTION MARK REVERSES IT.
+  //
+  // Without the mark it is the student answering — "yes, I'm sure" — and
+  // `yesNo` handles it. With it, the student is challenging what the tutor just
+  // said, which is the opposite move and needs the reasoning, not a rung of
+  // encouragement. Reading it as a yes would agree with a student who is
+  // telling you they disagree.
+  //
+  // It cost real calls because it hid: the trace stores the CANONICAL message,
+  // punctuation stripped, so "בטוח?" and "בטוח" are the same row in every
+  // report — and `yesNo`'s anchor allows `.` and `!` but not `?`. The reports
+  // showed "בטוח" being answered for free while the student was paying.
+  ['why', /(?:^|[^א-ת])(?:למה|מדוע)(?:[^א-ת]|$)|בשביל\s*מה|מה\s*הקשר|למה\s*דווקא|^\s*(?:אתה\s*)?(?:בטוח|בטוחה|סמוך|משוכנע)\s*\?|^\s*(?:כן|לא|נכון|באמת|זה\s*נכון)\s*\?/],
 
   ['more', /(?:^|[^א-ת])(?:עוד|המשך|תמשיך|הלאה|ואז|נו|יותר|בהמשך)(?:[^א-ת]|$)|לא\s*מספיק|תן\s*עוד|אפשר\s*עוד|משהו\s*נוסף|רמז\s*נוסף|עוד\s*קצת/],
 ];

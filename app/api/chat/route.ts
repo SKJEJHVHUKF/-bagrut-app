@@ -46,6 +46,17 @@ const MIN_MESSAGE_LEN = 1;
  * is ~50x the saving.
  */
 const CONTEXT_MESSAGE_COUNT = 4;
+/**
+ * Per-turn cap on a history message the CLIENT supplies.
+ *
+ * The stored history is model replies, which the reply budget already caps at
+ * 200-500 tokens. A local reply can be a whole authored solution, so without
+ * this the same four-message window could double in tokens — and "the model can
+ * see itself now" would have been bought with the money it was meant to save.
+ * 500 characters of Hebrew is roughly 190 tokens, about what a stored reply
+ * costs.
+ */
+const MAX_TURN_LEN = 500;
 
 // ===== REPLY BUDGET — per turn, not one flat number =====
 //
@@ -190,6 +201,10 @@ export async function POST(request: Request) {
       formNumber?: unknown;
       /** Unit id when the client's local tutor + FAQ bank both abstained. */
       faqMiss?: unknown;
+      /** The turns the client has on screen, INCLUDING the local ones this
+       *  route never stored. Validated at the boundary like everything else
+       *  the client sends — see section 8b. */
+      recent?: unknown;
       /** Diagnostics from the client: why the local layers declined. Validated
        *  in lib/tutor-telemetry before any of it is stored. */
       trace?: unknown;
@@ -341,6 +356,50 @@ export async function POST(request: Request) {
     // the call 400s and the student just sees "שגיאת צ'אט".
     const context = (recentMessages ?? []).reverse();
     while (context.length && context[0].role === 'assistant') context.shift();
+
+    // ===== 8b. THE TURNS THE MODEL HAS NEVER BEEN ABLE TO SEE =====
+    //
+    // ⚠️ `chat_messages` HOLDS ONLY TURNS THAT REACHED THIS ROUTE. Roughly three
+    // quarters of what this tutor says is answered locally from authored
+    // content and never touches the API, so it is never written here — and the
+    // model has been answering with three quarters of the conversation missing.
+    //
+    // Reported by Itay, with a screenshot:
+    //
+    //   student   10
+    //   tutor     נכון! 10 היא התשובה. 🎯      ← graded locally, never stored
+    //   student   בטוח?
+    //   tutor     לא, טעות. חשב שוב: ...        ← the model, which saw neither
+    //
+    // The model was not contradicting itself. It could not see itself. Same
+    // cause as the tutor re-offering a hint the student already has.
+    //
+    // ⚠️ AND IT COSTS NOTHING EXTRA, WHICH IS THE POINT. These REPLACE rows in
+    // the same CONTEXT_MESSAGE_COUNT window rather than being added to it, and
+    // each is capped, so the history the model reads is the same size and
+    // carries the turns that actually happened.
+    const clientTurns: unknown[] = Array.isArray(body.recent) ? body.recent : [];
+    const recent = clientTurns
+      .slice(-CONTEXT_MESSAGE_COUNT)
+      .filter(
+        (m): m is { role: string; content: string } =>
+          !!m &&
+          typeof m === 'object' &&
+          ((m as { role?: unknown }).role === 'user' || (m as { role?: unknown }).role === 'assistant') &&
+          typeof (m as { content?: unknown }).content === 'string',
+      )
+      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content.trim().slice(0, MAX_TURN_LEN) }))
+      // The trust boundary: this is client-supplied text entering the prompt,
+      // exactly like `attemptContext`, and it gets exactly the same guard.
+      .filter((m) => m.content.length > 0 && !BLACKLIST.test(m.content));
+
+    // Only when the client actually knows more than the table does. A window
+    // that is shorter than the stored one is a client that just opened.
+    if (recent.length > context.length) {
+      context.length = 0;
+      context.push(...recent);
+      while (context.length && context[0].role === 'assistant') context.shift();
+    }
 
     // ===== 9. INSERT USER MESSAGE FIRST =====
     // We persist the user turn BEFORE the Claude call so a Claude failure
