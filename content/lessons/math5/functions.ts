@@ -1,4 +1,5 @@
 import type { Lesson } from '../types';
+import { ROOT_QUOTIENT_BAGRUT, ROOT_QUOTIENT_STAGES } from './functions-root-quotient';
 
 export const math5Functions: Lesson = {
   subject: 'math5',
@@ -844,6 +845,8 @@ $$g(f(x)) = 3(x^2 + 1) - 2 = 3x^2 + 1$$
   ],
 
   bagrutQuestions: [
+    // One per stage of the פונקציות מנה ושורש track (fn-bag-rq-00N).
+    ...ROOT_QUOTIENT_BAGRUT,
     {
       id: 'fn-bag-001',
       difficulty: 'easy',
@@ -1668,6 +1671,12 @@ $$g(f(x)) = 3(x^2 + 1) - 2 = 3x^2 + 1$$
   ],
 
   subTopics: [
+    // The פונקציות מנה ושורש track (2026-08-29): eight stages authored to the
+    // owner's own level spec, in content/lessons/math5/functions-root-quotient.ts.
+    // They come first so prev/next on the ladder walks them in the taught order.
+    // The four generic modules below stay put — the quiz + reference banks and
+    // other tracks' tiles still point at them by id.
+    ...ROOT_QUOTIENT_STAGES,
     {
       id: 'domain-definition',
       title: 'תחום הגדרה',
