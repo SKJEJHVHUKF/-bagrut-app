@@ -23,7 +23,9 @@ if (!dir) { console.error('usage: fix-faq-dupe-alts.ts <outdir> [--apply]'); pro
 type Faq = { id: string; q: string; alts: string[] };
 type Unit = { unit: string; faqs: Faq[] };
 
-const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
+/** EXACTLY merge-tutor-faq's rule — all whitespace and `?!.,` removed. A looser
+ *  norm here reports 0 duplicates while the gate still drops the entries. */
+const norm = (s: string) => s.replace(/[?!.,\s]/g, '');
 
 let files = 0, entries = 0, repaired = 0, tooFew = 0;
 const needsHuman: string[] = [];

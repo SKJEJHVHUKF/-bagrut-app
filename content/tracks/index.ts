@@ -64,6 +64,9 @@ export const EXCLUDED_571: readonly string[] = [
   'definite-integral',
   'even-odd-inverse',
   'intersections-signs',
+  // Superseded by the five ext-* stages (owner's own breakdown, 2026-08-30). The
+  // module stays authored and reachable; it is only off the 571 track.
+  'optimization',
 ];
 
 /** Every sub-topic a paper's track leaves out on purpose — the sub-topic list

@@ -41,12 +41,21 @@ import { isParseable, latexToMathjs } from '@/lib/mathscan/solve/parse';
 import { checkAnswer } from '@/lib/answer-check';
 import type { TutorFocus } from '@/lib/tutor-presence';
 import type { AnswerSpec, Verdict } from '@/lib/answer-check';
+import { reportedValue, unambiguousReport, yesNo, type Pending } from '@/lib/tutor-pending';
+import { followUp, ladderMove } from '@/lib/tutor-followup';
+import { deriveExpected } from '@/lib/derive-expected';
 
 type Ask = NonNullable<ReturnType<typeof classifyAsk>>;
 
 export type Route =
   /** A. the student typed a value to be graded. `spec` is what to grade against. */
-  | { kind: 'answer'; spec: AnswerSpec; typed: string }
+  | {
+      kind: 'answer';
+      spec: AnswerSpec;
+      typed: string;
+      /** Present when the value being graded is a STEP's result, not the final answer. */
+      about?: { step: string };
+    }
   /** B/C. one of the six recurring asks — hint, first step, why wrong, full
    *  solution, formulas, key points — all served from authored content. */
   | { kind: 'ask'; ask: Ask }
@@ -70,14 +79,87 @@ export type TurnState = {
   lastAsk?: Ask | null;
   /** Rungs already handed out for this question (the bubble's `servedRef`). */
   served?: readonly LocalAnswerKind[];
+  /**
+   * What the tutor's OWN last message asked the student for.
+   *
+   * ⚠️ WITHOUT THIS A CORRECT STUDENT IS TOLD THEY ARE WRONG. Every local
+   * template ends by asking something, and most ask for the result of the NEXT
+   * step. The reply is a bare number, `looksLikeAnswer` says yes, and the value
+   * gets graded against `question.expected` — the FINAL answer. On the
+   * sequences question below, a student who correctly computes the middle and
+   * types it is told it is not equivalent to the right answer.
+   *
+   * When this says a specific step's value was asked for, that value is what
+   * the reply is graded against. When it says a value was asked for and we
+   * could not compute it, the reply is NOT GRADED AT ALL — the model answers
+   * it, which costs a call and cannot be wrong.
+   */
+  pending?: Pending | null;
+  /**
+   * Has the tutor already said something in this conversation?
+   *
+   * ⚠️ This is the permission slip for `tutor-followup`, whose patterns are far
+   * wider than anything else in this file. "לא הבנתי" one message after the
+   * tutor explained something can only mean "not that"; the same words opening
+   * a conversation mean anything at all. Without this flag the wide patterns
+   * would fire on nothing and answer the wrong question confidently.
+   *
+   * ⚠️ IT USED TO BE `lastWasLocal` — "was the PREVIOUS turn answered locally" —
+   * AND THAT WAS NARROWER THAN ITS OWN JUSTIFICATION, WHICH COST REAL MONEY.
+   *
+   * The reason above says "after the tutor explained something". It does not
+   * say "explained something LOCALLY", and it never needed to: a student
+   * replying to the model is replying to the tutor. Under the old flag the
+   * first paid turn locked every follow-up out of the free layers for the rest
+   * of the conversation, so one model call became three. Observed on a real
+   * trigonometry session (2026-08-29):
+   *
+   *   "יצא 16 69"   paid   a REPORTED VALUE, which the grader answers for free
+   *   "לא זוכר"     paid   `stuck` — the same shape as "לא יודע", free a minute
+   *                        earlier in the same session
+   *   "ביחס ישר"    paid
+   *
+   * Three turns, $0.020, and the first one is why the other two cost anything.
+   */
+  tutorSpoke?: boolean;
+  /**
+   * What the PREVIOUS turn's grading said, when the previous turn was a grade.
+   *
+   * ⚠️ WITHOUT IT THE TUTOR CONTRADICTS ITSELF IN TWO MESSAGES, AND A STUDENT
+   * SAW IT. Reported with a screenshot:
+   *
+   *   student   10
+   *   tutor     נכון! 10 היא התשובה. 🎯          ← graded here, deterministically
+   *   student   בטוח?
+   *   tutor     לא, טעות. חשב שוב: ...            ← answered by the MODEL
+   *
+   * Neither layer was broken on its own. `checkAnswer` compared 10 against the
+   * authored answer and was right. The model was obeying its own rule — never
+   * confirm a final answer thrown at you, hand the check back — and had no way
+   * to know the answer had already been verified against written content.
+   *
+   * Two layers answered and neither knew about the other. This is the missing
+   * fact: a challenge to a verdict is answered by standing behind the verdict,
+   * from a template, and never by re-litigating it with a model that cannot see
+   * it.
+   */
+  lastVerdict?: Verdict | null;
 };
 
 // ------------------------------------------------------------
 // Conversational moves that are not questions
 // ------------------------------------------------------------
 
-/** Pure acknowledgement — nothing is being asked. */
-const ACK = /^\s*(?:תודה(?:\s*רבה)?|אוקיי?|או\.?ק\.?|סבבה|מגניב|יופי|מעולה|הבנתי(?:\s*תודה)?|ברור|נכון מאוד|בסדר|טוב|כן טוב|ok|okay|thanks?)\s*[!.…]*\s*$/i;
+/**
+ * Pure acknowledgement — nothing is being asked.
+ *
+ * ⚠️ THE TWO-WORD FORMS COST REAL CALLS. Every entry here was a single word,
+ * and "אה נכון" — the sound a student makes when it lands — is two. From the
+ * trace: `"אה נכון"  in=1456 cr=5709 out=200  $0.0030`, paid twice on separate
+ * days, for a message that is asking nothing at all.
+ */
+const ACK =
+  /^\s*(?:תודה(?:\s*רבה)?|אה+|אה\s*(?:נכון|כן|אוקיי?|הבנתי|באמת)|אוקיי?(?:\s*(?:תודה|הבנתי|מעולה))?|או\.?ק\.?|סבבה|מגניב|יופי|מעולה|מצוין|מצויין|הבנתי(?:\s*(?:תודה|עכשיו|אותך))?|עכשיו\s*הבנתי|ברור(?:\s*עכשיו)?|נכון\s*(?:מאוד|נכון)|בסדר(?:\s*גמור)?|טוב|כן\s*טוב|ok|okay|thanks?)\s*[!.…]*\s*$/i;
 
 /**
  * "Carry on" — no new content, just a request for more of the same. Anchored
@@ -133,6 +215,41 @@ const ASKING = /למה|מדוע|איך|כיצד|מאיפה|מהיכן|תסביר
 const LEAD_IN =
   /^\s*(?:אז\s+)?(?:אני\s+)?(?:חושב(?:ת)?\s+ש|מקבל(?:ת)?|קיבלתי|יצא\s+לי|התשובה\s+(?:היא|שלי)?|התוצאה\s+(?:היא)?|זה|נראה\s+לי\s+ש|לדעתי)\s*[:=]?\s*/;
 
+/**
+ * "האם התשובה היא 15?" — a value being CHECKED, not a question.
+ *
+ * ⚠️ THE ASKING VETO REJECTED EVERY ONE OF THESE, AND IT WAS RIGHT TO EXIST.
+ *
+ * `ASKING` keeps questions out of the grading path, and it lists האם, נכון and
+ * "מה " among the words that mark one. But "האם התשובה היא 15" is not a
+ * question about the material — it is a value with a question mark around it,
+ * which is the single most natural way a student asks to be checked. Every
+ * form below was going to the model to have arithmetic confirmed:
+ *
+ *   האם התשובה היא 15 · האם זה 19 · אז זה 19 נכון? · האם קיבלתי נכון 42
+ *
+ * The frame is matched first and the value falls out of it, so the veto still
+ * guards everything that is not shaped this way. "האם צריך להכפיל" and "האם
+ * הסדרה חשבונית" carry no value and are left exactly where they were.
+ */
+const VERIFY_FORM =
+  /^[ ]*(?:אז[ ]+)?(?:האם[ ]+)?(?:זה[ ]+|התשובה[ ]+|התוצאה[ ]+|הפתרון[ ]+|קיבלתי[ ]+|יצא[ ]+לי[ ]+)?(?:היא[ ]+|הוא[ ]+|זה[ ]+)?([^A-Za-z֐-׿]*[0-9][^֐-׿]*?)[ ]*(?:נכון|נכונה|נכונים)?[ ]*[?]*[ ]*$/;
+
+/**
+ * The value a "is it X?" message is asking about, or null.
+ *
+ * Requires a digit, and refuses anything with a Hebrew letter left in the
+ * captured part: "האם הסדרה חשבונית" must not be read as a value.
+ */
+export function verificationValue(message: string): string | null {
+  const m = VERIFY_FORM.exec(message.trim());
+  if (!m) return null;
+  const v = m[1].trim();
+  if (!v || !/[0-9]/.test(v)) return null;
+  if (/[֐-׿]/.test(v)) return null;
+  return v;
+}
+
 /** Longest a plain answer gets. A value is short; prose is not. */
 const MAX_ANSWER_LEN = 60;
 
@@ -172,13 +289,66 @@ export function looksLikeAnswer(message: string): boolean {
   if (!/[0-9]|[a-zA-Z]/.test(bare)) return false;
 
   // A multi-value answer ("d=4, a1=3" / "x=2 או x=3") parses per part.
-  const parts = bare.split(/\s*(?:,|;|\bאו\b|\bו-)\s*/).filter(Boolean);
+  // ⚠️ "ו3" HAS NO DASH, AND THAT COST THREE CALLS.
+  //
+  // The separator list had `ו-`, which needs the maqaf. Students write
+  // "2 ו3 ו4" — the vav glued straight onto the digit — and the whole thing
+  // parsed as one unparseable token, so a list of three values went to the
+  // model. Seen in report:worklist, verbatim.
+  const parts = bare.split(/\s*(?:,|;|\bאו\b|ו-|ו(?=[0-9]))\s*/).filter(Boolean);
   return parts.every((p) => {
     // Grade the right-hand side of "x = 3"; the name is not the value.
     const rhs = p.includes('=') ? p.slice(p.lastIndexOf('=') + 1) : p;
     const cleaned = latexToMathjs(rhs).trim();
     return cleaned.length > 0 && isParseable(cleaned);
   });
+}
+
+/**
+ * The replies to "בטוח?" — one per verdict, and both of them stand.
+ *
+ * They say WHY the tutor is sure, because "כן, בטוח" on its own is the same
+ * confident noise the model was producing. The grader compared the student's
+ * value to the answer written in the content; saying so is both the honest
+ * reason and the strongest one.
+ *
+ * Neither ends the conversation: a student who doubts a verdict usually has a
+ * real disagreement one step earlier, and the last line goes looking for it.
+ */
+const STANDS_CORRECT = `כן, בטוח. השוויתי את מה שכתבת לתשובה שרשומה בפתרון של השאלה, והן זהות.
+
+אם יש צעד בדרך שלא הסתדר לך, תגיד לי איזה ונעבור עליו יחד.`;
+
+const STANDS_WRONG = `כן. השוויתי את מה שכתבת לתשובה שרשומה בפתרון, והן לא יוצאות אותו דבר.
+
+זה כמעט תמיד צעד אחד שהחליק. תכתוב לי איך הגעת לזה, ונמצא איפה.`;
+
+/** Anything numeric or algebraic: then the message is about the maths, not
+ *  about whether we meant the verdict. */
+function hasMaths(s: string): boolean {
+  return /[0-9]|[a-zA-Z]\s*=/.test(s);
+}
+
+/**
+ * What this question's typed answer is graded against.
+ *
+ * ⚠️ THE AUTHORED SPEC FIRST, AND A DERIVED ONE ONLY WHERE THERE IS NONE.
+ *
+ * MEASURED (`npm run report:gradable`): 199 of 1,214 questions carry an
+ * `expected`. On the other 84%, a student typing "15" could not be graded at
+ * all, so the turn went to the model — which costs money and, worse, makes
+ * claude-haiku-4-5 write the reply itself. That is where it invents Hebrew:
+ * "בטעות הנתת", "והקבלן לך 2.3", "בוגדר לרדיאנים". A graded turn answers from
+ * an authored template, so the Hebrew is a human's.
+ *
+ * `deriveExpected` reads the answer the content already states in
+ * `solution.finalAnswer` and refuses anything it cannot grade unambiguously —
+ * including every question an author marked `manual`. 319 of the 942 qualify;
+ * the rest still go to the model, on purpose.
+ */
+function specOf(focus: TutorFocus | null): AnswerSpec | undefined {
+  const q = focus?.question as { expected?: AnswerSpec } | undefined;
+  return q?.expected ?? deriveExpected(q) ?? undefined;
 }
 
 // ------------------------------------------------------------
@@ -193,91 +363,6 @@ export function looksLikeAnswer(message: string): boolean {
  * value, but "זה 16?" does, and a student asking for a hint while a spec
  * happens to exist must still get the hint.
  */
-// ------------------------------------------------------------
-// Pre-filter: messages that no layer should pay for
-// ------------------------------------------------------------
-
-/** Four or more of the same character: "אאאא", "1111", "????", "!!!!". */
-const REPEAT_RUN = /^(.)\1{3,}$/;
-
-/**
- * Keyboard mashing, as an EXPLICIT list rather than a cleverness.
- *
- * Hebrew writes no vowels, so "a run of consonants" — the usual gibberish
- * heuristic — describes every Hebrew word ever typed. There is no safe
- * general rule here; there is only a list of literal keyboard rows.
- */
-const KEYBOARD_MASH = /^(?:asd|sdf|dfg|qwe|wer|zxc|jkl|asdf|qwer|קראט|טאורק)+\d*$/i;
-
-/** A greeting and nothing else. Distinct from ACK, which closes a turn. */
-const BARE_GREETING =
-  /^\s*(?:היי+|הי|שלום|אהלן|הלו|יו|מה\s*קורה|מה\s*נשמע|מה\s*המצב|בוקר\s*טוב|ערב\s*טוב|צהריים\s*טובים|hi+|hello|hey|yo)\s*[!?.…]*\s*$/i;
-
-/**
- * Any hint that this message is about mathematics.
- *
- * ⚠️ THE OFF-TOPIC GUARD BELOW IS GATED ON THE ABSENCE OF THIS, AND THAT
- * CONJUNCTION IS THE WHOLE SAFETY MODEL. A plain keyword blocklist would be
- * catastrophic here and the content proves it: "כדורגל" appears 33 times and
- * "מתכון" 14 times inside real authored bagrut material (content/lessons/
- * math5/probability.ts and the FAQ bank). Israeli probability questions ARE
- * about football teams, card decks, dice and recipes. Blocking those words
- * would reject the exam syllabus.
- */
-const MATH_SIGNAL =
-  /[0-9$=+×÷^√∫]|משוואה|פונקצי|נגזרת|אינטגרל|משולש|זווית|הסתברות|סדרה|וקטור|לוגריתם|שורש|גרף|שיפוע|מעגל|ישר|נוסחה|נוסחא|תרגיל|שאלה|סעיף|בגרות|לפתור|פתרון|חשב|הוכח|מצא/;
-
-/**
- * Off-topic intents, anchored at the START and paired with the math-signal
- * check above. Deliberately tiny: every entry here is a way to be wrong about
- * a real student, and the upside of being right is one warm turn (~$0.0025).
- */
-const OFF_TOPIC_INTENT =
-  /^\s*(?:(?:תכתוב|כתוב|תן)\s+לי\s+(?:קוד|תוכנית|סקריפט|פונקציה\s+ב(?:פייתון|ג'אווה))|(?:איך\s+)?(?:מכינים|להכין)\s|תן\s+לי\s+מתכון|מי\s+(?:ניצח|זכה)\s|מתי\s+(?:נולד|מת)\s|מה\s+דעתך\s+על\s+(?:הממשלה|הפוליטיקה))/;
-
-/** A fixed local reply, or null to let the normal routing continue. */
-export type Screen = { reason: 'gibberish' | 'greeting' | 'off-topic'; text: string };
-
-/**
- * Runs BEFORE routeMessage and WITHOUT a focus, which is the point: the router
- * only runs when a question is on screen (TutorBubble `send()`), so a student
- * typing "אאאא" or "היי" on the home page skipped every local layer and went
- * straight to a billed call. Gibberish is gibberish with or without context.
- *
- * Returning non-null means the message never reaches /api/chat — so it costs
- * nothing AND consumes no daily quota, because the quota is charged server-side
- * on arrival.
- */
-export function screenMessage(message: string): Screen | null {
-  const trimmed = message.trim();
-  if (!trimmed) return null;
-
-  if (REPEAT_RUN.test(trimmed) || KEYBOARD_MASH.test(trimmed)) {
-    return {
-      reason: 'gibberish',
-      text: 'לא הצלחתי לקרוא את זה 🙂 כתוב לי את השאלה, או את הצעד שנתקעת בו, ואני איתך.',
-    };
-  }
-
-  if (BARE_GREETING.test(trimmed)) {
-    return {
-      reason: 'greeting',
-      text: 'היי! אני כאן בשביל הבגרות במתמטיקה 📐 על איזה תרגיל נעבוד?',
-    };
-  }
-
-  // Both conditions, never one: an off-topic phrasing AND no maths anywhere in
-  // the sentence. "בקבוצת כדורגל יש 11 שחקנים" carries a digit and stays.
-  if (!MATH_SIGNAL.test(trimmed) && OFF_TOPIC_INTENT.test(trimmed)) {
-    return {
-      reason: 'off-topic',
-      text: 'אני כאן כדי לעזור לך בהכנה לבגרות במתמטיקה בלבד 📐 במה נוכל להתקדם בתרגיל הנוכחי?',
-    };
-  }
-
-  return null;
-}
-
 export function routeMessage(message: string, focus: TutorFocus | null, state: TurnState = {}): Route {
   const trimmed = message.trim();
 
@@ -312,7 +397,149 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
     return { kind: 'ask', ask: ladderSpent ? 'full' : state.lastAsk };
   }
 
-  const spec = focus?.question?.expected;
+  // ---- the reply to the tutor's own question -----------------------
+  if (looksLikeAnswer(message)) {
+    // It asked for THIS step's result and we know it. Grade against that.
+    if (state.pending?.kind === 'step-value') {
+      return {
+        kind: 'answer',
+        spec: { kind: 'value', value: state.pending.expected },
+        typed: bareValue(message),
+        about: { step: state.pending.step },
+      };
+    }
+    // It asked for a value we could not compute. Grading against the final
+    // answer here is the bug: the student was asked for something else.
+    if (state.pending?.kind === 'value-unknown') return { kind: 'open' };
+  }
+
+  // ---- "האם התשובה היא 15?" — a value, wearing a question mark -------
+  //
+  // Placed before the yes-no and follow-up branches because it is the most
+  // specific reading available: the message names a number and asks whether it
+  // is right, and that is answerable exactly and for free.
+  {
+    const checking = verificationValue(trimmed);
+    if (checking) {
+      if (state.pending?.kind === 'step-value') {
+        return {
+          kind: 'answer',
+          spec: { kind: 'value', value: state.pending.expected },
+          typed: checking,
+          about: { step: state.pending.step },
+        };
+      }
+      const own = specOf(focus);
+      if (own && own.kind !== 'manual') return { kind: 'answer', spec: own, typed: checking };
+    }
+  }
+
+  // ---- the tutor asked a yes-or-no question and got one -------------
+  //
+  // "תיקח את הראשון מהם ותבדוק אותו מול השאלה — הוא מתקיים?" and the student
+  // types "לא". That was an unrecognised message and therefore a paid call, on
+  // a question the tutor itself had just asked. Both answers move the ladder:
+  // a "כן" means the check held and the next rung is what they need, a "לא"
+  // means it did not and they need the rung anyway. The difference is which
+  // template speaks, and `answerLocally` decides that from `served`.
+  //
+  // Gated on the pending expectation, so a bare "לא" in a fresh conversation —
+  // where it means something else entirely, or nothing — is untouched.
+  // ⚠️ AFTER ANY LOCAL TURN, NOT ONLY AFTER A YES-OR-NO QUESTION.
+  //
+  // The first version required `pending.kind === 'yes-no'`, and report:worklist
+  // then showed a bare "לא" costing three separate model calls. A student who
+  // answers "לא" one message after the tutor said something is answering the
+  // tutor whatever shape the question took: asked "מה יצא לך" and it did not
+  // work out, asked "הוא מתקיים" and it does not. Both mean the same next move.
+  //
+  // Still gated: a bare "לא" OPENING a conversation means nothing, or
+  // something else entirely, and is left alone. Once the tutor has spoken —
+  // by any means — "לא" is an answer to it.
+  // ---- "בטוח?" after a verdict: stand behind it -------------------
+  //
+  // ⚠️ THIS RUNS BEFORE EVERYTHING ELSE THAT COULD CLAIM THE MESSAGE, because
+  // being second here is what produced the contradiction in `lastVerdict`.
+  // A challenge to a grade is not a question about the maths; it is a question
+  // about whether we meant it, and only the layer that graded knows the answer.
+  if (state.tutorSpoke && state.lastVerdict && followUp(trimmed) === 'why' && !hasMaths(trimmed)) {
+    if (state.lastVerdict === 'correct') return { kind: 'ack', text: STANDS_CORRECT };
+    if (state.lastVerdict === 'wrong') return { kind: 'ack', text: STANDS_WRONG };
+  }
+
+  if (state.tutorSpoke) {
+    const v = yesNo(trimmed);
+    if (v !== null) {
+      return { kind: 'ask', ask: ladderMove(v ? 'more' : 'stuck', state.served ?? [], state.lastAsk) as Ask };
+    }
+  }
+
+  // ---- still talking about what the tutor just said ----------------
+  //
+  // The student took a free move — a hint, a formula, "why was I wrong" — and
+  // then kept going: "עוד קצת", "עדיין תקוע", "ניסיתי ולא יצא". Each of those
+  // used to be unrecognised and therefore paid for, on a conversation that had
+  // already been answered from authored content.
+  //
+  // Only once the tutor has spoken. The reply is always another rung of the
+  // same ladder, about the exercise already on screen, so the worst case is a
+  // rung they did not want rather than an answer about something else — and
+  // that worst case does not get worse when the previous speaker was the model:
+  // `served` still records which rungs this app has handed out, so `ladderMove`
+  // still picks one the student has not seen.
+  if (state.tutorSpoke) {
+    const fu = followUp(trimmed);
+    if (fu) {
+      // ⚠️ A REPORT OF A RESULT IS AN ANSWER, NOT A REQUEST FOR HELP.
+      //
+      // "ניסיתי שוב ויצא לי 19" reads as `tried` and was answered with another
+      // hint — while the student was telling us they had got it right.
+      // `looksLikeAnswer` misses it because its lead-in stripper is anchored at
+      // the start, so the same sentence with four words in front of it is
+      // invisible to the grading path.
+      const reported = reportedValue(trimmed);
+      if (reported) {
+        if (state.pending?.kind === 'step-value') {
+          return {
+            kind: 'answer',
+            spec: { kind: 'value', value: state.pending.expected },
+            typed: reported,
+            about: { step: state.pending.step },
+          };
+        }
+        const own = specOf(focus);
+        if (own && own.kind !== 'manual') return { kind: 'answer', spec: own, typed: reported };
+      }
+      return { kind: 'ask', ask: ladderMove(fu, state.served ?? [], state.lastAsk) as Ask };
+    }
+  }
+
+  const spec = specOf(focus);
+
+  // ---- a reported result, whatever else the sentence is doing ------
+  //
+  // ⚠️ THIS USED TO LIVE INSIDE THE FOLLOW-UP BRANCH, so it only ran on a
+  // message that ALSO read as a follow-up. "יצא לי 19" reports a result and
+  // matches no follow-up pattern, so it was paid for — while the same words
+  // wrapped in "ניסיתי שוב ו..." were free.
+  //
+  // `unambiguousReport`, not `reportedValue`: a message with two numbers in it
+  // is not graded on a guess about which one was meant. See lib/tutor-pending.
+  if (state.tutorSpoke && spec && spec.kind !== 'manual') {
+    const reported = unambiguousReport(trimmed);
+    if (reported) {
+      if (state.pending?.kind === 'step-value') {
+        return {
+          kind: 'answer',
+          spec: { kind: 'value', value: state.pending.expected },
+          typed: reported,
+          about: { step: state.pending.step },
+        };
+      }
+      return { kind: 'answer', spec, typed: reported };
+    }
+  }
+
   // `manual` means the content author said this answer cannot be graded
   // mechanically (a proof, a locus, "find all n"). Honour that.
   if (spec && spec.kind !== 'manual' && looksLikeAnswer(message)) {
@@ -371,6 +598,36 @@ export function answerGradedLocally(
 ): { text: string; verdict: Verdict } | null {
   const result = checkAnswer(route.typed, route.spec);
   if (result.verdict === 'unparseable' || result.verdict === 'manual') return null;
+
+  if (result.verdict === 'correct' && route.about) {
+    return {
+      verdict: 'correct',
+      text: `כן, \`${route.typed}\` — בדיוק מה שהצעד הזה נותן. 🎯
+
+עכשיו קדימה לצעד הבא.`,
+    };
+  }
+
+  // ⚠️ A WRONG INTERMEDIATE IS NOT A WRONG ANSWER. The student was asked for
+  // one step's result, so the reply is about that step and nothing else —
+  // handing them the why-wrong templates here would discuss a final answer they
+  // never claimed.
+  //
+  // ⚠️ AND THE STEP IS NOT QUOTED BACK. The first version pasted it in, and the
+  // step that produces the value CONTAINS the value: the student got it wrong
+  // and was immediately shown the number they were asked to find. That is the
+  // ladder collapsing at the exact moment it matters. They get told it does not
+  // match and are sent back to the step, which is the rung below.
+  if (result.verdict === 'wrong' && route.about) {
+    return {
+      verdict: 'wrong',
+      text:
+        `בדקתי — הצעד הזה נותן משהו אחר מ-\`${route.typed}\`.
+
+` +
+        'תעבור עליו שוב לאט, ותגיד לי מה יצא הפעם.',
+    };
+  }
 
   if (result.verdict === 'correct') {
     // Deliberately short and specific. The student's own value is echoed in

@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, KeyRound, LifeBuoy, ArrowLeft, RotateCcw, Wrench } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
+import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
 import { AnswerInput, AnswerParts, describeParts } from '@/components/practice/AnswerInput';
 import { MistakeTagger } from '@/components/practice/MistakeTagger';
 import { AITutorActions } from '@/components/practice/AITutorActions';
@@ -627,6 +628,12 @@ export function QuestionRunnerCard({
                   </li>
                 ))}
               </ol>
+              {/* The picture belongs AFTER the steps and BEFORE the answer: it
+                  is what the steps were building, and on a "sketch the graph"
+                  question it IS the answer's shape. */}
+              {q.solution.diagrams && q.solution.diagrams.length > 0 && (
+                <DiagramRenderer diagrams={q.solution.diagrams} />
+              )}
               <div className="mt-4 bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2.5">
                 <div className="text-[10px] font-black tracking-widest text-emerald-700 mb-0.5 uppercase">תשובה סופית</div>
                 <div className="text-sm font-bold text-emerald-900 chat-md"><MathText inline>{q.solution.finalAnswer}</MathText></div>

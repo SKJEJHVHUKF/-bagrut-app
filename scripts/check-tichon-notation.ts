@@ -15,7 +15,32 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 
-import { TICHON_NOTATION_RULES as RULES } from '../lib/tichon-notation';
+type Rule = { pattern: RegExp; why: string };
+
+const RULES: Rule[] = [
+  { pattern: /\\{1,2}forall|∀/g, why: 'כתוב "לכל" במילים' },
+  { pattern: /\\{1,2}exists|∃/g, why: 'כתוב "קיים" במילים' },
+  { pattern: /\\{1,2}(?:wedge|land)|∧/g, why: 'כתוב "וגם"' },
+  { pattern: /\\{1,2}(?:vee|lor)|∨/g, why: 'כתוב "או" (מחוץ למתמטיקה) או הפרד בפסיק' },
+  { pattern: /\\{1,2}(?:neg|lnot)|¬/g, why: 'כתוב "לא"' },
+  {
+    pattern: /\\{1,2}(?:iff|Leftrightarrow|Longleftrightarrow)|⟺|⇔/g,
+    why: 'כתוב "אם ורק אם" / "כלומר"; בתוך $$...$$ או latex: השתמש ב-\\Longrightarrow',
+  },
+  { pattern: /\\{1,2}emptyset|\\{1,2}varnothing|∅/g, why: 'כתוב "ריק" / "אין תוצאה משותפת"' },
+  { pattern: /\\{1,2}mathbb\s*\{?\s*[RCZNQ]\s*\}?|[ℝℂℤℕℚ]/g, why: 'כתוב "כל $x$ ממשי" / "שלם" / "בתחום המרוכבים"' },
+  { pattern: /\\{1,2}setminus|∖/g, why: 'כתוב "פרט ל-"' },
+  { pattern: /\\{1,2}blacksquare|■|⬛|∎/g, why: 'כתוב **מש״ל**' },
+  { pattern: /\\{1,2}(?:subseteq|supseteq)|⊆|⊇/g, why: 'סימון קבוצות אינו בתוכנית התיכון' },
+  { pattern: /\\{1,2}therefore|∴/g, why: 'כתוב "לכן"' },
+  // Proposition notation in induction proofs: P(1), P(k), P(n), P(k+1).
+  // Probability P(A), P(X=k) and Bernoulli P(0)/P(1)/P(k) are legitimate, so
+  // this only fires on lines that are actually about induction.
+  {
+    pattern: /\bP\((?:1|n|k|k\s*\+\s*1|n\s*\+\s*1)\)/g,
+    why: 'באינדוקציה כתוב "הטענה עבור $n=1$" במקום $P(1)$',
+  },
+];
 
 // Only student-facing content. lib/ prompts and scripts/ are developer-facing.
 const ROOTS = [

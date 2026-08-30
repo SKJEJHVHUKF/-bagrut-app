@@ -24,7 +24,8 @@
 import { readFileSync, readdirSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { leaksAnswer } from '../lib/help-ladder';
-import type { TutorFaq, TutorFaqBank, TutorFaqKind } from '../content/tutor-faq/types';
+import { tokens } from '../lib/tutor-faq';
+import { HELD_POSITIONS, type TutorFaq, type TutorFaqBank, type TutorFaqKind } from '../content/tutor-faq/types';
 
 const argv = process.argv.slice(2);
 const opt = (k: string) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : undefined; };
@@ -55,6 +56,20 @@ function mathSpans(s: string): string[] {
 const problems: string[] = [];
 const fail = (id: string, why: string) => problems.push(`${id}: ${why}`);
 
+// A SEPARATE LIST, BECAUSE THIS IS NOT A REASON TO DROP AN ENTRY.
+//
+// Everything above is structural: a malformed entry is worse than no entry, so
+// it goes. This is about whether an entry can ever be REACHED, which is not
+// decidable from the entry alone — the real answer is a recall number over a
+// whole bank, and that is test:faq's job.
+//
+// It earns its place anyway. Six trigonometry slices passed this script with
+// "dropped 0" and then measured 19-35% recall: structurally perfect, silent in
+// production. "dropped 0" read as success and nearly shipped ~600 dead
+// entries. A merge that can only say "well-formed" must not be the last thing
+// anyone looks at.
+const unreachable: string[] = [];
+
 function validate(unit: string, f: TutorFaq): boolean {
   const before = problems.length;
   const row = rows.get(unit);
@@ -74,6 +89,26 @@ function validate(unit: string, f: TutorFaq): boolean {
       seen.add(norm(a));
     }
   }
+  // ---- can the entry be found by the alts the recall test hides? ----
+  //
+  // `matchFaq` scores each phrasing on its own and keeps the best, so a hidden
+  // alt is found only if something still visible echoes it. Real tokens, from
+  // the real tokenizer — `$…$` stripped, sub-2-char dropped — because a shared
+  // vertex letter is not a shared word.
+  if (Array.isArray(f.alts) && f.alts.length >= 5) {
+    const visible = new Set(
+      [f.q, ...f.alts.filter((_, i) => !HELD_POSITIONS.has(i))]
+        .filter((t): t is string => typeof t === 'string')
+        .flatMap(tokens),
+    );
+    for (const i of HELD_POSITIONS) {
+      const alt = f.alts[i];
+      if (typeof alt !== 'string') continue;
+      if (!tokens(alt).some((t) => visible.has(t)))
+        unreachable.push(`${f.id} alt[${i}] "${alt.slice(0, 46)}" shares no word with q or any kept alt`);
+    }
+  }
+
   const a = typeof f.a === 'string' ? f.a : '';
   if (a.length < 40) fail(f.id, `answer too short (${a.length})`);
   if (a.length > 700) fail(f.id, `answer too long (${a.length})`);
@@ -128,6 +163,18 @@ const dropped = total - kept;
 console.log(`\n${files.length} file(s) · ${total} entries · kept ${kept} · dropped ${dropped} · units ${units.length}/${rows.size}`);
 const uncovered = [...rows.keys()].filter((u) => !bank[u]);
 if (uncovered.length) console.log(`units without entries (${uncovered.length}): ${uncovered.slice(0, 8).join(', ')}${uncovered.length > 8 ? ' …' : ''}`);
+if (unreachable.length) {
+  const pct = ((unreachable.length / Math.max(1, total * HELD_POSITIONS.size)) * 100).toFixed(1);
+  console.log();
+  console.log(`!!  ${unreachable.length} held-out alt(s) (${pct}%) share no word with anything kept:`);
+  for (const w of unreachable.slice(0, 12)) console.log(`  ! ${w}`);
+  if (unreachable.length > 12) console.log(`  ... and ${unreachable.length - 12} more`);
+  console.log();
+  console.log('  These entries are well-formed and may still be unfindable. This is a');
+  console.log('  lexical proxy, not the measurement - run `npm run test:faq` for the recall');
+  console.log('  number, which is the one that decides. Nothing was dropped for it.');
+}
+
 if (problems.length) {
   console.log(`\nproblems (${problems.length}):`);
   for (const p of problems.slice(0, 40)) console.log(`  ✗ ${p}`);

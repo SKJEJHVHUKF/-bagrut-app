@@ -36,15 +36,16 @@
 import { readFileSync } from 'fs';
 import {
   buildCorpusIdf, buildFaqIndex, matchFaq, stepReference, tokenGroups, tokens,
-  FAQ_TRANSFER_THRESHOLD, mentionsForeignNumber,
+  FAQ_TRANSFER_THRESHOLD, mentionsForeignNumber, pointsAtThisExercise,
 } from '../lib/tutor-faq';
 import { classifyAsk } from '../lib/tutor-local';
-import type { TutorFaq, TutorFaqBank } from '../content/tutor-faq/types';
+import { foreignSubject } from '../lib/maths-vocabulary';
+import { HELD_POSITIONS, type TutorFaq, type TutorFaqBank } from '../content/tutor-faq/types';
+import { faqBankKeys, loadFaqBank } from '../content/tutor-faq';
 
 /** Alts at these 0-based positions are held out (2 of ≥7). Fixed positions in
  *  the MIDDLE, not "the last two": an author told "the last two are the test"
  *  writes two outliers there and the number stops meaning anything. */
-const HELD_POSITIONS = new Set([1, 4]);
 const MIN_RECALL = 0.85;
 /** Noise is the production-relevant failure: nothing that no unit covers may
  *  ever be answered. Held to near-zero. */
@@ -122,9 +123,19 @@ async function loadBanks(): Promise<Record<string, TutorFaqBank>> {
     }
     return { [file]: raw };
   }
-  const seq = (await import('../content/tutor-faq/math5/sequences')).default;
-  const prob = (await import('../content/tutor-faq/math5/probability')).default;
-  return { 'סדרות': seq, 'הסתברות': prob };
+  // ⚠️ FROM THE REGISTRY, NEVER A LIST HERE.
+  //
+  // This used to name סדרות and הסתברות directly. When trigonometry was
+  // registered in content/tutor-faq/index.ts the bank went live for students
+  // and the gate did not see it — the run returned the identical 2276/2276,
+  // which reads as "nothing changed" rather than "nothing was measured". Any
+  // regression in a new topic's bank would have shipped in silence.
+  const banks: Record<string, TutorFaqBank> = {};
+  for (const [subject, topic] of faqBankKeys()) {
+    const bank = await loadFaqBank(subject, topic);
+    if (bank) banks[topic] = bank;
+  }
+  return banks;
 }
 
 function hebrewInMath(text: string): string | null {
@@ -272,9 +283,25 @@ async function trace(text: string) {
         .map((p) => buildFaqIndex(p, { idf: topicIdf }));
       if (indices.length) {
         {
-          const TRANSFER_OPTS = { threshold: FAQ_TRANSFER_THRESHOLD, minContentMatches: 2 };
+          // Overridable so the re-enable bar can be SWEPT rather than argued
+          // about. The note in lib/tutor-faq.ts says the route back is
+          // authoring rather than tuning; that is a claim, and a claim about
+          // numbers should be cheap to re-test:
+          //
+          //   FAQ_SWEEP_THRESHOLD=0.78 FAQ_SWEEP_MIN_CONTENT=3 npm run test:faq
+          //
+          // Defaults are exactly production, so an ordinary run is unchanged.
+          const TRANSFER_OPTS = {
+            threshold: Number(process.env.FAQ_SWEEP_THRESHOLD) || FAQ_TRANSFER_THRESHOLD,
+            minContentMatches: Number(process.env.FAQ_SWEEP_MIN_CONTENT) || 2,
+          };
           /** First index that answers — production returns on the first hit. */
+          const SCREEN = process.env.FAQ_SWEEP_NO_SCREEN !== '1';
           const tryTransfer = (alt: string) => {
+            // The same question-side screen production applies. Off via
+            // FAQ_SWEEP_NO_SCREEN=1 so its contribution is measurable, not
+            // assumed.
+            if (SCREEN && pointsAtThisExercise(alt)) return null;
             for (const ix of indices) {
               const hit = matchFaq(ix, alt, TRANSFER_OPTS);
               if (hit) return hit;
@@ -320,9 +347,21 @@ async function trace(text: string) {
 
       // Noise: nothing here may match. Mirrors production — a message the
       // local tutor's classifier already answers never reaches the bank.
+      //
+      // ⚠️ "Mirrors production" has to keep being true. This loop calls
+      // `matchFaq` directly rather than `answerFromFaq`, so every screen the
+      // real path applies must be applied here too or the gate measures a
+      // system nobody runs. That drifted once: anchoring `classifyAsk` stopped
+      // it from answering "תסביר לי על וקטורים", the message reached the bank
+      // for the first time, and the rate went from under 2% to 2.5% — a real
+      // defect the gate had never been able to see. The foreign-subject screen
+      // fixes it in `answerFromFaq`, and this line is what lets the gate
+      // confirm that rather than keep reporting the old number.
       const fullIndex = buildFaqIndex(faqs, { idf: topicIdf });
+      const unitSubject = faqs.map((f) => `${f.q} ${f.a} ${f.alts.join(' ')}`).join(' ') + ' ' + topic;
       for (const n of NOISE) {
         if (classifyAsk(n)) continue;
+        if (foreignSubject(n, unitSubject)) continue;
         noiseQueries++;
         const hit = matchFaq(fullIndex, n);
         if (hit) { noiseHits++; if (noiseHits <= 6) console.log(`  ✗ noise matched: "${n}" → ${hit.faq.id} (${hit.score.toFixed(2)})`); }
@@ -363,22 +402,31 @@ async function trace(text: string) {
   if (farQueries) {
     console.log(
       `  far-unit ${(farRate * 100).toFixed(1)}% — ${farRate > MAX_FAR ? 'above' : 'below'} the ${MAX_FAR * 100}% ` +
-        'guideline. Not enforced while cross-question reuse is disabled.',
+        'guideline. REPORTED, never enforced: this fires held-out queries at a ' +
+        'unit from a different SUB-TOPIC, and production cannot reach that — ' +
+        'stage 1 searches only the student’s own unit and stage 2 only their ' +
+        'own group. It is a specificity signal for authoring, and enforcing it ' +
+        'would push someone to weaken real entries to satisfy a scenario that ' +
+        'does not exist.',
     );
   }
-  // Reported, not enforced: TRANSFER_ENABLED is false in lib/tutor-faq.ts
-  // because these numbers did not clear the bar (4.2% unsafe against 17.2%
-  // firing — roughly one wrong answer per four calls saved). The measurement
-  // keeps running so a future authoring pass can be judged against it; see the
-  // re-enable criterion on TRANSFER_ENABLED.
+  // Reported, NOT enforced — and now that cross-question reuse is ON, that is
+  // worth stating rather than assuming. Only two numbers fail this gate:
+  // MIN_RECALL and MAX_NOISE. The transfer verdict prints and does not exit.
+  //
+  // Deliberate, because the transfer numbers move whenever a topic is ADDED:
+  // a new bank changes the denominator for everyone. Failing the build on that
+  // would block an author who did nothing wrong, and the verdict line is what
+  // tells a person to look. If it says ⛔, TRANSFER_ENABLED in lib/tutor-faq.ts
+  // should be flipped back to false by hand.
   if (transferQueries) {
     const verdict =
       unsafeRate <= MAX_UNSAFE_TRANSFER && transferRate >= MIN_TRANSFER
-        ? `✅ would now clear the bar (unsafe ≤ ${MAX_UNSAFE_TRANSFER * 100}%, fires ≥ ${MIN_TRANSFER * 100}%) — consider TRANSFER_ENABLED = true`
+        ? `✅ clears the bar (unsafe ≤ ${MAX_UNSAFE_TRANSFER * 100}%, fires ≥ ${MIN_TRANSFER * 100}%) — cross-question reuse stays ON`
         : `⛔ still below the bar (needs unsafe ≤ ${MAX_UNSAFE_TRANSFER * 100}% and fires ≥ ${MIN_TRANSFER * 100}%) — stays disabled`;
     console.log(`  ${verdict}`);
   }
 
   console.log(`\n${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
-  process.exit(failures === 0 ? 0 : 1);
+  process.exitCode = failures === 0 ? 0 : 1;
 })();

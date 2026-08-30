@@ -43,3 +43,6 @@ next-env.d.ts
 # Python bytecode from the /api Vercel Functions
 __pycache__/
 *.pyc
+slices/
+audit/
+logs/faq-misses.json

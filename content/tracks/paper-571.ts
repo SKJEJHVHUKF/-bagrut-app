@@ -308,7 +308,7 @@ export const TRACK_571: TrackTree = {
           kind: 'ladder',
           subId: 'trig-plane-basics',
           title: 'זהויות, משפטי מעגל ומשוואה טריגונומטרית',
-          bullets: ['הזהויות שצריך לפתרון משולשים', '$\\sin(180°-\\alpha)$ ו-$\\cos(180°-\\alpha)$', 'זווית מרכזית, היקפית, משיק ומרובע חסום', 'משוואה פשוטה בתחום נתון'],
+          bullets: ['הזהויות שצריך לפתרון משולשים', '$\\sin(180°-\\alpha)$ וגם $\\cos(180°-\\alpha)$', 'זווית מרכזית, היקפית, משיק ומרובע חסום', 'משוואה פשוטה בתחום נתון'],
         },
         // ---- רמה 1 --------------------------------------------------------
         {
@@ -322,13 +322,13 @@ export const TRACK_571: TrackTree = {
           kind: 'ladder',
           subId: 'trig-sine-cosine-laws',
           title: 'משפט הסינוסים המורחב ומשפט הקוסינוסים',
-          bullets: ['משפט הסינוסים — צלע מול הזווית שלה, ו-$2R$', 'שתי התשובות של הזווית', 'משפט הקוסינוסים — כשאין זוג', 'איך בוחרים משפט'],
+          bullets: ['משפט הסינוסים — צלע מול הזווית שלה, וגם $2R$', 'שתי התשובות של הזווית', 'משפט הקוסינוסים — כשאין זוג', 'איך בוחרים משפט'],
         },
         {
           kind: 'ladder',
           subId: 'trig-triangle-area',
           title: 'נוסחאות שטח משולש',
-          bullets: ['$S = \\tfrac12 ab\\sin\\gamma$ — הזווית הכלואה', 'מהשטח אל הזווית — שתי תשובות', '$S = \\dfrac{abc}{4R}$ והמעגל החוסם'],
+          bullets: ['$S = \\tfrac12 ab\\sin\\gamma$: הזווית הכלואה', 'מהשטח אל הזווית — שתי תשובות', '$S = \\dfrac{abc}{4R}$ והמעגל החוסם'],
         },
         // ---- רמה 3 --------------------------------------------------------
         {
@@ -456,10 +456,10 @@ export const TRACK_571: TrackTree = {
           subId: 'trig-calculus',
           title: 'נגזרות של פונקציות טריגונומטריות',
           bullets: [
-            'נגזרות של $\\sin$ ו-$\\cos$',
+            'נגזרות של $\\sin$ וגם $\\cos$',
             'כלל השרשרת',
             'אינטגרלים טריגונומטריים',
-            'צורת $R\\sin(x+\\varphi)$ — קיצון בלי גזירה',
+            'צורת $R\\sin(x+\\varphi)$: קיצון בלי גזירה',
           ],
         },
         { kind: 'soon', title: 'חקירה מלאה של פונקציה טריגונומטרית — קיצון' },
@@ -476,19 +476,41 @@ export const TRACK_571: TrackTree = {
       id: 'extremum-problems',
       title: 'בעיות קיצון',
       emoji: '🎯',
+      // Five stations, in the owner's own order and wording (2026-08-30). The four
+      // steps of solving one problem used to be four bullets on a single tile; they
+      // are the four things a student gets stuck on separately, so each is its own
+      // stage with its own ladder. Nothing else belongs in this topic — he asked for
+      // exactly these levels and nothing mixed in.
       tiles: [
         {
-          // The syllabus's four items are the four steps of solving one problem —
-          // exactly the content of the single existing sub-topic.
           kind: 'ladder',
-          subId: 'optimization',
-          title: 'בעיות קיצון',
-          bullets: [
-            'הגדרת המשתנה $x$ שאיתו עובדים',
-            'בניית פונקציית המטרה',
-            'גזירת הפונקציה ומציאת הקיצון',
-            'בעיות קיצון גאומטריות ובעיות קיצון גרפיות',
-          ],
+          subId: 'ext-base',
+          title: 'רמת בסיס · גזירת מנה ושורש',
+          bullets: ['כלל המנה, נגזרת שורש ופונקציה מורכבת', 'מה מאפס שבר, ומה רק הופך אותו ללא מוגדר'],
+        },
+        {
+          kind: 'ladder',
+          subId: 'ext-target',
+          title: 'רמה 1 · בניית פונקציית המטרה',
+          bullets: ['מהאילוץ שבשאלה למשתנה יחיד', 'בעיות גאומטריות ובעיות על גרף'],
+        },
+        {
+          kind: 'ladder',
+          subId: 'ext-extremum',
+          title: 'רמה 2 · מציאת הקיצון בגזירה',
+          bullets: ['מאפסים את הנגזרת, כי המשיק בקיצון אופקי', 'סיווג בנגזרת שנייה או בטבלת סימנים'],
+        },
+        {
+          kind: 'ladder',
+          subId: 'ext-substitute',
+          title: 'רמה 3 · הצבה וקבלת הגודל',
+          bullets: ['מציבים בפונקציית המטרה, לא בנגזרת', 'עונים בגודל שנשאל וביחידות שלו'],
+        },
+        {
+          kind: 'ladder',
+          subId: 'ext-bagrut',
+          title: 'רמה 4 · תרגול בגרות',
+          bullets: ['בעיה שלמה מההגדרה ועד התשובה', 'ארבע המשפחות שחוזרות בבגרות'],
         },
       ],
     },

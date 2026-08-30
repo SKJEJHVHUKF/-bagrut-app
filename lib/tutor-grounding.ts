@@ -37,6 +37,20 @@ export const PILOT_TOPIC = 'מספרים מרוכבים';
 const MAX_EXAMPLES = 6;
 const MAX_PITFALLS = 12;
 
+/**
+ * What to put in the grounding block.
+ *
+ * `essentialsOnly: true` keeps the two sections the tutor's own rules actually
+ * name — **נוסחאות** and **טעויות נפוצות** — and drops the three that are
+ * background: תמצית הנושא, the worked examples, and טיפים לבגרות.
+ *
+ * It is the right setting on every call that already carries the student's own
+ * question and its authored solution, which is every call this app makes except
+ * a free chat with nothing on screen. See `buildTopicExtras` for the
+ * measurement and for where the dropped sections go instead.
+ */
+export type GroundingOptions = { essentialsOnly?: boolean };
+
 /** True iff this topic has an authored lesson to ground the tutor in. */
 export function isGroundedTopic(topic?: string | null): boolean {
   const t = (topic ?? '').trim();
@@ -65,10 +79,11 @@ export function isPilotTopic(topic?: string | null): boolean {
  * Returns '' if the lesson is missing, so callers can detect the
  * "no grounding available" case and fall back rather than fabricate.
  */
-export function buildTopicContext(topic: string): string {
+export function buildTopicContext(topic: string, opts?: GroundingOptions): string {
   const t = (topic ?? '').trim();
   const lesson = getLesson('math5', t);
   if (!lesson) return '';
+  const full = !opts?.essentialsOnly;
 
   const parts: string[] = [];
 
@@ -81,7 +96,7 @@ export function buildTopicContext(topic: string): string {
         : 'שמור על מוסכמות הבגרות הישראלית: זוויות במעלות (לא רדיאנים), סימונים כפי שמופיעים בחומר.')
   );
 
-  if (lesson.summary?.length) {
+  if (full && lesson.summary?.length) {
     parts.push('### תמצית הנושא');
     parts.push(lesson.summary.map((s) => `- ${s}`).join('\n'));
   }
@@ -98,17 +113,8 @@ export function buildTopicContext(topic: string): string {
     );
   }
 
-  if (lesson.examples?.length) {
-    parts.push('### דוגמאות פתורות (מאומתות — העדף לשלוף מכאן)');
-    parts.push(
-      lesson.examples
-        .slice(0, MAX_EXAMPLES)
-        .map((ex) => {
-          const steps = ex.steps.map((st, i) => `   ${i + 1}. ${st}`).join('\n');
-          return `**${ex.problem}**\n${steps}\n   ⟹ ${ex.answer}`;
-        })
-        .join('\n\n')
-    );
+  if (full && lesson.examples?.length) {
+    parts.push(buildWorkedExamples(t));
   }
 
   if (lesson.pitfalls?.length) {
@@ -116,12 +122,83 @@ export function buildTopicContext(topic: string): string {
     parts.push(lesson.pitfalls.slice(0, MAX_PITFALLS).map((p) => `- ${p}`).join('\n'));
   }
 
-  if (lesson.examTips?.length) {
+  if (full && lesson.examTips?.length) {
     parts.push('### טיפים לבגרות');
     parts.push(lesson.examTips.map((t2) => `- ${t2}`).join('\n'));
   }
 
   return parts.join('\n\n');
+}
+
+/**
+ * The three background sections, for the turn that has nothing on screen.
+ *
+ * ============================================================
+ * WHY THEY ARE SEPARABLE, AND WHY THAT IS THE SECOND-BIGGEST SAVING IN THE TUTOR
+ * ============================================================
+ * MEASURED with messages.countTokens on claude-haiku-4-5 (2026-08-29): the six
+ * worked examples are 41-56% of the entire grounding block.
+ *
+ *   טריגונומטריה        3,353 of 6,384   53%
+ *   גיאומטריה אוקלידית  2,899 of 5,154   56%
+ *   סדרות               1,349 of 3,069   44%
+ *   הסתברות               952 of 2,309   41%
+ *
+ * And they are REDUNDANT on the turn that pays for them. When a student has a
+ * question on screen, `renderFocusContext` already puts that question's own
+ * authored solution in the user message under a `SOLUTION` header — the exact
+ * worked example that matters, for the exact question being asked. Six generic
+ * examples of the same topic are a second, worse copy of what the model already
+ * has, bought at 2x on the cache write.
+ *
+ * They earn their keep on the OTHER turn: a free chat about the topic with
+ * nothing on screen, where there is no specific solution to lean on. So they
+ * are emitted there, uncached, and never enter the cached prefix at all — one
+ * cache entry per topic instead of two, and the common turn stops paying for
+ * the rare one.
+ *
+ * ⚠️ תמצית הנושא AND טיפים לבגרות TRAVEL WITH THEM, for the same reason and on
+ * weaker grounds still: no rule in TUTOR_CORE refers to either. The prompt tells
+ * the tutor to teach from the material's METHODS and FORMULAS and to use its
+ * טעויות נפוצות for error-focused feedback — so those two sections stay cached,
+ * and the summary and the exam tips ride here. A student who asks for tips is
+ * now answered by lib/study-tips before any of this is reached.
+ */
+export function buildTopicExtras(topic: string): string {
+  const t = (topic ?? '').trim();
+  const lesson = getLesson('math5', t);
+  if (!lesson) return '';
+  const parts: string[] = [];
+
+  if (lesson.summary?.length) {
+    parts.push('### תמצית הנושא');
+    parts.push(lesson.summary.map((s) => `- ${s}`).join('\n'));
+  }
+  const examples = buildWorkedExamples(t);
+  if (examples) parts.push(examples);
+  if (lesson.examTips?.length) {
+    parts.push('### טיפים לבגרות');
+    parts.push(lesson.examTips.map((x) => `- ${x}`).join('\n'));
+  }
+
+  return parts.join('\n\n');
+}
+
+/** The worked-examples section on its own. Used by `buildTopicExtras` and by
+ *  `buildTopicContext` on the full path, so the two cannot drift apart. */
+export function buildWorkedExamples(topic: string): string {
+  const lesson = getLesson('math5', (topic ?? '').trim());
+  if (!lesson?.examples?.length) return '';
+  return [
+    '### דוגמאות פתורות (מאומתות — העדף לשלוף מכאן)',
+    lesson.examples
+      .slice(0, MAX_EXAMPLES)
+      .map((ex) => {
+        const steps = ex.steps.map((st, i) => `   ${i + 1}. ${st}`).join('\n');
+        return `**${ex.problem}**\n${steps}\n   ⟹ ${ex.answer}`;
+      })
+      .join('\n\n'),
+  ].join('\n\n');
 }
 
 /** Back-compat: the original pilot builder, now a thin wrapper. */
@@ -184,7 +261,10 @@ export function buildTutorSystemPrompt(topic?: string | null): string | null {
  * hint-help, explain-simpler). Same verified content; returns null for
  * ungrounded topics so callers append nothing.
  */
-export function buildPilotGrounding(topic?: string | null): string | null {
+export function buildPilotGrounding(
+  topic?: string | null,
+  opts?: GroundingOptions,
+): string | null {
   if (!isGroundedTopic(topic)) return null;
-  return buildTopicContext(topic!) || null;
+  return buildTopicContext(topic!, opts) || null;
 }

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
-import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
+import { isProUser, AI_DAILY_LIMIT, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
 import { hasLesson } from '@/content/lessons';
 import { buildStudentSnapshot } from '@/lib/tutor-context';
 import {
@@ -640,7 +640,7 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={remaining > 0 ? 'שאל את המורה...' : 'הגעת למכסה היומית'}
+              placeholder={remaining > 0 ? 'שאל את המורה...' : 'נגמרו השאלות החופשיות למורה AI להיום'}
               rows={1}
               maxLength={MAX_MESSAGE_LEN}
               disabled={sending || remaining <= 0}
@@ -661,7 +661,7 @@ export default function ChatPage() {
             </button>
           </form>
           <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
-            <span>נשארו לך {remaining} הודעות היום</span>
+            <span>נותרו לך {remaining} מתוך {AI_DAILY_LIMIT} שאלות AI היום</span>
             <span>{input.length}/{MAX_MESSAGE_LEN}</span>
           </div>
         </div>

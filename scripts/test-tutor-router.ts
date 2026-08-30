@@ -17,7 +17,7 @@
  * question that contains a number, and "16" alone is an answer that does not.
  */
 
-import { routeMessage, looksLikeAnswer, bareValue, screenMessage } from '../lib/tutor-router';
+import { routeMessage, looksLikeAnswer, bareValue } from '../lib/tutor-router';
 import type { TutorFocus } from '../lib/tutor-presence';
 import type { PracticeQuestion } from '../content/lessons/types';
 import type { AnswerSpec } from '../lib/answer-check';
@@ -52,6 +52,22 @@ const ANSWERS = [
   'x=3', '1+2i', '0.36', '2/6', 'x = -5', '1/3', '$x=3$', 'זה 16?',
   'יצא לי 0.36', 'קיבלתי 1/3', 'התשובה היא 2/6', 'אני חושב ש-x=3',
   'd=4, a1=3', 'x=2 או x=3', '2*sqrt(3)', '\\dfrac{1}{3}', '-0.5', '16',
+  // ⚠️ "IS IT X?" IS A VALUE, NOT A QUESTION — Itay, 2026-08-25.
+  //
+  // Every one of these went to a model to have arithmetic confirmed, because
+  // ASKING lists האם and נכון among the words that mark a question. They do,
+  // in general; they do not when the message is a number with a question mark
+  // around it. `verificationValue` matches the frame and takes the value out
+  // of it, so "האם צריך להכפיל" and "האם הסדרה חשבונית" stay untouched — and
+  // "למה זה 16" stays on the must-NOT-grade list two blocks below.
+  'האם התשובה היא 1/3', 'האם זה 0.36', 'אז זה 1/3 נכון?', 'האם 0.36 נכון',
+  // ⚠️ A HEBREW SEPARATOR THAT NEVER WORKED, AND ONE NOBODY WROTE.
+  //
+  // The list read `ו-`, and JavaScript's `` never matches next to a
+  // Hebrew letter — so "2 ו-3 ו-4" was one unparseable token from the day it
+  // was written. And students do not type the maqaf at all: report:worklist
+  // has "2 ו3 ו4" verbatim, three model calls for a list of three values.
+  '2 ו3 ו4', '2 ו-3 ו-4', '3 ו4',
 ];
 let caught = 0;
 for (const msg of ANSWERS) {
@@ -69,7 +85,7 @@ const QUESTIONS = [
   'למה זה 16', 'למה התשובה 1/3', 'איך הגעת ל-0.36', 'מאיפה ה-6',
   'תן לי רמז', 'אני תקוע', 'מאיפה מתחילים?', 'למה טעיתי',
   'תראה לי את הפתרון', 'מה הנוסחה', 'מה חשוב לזכור', 'תסביר לי את השאלה',
-  'לא הבנתי את 2/6', 'זה נכון ש-x=3?', 'האם 0.36 נכון', 'מה זה אומר x=3',
+  'לא הבנתי את 2/6', 'זה נכון ש-x=3?', 'מה זה אומר x=3',
   'בדוק לי את התשובה', 'אפשר עוד רמז', 'מה עושים עכשיו', 'למה לא 1/2',
   'כן', 'תודה', 'אוקיי', 'מה ההבדל בין וגם לאו',
 ];
@@ -139,9 +155,24 @@ console.log('\n— the conversation after the first chip —');
   const withState = (msg: string) =>
     routeMessage(msg, withValue, { lastAsk: 'help', served: ['hint'] });
 
-  for (const msg of ['תודה', 'אוקיי', 'הבנתי', 'סבבה', 'תודה רבה', 'ok']) {
+  // ⚠️ THE TWO-WORD ACKS ARE THE ONES THAT COST MONEY. Every entry in the
+  // original list was a single word, and the sound a student actually makes
+  // when it lands is two: "אה נכון" was billed at $0.0030 on two separate days
+  // for a message that asks nothing at all.
+  for (const msg of [
+    'תודה', 'אוקיי', 'הבנתי', 'סבבה', 'תודה רבה', 'ok',
+    'אה נכון', 'אה כן', 'הבנתי עכשיו', 'עכשיו הבנתי', 'מצוין', 'מצויין',
+    'ברור עכשיו', 'נכון נכון', 'בסדר גמור', 'אוקיי הבנתי',
+  ]) {
     const r = withState(msg);
     ok(r.kind === 'ack', `acknowledgement answered without a model: ${JSON.stringify(msg)} → ${r.kind}`);
+  }
+  // ⚠️ AND WHAT THE WIDENING MUST NOT SWALLOW. Each of these OPENS with an
+  // acknowledgement and then asks something; answering "אוקיי אז מה עכשיו"
+  // with "בכיף!" is the tutor hanging up on a student mid-question.
+  for (const msg of ['הבנתי אבל למה', 'אוקיי אז מה עכשיו', 'ברור לי שזה לא', 'טוב אז מה הצעד הבא', 'נכון?']) {
+    const r = withState(msg);
+    ok(r.kind !== 'ack', `not an acknowledgement: ${JSON.stringify(msg)} → ${r.kind}`);
   }
   for (const msg of ['ואז?', 'ואז מה', 'ומה עכשיו', 'המשך', 'נו', 'הלאה', 'עוד קצת',
                      'אוקיי ומה הלאה', 'תן לי עוד כיוון', 'עוד רמז']) {
@@ -165,53 +196,10 @@ console.log('\n— the conversation after the first chip —');
 }
 
 // ------------------------------------------------------------
-// screenMessage — the $0 pre-filter
-// ------------------------------------------------------------
-//
-// THE TWO ERRORS ARE NOT EQUAL HERE EITHER, and the counter-examples below are
-// the more important half of this block. Screening a real question is silent
-// and permanent: the student is told "I only do maths" and never reaches the
-// tutor at all. Failing to screen junk costs one warm turn (~$0.0025).
-{
-  const screens = (m: string, reason: string) =>
-    ok(screenMessage(m)?.reason === reason, `"${m}" → ${reason}`);
-  const passes = (m: string) =>
-    ok(screenMessage(m) === null, `"${m}" must reach the tutor`);
-
-  // --- caught, and correctly ---
-  screens('אאאא', 'gibberish');
-  screens('1111', 'gibberish');
-  screens('????', 'gibberish');
-  screens('asdasd', 'gibberish');
-  screens('היי', 'greeting');
-  screens('שלום', 'greeting');
-  screens('מה נשמע?', 'greeting');
-  screens('תכתוב לי קוד שממיין מערך', 'off-topic');
-  screens('תן לי מתכון לעוגת שוקולד', 'off-topic');
-
-  // --- MUST NOT be screened: real bagrut questions that look off-topic ---
-  // "כדורגל" appears 33x and "מתכון" 14x in authored content. Israeli
-  // probability questions are built on football, cards, dice and recipes; a
-  // keyword blocklist would reject the syllabus itself.
-  passes('בקבוצת כדורגל יש 11 שחקנים, מה ההסתברות שנבחר שוער?');
-  passes('מכינים 3 מתכונים ובכל אחד 4 מרכיבים, כמה צירופים יש?');
-  passes('מי ניצח במשחק אם ההסתברות לניצחון היא 0.6?');
-  // Short but real — a one-word maths message is not a greeting.
-  passes('נגזרת');
-  passes('רמז');
-  passes('למה?');
-  // A repeated character INSIDE a sentence is emphasis, not gibberish.
-  passes('אאאא לא הבנתי את השלב הזה');
-  // A typed answer must never be mistaken for a repeat-run.
-  passes('16');
-  passes('x=4');
-}
-
-// ------------------------------------------------------------
 const MIN_ANSWER_RECALL = 0.8;
 checks += 2;
 if (misrouted > 0) bad(`${misrouted} question(s) routed to grading — this must be zero`);
 if (recall < MIN_ANSWER_RECALL) bad(`answer recall ${(recall * 100).toFixed(0)}% < ${MIN_ANSWER_RECALL * 100}%`);
 
 console.log(`\n${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
-process.exit(failures === 0 ? 0 : 1);
+process.exitCode = failures === 0 ? 0 : 1;

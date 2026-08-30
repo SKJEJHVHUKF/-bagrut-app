@@ -46,6 +46,22 @@ export type GuardOptions = {
   freeDaily: number;
   /** Daily cap for a Pro account. */
   proDaily: number;
+  /**
+   * `false` for a route that CANNOT call a model — a deterministic endpoint
+   * whose whole point is that it costs nothing.
+   *
+   * Such a route still needs the abuse gates (origin, bot, IP burst,
+   * content-type, session), and skips only the three quota gates. That is not
+   * a convenience: counting a free call against the AI budget would be wrong,
+   * and being BLOCKED by it would be worse. The daily brake exists to say "the
+   * smart features are paused until tomorrow — the rest of the app is open",
+   * and deterministic maths is the rest of the app. Failing it shut is exactly
+   * the outage the brake was built to prevent.
+   *
+   * Anything that reaches `messages.create` must leave this alone, and must
+   * still call `logAgentUsage` afterwards.
+   */
+  billable?: boolean;
 };
 
 // ============================================================
@@ -309,6 +325,14 @@ export async function guardAgentRequest(
   }
 
   const isPro = isProUser(user);
+
+  // Deterministic routes stop here: gated against abuse, exempt from the AI
+  // budget. `remaining` is Infinity because there is nothing to run out of —
+  // a finite number here would invite a caller to render a misleading
+  // "N left today" for a feature that is never rationed.
+  if (opts.billable === false) {
+    return { ok: true, user, supabase, isPro, remaining: Number.POSITIVE_INFINITY };
+  }
 
   // 6. per-user hourly ceiling — the spec's "max 20 per user per hour"
   const durableHour = await countSince(supabase, user.id, opts.kind, hourAgoIso());

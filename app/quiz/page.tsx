@@ -274,11 +274,21 @@ function Quiz() {
         // hint / first step / distractor note with no API call at all.
         //
         // ⚠️ MAPPED, not passed through. This screen renders ConceptQuestion,
-        // whose worked material is under `explanation.*` and which has no
-        // `solution` field — and every tutor consumer reads `q.solution.steps`.
-        // Publishing it raw threw on all six asks and killed the tutor silently
-        // on this screen; see conceptAsQuestion in lib/tutor-presence.
+        // whose worked material lives under `explanation.*` and which has no
+        // `solution` field at all. The consumers are guarded against the throw
+        // that used to cause, but a guard only stops the crash — it does not
+        // give the tutor anything to say. MEASURED on this branch: 4 of the 6
+        // built-in asks (why-wrong, full solution, formulas, key points) fell
+        // back on 100% of /quiz questions, 184 of 276 asks per topic, while the
+        // authored worked solution sat one field away. conceptAsQuestion moves
+        // it across; see its note in lib/tutor-presence.
         question: conceptAsQuestion(activeQuestion),
+        // Siblings for "תן תרגיל דוגמה" — trimmed to what the tutor may show.
+        // Never the answers: see the field's note in lib/tutor-presence.
+        siblings: questions
+          .filter((x) => x.id !== activeQuestion.id)
+          .slice(0, 12)
+          .map((x) => ({ id: x.id, question: x.question, hint: x.hint })),
         ...(wrong ? { wrongAnswer: wrong, chosenIndex: selectedAnswer ?? undefined } : {}),
         ...(isCorrect !== null && typeof activeQuestion.correct === 'number'
           ? { correctAnswer: activeQuestion.answers?.[activeQuestion.correct] }
@@ -412,6 +422,14 @@ function Quiz() {
         ...q,
         topic: selectedTopic,
         difficulty: LEVEL_DIFFICULTY[q.level],
+        // `kind` is what lib/tutor-local's detectState branches on to reach the
+        // mcq states, and a ConceptQuestion does not carry it. Without it the
+        // tutor treated every quiz question as an OPEN one and answered
+        // "איני רואה את הדף שלך" — while `distractorNotes` sat authored,
+        // holding the single best thing we can say to this student: why the
+        // option THEY picked is wrong. Measured: no ask loses coverage, and
+        // why-wrong goes from a generic sentence to naming their choice.
+        kind: 'mcq' as const,
       }));
       // pickShuffled, NOT pickQuestions: the student chose this level
       // explicitly, and TIER_MIX would dilute it back with adjacent bands.

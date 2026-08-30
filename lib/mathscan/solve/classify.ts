@@ -47,6 +47,34 @@ type CueRule = { kind: ProblemKind; patterns: RegExp[]; weight: number };
  * load — which would take the whole page down, not just the classifier.
  */
 function heb(word: string): RegExp {
+  // The optional letter is a CLITIC — the one-letter prefixes Hebrew glues on
+  // (ה the, ו and, ב in, ל to, מ from, ש that, כ as). Without it the leading
+  // guard rejects exactly the phrasing the exam uses: `heb('סדרה')` matched
+  // "נתונה סדרה חשבונית" but NOT "נתונה הסדרה החשבונית", so a question
+  // classified as domain 'sequences' or as 'unknown' depending on one ה, and
+  // an unknown domain makes topicForDomain return null — no topic chip, no
+  // topic routing, silently.
+  //
+  // ⚠️ REVERTED, AND DO NOT TRY IT AGAIN WITHOUT MEASURING THE CORPUS.
+  //
+  // Allowing clitic prefixes here — `[הובלמשכ]{0,2}` before the word — does
+  // fix the definite article, and was measured against the app's own content
+  // to break far more than it fixed. Sweeping all 85,914 Hebrew sentences
+  // under content/ with both versions:
+  //
+  //   156 lines  flipped algebra → sequences            on "האיבר"
+  //    26 lines  flipped analytic-geometry → sequences  on "האיבר החופשי",
+  //              which is the y-intercept of a line, not a sequence term
+  //     7 lines  flipped integral → derivative          on "לנגזרת"/"בנגזרת",
+  //              as in "המונה שווה לנגזרת המכנה" — the standard phrasing for
+  //              integration by substitution. The student was then told to
+  //              differentiate an integral question.
+  //
+  // These cue words are prefixes and suffixes of ordinary Hebrew, so a
+  // morphological shortcut cannot be safe here. Where a definite article
+  // genuinely costs a domain, add the specific TWO-WORD phrase to the domain
+  // cues instead: two words that must appear together cannot collide with a
+  // single word inside another word.
   return new RegExp(`(?:^|[^א-ת])(${word})(?:[^א-ת]|$)`);
 }
 
@@ -67,7 +95,9 @@ const KIND_CUES: CueRule[] = [
     patterns: [/אינטגרל/, /פונקציה\s+קדומה/, /∫/, heb('אנטגרל')],
     weight: 3,
   },
-  { kind: 'limit', patterns: [heb('גבול'), /\blim\b/, /שואף\s+ל/], weight: 3 },
+  // Same `\blim\b` trap as the calculus domain cue: `\lim_{x \to 2}` has no
+  // word boundary after "lim" because `_` is a word character.
+  { kind: 'limit', patterns: [heb('גבול'), /\\lim/, /\blim\s*_/, /\blim\b/, /שואף\s+ל/], weight: 3 },
   {
     kind: 'system',
     patterns: [/מערכת\s+(?:ה)?משוואות/, /שתי\s+משוואות/],
@@ -124,7 +154,12 @@ const DOMAIN_CUES: { domain: MathDomain; patterns: RegExp[] }[] = [
       // so the topic chip and any topic-based routing pointed at the wrong
       // lesson.
       /נגזרת/, heb('גזור'), heb('גזרו'), /אינטגרל/, /פונקציה\s+קדומה/, /נקודות?\s+קיצון/,
-      /תחומי\s+עלייה/, /תחומי\s+ירידה/, /אסימפטוט/, /נקודת\s+פיתול/, /\blim\b/, /קעירות/,
+      /תחומי\s+עלייה/, /תחומי\s+ירידה/, /אסימפטוט/, /נקודת\s+פיתול/, /קעירות/,
+      // `\blim\b` alone never fires on real input: a limit is written
+      // `\lim_{x \to 2}`, and `_` is a word character, so there is no word
+      // boundary after "lim" and the pattern fails. Every limit question was
+      // therefore filed under אלגברה instead of חשבון דיפרנציאלי.
+      /\\lim/, /\blim\s*_/, /\blim\b/,
     ],
   },
   {
@@ -136,7 +171,20 @@ const DOMAIN_CUES: { domain: MathDomain; patterns: RegExp[] }[] = [
   },
   {
     domain: 'sequences',
-    patterns: [heb('סדרה'), /סדרה\s+חשבונית/, /סדרה\s+הנדסית/, heb('איבר'), /סכום\s+האיברים/, /a_?n/],
+    // The `ה?` on BOTH words is the safe way to accept the definite article:
+    // two words that must appear together cannot fire inside another word, so
+    // "הסדרה החשבונית" is recognised without "האיבר החופשי" (a y-intercept)
+    // dragging analytic geometry into sequences.
+    patterns: [
+      heb('סדרה'),
+      /ה?סדרה\s+ה?חשבונית/,
+      /ה?סדרה\s+ה?הנדסית/,
+      /ה?סדרות\s+ה?חשבוניות/,
+      /ה?סדרות\s+ה?הנדסיות/,
+      heb('איבר'),
+      /סכום\s+האיברים/,
+      /a_?n/,
+    ],
   },
   {
     domain: 'complex',

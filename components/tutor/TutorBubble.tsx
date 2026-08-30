@@ -45,8 +45,16 @@ import {
   type TutorFocus,
 } from '@/lib/tutor-presence';
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
-import { routeMessage, answerGradedLocally, canonicalFor, screenMessage } from '@/lib/tutor-router';
+import { routeMessage, answerGradedLocally, canonicalFor } from '@/lib/tutor-router';
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
+import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
+import { AI_DAILY_LIMIT } from '@/lib/access';
+import { offTopicRedirect } from '@/lib/off-topic';
+import { planAnswer } from '@/lib/tutor-plan-answer';
+import { metaAnswer } from '@/lib/tutor-meta-asks';
+import { expectationOf, nextStepAfter, type Pending } from '@/lib/tutor-pending';
+import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
+import { decideFallbackReason } from '@/lib/tutor-telemetry';
 // lib/tutor-context and lib/tutor-greeting are imported DYNAMICALLY at their
 // two call sites below, not here. Both pull the whole content corpus behind
 // them — tutor-context via lib/cognition, tutor-greeting via
@@ -107,6 +115,11 @@ export default function TutorBubble() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // How many AI turns are left today, as the SERVER counts them. null until a
+  // turn has actually reached the model — showing "10 מתוך 10" to a student
+  // who has only ever used the free local help would advertise a limit they
+  // have not touched.
+  const [aiLeft, setAiLeft] = useState<number | null>(null);
   // Kept for the life of the visit so the whole side-conversation lands in ONE
   // server conversation. Sending null every turn would mint a new conversation
   // per message and flood the student's history list.
@@ -147,6 +160,139 @@ export default function TutorBubble() {
   const hidden = HIDDEN_PREFIXES.some(
     (p) => pathname === p || pathname?.startsWith(p + '/'),
   );
+
+  // `?flags=compiler` in the address bar, once, and it sticks for this browser.
+  // Read before anything else so the very first message of the visit already
+  // sees the flag. See lib/tutor-flags for why this exists at all.
+  useEffect(() => {
+    adoptFlagsFromUrl();
+  }, []);
+
+  // ===== the denominator =====
+  //
+  // A turn answered by the router, the ladder, the FAQ bank or a card never
+  // leaves the browser, so tutor_trace only ever saw the expensive half. That
+  // answers "why did we pay" and cannot answer "how often" — and without the
+  // second, "most questions are answered locally" is a feeling.
+  //
+  // ⚠️ Hooked to `local: true` on the MESSAGE rather than to the six places
+  // that return one. Every local layer already sets that flag to render the
+  // message differently, so this catches all six today and whatever is added
+  // next without anyone remembering to instrument it. The alternative was six
+  // near-identical insertions, which is six chances to miss one.
+  //
+  // Fire and forget, 204, ignored: a diagnostic must never be something the
+  // student can feel. `reportedRef` is what stops a re-render from counting
+  // the same answer twice.
+  const reportedRef = useRef<Set<string>>(new Set());
+  /**
+   * What the tutor's own last message asked the student for.
+   *
+   * ⚠️ Set from the SAME effect that reports a local turn, and for the same
+   * reason: every local layer marks its message `local: true`, so hooking the
+   * flag catches all eight places one is produced — and the next one added,
+   * without anyone remembering. Read and cleared at the top of `send`.
+   */
+  const pendingRef = useRef<Pending | null>(null);
+  /**
+   * Has the tutor said anything yet in this conversation? The follow-up
+   * router's gate.
+   *
+   * ⚠️ ANY assistant message, local OR from the model. It used to be
+   * "did the tutor answer LOCALLY", which locked every follow-up out of the
+   * free layers as soon as one turn reached the model — see TurnState.tutorSpoke
+   * in lib/tutor-router for the session where that turned one paid turn into
+   * three.
+   *
+   * Set from its own effect rather than inside the local-answer effect below,
+   * because that one returns early on `!last.local` — which is exactly the case
+   * this flag has to cover.
+   */
+  const tutorSpokeRef = useRef(false);
+  /**
+   * What the last GRADE said, or null when the last turn was not a grade.
+   *
+   * ⚠️ The tutor contradicted itself in two messages without it: "10" was
+   * graded correct from authored content, "בטוח?" went to the model, and the
+   * model said "לא, טעות" because nothing told it the answer had already been
+   * verified. See TurnState.lastVerdict in lib/tutor-router.
+   */
+  const lastVerdictRef = useRef<'correct' | 'wrong' | null>(null);
+  /**
+   * The visible conversation, for `send` to read.
+   *
+   * ⚠️ A REF AND NOT `msgs`. `send` is a useCallback that does not list `msgs`
+   * in its dependencies, so reading the state inside it returns whatever it was
+   * when the callback was last built — the same stale-closure bug that once
+   * made every turn report its screen as "login".
+   */
+  const msgsRef = useRef<Msg[]>([]);
+  useEffect(() => {
+    msgsRef.current = msgs;
+    if (msgs.some((m) => m.role === 'assistant')) tutorSpokeRef.current = true;
+  }, [msgs]);
+  /** Was the PREVIOUS turn a complaint we answered with the stock sentence? */
+  const lastComplaintRef = useRef(false);
+  useEffect(() => {
+    const last = msgs[msgs.length - 1];
+    if (!last || last.role !== 'assistant' || !last.local) return;
+    if (reportedRef.current.has(last.id)) return;
+    reportedRef.current.add(last.id);
+
+    const asked = [...msgs].reverse().find((m) => m.role === 'user');
+    const focus = getTutorFocus();
+
+    // ---- what did this reply ask the student for? ----
+    //
+    // The tutor is Socratic by design: almost every template ends by asking
+    // something back. Recording it here is what stops the NEXT turn from being
+    // graded against the wrong thing — see lib/tutor-pending.
+    const pq = (focus?.question ?? null) as Record<string, unknown> | null;
+    const pSteps = Array.isArray((pq?.solution as Record<string, unknown>)?.steps)
+      ? (((pq!.solution as Record<string, unknown>).steps as unknown[]).filter(
+          (x): x is string => typeof x === 'string',
+        ))
+      : [];
+    pendingRef.current = expectationOf(last.text, nextStepAfter(last.text, pSteps));
+
+    if (!asked) return;
+    const q = (focus?.question ?? null) as Record<string, unknown> | null;
+    const own = q ? `${String(q.question ?? '')} ${focus?.topic ?? ''}` : (focus?.topic ?? '');
+    const intent = canonicalIntent(asked.text, own || undefined);
+
+    void fetch('/api/tutor-trace', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({
+        trace: {
+          screen: (typeof window === 'undefined' ? '' : window.location.pathname).split('/')[1] ?? '',
+          topic: focus?.topic ?? '',
+          subtopic: focus?.subTopicId ?? '',
+          questionId: String(q?.id ?? ''),
+          normalizedUserMessage: intent.canonical,
+          intent: intent.intent ?? '',
+          confidence: intent.confidence,
+          // ⚠️ Which layer answered is NOT recorded yet. The flag says "some
+          // local layer did", which is exactly the denominator and no more.
+          // Naming the layer means carrying it on the message, and that is a
+          // change at all six sites — worth doing once the denominator has
+          // shown it is worth doing.
+          localRouterMatched: true,
+          // ⚠️ IT WAS MISSING HERE, AND THAT MADE THE WHOLE COLUMN UNREADABLE.
+          //
+          // The paid beacon records the flag and this one did not, so every
+          // local turn stored `false` regardless. Cross-tabulated: 136 local
+          // turns, 136 of them "compiler off" — a perfect correlation that
+          // was an artefact of this line, not a fact about the rollout. The
+          // question "is the compiler actually on for students" could not be
+          // answered from the one column built to answer it.
+          compilerFlagOn: tutorFlag('compiler'),
+          fallbackReason: 'no_fallback',
+        },
+      }),
+    }).catch(() => {});
+  }, [msgs]);
 
   // Track what the page is showing.
   useEffect(() => {
@@ -199,6 +345,20 @@ export default function TutorBubble() {
       // The generation this send belongs to. If the student moves to the next
       // question mid-stream, the reset bumps genRef and everything below stops
       // touching the (new) chat.
+      // What the tutor asked LAST turn, read before this turn overwrites it.
+      const pendingNow = pendingRef.current;
+      // ⚠️ NOT cleared here. `pending` is about the LAST reply and is consumed
+      // once; "the tutor has spoken" is about the whole conversation and only
+      // ever becomes true. Clearing it here is what made one paid turn lock the
+      // free layers for every turn after it.
+      const tutorSpoke = tutorSpokeRef.current;
+      // Read and CLEARED: a verdict is about the turn that produced it, so the
+      // challenge has to be the very next message. Two turns later "בטוח?" is
+      // about something else.
+      const lastVerdictNow = lastVerdictRef.current;
+      lastVerdictRef.current = null;
+      pendingRef.current = null;
+
       const gen = genRef.current;
       const userId = `u-${Date.now()}`;
       setMsgs((m) => [...m, { id: userId, role: 'user', text }]);
@@ -209,21 +369,6 @@ export default function TutorBubble() {
       // the question object. Paying an API call to paraphrase it costs money on
       // every turn and can only make it worse. answerLocally abstains on
       // anything ambiguous, so the real tutor still handles the novel question.
-      // ===== screen out what nothing should pay for — BEFORE the focus check =====
-      // This runs outside `if (focusNow)` deliberately. The router below only
-      // runs when a question is on screen, so "אאאא" or "היי" typed on the home
-      // page used to skip every local layer and reach a billed call. Screening
-      // here also means no daily-quota turn is spent: the quota is charged
-      // server-side on arrival, and this never arrives.
-      const screened = screenMessage(text);
-      if (screened) {
-        setMsgs((m) => [
-          ...m,
-          { id: `a-${Date.now()}`, role: 'assistant', text: screened.text, local: true },
-        ]);
-        return;
-      }
-
       const focusNow = getTutorFocus();
       const qKey = focusNow?.question?.id ?? focusNow?.questionText ?? '';
       if (servedRef.current.key !== qKey) {
@@ -241,14 +386,25 @@ export default function TutorBubble() {
       // the canonical phrasing of that ask, because answerLocally classifies
       // the words it is given and "ואז?" classifies as nothing.
       let probe = text;
+      // Remembered for the trace: whether the router understood the message at
+      // all is the difference between 'unknown_intent' and 'no_local_content'.
+      let routeKind: string = 'open';
       if (focusNow) {
         const route = routeMessage(text, focusNow, {
           lastAsk: lastAskRef.current,
           served: servedRef.current.kinds,
+          pending: pendingNow,
+          tutorSpoke,
+          lastVerdict: lastVerdictNow,
         });
+        routeKind = route.kind;
         if (route.kind === 'answer') {
           const graded = answerGradedLocally(route, focusNow);
           if (graded) {
+            // Remembered so that a challenge to THIS verdict is answered by the
+            // layer that made it, instead of by a model that cannot see it.
+            // See TurnState.lastVerdict in lib/tutor-router.
+            lastVerdictRef.current = graded.verdict === 'correct' ? 'correct' : 'wrong';
             setMsgs((m) => [
               ...m,
               { id: `a-${Date.now()}`, role: 'assistant', text: graded.text, local: true },
@@ -269,6 +425,32 @@ export default function TutorBubble() {
           probe = canonicalFor(route.ask);
           lastAskRef.current = route.ask;
         }
+      }
+
+      // ===== about the TUTOR, or about studying — not about the exercise =====
+      //
+      // Placed here, early, because none of the layers below can ever catch
+      // these: they are not maths questions, so no bank entry and no intent
+      // rule would match them however much content is written. Found by
+      // report:worklist in real traffic, in the students' own words.
+      //
+      // ⚠️ A SECOND COMPLAINT IN A ROW IS HANDED TO THE MODEL. `metaAnswer`
+      // returns null for it deliberately: a student who has told us twice that
+      // we answered the wrong thing, and gets the same stock sentence back, has
+      // been shown that the tutor is not listening — which is what they said.
+      // One paid call is far cheaper than that.
+      const metaAsk = metaAnswer(text, {
+        lastWasComplaint: lastComplaintRef.current,
+        hasQuestion: Boolean(focusNow?.question),
+      });
+      lastComplaintRef.current = metaAsk?.kind === 'complaint';
+      if (metaAsk) {
+        setMsgs((m) => [
+          ...m,
+          { id: `a-${Date.now()}`, role: 'assistant', text: metaAsk.text, local: true },
+        ]);
+        setSending(false);
+        return;
       }
 
       // "זה יבוא בבגרות?" / "כמה נקודות זה שווה?" — exact answers that already
@@ -321,6 +503,56 @@ export default function TutorBubble() {
         }
       }
 
+      // ===== third local stage: the response compiler (FLAGGED OFF) =====
+      //
+      // Placed HERE and not earlier, and the position is a measurement rather
+      // than a preference. The authored hint, the authored FAQ entry and the
+      // distractor note are all written for THIS question by a person; the
+      // compiler assembles from the same content but generically. Whenever the
+      // layers above have something, theirs is better, so the compiler only
+      // ever sees what they declined.
+      //
+      // Measured before wiring (scripts/report-tutor-usage.ts): it takes 1,609
+      // of the turns that reach the model — local 50.6% → 61.4% — with the
+      // unsafe count unchanged at 8. It answers only from this question's own
+      // steps, rule line, hint and explanation, or from an authored Topic Card
+      // for a question about the TOPIC.
+      //
+      // Off for everyone until `localStorage.setItem('mathup-flags','compiler')`.
+      if (tutorFlag('compiler') && focusNow) {
+        try {
+          const { compileTutorResponse } = await import('@/lib/tutor-compiler');
+          const compiled = await compileTutorResponse({
+            message: text,
+            activeQuestion: (focusNow.question ?? null) as Record<string, unknown> | null,
+            selectedAnswer: typeof focusNow.chosenIndex === 'number' ? focusNow.chosenIndex : null,
+            topic: focusNow.topic ?? '',
+            formulas: focusNow.subTopic?.formulas,
+            keyPoints: focusNow.subTopic?.keyPoints,
+            // A lesson screen already has its sub-topic's questions; /quiz
+            // publishes `siblings` because it has no sub-topic at all.
+            siblings:
+              focusNow.siblings ??
+              focusNow.subTopic?.questions?.map((x) => ({
+                id: x.id,
+                question: x.question,
+                hint: x.hint,
+              })),
+          });
+          if (compiled.handled && compiled.safeToServe && compiled.message.trim()) {
+            setMsgs((m) => [
+              ...m,
+              { id: `a-${Date.now()}`, role: 'assistant', text: compiled.message, local: true },
+            ]);
+            setSending(false);
+            return;
+          }
+        } catch {
+          /* the compiler is additive — a failure here must cost nothing more
+             than the model call that was already about to happen */
+        }
+      }
+
       // Focus FIRST, student snapshot second. The server truncates `context`
       // from the end at 4000 chars (MAX_CONTEXT_LEN), and the snapshot alone
       // can reach 1800 — focus-last would silently drop the question the
@@ -346,6 +578,124 @@ export default function TutorBubble() {
         /* server defaults to 5 units / 572 */
       }
 
+      // ===== "על מה כדאי לעבוד עכשיו" — from the student's own plan =====
+      //
+      // The only phrasing that appeared TWICE in the live trace, and it came
+      // back `missing_question_context`. The model does not know this student;
+      // `buildTodayPlan` has their results, their mistakes and their target,
+      // and is what /my-plan renders. Silent whenever a question is on screen:
+      // there "מה לעשות עכשיו" means the exercise, and `what_to_do_here` owns it.
+      const fromPlan = planAnswer(text, Boolean(focusNow?.question));
+      if (fromPlan) {
+        setMsgs((m) => [
+          ...m,
+          { id: `a-${Date.now()}`, role: 'assistant', text: fromPlan, local: true },
+        ]);
+        setSending(false);
+        return;
+      }
+
+      // ===== "יש לך טיפים?" — the one ask no screen can improve =====
+      //
+      // The compiler serves this too, but only behind a focus and behind the
+      // rollout flag, and the screen where a student asks for exam tips is
+      // usually the one with no question on it at all. Same answer either way,
+      // so serving it here costs nothing and closes the gap.
+      //
+      // AFTER the plan layer, because "על מה כדאי לעבוד" is a better answer
+      // than five general tips when there is a plan to name.
+      if (canonicalIntent(text, undefined).intent === 'study_tips') {
+        const { studyTips } = await import('@/lib/study-tips');
+        setMsgs((m) => [
+          ...m,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            text: studyTips(focusNow?.topic || undefined),
+            local: true,
+          },
+        ]);
+        setSending(false);
+        return;
+      }
+
+      // ===== last local layer: the message is not about maths at all =====
+      //
+      // Placed LAST on purpose. Every layer above has already declined, so
+      // nothing that could have been answered is being redirected instead —
+      // and a redirect that lands on a real question is the expensive failure
+      // here, far worse than paying for one model call. `offTopicRedirect` is
+      // built the same way round: a long list of reasons to stay silent and a
+      // short one to speak.
+      const redirect = offTopicRedirect(
+        text,
+        focusNow?.question
+          ? `${String((focusNow.question as Record<string, unknown>).question ?? '')} ${focusNow.topic ?? ''}`
+          : undefined,
+      );
+      if (redirect) {
+        setMsgs((m) => [
+          ...m,
+          { id: `a-${Date.now()}`, role: 'assistant', text: redirect, local: true },
+        ]);
+        setSending(false);
+        return;
+      }
+
+      // ===== the trace: why this turn is reaching the model =====
+      //
+      // Built HERE because this is the last line of the chain: everything
+      // above declined, and only this scope knows which of them was even
+      // reached. `intent` is classified with the question's own words so the
+      // label matches what the router actually saw.
+      const traceQ = (focusNow?.question ?? null) as Record<string, unknown> | null;
+      const traceOwn = traceQ
+        ? `${String(traceQ.question ?? '')} ${focusNow?.topic ?? ''}`
+        : (focusNow?.topic ?? '');
+      const traceIntent = canonicalIntent(text, traceOwn || undefined);
+      const trace = {
+        // ⚠️ NOT the `pathname` from usePathname — `send` is a useCallback with
+        // `[sending]` as its only dependency, so every value it closes over is
+        // frozen at the render where `sending` last changed. The first real
+        // trace row proved it: screen read "login", because the component had
+        // mounted on the login redirect and `send` never saw the navigation.
+        //
+        // Everything else in here is already read live (`getTutorFocus()`, the
+        // refs), which is why the answer itself was about the right question
+        // and only the label was wrong. This reads live too.
+        screen: (typeof window === 'undefined' ? '' : window.location.pathname).split('/')[1] ?? '',
+        topic: focusNow?.topic ?? '',
+        subtopic: focusNow?.subTopicId ?? '',
+        questionId: String(traceQ?.id ?? ''),
+        normalizedUserMessage: traceIntent.canonical,
+        intent: traceIntent.intent ?? '',
+        // `matched` here means the layer produced SOMETHING, not that it
+        // answered — an answered turn returned long before this line. The
+        // router can match an ask whose rung the ladder then failed to fill,
+        // and that distinction is what separates "we did not understand" from
+        // "we understood and had nothing".
+        localRouterMatched: routeKind !== 'open',
+        localLadderMatched: false,
+        faqMatched: false,
+        crossQuestionReuseMatched: false,
+        mathEngineUsed: false,
+        compilerFlagOn: tutorFlag('compiler'),
+        fallbackReason: decideFallbackReason({
+          hasQuestion: Boolean(traceQ),
+          intent: traceIntent.intent ?? '',
+          confidence: traceIntent.confidence,
+          groundingMissing: Boolean(traceIntent.intent) && groundingFor(traceIntent.intent!, focusNow, text) === null,
+          faqSearched: faqMissed,
+          faqMatched: false,
+          transferCandidateRejected: false,
+          multiPart: false,
+          proofOrOpen: false,
+          askedForPersonalExplanation: false,
+          solverAttemptedAndFailed: false,
+        }),
+        confidence: traceIntent.confidence,
+      };
+
       const assistantId = `a-${Date.now()}`;
       try {
         const res = await fetch('/api/chat', {
@@ -353,20 +703,39 @@ export default function TutorBubble() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: text,
-            // Every math surface (quiz, roadmap, practice, ghost, thinking)
-            // publishes a focus carrying its real topic, so this falls back
-            // only when the bubble is opened somewhere with no math context at
-            // all. The sentinel says "asked from nowhere" rather than "the
-            // client forgot the field", which is the difference between a
-            // readable [faq-miss] log and a guess. It does NOT affect cost:
-            // an unrecognised topic takes the ungrounded path either way, and
-            // that path now caches on its own (see TUTOR_BASE_CURRICULUM).
-            topic: f?.topic || 'general_math',
+            topic: f?.topic ?? '',
             conversationId: convIdRef.current,
             // A question was on screen, the local tutor AND its FAQ bank both
             // abstained — the server logs it as `[faq-miss]`, and that log is
             // the next authoring list. The model's answer is still billed.
             ...(faqMissed && f?.question ? { faqMiss: f.question.id } : {}),
+            // ⚠️ WHY the model is being asked, recorded at the only place that
+            // knows. `/api/chat` counts model calls perfectly and cannot see a
+            // reason: the router, the ladder, the FAQ bank and the compiler
+            // all ran HERE and all declined. Without this the server can say
+            // "1,000 calls" and never "1,000 calls, 400 of them because no
+            // rule recognised the phrasing" — and the second sentence is the
+            // only one anyone can act on.
+            //
+            // Carries no user id, no conversation and no sentence the student
+            // wrote; `normalizedUserMessage` is folded, capped and stripped of
+            // anything shaped like contact detail. The server validates every
+            // field against the enums before storing any of it.
+            trace,
+            // ⚠️ THE TURNS THE SERVER HAS NEVER SEEN.
+            //
+            // `chat_messages` stores only what reached /api/chat, and about
+            // three quarters of this tutor's replies are local — so the model
+            // has been reasoning with most of the conversation missing. It told
+            // a student "נכון! 10 היא התשובה", was asked "בטוח?", and answered
+            // "לא, טעות", because the first message was never stored.
+            //
+            // The server REPLACES its own history window with this one rather
+            // than appending, and caps each turn, so the prompt does not grow.
+            recent: msgsRef.current.slice(-4).map((m) => ({
+              role: m.role,
+              content: m.text.slice(0, 500),
+            })),
             ...(context ? { context } : {}),
             ...(unitLevel ? { unitLevel } : {}),
             ...(formNumber ? { formNumber } : {}),
@@ -397,6 +766,7 @@ export default function TutorBubble() {
             reply?: string;
             error?: string;
             conversationId?: string | null;
+            remaining?: number;
           } & Partial<ResolvedSuggestion>;
           try {
             d = JSON.parse(raw);
@@ -405,6 +775,7 @@ export default function TutorBubble() {
           }
           if (ev === 'meta') {
             if (d.conversationId) convIdRef.current = d.conversationId;
+            if (typeof d.remaining === 'number') setAiLeft(d.remaining);
           } else if (ev === 'delta') {
             acc += d.text ?? '';
             if (!created) {
@@ -682,6 +1053,28 @@ export default function TutorBubble() {
                 {error && (
                   <div className="text-xs text-red-600 bg-red-500/5 border border-red-500/20 rounded-xl px-3 py-2">
                     {error}
+                  </div>
+                )}
+
+                {/*
+                  ⚠️ THE INPUT IS NEVER DISABLED BY THIS, AND THAT IS THE WHOLE
+                  DESIGN. Running out of AI turns is not running out of tutor:
+                  hints, the next step, formulas, answer checking, "why was I
+                  wrong", the written solution, Topic Cards and the FAQ bank all
+                  keep working and cost nothing. Greying out the box would take
+                  the free help away along with the paid kind, which is both
+                  wrong and the fastest way to make a student close the app.
+                */}
+                {aiLeft !== null && aiLeft > 0 && (
+                  <div className="text-[11px] text-slate-400 text-center">
+                    נותרו לך {aiLeft} מתוך {AI_DAILY_LIMIT} שאלות AI היום
+                  </div>
+                )}
+                {aiLeft === 0 && (
+                  <div className="text-xs text-amber-700 bg-amber-500/5 border border-amber-500/20 rounded-xl px-3 py-2 leading-relaxed">
+                    נגמרו השאלות החופשיות למורה AI להיום.
+                    <br />
+                    עדיין אפשר להשתמש ברמזים, פתרונות, נוסחאות ובדיקת תשובות ללא הגבלה.
                   </div>
                 )}
                 <div ref={endRef} />

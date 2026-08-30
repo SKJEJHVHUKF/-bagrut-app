@@ -70,4 +70,4 @@ clearAll();
 check('withdrawing everything leaves no focus', getTutorFocus(), null);
 
 console.log(failed ? `\n${failed} failure(s)` : '\nall good');
-process.exit(failed ? 1 : 0);
+process.exitCode = failed ? 1 : 0;

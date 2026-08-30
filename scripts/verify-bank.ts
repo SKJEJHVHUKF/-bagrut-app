@@ -36,6 +36,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { buildMatchIndex, __testables } from '../lib/mathscan/match';
 
 const ROOT = join(__dirname, '..');
 
@@ -153,12 +154,37 @@ check(
   /const\s+DUPLICATE_MIN_LENGTH\s*=\s*200\s*;/.test(matchCode),
   'match.ts: חסר רף האורך לזיהוי כפילות. בלעדיו שתי שאלות שונות שנבדלות בתו אחד נחשבות לאותה שאלה.'
 );
-check(
-  /function\s+isSameQuestion[\s\S]{0,400}?normalized\.length\s*<\s*DUPLICATE_MIN_LENGTH[\s\S]{0,120}?return\s+false/.test(
-    matchCode
-  ),
-  'match.ts: isSameQuestion חייב לצאת מוקדם מתחת לרף האורך — לפני שהוא בכלל בודק חפיפה.'
-);
+/**
+ * The property, asserted by RUNNING isSameQuestion — not by matching the shape
+ * of its source.
+ *
+ * This used to be a regex demanding `normalized.length < DUPLICATE_MIN_LENGTH
+ * … return false` within 400 characters of the function head. isSameQuestion
+ * was then rewritten to route short questions to a stricter path (expression
+ * atoms must agree AND the topic must match) instead of refusing them
+ * outright, and the regex failed even though the new code refuses the very
+ * pair this gate exists to protect. A gate that encodes one implementation
+ * fails on every refactor and says nothing about safety, so it now checks the
+ * behaviour: `e^x-1` vs `e^{2x}-1` — short, ~1.000 trigram overlap, different
+ * answers — must NOT be judged the same question, and an identical pair must.
+ */
+{
+  const mk = (id: string, text: string) => ({ id, text, topic: 'functions' });
+  const A = 'נתונה הפונקציה $f(x)=e^x-1$. מצא את נקודות החיתוך עם הצירים.';
+  const B = 'נתונה הפונקציה $f(x)=e^{2x}-1$. מצא את נקודות החיתוך עם הצירים.';
+  const idx = buildMatchIndex([mk('a', A), mk('b', B), mk('a2', A)]);
+  const by = new Map(idx.entries.map((e) => [e.entry.id, e]));
+  const same = __testables.isSameQuestion as (x: unknown, y: unknown) => boolean;
+  check(
+    same(by.get('a'), by.get('b')) === false,
+    'match.ts: isSameQuestion מיזג שתי שאלות קצרות שונות ($e^x-1$ מול $e^{2x}-1$). ' +
+      'זה מדכא את היריבה ששמרה על התלמיד ומגיש את הפתרון הלא נכון.',
+  );
+  check(
+    same(by.get('a'), by.get('a2')) === true,
+    'match.ts: isSameQuestion לא זיהה שתי שאלות זהות. השמירה הודקה יותר מדי.',
+  );
+}
 check(
   !/OVERLAP_ANY_LENGTH/.test(matchCode),
   'match.ts: כלל "חפיפה גבוהה בכל אורך" נמדד כלא-בטוח (שאלות שונות מגיעות ל-1.000) והוסר. אל תחזיר אותו.'

@@ -1,4 +1,5 @@
 import type { Lesson } from '../types';
+import { EXTREMUM_BAGRUT, EXTREMUM_STAGES } from './extremum-stages';
 
 export const math5Derivatives: Lesson = {
   subject: 'math5',
@@ -838,6 +839,7 @@ $$f''(x) = 6x - 12$$
   ],
 
   bagrutQuestions: [
+    ...EXTREMUM_BAGRUT,
     {
       id: 'der-bag-001',
       difficulty: 'easy',
@@ -1407,6 +1409,7 @@ $$f''(x) = 6x - 12$$
   ],
 
   subTopics: [
+    ...EXTREMUM_STAGES,
     {
       id: 'derivative-rules',
       title: 'כללי גזירה',

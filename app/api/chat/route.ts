@@ -2,10 +2,18 @@ import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { isGroundedTopic } from '@/lib/tutor-grounding';
-import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT } from '@/lib/access';
+import { isProUser, FREE_DAILY_CHAT, PRO_DAILY_CHAT, ADMIN_DAILY_CAP } from '@/lib/access';
+import {
+  AI_DAILY_LIMIT, QUOTA_EXHAUSTED_MESSAGE, quotaEnforced, quotaShadowed, quotaExempt,
+  reserveAiCall, releaseAiCall,
+} from '@/lib/ai-quota';
 import { buildTutorSystem } from '@/lib/agents/prompts';
 import { normalizeUnitLevel, normalizeFormNumber, MAX_CONTEXT_LEN } from '@/lib/agents/config';
 import { logCost } from '@/lib/mathscan/cost';
+import { recordTutorTrace } from '@/lib/tutor-trace-store';
+import { findLearnedAnswer, captureAnswer, countHit } from '@/lib/tutor-answer-library';
+import { isQuestion, NOT_A_QUESTION_REPLY } from '@/lib/is-question';
+import { sanitizeClientTrace } from '@/lib/tutor-telemetry';
 import { TUTOR_TOOLS, resolveSuggestion } from '@/lib/agents/tools';
 import { readFacts, writeFacts, mergeFact, renderMemoryBlock } from '@/lib/tutor-memory';
 // One copy of the injection guard, in one place. This file used to keep its
@@ -13,8 +21,8 @@ import { readFacts, writeFacts, mergeFact, renderMemoryBlock } from '@/lib/tutor
 // leaves the other one broken.
 import { BLACKLIST, logAgentUsage } from '@/lib/agents/guard';
 
-// Hobby plan needs an explicit ceiling. Haiku 4.5 with a tight 4-message
-// context + max_tokens=300 typically finishes in 5-15s, well under 60s.
+// Hobby plan needs an explicit ceiling. Haiku 4.5 with a tight 6-message
+// context + max_tokens=800 typically finishes in 5-15s, well under 60s.
 export const maxDuration = 60;
 
 // ===== LIMITS =====
@@ -38,56 +46,50 @@ const MIN_MESSAGE_LEN = 1;
  * is ~50x the saving.
  */
 const CONTEXT_MESSAGE_COUNT = 4;
-
-// ===== REPLY BUDGET — the only cost lever left on a warm turn =====
-//
-// The input side is cached (lib/agents/prompts.ts: a 1h prefix shared across
-// students, read at 0.1x). Output tokens are billed in full, every turn, and on
-// Haiku 4.5 they are ~5x the price of an input token. So the reply length IS
-// the per-turn bill.
-//
-// ⚠️ A FLAT LOW CAP IS A LOSS, NOT A SAVING. TUTOR_CORE keeps exactly two
-// deliberate exceptions to brevity — the full step-by-step after two failed
-// hints, and an explicit request for a full solution — and those are precisely
-// the replies that must not stop mid-derivation. A truncated answer costs
-// another whole turn (~$0.0024), roughly 50x what the cap saves. The old flat
-// 220 was documented in this file as already binding on that path.
-//
-// So the cap is per-turn, and it moves in BOTH directions: down to one Socratic
-// move by default, and UP past the old flat value when the long path is live.
 /**
- * ⚠️ READ THIS BEFORE LOWERING ANY NUMBER BELOW. IT WAS TRIED AND MEASURED.
+ * Per-turn cap on a history message the CLIENT supplies.
  *
- * HAIKU 4.5 WRITES UNTIL IT IS STOPPED. It does not have a natural reply length
- * that a prompt can shrink — it expands to fill whatever `max_tokens` allows,
- * and then gets cut off mid-sentence. Two separate attempts to make the prompt
- * bind instead (2026-08-26, on real סדרות/הסתברות turns):
- *
- *   TUTOR_CORE brevity rules, list ban, "פסקה אחת"    5/9 nudge turns truncated
- *   + an explicit "עד 45 מילים" budget, restated as
- *     the LAST block in the system prompt              7/9 nudge turns truncated
- *
- * The prompt DOES control the SHAPE — no greetings, no bullet lists, ends on a
- * guiding question, and that is worth keeping. It does not control the LENGTH.
- *
- * The consequence for cost is the opposite of the intuition: a low cap is not a
- * saving, it is a truncation. A cut-off answer makes the student ask again, so
- * it costs a whole extra turn (~$0.0013) to save ~$0.0004. The OLD flat 220 was
- * already doing this on 5 of 6 realistic turns — silently, with only the
- * `[truncated]` warning below to show for it.
- *
- * So these numbers are sized NOT to bind. They are the smallest value at which
- * a complete answer of that shape finishes on its own. The cost lever for this
- * route is not here: it is not reaching this route at all (lib/tutor-local and
- * the FAQ bank), which is why the `[faq-miss]` log above is the thing to read.
+ * The stored history is model replies, which the reply budget already caps at
+ * 200-500 tokens. A local reply can be a whole authored solution, so without
+ * this the same four-message window could double in tokens — and "the model can
+ * see itself now" would have been bought with the money it was meant to save.
+ * 500 characters of Hebrew is roughly 190 tokens, about what a stored reply
+ * costs.
  */
+const MAX_TURN_LEN = 500;
+
+// ===== REPLY BUDGET — per turn, not one flat number =====
+//
+// ⚠️ READ THIS BEFORE LOWERING ANY NUMBER BELOW. IT WAS TRIED AND MEASURED.
+//
+// HAIKU 4.5 WRITES UNTIL IT IS STOPPED. It has no natural reply length that a
+// prompt can shrink — it expands to fill whatever `max_tokens` allows and is
+// then cut off mid-sentence. MEASURED on real סדרות/הסתברות turns (2026-08-27):
+// the same question produced 80 output tokens at a 140 cap and 376 at a 400
+// cap, both ending naturally. Two attempts to make the prompt bind instead:
+//
+//   TUTOR_CORE brevity rules, list ban, "פסקה אחת"    5/9 nudge turns truncated
+//   + an explicit "עד 45 מילים" budget, restated as
+//     the LAST block in the system prompt              7/9 nudge turns truncated
+//
+// The prompt DOES control the SHAPE — no greetings, no bullet lists, ends on a
+// guiding question. It does not control the LENGTH.
+//
+// So a low cap is not a saving, it is a truncation: a cut-off answer makes the
+// student ask again, costing a whole extra turn (~$0.0013) to save ~$0.0004.
+// These numbers are sized NOT to bind, which took truncation from 10/18 to 3/18.
+//
+// The reason a flat number is wrong at all is architectural: by the time a
+// message reaches this route the client has already answered every
+// "אני תקוע / רמז / למה טעיתי / איזו נוסחה" from authored content
+// (lib/tutor-local, then the FAQ bank). What arrives here is SELECTED FOR being
+// what local content could not answer — disproportionately concept questions,
+// which legitimately need length. Sizing the whole route for the nudge case
+// starves exactly the traffic it gets.
+
 /** A NUDGE on an exercise the student is looking at: one point, one question. */
 const REPLY_TOKENS_NUDGE = 200;
-/**
- * A CONCEPT question with no exercise on screen — "מה זה הסתברות מותנית",
- * "איך יודעים אם סדרה חשבונית או הנדסית". These need a real explanation, and
- * they are the MAJORITY of what reaches this route (see replyBudget).
- */
+/** A CONCEPT question with no exercise on screen — "מה זה הסתברות מותנית". */
 const REPLY_TOKENS_CONCEPT = 400;
 /** The two long-path exceptions TUTOR_CORE names. */
 const REPLY_TOKENS_FULL = 500;
@@ -95,36 +97,13 @@ const REPLY_TOKENS_FULL = 500;
 /**
  * The student has stopped working and wants it laid out. Mirrors GIVE_UP and
  * the `full` ask in lib/tutor-router — the client normally answers these from
- * authored content, so what reaches here is the case with no question object
- * (the bagrut view, or the bubble opened away from a question), which is
- * exactly when the model has to write the whole thing itself.
+ * authored content, so what reaches here is the case with no question object.
  */
 const WANTS_FULL =
   /פתרון\s*מלא|הפתרון\s*המלא|תפתור|תפתרי|תראה\s*לי\s*את\s*הפתרון|כל\s*הצעדים|צעד\s*אחר\s*צעד|הסבר\s*מלא|אני\s*מוותר|פשוט\s*תגיד|תגיד\s*לי\s*כבר|נמאס|אין\s*לי\s*כוח/;
 
 /**
  * How many tokens this reply may take.
- *
- * ============================================================
- * WHY THREE BRANCHES AND NOT ONE NUMBER
- * ============================================================
- * MEASURED on six realistic סדרות/הסתברות turns (2026-08-26): the OLD flat 220
- * truncated FIVE OF SIX. That was not introduced here — it was already
- * happening in production, and the `[truncated]` warning below was already the
- * thing nobody was reading. A cut-off answer makes the student ask again, so
- * each one costs a whole extra turn: the cap was losing money, not saving it.
- *
- * The cause is architectural. By the time a message reaches this route, the
- * client has already answered every "אני תקוע / רמז / למה טעיתי / איזו נוסחה"
- * from authored content (lib/tutor-local, then the FAQ bank). So the turns that
- * arrive here are SELECTED FOR being the ones local content could not answer —
- * disproportionately concept questions, which legitimately need length. Sizing
- * the whole route for the nudge case starves exactly the traffic it gets.
- *
- * ⚠️ Haiku 4.5 CONDITIONS ITS ANSWER LENGTH ON max_tokens. Measured: the same
- * question produced 80 tokens at a 140 cap and 376 at a 400 cap, both ending
- * naturally. So this number is not merely a rail — it is read as an instruction,
- * which is what makes a per-turn value worth computing instead of one constant.
  *
  * `hasQuestionOnScreen` comes from `faqMiss`, which the bubble sets ONLY when a
  * real question object was in focus and both local layers abstained. /chat and
@@ -133,8 +112,7 @@ const WANTS_FULL =
  *
  * `priorAssistantTurns` counts assistant messages in the replayed window, capped
  * at CONTEXT_MESSAGE_COUNT / 2 = 2 pairs. `>= 2` means two hints have already
- * been given — the exact trigger TUTOR_CORE names for switching to a direct,
- * full explanation.
+ * been given — the exact trigger TUTOR_CORE names for a direct, full explanation.
  */
 function replyBudget(
   message: string,
@@ -168,6 +146,9 @@ function todayStartIso(): string {
 }
 
 export async function POST(request: Request) {
+  // Wall clock for the trace. Taken at the very top so it measures what the
+  // student waited for, not just the model call.
+  const startedAt = Date.now();
   try {
     // ===== 1. ORIGIN VALIDATION =====
     if (!isAllowedOrigin(request)) {
@@ -220,6 +201,13 @@ export async function POST(request: Request) {
       formNumber?: unknown;
       /** Unit id when the client's local tutor + FAQ bank both abstained. */
       faqMiss?: unknown;
+      /** The turns the client has on screen, INCLUDING the local ones this
+       *  route never stored. Validated at the boundary like everything else
+       *  the client sends — see section 8b. */
+      recent?: unknown;
+      /** Diagnostics from the client: why the local layers declined. Validated
+       *  in lib/tutor-telemetry before any of it is stored. */
+      trace?: unknown;
     };
     try {
       body = await request.json();
@@ -295,9 +283,29 @@ export async function POST(request: Request) {
       console.error('[chat] quota count failed — ai_generation_log missing? capping disabled:', countError.message);
     }
 
-    const dailyCap = isProUser(user) ? PRO_DAILY_CHAT : FREE_DAILY_CHAT;
+    // ⚠️ TWO QUOTAS EXIST DURING THE ROLLOUT, AND ONLY ONE DECIDES.
+    //
+    // The old one counts rows in ai_generation_log and charges BEFORE the model
+    // is called, so a failed call costs a credit and two parallel requests both
+    // pass. The new one reserves in Postgres and gives the credit back when the
+    // call produces nothing. While `quotaEnforced` is false the old gate is
+    // still the one that blocks — the new counters move in the background so
+    // the mechanism can be watched before it is allowed to lock anyone out.
+    // ⚠️ THE OWNER IS NEVER BLOCKED, AND IS STILL COUNTED.
+    //
+    // `AI_QUOTA_V2=on` applies the ten-a-day limit to everyone, which is
+    // correct for students and wrong for the one account that has to be able to
+    // test the tutor for an hour straight. Exempt skips BOTH gates — the new
+    // reserve and the old row count — while the counters keep moving, so
+    // /admin still shows exactly what this account spent.
+    //
+    // Server-side and env-driven: the browser cannot put anybody on this list.
+    const exempt = quotaExempt(user.email);
+    const enforceV2 = quotaEnforced(user.email) && !exempt;
+    const shadowV2 = quotaShadowed(user.email);
+    const dailyCap = enforceV2 ? AI_DAILY_LIMIT : isProUser(user) ? PRO_DAILY_CHAT : FREE_DAILY_CHAT;
     const used = countError ? 0 : (todayCount ?? 0);
-    if (used >= dailyCap) {
+    if (!exempt && !enforceV2 && used >= dailyCap) {
       return Response.json(
         {
           error: isProUser(user)
@@ -320,12 +328,7 @@ export async function POST(request: Request) {
     let convId: string | null = bodyConversationId;
     let convEnabled = true;
     if (!convId) {
-      // Only a REAL lesson topic may name a conversation. The client sends a
-      // sentinel ('general_math') when the bubble is opened away from any
-      // question, and titling the sidebar entry "general_math" would put an
-      // internal string in front of the student. Gating on isGroundedTopic
-      // rather than on that one literal also covers any other junk topic.
-      const title = ((isGroundedTopic(topic) ? topic : '') || message).slice(0, 40).trim() || 'שיחה חדשה';
+      const title = (topic || message).slice(0, 40).trim() || 'שיחה חדשה';
       try {
         const { data: conv, error: convErr } = await supabase
           .from('conversations')
@@ -364,6 +367,50 @@ export async function POST(request: Request) {
     const context = (recentMessages ?? []).reverse();
     while (context.length && context[0].role === 'assistant') context.shift();
 
+    // ===== 8b. THE TURNS THE MODEL HAS NEVER BEEN ABLE TO SEE =====
+    //
+    // ⚠️ `chat_messages` HOLDS ONLY TURNS THAT REACHED THIS ROUTE. Roughly three
+    // quarters of what this tutor says is answered locally from authored
+    // content and never touches the API, so it is never written here — and the
+    // model has been answering with three quarters of the conversation missing.
+    //
+    // Reported by Itay, with a screenshot:
+    //
+    //   student   10
+    //   tutor     נכון! 10 היא התשובה. 🎯      ← graded locally, never stored
+    //   student   בטוח?
+    //   tutor     לא, טעות. חשב שוב: ...        ← the model, which saw neither
+    //
+    // The model was not contradicting itself. It could not see itself. Same
+    // cause as the tutor re-offering a hint the student already has.
+    //
+    // ⚠️ AND IT COSTS NOTHING EXTRA, WHICH IS THE POINT. These REPLACE rows in
+    // the same CONTEXT_MESSAGE_COUNT window rather than being added to it, and
+    // each is capped, so the history the model reads is the same size and
+    // carries the turns that actually happened.
+    const clientTurns: unknown[] = Array.isArray(body.recent) ? body.recent : [];
+    const recent = clientTurns
+      .slice(-CONTEXT_MESSAGE_COUNT)
+      .filter(
+        (m): m is { role: string; content: string } =>
+          !!m &&
+          typeof m === 'object' &&
+          ((m as { role?: unknown }).role === 'user' || (m as { role?: unknown }).role === 'assistant') &&
+          typeof (m as { content?: unknown }).content === 'string',
+      )
+      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content.trim().slice(0, MAX_TURN_LEN) }))
+      // The trust boundary: this is client-supplied text entering the prompt,
+      // exactly like `attemptContext`, and it gets exactly the same guard.
+      .filter((m) => m.content.length > 0 && !BLACKLIST.test(m.content));
+
+    // Only when the client actually knows more than the table does. A window
+    // that is shorter than the stored one is a client that just opened.
+    if (recent.length > context.length) {
+      context.length = 0;
+      context.push(...recent);
+      while (context.length && context[0].role === 'assistant') context.shift();
+    }
+
     // ===== 9. INSERT USER MESSAGE FIRST =====
     // We persist the user turn BEFORE the Claude call so a Claude failure
     // doesn't leave history with an assistant reply that has no preceding
@@ -379,13 +426,130 @@ export async function POST(request: Request) {
       console.error('insert user msg error:', insertUserError);
       return Response.json({ error: 'שגיאה בשמירת ההודעה.' }, { status: 500 });
     }
-    // The turn is now committed to history, so it is charged to the quota —
-    // same moment as before (the user row), just in the table nobody can empty.
-    await logAgentUsage(supabase, user.id, 'chat');
+    // ===== 9b. HAVE WE ALREADY PAID FOR THIS ANSWER? =====
+    //
+    // Before the quota is charged, not after. The daily cap exists to bound
+    // what a student can COST, and an answer served from the library costs
+    // nothing — charging for it would ration a free thing. So a hit skips
+    // `logAgentUsage` entirely and the student's allowance is untouched.
+    //
+    // The lookup runs here rather than earlier because everything above has
+    // to happen either way: the message is in history, the conversation
+    // exists, and the reply will stream through the same events. The only
+    // difference a hit makes is that no model is called.
+    const clientTrace = sanitizeClientTrace(body.trace);
+    // ===== 9b-i. IS THERE A QUESTION HERE AT ALL? =====
+    //
+    // ⚠️ SERVER-SIDE, AND THAT IS THE ARCHITECTURE, NOT A CONVENIENCE.
+    //
+    // The evidence it needs is a 214 KB lexicon built from every word this app
+    // has written — fine here, unacceptable in a browser bundle. Shipping a
+    // smaller client-side copy would mean a worse lexicon, and a worse lexicon
+    // means telling a student their real question is not a question. The round
+    // trip still happens and costs nothing; the model call is the entire cost
+    // and it is what this prevents.
+    //
+    // Measured on the twelve rows that cost $0.06: "ייעיעעיעי", "י", "אוקקי"
+    // and a keyboard mash are blocked, and all thirty real messages tested —
+    // including "אינדקס", "19", "x=3" and one-word maths terms — pass.
+    const asked = isQuestion(message, attemptContext || undefined);
+    if (!asked.isQuestion) {
+      void recordTutorTrace(
+        { ...clientTrace, fallbackReason: 'no_fallback' },
+        {
+          durationMs: Date.now() - startedAt,
+          model: 'gate:not-a-question',
+          inputTokens: 0, outputTokens: 0, cachedRead: 0, cachedWrite: 0,
+          usedLlm: false,
+        },
+      );
+      // ⚠️ AN SSE STREAM, NOT JSON. The client reads `event:`/`data:` lines and
+      // would see a JSON body as an empty stream — a silent blank reply, which
+      // is worse than the model call this saves. Same three events a real turn
+      // sends, so nothing on the client has to know this path exists.
+      // ⚠️ THE REPLY GOES INTO HISTORY TOO.
+      //
+      // The student's message was already persisted a few lines up. Returning
+      // without persisting the answer leaves an orphan question in the thread —
+      // on reload they see what they asked and nothing back, which reads as the
+      // tutor having failed rather than having answered.
+      const gateRow: Record<string, unknown> = {
+        role: 'assistant',
+        content: NOT_A_QUESTION_REPLY,
+        tokens_in: 0,
+        tokens_out: 0,
+      };
+      if (convEnabled && convId) gateRow.conversation_id = convId;
+      const { error: gateInsertError } = await supabase.from('chat_messages').insert(gateRow);
+      if (gateInsertError) console.error('insert gate reply error:', gateInsertError.message);
+
+      const enc = new TextEncoder();
+      const frame = (event: string, data: unknown) =>
+        enc.encode(`event: ${event}
+data: ${JSON.stringify(data)}
+
+`);
+      return new Response(
+        new ReadableStream({
+          start(c) {
+            // ⚠️ NOT `remaining` — that const is declared 130 lines below and
+            // this closure runs immediately, which is a ReferenceError at
+            // runtime. TypeScript does not flag a temporal-dead-zone use
+            // inside a callback, because it cannot know when the callback
+            // runs. Nothing was spent here, so the honest number is what the
+            // student had on the way in.
+            c.enqueue(frame('meta', { conversationId: convEnabled ? convId : null, remaining: Math.max(0, dailyCap - used) }));
+            c.enqueue(frame('delta', { text: NOT_A_QUESTION_REPLY }));
+            c.enqueue(frame('done', { reply: NOT_A_QUESTION_REPLY }));
+            c.close();
+          },
+        }),
+        { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache' } },
+      );
+    }
+
+    const learned = await findLearnedAnswer(clientTrace);
+
+    // ===== 9c. TAKE ONE AI CREDIT =====
+    //
+    // Here, and nowhere earlier: at this line the local layers have all
+    // declined AND the library has nothing, so a model call is certain. A hint,
+    // a formula, a written solution or a library hit never reaches this code
+    // and therefore never costs a credit — which is the rule, expressed as
+    // control flow rather than as a condition somebody has to remember.
+    //
+    // Given back below on every path where no answer is produced.
+    let creditTaken = false;
+    let v2Remaining: number | null = null;
+    if (!learned && (enforceV2 || shadowV2)) {
+      // ⚠️ THE EXEMPT ACCOUNT RESERVES AGAINST A CEILING IT CANNOT REACH, and
+      // that is what keeps it COUNTED. The reserve is `... WHERE
+      // successful_ai_calls < daily_limit`, so with the student cap the row
+      // would freeze at 10/10 and stop recording the owner's real usage —
+      // "unlimited" would have quietly meant "invisible in /admin", which is
+      // the opposite of what it is for.
+      const q = await reserveAiCall(user.id, exempt ? ADMIN_DAILY_CAP : AI_DAILY_LIMIT);
+      creditTaken = q.allowed && q.degraded !== true;
+      v2Remaining = q.remaining;
+      if (!q.allowed && enforceV2) {
+        return Response.json(
+          { error: QUOTA_EXHAUSTED_MESSAGE, quotaExceeded: true, localHelpStillFree: true, remaining: 0 },
+          { status: 429 },
+        );
+      }
+    }
+
+    if (!learned) {
+      // The turn is now committed to history, so it is charged to the quota —
+      // same moment as before (the user row), just in the table nobody can empty.
+      await logAgentUsage(supabase, user.id, 'chat');
+    }
 
     // ===== 10. CALL ANTHROPIC =====
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
+      // Reserved a credit for a call that will never happen.
+      if (creditTaken) await releaseAiCall(user.id);
       return Response.json({ error: 'Server configuration error' }, { status: 500 });
     }
     const client = new Anthropic({ apiKey });
@@ -415,6 +579,11 @@ export async function POST(request: Request) {
       formNumber,
       topic: topic || undefined,
       memory: renderMemoryBlock(facts),
+      // The student's own question and its authored solution ride in
+      // `attemptContext`. When they are there, the six generic worked examples
+      // are a second copy of what the model already has — and the most
+      // expensive block in the prompt. See PromptContext.hasQuestion.
+      hasQuestion: Boolean(attemptContext),
     });
     // ===== MODEL: Haiku by default, Sonnet only for topics listed in env =====
     //
@@ -467,7 +636,10 @@ export async function POST(request: Request) {
     // Vercel-serverless trap is doing async work AFTER the response finishes —
     // we don't; we do it before controller.close()).
     const encoder = new TextEncoder();
-    const remaining = Math.max(0, dailyCap - (used + 1));
+    // `null` for the exempt account, not a big number: the bubble only renders
+    // "נותרו לך X מתוך 10" when it receives a number, so null is how the
+    // counter disappears for somebody who does not have one.
+    const remaining = exempt ? null : (v2Remaining ?? Math.max(0, dailyCap - (used + 1)));
     // Counted off the window that was actually replayed to the model, not off
     // the conversation as a whole — two hints ago is what TUTOR_CORE reacts to.
     const maxTokens = replyBudget(
@@ -492,121 +664,203 @@ export async function POST(request: Request) {
         let usageIn = 0;
         let usageOut = 0;
 
+        // ===== the answer we already paid for =====
+        //
+        // Sent as ONE delta rather than typed out character by character. The
+        // streaming effect exists to hide the model's latency, and there is no
+        // latency to hide — faking it would spend real milliseconds to look
+        // slower. Everything after this block is identical to a model turn:
+        // the same persist, the same `done` event, the same client code.
+        if (learned) {
+          fullText = learned.answer;
+          send('delta', { text: fullText });
+          void countHit(learned.id);
+          void recordTutorTrace(
+            { ...clientTrace, fallbackReason: 'no_fallback' },
+            {
+              durationMs: Date.now() - startedAt,
+              model: `library:${learned.via}`,
+              inputTokens: 0,
+              outputTokens: 0,
+              cachedRead: 0,
+              cachedWrite: 0,
+              // ⚠️ THE WHOLE POINT OF THIS BRANCH IS THAT NOTHING WAS PAID.
+              //
+              // Omitted at first, and the stamp defaults to true — so every
+              // library hit was recorded as a model call. Two consequences,
+              // both silent: the local rate read LOWER than it was, and
+              // report:worklist listed the saved turns as work still to do,
+              // labelled "BUG — the trace arrived malformed" because
+              // `no_fallback` on a paid row can only mean that.
+              //
+              // Caught in the first production hit, at 20:41:54, reading
+              // `llm=true model=library:same-question in=0`. Zero input tokens
+              // and a model called `library` cannot both be a paid call.
+              usedLlm: false,
+            },
+          );
+        }
+
         try {
-          const stream = client.messages.stream({
-            model,
-            // Per-turn, not flat — see replyBudget() at the top of this file.
-            // 200 nudge / 400 concept / 500 full. Billing is per token
-            // GENERATED, so the high branches cost nothing on the turns that do
-            // not use them; the low branch is a rail under a prompt rule, not a
-            // substitute for one.
+          // The model is called only when the library had nothing. Everything
+          // below — tools, memory, the trace, the capture — belongs to a turn
+          // that was actually paid for.
+          if (!learned) {
+            const stream = client.messages.stream({
+              model,
+              // Per-turn, not flat — see replyBudget() at the top of this file.
+              // 200 nudge / 400 concept / 500 full. Billing is per token
+              // GENERATED, so the high branches cost nothing on the turns that
+              // do not use them, and the low branch stops a one-line nudge from
+              // being budgeted like a full derivation.
+              max_tokens: maxTokens,
+              // ⚠️ NOT THE DEFAULT 1.0, AND THE REASON IS HEBREW, NOT VARIETY.
+              //
+              // claude-haiku-4-5 fabricates Hebrew verb forms when it samples
+              // freely. Real replies from the live tutor, all of them words
+              // that do not exist:
+              //
+              //   "בטעות הנתת 14 חלקי משהו"      (הזנת)
+              //   "אתה חישבת ... והקבלן לך 2.3"   (והתקבל)
+              //   "אם המחשבון שלך בוגדר"          (מוגדר)
+              //   "בואנו נבנה זאת מחדש"           (בוא נבנה את זה)
+              //
+              // Hebrew morphology is where a small model's sampling noise
+              // shows first: the binyan is almost right and the word is not a
+              // word. A/B'd at 0.2 against the default on the same six turns —
+              // visibly fewer invented forms, same Socratic behaviour.
+              //
+              // 0.3 rather than 0: this tutor is told never to repeat an
+              // explanation in other words, and greedy decoding is exactly how
+              // a model repeats itself.
+              temperature: 0.3,
+              system,
+              messages: claudeMessages,
+              // The tutor may suggest an in-app action and may remember a fact.
+              // Neither executes anything here: `suggest_action` becomes a button
+              // the student chooses to press, and that is why there is no
+              // tool_result round-trip and no agent loop — the turn ends when the
+              // text ends. ⚠️ Tools serialise ahead of `system` in the cached
+              // prefix; editing lib/agents/tools.ts invalidates every tutor cache
+              // entry once (see the note there).
+              tools: TUTOR_TOOLS,
+              // Cost valve: effort:'low' only on the Sonnet path. ⚠️ Haiku 4.5
+              // (ungrounded) 400s on effort ("This model does not support the
+              // effort parameter"), so gate on useSonnet. Haiku is cheap anyway.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(useSonnet ? ({ output_config: { effort: 'low' } } as any) : {}),
+            });
+
+            stream.on('text', (delta: string) => {
+              fullText += delta;
+              send('delta', { text: delta });
+            });
+
+            const final = await stream.finalMessage();
+
+            // ⚠️ This used to read content[0] and assume it was the text block.
+            // With tools in play the model can put a tool_use block first, and
+            // that assumption silently discarded the authoritative text — so join
+            // every text block instead of trusting a position.
+            const authoritative = final.content
+              .filter((b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text')
+              .map((b) => b.text)
+              .join('');
+            if (authoritative.trim()) fullText = authoritative;
+
+            usageIn = final.usage.input_tokens;
+            usageOut = final.usage.output_tokens;
+            // Cache-aware cost line for Vercel's logs. `input_tokens` alone hides
+            // the prefix: a cached turn and a turn that just WROTE the 4,800-token
+            // prefix report the same ~1,500 — and on Sonnet that write is ~$0.018.
+            logCost('chat', model, final.usage);
+            // The diagnostic row. NOT awaited: the reply has already streamed to
+            // the student, and a slow or missing table must not hold the request
+            // open. `trace` is whatever the client sent and is validated inside.
+            const u = final.usage as unknown as Record<string, number | undefined>;
+            void recordTutorTrace(body.trace, {
+              durationMs: Date.now() - startedAt,
+              model,
+              inputTokens: usageIn,
+              outputTokens: usageOut,
+              cachedRead: u.cache_read_input_tokens ?? 0,
+              cachedWrite: u.cache_creation_input_tokens ?? 0,
+            });
+            // ===== pay for this answer once =====
             //
-            // The `[truncated]` warning below is not decoration. If it appears
-            // on the SHORT branch the prompt is failing to keep replies short;
-            // if it appears on the FULL branch this number is too low, and the
-            // fix is to raise it, not to shorten the explanation.
-            max_tokens: maxTokens,
-            system,
-            messages: claudeMessages,
-            // The tutor may suggest an in-app action and may remember a fact.
-            // Neither executes anything here: `suggest_action` becomes a button
-            // the student chooses to press, and that is why there is no
-            // tool_result round-trip and no agent loop — the turn ends when the
-            // text ends. ⚠️ Tools serialise ahead of `system` in the cached
-            // prefix; editing lib/agents/tools.ts invalidates every tutor cache
-            // entry once (see the note there).
-            tools: TUTOR_TOOLS,
-            // Cost valve: effort:'low' only on the Sonnet path. ⚠️ Haiku 4.5
-            // (ungrounded) 400s on effort ("This model does not support the
-            // effort parameter"), so gate on useSonnet. Haiku is cheap anyway.
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ...(useSonnet ? ({ output_config: { effort: 'low' } } as any) : {}),
-          });
-
-          stream.on('text', (delta: string) => {
-            fullText += delta;
-            send('delta', { text: delta });
-          });
-
-          const final = await stream.finalMessage();
-
-          // ⚠️ This used to read content[0] and assume it was the text block.
-          // With tools in play the model can put a tool_use block first, and
-          // that assumption silently discarded the authoritative text — so join
-          // every text block instead of trusting a position.
-          const authoritative = final.content
-            .filter((b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text')
-            .map((b) => b.text)
-            .join('');
-          if (authoritative.trim()) fullText = authoritative;
-
-          usageIn = final.usage.input_tokens;
-          usageOut = final.usage.output_tokens;
-          // Cache-aware cost line for Vercel's logs. `input_tokens` alone hides
-          // the prefix: a cached turn and a turn that just WROTE the 4,800-token
-          // prefix report the same ~1,500 — and on Sonnet that write is ~$0.018.
-          // The raw block, unmapped. `cache_creation` breaks the write down by
-          // TTL bucket — that is the ONLY field that proves the 1h TTL was
-          // actually applied rather than silently downgraded to 5m, and no
-          // derived cost line can show it.
-          console.log('REAL ANTHROPIC USAGE:', {
-            input_tokens: final.usage.input_tokens,
-            output_tokens: final.usage.output_tokens,
-            cache_creation: final.usage.cache_creation_input_tokens ?? 0,
-            cache_read: final.usage.cache_read_input_tokens ?? 0,
-            cache_creation_by_ttl: final.usage.cache_creation ?? null,
-            grounded,
-            topic: topic || '<none>',
-          });
-          logCost('chat', model, final.usage);
-          if (final.stop_reason === 'max_tokens') {
-            console.warn(
-              `[truncated] chat reply hit max_tokens (out=${usageOut} cap=${maxTokens}) — the student ` +
-                'got a cut-off answer and will likely ask again, which costs more than the cap saves. ' +
-                // Every branch says "raise it" on purpose. The caps are sized
-                // NOT to bind (measured 3/18), so a hit here means this shape of
-                // turn is genuinely longer than the sample it was calibrated on
-                // — not that the student should have got less. Shortening is the
-                // prompt's job and it has already been tried twice.
-                `raise ${maxTokens === REPLY_TOKENS_NUDGE ? 'REPLY_TOKENS_NUDGE' : maxTokens === REPLY_TOKENS_CONCEPT ? 'REPLY_TOKENS_CONCEPT' : 'REPLY_TOKENS_FULL'}.`
-            );
-          }
-
-          // ===== tool calls: suggestion + memory =====
-          // Both are best-effort and deliberately AFTER the text is settled.
-          // Nothing here may throw past its own guard: a malformed tool input
-          // must not cost the student the answer that already streamed.
-          for (const b of final.content) {
-            if (b.type !== 'tool_use') continue;
-
-            if (b.name === 'suggest_action') {
-              // resolveSuggestion drops anything it cannot map to a real route.
-              const action = resolveSuggestion(b.input, 'math5', topic);
-              if (action) send('action', action);
-              continue;
+            // Screened and stored so the next student asking the same thing on
+            // the same question is served from the table and no model is
+            // called. `screen` decides between 'live' and 'pending': an answer
+            // about this exercise's numbers is never served automatically, and
+            // one that mentions the student's own attempt is not stored at all.
+            //
+            // Not awaited, for the same reason as the trace — the reply has
+            // already streamed, and a missing table must not hold it open.
+            void captureAnswer({
+              trace: clientTrace,
+              answer: fullText,
+              model,
+              outputTokens: usageOut,
+            });
+            if (final.stop_reason === 'max_tokens') {
+              console.warn(
+                `[truncated] chat reply hit max_tokens (out=${usageOut} cap=${maxTokens}) — the student ` +
+                  'got a cut-off answer and will likely ask again, which costs more than the cap saves. ' +
+                  // Every branch says "raise it" on purpose. The caps are sized
+                  // NOT to bind (measured 3/18), so a hit here means this shape
+                  // of turn is genuinely longer than the sample it was
+                  // calibrated on — not that the student should have got less.
+                  `raise ${maxTokens === REPLY_TOKENS_NUDGE ? 'REPLY_TOKENS_NUDGE' : maxTokens === REPLY_TOKENS_CONCEPT ? 'REPLY_TOKENS_CONCEPT' : 'REPLY_TOKENS_FULL'}.`
+              );
             }
 
-            if (b.name === 'remember') {
-              const fact = (b.input as { fact?: unknown })?.fact;
-              if (typeof fact !== 'string' || !fact.trim()) continue;
-              // Reject anything the student could have injected into his own
-              // profile: the fact is model-authored, but the model was reading
-              // the student's message when it wrote it.
-              if (BLACKLIST.test(fact)) continue;
-              const merged = mergeFact(facts, fact, Date.now());
-              if (await writeFacts(supabase, user.id, merged)) {
-                // The client shows what was saved — memory the student can't
-                // see isn't memory, it's a file on him.
-                send('memory', { facts: merged });
+            // ===== tool calls: suggestion + memory =====
+            // Both are best-effort and deliberately AFTER the text is settled.
+            // Nothing here may throw past its own guard: a malformed tool input
+            // must not cost the student the answer that already streamed.
+            for (const b of final.content) {
+              if (b.type !== 'tool_use') continue;
+
+              if (b.name === 'suggest_action') {
+                // resolveSuggestion drops anything it cannot map to a real route.
+                const action = resolveSuggestion(b.input, 'math5', topic);
+                if (action) send('action', action);
+                continue;
+              }
+
+              if (b.name === 'remember') {
+                const fact = (b.input as { fact?: unknown })?.fact;
+                if (typeof fact !== 'string' || !fact.trim()) continue;
+                // Reject anything the student could have injected into his own
+                // profile: the fact is model-authored, but the model was reading
+                // the student's message when it wrote it.
+                if (BLACKLIST.test(fact)) continue;
+                const merged = mergeFact(facts, fact, Date.now());
+                if (await writeFacts(supabase, user.id, merged)) {
+                  // The client shows what was saved — memory the student can't
+                  // see isn't memory, it's a file on him.
+                  send('memory', { facts: merged });
+                }
               }
             }
           }
         } catch (streamErr) {
           console.error('Chat stream error:', streamErr);
+          // ⚠️ THE STUDENT GOT NO ANSWER, SO THE CREDIT GOES BACK.
+          //
+          // A timeout, a 529, an abort mid-stream — the whole reason the credit
+          // is reserved rather than charged is so this line can exist. Awaited:
+          // the response is already lost, and letting the function close before
+          // the counter is restored would charge for the failure after all.
+          if (creditTaken) await releaseAiCall(user.id);
           send('error', { error: "שגיאת צ'אט. נסה שוב." });
           controller.close();
           return;
         }
+
+        // An empty reply is a failed call wearing a success's clothes: the
+        // stream ended, nothing threw, and the student has nothing to read.
+        if (!fullText.trim() && creditTaken) await releaseAiCall(user.id);
 
         // ===== persist assistant reply — AWAITED before close() =====
         if (fullText.trim()) {

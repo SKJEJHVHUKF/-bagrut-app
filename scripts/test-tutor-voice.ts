@@ -32,7 +32,8 @@ const store = new Map<string, string>();
 ).window.localStorage;
 
 import { allLessonKeys, getSubTopics, getLesson, getSubTopic } from '../content/lessons';
-import { answerLocally, classifyAsk, type LocalAnswerKind } from '../lib/tutor-local';
+import { CONCEPT_MATH5 } from '../content/concept-quiz/math5';
+import { answerLocally, classifyAsk, formulaBlock, type LocalAnswerKind } from '../lib/tutor-local';
 import { focusPrompts, partAsQuestion, type TutorFocus } from '../lib/tutor-presence';
 import type { AnswerDiagnosis } from '../lib/answer-check';
 
@@ -43,6 +44,47 @@ function bad(msg: string) {
   failures++;
   if (failures <= 12) console.log(`FAIL  ${msg}`);
 }
+
+/**
+ * formulaBlock splits a multi-identity island on `\quad` / `\;,\;`. The split
+ * is a parser, and the two ways it can break are both silent: swallowing an
+ * implication arrow (`\;\Rightarrow\;` differs from `\;,\;` by one character),
+ * or emitting `$$…$$` that is NOT alone on its line, which stops MathText's
+ * promoteDisplayMath from promoting it and drops the maths back to inline.
+ */
+function checkFormulaBlock() {
+  const cases: Array<[string, { name: string; latex: string; note?: string }, number]> = [
+    ['splits a comma-quad list', { name: 'n', latex: 'a = 1, \\quad b = 2, \\quad c = 3' }, 3],
+    ['splits \\;,\\;', { name: 'n', latex: 'x = 1 \\;,\\; y = 2' }, 2],
+    ['splits \\qquad', { name: 'n', latex: 'a + b = 90°,\\qquad s = c' }, 2],
+    ['keeps an implication whole', { name: 'n', latex: 'x = k \\;\\Rightarrow\\; y = 2' }, 1],
+    ['keeps a chain of equals whole', { name: 'n', latex: 'a = b = c = 2R' }, 1],
+  ];
+  for (const [label, input, wantLines] of cases) {
+    checks++;
+    const out = formulaBlock(input);
+    const mathLines = out.split('\n').filter((l) => l.startsWith('$$'));
+    if (mathLines.length !== wantLines) {
+      bad(`formulaBlock ${label}: ${mathLines.length} maths lines, expected ${wantLines}`);
+    }
+    checks++;
+    // Every maths line must be exactly one island alone on its line, or
+    // promoteDisplayMath (anchored ^…$ per line) will not fire.
+    if (!mathLines.every((l) => /^\$\$.+\$\$$/.test(l))) {
+      bad(`formulaBlock ${label}: a $$…$$ line is not alone on its line`);
+    }
+  }
+  checks++;
+  const withNote = formulaBlock({ name: 'שם', latex: 'a = 1', note: 'הערה' });
+  if (withNote !== '**שם**\n$$a = 1$$\nהערה') {
+    bad(`formulaBlock layout drifted: ${JSON.stringify(withNote)}`);
+  }
+  checks++;
+  // The whole point of the rewrite: no em-dash touching a maths island, which
+  // renders as a minus sign in RTL.
+  if (/—\s*\$/.test(withNote)) bad('formulaBlock put an em-dash next to maths again');
+}
+checkFormulaBlock();
 
 /**
  * Hebrew inside a $…$ span — KaTeX has no bidi support and renders it reversed.
@@ -87,6 +129,68 @@ function inspect(where: string, text: string) {
   if (first === '$' || first === '`' || /[A-Za-z0-9]/.test(first))
     bad(`${where}: opens on a non-Hebrew character "${first}" → bidi flip`);
   if (!text.trim()) bad(`${where}: empty answer`);
+}
+
+// ===== /quiz: a question shape with NO `solution` =====
+//
+// The concept bank carries `explanation`, not `solution` — and buildSlots read
+// `q?.solution.steps`, which guards `q` and not `q.solution`. Every tutor ask
+// on /quiz therefore THREW, and the screen measured 0% local coverage while
+// its `hint`, `distractorNotes` and `explanation` sat authored and unused.
+// TypeScript could not catch it: app/quiz/page.tsx holds the bank in
+// `useState<any[]>`, so the shape is erased at the boundary.
+//
+// Pinned here rather than in a unit test because the failure was a THROW, and
+// a throw is invisible to a coverage count — it looks exactly like "no answer
+// available" from the outside.
+{
+  const conceptQuestions: Record<string, unknown>[] = [];
+  const collect = (v: unknown) => {
+    if (Array.isArray(v)) return v.forEach(collect);
+    if (v && typeof v === 'object') {
+      const o = v as Record<string, unknown>;
+      if (typeof o.question === 'string' && Array.isArray(o.answers)) conceptQuestions.push(o);
+      else Object.values(o).forEach(collect);
+    }
+  };
+  collect(CONCEPT_MATH5);
+  if (conceptQuestions.length < 100) bad(`concept bank collapsed to ${conceptQuestions.length} questions`);
+  checks++;
+
+  const QUIZ_ASKS = ['תן לי רמז', 'למה התשובה שלי שגויה?', 'תסביר לי את השאלה הזאת מההתחלה'];
+  let quizServed = 0;
+  let quizTotal = 0;
+  for (const q of conceptQuestions) {
+    const focus = {
+      where: 'בוחן',
+      topic: q.topic as string | undefined,
+      questionText: q.question as string,
+      question: q,
+      wrongAnswer: (q.answers as string[])?.[0],
+      chosenIndex: 0,
+    } as unknown as TutorFocus;
+    for (const ask of QUIZ_ASKS) {
+      quizTotal++;
+      let a: ReturnType<typeof answerLocally> = null;
+      try {
+        a = answerLocally(ask, focus, []);
+      } catch (e) {
+        bad(`/quiz "${ask}" THREW on ${String(q.id)}: ${e instanceof Error ? e.message : e}`);
+      }
+      checks++;
+      if (a?.text?.trim()) {
+        quizServed++;
+        inspect(`/quiz ${String(q.id)} · ${ask}`, a.text);
+      }
+    }
+  }
+  const quizRate = quizTotal ? quizServed / quizTotal : 0;
+  console.log(
+    `\n/quiz local coverage: ${quizServed}/${quizTotal} (${(quizRate * 100).toFixed(1)}%) — was 0% while buildSlots threw`,
+  );
+  // Deliberately a floor, not an equality: the number should be free to rise.
+  if (quizRate < 0.6) bad(`/quiz local coverage fell to ${(quizRate * 100).toFixed(1)}% (floor 60%)`);
+  checks++;
 }
 
 // Every chip the bubble can render must classify, or that button costs an API
@@ -149,6 +253,25 @@ const PHRASINGS: { text: string; expect: ReturnType<typeof classifyAsk> }[] = [
   { text: 'איך מתחילים את זה', expect: 'help' },
   { text: 'נתקעתי בסעיף א', expect: 'help' },
   { text: 'איך מחשבים את זה', expect: 'help' },
+  // Bare method questions — no object, so the only thing they can be about is
+  // the question on screen. Reported from a real session: "ואיך מחשבים?" cost
+  // $0.01 because the bare form was left out to protect the general-method
+  // cases pinned as `null` further down. Both now hold: the object is what
+  // separates them.
+  { text: 'ואיך מחשבים?', expect: 'help' },
+  { text: 'איך מחשבים?', expect: 'help' },
+  { text: 'אז איך?', expect: 'help' },
+  { text: 'ואיך עושים את זה', expect: 'help' },
+  { text: 'איך פותרים?', expect: 'help' },
+  { text: 'ואיך?', expect: 'help' },
+  // Reported from a real probability session as costing a call. A two-way
+  // table is how the question is set up, so asking for it is asking for the
+  // first move — which the ladder already serves from authored content.
+  { text: 'תן לי הטבלה של זה', expect: 'help' },
+  { text: 'תן לי את הטבלה', expect: 'help' },
+  { text: 'אפשר טבלה?', expect: 'help' },
+  { text: 'תבנה לי טבלה', expect: 'help' },
+  { text: 'איך בונים את הטבלה', expect: 'help' },
   // why-wrong
   { text: 'למה זה לא נכון?', expect: 'why-wrong' },
   { text: 'מה לא בסדר בתשובה שלי', expect: 'why-wrong' },
@@ -171,6 +294,13 @@ const PHRASINGS: { text: string; expect: ReturnType<typeof classifyAsk> }[] = [
   { text: 'לא הבנתי את השאלה', expect: 'explain' },
   { text: 'מה רוצים ממני פה', expect: 'explain' },
   { text: 'מה זה אומר', expect: 'explain' },
+  // Also reported from a real session. `זה` points at the screen; it is not an
+  // object, so there is nothing else the sentence can be about.
+  { text: 'איך זה עובד', expect: 'explain' },
+  { text: 'איך זה עובד?', expect: 'explain' },
+  { text: 'איך זה עובד בדיוק', expect: 'explain' },
+  { text: 'איך זה קשור', expect: 'explain' },
+  { text: 'למה זה עובד', expect: 'explain' },
   // genuinely new — the model's job
   { text: 'האם אפשר להשתמש בנוסחת הסכום גם כשהסדרה אינסופית?', expect: null },
   { text: 'מה ההבדל בין סדרה חשבונית להנדסית', expect: null },
@@ -186,6 +316,12 @@ const PHRASINGS: { text: string; expect: ReturnType<typeof classifyAsk> }[] = [
   { text: 'מה כיוון הווקטור AB', expect: null },
   { text: 'מאיפה הגיע ה-2 בשורה השלישית', expect: null },
   { text: 'איך מחשבים נגזרת של ln בכלל', expect: null },
+  // The other side of the two fixes above: name a subject and it is a new
+  // question again, so it keeps going to the model.
+  { text: 'איך עובד חוק בייס', expect: null },
+  { text: 'איך עובדת הסתברות מותנית בכלל', expect: null },
+  { text: 'איך זה עובד כשיש שלושה מאורעות בלתי תלויים', expect: null },
+  { text: 'מה ההבדל בין טבלה דו ממדית לדיאגרמת עץ', expect: null },
   { text: 'בעזרת איזו שיטה פותרים מערכת עם פרמטר', expect: null },
 ];
 let phrasingMisses = 0;
@@ -355,4 +491,4 @@ console.log(`  סה"כ סעיפים: ${partsRendered}/${partsTotal} מקומי (
 
 console.log(`\nרונדרו ${rendered} תשובות · ${checks} בדיקות · ${missing} נפילות ל-API`);
 console.log(`${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
-process.exit(failures === 0 ? 0 : 1);
+process.exitCode = failures === 0 ? 0 : 1;

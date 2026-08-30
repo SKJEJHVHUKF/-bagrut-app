@@ -58,6 +58,8 @@
 
 import { buildHelpLadder, type HelpTier } from '@/lib/help-ladder';
 import { stripFigureFences } from '@/lib/geo-figure';
+import { namesAMathsSubject } from '@/lib/maths-vocabulary';
+import { getTopicMapping } from '@/content/bagrut-curriculum';
 import type { TutorFocus } from '@/lib/tutor-presence';
 
 export type LocalAnswerKind =
@@ -111,6 +113,87 @@ const has = (t: string, ...w: string[]) => w.some((x) => t.includes(x));
  *
  * Order matters: "למה התשובה שלי שגויה" contains both "למה" and "תשובה".
  */
+/**
+ * "ואיך מחשבים?" — a method question with NO OBJECT.
+ *
+ * The `has(t, 'איך מחשבים את', …)` phrases above are deliberately anchored to
+ * "this / here / now", because a bare `איך מחשבים` also appears inside
+ * "איך מחשבים נגזרת של ln בכלל" — a general method question that belongs to
+ * the model, and one the voice corpus pins as such. So the bare form was left
+ * out entirely, and fell through to the API.
+ *
+ * The missing distinction is not the verb, it is the OBJECT. A student who
+ * names one ("איך מחשבים סטיית תקן") is asking about mathematics; a student
+ * who names none ("ואיך מחשבים?", "אז איך?") can only mean the question on the
+ * screen, because there is nothing else for the sentence to be about.
+ *
+ * Anchored at both ends, so any object at all disqualifies it — which is
+ * exactly what keeps the corpus's general-method cases going to the model.
+ * Same shape as BARE_WHY in lib/tutor-router.ts, for the same reason.
+ *
+ * Cost of the miss, reported from a real session: $0.01 for one "ואיך מחשבים?".
+ */
+/**
+ * "איך זה עובד" — reported from a real session as costing a call.
+ *
+ * Same shape as BARE_METHOD and the same reasoning: `זה` is not an object, it
+ * is a pointer at the thing on the screen. A student who names something
+ * ("איך עובד חוק בייס", "איך זה עובד כשיש שלושה מאורעות בלתי תלויים") is
+ * asking a new question and still gets the model; a student who names nothing
+ * can only mean this exercise.
+ *
+ * The optional tail is intensifiers only — בדיוק / פה / כאן / עכשיו add
+ * emphasis, never a subject. Anything else after the verb disqualifies it,
+ * which is what keeps the two cases apart.
+ */
+/**
+ * Does the sentence NAME a subject of its own?
+ *
+ * "מה הנוסחה?" points at the screen; "מה הנוסחה לסכום סדרה
+ * הנדסית אינסופית" names one, and answering it from this sub-topic's
+ * formula sheet is a true page about a question nobody asked.
+ *
+ * The first attempt tested for a preposition followed by a space. Hebrew
+ * prepositions are PREFIXES — "לסכום" is ל+סכום with nothing between
+ * them — so it matched almost nothing and 174 of the census's unsafe answers
+ * survived it. Testing for the maths NOUN instead is both simpler and right:
+ * naming a piece of mathematics is what makes a question general.
+ */
+function namesOwnSubject(t: string): boolean {
+  if (!namesAMathsSubject(t)) return false;
+  // ⚠️ The app's OWN chip is `תסביר לי את ${topic}` (tutor-presence
+  // focusPrompts), so it necessarily names a maths subject — and it is a
+  // button we drew, on the topic the student is already in. Exempted by
+  // checking the tail against the curriculum rather than by loosening the
+  // rule: a real general question ("תסביר לי על וקטורים") is not a topic
+  // key and stays with the model. Caught by scripts/test-tutor-voice.ts,
+  // which asserts every chip classifies.
+  const chip = t.match(/^(?:תסביר|הסבר)\s+לי\s+את\s+(.+)$/);
+  if (chip && getTopicMapping(chip[1].trim())) return false;
+  return true;
+}
+
+const BARE_HOW_IT_WORKS =
+  /^(?:ו|אז|נו|טוב)?\s*(?:איך|למה|מדוע|מה)\s+זה\s*(?:עובד|קשור|הולך|מסתדר|יוצא|קורה|נכון)?\s*(?:בדיוק|פה|כאן|עכשיו|בכלל)?\s*$/;
+
+/**
+ * "תן לי הטבלה של זה" — also reported from a real session.
+ *
+ * A two-way table is how probability questions are set up, so asking for it is
+ * asking to be shown the first move, which is exactly what the help ladder
+ * serves. The model's own reply to this was a walkthrough of building one —
+ * something the ladder already does from authored content, for free.
+ *
+ * Anchored, so "תן לי טבלה של כל הנוסחאות בבגרות" is untouched — and it is
+ * already caught earlier as `formulas` anyway, since the formulas branch runs
+ * before this one.
+ */
+const TABLE_REQUEST =
+  /^(?:ו|אז)?\s*(?:תן|תני|אפשר|בוא|בואי|תבנה|תבני|נבנה|איך בונים|איך עושים|איך מסדרים)?\s*(?:לי|נא)?\s*(?:את\s*)?(?:ה)?טבלה\s*(?:של\s*זה|לזה|פה|כאן|כאן\?)?\s*$/;
+
+const BARE_METHOD =
+  /^(?:ו|אז|נו|טוב|או?ק(?:יי)?)?\s*(?:איך|כיצד)(?:\s+(?:מחשבים|מחשב|עושים|פותרים|ניגשים|מתחילים|יודעים|ממשיכים|מוצאים|קובעים))?(?:\s+(?:את\s+זה|זה|זאת|פה|כאן|אותו|אותה|עכשיו))?$/;
+
 export function classifyAsk(message: string): Ask | null {
   const t = norm(message);
 
@@ -124,7 +207,13 @@ export function classifyAsk(message: string): Ask | null {
     return 'why-wrong';
   }
 
-  if (has(t, 'נוסחה', 'נוסחא', 'נוסחאות')) return 'formulas';
+  // ⚠️ NOT a bare substring. "מה הנוסחה?" is about this screen; "מה הנוסחה
+  // לסכום סדרה הנדסית אינסופית" NAMES ITS OWN SUBJECT and the honest answer is
+  // the model's. The unanchored version served the sub-topic's whole formula
+  // sheet to the second one — a true page about a question nobody asked.
+  // Measured in scripts/report-tutor-usage.ts: 174 of the 356 unsafe local
+  // answers in the census came from this single line.
+  if (has(t, 'נוסחה', 'נוסחא', 'נוסחאות') && !namesOwnSubject(t)) return 'formulas';
 
   // ⚠️ 'הכי חשוב' and 'חשוב לדעת' are here because the app's OWN one-tap chip
   // reads "מה הכי חשוב לדעת פה לבגרות?" (lib/tutor-presence.focusPrompts).
@@ -134,11 +223,19 @@ export function classifyAsk(message: string): Ask | null {
     return 'key-points';
 
   if (
-    has(t, 'תראה לי את הפתרון', 'הפתרון המלא', 'תפתור', 'תראה לי איך', 'פתרון מלא', 'תפתרי') ||
+    has(t, 'תראה לי את הפתרון', 'הפתרון המלא', 'תפתור', 'תראה לי איך', 'פתרון מלא', 'תפתרי',
+           // "אתה יכול לפתור את זה" — the same request as "תפתור", asked politely.
+           'אתה יכול לפתור', 'את יכולה לפתור', 'תוכל לפתור', 'תוכלי לפתור') ||
     (has(t, 'פתרון') && has(t, 'תראה', 'תן', 'רוצה', 'תסביר')) ||
     // "what's the answer" IS a request for the solution; the A/G templates
     // decide how much of it a student who has not tried yet actually gets.
-    has(t, 'מה התשובה', 'מה הפתרון')
+    has(t, 'מה התשובה', 'מה הפתרון') ||
+    // "תעבור איתי על הכל" — a real phrasing from the trace, and the first one
+    // the router did not recognise at all. Deliberately NOT a bare "תעבור על":
+    // "תעבור על התשובה שלי" is a request to CHECK, and answering it with the
+    // full solution would hand the answer to a student who asked to be marked.
+    // "איתי" and "הכל" are what make it a walkthrough.
+    has(t, 'תעבור איתי', 'נעבור איתי', 'תעברי איתי', 'תעבור על הכל', 'נעבור על הכל')
   ) {
     return 'full';
   }
@@ -148,7 +245,7 @@ export function classifyAsk(message: string): Ask | null {
   // so "תסביר למה טעיתי" and "תסביר את הפתרון" keep their more specific asks;
   // the bare "לא הבנתי" (no object) stays a help ask below.
   if (
-    has(t, 'תסביר', 'תסבירי', 'הסבר לי', 'הסבירי') ||
+    (has(t, 'תסביר', 'תסבירי', 'הסבר לי', 'הסבירי') && !namesOwnSubject(t)) ||
     has(t, 'מה השאלה מבקשת', 'מה השאלה רוצה', 'מה מבקשים', 'לא הבנתי את השאלה', 'מה זאת אומרת') ||
     // "מה זה אומר" / "מה הכוונה" only when they point at THIS question — bare,
     // they also match "מה זה אומר שהסדרה מתכנסת", a definition question that
@@ -158,7 +255,8 @@ export function classifyAsk(message: string): Ask | null {
     has(t, 'יותר פשוט', 'פשוט יותר', 'בפשטות', 'במילים פשוטות', 'הסבר פשוט') ||
     has(t, 'מה רוצים', 'מה זה אומר פה', 'מה זה אומר כאן', 'מה זה אומר בשאלה') ||
     has(t, 'מה הכוונה פה', 'מה הכוונה כאן', 'מה הכוונה בשאלה') ||
-    t === 'מה זה אומר' || t === 'מה הכוונה'
+    t === 'מה זה אומר' || t === 'מה הכוונה' ||
+    BARE_HOW_IT_WORKS.test(t)
   ) {
     return 'explain';
   }
@@ -182,7 +280,9 @@ export function classifyAsk(message: string): Ask | null {
     has(t, 'עזרה', 'תעזור', 'תעזרי', 'לא יוצא לי') ||
     has(t, 'לא יודע מה', 'לא יודעת מה', 'לא יודע איך', 'לא יודעת איך') ||
     has(t, 'תן לי כיוון', 'תני לי כיוון', 'צריך כיוון', 'מאיפה אני מתחיל', 'מאיפה אני מתחילה') ||
-    has(t, 'איך מחשבים את', 'איך עושים את')
+    has(t, 'איך מחשבים את', 'איך עושים את') ||
+    BARE_METHOD.test(t) ||
+    TABLE_REQUEST.test(t)
   ) {
     return 'help';
   }
@@ -193,6 +293,15 @@ export function classifyAsk(message: string): Ask | null {
 // ------------------------------------------------------------
 // 2. Which situation are we in?
 // ------------------------------------------------------------
+
+/** The /quiz bank writes its prose as a top-level `explanation`, not under
+ *  `solution`. Read through an accessor rather than widening the type: the
+ *  focus arrives from `useState<any[]>` in app/quiz/page.tsx, so the shape is
+ *  already erased and a cast here would only hide that. */
+function conceptExplanation(q: unknown): string | undefined {
+  const e = (q as { explanation?: unknown } | null | undefined)?.explanation;
+  return typeof e === 'string' && e.trim() ? e.trim() : undefined;
+}
 
 function detectState(f: TutorFocus): State {
   // Keyed on the OBJECT first, not on the text. A screen that supplies the
@@ -228,6 +337,41 @@ function detectState(f: TutorFocus): State {
 
 type Slots = Record<string, string | undefined>;
 
+/**
+ * A formula entry often carries SEVERAL identities in one maths island, joined
+ * by `\quad` (or `\;,\;`). That is right for a printed formula sheet and wrong
+ * for a chat bubble: on a phone in RTL the line wraps mid-identity and the
+ * student cannot tell where one ends and the next begins.
+ *
+ * Split only on those separators. `\;\Rightarrow\;` must survive — the comma is
+ * what distinguishes a list from an implication, so it is required in the
+ * pattern.
+ */
+const FORMULA_SEP = /\s*,?\s*(?:\\qquad|\\quad|\\;\s*,\s*\\;)\s*/;
+
+/**
+ * One formula, laid out as a block: the name, then each identity as display
+ * maths on a line of its own, then the note.
+ *
+ * It used to be one line — `- **name** — $latex$ — note` — which read badly
+ * twice over. The lines ran to 250+ characters, and an em-dash flanking a
+ * maths island renders as a MINUS SIGN in Hebrew (see the RTL dash rule), so
+ * "**שטח משולש** — $S = ...$" looked like it was negating the formula.
+ *
+ * `$$…$$` must sit alone on its line or MathText's promoteDisplayMath will not
+ * promote it, which is why the maths lines are joined with `\n` and never
+ * folded into the name line.
+ */
+export function formulaBlock(x: { name: string; latex: string; note?: string }): string {
+  const maths = x.latex
+    .split(FORMULA_SEP)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `$$${p}$$`)
+    .join('\n');
+  return `**${x.name}**\n${maths}${x.note ? `\n${x.note.trim()}` : ''}`;
+}
+
 function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
   const q = f.question;
   const st = f.subTopic;
@@ -246,26 +390,25 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
     // The sub-topic's authored overview — the closest thing to "explain this
     // to me from the top" that exists in writing.
     summary: st?.summary?.trim() || undefined,
-    formulas: st?.formulas?.length
-      ? st.formulas
-          .map((x) => `- **${x.name}** — $${x.latex}$${x.note ? ` — ${x.note}` : ''}`)
-          .join('\n')
-      : undefined,
-    // ⚠️ `q?.solution?.` and not `q?.solution.` — the optional chain has to
-    // cover BOTH hops. A screen that publishes a question with no `solution`
-    // (the /quiz ConceptQuestion shape did, for months) makes the second hop
-    // throw, and `answerLocally` is called from TutorBubble WITHOUT a guard —
-    // so the throw rejected send() and the student got no reply at all, with
-    // nothing in the logs. See conceptAsQuestion in lib/tutor-presence.
+    formulas: st?.formulas?.length ? st.formulas.map(formulaBlock).join('\n\n') : undefined,
     steps: q?.solution?.steps.length
-      ? q.solution.steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n')
+      ? q.solution!.steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n')
       : undefined,
     // The authored "which rule and why" line — solutions open with a step
     // marked `**הכלל:**` (probability first, rolling out per topic). Kept with
     // its label so the template can drop it in as-is.
     rule: q?.solution?.steps.find((s) => s.startsWith('**הכלל:**'))?.trim() || undefined,
-    finalAnswer: q?.solution?.finalAnswer,
-    explanation: q?.solution?.explanation?.trim() || undefined,
+    // For an mcq with no `solution`, the correct option text is the final
+    // answer — there is nowhere else for it to come from.
+    finalAnswer:
+      q?.solution?.finalAnswer ||
+      (typeof q?.correct === 'number' ? q?.answers?.[q.correct] : undefined),
+    // ⚠️ Two field names for one thing. A PracticeQuestion keeps its prose in
+    // `solution.explanation`; a ConceptQuestion (the /quiz bank) has no
+    // `solution` at all and keeps it in a top-level `explanation`. Reading only
+    // the first left 574 authored explanations unreachable, so every "תראה לי
+    // את הפתרון" on the quiz screen returned nothing and went to the model.
+    explanation: q?.solution?.explanation?.trim() || conceptExplanation(q) || undefined,
     chosenText:
       typeof f.chosenIndex === 'number' ? q?.answers?.[f.chosenIndex] : undefined,
     correctText: f.correctAnswer,
@@ -274,6 +417,7 @@ function buildSlots(f: TutorFocus, tier: HelpTier | null): Slots {
     why:
       (typeof f.chosenIndex === 'number' ? q?.distractorNotes?.[f.chosenIndex]?.trim() : '') ||
       q?.solution?.explanation?.trim() ||
+      conceptExplanation(q) ||
       undefined,
     // The authored note behind a matched predictable mistake on a TYPED answer
     // (question.wrongAnswers) — the open-question counterpart of {note}.
@@ -324,6 +468,25 @@ const TEMPLATES: Record<string, Tpl> = {
   // require {rule} ON PURPOSE (an exception to rule 2): when the question has
   // no rule line, both fail and the loop falls through to the generic
   // A:formulas below, which keeps today's behavior for every other topic.
+  /**
+   * The last resort for "show me the solution", and the only one that asks for
+   * no worked steps.
+   *
+   * A ConceptQuestion (/quiz) has `answers` + `correct` + `explanation` and no
+   * `solution` at all, so A:full and B:full — which both require {steps} in
+   * their primary AND their fallback wording — could never fill, and every
+   * "תראה לי את הפתרון" on that screen went to the model with an authored
+   * explanation sitting right there.
+   *
+   * The wording does not pretend there are steps. For a concept question the
+   * honest full answer IS the correct option plus why it is correct.
+   */
+  'ANY:full': T(
+    'full',
+    'הנה הפתרון:\n\n**התשובה הנכונה: {finalAnswer}**\n\n**למה:** {explanation}\n\nעכשיו כסה את זה ונסח בעצמך, במשפט אחד, למה שאר האפשרויות נפסלות.',
+    'הנה הפתרון:\n\n**התשובה הנכונה: {finalAnswer}**\n\nעכשיו נסח בעצמך, במשפט אחד, למה דווקא זו התשובה ולא האחרות.',
+  ),
+
   'A:formulas-q': T(
     'formulas',
     'שאלת בדיוק את השאלה הנכונה — קודם בוחרים כלי, רק אחר כך מחשבים. בשאלה הזאת:\n\n{rule}\n\nוכל שאר הכלים של {title}, כדי לראות איפה זה יושב:\n\n{formulas}\n\nעכשיו תציב בכלל הזה את המספרים מהשאלה — מה יוצא לך?',
@@ -461,9 +624,18 @@ const TEMPLATES: Record<string, Tpl> = {
   // ---- F · proof / open, self-reported wrong -------------------------
   // The focus here is byte-identical to "not answered yet", so any claim about
   // what the student did would be an invention.
+  // ⚠️ THE PRIMARY NAMES THE VALUE; THE FALLBACK IS THE OLD SELF-REPORT WORDING.
+  //
+  // State F is reached two different ways and said the same thing for both.
+  // When a student TYPES a value and it grades wrong, `studentAnswer` is filled —
+  // and "אתה מדווח שזה לא יצא, ואיני רואה את הדף שלך" is false twice over: they
+  // reported nothing, and the number is right there. Caught by sim-followup-session.
+  //
+  // `t` needs both slots, so a question with no written hint still falls back to
+  // the self-report wording — rare, and merely vague rather than wrong.
   'F:why-wrong': T(
     'why-wrong',
-    'אתה מדווח שזה לא יצא, ואיני רואה את הדף שלך — אז לא אנחש היכן זה נשבר. אבל זה מה שהשאלה נשענת עליו: {hint}\n\nאין צורך להתחיל מחדש — עבור על מה שכתבת ואתר את השורה הראשונה שאינה עומדת במשפט הזה.',
+    'בדקתי את {studentAnswer} והיא לא יוצאת נכונה. אני לא רואה את הדרך שעשית, אז לא אנחש איפה זה נשבר — אבל זה מה שהשאלה נשענת עליו: {hint}\n\nעבור על מה שכתבת ואתר את השורה הראשונה שאינה עומדת במשפט הזה.',
     'אתה מדווח שזה לא יצא, ואיני רואה את הדף שלך — אז לא אנחש היכן זה נשבר. אין צורך להתחיל מחדש: עבור על מה שכתבת, אתר את השורה הראשונה שאינך יכול להצדיק, וכתוב לי אותה.',
   ),
 
@@ -565,9 +737,22 @@ function keysFor(state: State, ask: Ask, tierKind?: string, diag?: string): stri
   if (ask === 'formulas') out.push('A:formulas-q');
   out.push(`${state}:${ask}`);
   // Everything that isn't specialised borrows A's wording verbatim.
-  if (state === 'C') out.push(`B:${ask}`);
+  //
+  // ⚠️ C falls through B and THEN to A. It used to stop at B, and B holds only
+  // full / help / why-wrong — so an mcq that was answered wrong with no
+  // authored note (that is exactly what C means) had NO template for explain,
+  // formulas or key-points and returned null, i.e. a paid call. Every other
+  // state already reaches A; C was the one that did not, and A is the right
+  // last resort because C is a MORE SPECIFIC A: same mcq, same screen, we
+  // simply also know the student answered and that no note was written for
+  // what they picked.
+  if (state === 'C') out.push(`B:${ask}`, `A:${ask}`);
   if (state === 'B' || state === 'D' || state === 'E' || state === 'F' || state === 'G')
     out.push(`A:${ask}`);
+  // Terminal key, same idea as ANY:help. It is reached ONLY when every state
+  // key above failed to FILL, so defining one cannot change a question that
+  // already had an answer — it can only turn a null into something.
+  out.push(`ANY:${ask}`);
   return out;
 }
 

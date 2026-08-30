@@ -35,6 +35,7 @@ import {
   buildScanTutorSystem,
   type TutorPromptGrounding,
 } from '@/lib/mathscan/tutor-prompt';
+import { isQuestion, NOT_A_QUESTION_REPLY } from '@/lib/is-question';
 
 export const maxDuration = 60;
 
@@ -176,6 +177,48 @@ export async function POST(request: Request) {
 
     if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
       return Response.json({ error: 'חסרה שאלה של התלמיד' }, { status: 400 });
+    }
+
+    // ===== IS THERE A QUESTION HERE AT ALL? =====
+    //
+    // ⚠️ THIS IS THE SECOND TUTOR, AND IT WAS NOT BEHIND THE GATE.
+    //
+    // /api/chat got the gate first, and it looked like every tutor turn was
+    // covered — but this endpoint is a whole separate tutor with its own free
+    // text from the student, its own model call and its own spend controls. A
+    // student who typed "י" here still paid for it.
+    //
+    // Grounding.question is the scanned exercise, which is exactly the echo
+    // signal the gate wants: a message that repeats a word from the question on
+    // screen is about it, whatever else it contains.
+    const lastUser = messages[messages.length - 1].content;
+    const asked = isQuestion(lastUser, grounding.question);
+    if (!asked.isQuestion) {
+      const enc = new TextEncoder();
+      const frame = (event: string, data: unknown) =>
+        enc.encode(`event: ${event}
+data: ${JSON.stringify(data)}
+
+`);
+      return new Response(
+        new ReadableStream({
+          start(c) {
+            // The same three events a real turn sends, and a turn NOT consumed:
+            // nothing was answered, so nothing should be counted against the
+            // ceiling either.
+            c.enqueue(frame('meta', { remaining, turnsLeft: MAX_TURNS - assistantTurns }));
+            c.enqueue(frame('delta', { text: NOT_A_QUESTION_REPLY }));
+            c.enqueue(frame('done', { costUsd: 0, usage: { input: 0, output: 0 } }));
+            c.close();
+          },
+        }),
+        {
+          headers: {
+            'Content-Type': 'text/event-stream; charset=utf-8',
+            'Cache-Control': 'no-cache',
+          },
+        },
+      );
     }
 
     // The database-free spend guard: count the assistant turns the client
