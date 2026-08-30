@@ -150,8 +150,16 @@ export type TurnState = {
 // Conversational moves that are not questions
 // ------------------------------------------------------------
 
-/** Pure acknowledgement — nothing is being asked. */
-const ACK = /^\s*(?:תודה(?:\s*רבה)?|אה+|אוקיי?|או\.?ק\.?|סבבה|מגניב|יופי|מעולה|הבנתי(?:\s*תודה)?|ברור|נכון מאוד|בסדר|טוב|כן טוב|ok|okay|thanks?)\s*[!.…]*\s*$/i;
+/**
+ * Pure acknowledgement — nothing is being asked.
+ *
+ * ⚠️ THE TWO-WORD FORMS COST REAL CALLS. Every entry here was a single word,
+ * and "אה נכון" — the sound a student makes when it lands — is two. From the
+ * trace: `"אה נכון"  in=1456 cr=5709 out=200  $0.0030`, paid twice on separate
+ * days, for a message that is asking nothing at all.
+ */
+const ACK =
+  /^\s*(?:תודה(?:\s*רבה)?|אה+|אה\s*(?:נכון|כן|אוקיי?|הבנתי|באמת)|אוקיי?(?:\s*(?:תודה|הבנתי|מעולה))?|או\.?ק\.?|סבבה|מגניב|יופי|מעולה|מצוין|מצויין|הבנתי(?:\s*(?:תודה|עכשיו|אותך))?|עכשיו\s*הבנתי|ברור(?:\s*עכשיו)?|נכון\s*(?:מאוד|נכון)|בסדר(?:\s*גמור)?|טוב|כן\s*טוב|ok|okay|thanks?)\s*[!.…]*\s*$/i;
 
 /**
  * "Carry on" — no new content, just a request for more of the same. Anchored

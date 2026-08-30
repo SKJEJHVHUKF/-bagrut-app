@@ -155,9 +155,24 @@ console.log('\n— the conversation after the first chip —');
   const withState = (msg: string) =>
     routeMessage(msg, withValue, { lastAsk: 'help', served: ['hint'] });
 
-  for (const msg of ['תודה', 'אוקיי', 'הבנתי', 'סבבה', 'תודה רבה', 'ok']) {
+  // ⚠️ THE TWO-WORD ACKS ARE THE ONES THAT COST MONEY. Every entry in the
+  // original list was a single word, and the sound a student actually makes
+  // when it lands is two: "אה נכון" was billed at $0.0030 on two separate days
+  // for a message that asks nothing at all.
+  for (const msg of [
+    'תודה', 'אוקיי', 'הבנתי', 'סבבה', 'תודה רבה', 'ok',
+    'אה נכון', 'אה כן', 'הבנתי עכשיו', 'עכשיו הבנתי', 'מצוין', 'מצויין',
+    'ברור עכשיו', 'נכון נכון', 'בסדר גמור', 'אוקיי הבנתי',
+  ]) {
     const r = withState(msg);
     ok(r.kind === 'ack', `acknowledgement answered without a model: ${JSON.stringify(msg)} → ${r.kind}`);
+  }
+  // ⚠️ AND WHAT THE WIDENING MUST NOT SWALLOW. Each of these OPENS with an
+  // acknowledgement and then asks something; answering "אוקיי אז מה עכשיו"
+  // with "בכיף!" is the tutor hanging up on a student mid-question.
+  for (const msg of ['הבנתי אבל למה', 'אוקיי אז מה עכשיו', 'ברור לי שזה לא', 'טוב אז מה הצעד הבא', 'נכון?']) {
+    const r = withState(msg);
+    ok(r.kind !== 'ack', `not an acknowledgement: ${JSON.stringify(msg)} → ${r.kind}`);
   }
   for (const msg of ['ואז?', 'ואז מה', 'ומה עכשיו', 'המשך', 'נו', 'הלאה', 'עוד קצת',
                      'אוקיי ומה הלאה', 'תן לי עוד כיוון', 'עוד רמז']) {
