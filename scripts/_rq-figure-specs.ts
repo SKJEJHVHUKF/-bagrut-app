@@ -338,7 +338,7 @@ export const SPECS: Spec[] = [
       texts: [
         { x: 1.0, y: 3.1, text: 'S = 32/3', color: EMERALD, bold: true },
         { x: -1.75, y: 4.6, text: 'y = x²', color: INDIGO, bold: true },
-        { x: 3.35, y: 8.4, text: 'y = 2x+3', color: PINK, bold: true },
+        { x: 1.55, y: 10.4, text: 'y = 2x+3', color: PINK, bold: true },
       ],
     },
     checks: [
@@ -347,6 +347,278 @@ export const SPECS: Spec[] = [
       ['the LINE is the upper one in between', f_line(0) - f_sq(0), 3],
       ['the area is 32/3', Math.round((9 - -q(5, 3)) * 1e9) / 1e9, Math.round(q(32, 3) * 1e9) / 1e9],
     ],
+  },
+];
+
+// ===========================================================================
+// Figures for SOLUTIONS (not lesson steps).
+// Itay, 2026-08-30: "באזור של סרטוט וגרף … אני לא רואה שם בכלל גרפים
+// וסרטוטים בפתרונות המלאים". He is right — a stage that teaches how to sketch
+// a graph whose worked solutions show no graph is the clearest case of it.
+// These render under the steps, before the final answer.
+// ===========================================================================
+const f_sk005 = (x: number) => 4 / (x - 2);
+const f_in005 = (x: number) => 9 - x * x;
+const f_asy008 = (x: number) => (x * x - 25) / (x * x - 5 * x);
+const f_der009 = (x: number) => (x * x + 3) / x;
+const f_bg002 = (x: number) => (2 * x - 6) / (x + 4);
+
+SPECS.push(
+  {
+    id: 'SOL_SK005',
+    where: 'solution of rq-sub-sk-005 — the sketch the question asks for',
+    fig: {
+      xRange: [-3, 7], yRange: [-6, 6],
+      curves: [{ f: f_sk005 }],
+      vAsym: [{ x: 2, label: 'x = 2' }],
+      hAsym: [{ y: 0, label: 'y = 0' }],
+      points: [{ x: 0, y: -2, label: '(0,-2)', color: PINK, dx: -8, dy: 14 }],
+      xTicks: [{ x: 2, label: '2' }],
+    },
+    checks: [
+      ['the denominator vanishes at x = 2', 2 - 2, 0],
+      ['the numerator there is 4, so it is an asymptote', 4, 4],
+      ['f(0) = -2 is the only intercept', f_sk005(0), -2],
+      ['the numerator never vanishes, so there is no x-intercept', 4, 4],
+      ['both branches fall: f(3) = 4 down to f(6) = 1', f_sk005(3) - f_sk005(6), 3],
+    ],
+  },
+  {
+    id: 'SOL_IN005',
+    where: 'solution of rq-sub-in-005 — the area that was computed',
+    fig: {
+      xRange: [-4, 4], yRange: [-2, 10.5],
+      curves: [{ f: f_in005 }],
+      shade: [{ from: -3, to: 3, upper: f_in005 }],
+      points: [{ x: -3, y: 0, color: EMERALD }, { x: 3, y: 0, color: EMERALD }],
+      xTicks: [{ x: -3, label: '-3' }, { x: 3, label: '3' }],
+      texts: [{ x: 0, y: 3.4, text: 'S = 36', color: EMERALD, bold: true }],
+    },
+    checks: [
+      ['the roots are the limits', 9 - 9, 0],
+      ['the dome peaks at 9', f_in005(0), 9],
+      ['it is above the axis between them', f_in005(2), 5],
+      ['and below outside', f_in005(3.5), -3.25],
+      ['the area is 36', (27 - 9) - (-27 + 9), 36],
+    ],
+  },
+  {
+    id: 'SOL_ASY008',
+    where: 'solution of rq-sub-asy-008 — asymptote, hole and horizontal together',
+    fig: {
+      xRange: [-6.5, 9], yRange: [-4.5, 8],
+      curves: [{ f: f_asy008 }],
+      vAsym: [{ x: 0, label: 'x = 0' }],
+      hAsym: [{ y: 1, label: 'y = 1' }],
+      points: [
+        { x: 5, y: 2, label: '(5,2)', hollow: true, dx: 9, dy: -7 },
+        { x: -5, y: 0, label: '(-5,0)', color: PINK, dx: -6, dy: 15 },
+      ],
+      xTicks: [{ x: 5, label: '5' }],
+    },
+    checks: [
+      ['at x = 0 the numerator is -25, so it is an asymptote', 0 - 25, -25],
+      ['at x = 5 both vanish, so it is a hole', 25 - 25, 0],
+      ['the hole sits at height 2', 10 / 5, 2],
+      ['the curve crosses the axis at -5', f_asy008(-5), 0],
+      ['and tends to 1 far out', Math.round(f_asy008(1000) * 1000) / 1000, 1.005],
+    ],
+  },
+  {
+    id: 'SOL_DER009',
+    where: 'solution of rq-sub-der-009 — where the minimum actually sits',
+    fig: {
+      xRange: [-6, 6], yRange: [-9, 9],
+      curves: [{ f: f_der009 }],
+      vAsym: [{ x: 0 }],
+      points: [{ x: Math.sqrt(3), y: 2 * Math.sqrt(3), label: '', color: EMERALD }],
+      guides: [{ x1: 0.2, y1: 2 * Math.sqrt(3), x2: 3.4, y2: 2 * Math.sqrt(3), dashed: true }],
+      texts: [{ x: 4.3, y: 3.1, text: 'min', color: EMERALD, bold: true }],
+    },
+    checks: [
+      ['the minimum is at sqrt(3)', Math.round(Math.sqrt(3) * 1e6) / 1e6, 1.732051],
+      ['its height is 2*sqrt(3)', Math.round(f_der009(Math.sqrt(3)) * 1e6) / 1e6, Math.round(2 * Math.sqrt(3) * 1e6) / 1e6],
+      ['and the neighbours are higher', f_der009(1), 4],
+      ['on both sides', f_der009(3), 4],
+      ['the left branch is a separate piece', f_der009(-1), -4],
+    ],
+  },
+  {
+    id: 'SOL_BG002',
+    where: 'solution of rq-sub-bg-002 — the whole investigation in one picture',
+    fig: {
+      xRange: [-13, 8], yRange: [-8, 8],
+      curves: [{ f: f_bg002 }],
+      vAsym: [{ x: -4, label: 'x = -4' }],
+      hAsym: [{ y: 2, label: 'y = 2' }],
+      points: [
+        { x: 3, y: 0, label: '(3,0)', color: EMERALD, dx: -30, dy: -10 },
+        { x: 0, y: -1.5, label: '(0,-1.5)', color: PINK, dx: -8, dy: 15 },
+      ],
+      xTicks: [{ x: 3, label: '3' }, { x: -4, label: '-4' }],
+    },
+    checks: [
+      ['the denominator vanishes at -4', -4 + 4, 0],
+      ['the numerator there is -14, so it is an asymptote', 2 * -4 - 6, -14],
+      ['the x-intercept is 3', f_bg002(3), 0],
+      ['the y-intercept is -1.5', f_bg002(0), -1.5],
+      ['equal degrees give y = 2', 2 / 1, 2],
+    ],
+  },
+);
+
+// Every question in רמה 5 asks about the SHAPE of a graph. Four of them only
+// describe that shape in words, which is the whole of Itay's complaint — the
+// stage that teaches sketching showed no sketch. One picture each.
+const f_sk002 = (x: number) => 5 - (x * x) / 4;
+const f_sk002t = (x: number) => 6 - x; // the tangent at x = 2, slope -1
+const u003 = (x: number) => x - 8;
+const f_sk003 = (x: number) =>
+  -1 + (3 * (1 + (u003(x) * u003(x)) / 6)) / Math.pow(1 + (u003(x) * u003(x)) / 36, 2);
+const f_sk004 = (x: number) => ((x + 2) * (x + 2)) / 2;
+const d_sk004 = (x: number) => x + 2; // exactly the derivative of f_sk004
+const f_sk006 = (x: number) => 6 - 0.24 * (x - 1) * (x - 1);
+
+SPECS.push(
+  {
+    id: 'SOL_SK002',
+    where: 'solution of rq-sub-sk-002 — a negative derivative, drawn',
+    fig: {
+      xRange: [-0.6, 5.6], yRange: [-2.2, 7],
+      curves: [
+        { f: f_sk002 },
+        { f: f_sk002t, from: 0.4, to: 3.6, color: PINK, dashed: true, width: 2 },
+      ],
+      points: [{ x: 2, y: 4, color: PINK }],
+      texts: [{ x: 3.6, y: 5.3, text: "f'(x) < 0", color: PINK, bold: true }],
+    },
+    checks: [
+      ['the tangent touches at x = 2', f_sk002(2), 4],
+      ['and the tangent agrees there', f_sk002t(2), 4],
+      ['its slope is negative', f_sk002t(3) - f_sk002t(2), -1],
+      ['which is the derivative -x/2 at x = 2', -2 / 2, -1],
+      ['so the curve falls', f_sk002(4) - f_sk002(1), -3.75],
+    ],
+  },
+  {
+    id: 'SOL_SK003',
+    where: 'solution of rq-sub-sk-003 — why a second extremum is forced',
+    fig: {
+      xRange: [4, 30], yRange: [-2.2, 5.6],
+      curves: [{ f: f_sk003 }],
+      hAsym: [{ y: -1, label: 'y = -1' }],
+      points: [
+        { x: 8, y: 2, label: '(8,2)', color: INDIGO, dx: -10, dy: 17 },
+        { x: 12.899, y: f_sk003(12.899), label: '', color: EMERALD },
+      ],
+      xTicks: [{ x: 8, label: '8' }],
+      texts: [{ x: 15.5, y: 4.75, text: 'max', color: EMERALD, bold: true }],
+    },
+    checks: [
+      ['the minimum sits at (8,2) as given', f_sk003(8), 2],
+      ['just right of it the curve rises', Math.round((f_sk003(9) - 2) * 1e4) / 1e4, 0.3134],
+      ['it climbs above the minimum', Math.round(f_sk003(12.899) * 100) / 100, 4.4],
+      ['then it must come back down', Math.round(f_sk003(24) * 1000) / 1000, 0.991],
+      ['heading for the asymptote y = -1', Math.round(f_sk003(400) * 100) / 100, -1],
+    ],
+  },
+  {
+    id: 'SOL_SK004',
+    where: 'solution of rq-sub-sk-004 — the derivative and the function, lined up',
+    fig: {
+      xRange: [-6, 2.4], yRange: [-4, 6],
+      curves: [
+        { f: f_sk004, color: EMERALD, width: 2 },
+        { f: d_sk004, color: INDIGO, width: 2, dashed: true },
+      ],
+      points: [{ x: -2, y: 0, color: PINK }],
+      guides: [{ x1: -2, y1: -3.6, x2: -2, y2: 5.6, color: PINK, dashed: true }],
+      xTicks: [{ x: -2, label: '-2' }],
+      texts: [
+        { x: 1.1, y: 5.15, text: 'f', color: EMERALD, bold: true },
+        { x: 1.9, y: 2.5, text: "f'", color: INDIGO, bold: true },
+      ],
+    },
+    checks: [
+      ["the derivative vanishes at -2", d_sk004(-2), 0],
+      ['it is negative to the left', d_sk004(-5), -3],
+      ['and positive to the right', d_sk004(1), 3],
+      ['the function bottoms out there', f_sk004(-2), 0],
+      ['with higher values on both sides', f_sk004(-5) - f_sk004(1), 0],
+    ],
+  },
+  {
+    id: 'SOL_SK006',
+    where: 'solution of rq-sub-sk-006 — rise, turn, fall',
+    fig: {
+      xRange: [-5.6, 6.6], yRange: [-1.6, 7.6],
+      curves: [{ f: f_sk006 }],
+      points: [
+        { x: 1, y: 6, label: '(1,6)', color: EMERALD, dx: 10, dy: -8 },
+        { x: -4, y: 0, color: PINK },
+      ],
+      guides: [{ x1: -1.4, y1: 6, x2: 3.4, y2: 6, color: EMERALD, dashed: true }],
+      xTicks: [{ x: -4, label: '-4' }, { x: 1, label: '1' }],
+      texts: [
+        { x: -3.4, y: 3.5, text: "f' > 0", color: INDIGO, bold: true },
+        { x: 4.9, y: 5.3, text: "f' < 0", color: PINK, bold: true },
+      ],
+    },
+    checks: [
+      ['the branch starts on the axis at -4', f_sk006(-4), 0],
+      ['it peaks at the given point', f_sk006(1), 6],
+      ['rising all the way there', Math.round((f_sk006(0) - f_sk006(-3)) * 100) / 100, 3.6],
+      ['and falling after it', Math.round((f_sk006(4) - f_sk006(2)) * 100) / 100, -1.92],
+      ['the tangent at the peak is horizontal', -2 * 0.24 * (1 - 1), 0],
+    ],
+  },
+);
+
+/** A figure that belongs to a QUESTION's solution, keyed by question id. */
+export const SOLUTION_PLACEMENT: { id: string; question: string; caption: string }[] = [
+  {
+    id: 'ASYM_VERTICAL', question: 'rq-sub-sk-001',
+    caption: 'האסימפטוטה האנכית חוצה את המישור לשניים, והגרף לא יכול לחצות אותה. לכן נוצרים בדיוק שני ענפים, אחד מכל צד.',
+  },
+  {
+    id: 'SOL_SK002', question: 'rq-sub-sk-002',
+    caption: 'המשיק המקווקו יורד, וזאת בדיוק המשמעות של נגזרת שלילית: השיפוע שלילי, ולכן הגרף עצמו יורד באותו קטע.',
+  },
+  {
+    id: 'SOL_SK003', question: 'rq-sub-sk-003',
+    caption: 'מהמינימום הגרף חייב לעלות, אבל בקצה הוא חייב להתקרב לאסימפטוטה $y = -1$ שנמצאת מתחתיו. עלייה שחייבת לחזור ולרדת מחייבת מקסימום ביניהן.',
+  },
+  {
+    id: 'SOL_SK004', question: 'rq-sub-sk-004',
+    caption: 'שני הגרפים משורטטים על אותו ציר $x$. במקום שבו גרף הנגזרת המקווקו חוצה מאזור שלילי לאזור חיובי, הפונקציה מפסיקה לרדת ומתחילה לעלות, כלומר יש שם מינימום.',
+  },
+  {
+    id: 'SOL_SK005', question: 'rq-sub-sk-005',
+    caption: 'התמונה שמתארת את התשובה: שני ענפים משני צדי $x = 2$, שניהם יורדים, ושניהם מתיישרים לציר $x$ בקצוות. אין חיתוך עם ציר $x$ כי המונה קבוע.',
+  },
+  {
+    id: 'SOL_SK006', question: 'rq-sub-sk-006',
+    caption: 'העלייה, נקודת המפנה והירידה. המשיק בנקודה $(1,6)$ אופקי, ולכן הנגזרת מתאפסת שם ומחליפה סימן מחיובי לשלילי.',
+  },
+  {
+    id: 'SOL_ASY008', question: 'rq-sub-asy-008',
+    caption: 'שלושת המצבים בתמונה אחת: אסימפטוטה אנכית $x = 0$, חור בנקודה $(5,2)$ שמסומן בעיגול ריק, ואסימפטוטה אופקית $y = 1$.',
+  },
+  {
+    id: 'SOL_DER009', question: 'rq-sub-der-009',
+    caption: 'המינימום בתחום החיובי. שימו לב שהענף השמאלי נפרד לגמרי, ולכן הערכים שלו אינם משתתפים בהשוואה.',
+  },
+  {
+    id: 'SOL_IN005', question: 'rq-sub-in-005',
+    caption: 'האזור שחושב: כולו מעל הציר בין שני השורשים, ולכן אינטגרל אחד בלי פיצול.',
+  },
+  {
+    id: 'AREA_BETWEEN', question: 'rq-sub-in-006',
+    caption: 'האזור הכלוא בין הפרבולה לישר. הגבולות הם נקודות המפגש, והישר הוא העליון לכל אורך התחום.',
+  },
+  {
+    id: 'SOL_BG002', question: 'rq-sub-bg-002',
+    caption: 'כל מה שהסעיף מצא, על גרף אחד: האסימפטוטות המקווקוות ושתי נקודות החיתוך.',
   },
 ];
 

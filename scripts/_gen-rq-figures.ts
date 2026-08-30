@@ -130,6 +130,11 @@ function shadePath(fig: Fig, s: Shade, m: ReturnType<typeof mapper>): string {
   return `M ${up.join(' L ')} L ${lo.join(' L ')} Z`;
 }
 
+// SVG is XML: a bare `<` in a label ("f'(x) < 0") makes the document
+// unparseable. HTML's lenient parser hides it in the browser, so it only
+// surfaces in a real XML consumer — escape at the single point of emission.
+const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 export function render(fig: Fig): string {
   const m = mapper(fig);
   const L: string[] = [];
@@ -152,8 +157,12 @@ export function render(fig: Fig): string {
     L.push(`<text x="${R(yAxisX + 7)}" y="${R(m.sy(m.y1) + 10)}" font-size="11" fill="${LABEL}">${fig.yLabel ?? 'y'}</text>`);
   }
   // ticks
+  // A tick at the same x as a vertical asymptote gets the dashed line drawn
+  // straight through its label. The asymptote's own label already names that x.
+  const asymX = (fig.vAsym ?? []).map((a) => m.sx(a.x));
   for (const t of fig.xTicks ?? []) {
     const X = m.sx(t.x);
+    if (asymX.some((ax) => Math.abs(ax - X) < 8)) continue;
     if (xAxisY !== null) L.push(`<line x1="${X}" y1="${R(xAxisY - 3)}" x2="${X}" y2="${R(xAxisY + 3)}" stroke="${INK}" stroke-width="1.2"/>`);
     L.push(`<text x="${X}" y="${R((xAxisY ?? m.sy(m.y0)) + 15)}" font-size="10.5" fill="${LABEL}" text-anchor="middle">${t.label}</text>`);
   }
@@ -166,12 +175,18 @@ export function render(fig: Fig): string {
   for (const a of fig.vAsym ?? []) {
     const X = m.sx(a.x);
     L.push(`<line x1="${X}" y1="${m.sy(m.y1)}" x2="${X}" y2="${m.sy(m.y0)}" stroke="${AMBER}" stroke-width="1.8" stroke-dasharray="6 4"/>`);
-    if (a.label) L.push(`<text x="${R(X + 5)}" y="${R(m.sy(m.y1) + 11)}" font-size="10.5" fill="${AMBER}" font-weight="bold">${a.label}</text>`);
+    // A vertical asymptote AT x = 0 lies under the y-axis, whose own "y" label
+    // occupies the same corner — flip this one to the other side of the line.
+    const onYAxis = yAxisX !== null && Math.abs(X - yAxisX) < 12;
+    if (a.label)
+      L.push(
+        `<text x="${R(onYAxis ? X - 5 : X + 5)}" y="${R(m.sy(m.y1) + 11)}" font-size="10.5" fill="${AMBER}" font-weight="bold"${onYAxis ? ' text-anchor="end"' : ''}>${a.label}</text>`,
+      );
   }
   for (const a of fig.hAsym ?? []) {
     const Y = m.sy(a.y);
     L.push(`<line x1="${m.sx(m.x0)}" y1="${Y}" x2="${m.sx(m.x1)}" y2="${Y}" stroke="${AMBER}" stroke-width="1.8" stroke-dasharray="6 4"/>`);
-    if (a.label) L.push(`<text x="${m.sx(m.x1)}" y="${R(Y - 5)}" font-size="10.5" fill="${AMBER}" font-weight="bold" text-anchor="end">${a.label}</text>`);
+    if (a.label) L.push(`<text x="${R(m.sx(m.x0) + 4)}" y="${R(Y - 5)}" font-size="10.5" fill="${AMBER}" font-weight="bold">${a.label}</text>`);
   }
   for (const g of fig.guides ?? []) {
     L.push(
@@ -196,12 +211,12 @@ export function render(fig: Fig): string {
         : `<circle cx="${X}" cy="${Y}" r="4.5" fill="${col}"/>`,
     );
     if (p.label) {
-      L.push(`<text x="${R(X + (p.dx ?? 8))}" y="${R(Y + (p.dy ?? -8))}" font-size="10.5" fill="${LABEL}">${p.label}</text>`);
+      L.push(`<text x="${R(X + (p.dx ?? 8))}" y="${R(Y + (p.dy ?? -8))}" font-size="10.5" fill="${LABEL}">${esc(p.label)}</text>`);
     }
   }
   for (const t of fig.texts ?? []) {
     L.push(
-      `<text x="${m.sx(t.x)}" y="${m.sy(t.y)}" font-size="10.5" fill="${t.color ?? LABEL}" text-anchor="${t.anchor ?? 'middle'}"${t.bold ? ' font-weight="bold"' : ''}>${t.text}</text>`,
+      `<text x="${m.sx(t.x)}" y="${m.sy(t.y)}" font-size="10.5" fill="${t.color ?? LABEL}" text-anchor="${t.anchor ?? 'middle'}"${t.bold ? ' font-weight="bold"' : ''}>${esc(t.text)}</text>`,
     );
   }
   return '\n' + L.join('\n') + '\n';

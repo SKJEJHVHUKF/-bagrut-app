@@ -219,6 +219,13 @@ export type PracticeQuestion = {
     finalAnswer: string;
     /** Brief "why this works" — 1-2 sentences. */
     explanation: string;
+    /** Optional figure(s) shown UNDER the steps, once the solution is open.
+     *  A solution whose answer IS a shape — "sketch the graph", "where are the
+     *  asymptotes", "shade the area" — reads as a wall of algebra without one.
+     *  Same DiagramSpec the lesson steps use, so it renders through the
+     *  existing DiagramRenderer; `type:'custom'` raw SVG only (a `fn:` closure
+     *  breaks the RSC boundary). */
+    diagrams?: DiagramSpec[];
   };
 };
 
