@@ -59,6 +59,7 @@ import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 // changes — no signatures, no other pages, no test rewrites.
 import type { TutorGreeting } from '@/lib/tutor-greeting';
 import type { ResolvedSuggestion } from '@/lib/agents/tools';
+import { MathText } from '@/components/practice/MathText';
 
 const MAX_LEN = 500;
 
@@ -576,11 +577,13 @@ export default function TutorBubble() {
                     >
                       <span className="flex items-center gap-2">
                         <span className="flex-1 min-w-0">
+                          {/* MathText: a 'fix' task's title is the misconception
+                              title, which carries $…$ islands. */}
                           <span className="block text-sm font-bold text-slate-800">
-                            {greeting.today.first.title}
+                            <MathText inline>{greeting.today.first.title}</MathText>
                           </span>
                           <span className="block text-[11px] text-slate-600 leading-snug">
-                            {greeting.today.first.why}
+                            <MathText inline>{greeting.today.first.why}</MathText>
                           </span>
                         </span>
                         <ArrowLeft className="w-4 h-4 text-violet-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
@@ -588,7 +591,7 @@ export default function TutorBubble() {
                     </Link>
                     {greeting.today.more > 0 && (
                       <p className="mt-2 text-[11px] text-slate-500">
-                        ואחר כך עוד {greeting.today.more} — נעבור אחת-אחת.
+                        ואחר כך עוד {greeting.today.more}, נעבור אחת-אחת.
                       </p>
                     )}
                   </div>

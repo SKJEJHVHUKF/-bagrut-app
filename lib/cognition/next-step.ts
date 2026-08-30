@@ -124,7 +124,7 @@ export function buildCandidates(
     out.push({
       kind: 'review-due',
       score: PRIORITY['review-due'] * Math.min(1, ctx.dueCount / 10),
-      title: `חזרה יומית — ${ctx.dueCount} שאלות`,
+      title: `חזרה יומית · ${ctx.dueCount} שאלות`,
       reason: 'שאלות שכבר פגשת וחזרו למועד בדיקה. זה מה ששומר על מה שכבר למדת.',
       href: '/roadmap/review',
       skillId: undefined,

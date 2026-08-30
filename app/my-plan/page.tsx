@@ -41,6 +41,7 @@ import { trackLevelsBySub, trackMainTopics } from '@/lib/track';
 import { isProUser, isAdmin, type UserLike } from '@/lib/access';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
+import { MathText } from '@/components/practice/MathText';
 
 export default function MyPlanPage() {
   const router = useRouter();
@@ -507,10 +508,10 @@ function TodaySection({ plan, onTargetSet }: { plan: StudyPlan; onTargetSet: () 
               </span>
               <span className="flex-1 min-w-0">
                 <span className="block text-sm font-black text-slate-900 leading-tight">
-                  {task.title}
+                  <MathText inline>{task.title}</MathText>
                 </span>
                 <span className="block text-[11px] text-slate-600 leading-snug mt-0.5">
-                  {task.why}
+                  <MathText inline>{task.why}</MathText>
                 </span>
               </span>
               <ArrowLeft className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />

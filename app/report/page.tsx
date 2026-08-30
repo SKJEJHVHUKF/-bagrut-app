@@ -125,7 +125,7 @@ function RepairRow({ repair, now }: { repair: RepairOutcome; now: number }) {
     <li className={`rounded-xl border p-4 ${ui.className}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-black text-slate-900 truncate">{repair.title}</p>
+          <p className="font-black text-slate-900 line-clamp-2"><MathText inline>{repair.title}</MathText></p>
           <p className="text-xs text-slate-600">
             {repair.topic} · תוקן {daysAgo(repair.healedAt, now)}
             {repair.repairs > 1 && ` · תוקן ${repair.repairs} פעמים`}
@@ -277,7 +277,7 @@ export default function ReportPage() {
                   <li key={w.id} className="rounded-xl border border-amber-200 bg-amber-50 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="font-black text-slate-900">{w.title}</p>
+                        <p className="font-black text-slate-900"><MathText inline>{w.title}</MathText></p>
                         <p className="text-xs text-slate-600">{w.topic}</p>
                       </div>
                       <Link

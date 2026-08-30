@@ -301,7 +301,7 @@ function sharpWeaknesses(input: DetectInput): Weakness[] {
         topic,
         subTopicId,
         title: state.title,
-        detail: `${state.insight} נפלת בזה ${state.hits} מתוך ${state.opportunities} פעמים שנתקלת בו.`,
+        detail: `${state.insight} נפלת בזה ב-${state.hits} מתוך ${state.opportunities} הפעמים שנתקלת בו.`,
         band: skill?.band ?? 'mid',
         confidence,
         score: state.weight * confidence * topicFactor(topic) * MISCONCEPTION_PRIORITY,
