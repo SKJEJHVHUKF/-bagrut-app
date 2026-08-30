@@ -114,7 +114,7 @@ export function FixSummary({
             }
           >
             <Wrench className="w-4 h-4" />
-            <span>{`לתקן את הבא: ${nextWeakness.title}`}</span>
+            <span><MathText inline>{`לתקן את הבא: ${nextWeakness.title}`}</MathText></span>
           </Link>
         )}
 

@@ -52,6 +52,7 @@ import {
 } from '@/lib/prediction';
 import { getTopWeakness, healedCountSince, type Weakness } from '@/lib/remediation';
 import ShareCardButton from '@/components/ShareCardButton';
+import { MathText } from '@/components/practice/MathText';
 
 const SUBJECT_NAMES: Record<string, string> = {
   math5: 'מתמטיקה 5 יח׳',
@@ -296,11 +297,11 @@ export default function InsightsPage() {
                 <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
                   הכי משתלם לתקן עכשיו
                 </div>
-                <div className="text-sm font-black leading-tight mt-0.5 truncate">
-                  {fixTargets['math5'].title}
+                <div className="text-sm font-black leading-tight mt-0.5 line-clamp-2">
+                  <MathText inline>{fixTargets['math5'].title}</MathText>
                 </div>
-                <div className="text-[11px] text-white/80 mt-0.5 truncate">
-                  {fixTargets['math5'].detail}
+                <div className="text-[11px] text-white/80 mt-0.5 line-clamp-2">
+                  <MathText inline>{fixTargets['math5'].detail}</MathText>
                 </div>
               </div>
               <ArrowRight
@@ -500,9 +501,9 @@ export default function InsightsPage() {
                       <Wrench className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-black text-white">מסלול תיקון — הכי כדאי עכשיו</div>
-                      <div className="text-xs text-rose-50/90 mt-0.5 truncate">
-                        {`${fixTarget.title} · ${fixTarget.detail}`}
+                      <div className="font-black text-white">מסלול תיקון · הכי כדאי עכשיו</div>
+                      <div className="text-xs text-rose-50/90 mt-0.5 line-clamp-2">
+                        <MathText inline>{`${fixTarget.title} · ${fixTarget.detail}`}</MathText>
                       </div>
                     </div>
                     <ArrowRight className="w-5 h-5 text-white rotate-180 group-hover:-translate-x-1 transition-transform flex-shrink-0" />

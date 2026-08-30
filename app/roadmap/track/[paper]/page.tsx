@@ -190,8 +190,16 @@ function Track({ paper }: { paper: BagrutPaper }) {
               </div>
               <div className="flex-1 min-w-0 text-white">
                 <div className="text-[10px] font-black tracking-widest uppercase text-white/70">הכי חשוב היום</div>
-                <div className="text-sm font-black leading-tight mt-0.5 truncate">{`מסלול תיקון · ${fixTarget.title}`}</div>
-                <div className="text-[11px] text-white/80 mt-0.5 truncate">{`${fixTarget.topic} — ${fixTarget.detail}`}</div>
+                {/* MathText, not a bare string: weakness titles/details carry
+                    $…$ islands from the misconception map. Raw, they print the
+                    dollars and RTL flips "q^{n-1}" into "q^{1-n}". line-clamp,
+                    not truncate — a KaTeX inline-block doesn't ellipsis. */}
+                <div className="text-sm font-black leading-tight mt-0.5 line-clamp-2">
+                  <MathText inline>{`מסלול תיקון · ${fixTarget.title}`}</MathText>
+                </div>
+                <div className="text-[11px] text-white/80 mt-0.5 line-clamp-2">
+                  <MathText inline>{`${fixTarget.topic} · ${fixTarget.detail}`}</MathText>
+                </div>
               </div>
               <ArrowLeft className="w-5 h-5 text-white group-hover:-translate-x-1 transition-transform flex-shrink-0" />
             </Link>
