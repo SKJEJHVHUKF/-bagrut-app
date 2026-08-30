@@ -154,7 +154,7 @@ export default function ErrorsPage() {
                     className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 px-5 py-3.5 rounded-2xl font-black text-white shadow-xl shadow-violet-500/25 transition-colors"
                   >
                     <Wrench className="w-4 h-4" />
-                    <span>{`מסלול תיקון: ${fixTarget.title}`}</span>
+                    <span><MathText inline>{`מסלול תיקון: ${fixTarget.title}`}</MathText></span>
                   </Link>
                 )}
                 {/* The spaced-repetition daily review (schedules the hard ones

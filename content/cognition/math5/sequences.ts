@@ -80,7 +80,7 @@ export const sequencesCognition: TopicCognitionMap = {
     },
     {
       id: "ge-off-by-one-high",
-      title: "הכפלה פי $q^n$ במקום בביטוי $q^{n-1}$ בסדרה הנדסית",
+      title: "העלאת $q$ בחזקת $n$ במקום בחזקת $n-1$ בסדרה הנדסית",
       skill: "ge-nth-term",
       insight: "אתה מחשב $a_n = a_1 \\cdot q^n$ במקום $a_1 \\cdot q^{n-1}$, וכך מקבל איבר אחד גבוה מדי.",
       remedy: { subTopicId: "ge-general-term" },

@@ -88,9 +88,9 @@ function buildGoal(
   } else if (gap === null) {
     headline = `הציון החזוי שלך כרגע: ${predicted}. כל שיפור נספר.`;
   } else if (gap > 0) {
-    headline = `אתה ${gap} נקודות מתחת ליעד — ${predicted} מול ${targetScore}.`;
+    headline = `אתה ${gap} נקודות מתחת ליעד: ${predicted} מול ${targetScore}.`;
   } else {
-    headline = `אתה כבר על היעד (${predicted} מול ${targetScore}) — עכשיו מייצבים.`;
+    headline = `אתה כבר על היעד (${predicted} מול ${targetScore}), עכשיו מייצבים.`;
   }
 
   return { target, targetScore, predicted, gap, headline };
