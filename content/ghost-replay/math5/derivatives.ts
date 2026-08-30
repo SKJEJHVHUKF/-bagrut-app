@@ -25,6 +25,7 @@
 // NO `mistakeCategory`: content/cognition covers מספרים מרוכבים only.
 
 import type { TopicGhostReplays } from '../types';
+import { EXTREMUM_REPLAYS } from './extremum';
 
 const SUBJECT = 'math5';
 const TOPIC = 'חשבון דיפרנציאלי';
@@ -33,6 +34,8 @@ export const derivativesGhostReplays: TopicGhostReplays = {
   subject: SUBJECT,
   topic: TOPIC,
   replays: [
+    // The five בעיות קיצון stages (owner's breakdown, 2026-08-30).
+    ...EXTREMUM_REPLAYS,
     // =========================================================
     // 1 · derivative-rules
     // =========================================================

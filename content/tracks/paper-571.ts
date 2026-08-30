@@ -476,19 +476,41 @@ export const TRACK_571: TrackTree = {
       id: 'extremum-problems',
       title: 'בעיות קיצון',
       emoji: '🎯',
+      // Five stations, in the owner's own order and wording (2026-08-30). The four
+      // steps of solving one problem used to be four bullets on a single tile; they
+      // are the four things a student gets stuck on separately, so each is its own
+      // stage with its own ladder. Nothing else belongs in this topic — he asked for
+      // exactly these levels and nothing mixed in.
       tiles: [
         {
-          // The syllabus's four items are the four steps of solving one problem —
-          // exactly the content of the single existing sub-topic.
           kind: 'ladder',
-          subId: 'optimization',
-          title: 'בעיות קיצון',
-          bullets: [
-            'הגדרת המשתנה $x$ שאיתו עובדים',
-            'בניית פונקציית המטרה',
-            'גזירת הפונקציה ומציאת הקיצון',
-            'בעיות קיצון גאומטריות ובעיות קיצון גרפיות',
-          ],
+          subId: 'ext-base',
+          title: 'רמת בסיס · גזירת מנה ושורש',
+          bullets: ['כלל המנה, נגזרת שורש ופונקציה מורכבת', 'מה מאפס שבר, ומה רק הופך אותו ללא מוגדר'],
+        },
+        {
+          kind: 'ladder',
+          subId: 'ext-target',
+          title: 'רמה 1 · בניית פונקציית המטרה',
+          bullets: ['מהאילוץ שבשאלה למשתנה יחיד', 'בעיות גאומטריות ובעיות על גרף'],
+        },
+        {
+          kind: 'ladder',
+          subId: 'ext-extremum',
+          title: 'רמה 2 · מציאת הקיצון בגזירה',
+          bullets: ['מאפסים את הנגזרת, כי המשיק בקיצון אופקי', 'סיווג בנגזרת שנייה או בטבלת סימנים'],
+        },
+        {
+          kind: 'ladder',
+          subId: 'ext-substitute',
+          title: 'רמה 3 · הצבה וקבלת הגודל',
+          bullets: ['מציבים בפונקציית המטרה, לא בנגזרת', 'עונים בגודל שנשאל וביחידות שלו'],
+        },
+        {
+          kind: 'ladder',
+          subId: 'ext-bagrut',
+          title: 'רמה 4 · תרגול בגרות',
+          bullets: ['בעיה שלמה מההגדרה ועד התשובה', 'ארבע המשפחות שחוזרות בבגרות'],
         },
       ],
     },

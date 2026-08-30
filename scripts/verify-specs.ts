@@ -73,12 +73,27 @@ function checkWrongAnswers(
   where: string,
   expected: unknown,
   wrongAnswers: { value: string; note: string }[] | undefined,
+  answerLabels?: string[],
 ) {
   if (!wrongAnswers?.length) return;
   for (const w of wrongAnswers) {
-    const asInput = w.value.includes(',') ? w.value : w.value;
+    // Mirror QuestionRunnerCard exactly (its lines 323 + 328): a question with
+    // answerLabels grades its boxes IN ORDER through checkAnswerParts, and the
+    // mistake lookup gets the same array. This line used to be
+    //   w.value.includes(',') ? w.value : w.value
+    // — a ternary whose two branches are identical, so the split it was written
+    // to do never happened and every labelled question was checked here by the
+    // UNORDERED checkAnswer. That both failed a legitimate swapped-order
+    // distractor ("3, 6" for an answer of 6 then 3, which is exactly the
+    // mistake worth catching) and would have waved through a genuinely
+    // equal one.
+    const asInput = answerLabels?.length ? w.value.split(',').map((s) => s.trim()) : w.value;
     const matched = matchKnownMistake(asInput, [w]);
-    const vsExpected = expected ? checkAnswer(asInput, expected as never).verdict : 'wrong';
+    const vsExpected = !expected
+      ? 'wrong'
+      : Array.isArray(asInput)
+        ? checkAnswerParts(asInput, expected as never).verdict
+        : checkAnswer(asInput, expected as never).verdict;
     if (matched && vsExpected !== 'correct') {
       pass++;
     } else {
@@ -139,13 +154,13 @@ for (const [name, L] of LESSONS) {
   for (const st of L.subTopics ?? []) {
     for (const question of st.questions ?? []) {
       checkSpec(`${name}/${st.id}/${question.id}`, question.expected, question.solution.finalAnswer);
-      checkWrongAnswers(`${name}/${st.id}/${question.id}`, question.expected, question.wrongAnswers);
+      checkWrongAnswers(`${name}/${st.id}/${question.id}`, question.expected, question.wrongAnswers, question.answerLabels);
       checkLabels(`${name}/${st.id}/${question.id}`, question.expected, question.answerLabels, question.wrongAnswers);
     }
     for (const step of st.lesson ?? []) {
       if (step.drill) {
         checkSpec(`${name}/${st.id}/drill:${step.drill.id}`, step.drill.expected, step.drill.solution.finalAnswer);
-        checkWrongAnswers(`${name}/${st.id}/drill:${step.drill.id}`, step.drill.expected, step.drill.wrongAnswers);
+        checkWrongAnswers(`${name}/${st.id}/drill:${step.drill.id}`, step.drill.expected, step.drill.wrongAnswers, step.drill.answerLabels);
         checkLabels(`${name}/${st.id}/drill:${step.drill.id}`, step.drill.expected, step.drill.answerLabels, step.drill.wrongAnswers);
       }
     }
