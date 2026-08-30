@@ -65,7 +65,12 @@ const RULES: Array<[FollowUp, RegExp]> = [
   // punctuation stripped, so "בטוח?" and "בטוח" are the same row in every
   // report — and `yesNo`'s anchor allows `.` and `!` but not `?`. The reports
   // showed "בטוח" being answered for free while the student was paying.
-  ['why', /(?:^|[^א-ת])(?:למה|מדוע)(?:[^א-ת]|$)|בשביל\s*מה|מה\s*הקשר|למה\s*דווקא|^\s*(?:אתה\s*)?(?:בטוח|בטוחה|סמוך|משוכנע)\s*\?|^\s*(?:כן|לא|נכון|באמת|זה\s*נכון)\s*\?/],
+  // ⚠️ AND THE CHALLENGE HAS A TAIL. "אתה בטוח" was answered locally on the
+  // first try; "בטוח שזאת התשובה" — the same move with three more words —
+  // cost a call in the very next session. Anchored at the START, so a sentence
+  // that merely CONTAINS "בטוח" ("אני לא בטוח מה עושים") is untouched and stays
+  // with `stuck` where it belongs.
+  ['why', /(?:^|[^א-ת])(?:למה|מדוע)(?:[^א-ת]|$)|בשביל\s*מה|מה\s*הקשר|למה\s*דווקא|^\s*(?:אתה\s*|את\s*)?(?:בטוח|בטוחה|סמוך|משוכנע|משוכנעת)(?:\s*\?|\s+ש|\s*$)|^\s*(?:כן|לא|נכון|באמת|זה\s*נכון)\s*\?/],
 
   ['more', /(?:^|[^א-ת])(?:עוד|המשך|תמשיך|הלאה|ואז|נו|יותר|בהמשך)(?:[^א-ת]|$)|לא\s*מספיק|תן\s*עוד|אפשר\s*עוד|משהו\s*נוסף|רמז\s*נוסף|עוד\s*קצת/],
 ];

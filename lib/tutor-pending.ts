@@ -173,7 +173,12 @@ export function expectationOf(servedText: string, nextStep?: string): Pending | 
  * Only after a result cue, and only a plain number: "יש 19 אפשרויות" reports
  * nothing.
  */
-const REPORTED = /(?:יצא|יוצא|קיבלתי|מקבל|התקבל|הגעתי\s*ל)(?:\s*לי)?\s*[:=]?\s*(-?[0-9]+(?:[.,][0-9]+)?)/;
+// ⚠️ THE CUE LIST IS THE WHOLE THING, AND IT WAS WRITTEN FROM IMAGINATION.
+// "כתבתי 4" cost a model call in a real session while "יצא לי 4" was free —
+// the same report, in the verb the student happened to reach for. These are
+// the ones students actually use for "here is what I got".
+const REPORTED =
+  /(?:יצא|יוצא|קיבלתי|מקבל|התקבל|הגעתי\s*ל|כתבתי|רשמתי|עניתי|שמתי|הצבתי\s*וקיבלתי|חישבתי\s*וקיבלתי)(?:\s*לי)?\s*[:=]?\s*(-?[0-9]+(?:[.,][0-9]+)?)/;
 
 export function reportedValue(message: string): string | null {
   const m = REPORTED.exec(message);

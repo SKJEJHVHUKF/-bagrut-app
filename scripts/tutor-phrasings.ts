@@ -171,6 +171,19 @@ export const PHRASINGS: Phrasing[] = [
   { text: 'מאיפה מתחילים בכלל עם השאלה הזאת', expect: 'how_to_solve' },
   { text: 'תסביר לי את זה יותר פשוט בבקשה', expect: 'explain' },
 
+  // "תן לי אחת אחרת" — the same ask as "תן דוגמה", and `pickExample` answers
+  // both from the bank the student is already inside. Each of these cost a
+  // model call in a real session.
+  { text: 'משהו אחר', expect: 'give_example', reported: true },
+  { text: 'שאלה אחרת', expect: 'give_example', reported: true },
+  { text: 'עוד תרגיל', expect: 'give_example' },
+  { text: 'תרגיל דומה', expect: 'give_example' },
+  // ⚠️ AND THE ONE THE WIDENING MUST NOT SWALLOW. "אחרת" alone is a request to
+  // rephrase the SAME idea, not for a different exercise — answering it with a
+  // new question is answering somebody who said "I did not follow" with "here,
+  // do another one".
+  { text: 'תסביר אחרת', expect: 'explain' },
+
   // ==================================================================
   // "יש לך טיפים?" — four phrasings, four paid calls, one answer.
   //

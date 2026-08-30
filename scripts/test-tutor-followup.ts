@@ -183,6 +183,22 @@ ok(yesNo('בטוח') === true, '"בטוח" is a yes');
 ok(yesNo('בטוח?') === null, '"בטוח?" is NOT a yes — it is a challenge');
 ok(followUp('בטוח?') === 'why', 'and it asks for the reasoning');
 
+// ⚠️ THE CHALLENGE HAS A TAIL, AND THE FIRST FIX MISSED IT. "אתה בטוח" was
+// answered locally on its first live session; "בטוח שזאת התשובה" — the same
+// move with three more words — cost a call in the very next one.
+for (const msg of ['בטוח שזאת התשובה', 'אתה בטוח שזאת התשובה', 'את בטוחה שזה נכון', 'אתה בטוח']) {
+  ok(followUp(msg) === 'why', `"${msg}" is a challenge`);
+}
+// And what it must NOT swallow: "בטוח" inside a sentence about being lost.
+ok(followUp('אני לא בטוח מה עושים') === 'stuck', '"אני לא בטוח מה עושים" is stuck, not a challenge');
+
+// The cue list for a reported result was written from imagination. "כתבתי 4"
+// cost a call while "יצא לי 4" was free — the same report, a different verb.
+for (const msg of ['כתבתי 4', 'רשמתי 4', 'עניתי 4', 'שמתי 4']) {
+  ok(reportedValue(msg) === '4', `"${msg}" reports 4`);
+}
+ok(reportedValue('כתבתי את הנוסחה') === null, 'and a verb with no number reports nothing');
+
 // A reported result is graded wherever it appears in the sentence — it used to
 // need the message to ALSO read as a follow-up, so "יצא לי 19" was paid for
 // while "ניסיתי שוב ויצא לי 19" was free.

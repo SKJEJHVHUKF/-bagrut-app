@@ -288,6 +288,13 @@ const RULES: Rule[] = [
 
   // --- "תן דוגמה" ---------------------------------------------------
     R('give_example', `דוגמה`, 0.9),
+  // "משהו אחר", "שאלה אחרת", "עוד תרגיל" — asking for ANOTHER exercise is the
+  // same request as asking for an example, and `pickExample` answers it from
+  // the bank the student is already inside. From the trace, where each cost a
+  // call. ⚠️ "שאלה אחרת" and not a bare "אחרת": "תסביר אחרת" is a request to
+  // rephrase, which `followUp` owns, and swallowing it here would answer a
+  // student who wants the SAME idea explained differently with a new exercise.
+    R('give_example', `(?:משהו|תרגיל|שאלה|תרגול)\\s*(?:אחר|אחרת|נוסף|נוספת|דומה)|עוד\\s*(?:תרגיל|שאלה)|תרגיל\\s*כזה`, 0.85),
 
   // --- "תן לי טבלה" -------------------------------------------------
     // `עץ` needs boundaries on both sides — it is two letters and sits inside

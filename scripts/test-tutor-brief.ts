@@ -1020,5 +1020,66 @@ publishTutorFocus('lesson', null);
 assert(getTutorFocus() === null, 'with nothing published the focus is null');
 
 // ============================================================
+console.log('\n── the model and the verified answers stay in sync ──────────');
+// ============================================================
+//
+// ⚠️ THE CONTRACT A SCREENSHOT BOUGHT.
+//
+//   student   10
+//   tutor     נכון! 10 היא התשובה. 🎯      ← graded from content, never stored
+//   student   בטוח?
+//   tutor     לא, טעות. חשב שוב: ...        ← the model, which could not see it
+//
+// `chat_messages` holds only turns that reached /api/chat, and about three
+// quarters of what this tutor says is answered locally. So the model was
+// reasoning with most of the conversation missing — and a surface that answers
+// locally without shipping those turns re-creates the bug in a new place.
+//
+// Asserted STRUCTURALLY, not on behaviour: the failure is a screen somebody
+// adds next month, and no unit test of today's screens can see that coming.
+{
+  // ⚠️ `require`, not `await import`: this file is transformed to CJS and a
+  // top-level await is a build error there.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { readFileSync, readdirSync, existsSync } = require('fs') as typeof import('fs');
+  const route = readFileSync('app/api/chat/route.ts', 'utf8');
+  assert(/body\.recent/.test(route), '/api/chat reads the turns the client can see');
+  // ⚠️ REPLACES, never appends. Appending would fix the sync by growing the
+  // prompt — buying correctness with exactly the money this work was for.
+  assert(
+    /context\.length = 0;[\s\S]{0,200}context\.push\(\.\.\.recent\)/.test(route),
+    'and REPLACES its own window with them rather than adding to it',
+  );
+  assert(/MAX_TURN_LEN/.test(route), 'each supplied turn is capped, so the window cannot grow');
+  assert(
+    /!BLACKLIST\.test\(m\.content\)/.test(route),
+    'and it is guarded at the trust boundary like every other client string',
+  );
+
+  // Every surface that answers locally AND holds a conversation must ship them.
+  const surfaces: string[] = [];
+  const walk = (dir: string) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const full = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(full);
+      else if (e.name.endsWith('.tsx') || e.name.endsWith('.ts')) {
+        const src = readFileSync(full, 'utf8');
+        const answersLocally = /answerLocally|routeMessage/.test(src);
+        // A conversation, not a one-shot button: it posts to the chat route.
+        const converses = /['"`]\/api\/(?:chat|scan-tutor)['"`]/.test(src);
+        if (answersLocally && converses && !/recent:/.test(src)) surfaces.push(full);
+      }
+    }
+  };
+  for (const dir of ['components', 'app']) if (existsSync(dir)) walk(dir);
+  assert(
+    surfaces.length === 0,
+    surfaces.length === 0
+      ? 'every conversational surface that answers locally ships those turns to the model'
+      : `OUT OF SYNC: ${surfaces.join(', ')} answers locally and holds a conversation, but sends no \`recent\``,
+  );
+}
+
+// ============================================================
 console.log(`\n${failures === 0 ? '✅' : '❌'}  ${checks - failures}/${checks} passed`);
 process.exit(failures === 0 ? 0 : 1);
