@@ -1,4 +1,4 @@
-// Repair unsafe cross-question transfer in the פונקציות bank.
+// Repair unsafe cross-question transfer in ANY tutor FAQ bank.
 //
 // WHY THIS CAN BE MECHANICAL. `q` and `alts` are never rendered — lib/tutor-faq
 // returns `hit.faq.a` and nothing else, and uses the phrasings only to build
@@ -14,14 +14,21 @@
 // It edits the SLICE files, never the generated bank — the bank is rebuilt by
 // merge-tutor-faq afterwards.
 //
-//   npx tsx scripts/_patch-func-faq.ts [--dry]
+//   npx tsx scripts/_patch-faq-transfer.ts <sliceDir> <rows.json> <unsafe.txt> [--dry]
+//
+// Was hardcoded to one topic's .faq-work paths; parameterised 2026-08-30 when
+// the same repair was needed for חשבון דיפרנציאלי. 11 topics still have no bank.
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tokens } from '../lib/tutor-faq';
 import { HELD_POSITIONS } from '../content/tutor-faq/types';
 
 const DRY = process.argv.includes('--dry');
-const OUT_DIR = '.faq-work/out';
-const ROWS = JSON.parse(readFileSync('.faq-work/rows-פונקציות.json', 'utf8')) as any[];
+const [OUT_DIR, ROWS_PATH, UNSAFE_PATH] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+if (!OUT_DIR || !ROWS_PATH || !UNSAFE_PATH) {
+  console.error('usage: _patch-faq-transfer.ts <sliceDir> <rows.json> <unsafe.txt> [--dry]');
+  process.exit(1);
+}
+const ROWS = JSON.parse(readFileSync(ROWS_PATH, 'utf8')) as any[];
 const rowFor = (u: string) => ROWS.find((r) => r.unit === u);
 
 /** Everything a student can see for a unit, as one string. */
@@ -33,7 +40,7 @@ function unitText(u: string): string {
     .join(' ');
 }
 
-const unsafe = readFileSync('.faq-work/unsafe.txt', 'utf8')
+const unsafe = readFileSync(UNSAFE_PATH, 'utf8')
   .split('\n')
   .slice(2)
   .filter(Boolean)

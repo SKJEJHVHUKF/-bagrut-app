@@ -17,7 +17,7 @@ import { conceptAsQuestion } from '../lib/tutor-presence';
 
 const [topicArg, outDir, sliceArg = '15'] = process.argv.slice(2);
 if (!topicArg || !outDir) {
-  console.error('usage: npx tsx scripts/audit-tutor-faq.ts <topic> <outdir> [sliceSize] [--kind k,k]');
+  console.error('usage: npx tsx scripts/audit-tutor-faq.ts <topic> <outdir> [sliceSize] [--kind k,k] [--sub prefix,prefix]');
   process.exit(1);
 }
 const SLICE = Number(sliceArg);
@@ -27,6 +27,16 @@ const KINDS = (() => {
   const i = process.argv.indexOf('--kind');
   return i >= 0 ? new Set(process.argv[i + 1].split(',')) : null;
 })();
+/** `--sub <prefix,prefix>` restricts the audit to sub-topics whose id starts
+ *  with one of the prefixes. A topic is not always banked all at once: the five
+ *  ext-* stages of בעיות קיצון were authored as their own track and get their
+ *  own bank, while the older חשבון דיפרנציאלי modules are still unbanked.
+ *  Without this the audit hands out work nobody asked for. */
+const SUBS = (() => {
+  const i = process.argv.indexOf('--sub');
+  return i >= 0 ? process.argv[i + 1].split(',') : null;
+})();
+const wantedSub = (id: string) => !SUBS || SUBS.some((pre) => id.startsWith(pre));
 
 export type FaqRow = {
   unit: string;
@@ -50,6 +60,7 @@ for (const { subject, topic } of allLessonKeys()) {
   const L = getLesson(subject, topic);
   if (!L) continue;
   for (const st of L.subTopics ?? []) {
+    if (!wantedSub(st.id)) continue;
     const meta = {
       subId: st.id,
       subTitle: st.title,
@@ -73,6 +84,8 @@ for (const { subject, topic } of allLessonKeys()) {
     }
   }
   for (const q of L.questions ?? []) {
+    // These belong to no sub-topic, so a --sub run must not pick them up.
+    if (SUBS) break;
     if (!q.solution?.steps?.length) continue;
     rows.push({
       unit: q.id, kind: 'question-top', subId: '', subTitle: '', subSummary: '', formulas: [], keyPoints: [],
@@ -82,6 +95,7 @@ for (const { subject, topic } of allLessonKeys()) {
     });
   }
   for (const b of L.bagrutQuestions ?? []) {
+    if (!wantedSub(b.subTopicId ?? '')) continue;
     const st = b.subTopicId ? (L.subTopics ?? []).find((s) => s.id === b.subTopicId) : undefined;
     for (const p of b.parts ?? []) {
       if (!p.solution?.steps?.length) continue;
@@ -113,6 +127,9 @@ for (const { subject, topic } of allLessonKeys()) {
 // notes are the ready-made source for the why-not entries.
 for (const e of conceptBankEntries()) {
   if (e.topic !== topicArg) continue;
+  // The /quiz bank belongs to the topic, not to any one sub-topic, so a --sub
+  // run (banking one track inside a bigger topic) must leave it alone.
+  if (SUBS) break;
   for (const lvl of CONCEPT_LEVELS) {
     for (const q of getConceptQuestions(e.subject, e.topic, lvl)) {
       // ⚠️ THE SAME MAPPING THE STUDENT'S TUTOR USES, not a second one.

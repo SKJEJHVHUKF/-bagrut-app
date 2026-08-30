@@ -20,6 +20,9 @@ const LOADERS: Record<string, Loader> = {
   'math5/טריגונומטריה': () => import('./math5/trigonometry'),
   'math5/גיאומטריה אוקלידית': () => import('./math5/euclidean-geometry'),
   'math5/פונקציות': () => import('./math5/functions'),
+  // Covers the five בעיות קיצון stages only. The older חשבון דיפרנציאלי modules
+  // and the topic's /quiz concept bank are still unbanked.
+  'math5/חשבון דיפרנציאלי': () => import('./math5/derivatives'),
 };
 
 /**
