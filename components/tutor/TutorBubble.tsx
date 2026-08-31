@@ -52,6 +52,7 @@ import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
 import { AI_DAILY_LIMIT } from '@/lib/access';
 import { offTopicRedirect } from '@/lib/off-topic';
 import { planAnswer } from '@/lib/tutor-plan-answer';
+import { resolveTopic } from '@/lib/resolve-topic';
 import { metaAnswer } from '@/lib/tutor-meta-asks';
 import { expectationOf, nextStepAfter, type Pending } from '@/lib/tutor-pending';
 import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
@@ -411,7 +412,26 @@ export default function TutorBubble() {
       // Remembered for the trace: whether the router understood the message at
       // all is the difference between 'unknown_intent' and 'no_local_content'.
       let routeKind: string = 'open';
-      if (focusNow) {
+      // ⚠️ NOT `if (focusNow)`. THAT GATE MADE EVERY FREE LAYER DARK ON THE ONE
+      // SCREEN STUDENTS OPEN FIRST.
+      //
+      // The bubble is mounted globally and the roadmap index publishes a focus
+      // with a `where` and no question — or none at all. Under the old gate the
+      // whole router was skipped there, so acknowledgements, follow-ups,
+      // yes/no and the verdict handler never ran, and EVERY message went to the
+      // model. From the trace, seven consecutive turns on /roadmap, $0.0461:
+      //
+      //   "אה הבנתי"   $0.0034   ← a pure acknowledgement, paid for
+      //
+      // `routeMessage` already takes `TutorFocus | null` and is written for it:
+      // it reads `focus?.question?.expected` throughout and returns `ack` for
+      // "אה הבנתי" with focus null. The gate was never protecting anything.
+      //
+      // Nothing new can go wrong below: `answer` needs a spec that only a
+      // question provides, and `ask` is handed to `answerLocally`, which
+      // abstains without a question exactly as it does today. The only path
+      // this opens is `ack`, which needs no question by definition.
+      {
         const route = routeMessage(text, focusNow, {
           lastAsk: lastAskRef.current,
           served: servedRef.current.kinds,
@@ -420,7 +440,7 @@ export default function TutorBubble() {
           lastVerdict: lastVerdictNow,
         });
         routeKind = route.kind;
-        if (route.kind === 'answer') {
+        if (route.kind === 'answer' && focusNow) {
           const graded = answerGradedLocally(route, focusNow);
           if (graded) {
             // Remembered so that a challenge to THIS verdict is answered by the
@@ -727,7 +747,15 @@ export default function TutorBubble() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: text,
-            topic: f?.topic ?? '',
+            // ⚠️ THE SCREEN FIRST, THE SENTENCE ONLY WHEN THE SCREEN IS SILENT.
+            //
+            // On the roadmap index nothing publishes a topic, so seven turns
+            // about probability were grounded in the generic curriculum map,
+            // could not reach a Topic Card, and landed in their own cold cache
+            // entry instead of sharing the one the app's probability traffic
+            // already warms. `resolveTopic` reads the topic out of the message
+            // and returns null unless it is certain — see lib/resolve-topic.
+            topic: f?.topic || resolveTopic(text) || '',
             conversationId: convIdRef.current,
             // A question was on screen, the local tutor AND its FAQ bank both
             // abstained — the server logs it as `[faq-miss]`, and that log is
