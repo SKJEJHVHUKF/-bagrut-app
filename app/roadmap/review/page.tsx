@@ -6,13 +6,14 @@
 // answer re-schedules its card (lib/review). No stars — review is retention,
 // not a rung — but it feeds the streak and the mistake notebook.
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { RotateCcw, ArrowLeft, PartyPopper } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { QuestionRunnerCard } from '@/components/roadmap/QuestionRunnerCard';
-import { dueItems, type ReviewItem } from '@/lib/review';
+import { dueCount, dueItems, type ReviewItem } from '@/lib/review';
 import { resolveQuestion, backfillFromMistakes, pruneUnresolvable } from '@/lib/review-resolve';
 import { celebrateCompletion } from '@/lib/confetti';
 import type { PracticeQuestion } from '@/content/lessons/types';
@@ -20,21 +21,44 @@ import type { PracticeQuestion } from '@/content/lessons/types';
 type Card = { item: ReviewItem; q: PracticeQuestion };
 
 export default function ReviewPage() {
+  // useSearchParams needs a boundary above it; everything below is client-only.
+  return (
+    <Suspense fallback={null}>
+      <Review />
+    </Suspense>
+  );
+}
+
+function Review() {
   const [ready, setReady] = useState(false);
   const [queue, setQueue] = useState<Card[]>([]);
   const [pos, setPos] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [done, setDone] = useState(false);
+  /** `?topic=` — set when the student arrived from a button that promised ONE
+   *  topic ("חזור על הסתברות"). The queue is mixed across topics by default,
+   *  so without this filter that button opened a session about everything
+   *  except what it offered. See lib/agents/tools.topicNamedIn. */
+  const topic = useSearchParams().get('topic');
+  /** Due elsewhere — only read when the filtered queue came back empty, to
+   *  decide whether offering the full queue is a real offer. */
+  const [otherDue, setOtherDue] = useState(0);
 
+  // Keyed on `topic`, not run once: the tutor bubble floats over this page too,
+  // so the filter can change under a student who is already standing here.
   useEffect(() => {
     backfillFromMistakes();
     pruneUnresolvable();
-    const resolved = dueItems(Date.now(), 15)
+    const resolved = dueItems(Date.now(), 15, topic ?? undefined)
       .map((item) => ({ item, q: resolveQuestion(item) }))
       .filter((c): c is Card => c.q !== null);
     setQueue(resolved);
+    setPos(0);
+    setCorrect(0);
+    setDone(false);
+    setOtherDue(topic && resolved.length === 0 ? dueCount() : 0);
     setReady(true);
-  }, []);
+  }, [topic]);
 
   function onResolved(firstTryCorrect: boolean) {
     if (firstTryCorrect) setCorrect((c) => c + 1);
@@ -51,7 +75,9 @@ export default function ReviewPage() {
       <div className="space-y-4">
         <div className="text-center space-y-1">
           <div className="text-3xl">🔁</div>
-          <h1 className="font-display text-2xl font-black text-slate-900">חזרה יומית</h1>
+          <h1 className="font-display text-2xl font-black text-slate-900">
+            חזרה יומית{topic ? ` · ${topic}` : ''}
+          </h1>
           {ready && queue.length > 0 && !done && (
             <p className="text-sm text-slate-600">
               {queue.length} שאלות שכדאי לחזור עליהן — שאלה {pos + 1} מתוך {queue.length}
@@ -64,16 +90,19 @@ export default function ReviewPage() {
         ) : queue.length === 0 ? (
           <div className="surface-premium rounded-3xl p-8 text-center space-y-3">
             <PartyPopper className="w-10 h-10 mx-auto text-emerald-500" />
-            <div className="font-black text-slate-900">אין שאלות לחזרה כרגע 🎉</div>
+            <div className="font-black text-slate-900">
+              {topic ? `אין שאלות לחזרה ב${topic} כרגע 🎉` : 'אין שאלות לחזרה כרגע 🎉'}
+            </div>
             <p className="text-sm text-slate-600 leading-relaxed">
-              שאלות שתטעה בהן יופיעו כאן למחרת, כדי לוודא שהחומר באמת נכנס. בינתיים —
-              המשך במסלול.
+              {topic && otherDue > 0
+                ? `שאלות שתטעה בהן ב${topic} יופיעו כאן למחרת. בינתיים יש לך ${otherDue} שאלות לחזרה בנושאים אחרים.`
+                : 'שאלות שתטעה בהן יופיעו כאן למחרת, כדי לוודא שהחומר באמת נכנס. בינתיים המשך במסלול.'}
             </p>
             <Link
-              href="/roadmap"
+              href={topic && otherDue > 0 ? '/roadmap/review' : '/roadmap'}
               className="inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 px-5 py-2.5 rounded-2xl font-bold text-white text-sm"
             >
-              חזרה למפה <ArrowLeft className="w-4 h-4" />
+              {topic && otherDue > 0 ? 'חזרה בכל הנושאים' : 'חזרה למפה'} <ArrowLeft className="w-4 h-4" />
             </Link>
           </div>
         ) : done ? (

@@ -140,9 +140,11 @@ export function gradeReview(questionId: string, correct: boolean, now: number = 
 }
 
 /** Items due for review now, soonest-first, capped. */
-export function dueItems(now: number = Date.now(), limit = 15): ReviewItem[] {
+/** `topic` filters the queue to one topic — BEFORE the limit, so a topic whose
+ *  cards sit past the first 15 due items still returns them. */
+export function dueItems(now: number = Date.now(), limit = 15, topic?: string): ReviewItem[] {
   return readAll()
-    .filter((it) => it.dueAt <= now)
+    .filter((it) => it.dueAt <= now && (!topic || it.topic === topic))
     .sort((a, b) => a.dueAt - b.dueAt)
     .slice(0, limit);
 }
