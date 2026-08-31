@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hasPlan } from '@/lib/study-plan';
 import MathUpLogo from '@/components/MathUpLogo';
+import TutorMascot from '@/components/tutor/TutorMascot';
 import {
   fadeUp,
   heroStagger,
@@ -170,6 +171,19 @@ export default function Landing() {
             </defs>
           </svg>
         </div>
+
+        {/* The tutor greets you before the headline does. Deliberately the
+            same character as the launcher and the chat: the first thing a
+            student meets on the home page is the one that will sit next to
+            them inside an exercise, so it arrives already familiar.
+            `label`, not aria-hidden — up here it is content, not decoration. */}
+        <motion.div variants={fadeUp} className="mb-5 sm:mb-6 flex justify-center">
+          <TutorMascot
+            variant="full"
+            label="המורה הפרטי של MathUp"
+            className="w-32 h-32 sm:w-40 sm:h-40"
+          />
+        </motion.div>
 
         <motion.div variants={fadeUp} className="mb-7">
           <span className="inline-flex items-center gap-2 glass-card rounded-full px-4 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 tracking-wide">
