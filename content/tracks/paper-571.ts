@@ -230,10 +230,19 @@ export const TRACK_571: TrackTree = {
       // שילוב מעגלים, דמיון, יחסים ושטחים ברמת בגרות.
       tiles: [
         {
+          // Owner, 2026-08-30: the track used to open on חפיפה, which already
+          // assumes "קודקודיות שוות" / "מתחלפות שוות" as reasons. This is that
+          // floor, and it comes first.
+          kind: 'ladder',
+          subId: 'eg-angles',
+          title: 'יחסים בין זוויות וקטעים',
+          bullets: ['קודקודיות, צמודות ומשלימות', 'מתאימות, מתחלפות וחד-צדדיות', 'חיבור וחיסור קטעים'],
+        },
+        {
           kind: 'ladder',
           subId: 'eg-congruence',
           title: 'משולשים חופפים',
-          bullets: ['ארבעת משפטי החפיפה', 'שלוש טענות + שם המשפט', 'שאלת היעד של המסלול'],
+          bullets: ['ארבעת משפטי החפיפה', 'שלוש טענות + שם המשפט', 'תרגול אחרי כל משפט'],
         },
         {
           kind: 'ladder',

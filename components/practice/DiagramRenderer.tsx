@@ -360,12 +360,15 @@ function TwoTrianglesSVG({
   const Lc = { x: 55, y: 50 };
   // Right triangle — similar shape, slightly different size for "similar"
   const scale = spec.relation === 'similar' ? 0.7 : 1;
-  const Ra = { x: 115, y: 130 };
-  const Rb = { x: 115 + 70 * scale, y: 130 };
-  const Rc = { x: 115 + 35 * scale, y: 130 - 80 * scale };
+  // Gap between the two triangles: the left triangle's B label sits at x≈100 and
+  // the right one's D label at Ra.x − 8, so anything under ~140 renders them
+  // touching ("BD" as one word). 155 keeps them apart with the ≅ sign between.
+  const Ra = { x: 155, y: 130 };
+  const Rb = { x: 155 + 70 * scale, y: 130 };
+  const Rc = { x: 155 + 35 * scale, y: 130 - 80 * scale };
 
   return (
-    <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+    <svg viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
       <polygon points={`${La.x},${La.y} ${Lb.x},${Lb.y} ${Lc.x},${Lc.y}`} fill={FILL} stroke={STROKE} strokeWidth="2" />
       <polygon points={`${Ra.x},${Ra.y} ${Rb.x},${Rb.y} ${Rc.x},${Rc.y}`} fill={FILL} stroke={STROKE} strokeWidth="2" />
       {/* Tick marks on corresponding sides — show 1, 2, 3 ticks for AB↔DE, BC↔EF, CA↔FD */}

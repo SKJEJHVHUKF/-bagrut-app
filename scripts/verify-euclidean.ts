@@ -408,6 +408,71 @@ assert('bag013 ג: 6·4 = 3·ED → ED = 8', (6 * 4) / 3, 8);
 assert('bag013 ג consistency: AE/DE = BE/CE = 3/4', 6 / 8, 3 / 4);
 assert('bag013 ד: k² = 9/16 → S = 16·9/16 = 9', 16 * (9 / 16), 9);
 
+// ============================================================
+// eg-angles — רמה 0: יחסים בין זוויות וחשבון קטעים (added 2026-08-30)
+// Re-derived from the statements, not copied from the authored answers.
+// ============================================================
+assert('ang lesson: 126° → adjacent 54°', 180 - 126, 54);
+assert('ang lesson: the four angles close a full turn', 126 + 54 + 126 + 54, 360);
+assert('ang lesson: 90° split 27° + 63°', 90 - 27, 63);
+assert('ang drill-001: adjacent to 38° is 142°', 180 - 38, 142);
+assert('ang drill-002: right triangle, other acute angle', 90 - 34, 56);
+// The segment figure ships A=0, B=3, C=7, D=10 on a line. Both claims are read
+// off THOSE coordinates, not off the authored sentence.
+assert('ang drill-004 figure: AB = CD', 3 - 0, 10 - 7);
+assert('ang drill-004 figure: therefore AC = BD', 7 - 0, 10 - 3);
+assert('ang-001: the two angles adjacent to 70° are 110° each', 180 - 70, 110);
+assert('ang-001 check: 70 + 110 + 70 + 110 = 360', 70 + 110 + 70 + 110, 360);
+assert('ang-002: the co-interior partner of 48° is 132°', 180 - 48, 132);
+assert('ang-002 wrongAnswer 42 is 90 − 48, a different (wrong) rule', 90 - 48, 42);
+assert('ang-003: AC = 12 + 5 = 17', 12 + 5, 17);
+assert('ang-003: AD = 17 − 4 = 13', 17 - 4, 13);
+assert('ang-005: (3x+10) + (5x−30) = 180 → x = 25', (180 + 20) / 8, 25);
+assert('ang-005: ∠BMN = 3·25 + 10 = 85', 3 * 25 + 10, 85);
+assert('ang-005: ∠MND = 5·25 − 30 = 95', 5 * 25 - 30, 95);
+assert('ang-005 check: 85 + 95 = 180', 85 + 95, 180);
+assert('ang-006: x + (x+40) = 180 → x = 70', (180 - 40) / 2, 70);
+assert('ang-006: the larger angle is 110', 70 + 40, 110);
+assert('ang-008: 2α + 2β = 180 → α + β = 90', 180 / 2, 90);
+assert('ang-008: ∠MKN = 180 − 90 = 90', 180 - 90, 90);
+assert('ang-009: 232 is not 180, so the pair is equal → 116 each', 232 / 2, 116);
+assert('ang-009: adjacent to 116° is 64°', 180 - 116, 64);
+assert('ang-009 check: 116 + 64 + 116 + 64 = 360', 116 + 64 + 116 + 64, 360);
+// eg-bag-ang-001 — every angle re-measured from the SHIPPED coordinates of the
+// ```geo fence, so the figure and the four authored answers cannot drift apart.
+type P = [number, number];
+/** Angle at `q`, in degrees, between the rays q→p and q→r. */
+function angleAt(p: P, q: P, r: P): number {
+  const u: P = [p[0] - q[0], p[1] - q[1]];
+  const v: P = [r[0] - q[0], r[1] - q[1]];
+  const cos =
+    (u[0] * v[0] + u[1] * v[1]) / (Math.hypot(u[0], u[1]) * Math.hypot(v[0], v[1]));
+  return (Math.acos(cos) * 180) / Math.PI;
+}
+const gA: P = [-7, 4];
+const gB: P = [7, 4];
+const gC: P = [-7, -2];
+const gD: P = [7, -2];
+const gM: P = [0, 4];
+const gN: P = [3.4641, -2];
+/** 2 decimals: N is 2√3 truncated, so the figure is exact to ~0.0001°. */
+const near = (x: number) => Math.round(x * 100) / 100;
+assert('bag-ang figure: ∠BMN = 60° as the context states', near(angleAt(gB, gM, gN)), 60);
+assert('bag-ang א: ∠MNC = 60° (alternate)', near(angleAt(gM, gN, gC)), 60);
+assert('bag-ang ב: ∠MND = 120° (adjacent to ∠MNC)', near(angleAt(gM, gN, gD)), 120);
+assert('bag-ang ג: ∠AMN = 120° (adjacent to ∠BMN)', near(angleAt(gA, gM, gN)), 120);
+assert(
+  'bag-ang ד: ∠AMN + ∠MNC = 180° (co-interior)',
+  near(angleAt(gA, gM, gN) + angleAt(gM, gN, gC)),
+  180,
+);
+assert('bag-ang figure: AB really is parallel to CD', gA[1] - gB[1], gC[1] - gD[1]);
+
+// ============================================================
+// eg-congruence — questions added 2026-08-30
+// ============================================================
+assert('cong-009: third angle 180 − 50 − 60 = 70', 180 - 50 - 60, 70);
+
 // ---- wrongAnswers on the older questions really are wrong ----
 assert('sim-004 wrong 16/25 ≠ 4/5', Math.abs(16 / 25 - 4 / 5) > TOL ? 1 : 0, 1);
 assert('circ-004 wrong 20 is PB, differs from 15', Math.abs(20 - 15) > TOL ? 1 : 0, 1);
