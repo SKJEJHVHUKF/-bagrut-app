@@ -13,6 +13,7 @@ import {
   type TutorGreeting,
 } from '@/lib/tutor-greeting';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
+import TutorMascot from '@/components/tutor/TutorMascot';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -22,7 +23,6 @@ import {
   Sparkles,
   ArrowLeft,
   Loader2,
-  MessageCircle,
   Lightbulb,
   Plus,
   History,
@@ -741,7 +741,10 @@ function MessageBubble({
   //   inherits from the bubble; katex.min.css handles typography)
   // - react-markdown renders headings, bold, lists, etc.
   return (
-    <div className="flex justify-end">
+    // items-end, so the avatar sits at the bottom of a long answer — level
+    // with the last line, the way a person sits beside what they just said,
+    // instead of floating at the top of a wall of text.
+    <div className="flex justify-end items-end gap-2">
       <div className="max-w-[85%]">
         <div
           className="chat-md bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 text-slate-800 px-4 py-3 rounded-2xl rounded-tr-md"
@@ -756,18 +759,36 @@ function MessageBubble({
         </div>
         {action && <ActionCard action={action} />}
       </div>
+      <TutorAvatar />
     </div>
   );
 }
 
 function TypingBubble() {
   return (
-    <div className="flex justify-end">
+    <div className="flex justify-end items-end gap-2">
       <div className="max-w-[85%] bg-slate-900/[0.03] backdrop-blur-md border border-slate-900/10 text-slate-700 px-4 py-3 rounded-2xl rounded-tr-md inline-flex items-center gap-2">
         <Loader2 className="w-4 h-4 animate-spin text-violet-600" />
         <span className="text-sm">המורה כותב…</span>
       </div>
+      {/* The face says the same thing the spinner does, only sooner: brows
+          down, eyes up, dots off the corner. */}
+      <TutorAvatar expression="thinking" />
     </div>
+  );
+}
+
+/**
+ * The 30px mascot that sits beside every assistant turn. `compact` because at
+ * this size the mic boom stops being a detail and becomes a smudge on the
+ * cheek, and the ink pod because the character wears a violet headset — a
+ * violet pod behind it stacks the same hue twice and the silhouette dissolves.
+ */
+function TutorAvatar({ expression = 'idle' }: { expression?: 'idle' | 'thinking' }) {
+  return (
+    <span className="relative flex-shrink-0 w-[30px] h-[30px] rounded-full bg-gradient-to-br from-[#3B3480] via-[#241E7A] to-[#12102E] ring-1 ring-white/80 shadow-sm shadow-violet-900/30 flex items-center justify-center">
+      <TutorMascot variant="bust" expression={expression} compact className="absolute w-[34px] h-[34px]" />
+    </span>
   );
 }
 
@@ -791,8 +812,16 @@ function EmptyState({ topic, onPick }: { topic: string; onPick: (text: string) =
 
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-4">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-violet-500/20 border border-violet-500/30 flex items-center justify-center mb-5">
-        <MessageCircle className="w-8 h-8 text-violet-700" />
+      {/* The tutor itself, not a speech-bubble icon standing in for it. This
+          is the first screen of /chat, so it is the one place with room for
+          the whole character — and the pool of violet underneath is what stops
+          a pearl-white mascot dissolving into a near-white page. */}
+      <div className="relative mb-4">
+        <span
+          className="absolute inset-x-4 bottom-3 h-10 rounded-full bg-violet-500/15 blur-lg"
+          aria-hidden
+        />
+        <TutorMascot variant="full" label="המורה הפרטי" className="relative w-28 h-28 sm:w-32 sm:h-32" />
       </div>
       <h2 className="font-display text-2xl font-black mb-2">
         <span className="font-display text-slate-800">
