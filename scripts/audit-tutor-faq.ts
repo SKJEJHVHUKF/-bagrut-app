@@ -6,7 +6,15 @@
  *
  * Traversal mirrors scripts/verify-rule-lines.ts, so unit ids match the gate's
  * and `partAsQuestion` (`${bagrutId}/${label}`). Units that already have FAQ
- * entries in the merged bank are skipped, so re-runs only hand out new work.
+ * entries in the merged bank are skipped, so re-runs only hand out new work;
+ * pass --all to re-issue everything.
+ *
+ * ⚠️ That skip was DOCUMENTED HERE AND NEVER IMPLEMENTED until 2026-08-31. A
+ * re-run on a partly-banked topic handed out all 215 units instead of the 62
+ * outstanding ones — thirteen slices of work already done, at roughly 150k
+ * tokens each. Same class as the gates that cannot see new content: here the
+ * comment described behaviour the code did not have, and nothing contradicted
+ * it, because the output looks identical either way.
  */
 
 import { mkdirSync, writeFileSync } from 'fs';
@@ -14,6 +22,7 @@ import { join } from 'path';
 import { allLessonKeys, getLesson } from '../content/lessons';
 import { conceptBankEntries, getConceptQuestions, CONCEPT_LEVELS } from '../content/concept-quiz';
 import { conceptAsQuestion } from '../lib/tutor-presence';
+import { loadFaqBank } from '../content/tutor-faq';
 
 const [topicArg, outDir, sliceArg = '15'] = process.argv.slice(2);
 if (!topicArg || !outDir) {
@@ -161,17 +170,29 @@ for (const e of conceptBankEntries()) {
   }
 }
 
-mkdirSync(outDir, { recursive: true });
-// The rows file stays COMPLETE even when slicing a subset: merge-tutor-faq
-// validates every authored unit against it, and a filtered rows file would
-// reject entries for units it simply did not list.
-writeFileSync(join(outDir, `rows-${topicArg}.json`), JSON.stringify(rows, null, 1), 'utf8');
-const selected = KINDS ? rows.filter((r) => KINDS.has(r.kind)) : rows;
-const slices: FaqRow[][] = [];
-for (let i = 0; i < selected.length; i += SLICE) slices.push(selected.slice(i, i + SLICE));
-slices.forEach((s, i) => writeFileSync(join(outDir, `slice-${String(i + 1).padStart(2, '0')}.json`), JSON.stringify(s, null, 1), 'utf8'));
-console.log(
-  `${topicArg}: ${rows.length} units total` +
-  (KINDS ? `, ${selected.length} of kind [${[...KINDS].join(',')}]` : '') +
-  ` → ${slices.length} slices of ≤${SLICE} in ${outDir}`,
-);
+// Wrapped in a main(): the bank is lazy-imported, and tsx compiles these scripts
+// to CJS, where a top-level await is a hard build error. tsc --noEmit does NOT
+// catch it — it type-checks under the ESM target and passes.
+async function main() {
+  mkdirSync(outDir, { recursive: true });
+  // The rows file stays COMPLETE even when slicing a subset: merge-tutor-faq
+  // validates every authored unit against it, and a filtered rows file would
+  // reject entries for units it simply did not list.
+  writeFileSync(join(outDir, `rows-${topicArg}.json`), JSON.stringify(rows, null, 1), 'utf8');
+  const banked = process.argv.includes('--all')
+    ? new Set<string>()
+    : new Set(Object.keys((await loadFaqBank('math5', topicArg)) ?? {}));
+  const byKind = KINDS ? rows.filter((r) => KINDS.has(r.kind)) : rows;
+  const selected = byKind.filter((r) => !banked.has(r.unit));
+  const slices: FaqRow[][] = [];
+  for (let i = 0; i < selected.length; i += SLICE) slices.push(selected.slice(i, i + SLICE));
+  slices.forEach((s, i) => writeFileSync(join(outDir, `slice-${String(i + 1).padStart(2, '0')}.json`), JSON.stringify(s, null, 1), 'utf8'));
+  console.log(
+    `${topicArg}: ${rows.length} units total` +
+    (KINDS ? `, ${byKind.length} of kind [${[...KINDS].join(',')}]` : '') +
+    (banked.size ? `, ${banked.size} already banked` : '') +
+    ` → ${selected.length} units in ${slices.length} slices of ≤${SLICE} in ${outDir}`,
+  );
+}
+
+main();
