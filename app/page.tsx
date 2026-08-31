@@ -12,7 +12,6 @@ import {
   staggerContainer,
   scaleIn,
   inViewProps,
-  cardHover,
   buttonTap,
 } from '@/lib/animations';
 import {
