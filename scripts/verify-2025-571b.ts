@@ -253,7 +253,10 @@ const d1 = (fn: (x: number) => number, x: number, h = 1e-6) => (fn(x + h) - fn(x
     const gap = (q: number) => {
       let even = 0;
       let odd = 0;
-      for (let n = 1; n <= 3000; n++) (n % 2 === 0 ? (even += a1 * q ** (n - 1)) : (odd += a1 * q ** (n - 1)));
+      for (let n = 1; n <= 3000; n++) {
+        if (n % 2 === 0) even += a1 * q ** (n - 1);
+        else odd += a1 * q ** (n - 1);
+      }
       return even - odd;
     };
     let best = 0.001;

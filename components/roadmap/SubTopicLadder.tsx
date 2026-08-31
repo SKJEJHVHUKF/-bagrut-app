@@ -30,6 +30,7 @@ import { LearnLevel } from './LearnLevel';
 import { RoadmapLevelRunner } from './RoadmapLevelRunner';
 import { BagrutLevel } from './BagrutLevel';
 import { GhostReplayLevel } from '@/components/ghost/GhostReplayLevel';
+import { useHydrated, useUrlParam } from '@/lib/use-client-value';
 
 
 
@@ -58,25 +59,28 @@ export function SubTopicLadder({
 }) {
   const levels = useMemo(() => buildSubTopicLevels(subject, topic, subTopic), [subject, topic, subTopic]);
 
-  const [ready, setReady] = useState(false);
+  const ready = useHydrated();
   const [version, setVersion] = useState(0); // bump to recompute after a clear
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  useEffect(() => {
-    setReady(true);
-    // Deep-link: /roadmap/<sub>?level=<kind> opens that rung directly (used by
-    // "continue where you left off" and the "back to the explanation" link).
-    // Every rung is open, so any known kind can be opened.
-    const kind = new URLSearchParams(window.location.search).get('level');
-    if (kind) {
-      const idx = levels.findIndex((l) => l.kind === kind);
-      if (idx >= 0) setOpenIndex(idx);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Deep-link: /roadmap/<sub>?level=<kind> opens that rung directly (used by
+  // "continue where you left off" and the "back to the explanation" link).
+  // Every rung is open, so any known kind can be opened.
+  const deepLinkKind = useUrlParam('level');
+  const deepLinkIndex = useMemo(() => {
+    if (!deepLinkKind) return null;
+    const idx = levels.findIndex((l) => l.kind === deepLinkKind);
+    return idx >= 0 ? idx : null;
+  }, [deepLinkKind, levels]);
+  // `undefined` = the student has not opened or closed anything yet, so the
+  // deep link still applies; `null` = they explicitly closed the open rung.
+  const [chosenIndex, setOpenIndex] = useState<number | null | undefined>(undefined);
+  const openIndex = chosenIndex === undefined ? deepLinkIndex : chosenIndex;
 
   // Recompute derived progress whenever storage changes (version) or mount.
   const summary = useMemo(
     () => (ready ? nodeLevelSummary(topic, subTopic.id, levels) : null),
+    // `version` is not read inside — it is the recompute trigger: the progress
+    // comes from localStorage, which React cannot see changing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [ready, version, topic, subTopic.id, levels],
   );
 
@@ -408,6 +412,9 @@ function RungCard({
           ) : locked ? (
             <Lock className="w-4 h-4" />
           ) : (
+            /* eslint-disable-next-line react-hooks/static-components -- `levelIconFor`
+               is a pure lookup in the module-level LEVEL_ICONS table; the component is
+               selected, never created, so its identity is stable per `kind`. */
             <LevelIcon className="w-5 h-5" strokeWidth={1.75} />
           )}
         </div>

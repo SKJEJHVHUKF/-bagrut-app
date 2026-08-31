@@ -59,6 +59,15 @@ export default function FixPage() {
   const [nextWeakness, setNextWeakness] = useState<{ id: string; title: string } | null>(null);
 
   // Start (or resume) the session once, on mount.
+  //
+  // This one really does setState synchronously, and the rule is right about
+  // what that costs: one extra render on mount. It stays because `startFix`
+  // WRITES — it creates or resumes a persisted repair session — so it cannot
+  // move into a render-phase read the way the localStorage reads elsewhere in
+  // this app did. Removing the second render means starting the session before
+  // the page renders (a server component or a route handler), which is a
+  // larger change than this cleanup.
+  /* eslint-disable react-hooks/set-state-in-effect -- see the note above. */
   useEffect(() => {
     if (!targetId) {
       setFailure('unknown-target');
@@ -77,6 +86,7 @@ export default function FixPage() {
     }
     setReady(true);
   }, [targetId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const decision = useMemo(
     () => (fix ? decideNext(fix.path, fix.progress) : null),
@@ -92,6 +102,12 @@ export default function FixPage() {
 
   // Content renamed since the path was built: drop the orphaned step rather
   // than showing a blank card. Done in an effect, never during render.
+  //
+  // `setActiveFix` persists the pruned path, so this is a write, not a read;
+  // the local `setFix` keeps the component in step with what was just written.
+  // Deriving the pruned path during render instead would be circular —
+  // `decision` and `currentQuestion` are themselves derived from `fix`.
+  /* eslint-disable react-hooks/set-state-in-effect -- see the note above. */
   useEffect(() => {
     if (!fix || !decision) return;
     if (decision.kind !== 'question' && decision.kind !== 'reteach') return;
@@ -103,6 +119,7 @@ export default function FixPage() {
     setActiveFix(pruned, fix.progress);
     setFix({ path: pruned, progress: fix.progress });
   }, [fix, decision, currentQuestion]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // The question they just got wrong — the re-teach is built from THAT, never
   // from the question that comes next (which would hand over its solution).

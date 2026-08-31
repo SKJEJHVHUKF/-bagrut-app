@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BookOpen, Brain, Target, Lock, CheckCircle, ArrowLeft, PlayCircle } from 'lucide-react';
 import { getPlan, type PlanTopic } from '@/lib/study-plan';
 import { isProUser, type UserLike } from '@/lib/access';
 import { createClient } from '@/lib/supabase/client';
+import { useClientValue } from '@/lib/use-client-value';
+
+/** Stable snapshot for the server render and for "no plan yet". */
+const NO_PLAN: { hasPlan: boolean; planTopic: PlanTopic | null } = { hasPlan: false, planTopic: null };
 
 /**
  * TopicJourney — top-of-page header showing the 3-stage journey for the
@@ -23,20 +27,19 @@ export function TopicJourney({
   subject: string;
   topic: string;
 }) {
-  const [planTopic, setPlanTopic] = useState<PlanTopic | null>(null);
-  const [hasPlan, setHasPlan] = useState(false);
   const [pro, setPro] = useState(false);
 
-  useEffect(() => {
+  // The study plan lives in localStorage, so it does not exist during the
+  // server render — read once at hydration rather than through a mount effect.
+  const readPlanTopic = useCallback(() => {
     const plan = getPlan();
-    if (!plan) {
-      setHasPlan(false);
-      return;
-    }
-    setHasPlan(true);
-    const t = plan.topics.find((x) => x.subject === subject && x.topic === topic);
-    setPlanTopic(t ?? null);
+    if (!plan) return NO_PLAN;
+    return {
+      hasPlan: true,
+      planTopic: plan.topics.find((x) => x.subject === subject && x.topic === topic) ?? null,
+    };
   }, [subject, topic]);
+  const { hasPlan, planTopic } = useClientValue(readPlanTopic, NO_PLAN);
 
   // Pro/admin users get all stages unlocked from the start (no progress
   // gate). Admin override is built into isProUser via email check.

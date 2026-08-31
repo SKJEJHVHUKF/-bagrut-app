@@ -28,7 +28,13 @@ if (!OUT_DIR || !ROWS_PATH || !UNSAFE_PATH) {
   console.error('usage: _patch-faq-transfer.ts <sliceDir> <rows.json> <unsafe.txt> [--dry]');
   process.exit(1);
 }
-const ROWS = JSON.parse(readFileSync(ROWS_PATH, 'utf8')) as any[];
+/** Only the fields this patcher reads out of the dumped rows / FAQ slices;
+ *  both files carry more, and none of the rest is touched here. */
+type Row = { unit: string; question?: string; context?: string; partPrompt?: string; prompt?: string; steps?: string[]; finalAnswer?: string };
+type FaqEntry = { id: string; alts: string[]; [k: string]: unknown };
+type SliceRow = { unit: string; faqs?: FaqEntry[] };
+
+const ROWS = JSON.parse(readFileSync(ROWS_PATH, 'utf8')) as Row[];
 const rowFor = (u: string) => ROWS.find((r) => r.unit === u);
 
 /** Everything a student can see for a unit, as one string. */
@@ -51,14 +57,14 @@ const unsafe = readFileSync(UNSAFE_PATH, 'utf8')
 
 // Load every slice file, keyed for editing.
 const files = readdirSync(OUT_DIR).filter((f) => /^faq-\d+\.json$/.test(f)).sort();
-const slices = new Map<string, any[]>();
+const slices = new Map<string, SliceRow[]>();
 for (const f of files) slices.set(f, JSON.parse(readFileSync(`${OUT_DIR}/${f}`, 'utf8')));
 
 const findEntry = (id: string) => {
   const unit = id.split('#')[0];
   for (const [f, rows] of slices) {
-    const row = rows.find((r: any) => r.unit === unit);
-    const e = row?.faqs?.find((x: any) => x.id === id);
+    const row = rows.find((r) => r.unit === unit);
+    const e = row?.faqs?.find((x) => x.id === id);
     if (e) return { file: f, row, entry: e, unit };
   }
   return null;
@@ -71,9 +77,9 @@ const used = new Map<string, Set<string>>(); // unit → anchors already spent
 for (const u of unsafe) {
   const found = findEntry(u.id);
   if (!found) { skipped.push(`${u.id}: entry not found`); continue; }
-  const { entry, unit, file } = found;
+  const { entry, unit } = found;
 
-  const held = entry.alts.findIndex((a: string) => a.trim() === u.held);
+  const held = entry.alts.findIndex((a) => a.trim() === u.held);
   if (held < 0) { skipped.push(`${u.id}: held alt not found in alts`); continue; }
   if (!HELD_POSITIONS.has(held)) { skipped.push(`${u.id}: alt ${held} is not a held position`); continue; }
   const partner = held === 1 ? 0 : 3;

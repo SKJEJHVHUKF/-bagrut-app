@@ -13,7 +13,6 @@ import { allLessonKeys, getLesson } from '@/content/lessons';
 // Pro-only (no library/cache path — a handwritten solution is unique).
 export const maxDuration = 60;
 
-const FREE_DAILY_SCANS = 0; // audit is Pro-only
 const PRO_DAILY_SCANS = 150;
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;

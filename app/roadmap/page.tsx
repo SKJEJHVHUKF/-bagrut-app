@@ -22,6 +22,7 @@ import { levelsForNodes, trackMainTopics, trackNodes } from '@/lib/track';
 import { getPaper, setPaper } from '@/lib/study-plan';
 import { countCompleted, nodeLevelSummary } from '@/lib/roadmap-progress';
 import { getResumePoint } from '@/lib/roadmap-resume';
+import { useClientState, useHydrated } from '@/lib/use-client-value';
 
 const PAPER_BLURB: Record<BagrutPaper, string> = {
   '571': 'סדרות, הסתברות, גאומטריה, טריגונומטריה, חקירת פונקציות ובעיות קיצון',
@@ -40,12 +41,13 @@ export default function RoadmapHubPage() {
   );
   const levelsBySub = useMemo(() => levelsForNodes(tracks.flatMap((t) => t.nodes)), [tracks]);
 
-  const [ready, setReady] = useState(false);
-  const [active, setActive] = useState<BagrutPaper | null>(null);
+  const ready = useHydrated();
+  // The active paper comes from localStorage at hydration and from the two
+  // store events after that — so the effect below only SUBSCRIBES, which is
+  // what an effect is for.
+  const [active, setActive] = useClientState<BagrutPaper | null>(getPaper, null);
   const [syncTick, setSyncTick] = useState(0);
   useEffect(() => {
-    setReady(true);
-    setActive(getPaper());
     const onPaperChange = () => setActive(getPaper());
     const onSynced = () => {
       setActive(getPaper());
@@ -57,7 +59,7 @@ export default function RoadmapHubPage() {
       window.removeEventListener('bagrut-paper-changed', onPaperChange);
       window.removeEventListener('bagrut-state-synced', onSynced);
     };
-  }, []);
+  }, [setActive]);
 
   // Per-paper progress + resume point (localStorage-derived).
   const stats = useMemo(

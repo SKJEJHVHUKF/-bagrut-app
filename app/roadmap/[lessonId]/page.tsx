@@ -13,7 +13,6 @@
 // up in the active paper's track; if it is in neither track we fall back to the
 // lesson-file order and the hub, exactly as before.
 
-import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PracticeShell } from '@/components/practice/PracticeShell';
@@ -22,7 +21,7 @@ import { resolveRoadmapNode } from '@/constants/roadmapData';
 import { getSubTopic } from '@/content/lessons';
 import { getPaper } from '@/lib/study-plan';
 import { ladderHref, locateInTrack, parseCtx } from '@/lib/track';
-import type { BagrutPaper } from '@/content/bagrut-curriculum';
+import { useClientValue, useUrlParam } from '@/lib/use-client-value';
 
 export default function RoadmapLessonPage() {
   const params = useParams();
@@ -32,12 +31,8 @@ export default function RoadmapLessonPage() {
   // Both read after mount: `?ctx=` from window.location rather than
   // useSearchParams() (which forces a Suspense boundary at build time — same
   // choice as app/teach/page.tsx), and the active paper from localStorage.
-  const [ctx, setCtx] = useState<ReturnType<typeof parseCtx>>(null);
-  const [activePaper, setActivePaper] = useState<BagrutPaper | null>(null);
-  useEffect(() => {
-    setCtx(parseCtx(new URLSearchParams(window.location.search).get('ctx')));
-    setActivePaper(getPaper());
-  }, []);
+  const ctx = parseCtx(useUrlParam('ctx'));
+  const activePaper = useClientValue(getPaper, null);
 
   const resolved = lessonId ? resolveRoadmapNode(lessonId) : null;
   const subTopic = resolved ? getSubTopic('math5', resolved.topic, lessonId) : null;

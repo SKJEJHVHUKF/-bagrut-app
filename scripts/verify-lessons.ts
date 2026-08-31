@@ -20,7 +20,8 @@ function eq(desc: string, gotExpr: string, wantExpr: string) {
   const g = cx(gotExpr);
   const w = cx(wantExpr);
   const ok = Math.abs(g.re - w.re) < 1e-9 && Math.abs(g.im - w.im) < 1e-9;
-  ok ? pass++ : fail++;
+  if (ok) pass++;
+  else fail++;
   console.log(`  ${ok ? '✓' : '✗ FAIL'}  ${desc}   (${g} vs ${w})`);
 }
 

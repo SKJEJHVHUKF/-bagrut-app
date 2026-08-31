@@ -31,6 +31,7 @@ import { backfillFromMistakes } from '@/lib/review-resolve';
 import { getTopWeakness } from '@/lib/remediation';
 import { getCognitiveState } from '@/lib/cognition';
 import { createClient } from '@/lib/supabase/client';
+import { useClientState, useHydrated } from '@/lib/use-client-value';
 
 const SUBJECT = 'math5';
 
@@ -65,15 +66,13 @@ function Track({ paper }: { paper: BagrutPaper }) {
   // Levels per node are pure (content-derived) → build once per paper.
   const levelsBySub = useMemo(() => levelsForNodes(allNodes), [allNodes]);
 
-  // localStorage read only after mount (avoids hydration mismatch).
-  const [plan, setPlan] = useState<StudyPlan | null>(null);
-  const [ready, setReady] = useState(false);
+  // localStorage is read at hydration, not during the server render.
+  const [plan, setPlan] = useClientState<StudyPlan | null>(getPlan, null);
+  const ready = useHydrated();
   const [syncTick, setSyncTick] = useState(0);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   useEffect(() => {
     backfillFromMistakes(); // seed the review queue from past mistakes (once)
-    setReady(true);
-    setPlan(getPlan());
     // The profile-drawer paper switcher dispatches this; the track lives in the
     // URL, so follow the switch by navigating to the other paper's track.
     const onPaperChange = () => {
@@ -95,7 +94,7 @@ function Track({ paper }: { paper: BagrutPaper }) {
       window.removeEventListener('bagrut-paper-changed', onPaperChange);
       window.removeEventListener('bagrut-state-synced', onSynced);
     };
-  }, [paper, router]);
+  }, [setPlan, paper, router]);
 
   // Per-node ladder summaries (depend on stored progress).
   const summaries = useMemo(() => {
@@ -135,6 +134,9 @@ function Track({ paper }: { paper: BagrutPaper }) {
   );
 
   // Spaced-repetition: how many questions are due for review today.
+  // `syncTick` is not read inside — it is the recompute trigger: the value comes
+  // from localStorage, which React cannot see changing.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const reviewDue = useMemo(() => (ready ? dueCount() : 0), [ready, syncTick]);
 
   // The diagnostic engine's single recommendation, for the lesson topic the

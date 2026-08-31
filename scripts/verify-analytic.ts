@@ -20,7 +20,8 @@ let fail = 0;
 const approx = (x: number, y: number) => Math.abs(x - y) < 1e-9;
 function num(desc: string, got: number, want: number) {
   const ok = approx(got, want);
-  ok ? pass++ : fail++;
+  if (ok) pass++;
+  else fail++;
   console.log(`  ${ok ? '✓' : '✗ FAIL'}  ${desc}   (${got} vs ${want})`);
 }
 // mathjs re-derivation: check a point (x,y) satisfies a locus equation "lhs = rhs".
@@ -32,7 +33,8 @@ function onCurve(desc: string, eq: string, x: number, y: number) {
 function offCurve(desc: string, eq: string, x: number, y: number) {
   const [lhs, rhs] = eq.split('=');
   const ok = !approx(evaluate(lhs, { x, y }) as number, evaluate(rhs, { x, y }) as number);
-  ok ? pass++ : fail++;
+  if (ok) pass++;
+  else fail++;
   console.log(`  ${ok ? '✓' : '✗ FAIL'}  ${desc} (correctly off-curve)`);
 }
 

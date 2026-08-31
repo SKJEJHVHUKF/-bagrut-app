@@ -16,22 +16,21 @@ import {
   X,
   Crown,
   Flame,
-  BookOpen,
-  BarChart3,
-  History,
-  Library,
+  
+  
+  
+  
   Check,
   Pencil,
   LogOut,
   ChevronLeft,
-  NotebookPen,
-  Map as MapIcon,
+  
   Search as SearchIcon,
-  Target,
-  MessageCircle,
-  ScrollText,
-  Sigma,
-  GraduationCap,
+  
+  
+  
+  
+  
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
@@ -52,6 +51,24 @@ import {
 // syllabus table) into every page's first load — AppChrome is in the root
 // layout. `paperLabel` is inlined below; it is a one-line template.
 import type { BagrutPaper } from '@/content/bagrut-curriculum';
+import { useClientValue } from '@/lib/use-client-value';
+
+/** Stable snapshot for the server render and for a closed drawer. */
+const DRAWER_CLOSED: { streak: number; units: UnitLevel | null; paper: BagrutPaper | null } = {
+  streak: 0,
+  units: null,
+  paper: null,
+};
+
+/** The drawer's localStorage-backed facts, read on open. */
+function readDrawerState(): { streak: number; units: UnitLevel | null; paper: BagrutPaper | null } {
+  const planned = hasPlan();
+  return {
+    streak: currentStreak(),
+    units: planned ? getUnitLevel() : null,
+    paper: planned ? getPaper() : null,
+  };
+}
 
 /** Inline copy of content/bagrut-curriculum's paperLabel (a one-liner) — see
  *  the import note above for why the real one is not imported. */
@@ -81,7 +98,7 @@ function initialsOf(name: string, email: string): string {
 
 export default function AppChrome() {
   const pathname = usePathname();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loadedProfile, setProfile] = useState<Profile | null>(null);
   const [open, setOpen] = useState(false);
   const [streak, setStreak] = useState(0);
 
@@ -96,11 +113,12 @@ export default function AppChrome() {
   // Robust to a session that hydrates slightly after mount: we read the
   // cached session immediately, confirm with getUser, AND subscribe to auth
   // changes so the avatar appears the moment the user is known.
+  // Derived, not stored: on a chrome-less path there is no profile to show, so
+  // the effect below simply does not subscribe rather than blanking state.
+  const profile = hidden ? null : loadedProfile;
+
   useEffect(() => {
-    if (hidden) {
-      setProfile(null);
-      return;
-    }
+    if (hidden) return;
     let cancelled = false;
     const supabase = createClient();
 
@@ -156,14 +174,17 @@ export default function AppChrome() {
   // read on drawer open.
   const [units, setUnits] = useState<UnitLevel | null>(null);
   const [paper, setPaperState] = useState<BagrutPaper | null>(null);
-  useEffect(() => {
-    if (open) {
-      setStreak(currentStreak());
-      const planned = hasPlan();
-      setUnits(planned ? getUnitLevel() : null);
-      setPaperState(planned ? getPaper() : null);
-    }
-  }, [open]);
+  const readDrawer = useCallback(() => (open ? readDrawerState() : DRAWER_CLOSED), [open]);
+  const snapshot = useClientValue(readDrawer, DRAWER_CLOSED);
+  // Adopt each new snapshot during render — an effect here would paint the
+  // previous student's streak for one frame every time the drawer opens.
+  const [shown, setShown] = useState(snapshot);
+  if (shown !== snapshot) {
+    setShown(snapshot);
+    setStreak(snapshot.streak);
+    setUnits(snapshot.units);
+    setPaperState(snapshot.paper);
+  }
 
   const changeUnits = (u: UnitLevel) => {
     setUnitLevel(u);

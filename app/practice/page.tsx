@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -22,6 +22,26 @@ import {
 } from '@/content/bagrut-curriculum';
 import { getPaper, setPaper } from '@/lib/study-plan';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
+import { useClientState, useClientValue } from '@/lib/use-client-value';
+
+/** Stable empty snapshot for the server render. */
+const NO_VIEWED: ReadonlySet<string> = new Set();
+
+/** Which lesson keys the student has already opened. Module-level so
+ *  `useClientValue` sees a stable reader. */
+function readViewedKeys(): ReadonlySet<string> {
+  try {
+    const all = getAllProgress();
+    const set = new Set<string>();
+    for (const k of Object.keys(all)) {
+      if (all[k]?.viewedAt) set.add(k);
+    }
+    return set;
+  } catch {
+    // ignore — progress is best-effort
+    return NO_VIEWED;
+  }
+}
 
 // ===== SUBJECTS (mirror of /quiz subject map, trimmed to the fields we need here) =====
 const SUBJECTS = {
@@ -120,10 +140,7 @@ export default function PracticePage() {
 
   // The bagrut paper the student is focused on (581/582). null = never chosen
   // → show both papers. Read once after mount (localStorage).
-  const [activePaper, setActivePaper] = useState<BagrutPaper | null>(null);
-  useEffect(() => {
-    setActivePaper(getPaper());
-  }, []);
+  const [activePaper, setActivePaper] = useClientState<BagrutPaper | null>(getPaper, null);
 
   function switchPaper() {
     if (!activePaper) return;
@@ -136,19 +153,7 @@ export default function PracticePage() {
   // Read localStorage once after mount. We don't subscribe to changes —
   // the badges refresh next time the user lands on the picker, which is
   // good enough for "did I already open this lesson?".
-  const [viewedKeys, setViewedKeys] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    try {
-      const all = getAllProgress();
-      const set = new Set<string>();
-      for (const k of Object.keys(all)) {
-        if (all[k]?.viewedAt) set.add(k);
-      }
-      setViewedKeys(set);
-    } catch {
-      // ignore — progress is best-effort
-    }
-  }, []);
+  const viewedKeys = useClientValue(readViewedKeys, NO_VIEWED);
 
   const subjectInfo = SUBJECTS[subject];
 
@@ -323,7 +328,7 @@ function Math5TopicsByPaper({
 }: {
   selectedTopic: string | null;
   onSelect: (topic: string) => void;
-  viewedKeys: Set<string>;
+  viewedKeys: ReadonlySet<string>;
   activePaper: BagrutPaper | null;
   onSwitchPaper: () => void;
 }) {

@@ -8,7 +8,7 @@
 // is client-side (localStorage), so the page renders after mount. Consistent
 // with the free /insights dashboard — categorization by AI is the Pro part.
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -39,29 +39,41 @@ import {
   type CategoryStat,
   type TopicMistakeStat,
 } from '@/lib/mistakes';
+import { useClientValue } from '@/lib/use-client-value';
+
+/** Stable server-render snapshot; a fresh object per call would re-render forever. */
+const EMPTY_NOTEBOOK: {
+  mistakes: MistakeRecord[] | null;
+  cats: CategoryStat[];
+  topics: TopicMistakeStat[];
+  top: CategoryStat | null;
+  fixTarget: Weakness | null;
+} = { mistakes: null, cats: [], topics: [], top: null, fixTarget: null };
 
 export default function ErrorsPage() {
-  const [mistakes, setMistakes] = useState<MistakeRecord[] | null>(null);
-  const [cats, setCats] = useState<CategoryStat[]>([]);
-  const [topics, setTopics] = useState<TopicMistakeStat[]>([]);
-  const [top, setTop] = useState<CategoryStat | null>(null);
   const [pro, setPro] = useState(true);
   const [reviewing, setReviewing] = useState(false);
-  // The notebook says WHAT goes wrong; this is the one control that does
-  // something about it. Null until there is enough evidence to name a weakness.
-  const [fixTarget, setFixTarget] = useState<Weakness | null>(null);
 
-  function refresh() {
-    setMistakes(getMistakes());
-    setCats(mistakesByCategory());
-    setTopics(mistakesByTopic());
-    setTop(topCategory());
-    setFixTarget(getTopWeakness('math5'));
-  }
+  // The notebook lives in localStorage, so it does not exist during the server
+  // render. It is read as ONE snapshot at hydration and re-read after a write —
+  // the store stays the single source of truth instead of being mirrored into
+  // five pieces of React state that can disagree.
+  // `fixTarget` is null until there is enough evidence to name a weakness.
+  const [version, refresh] = useReducer((n: number) => n + 1, 0);
+  const readNotebook = useCallback(
+    () => ({
+      mistakes: getMistakes(),
+      cats: mistakesByCategory(),
+      topics: mistakesByTopic(),
+      top: topCategory(),
+      fixTarget: getTopWeakness('math5'),
+    }),
+    // `version` is not read inside — it is the re-read trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [version],
+  );
+  const { mistakes, cats, topics, top, fixTarget } = useClientValue(readNotebook, EMPTY_NOTEBOOK);
 
-  useEffect(() => {
-    refresh();
-  }, []);
   useEffect(() => {
     createClient()
       .auth.getUser()
@@ -159,13 +171,13 @@ export default function ErrorsPage() {
                 )}
                 {/* The spaced-repetition daily review (schedules the hard ones
                     to come back). */}
-                <a
+                <Link
                   href="/roadmap/review"
                   className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-rose-500 to-orange-500 hover:from-rose-400 hover:to-orange-400 px-5 py-3.5 rounded-2xl font-black text-white shadow-xl shadow-rose-500/25 transition-colors"
                 >
                   🔁
                   <span>התחל חזרה על הטעויות שלי</span>
-                </a>
+                </Link>
                 <button
                   onClick={() => setReviewing((v) => !v)}
                   className="w-full inline-flex items-center justify-center gap-2 bg-slate-900/[0.04] hover:bg-slate-900/[0.07] border border-slate-900/10 px-5 py-3 rounded-2xl font-bold text-slate-700 transition-colors"

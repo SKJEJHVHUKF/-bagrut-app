@@ -404,11 +404,19 @@ check(
  * are all optional makes `{}` a valid answer, and returning nothing is always
  * the cheapest way to satisfy it. This repo has already paid for that once:
  * SOLVE_SCHEMA without `required` produced 9 output tokens, `{}`, and a
- * student billed 4.5 agorot for an empty screen.
+ * student billed 4.5 agorot for an empty screen. That constant is gone (the
+ * route streams markdown now), so the schema names are DISCOVERED rather than
+ * listed — a pinned list stops checking anything the day a name changes, and
+ * never covers a schema added later.
  */
-for (const schema of ['SOLVE_SCHEMA', 'TRANSCRIBE_SCHEMA']) {
+const routeSchemas = [...routeCode.matchAll(/const (\w*SCHEMA)\s*=\s*\{/g)].map((m) => m[1]);
+check(
+  routeSchemas.length > 0,
+  'route.ts: לא מצאתי אף *_SCHEMA — הבדיקה הזאת כבר לא בודקת כלום.'
+);
+for (const schema of routeSchemas) {
   const body = routeCode.match(new RegExp(`const\\s+${schema}\\s*=\\s*\\{[\\s\\S]*?\\n\\};`))?.[0] ?? '';
-  check(body.length > 0, `route.ts: לא מצאתי את ${schema} — הבדיקה הזאת כבר לא בודקת כלום.`);
+  check(body.length > 0, `route.ts: לא הצלחתי לקרוא את גוף ${schema}.`);
   check(
     /required:\s*\[\s*'/.test(body),
     `route.ts: ל-${schema} אין required. סכימה שכל שדותיה אופציונליים הופכת {} לתשובה חוקית — והמודל יחזיר בדיוק את זה בשאלות הקשות, אחרי שהתלמיד כבר חויב.`

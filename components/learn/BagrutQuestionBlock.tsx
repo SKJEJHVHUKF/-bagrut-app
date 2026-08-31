@@ -48,7 +48,7 @@ export function BagrutQuestionBlock({ q, index }: { q: BagrutQuestion; index: nu
   );
 }
 
-function BagrutPartCard({ part, context }: { part: BagrutPart; context: string }) {
+function BagrutPartCard({ part }: { part: BagrutPart; context: string }) {
   const [hintsShown, setHintsShown] = useState(0);
   const [solutionShown, setSolutionShown] = useState(false);
   const [answer, setAnswer] = useState('');

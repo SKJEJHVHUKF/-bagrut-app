@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Rocket, ArrowLeft, Lock, Crown } from 'lucide-react';
 import { PATH_SECTIONS } from '@/content/learning-paths/types';
@@ -12,6 +12,10 @@ import { getAdvancedProgress, getCompletedAdvancedSections } from '@/lib/advance
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
 import { fadeUp, inViewProps } from '@/lib/animations';
+import { useClientValue } from '@/lib/use-client-value';
+
+/** Stable server-render snapshot. */
+const NO_STATUSES: { base: TrackStatus | null; adv: TrackStatus | null } = { base: null, adv: null };
 
 type TrackStatus = { label: string; cls: string };
 
@@ -26,18 +30,18 @@ type TrackStatus = { label: string; cls: string };
 export function CourseTracks({ subject, topic }: { subject: string; topic: string }) {
   const advanced = hasAdvancedCourse(subject, topic);
 
-  const [baseStatus, setBaseStatus] = useState<TrackStatus | null>(null);
-  const [advStatus, setAdvStatus] = useState<TrackStatus | null>(null);
   const [pro, setPro] = useState(false);
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setPro(isProUser(data.user)));
   }, []);
 
-  useEffect(() => {
+  // Both badges are derived from localStorage progress, so neither exists during
+  // the server render — read as one snapshot at hydration.
+  const readStatuses = useCallback((): { base: TrackStatus | null; adv: TrackStatus | null } => {
     // Base track status
     const baseDone = getCompletedSections(subject, topic).size;
-    setBaseStatus(
+    const base: TrackStatus =
       baseDone >= PATH_SECTIONS.length
         ? { label: '✓ הושלם', cls: 'bg-emerald-500/25 border-emerald-400/50 text-emerald-800' }
         : baseDone > 0
@@ -45,14 +49,14 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
               label: `בתהליך · ${baseDone}/${PATH_SECTIONS.length}`,
               cls: 'bg-amber-500/20 border-amber-400/40 text-amber-800',
             }
-          : { label: 'התחל כאן', cls: 'bg-slate-900/5 border-slate-900/15 text-slate-800' },
-    );
+          : { label: 'התחל כאן', cls: 'bg-slate-900/5 border-slate-900/15 text-slate-800' };
 
     // Advanced track status
+    let adv: TrackStatus | null = null;
     if (advanced) {
       const p = getAdvancedProgress(subject, topic);
       const advDone = getCompletedAdvancedSections(subject, topic).size;
-      setAdvStatus(
+      adv =
         p.simulationPassed
           ? { label: '🎓 הושלם', cls: 'bg-violet-500/25 border-violet-400/50 text-violet-800' }
           : p.gatePassed
@@ -60,10 +64,11 @@ export function CourseTracks({ subject, topic }: { subject: string; topic: strin
                 label: `בתהליך · ${advDone}/${ADVANCED_SECTIONS.length}`,
                 cls: 'bg-amber-500/20 border-amber-400/40 text-amber-800',
               }
-            : { label: '🔒 שער כניסה', cls: 'bg-slate-900/5 border-slate-900/15 text-slate-700' },
-      );
+            : { label: '🔒 שער כניסה', cls: 'bg-slate-900/5 border-slate-900/15 text-slate-700' };
     }
+    return { base, adv };
   }, [subject, topic, advanced]);
+  const { base: baseStatus, adv: advStatus } = useClientValue(readStatuses, NO_STATUSES);
 
   const topicHref = encodeURIComponent(topic);
 

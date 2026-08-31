@@ -38,6 +38,7 @@ import { MathText } from '@/components/practice/MathText';
 import MathUpLogo from '@/components/MathUpLogo';
 import type { ResolvedSuggestion } from '@/lib/agents/tools';
 import type { TutorFact } from '@/lib/tutor-memory';
+import { useClientValue, useUrlParam } from '@/lib/use-client-value';
 
 const MAX_MESSAGE_LEN = 500;
 
@@ -84,7 +85,8 @@ export default function ChatPage() {
   // Optional topic context from the URL (?topic=...). When it's the grounded
   // pilot ("מספרים מרוכבים") the chat tutor teaches from the verified content
   // and follows the private-tutor bar; otherwise it's the normal chat.
-  const [topic, setTopic] = useState('');
+  // `?topic=` — read once after hydration; nothing else ever sets it.
+  const topic = useUrlParam('topic') ?? '';
   const [showAudit, setShowAudit] = useState(false);
   // What the tutor remembers about this student, and the panel that shows it.
   // Loaded once per visit; /api/chat pushes an updated list whenever the tutor
@@ -195,13 +197,6 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
-
-  // Read the optional ?topic= once on mount (client-only — avoids the
-  // useSearchParams Suspense-boundary requirement).
-  useEffect(() => {
-    const t = new URLSearchParams(window.location.search).get('topic');
-    if (t) setTopic(t);
-  }, []);
 
   // What the tutor already remembers. Silent on failure: an unreachable memory
   // endpoint should cost the panel, never the chat.
@@ -801,11 +796,11 @@ function TutorAvatar({ expression = 'idle' }: { expression?: 'idle' | 'thinking'
  * prompts, so the first paint is a working screen and not an empty grid.
  */
 function EmptyState({ topic, onPick }: { topic: string; onPick: (text: string) => void }) {
-  const [greeting, setGreeting] = useState<TutorGreeting | null>(null);
-
-  useEffect(() => {
-    setGreeting(buildTutorGreeting('math5', topic));
-  }, [topic]);
+  // buildTutorGreeting reads the student's stats out of localStorage and the
+  // clock, so it cannot run on the server — null until hydration, recomputed
+  // when the topic changes.
+  const readGreeting = useCallback(() => buildTutorGreeting('math5', topic), [topic]);
+  const greeting = useClientValue<TutorGreeting | null>(readGreeting, null);
 
   const prompts = greeting?.prompts ?? GENERIC_PROMPTS;
 

@@ -26,7 +26,7 @@ function mathSpans(line: string): string[] {
   // Escaped dollar (currency like \$5000) is NOT a math delimiter — neutralize.
   line = line.replace(/\\+\$/g, '¤');
   // display $$...$$ first
-  let s = line.replace(/\$\$([^$]*)\$\$/g, (_m, g: string) => {
+  const s = line.replace(/\$\$([^$]*)\$\$/g, (_m, g: string) => {
     spans.push(g);
     return ' ';
   });

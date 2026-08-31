@@ -18,7 +18,8 @@ const TOL = 1e-9;
 const approx = (x: number, y: number) => Math.abs(x - y) < TOL;
 function num(desc: string, got: number, want: number) {
   const ok = approx(got, want);
-  ok ? pass++ : fail++;
+  if (ok) pass++;
+  else fail++;
   console.log(`  ${ok ? '✓' : '✗ FAIL'}  ${desc}   (${got} vs ${want})`);
 }
 // Evaluate a symbolic derivative of `expr` w.r.t x at x=at, compare to want.

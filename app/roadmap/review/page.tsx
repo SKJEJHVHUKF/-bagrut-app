@@ -46,6 +46,12 @@ function Review() {
 
   // Keyed on `topic`, not run once: the tutor bubble floats over this page too,
   // so the filter can change under a student who is already standing here.
+  //
+  // `backfillFromMistakes` and `pruneUnresolvable` WRITE to the review store,
+  // and the queue below must be built from what they leave behind — so the read
+  // cannot move into render ahead of them. The cost the rule names is real: one
+  // extra render when the topic changes.
+  /* eslint-disable react-hooks/set-state-in-effect -- see the note above. */
   useEffect(() => {
     backfillFromMistakes();
     pruneUnresolvable();
@@ -59,6 +65,7 @@ function Review() {
     setOtherDue(topic && resolved.length === 0 ? dueCount() : 0);
     setReady(true);
   }, [topic]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function onResolved(firstTryCorrect: boolean) {
     if (firstTryCorrect) setCorrect((c) => c + 1);

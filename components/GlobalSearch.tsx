@@ -38,13 +38,23 @@ export default function GlobalSearch() {
     };
   }, []);
 
-  useEffect(() => {
+  // Clearing the box is a state adjustment, so it happens during render: React
+  // re-runs this component immediately and the stale query is never committed.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
     if (open) {
       setQuery('');
       setSelected(0);
-      // Focus after the enter animation starts.
-      setTimeout(() => inputRef.current?.focus(), 60);
     }
+  }
+
+  // Focusing the input IS a side effect, so it stays in one.
+  useEffect(() => {
+    if (!open) return;
+    // Focus after the enter animation starts.
+    const timer = setTimeout(() => inputRef.current?.focus(), 60);
+    return () => clearTimeout(timer);
   }, [open]);
 
   // The index (and the content modules behind it) is fetched on first open, so

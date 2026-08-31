@@ -16,7 +16,7 @@
 import {
   Map as MapIcon,
   Target,
-  GraduationCap,
+  
   MessageCircle,
   ScanLine,
   ScrollText,

@@ -114,5 +114,10 @@ export function TopicIcon({
   strokeWidth?: number;
 }) {
   const Icon = topicIconFor(id);
+  // `topicIconFor` is a pure lookup in the module-level TOPIC_ICONS table: it
+  // SELECTS an existing lucide component, it does not create one. The identity is
+  // stable for a given `id`, so the remount-and-lose-state failure this rule
+  // guards against cannot happen here.
+  // eslint-disable-next-line react-hooks/static-components
   return <Icon aria-hidden="true" className={className} strokeWidth={strokeWidth} />;
 }

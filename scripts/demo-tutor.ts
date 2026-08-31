@@ -34,7 +34,8 @@ let fail = 0;
 function check(desc: string, student: string, spec: AnswerSpec, want: string) {
   const r = checkAnswer(student, spec);
   const ok = r.verdict === want;
-  ok ? pass++ : fail++;
+  if (ok) pass++;
+  else fail++;
   console.log(
     `  ${ok ? '✓' : '✗ FAIL'}  ${desc}\n       "${student}"  →  ${r.verdict}` +
       `${r.readAs ? `  (קראתי כ-${r.readAs})` : ''}   [ציפיתי ל-${want}]`

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { sparkle, celebrateCompletion, celebrateCorrect } from '@/lib/confetti';
+import { sparkle, celebrateCorrect } from '@/lib/confetti';
 import {
   BookOpen,
   Loader2,

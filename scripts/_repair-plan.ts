@@ -8,7 +8,7 @@
  */
 import { readFileSync, writeFileSync } from 'fs';
 import { tokens } from '../lib/tutor-faq';
-import { HELD_POSITIONS, type TutorFaq, type TutorFaqBank } from '../content/tutor-faq/types';
+import { HELD_POSITIONS, type TutorFaqBank } from '../content/tutor-faq/types';
 
 const bank: TutorFaqBank = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const unsafeRows = readFileSync(process.argv[3], 'utf8').split('\n').slice(2).filter(Boolean);

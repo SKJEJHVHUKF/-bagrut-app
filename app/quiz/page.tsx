@@ -28,6 +28,17 @@ import { toast } from 'sonner';
 import { Flame, Sprout, Target, Zap } from 'lucide-react';
 import { TopicIcon } from '@/components/roadmap/TopicIcon';
 import type { LucideIcon } from 'lucide-react';
+import { useClientState, useClientValue } from '@/lib/use-client-value';
+
+/** The level the quiz opens at: `?level=` when it is a valid tier, otherwise the
+ *  student's stored choice. Module-level so `useClientState` sees a stable reader. */
+function readInitialConceptLevel(): ConceptLevel | null {
+  const params = new URLSearchParams(window.location.search);
+  const urlLevel = Number(params.get('level'));
+  if (urlLevel === 1 || urlLevel === 2 || urlLevel === 3) return urlLevel;
+  const subject = params.get('subject');
+  return getConceptLevel(subject && subject in SUBJECTS ? subject : 'math5');
+}
 
 // The three concept levels, drawn with the ladder's icon language (🌱⚡🔥 in
 // the content stays; only the rendering swaps to lucide).
@@ -119,7 +130,7 @@ const MIXED_EXCLUDED_TOPICS = new Set(['סטטיסטיקה']);
 function adaptBankQuestion(
   q: { id: string; difficulty: 'easy' | 'mid' | 'hard'; question: string; answers?: string[]; correct?: number; distractorNotes?: (string | undefined)[]; hint?: string; solution: { steps: string[]; finalAnswer: string; explanation: string } },
   topic: string
-) {
+): QuizQuestion {
   return {
     id: q.id,
     difficulty: q.difficulty,
@@ -143,6 +154,37 @@ function adaptBankQuestion(
     },
   };
 }
+
+/** What the quiz actually holds, whichever of the three supply paths built it:
+ *  a lesson bank via `adaptBankQuestion`, the concept bank, or a live
+ *  generation. `kind`/`level` come only from the concept bank; the MCQ fields
+ *  are absent on an open question. */
+type QuizQuestion = {
+  id: string;
+  difficulty: 'easy' | 'mid' | 'hard';
+  topic: string;
+  question: string;
+  answers?: string[];
+  correct?: number;
+  distractorNotes?: (string | undefined)[];
+  hint?: string;
+  explanation: { why_correct: string; why_wrong: string; concept: string; remember: string };
+  kind?: 'mcq';
+  level?: ConceptLevel;
+};
+
+/** One graded answer, kept for the end-of-quiz review. Session-local: this is
+ *  deliberately NOT lib/results.ts ResultEvent, which has stored data behind it. */
+type AnsweredRecord = {
+  question: string;
+  correct: boolean;
+  topic: string;
+  chosenText: string | undefined;
+  correctText: string | undefined;
+  distractorNote: string | undefined;
+  explanation: QuizQuestion['explanation'];
+  usedHint: boolean;
+};
 
 function shuffleInPlace<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -173,10 +215,10 @@ function Quiz() {
     urlSubject && urlSubject in SUBJECTS ? urlSubject : 'math5'
   );
   const [selectedTopic, setSelectedTopic] = useState<string | null>(urlTopic);
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
-  const [answered, setAnswered] = useState<any[]>([]);
+  const [answered, setAnswered] = useState<AnsweredRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -186,22 +228,24 @@ function Quiz() {
 
   // The bagrut paper the student is focused on (571/572); null = show all.
   // Read once after mount (localStorage), used to filter the math5 topic list.
-  const [activePaper, setActivePaper] = useState<BagrutPaper | null>(null);
+  const activePaper = useClientValue<BagrutPaper | null>(getPaper, null);
   // The level the student picked. `null` until the mount effect reads
   // localStorage — rendering reads `effectiveLevel` below, never this directly,
   // so the first paint doesn't flash an unselected picker.
-  const [conceptLevel, setConceptLevelState] = useState<ConceptLevel | null>(null);
+  const [conceptLevel, setConceptLevelState] = useClientState<ConceptLevel | null>(
+    readInitialConceptLevel,
+    null,
+  );
   // Whether the student asked for the hint on the current question.
   const [hintShown, setHintShown] = useState(false);
 
+  // `?level=` overrides the stored choice AND is written back, so the deep link
+  // is sticky. The write is a side effect and stays in an effect; the reads are
+  // just localStorage, which does not exist during the server render.
   useEffect(() => {
-    setActivePaper(getPaper());
     const urlLevel = Number(searchParams.get('level'));
     if (urlLevel === 1 || urlLevel === 2 || urlLevel === 3) {
-      setConceptLevelState(urlLevel);
       setConceptLevel(urlSubject && urlSubject in SUBJECTS ? urlSubject : 'math5', urlLevel);
-    } else {
-      setConceptLevelState(getConceptLevel(urlSubject && urlSubject in SUBJECTS ? urlSubject : 'math5'));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -297,7 +341,9 @@ function Quiz() {
       FOCUS_PRIORITY.question,
     );
     return () => publishTutorFocus('quiz', null);
-  }, [activeQuestion, isCorrect, selectedAnswer, selectedTopic]);
+    // `questions` feeds `siblings` above. It moves together with `activeQuestion`
+    // in practice, but listing it keeps that an observation rather than a bet.
+  }, [activeQuestion, questions, isCorrect, selectedAnswer, selectedTopic]);
 
   // math5 topic list filtered to the student's active paper (571/572);
   // other subjects / no chosen paper → the full list.
@@ -326,7 +372,7 @@ function Quiz() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startQuiz = async (levelOverride?: ConceptLevel) => {
+  async function startQuiz(levelOverride?: ConceptLevel) {
     if (!selectedTopic) return;
     // Resolve the level HERE, not from render state. The deep-link auto-start
     // below fires through setTimeout(…, 0) and can beat the mount effect that
@@ -356,7 +402,7 @@ function Quiz() {
     // Draws MCQs from every topic of the subject that has a static bank,
     // round-robin so no single topic dominates. 8 questions, zero API cost.
     if (selectedTopic === MIXED_TOPIC) {
-      const perTopic: any[][] = [];
+      const perTopic: QuizQuestion[][] = [];
       let bandAvailable = 0;
       for (const t of subject.topics) {
         if (MIXED_EXCLUDED_TOPICS.has(t.name)) continue;
@@ -379,7 +425,7 @@ function Quiz() {
       // Round-robin: one question from each topic (random topic order),
       // then a second pass, until we have 8.
       shuffleInPlace(perTopic);
-      const picked: any[] = [];
+      const picked: QuizQuestion[] = [];
       for (let round = 0; picked.length < 8; round++) {
         let took = false;
         for (const list of perTopic) {
@@ -509,7 +555,7 @@ function Quiz() {
       // readSeen() and drop out of the accuracy that feeds the prediction.
       const gen = Date.now().toString(36);
       setQuestions(
-        (data.questions as any[]).map((q, i) => ({
+        (data.questions as QuizQuestion[]).map((q, i) => ({
           ...q,
           id: q.id ?? `ai-${gen}-${i}`,
           difficulty: q.difficulty ?? band,
@@ -522,7 +568,7 @@ function Quiz() {
       setScreen('home');
     }
     setLoading(false);
-  };
+  }
 
   const checkAnswer = (idx: number) => {
     const q = questions[currentQ];
@@ -535,7 +581,7 @@ function Quiz() {
     // Keep enough to REVIEW wrong answers at the end: the chosen option, the
     // correct option, the explanation, and the per-option misconception note.
     const chosenText = Array.isArray(q.answers) ? q.answers[idx] : undefined;
-    const correctText = Array.isArray(q.answers) ? q.answers[q.correct] : undefined;
+    const correctText = Array.isArray(q.answers) && q.correct != null ? q.answers[q.correct] : undefined;
     const distractorNote = Array.isArray(q.distractorNotes) ? q.distractorNotes[idx] : undefined;
     setAnswered([
       ...answered,
@@ -583,7 +629,7 @@ function Quiz() {
           questionId: q.id,
           questionText: q.question,
           userAnswer: Array.isArray(q.answers) ? q.answers[idx] : undefined,
-          correctAnswer: Array.isArray(q.answers) ? q.answers[q.correct] : undefined,
+          correctAnswer: Array.isArray(q.answers) && q.correct != null ? q.answers[q.correct] : undefined,
           category: 'אחר',
           source: 'quiz',
         });
@@ -830,7 +876,7 @@ function Quiz() {
 
           <div className="answers">
             {answerOrder.map((origIdx: number, i: number) => {
-              const ans: string = q.answers[origIdx];
+              const ans: string = q.answers?.[origIdx] ?? '';
               // After answering: the picked option turns correct/wrong, and the
               // right answer is always revealed green so a wrong pick shows what
               // it should have been.

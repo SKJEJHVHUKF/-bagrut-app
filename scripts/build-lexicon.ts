@@ -129,14 +129,12 @@ const MIN_LEN = 3;
   // nowhere in the written content and is an alias of seq-index-n — a message
   // containing it is a question we have a card for, and blocking it would be
   // refusing to answer something we wrote an answer for.
-  let cards = 0;
   for (const topic of ['probability', 'sequences']) {
     try {
       const mod = (await import(`../content/topic-cards/math5/${topic}`)).default as Array<
         Record<string, unknown>
       >;
       for (const c of mod) {
-        cards++;
         for (const a of (c.aliases as string[]) ?? []) addAsking(a);
         add(c.shortExplanation);
         add(c.formulaOrRule);

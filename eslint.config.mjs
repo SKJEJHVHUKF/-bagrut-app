@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored third-party bundles served verbatim (tesseract.js wasm glue +
+    // worker). Not our source, never hand-edited — linting them is noise.
+    "public/**",
   ]),
 ]);
 

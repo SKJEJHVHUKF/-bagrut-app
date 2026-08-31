@@ -22,7 +22,7 @@ import { AITutorActions, type SimilarQuestionResult } from './AITutorActions';
 import { markExerciseDone } from '@/lib/progress';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { sparkle, celebrateCompletion } from '@/lib/confetti';
-import { fadeUp, staggerContainer, scaleIn, buttonTap } from '@/lib/animations';
+import { buttonTap } from '@/lib/animations';
 
 type Exercise = {
   problem: string;
@@ -122,6 +122,13 @@ export function QuickExerciseView({
   }
 
   useEffect(() => {
+  // The rule does not analyse `await` boundaries: an async function called from
+  // an effect is flagged even when every setState in it happens after the first
+  // await (verified against a minimal repro — the identical `.then(...)` form is
+  // NOT flagged). Nothing here setStates synchronously, so there is no cascading
+  // render to fix; rewriting the awaits into a promise chain would only hide the
+  // shape from the linter.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
     load('normal');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

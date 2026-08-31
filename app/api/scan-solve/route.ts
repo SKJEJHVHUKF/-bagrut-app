@@ -110,35 +110,10 @@ const TRANSCRIBE_SYSTEM = `אתה קורא צילום של שאלת בגרות �
 - אם התמונה מטושטשת → {"transcribedQuestion": "", "topic": "", "error": "התמונה לא ברורה מספיק. נסה לצלם שוב באור טוב ובזווית ישרה."}
 - אם אין בתמונה שאלת מתמטיקה → {"transcribedQuestion": "", "topic": "", "error": "לא זיהיתי שאלת מתמטיקה בתמונה."}`;
 
-// The solve prompt is built once at module load and marked for prompt
-// caching, so its ~1.5k tokens are billed once per 5-minute window instead
-// of on every solve. It is deliberately LEANER than /api/solve-photo's:
-// this route is reached only after the local CAS has already refused, so the
-// questions arriving here are the hard ones, and a formula dump helps them
-// less than a tight instruction does.
-const SOLVE_SYSTEM = [
-  MATH5.identity,
-  MATH5.styleGuide,
-  `## המשימה
-
-תקבל שאלת בגרות במתמטיקה שכבר תומללה. פתור אותה צעד-אחר-צעד.
-
-**כללי הכתיבה (מחייבים):**
-1. **צעד = רעיון אחד.** אסור לדחוס שני מהלכים לצעד אחד.
-2. **בלי דילוגים.** מ-$2x^2-8=0$ ל-$x=\\pm2$ יש בדרך $x^2=4$ — כתוב אותו.
-3. **עברית לעולם לא בתוך $...$** — הנוסחאות ב-LaTeX, ההסבר בעברית מחוץ להן.
-4. **"למה" ולא רק "מה".** "מעבירים אגף" זה מה; "כדי לבודד את $x$" זה למה.
-5. **תחום הגדרה ראשון** כשיש שורש, מכנה, לוג או טנגנס.
-6. **אימות בסוף** לרדיקל ולרציונלי — הצבה במשוואה המקורית.
-7. **תשובה מדויקת:** $\\frac{\\sqrt2}{2}$, לא $0.707$.
-8. **מרוכבים ב-cis ובמעלות**, לא $e^{i\\theta}$ ולא רדיאנים.
-
-גם אם השאלה קשה, ארוכה או חלקית — **תמיד החזר צעדים ותשובה סופית**. אם חלק מהנתונים חסר או לא ברור, אמור זאת במפורש בתוך צעד וכתוב את הפתרון עבור מה שכן נתון. אין אפשרות להחזיר תשובה ריקה.`,
-].join('\n\n');
-
 /**
- * ⚠️ `required` is load-bearing here for the SAME reason it is on
- * SOLVE_SCHEMA below. Do not remove it. This schema was missing it.
+ * ⚠️ `required` is load-bearing here. Do not remove it. This schema was
+ * missing it, and so was the JSON solve schema that used to live below (both
+ * it and its prompt are gone — this route streams markdown now).
  *
  * With every property optional, `{}` is a valid response — and returning
  * nothing is always the cheapest way to satisfy a schema, which is why the
@@ -167,24 +142,6 @@ const TRANSCRIBE_SCHEMA = {
   additionalProperties: false,
 };
 
-/**
- * ⚠️ `required` is the load-bearing part of this schema. Do not remove it.
- *
- * The previous version listed `error`, `topic`, `steps` and `finalAnswer` as
- * properties with NO `required` array. `{}` therefore satisfies it — and on a
- * hard multi-section bagrut question that is exactly what the model returned:
- * MEASURED, 9 output tokens, `{}`, 2 seconds. The student waited 35 seconds,
- * was billed 4.5 agorot, and got "עוד לא פתרנו את השאלה הזאת".
- *
- * Structured outputs enforce STRUCTURE, not effort. An all-optional schema
- * tells the model that returning nothing is a valid answer, and on the
- * questions that are hardest to solve that is the cheapest path available.
- * With `steps` and `finalAnswer` required, the same question and the same
- * prompt produced a full 6-step solution.
- *
- * `minItems` must be 0 or 1 — the API rejects any other value
- * ("For 'array' type, 'minItems' values other than 0 or 1 are not supported").
- */
 /**
  * The STREAMING solve prompt — markdown, not JSON.
  *
@@ -225,26 +182,6 @@ const SOLVE_STREAM_SYSTEM = [
 **קצר וברור עדיף על ארוך ומלומד.** התלמיד תקוע — הוא צריך להבין, לא להתרשם.
 אם חסר נתון או שרטוט — אמור זאת במשפט אחד והמשך עם מה שכן נתון. אל תסרב לפתור.`,
 ].join('\n\n');
-
-const SOLVE_SCHEMA = {
-  type: 'object',
-  properties: {
-    topic: { type: 'string' },
-    steps: {
-      type: 'array',
-      minItems: 1,
-      items: {
-        type: 'object',
-        properties: { title: { type: 'string' }, content: { type: 'string' } },
-        required: ['title', 'content'],
-        additionalProperties: false,
-      },
-    },
-    finalAnswer: { type: 'string' },
-  },
-  required: ['steps', 'finalAnswer'],
-  additionalProperties: false,
-};
 
 // ============================================================
 // Helpers

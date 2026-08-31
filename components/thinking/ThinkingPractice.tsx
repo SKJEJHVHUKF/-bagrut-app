@@ -88,6 +88,13 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
   }, [topic]);
 
   useEffect(() => {
+  // The rule does not analyse `await` boundaries: an async function called from
+  // an effect is flagged even when every setState in it happens after the first
+  // await (verified against a minimal repro — the identical `.then(...)` form is
+  // NOT flagged). Nothing here setStates synchronously, so there is no cascading
+  // render to fix; rewriting the awaits into a promise chain would only hide the
+  // shape from the linter.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
     loadQuestion();
   }, [loadQuestion]);
 

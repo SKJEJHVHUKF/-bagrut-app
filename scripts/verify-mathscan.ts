@@ -296,22 +296,41 @@ check(
     'The AI solve prompt is no longer prompt-cached; its system prompt will be re-billed on every solve.'
   );
 
-  // The bug that shipped: SOLVE_SCHEMA had no `required`, so `{}` satisfied
-  // it and the model returned exactly that on a hard question — 9 output
-  // tokens, no solution, and the student still billed.
-  const schemaBlock = route.slice(route.indexOf('const SOLVE_SCHEMA'), route.indexOf('const SOLVE_SCHEMA') + 900);
+  // The bug that shipped: a structured-output schema (SOLVE_SCHEMA, deleted
+  // along with the JSON solve path this route no longer takes) had no
+  // `required`, so `{}` satisfied it and the model returned exactly that on a
+  // hard question — 9 output tokens, no solution, and the student still billed.
+  //
+  // Asserted over EVERY schema the route declares rather than a pinned name.
+  // The old version named SOLVE_SCHEMA, which meant it went silent the moment
+  // that constant was renamed, and it could never have caught a NEW schema
+  // added without `required`. Discovering the names keeps this check attached
+  // to the property it exists to protect.
+  const schemaNames = [...route.matchAll(/const (\w*SCHEMA) = \{/g)].map((m) => m[1]);
   check(
-    /required:\s*\[[^\]]*'steps'[^\]]*\]/.test(schemaBlock),
-    "SOLVE_SCHEMA lost `required: ['steps', …]`. Structured outputs enforce STRUCTURE, not effort — " +
-      'with everything optional, `{}` is a valid response and the model returns it on exactly the ' +
-      'hard questions where a solution matters most. This shipped once: 9 output tokens, ' +
-      '"עוד לא פתרנו את השאלה הזאת", 4.5 agorot billed.'
+    schemaNames.length > 0,
+    'app/api/scan-solve/route.ts declares no *_SCHEMA at all. Either the route stopped using ' +
+      'structured outputs, or one was renamed out of reach of this check — which would leave the ' +
+      '`required` rule below asserting nothing.'
   );
-  check(
-    /minItems:\s*[01]\b/.test(schemaBlock),
-    'SOLVE_SCHEMA is missing `minItems: 1` on steps, or uses an unsupported value. The API rejects ' +
-      "any minItems other than 0 or 1 ('minItems' values other than 0 or 1 are not supported)."
-  );
+  for (const name of schemaNames) {
+    const start = route.indexOf(`const ${name} = {`);
+    check(
+      /required:\s*\[[^\]]+\]/.test(route.slice(start, start + 900)),
+      `${name} has no non-empty \`required\`. Structured outputs enforce STRUCTURE, not effort — ` +
+        'with everything optional, `{}` is a valid response and the model returns it on exactly the ' +
+        'hard questions where an answer matters most. This shipped once: 9 output tokens, ' +
+        '"עוד לא פתרנו את השאלה הזאת", 4.5 agorot billed.'
+    );
+  }
+  // The API rejects any minItems other than 0 or 1, wherever it appears.
+  for (const [, value] of route.matchAll(/minItems:\s*(\d+)/g)) {
+    check(
+      value === '0' || value === '1',
+      `minItems: ${value} — the API rejects any value other than 0 or 1 ` +
+        "('minItems' values other than 0 or 1 are not supported)."
+    );
+  }
 
   // Streaming is what keeps a long solve from being a blank minute — and it
   // replaced the per-section split, which fixed the server's time budget by

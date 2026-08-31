@@ -41,6 +41,7 @@ config({ path: resolve(process.cwd(), '.env.local'), override: true });
 import { randomBytes } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
+import type { QuestionAnalysis } from '../lib/analyze-question';
 
 // ============================================================
 // Configuration — all of it from the environment
@@ -109,6 +110,12 @@ async function sessionCookie(accessToken: string, refreshToken: string): Promise
 }
 
 type Res = { status: number; json: Record<string, unknown> | null; text: string };
+
+/** The wire body read as /api/analyze's own contract, so a field renamed in
+ *  the route breaks this harness at compile time instead of at 3am. `Partial`
+ *  because an error or `unsupported` reply omits most of it — probing a field
+ *  that is absent must read `undefined`, not fail to typecheck. */
+const body = (r: Res): Partial<QuestionAnalysis> => (r.json ?? {}) as Partial<QuestionAnalysis>;
 
 function requester(cookie: string) {
   return async (path: string, body?: unknown, init: RequestInit = {}): Promise<Res> => {
@@ -258,7 +265,7 @@ function requester(cookie: string) {
         question: 'פתור את המשוואה: 2x + 3 = 11',
         requestedMode: 'solve',
       });
-      const j = (r.json ?? {}) as Record<string, any>;
+      const j = body(r);
       ok(r.status === 200, `status ${r.status}`);
       ok(j.questionType === 'equation', `questionType=${j.questionType}`);
       ok(j.topic === 'אלגברה', `topic=${j.topic}`);
@@ -283,7 +290,7 @@ function requester(cookie: string) {
         studentAnswer: '8/2',
         requestedMode: 'validate',
       });
-      const j = (r.json ?? {}) as Record<string, any>;
+      const j = body(r);
       ok(r.status === 200, `status ${r.status}`);
       ok(j.mathEngineAction === 'validate', `mathEngineAction=${j.mathEngineAction}`);
       ok(j.verdict?.isCorrect === true, `8/2 accepted (verdict ${JSON.stringify(j.verdict)})`);
@@ -299,7 +306,7 @@ function requester(cookie: string) {
       // A middle dot for multiplication and an em dash for minus — what a
       // photo transcription actually produces, and neither is valid maths.
       const r = await req('/api/analyze', { question: 'פתור את המשוואה:  2·x — 6 = 0' });
-      const j = (r.json ?? {}) as Record<string, any>;
+      const j = body(r);
       ok(r.status === 200, `status ${r.status}`);
       ok(j.questionType === 'equation', `still an equation (${j.questionType})`);
       ok(
@@ -307,7 +314,7 @@ function requester(cookie: string) {
         `maths extracted from the prose: ${JSON.stringify(j.normalizedExpressions)}`,
       );
       ok(
-        j.solution?.answerValues?.some((v: string) => Math.abs(Number(v) - 3) < 1e-9),
+        j.solution?.answerValues?.some((v: string) => Math.abs(Number(v) - 3) < 1e-9) === true,
         `answer = 3 (got ${JSON.stringify(j.solution?.answerValues)})`,
       );
     }
@@ -321,7 +328,7 @@ function requester(cookie: string) {
         question: 'פתור את המשוואה: 2x + 3 = 11',
         requestedMode: 'hint',
       });
-      const j = (r.json ?? {}) as Record<string, any>;
+      const j = body(r);
       const hints: { tier: string; text: string; source: string }[] = j.hints ?? [];
       ok(r.status === 200, `status ${r.status}`);
       ok(hints.some((h) => h.tier === 'hint1'), `hint1 present (${hints.length} hints)`);
@@ -346,7 +353,7 @@ function requester(cookie: string) {
         question:
           'נתונה הפונקציה $f(x) = x^2 - 4x + 3$.\nא. מצא את נקודות החיתוך עם הצירים.\nב. מצא את נקודת הקיצון.\nג. שרטט את גרף הפונקציה.',
       });
-      const j = (r.json ?? {}) as Record<string, any>;
+      const j = body(r);
       ok(r.status === 200, `status ${r.status}`);
       ok(j.multiPart === true, `multiPart=${j.multiPart}`);
       ok(j.deterministicEligible === false, `deterministicEligible=${j.deterministicEligible} (one question, three tasks)`);
@@ -363,7 +370,7 @@ function requester(cookie: string) {
     // ========================================================
     {
       const r = await req('/api/analyze', { question: 'הוכח שהסדרה מתכנסת' });
-      const j = (r.json ?? {}) as Record<string, any>;
+      const j = body(r);
       ok(r.status === 200, `status ${r.status}`);
       ok(j.requiresLLM === true, `requiresLLM=${j.requiresLLM}`);
       ok(j.deterministicEligible === false, `deterministicEligible=${j.deterministicEligible}`);
@@ -378,7 +385,7 @@ function requester(cookie: string) {
       // The other half of the same distinction: junk must NOT become a paid call.
       await sleep(PACE_MS);
       const junk = await req('/api/analyze', { question: 'ספר לי בדיחה' });
-      const jj = (junk.json ?? {}) as Record<string, any>;
+      const jj = body(junk);
       ok(jj.status === 'unsupported', `"ספר לי בדיחה" → status=${jj.status}`);
       ok(jj.requiresLLM === false, `…and requiresLLM=${jj.requiresLLM} (junk is not a model's problem)`);
     }
@@ -404,7 +411,7 @@ function requester(cookie: string) {
       const injection = await req('/api/analyze', {
         question: "__import__('os').system('cat /etc/passwd')",
       });
-      const ij = (injection.json ?? {}) as Record<string, any>;
+      const ij = body(injection);
       ok(injection.status === 200 || injection.status === 400, `code payload → ${injection.status}`);
       // ⚠️ NOT a grep for "passwd". The response echoes `normalizedQuestion`
       // back, so the word is in the body by design and matching it reports a
@@ -452,10 +459,10 @@ function requester(cookie: string) {
 
       await sleep(PACE_MS);
       const free = await req('/api/analyze', { question: 'פתור את המשוואה: 2x + 3 = 11' });
-      const fj = (free.json ?? {}) as Record<string, any>;
+      const fj = body(free);
       ok(free.status === 200, `/api/analyze (same kind, same user, same moment) → ${free.status}`);
       ok(
-        fj.solution?.answerValues?.some((v: string) => Math.abs(Number(v) - 4) < 1e-9),
+        fj.solution?.answerValues?.some((v: string) => Math.abs(Number(v) - 4) < 1e-9) === true,
         'and it still solves the equation with the budget at zero',
       );
     }
