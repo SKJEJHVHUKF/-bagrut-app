@@ -210,18 +210,39 @@ assert(
 );
 
 // ============================================================
-section('the no-topic fallback — /chat is usually opened bare');
+section('no topic means NO topic — the brief must not pick one');
 // ============================================================
+//
+// ⚠️ THIS SECTION USED TO ASSERT THE OPPOSITE, AND PRODUCTION SETTLED IT.
+//
+// The old behaviour was deliberate: with no ?topic=, `resolveCognitive` fell
+// back to the topic with the most observations and the brief emitted
+// `scope: <that topic>` so "the tutor cannot misread them". The tutor read them
+// exactly as written, which is the problem. Reported twice, with screenshots:
+//
+//   תלמיד: תסביר לי משהו מהחומר
+//   מורה:  אני רואה שאתה עובד על מספרים מרוכבים…
+//   תלמיד: לא, אני עובד על הסתברות
+//   מורה:  אבל STATE אומר שאתה עובד על מספרים מרוכבים
+//
+// The model invented nothing — it was handed a topic and reported it. Two
+// rounds of prompt rules could not beat it, because a prompt cannot stop a
+// model from using data it can see. A guessed topic is not a default, it is a
+// claim about the student, and the only safe number of claims here is zero.
+//
+// What survives is what is true without a topic: the level, the countdown, the
+// frequent error type.
 
 const bare = buildStudentSnapshot(SUBJECT, '');
-assert(
-  bare.includes('next:'),
-  'with no ?topic= the brief still finds the mapped topic',
-);
-assert(
-  bare.includes(`scope: ${TOPIC}`),
-  'and names which topic the findings are about, so the tutor cannot misread them',
-);
+assert(!bare.includes('scope:'), 'with no topic the brief names no topic');
+assert(!bare.includes('next:'), 'and recommends no next step, which would be about one');
+assert(!bare.includes('weak:') && !bare.includes('misc:'), 'and makes no claim about a topic');
+assert(bare.includes('lvl:'), 'what is true without a topic survives — the unit level');
+
+// And the scoped brief is untouched: naming a topic still gets its full state.
+const scoped = buildStudentSnapshot(SUBJECT, TOPIC);
+assert(scoped.includes(`scope: ${TOPIC}`), 'a NAMED topic still names itself in the brief');
+assert(scoped.includes('next:'), 'and still carries its recommended next step');
 
 // ============================================================
 section('context markers — the per-turn blocks and the prompt must agree');

@@ -35,7 +35,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { X, Send, Loader2, Sparkles, ArrowLeft, ShieldCheck, CalendarCheck } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, ArrowLeft, ShieldCheck } from 'lucide-react';
 import TutorMascot, { type MascotExpression } from './TutorMascot';
 import TodayPlanCard from './TodayPlanCard';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
@@ -70,7 +70,6 @@ import { decideFallbackReason } from '@/lib/tutor-telemetry';
 // changes — no signatures, no other pages, no test rewrites.
 import type { TutorGreeting } from '@/lib/tutor-greeting';
 import type { ResolvedSuggestion } from '@/lib/agents/tools';
-import { MathText } from '@/components/practice/MathText';
 
 const MAX_LEN = 500;
 
@@ -250,6 +249,25 @@ export default function TutorBubble() {
    * when the callback was last built — the same stale-closure bug that once
    * made every turn report its screen as "login".
    */
+  /**
+   * The topic this CONVERSATION is about, once anything has established one.
+   *
+   * WARNING: WITHOUT IT EVERY FOLLOW-UP IS TOPIC-LESS. The student names the
+   * topic once — "על הסתברות" — and every message after it is "ולמה זה ככה",
+   * "תן דוגמה", "לא הבנתי". None of those contains a topic, so `resolveTopic`
+   * returns null on all of them, the grounding falls back to the generic
+   * curriculum map, and the topic bank cannot be searched. The conversation
+   * forgets what it is about between one message and the next.
+   *
+   * Set from the screen when it publishes one and from the message when it
+   * names one. Never guessed: it only ever holds a topic somebody actually
+   * stated, which is the whole difference between this and the cognitive
+   * fallback that had to be removed (see lib/tutor-context resolveCognitive).
+   *
+   * Cleared with the conversation, not with the question — a student who moves
+   * between exercises inside one topic is still in that topic.
+   */
+  const convTopicRef = useRef('');
   const msgsRef = useRef<Msg[]>([]);
   useEffect(() => {
     msgsRef.current = msgs;
@@ -343,6 +361,11 @@ export default function TutorBubble() {
       genRef.current++;
       setMsgs([]);
       setError(null);
+      // The visible thread starts fresh, so what the previous thread had
+      // established about its subject goes with it. Keeping it would ground a
+      // brand-new conversation in the last one's topic — quietly, and exactly
+      // the failure `resolveCognitive` was just stripped for.
+      convTopicRef.current = '';
     }
     if (k) lastQKeyRef.current = k;
   }, [focus]);
@@ -537,7 +560,10 @@ export default function TutorBubble() {
       //
       // The screen's topic when it has one; otherwise the topic named in the
       // message, or '' when that is not certain. See lib/resolve-topic.
-      const cardTopic = focusNow?.topic || resolveTopic(text) || '';
+      // The screen's topic, else the one this message names, else the one this
+      // CONVERSATION already established. See convTopicRef.
+      const cardTopic = focusNow?.topic || resolveTopic(text) || convTopicRef.current || '';
+      if (cardTopic) convTopicRef.current = cardTopic;
 
       let faqMissed = false;
       if (focusNow?.question && focusNow.topic) {
@@ -697,7 +723,12 @@ export default function TutorBubble() {
       let context = renderFocusContext(f);
       try {
         const { buildStudentSnapshot } = await import('@/lib/tutor-context');
-        const snap = buildStudentSnapshot('math5', f?.topic ?? '');
+        // The topic the request is actually grounded in — the screen's when it
+        // has one, otherwise the one named in the message. Passing '' here would
+        // drop the cognitive block on a turn that DID resolve a topic and is
+        // properly grounded in it. See resolveCognitive for why '' must never
+        // mean "pick the student's most-practised topic".
+        const snap = buildStudentSnapshot('math5', f?.topic || resolveTopic(text) || convTopicRef.current || '');
         context = [context, snap].filter(Boolean).join('\n\n').slice(0, 4000);
       } catch {
         /* snapshot is best-effort — never block the question */
@@ -803,7 +834,7 @@ export default function TutorBubble() {
         // `focusNow?.topic`, so a turn that DID resolve a topic and DID read
         // the right grounding still appeared in every report as "(ריק)" — the
         // fix looked like it had not deployed.
-        topic: focusNow?.topic || resolveTopic(text) || '',
+        topic: focusNow?.topic || resolveTopic(text) || convTopicRef.current || '',
         subtopic: focusNow?.subTopicId ?? '',
         questionId: String(traceQ?.id ?? ''),
         normalizedUserMessage: traceIntent.canonical,
@@ -850,7 +881,7 @@ export default function TutorBubble() {
             // entry instead of sharing the one the app's probability traffic
             // already warms. `resolveTopic` reads the topic out of the message
             // and returns null unless it is certain — see lib/resolve-topic.
-            topic: f?.topic || resolveTopic(text) || '',
+            topic: f?.topic || resolveTopic(text) || convTopicRef.current || '',
             conversationId: convIdRef.current,
             // A question was on screen, the local tutor AND its FAQ bank both
             // abstained — the server logs it as `[faq-miss]`, and that log is

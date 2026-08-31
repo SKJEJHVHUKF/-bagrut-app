@@ -51,7 +51,6 @@ import { studentTier, tierLabel } from '@/lib/adaptive';
 import { getPlan, getUnitLevel, daysUntilBagrut } from '@/lib/study-plan';
 import { dueCount } from '@/lib/review';
 import { getCognitiveState, type CognitiveState } from '@/lib/cognition';
-import { cognitionEntries } from '@/content/cognition';
 
 /**
  * 1200, down from 1800.
@@ -71,24 +70,36 @@ const MAX_LEN = 1200;
 const MIN_OBSERVATIONS = 3;
 
 /**
- * The cognitive state to brief the tutor on.
+ * The cognitive state to brief the tutor on — for a NAMED topic, or nothing.
  *
- * Prefers the topic the student is actually looking at. On the generic /chat
- * entry there is no topic, and without this fallback the richest signal the app
- * owns would reach the tutor ONLY from inside a lesson — so we pick whichever
- * mapped topic the student has the most evidence in. `getCognitiveState`
- * returns null for unmapped topics, so this is a no-op until a topic has a
- * catalog in content/cognition (today: complex numbers only).
+ * `getCognitiveState` returns null for unmapped topics, so this is already a
+ * no-op until a topic has a catalog in content/cognition.
  */
 export function resolveCognitive(subject: string, topic: string): CognitiveState | null {
   if (topic) return getCognitiveState(subject, topic);
-  let best: CognitiveState | null = null;
-  for (const map of cognitionEntries()) {
-    if (map.subject !== subject) continue;
-    const st = getCognitiveState(subject, map.topic);
-    if (st && (!best || st.totalObservations > best.totalObservations)) best = st;
-  }
-  return best;
+  // ⚠️ NO TOPIC MEANS NO COGNITIVE BLOCK. IT USED TO MEAN "GUESS ONE", AND THE
+  // GUESS WAS SHOWN TO THE STUDENT AS A FACT.
+  //
+  // This used to return the topic with the most observations, which is a
+  // reasonable default for a report and a disaster for a tutor. Reported twice
+  // with screenshots, on the roadmap where no topic is published:
+  //
+  //   תלמיד: תסביר לי משהו מהחומר
+  //   מורה:  אני רואה שאתה עובד על מספרים מרוכבים…
+  //   תלמיד: לא, אני עובד על הסתברות
+  //   מורה:  אבל STATE אומר שאתה עובד על מספרים מרוכבים
+  //
+  // The model invented nothing. It was handed `scope: מספרים מרוכבים` — the
+  // topic this student has practised most — and reported it faithfully. Two
+  // rounds of prompt rules ("never announce the topic", "never name a context
+  // block") could not beat it, because a prompt cannot stop a model from using
+  // data it can see. The fix is to stop showing it.
+  //
+  // What survives without a topic is what is true regardless of one: the unit
+  // level, the days to the exam, the frequent error type. Everything below —
+  // scope, weak, misc, next — is a claim ABOUT a topic, and on this screen
+  // nobody named one.
+  return null;
 }
 
 /** Trim a possibly-long answer string for the brief. */
