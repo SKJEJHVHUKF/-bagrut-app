@@ -408,6 +408,34 @@ const rev = resolveSuggestion(
 );
 assert(rev?.href === '/roadmap/review', 'review resolves with no topic in scope');
 
+// …but the LABEL is the promise. "חזור על הסתברות" opening the mixed daily
+// queue is the same broken-button class as an invented sub-topic: the student
+// is offered one topic and served every other one. The topic on screen is
+// deliberately a different one here — the chat wanders away from the drill the
+// bubble is floating over, so scoping to the focus would only break it
+// differently.
+assert(
+  resolveSuggestion(
+    { kind: 'review', label: 'חזור על הסתברות', reason: 'יש לך 10 שאלות' },
+    SUBJECT,
+    'טריגונומטריה',
+  )?.href === `/roadmap/review?topic=${encodeURIComponent('הסתברות')}`,
+  'a review button naming a topic opens that topic, not the screen it was suggested from',
+);
+assert(
+  resolveSuggestion(
+    { kind: 'review', label: 'חזרה על פונקציה מעריכית', reason: 'סיבה' },
+    SUBJECT,
+    '',
+  )?.href === `/roadmap/review?topic=${encodeURIComponent('פונקציה מעריכית')}`,
+  'a multi-word topic name resolves whole',
+);
+assert(
+  resolveSuggestion({ kind: 'review', label: 'נמשיך לחזרה', reason: 'סיבה' }, SUBJECT, 'הסתברות')
+    ?.href === '/roadmap/review',
+  'a review button naming no topic keeps the whole queue',
+);
+
 assert(
   resolveSuggestion({ kind: 'practice', subTopicTitle: realTitle, label: 'x', reason: 'y' }, SUBJECT, '') === null,
   'practice with no topic in scope is dropped',

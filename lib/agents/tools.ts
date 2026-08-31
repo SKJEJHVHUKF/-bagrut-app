@@ -28,7 +28,7 @@
  */
 
 import type { Tool } from '@anthropic-ai/sdk/resources/messages';
-import { getSubTopics } from '@/content/lessons';
+import { allLessonKeys, getSubTopics } from '@/content/lessons';
 import { hasGhostReplay } from '@/content/ghost-replay';
 
 /** Actions the client knows how to render. Anything else is dropped. */
@@ -106,7 +106,15 @@ export const TUTOR_TOOLS: Tool[] = [
         },
         label: {
           type: 'string',
-          description: 'Button text, Hebrew, max 4 words, imperative. e.g. "נתרגל דה-מואבר"',
+          // Not decoration on a review suggestion: the server reads the topic
+          // back OUT of this string (resolveSuggestion → topicNamedIn) and
+          // filters the queue to it. Naming a topic the model did not mean
+          // sends the student to the wrong queue; naming none is the mixed
+          // queue, which is a perfectly good answer — but it has to be chosen.
+          description:
+            'Button text, Hebrew, max 4 words, imperative. e.g. "נתרגל דה-מואבר". ' +
+            'For review, naming a topic here ("חזור על הסתברות") opens THAT topic\'s ' +
+            'queue; leaving it unnamed opens everything that is due.',
         },
         reason: {
           type: 'string',
@@ -146,6 +154,36 @@ function norm(s: string): string {
 }
 
 /**
+ * The topic a suggestion's own label names, or null.
+ *
+ * The review queue is mixed across topics, but the model words this button from
+ * the CONVERSATION — and the conversation is not always the topic on screen: a
+ * student sitting in a trigonometry drill can spend the whole chat asking about
+ * probability, and then gets "חזור על הסתברות". Sending that button to the
+ * mixed daily queue is a broken promise; sending it to the FOCUS topic would
+ * only break it differently. The label is the promise, so the label picks the
+ * destination.
+ *
+ * Matched against the real lesson registry, whose keys ARE the Hebrew topic
+ * names, so this can only narrow the queue to a topic that exists — and returns
+ * null (whole queue, as before) on anything it cannot match. Longest match
+ * wins, so "פונקציה מעריכית" does not lose to "פונקציות".
+ */
+function topicNamedIn(label: string): string | null {
+  const l = norm(label);
+  let best: string | null = null;
+  let bestLen = 0;
+  for (const { topic } of allLessonKeys()) {
+    const t = norm(topic);
+    if (t.length >= 4 && t.length > bestLen && l.includes(t)) {
+      best = topic;
+      bestLen = t.length;
+    }
+  }
+  return best;
+}
+
+/**
  * Turn a raw `suggest_action` input into something safe to render, or null.
  *
  * Every failure mode returns null rather than a best guess: an unknown kind, a
@@ -169,8 +207,14 @@ export function resolveSuggestion(
   if (!label || !reason) return null;
 
   if (kind === 'review') {
-    // The one destination that needs no content lookup — it is the whole queue.
-    return { kind, label, reason, href: '/roadmap/review' };
+    // The whole queue, unless the button names a topic — see topicNamedIn.
+    const named = topicNamedIn(label);
+    return {
+      kind,
+      label,
+      reason,
+      href: named ? `/roadmap/review?topic=${encodeURIComponent(named)}` : '/roadmap/review',
+    };
   }
 
   // practice / replay both need a real sub-topic to point at.
