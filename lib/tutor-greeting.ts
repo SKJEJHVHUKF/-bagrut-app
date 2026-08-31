@@ -22,6 +22,7 @@ import { dueCount } from '@/lib/review';
 import { getPlan, daysUntilBagrut } from '@/lib/study-plan';
 import { resolveCognitive } from '@/lib/tutor-context';
 import { buildTodayPlan } from '@/lib/daily-plan-client';
+import type { DailyTaskKind } from '@/lib/daily-plan';
 
 /** A destination lib/cognition already chose. We never invent one here. */
 export type GreetingAction = { label: string; href: string; reason: string };
@@ -31,7 +32,7 @@ export type TodayBrief = {
   /** "12 דקות · 2 משימות" — the commitment, stated before it is asked for. */
   summary: string;
   /** The ONE thing to start with. A teacher names a first move, not a menu. */
-  first: { title: string; why: string; href: string; minutes: number };
+  first: { kind: DailyTaskKind; title: string; why: string; href: string; minutes: number };
   /** How far the predicted grade is from the target, when both are known. */
   goalLine: string | null;
   /** Tasks beyond the first — counted, not listed. */
@@ -161,7 +162,7 @@ export function buildTutorGreeting(
       const count = plan.tasks.length;
       today = {
         summary: `${plan.totalMinutes} דקות · ${count === 1 ? 'משימה אחת' : `${count} משימות`}`,
-        first: { title: first.title, why: first.why, href: first.href, minutes: first.minutes },
+        first: { kind: first.kind, title: first.title, why: first.why, href: first.href, minutes: first.minutes },
         goalLine: plan.goal.headline,
         more: Math.max(0, count - 1),
       };

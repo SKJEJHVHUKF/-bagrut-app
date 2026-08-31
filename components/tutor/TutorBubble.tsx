@@ -37,6 +37,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { X, Send, Loader2, Sparkles, ArrowLeft, ShieldCheck, CalendarCheck } from 'lucide-react';
 import TutorMascot, { type MascotExpression } from './TutorMascot';
+import TodayPlanCard from './TodayPlanCard';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
 import {
   getTutorFocus,
@@ -708,7 +709,12 @@ export default function TutorBubble() {
         // refs), which is why the answer itself was about the right question
         // and only the label was wrong. This reads live too.
         screen: (typeof window === 'undefined' ? '' : window.location.pathname).split('/')[1] ?? '',
-        topic: focusNow?.topic ?? '',
+        // ⚠️ THE SAME TOPIC THE REQUEST WAS GROUNDED IN, resolved from the
+        // message when the screen had none. The first version recorded only
+        // `focusNow?.topic`, so a turn that DID resolve a topic and DID read
+        // the right grounding still appeared in every report as "(ריק)" — the
+        // fix looked like it had not deployed.
+        topic: focusNow?.topic || resolveTopic(text) || '',
         subtopic: focusNow?.subTopicId ?? '',
         questionId: String(traceQ?.id ?? ''),
         normalizedUserMessage: traceIntent.canonical,
@@ -1037,42 +1043,7 @@ export default function TutorBubble() {
               {/* messages */}
               <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
                 {msgs.length === 0 && !focus?.questionText && greeting?.today && (
-                  <div className="mb-4 rounded-2xl border border-violet-500/25 bg-violet-500/[0.06] p-3.5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CalendarCheck className="w-4 h-4 text-violet-700 flex-shrink-0" aria-hidden />
-                      <span className="text-xs font-black text-slate-900">התוכנית להיום</span>
-                      <span className="text-[11px] text-slate-500">{greeting.today.summary}</span>
-                    </div>
-                    {greeting.today.goalLine && (
-                      <p className="text-[11px] text-slate-600 mb-2 leading-snug">
-                        {greeting.today.goalLine}
-                      </p>
-                    )}
-                    <Link
-                      href={greeting.today.first.href}
-                      onClick={() => setOpen(false)}
-                      className="group block rounded-xl bg-white/70 border border-violet-500/25 hover:border-violet-500/50 px-3 py-2.5 transition-colors"
-                    >
-                      <span className="flex items-center gap-2">
-                        <span className="flex-1 min-w-0">
-                          {/* MathText: a 'fix' task's title is the misconception
-                              title, which carries $…$ islands. */}
-                          <span className="block text-sm font-bold text-slate-800">
-                            <MathText inline>{greeting.today.first.title}</MathText>
-                          </span>
-                          <span className="block text-[11px] text-slate-600 leading-snug">
-                            <MathText inline>{greeting.today.first.why}</MathText>
-                          </span>
-                        </span>
-                        <ArrowLeft className="w-4 h-4 text-violet-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
-                      </span>
-                    </Link>
-                    {greeting.today.more > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        ואחר כך עוד {greeting.today.more}, נעבור אחת-אחת.
-                      </p>
-                    )}
-                  </div>
+                  <TodayPlanCard today={greeting.today} onNavigate={() => setOpen(false)} />
                 )}
 
                 {msgs.length === 0 && (
