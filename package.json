@@ -88,6 +88,7 @@
     "test:mathscan": "tsx scripts/test-mathscan.ts",
     "verify:bank": "tsx scripts/verify-bank.ts",
     "verify:571a-2025": "tsx scripts/verify-2025-571a.ts",
+    "verify:571b-2025": "tsx scripts/verify-2025-571b.ts",
     "verify:571-2026": "tsx scripts/verify-2026-571.ts",
     "verify:571b-2026": "tsx scripts/verify-2026-571b.ts",
     "test:bank": "tsx scripts/test-bank.ts",
