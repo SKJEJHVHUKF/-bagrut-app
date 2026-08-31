@@ -529,6 +529,16 @@ export default function TutorBubble() {
       // list asked in many phrasings, and that list is authored per question
       // (content/tutor-faq, matched by lib/tutor-faq). Lazy: the bank for a
       // topic is imported the first time a student here types something.
+      // WARNING: DECLARED HERE, NOT NEXT TO THE COMPILER THAT ALSO USES IT.
+      // The FAQ stage below reads it, and a `const` declared after its first
+      // reader is a ReferenceError at run time that TypeScript does not flag
+      // when the reader sits in the same function body. This exact shape was
+      // nearly shipped once already in this file.
+      //
+      // The screen's topic when it has one; otherwise the topic named in the
+      // message, or '' when that is not certain. See lib/resolve-topic.
+      const cardTopic = focusNow?.topic || resolveTopic(text) || '';
+
       let faqMissed = false;
       if (focusNow?.question && focusNow.topic) {
         try {
@@ -545,6 +555,66 @@ export default function TutorBubble() {
           faqMissed = true;
         } catch {
           /* no bank for this topic yet — the model handles it, as before */
+        }
+      } else {
+        // ===== the SAME banks, entered from the other door =====
+        //
+        // ⚠️ A SEPARATE FUNCTION, NOT A LOOSER `answerFromFaq`, AND THAT IS THE
+        // WHOLE SAFETY MODEL. Itay: "תבנה כניסות נפרדות כך שתלמיד שואל שאלה
+        // הבנקים לא מתערבבים וכך הוא לא יקבל תשובה אחרת".
+        //
+        // With a question on screen the bank search is fenced to that question's
+        // own sub-topic, because an answer about a DIFFERENT exercise is about
+        // the wrong numbers — measured, 26.8% reach for 5.6% wrong answers, and
+        // rejected on those numbers. That fence stays exactly where it is; this
+        // branch cannot even be reached while `focusNow?.question` exists.
+        //
+        // With NO exercise on screen there is no other exercise to confuse it
+        // with, so `answerTopicFaq` searches the whole topic — concept, mistake
+        // and check entries only, and never one whose wording is bound to its
+        // own exercise. MEASURED (npm run measure:topicfaq) over 3,657 authored
+        // phrasings: 47.3% answered with no model call, 1.1% of hits from
+        // another unit.
+        try {
+          const { answerTopicFaq } = await import('@/lib/tutor-faq');
+          // null topic = EVERY authored bank. MEASURED (npm run measure:topicfaq)
+          // over 1,219 phrasings with no topic named: 49.1% answered with no
+          // model call, and ZERO from the wrong topic. The sub-topic fence was
+          // rejected at 5.6% wrong; this is 0.0%.
+          const hit = await answerTopicFaq(text, cardTopic || null);
+          if (hit) {
+            setMsgs((m) => [
+              ...m,
+              { id: `a-${Date.now()}`, role: 'assistant', text: hit.text, local: true },
+            ]);
+            setSending(false);
+            return;
+          }
+        } catch {
+          /* no bank for this topic yet */
+        }
+      }
+
+      // ===== and the bank that belongs to no topic at all =====
+      //
+      // "איך כדאי ללמוד", "מה יש בנוסחאון", "מה לעשות כשאני נתקע" — asked
+      // constantly on this screen, answered by nothing, and every one of them
+      // a model call. Runs LAST of the banks and only without a question, so
+      // it can never speak over an answer written for the exercise on screen.
+      if (!focusNow?.question) {
+        try {
+          const { answerGeneralFaq } = await import('@/lib/tutor-faq');
+          const hit = await answerGeneralFaq(text);
+          if (hit) {
+            setMsgs((m) => [
+              ...m,
+              { id: `a-${Date.now()}`, role: 'assistant', text: hit.text, local: true },
+            ]);
+            setSending(false);
+            return;
+          }
+        } catch {
+          /* the general bank is optional */
         }
       }
 
@@ -576,7 +646,6 @@ export default function TutorBubble() {
       // branch runs BEFORE the no-question guard (see tutor-compiler section
       // 2). What it actually needs is a topic, and `resolveTopic` finds one in
       // the message when the screen has none.
-      const cardTopic = focusNow?.topic || resolveTopic(text) || '';
       if (tutorFlag('compiler') && (focusNow || cardTopic)) {
         try {
           const { compileTutorResponse } = await import('@/lib/tutor-compiler');

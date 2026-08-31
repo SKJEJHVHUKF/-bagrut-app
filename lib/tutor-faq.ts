@@ -546,6 +546,25 @@ export function pointsAtThisExercise(message: string): boolean {
   );
 }
 
+/**
+ * The narrow version of `pointsAtThisExercise`, for the screens that have none.
+ *
+ * WARNING: THE WIDE ONE IS WRONG HERE, AND IT SILENTLY ATE REAL QUESTIONS.
+ * `pointsAtThisExercise` rejects any digit and the words פה, כאן, הזה, הזאת,
+ * שלך — correct when a student is looking at an exercise, where all of those
+ * mean "this one". On the roadmap there is no "this one": "איך עובדת
+ * האפליקציה הזאת" and "מאיפה התשובות שלך" are ordinary questions with authored
+ * answers, and the wide guard refused both.
+ *
+ * What is left is the words that cannot mean anything ELSE: a step, a line, a
+ * סעיף, or something the student did in a working he can see.
+ */
+export function pointsAtSomethingOnScreen(message: string): boolean {
+  return /(?:^|[^א-ת])(?:בשורה|בשלב|בסעיף|שכתבת|שעשית|שחילקת|שהצבת|שחישבת|למעלה|למטה)(?:[^א-ת]|$)/.test(
+    message,
+  );
+}
+
 export function mentionsForeignNumber(answer: string, ownText: string): boolean {
   const own = new Set(ownText.match(/\d+(?:\.\d+)?/g) ?? []);
   for (const n of answer.match(/\d+(?:\.\d+)?/g) ?? []) {
@@ -577,6 +596,155 @@ function answered(focus: TutorFocus): boolean {
  * Never throws: a topic without a bank, a unit without entries, or a message
  * that matches nothing all return null and the caller goes to the model.
  */
+/**
+ * An entry that is grounded in ITS OWN exercise, whatever kind it claims to be.
+ *
+ * A `concept` answer that opens "בשאלה שלנו מוציאים 2 כדורים" is a general
+ * explanation on paper and an exercise-specific one in practice. Inside a
+ * question that is harmless — the student has an exercise to map it onto. On a
+ * screen with no exercise at all it is nonsense, so it is refused there.
+ */
+const BOUND_TO_ITS_EXERCISE =
+  /(?:^|[^א-ת])(?:בשאלה\s*(?:הזאת|הזו|שלנו|שלפנינו)|בסעיף\s*(?:הזה|א|ב|ג|ד)|בתרגיל\s*(?:הזה|שלנו)|כאן\s*(?:יש|מוציאים|בוחרים)|בדוגמה\s*(?:הזאת|שלנו))/;
+
+/**
+ * The whole topic's bank, for a student with NO exercise on screen.
+ *
+ * ============================================================
+ * WHY THIS IS A SEPARATE ENTRY POINT AND NOT A LOOSER `answerFromFaq`
+ * ============================================================
+ * Itay: "ברגע שהוא לא במסלול הלמידה עצמו בתוך שאלות, שיהיה לו את כל הבנקים".
+ *
+ * `answerFromFaq` returns null without a question, so on the roadmap index the
+ * ~3,500 authored entries — the largest body of Hebrew this app owns — were
+ * never searched at all. Every question there went to the model.
+ *
+ * ⚠️ AND THE MEASUREMENT THAT REJECTED TOPIC-WIDE SEARCH DOES NOT APPLY HERE.
+ * Stage 2 of `answerFromFaq` deliberately stays inside the sub-topic:
+ *
+ *   same sub-topic only   fires 15.5% · unsafe 1.6%   ← shipping
+ *   + whole topic         fires 26.8% · unsafe 5.6%
+ *
+ * What made the wide pool unsafe there is that the student is looking at an
+ * exercise, so an answer about a DIFFERENT exercise is about the wrong numbers.
+ * With no exercise on screen there is no other exercise to confuse it with: the
+ * question is general, and a `concept` / `mistake` / `check` entry about the
+ * topic is exactly what it asks for. The guard that replaces the sub-topic
+ * fence is BOUND_TO_ITS_EXERCISE, which drops the entries that only LOOK
+ * general.
+ *
+ * Same TRANSFERABLE kinds and same threshold as stage 2 — nothing is loosened
+ * except the pool, and only on the screen where the tightening bought nothing.
+ */
+/**
+ * The bank that belongs to no topic — method, structure, how this app works.
+ *
+ * ⚠️ SEARCHED ONLY WHEN NOTHING ELSE COULD BE, AND WITH THE SAME THRESHOLD.
+ * It is the widest pool in the product: nothing keys it, so nothing narrows a
+ * wrong answer. It runs last, after the topic bank has declined, and it is
+ * deliberately ten entries rather than a hundred — an entry earns its place by
+ * being asked often AND having one answer that is true for every student on
+ * every day. See content/tutor-faq/general.ts for what that rules out.
+ */
+export async function answerGeneralFaq(message: string): Promise<FaqAnswer | null> {
+  if (!message.trim()) return null;
+  if (pointsAtSomethingOnScreen(message)) return null;
+
+  let pool: TutorFaq[];
+  try {
+    pool = (await import('@/content/tutor-faq/general')).GENERAL_FAQ;
+  } catch {
+    return null;
+  }
+  if (!pool?.length) return null;
+
+  const idf = buildCorpusIdf(pool.flatMap((f) => [f.q, ...f.alts]));
+  // WARNING: ONE CONTENT WORD IS ENOUGH HERE, AND ONLY HERE.
+  //
+  //  exists for the topic pools, where hundreds of
+  // entries discuss the same mathematics and a single shared word is a
+  // coincidence. This bank is ten entries about ten unrelated things, so one
+  // strong word is decisive — measured, "מה לעשות כשאני נתקע בשאלה" matched its
+  // own entry at score 1.000 and margin 1.000 and was refused for having only
+  // one word the matcher counts.
+  //
+  // The threshold stays at the transfer level, and scripts/test-general-faq
+  // asserts that maths questions still get nothing from this pool.
+  const hit = matchFaq(buildFaqIndex(pool, { idf }), message, {
+    threshold: FAQ_TRANSFER_THRESHOLD,
+    minContentMatches: 1,
+  });
+  if (!hit) return null;
+
+  return { source: 'transfer', faqId: hit.faq.id, score: hit.score, text: hit.faq.a };
+}
+
+/**
+ * Every topic whose bank is authored. The pool when no single topic is named.
+ *
+ * WARNING: HEBREW KEYS, because `loadFaqBank` is keyed by the topic name the
+ * lessons register, not by the file name. Getting this wrong fails silently:
+ * the import throws, the catch swallows it, and the layer simply never fires.
+ */
+const BANKED_TOPICS = ['הסתברות', 'סדרות', 'טריגונומטריה', 'גיאומטריה אוקלידית'];
+
+export async function answerTopicFaq(
+  message: string,
+  topic: string | null,
+  subject = 'math5',
+): Promise<FaqAnswer | null> {
+  if (!message.trim()) return null;
+  // A message pointing at "this step" or "this exercise" is about something
+  // the student is looking at, and on this screen there is nothing to look at.
+  if (pointsAtSomethingOnScreen(message)) return null;
+
+  // WARNING: A NAMED TOPIC IS ONE BANK. NO TOPIC IS ALL OF THEM.
+  //
+  // Itay: "שיהיה לו צינור לכל הבנקים הקיימים והוא ידע לענות בצורה מדויקת בהקשר
+  // לשאלה בלי שימוש ב-API". When the message names a topic, searching only that
+  // topic is both cheaper and safer. When it names none — "מה זה בעצם משתנה
+  // מקרי", asked from the roadmap — the right pool is everything authored,
+  // because the question is about mathematics and the app has ~3,500 authored
+  // answers about mathematics.
+  const banks: string[] = topic ? [topic] : BANKED_TOPICS;
+  const pool: TutorFaq[] = [];
+  for (const t of banks) {
+    let bank: Record<string, TutorFaq[]> | null = null;
+    try {
+      bank = (await loadFaqBank(subject, t)) as Record<string, TutorFaq[]>;
+    } catch {
+      continue; // a topic with no bank authored yet
+    }
+    if (!bank) continue;
+    for (const list of Object.values(bank)) {
+      for (const f of list) {
+        if (!TRANSFERABLE.has(f.kind)) continue;
+      // `reveals` entries hand over an answer. With no exercise on screen there
+      // is no ladder to be early on, but there is also no reason to volunteer
+      // one, and the conservative choice is the one that cannot embarrass us.
+        if (f.reveals) continue;
+        if (BOUND_TO_ITS_EXERCISE.test(f.a)) continue;
+        pool.push(f);
+      }
+    }
+  }
+  if (pool.length === 0) return null;
+
+  const idf = buildCorpusIdf(pool.flatMap((f) => [f.q, ...f.alts]));
+  const hit = matchFaq(buildFaqIndex(pool, { idf }), message, {
+    threshold: FAQ_TRANSFER_THRESHOLD,
+    minContentMatches: 2,
+  });
+  if (!hit) return null;
+
+  return {
+    source: 'transfer',
+    faqId: hit.faq.id,
+    score: hit.score,
+    text: hit.faq.a,
+  };
+}
+
 export async function answerFromFaq(message: string, focus: TutorFocus | null, subject = 'math5'): Promise<FaqAnswer | null> {
   const q = focus?.question;
   if (!q || !focus?.topic) return null;
