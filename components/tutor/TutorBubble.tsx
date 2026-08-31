@@ -53,7 +53,7 @@ import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
 import { AI_DAILY_LIMIT } from '@/lib/access';
 import { offTopicRedirect } from '@/lib/off-topic';
 import { planAnswer } from '@/lib/tutor-plan-answer';
-import { resolveTopic } from '@/lib/resolve-topic';
+import { resolveTopic, isTopicOnly } from '@/lib/resolve-topic';
 import { metaAnswer } from '@/lib/tutor-meta-asks';
 import { expectationOf, nextStepAfter, type Pending } from '@/lib/tutor-pending';
 import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
@@ -564,21 +564,41 @@ export default function TutorBubble() {
       // for a question about the TOPIC.
       //
       // Off for everyone until `localStorage.setItem('mathup-flags','compiler')`.
-      if (tutorFlag('compiler') && focusNow) {
+      // WARNING: A TOPIC IS ENOUGH. IT DOES NOT NEED A QUESTION ON SCREEN.
+      //
+      // This used to require `focusNow`, which meant Topic Cards — the one
+      // layer written for "tell me about this topic" — could never fire on the
+      // roadmap index, the screen where that is the ONLY thing a student can
+      // ask. Same shape as the `if (focusNow)` that kept the whole router dark
+      // there.
+      //
+      // The compiler already reads `activeQuestion` as nullable and its card
+      // branch runs BEFORE the no-question guard (see tutor-compiler section
+      // 2). What it actually needs is a topic, and `resolveTopic` finds one in
+      // the message when the screen has none.
+      const cardTopic = focusNow?.topic || resolveTopic(text) || '';
+      if (tutorFlag('compiler') && (focusNow || cardTopic)) {
         try {
           const { compileTutorResponse } = await import('@/lib/tutor-compiler');
           const compiled = await compileTutorResponse({
             message: text,
-            activeQuestion: (focusNow.question ?? null) as Record<string, unknown> | null,
-            selectedAnswer: typeof focusNow.chosenIndex === 'number' ? focusNow.chosenIndex : null,
-            topic: focusNow.topic ?? '',
-            formulas: focusNow.subTopic?.formulas,
-            keyPoints: focusNow.subTopic?.keyPoints,
+            // WARNING: A BARE TOPIC NAME IS A `concept` ASK, and nothing else
+            // classifies it. The tutor is told to ask "על איזה נושא אתה עובד
+            // עכשיו?" when no SCREEN block names one, and the student answers
+            // "על הסתברות" — two words, no verb. That reply to the tutor's own
+            // question cost $0.0047 while "תסביר את הסתברות", the same request
+            // one word longer, was free from an authored card.
+            ...(isTopicOnly(text) ? { canonicalIntent: 'concept' as const } : {}),
+            activeQuestion: (focusNow?.question ?? null) as Record<string, unknown> | null,
+            selectedAnswer: typeof focusNow?.chosenIndex === 'number' ? focusNow.chosenIndex : null,
+            topic: cardTopic,
+            formulas: focusNow?.subTopic?.formulas,
+            keyPoints: focusNow?.subTopic?.keyPoints,
             // A lesson screen already has its sub-topic's questions; /quiz
             // publishes `siblings` because it has no sub-topic at all.
             siblings:
-              focusNow.siblings ??
-              focusNow.subTopic?.questions?.map((x) => ({
+              focusNow?.siblings ??
+              focusNow?.subTopic?.questions?.map((x) => ({
                 id: x.id,
                 question: x.question,
                 hint: x.hint,

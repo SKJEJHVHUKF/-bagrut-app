@@ -11,7 +11,7 @@
  * here is asymmetric: a miss is acceptable, a mis-resolve is a failure.
  */
 
-import { resolveTopic, TOPIC_PHRASES } from '../lib/resolve-topic';
+import { resolveTopic, isTopicOnly, TOPIC_PHRASES } from '../lib/resolve-topic';
 import { MATH5_CURRICULUM } from '../content/bagrut-curriculum';
 
 let failed = 0;
@@ -48,6 +48,26 @@ for (const msg of [
 ]) {
   ok(resolveTopic(msg) === null, `"${msg}" → null`);
 }
+
+console.log('\n=== a message that is ONLY a topic name ===\n');
+// The tutor asks "על איזה נושא אתה עובד עכשיו?" and the student answers in two
+// words. That reply cost $0.0047 while "תסביר את הסתברות" — the same request
+// with one more word — was free from an authored Topic Card.
+for (const msg of ['על הסתברות', 'הסתברות', 'סדרות', 'על סדרות בבקשה', 'אני עובד על טריגונומטריה']) {
+  ok(isTopicOnly(msg), `"${msg}" is a bare topic name`);
+}
+// ⚠️ AND WHAT IT MUST NOT SWALLOW. A message that names a topic AND asks
+// something specific is a real question, and answering it with the topic's
+// overview card is answering a different question.
+for (const msg of [
+  'מה ההסתברות לקבל שני אדומים',
+  'למה בהסתברות מותנית מחלקים',
+  'איך פותרים סדרה הנדסית עם מנה שלילית',
+  'תן לי תרגיל בהסתברות',
+]) {
+  ok(!isTopicOnly(msg), `"${msg}" is a real question, not a bare topic name`);
+}
+ok(!isTopicOnly('תסביר משהו מהחומר'), 'and a message with no topic at all is not one');
 
 console.log('\n=== every phrase resolves to exactly ONE topic ===\n');
 // ⚠️ THE ASSERTION THAT KEEPS THE LIST HONEST. A phrase that appears in two

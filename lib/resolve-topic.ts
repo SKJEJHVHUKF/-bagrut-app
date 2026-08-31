@@ -89,6 +89,37 @@ export const TOPIC_PHRASES = PHRASES;
  * `null` is the safe answer and the common one. It means the turn goes to the
  * model with the generic curriculum map, exactly as it does today.
  */
+/**
+ * Words that carry no ask of their own, so a message made only of these plus a
+ * topic name is a message that names a topic and nothing else.
+ */
+const FILLER = /^(?:על|את|של|לגבי|בנושא|נושא|ה|ב|ל|מ|תסביר|הסבר|לי|אני|עובד|עובדת|עכשיו|בבקשה|תודה|כן|אז|זה|זהו)$/;
+
+/**
+ * Is this message nothing but the name of a topic?
+ *
+ * ⚠️ IT EXISTS BECAUSE THE TUTOR ASKS THE QUESTION THAT PRODUCES IT. With no
+ * SCREEN block the tutor is instructed to ask "על איזה נושא אתה עובד עכשיו?",
+ * and the student answers "על הסתברות" — two words, no verb, no question mark.
+ * Nothing classified it, so the reply to the tutor's own question went to the
+ * model at $0.0047, while "תסביר את הסתברות" — the same request with one more
+ * word — was answered from an authored Topic Card for free.
+ *
+ * A message that is a topic name and nothing else can only mean one thing:
+ * tell me about this topic. The caller turns it into a `concept` ask.
+ */
+export function isTopicOnly(message: string): boolean {
+  const topic = resolveTopic(message);
+  if (!topic) return false;
+  let rest = (message ?? '').trim();
+  // Strip every phrase that pointed at this topic, longest first.
+  for (const { topic: t, phrase } of PHRASES) {
+    if (t === topic) rest = rest.split(phrase).join(' ');
+  }
+  const words = rest.replace(/[^֐-׿a-zA-Z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+  return words.every((w) => FILLER.test(w));
+}
+
 export function resolveTopic(message: string): string | null {
   const text = (message ?? '').trim();
   if (!text || text.length > 300) return null;
