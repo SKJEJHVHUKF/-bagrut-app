@@ -35,7 +35,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { X, Send, Loader2, Sparkles, ArrowLeft, GraduationCap, ShieldCheck, CalendarCheck } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, ArrowLeft, ShieldCheck, CalendarCheck } from 'lucide-react';
+import TutorMascot, { type MascotExpression } from './TutorMascot';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
 import {
   getTutorFocus,
@@ -127,6 +128,27 @@ export default function TutorBubble() {
   // The nudge is dismissed per question, not globally — otherwise the first
   // dismissal silences the tutor for the rest of the session.
   const [nudgeDismissed, setNudgeDismissed] = useState<string | null>(null);
+  /**
+   * A verdict is a MOMENT, not a state: the mascot celebrates or leans in for
+   * a couple of seconds and then goes back to being present. Held in state and
+   * not in the `lastVerdictRef` beside it, because that ref exists precisely
+   * so a verdict does NOT re-render — and a face that reacts has to.
+   *
+   * The nonce is load-bearing: two correct answers in a row produce the same
+   * kind, and without it React bails on the identical value, the effect never
+   * re-runs, and the second celebration silently does not happen.
+   */
+  const [reaction, setReaction] = useState<{ kind: 'happy' | 'oops'; n: number } | null>(null);
+  const reactionN = useRef(0);
+  const react = useCallback((kind: 'happy' | 'oops') => {
+    reactionN.current += 1;
+    setReaction({ kind, n: reactionN.current });
+  }, []);
+  useEffect(() => {
+    if (!reaction) return;
+    const t = setTimeout(() => setReaction(null), 2600);
+    return () => clearTimeout(t);
+  }, [reaction]);
   const endRef = useRef<HTMLDivElement>(null);
   // Which rungs of authored help were already served for the CURRENT question,
   // so a second "אני תקוע" walks down the ladder instead of repeating itself.
@@ -405,6 +427,8 @@ export default function TutorBubble() {
             // layer that made it, instead of by a model that cannot see it.
             // See TurnState.lastVerdict in lib/tutor-router.
             lastVerdictRef.current = graded.verdict === 'correct' ? 'correct' : 'wrong';
+            // The face reacts to the same verdict the text does.
+            react(graded.verdict === 'correct' ? 'happy' : 'oops');
             setMsgs((m) => [
               ...m,
               { id: `a-${Date.now()}`, role: 'assistant', text: graded.text, local: true },
@@ -817,7 +841,10 @@ export default function TutorBubble() {
         setSending(false);
       }
     },
-    [sending],
+    // `react` is a useCallback with an empty dep list, so it is stable and this
+    // does not widen when send() re-creates. Listed anyway — an omitted stable
+    // dep is a trap for whoever gives it dependencies later.
+    [sending, react],
   );
 
   function openWithNudge() {
@@ -841,6 +868,32 @@ export default function TutorBubble() {
   // between routes and crash on navigation.
   if (hidden) return null;
 
+  /**
+   * The mascot's face IS the status indicator — it thinks while the request is
+   * in flight and talks while the answer streams in, which is one spinner the
+   * student does not have to decode. The assistant message only exists once
+   * the first chunk lands (see the SSE loop), so its presence is the honest
+   * boundary between "waiting" and "answering".
+   *
+   * Order matters. A fresh verdict outranks everything, then the live request,
+   * then the standing state of the screen. `focus.wrongAnswer` is filled ONLY
+   * after a wrong answer (lib/tutor-presence), so it is a real signal and not
+   * a guess — the face stays concerned for as long as the student is still
+   * sitting on the question they missed, which is exactly the window where
+   * "someone noticed" is worth something.
+   */
+  const mascotMood: MascotExpression = reaction
+    ? reaction.kind
+    : sending
+      ? msgs[msgs.length - 1]?.role === 'assistant'
+        ? 'talking'
+        : 'thinking'
+      : focus?.wrongAnswer
+        ? 'oops'
+        : focus?.questionText
+          ? 'curious'
+          : 'idle';
+
   return (
     <>
       {/* ===== the bubble ===== */}
@@ -850,13 +903,32 @@ export default function TutorBubble() {
       <button
         onClick={openWithNudge}
         aria-label="המורה הפרטי"
-        className="fixed left-4 bottom-20 md:bottom-6 z-[58] w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-xl shadow-violet-500/30 ring-2 ring-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+        // Deep ink, NOT violet. The mascot wears a violet headset; a violet pod
+        // behind it stacks the same hue twice and the silhouette dissolves —
+        // caught in the raster, it read as one purple blob with a face. Ink is
+        // also the brand's own "dark object that glows" move.
+        className="fixed left-4 bottom-20 md:bottom-6 z-[58] w-14 h-14 rounded-full bg-gradient-to-br from-[#3B3480] via-[#241E7A] to-[#12102E] shadow-xl shadow-violet-900/40 ring-2 ring-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
       >
-        <GraduationCap className="w-6 h-6" />
+        {/* The mascot is deliberately LARGER than its pod and breaks out of
+            it — antenna over the top rim, ear pods past the sides. Something
+            that fits neatly inside the circle is an icon again, and an icon
+            is exactly what this stopped being. The pod stays because the
+            56px circle is the tap target and the ring is what separates a
+            pearl-white character from a pale page. */}
+        <TutorMascot
+          variant="bust"
+          // The launcher is where a reaction actually earns its keep: the panel
+          // is shut, so this closed bubble in the corner is the only thing that
+          // can notice the student just got it wrong.
+          expression={showNudge ? 'oops' : 'idle'}
+          className="absolute w-16 h-16 pointer-events-none"
+        />
+        {/* Bottom corner, not top: the antenna bulb owns the top-right and an
+            amber dot on top of a glowing cyan one reads as a rendering bug. */}
         {showNudge && (
           <>
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 ring-2 ring-white" />
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 animate-ping opacity-75" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 ring-2 ring-white" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 animate-ping opacity-75" />
           </>
         )}
       </button>
@@ -909,8 +981,15 @@ export default function TutorBubble() {
               className="fixed z-[73] left-3 right-3 bottom-3 md:right-auto md:left-5 md:bottom-5 md:w-[400px] h-[70vh] md:h-[600px] max-h-[calc(100vh-2rem)] bg-[var(--background)] border border-slate-900/10 rounded-3xl shadow-2xl shadow-slate-900/25 flex flex-col overflow-hidden"
             >
               {/* header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-900/[0.08] flex-shrink-0">
-                <div className="min-w-0">
+              <div className="flex items-center gap-2.5 justify-between px-4 py-3 border-b border-slate-900/[0.08] flex-shrink-0">
+                {/* Same character as the launcher, so opening the panel feels
+                    like the thing you tapped came with you. */}
+                <span className="relative flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-[#3B3480] via-[#241E7A] to-[#12102E] ring-1 ring-white/80 shadow-md shadow-violet-900/30 flex items-center justify-center">
+                  {/* compact: at 40px the mic boom stops being a detail and
+                      becomes a smudge on the cheek. */}
+                  <TutorMascot variant="bust" expression={mascotMood} compact className="absolute w-10 h-10" />
+                </span>
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-black text-slate-900">המורה הפרטי שלך</div>
                   {/* Proof it can see the screen. Without this line the student
                       has no reason to believe it and re-types the question. */}
@@ -970,13 +1049,27 @@ export default function TutorBubble() {
 
                 {msgs.length === 0 && (
                   <div className="pt-2">
-                    <p className="text-sm text-slate-600 mb-3">
-                      {focus?.wrongAnswer
-                        ? 'בוא נבין מה קרה בשאלה הזאת — בלי שאתן לך את התשובה.'
-                        : focus?.questionText
-                          ? 'אני רואה את השאלה שלפניך. במה נתחיל?'
-                          : 'שאל אותי כל דבר. אני זוכר על מה עבדת.'}
-                    </p>
+                    {/* The one spot with room for the whole character. The
+                        panel is RTL, so the first flex child lands on the
+                        right and the line reads as coming out of its mouth. */}
+                    <div className="flex items-start gap-2.5 mb-3">
+                      <span className="relative flex-shrink-0 w-[4.5rem] h-[4.5rem] -mt-1">
+                        {/* A pearl-white mascot dissolves into a near-white
+                            panel; this pool of violet is its ground. */}
+                        <span
+                          className="absolute inset-x-2 bottom-2 h-8 rounded-full bg-violet-500/15 blur-md"
+                          aria-hidden
+                        />
+                        <TutorMascot variant="full" expression={mascotMood} className="relative w-full h-full" />
+                      </span>
+                      <p className="flex-1 text-sm text-slate-700 leading-relaxed bg-slate-900/[0.035] border border-slate-900/[0.07] rounded-2xl rounded-tr-md px-3.5 py-2.5">
+                        {focus?.wrongAnswer
+                          ? 'בוא נבין מה קרה בשאלה הזאת — בלי שאתן לך את התשובה.'
+                          : focus?.questionText
+                            ? 'אני רואה את השאלה שלפניך. במה נתחיל?'
+                            : 'שאל אותי כל דבר. אני זוכר על מה עבדת.'}
+                      </p>
+                    </div>
                     <div className="space-y-2">
                       {prompts.map((p) => (
                         <button
