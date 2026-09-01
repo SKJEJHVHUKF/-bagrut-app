@@ -196,6 +196,35 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     }
   }
 
+  console.log('\n=== the menu is shown once, never in a loop ===\n');
+  {
+    // ⚠️ THE STUDENT COULD NOT GET OUT. topicOverview answers "הסתברות" with a
+    // list of card subjects — "עם החזרה", "הסתברות מותנית". Those resolve to
+    // the SAME topic and leave only filler behind, so each one is itself a
+    // bare topic name: pick an item off the menu, get the identical menu back.
+    // Measured at 2 of 25 items, with no way out but rephrasing.
+    const first = await turn('הסתברות');
+    ok(first.answered && first.layer === 'topic-overview', 'the menu is offered once');
+
+    const items = (first.answered ? first.text : '')
+      .split('\n')
+      .filter((l) => l.startsWith('· '))
+      .map((l) => l.slice(2).trim());
+    ok(items.length > 0, `the menu has items (${items.length})`);
+
+    let looped = 0;
+    for (const item of items) {
+      const back = await turn(item, { ...first.state, tutorSpoke: true });
+      if (back.answered && back.layer === 'topic-overview') looped++;
+    }
+    ok(looped === 0, looped === 0 ? 'and picking any item never returns it again' : `${looped} of ${items.length} items loop back to the menu`);
+
+    // A DIFFERENT topic must still get its own menu — the guard is per topic,
+    // not a global "menus are done now".
+    const other = await turn('סדרות', { ...first.state, tutorSpoke: true });
+    ok(other.answered && other.layer === 'topic-overview', 'a different topic still gets its own menu');
+  }
+
   console.log('\n=== and /chat keeps its controls at BOTH breakpoints ===\n');
   {
     // ⚠️ WHY THIS IS ASSERTED ON THE SOURCE. /chat is behind auth — it 307s to

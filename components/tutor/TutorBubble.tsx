@@ -264,6 +264,8 @@ export default function TutorBubble() {
    * between exercises inside one topic is still in that topic.
    */
   const convTopicRef = useRef('');
+  /** The topic whose menu was already shown — see ChainState.overviewFor. */
+  const overviewForRef = useRef('');
   const msgsRef = useRef<Msg[]>([]);
   useEffect(() => {
     msgsRef.current = msgs;
@@ -362,6 +364,7 @@ export default function TutorBubble() {
       // brand-new conversation in the last one's topic — quietly, and exactly
       // the failure `resolveCognitive` was just stripped for.
       convTopicRef.current = '';
+      overviewForRef.current = '';
     }
     if (k) lastQKeyRef.current = k;
   }, [focus]);
@@ -446,6 +449,7 @@ export default function TutorBubble() {
           lastVerdict: lastVerdictNow,
           lastComplaint: lastComplaintRef.current,
           convTopic: convTopicRef.current,
+          overviewFor: overviewForRef.current,
         },
         // The spinner rises where it always did — after the instant layers and
         // before the first awaited bank import — so an answered "אוקיי" still
@@ -458,6 +462,7 @@ export default function TutorBubble() {
       lastVerdictRef.current = chain.state.lastVerdict;
       lastComplaintRef.current = chain.state.lastComplaint;
       convTopicRef.current = chain.state.convTopic;
+      overviewForRef.current = chain.state.overviewFor;
 
       if (chain.answered) {
         // The face reacts to the same verdict the text does.

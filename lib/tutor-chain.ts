@@ -83,6 +83,18 @@ export type ChainState = {
   lastComplaint: boolean;
   /** The topic this CONVERSATION established, when no screen names one. */
   convTopic: string;
+  /**
+   * The topic whose menu was already shown, so it is never shown twice.
+   *
+   * ⚠️ WITHOUT THIS THE MENU LOOPS. topicOverview answers a bare topic name
+   * with a list of card subjects — "עם החזרה", "הסתברות מותנית". Those
+   * subjects resolve to the SAME topic and leave only filler behind, so they
+   * are themselves "topic only": the student picks an item off the menu and
+   * is handed the identical menu again. MEASURED at 2 of 25 items today, and
+   * every one of them a dead loop the student has no way out of except
+   * rephrasing.
+   */
+  overviewFor: string;
 };
 
 export const emptyChainState = (): ChainState => ({
@@ -93,6 +105,7 @@ export const emptyChainState = (): ChainState => ({
   lastVerdict: null,
   lastComplaint: false,
   convTopic: '',
+  overviewFor: '',
 });
 
 export type ChainInput = {
@@ -339,11 +352,14 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   // on. Four of these in one session, every one a model call, because the
   // fifteen authored cards cover the ideas INSIDE probability and none covers
   // probability itself.
-  if (!focus?.question && cardTopic && isTopicOnly(text)) {
+  if (!focus?.question && cardTopic && cardTopic !== state.overviewFor && isTopicOnly(text)) {
     try {
       const { topicOverview } = await import('@/lib/topic-overview');
       const overview = await topicOverview(cardTopic);
-      if (overview) return hit(overview, 'topic-overview');
+      if (overview) {
+        state.overviewFor = cardTopic;
+        return hit(overview, 'topic-overview');
+      }
     } catch {
       /* nothing authored for this topic */
     }
