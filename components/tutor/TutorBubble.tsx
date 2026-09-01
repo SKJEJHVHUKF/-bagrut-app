@@ -39,6 +39,7 @@ import { X, Send, Loader2, Sparkles, ArrowLeft, ShieldCheck } from 'lucide-react
 import TutorMascot, { type MascotExpression } from './TutorMascot';
 import TodayPlanCard from './TodayPlanCard';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
+import { isStaffPath } from '@/lib/nav';
 import {
   getTutorFocus,
   subscribeTutorFocus,
@@ -176,9 +177,10 @@ export default function TutorBubble() {
    */
   const [greeting, setGreeting] = useState<TutorGreeting | null>(null);
 
-  const hidden = HIDDEN_PREFIXES.some(
-    (p) => pathname === p || pathname?.startsWith(p + '/'),
-  );
+  const hidden =
+    // isStaffPath: the tutor mascot is for students, not for staff consoles.
+    isStaffPath(pathname ?? '/') ||
+    HIDDEN_PREFIXES.some((p) => pathname === p || pathname?.startsWith(p + '/'));
 
   // `?flags=compiler` in the address bar, once, and it sticks for this browser.
   // Read before anything else so the very first message of the visit already

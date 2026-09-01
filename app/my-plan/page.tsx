@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
+import TeacherAssignments from '@/components/TeacherAssignments';
 import {
   ArrowLeft,
   Crown,
@@ -113,6 +114,12 @@ export default function MyPlanPage() {
           title="התוכנית שלי"
           description="מה ללמוד היום, ולמה דווקא את זה — נגזר מהתאריך שקבעת ומההתקדמות שלך."
         />
+
+        {/* What a HUMAN told him to do outranks what the app worked out on its
+            own, so it sits above the daily plan. It renders nothing at all for
+            a student with no private teacher, which is most of them — the plan
+            below is not pushed down for anyone who has no task waiting. */}
+        <TeacherAssignments />
 
         {/* The goal, and today's work toward it. This is the only part of the
             page that changes daily; everything below it is navigation — which

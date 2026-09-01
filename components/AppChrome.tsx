@@ -35,8 +35,8 @@ import {
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { STORAGE_FULL_EVENT } from '@/lib/storage';
-import { NAV_GROUPS, isActive } from '@/lib/nav';
-import { isProUser } from '@/lib/access';
+import { NAV_GROUPS, isActive, isStaffPath } from '@/lib/nav';
+import { isProUser, isTeacher } from '@/lib/access';
 import { currentStreak } from '@/lib/results';
 import { initSync, syncNow, syncStatus, type SyncStatus } from '@/lib/sync/roadmap-sync';
 import {
@@ -80,13 +80,16 @@ const paperLabel = (paper: BagrutPaper) => `שאלון ${paper}`;
 // user, so logged-out marketing visitors never see it).
 const HIDDEN_PREFIXES = ['/login', '/signup', '/auth', '/onboarding'];
 function isHiddenPath(path: string): boolean {
-  return HIDDEN_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
+  // isStaffPath: /admin and /teacher carry none of the learner's chrome.
+  return isStaffPath(path) || HIDDEN_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
 }
 
 type Profile = {
   email: string;
   name: string;
   pro: boolean;
+  /** One of the paid private teachers — gets a way into /teacher from here. */
+  teacher: boolean;
 };
 
 function initialsOf(name: string, email: string): string {
@@ -125,6 +128,11 @@ export default function AppChrome() {
     type AuthUser = {
       email?: string | null;
       user_metadata?: Record<string, unknown>;
+      /** ⚠️ Was missing, and both role checks below read it: without it
+       *  `isProUser` saw no `pro` flag and a paying non-admin account rendered
+       *  as free here, and `isTeacher` — which has no email fallback at all —
+       *  would always be false. */
+      app_metadata?: { pro?: boolean; teacher?: boolean } & Record<string, unknown>;
     } | null | undefined;
 
     const apply = (user: AuthUser) => {
@@ -135,7 +143,12 @@ export default function AppChrome() {
       }
       const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
       const name = (meta.name as string) || (meta.full_name as string) || '';
-      setProfile({ email: user.email ?? '', name, pro: isProUser(user) });
+      setProfile({
+        email: user.email ?? '',
+        name,
+        pro: isProUser(user),
+        teacher: isTeacher(user),
+      });
     };
 
     // 1) Cached session — instant, no network round-trip.
@@ -463,6 +476,18 @@ export default function AppChrome() {
                     })}
                   </div>
                 ))}
+
+                {profile.teacher && (
+                  <Link
+                    href="/teacher"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-violet-500/10 border border-violet-500/25 text-violet-800 mt-2"
+                  >
+                    <GraduationCap className="w-4.5 h-4.5 text-violet-600" />
+                    <span className="flex-1 text-sm font-bold">לוח המורה</span>
+                    <ChevronLeft className="w-4 h-4 text-violet-400" />
+                  </Link>
+                )}
 
                 {!profile.pro && (
                   <Link

@@ -3,7 +3,8 @@
  *
  * GET    → list every account (id, email, name, created, last sign-in, pro)
  * POST   → create an account            { email, password, name? }
- * PATCH  → grant / revoke Pro by hand   { id, pro }
+ * PATCH  → account flags, one key at a time (only what the body names):
+ *          { id, pro } | { id, teacher } | { id, hourlyRate } | { id, weeklyHours }
  * DELETE → delete an account            { id }
  *
  * Every method requires a signed-in session that passes isAdmin() — the same
@@ -21,7 +22,8 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { isAdmin } from '@/lib/access';
+import { isAdmin, isTeacher, teacherRate, teacherWeeklyHours, teacherSince } from '@/lib/access';
+import { israelDay } from '@/lib/teacher-pay';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,6 +67,10 @@ function toRow(u: User) {
     lastSignInAt: u.last_sign_in_at ?? null,
     confirmed: !!u.email_confirmed_at,
     pro: u.app_metadata?.pro === true,
+    teacher: isTeacher(u),
+    hourlyRate: teacherRate(u),
+    weeklyHours: teacherWeeklyHours(u),
+    teacherSince: teacherSince(u),
   };
 }
 
@@ -121,10 +127,40 @@ export async function PATCH(request: Request) {
   const id = typeof body?.id === 'string' ? body.id : '';
   if (!id) return jsonError('missing id', 400);
 
-  // app_metadata is shallow-merged by GoTrue, so this only touches `pro`.
-  const { error } = await ctx.admin.auth.admin.updateUserById(id, {
-    app_metadata: { pro: body?.pro === true },
-  });
+  // app_metadata is shallow-merged by GoTrue, so a patch touches only the keys
+  // it names. ⚠️ Only keys PRESENT in the body are written: `pro: body.pro ===
+  // true` on its own would revoke Pro every time the teacher terms are saved.
+  const patch: Record<string, unknown> = {};
+
+  if (body && 'pro' in body) patch.pro = body.pro === true;
+
+  if (body && 'teacher' in body) {
+    const teacher = body.teacher === true;
+    patch.teacher = teacher;
+    if (teacher) {
+      // Stamp the hire date once, on the first grant — lib/teacher-pay refuses
+      // to accrue weeks before it, and `created_at` would be wrong for a
+      // student later promoted to teacher.
+      const { data } = await ctx.admin.auth.admin.getUserById(id);
+      if (!teacherSince(data?.user ?? null)) patch.teacherSince = israelDay(new Date());
+    }
+  }
+
+  for (const key of ['hourlyRate', 'weeklyHours'] as const) {
+    if (!body || !(key in body)) continue;
+    const value = Number(body[key]);
+    // The ceilings are sanity rails, not policy: no one is paid ₪10,000/hour
+    // and no week holds 168 hours of teaching.
+    const max = key === 'hourlyRate' ? 10000 : 168;
+    if (!Number.isFinite(value) || value < 0 || value > max) {
+      return jsonError(key === 'hourlyRate' ? 'תעריף לא תקין' : 'שעות שבועיות לא תקינות', 400);
+    }
+    patch[key] = value;
+  }
+
+  if (Object.keys(patch).length === 0) return jsonError('אין מה לעדכן', 400);
+
+  const { error } = await ctx.admin.auth.admin.updateUserById(id, { app_metadata: patch });
   if (error) return jsonError(error.message, 400);
   return Response.json({ ok: true });
 }

@@ -32,7 +32,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Menu, LogIn } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { PRIMARY_ITEMS, isActive } from '@/lib/nav';
+import { PRIMARY_ITEMS, isActive, isStaffPath } from '@/lib/nav';
 
 // Routes where the bar must not appear at all.
 //   /login,/signup,/auth,/onboarding — pre-app flows, same as AppChrome.
@@ -42,7 +42,8 @@ import { PRIMARY_ITEMS, isActive } from '@/lib/nav';
 const HIDDEN_PREFIXES = ['/login', '/signup', '/auth', '/onboarding', '/chat', '/quiz'];
 
 function isHiddenPath(path: string): boolean {
-  return HIDDEN_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
+  // isStaffPath: the learner's tab bar does not belong on /admin or /teacher.
+  return isStaffPath(path) || HIDDEN_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
 }
 
 // The four tabs are a SUBSET of lib/nav.ts, not a fourth hand-written list.

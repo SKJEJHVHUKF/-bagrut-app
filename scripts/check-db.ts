@@ -34,6 +34,9 @@ const TABLES: [string, string, string][] = [
   ['learning_state', 'supabase-learning-path.sql', 'progress does not sync between the student\'s devices'],
   ['chat_messages', 'supabase-conversations.sql', 'the tutor has no conversation history'],
   ['conversations', 'supabase-conversations.sql', 'the tutor cannot open a conversation'],
+  ['teacher_students', 'supabase-teachers.sql', '/teacher loads with an empty roster — a teacher sees none of his students'],
+  ['assignments', 'supabase-teachers.sql', 'a teacher cannot give a task, and the student\'s task card renders nothing'],
+  ['teacher_week_hours', 'supabase-teachers.sql', 'a week whose hours differed cannot be corrected; pay is the standing figure only'],
 ];
 
 /**

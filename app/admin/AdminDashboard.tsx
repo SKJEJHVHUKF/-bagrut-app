@@ -5,14 +5,12 @@
 // Server side of everything lives in /api/admin/users.
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
-import MathUpLogo from '@/components/MathUpLogo';
 import { PageHeader } from '@/components/PageHeader';
 import { isAdmin } from '@/lib/access';
 import {
   Activity,
-  ArrowLeft,
   Crown,
+  GraduationCap,
   RefreshCw,
   ShieldCheck,
   Trash2,
@@ -29,6 +27,11 @@ type Row = {
   lastSignInAt: string | null;
   confirmed: boolean;
   pro: boolean;
+  /** One of the paid private teachers. Terms live on the account too. */
+  teacher: boolean;
+  hourlyRate: number;
+  weeklyHours: number;
+  teacherSince: string | null;
 };
 
 /**
@@ -206,6 +209,18 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
     }
   }
 
+  async function toggleTeacher(row: Row) {
+    setBusyId(row.id);
+    try {
+      await mutate('PATCH', { id: row.id, teacher: !row.teacher });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'עדכון תפקיד המורה נכשל');
+    } finally {
+      setBusyId('');
+    }
+  }
+
   async function removeUser(row: Row) {
     const label = row.name ? `${row.name} (${row.email})` : row.email;
     if (!window.confirm(`למחוק את החשבון של ${label}?\nכל הנתונים שלו יימחקו לצמיתות.`)) return;
@@ -230,47 +245,14 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
       .length ?? 0;
   const proCount = rows?.filter((r) => r.pro).length ?? 0;
 
+  // The page chrome — logo bar, background, and the admin navigation — lives
+  // in app/admin/layout.tsx now, shared by every screen in the area. This
+  // component renders one screen's content and nothing around it.
   return (
-    <div
-      className="min-h-screen text-slate-900 relative overflow-x-hidden"
-      style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
-    >
-      {/* Background orbs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div
-          className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/30 blur-[120px] animate-pulse"
-          style={{ animationDuration: '8s' }}
-        />
-        <div
-          className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/25 blur-[120px] animate-pulse"
-          style={{ animationDuration: '10s', animationDelay: '2s' }}
-        />
-      </div>
-
-      {/* Top bar (mobile — desktop has the global header) */}
-      <nav className="md:hidden sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <MathUpLogo size="md" />
-            <div>
-              <div className="text-base font-black font-display text-slate-800">MathUp</div>
-              <div className="text-[10px] text-slate-600 -mt-0.5">לוח בקרה</div>
-            </div>
-          </Link>
-          <Link
-            href="/"
-            className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-          >
-            <span>לאפליקציה</span>
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-          </Link>
-        </div>
-      </nav>
-
-      <main className="relative z-10 max-w-4xl mx-auto px-4 py-8">
+    <div className="space-y-6">
         <PageHeader
-          title="לוח בקרה"
-          description="כל מי שנרשם לאפליקציה — מתי התחבר לאחרונה, מי Pro, והוספה או הסרה של חשבונות."
+          title="חשבונות"
+          description="כל מי שנרשם לאפליקציה — מתי התחבר לאחרונה, מי Pro, מי מורה, ומה כל אחד עשה."
           actions={
             <button
               onClick={() => void load()}
@@ -539,6 +521,23 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
                           <Crown aria-hidden="true" className="w-3 h-3" />
                           {row.pro ? 'Pro' : 'חינם'}
                         </button>
+                        <button
+                          onClick={() => void toggleTeacher(row)}
+                          disabled={busy}
+                          title={
+                            row.teacher
+                              ? 'לחיצה תבטל את תפקיד המורה'
+                              : 'לחיצה תהפוך את החשבון למורה פרטי'
+                          }
+                          className={`mr-1.5 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-black transition-colors disabled:opacity-50 ${
+                            row.teacher
+                              ? 'bg-violet-100 border-violet-300 text-violet-800 hover:bg-violet-200'
+                              : 'bg-slate-100 border-slate-200 text-slate-500 hover:border-violet-300 hover:text-violet-700'
+                          }`}
+                        >
+                          <GraduationCap aria-hidden="true" className="w-3 h-3" />
+                          {row.teacher ? 'מורה' : 'תלמיד'}
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-left">
                         {!self && (
@@ -643,7 +642,6 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
             </table>
           </div>
         </div>
-      </main>
     </div>
   );
 }
