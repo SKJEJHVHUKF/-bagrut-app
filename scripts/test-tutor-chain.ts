@@ -196,6 +196,32 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     }
   }
 
+  console.log('\n=== and /chat keeps its controls at BOTH breakpoints ===\n');
+  {
+    // ⚠️ WHY THIS IS ASSERTED ON THE SOURCE. /chat is behind auth — it 307s to
+    // /login — so it cannot be rendered in a test without credentials, and the
+    // regression this guards was invisible in exactly that way: the whole
+    // button cluster sat inside `<nav className="md:hidden">`, so from 768px up
+    // the only trigger for the conversations drawer did not exist. The drawer,
+    // the query, the table and its RLS were all healthy. Nothing could open it.
+    const src = readFileSync('app/chat/page.tsx', 'utf8');
+    const uses = (src.match(/<ChatActions\b/g) ?? []).length;
+    ok(uses === 2, `the controls render at both breakpoints (${uses} call sites)`);
+    ok(
+      /className="md:hidden[^"]*"/.test(src) && /className="hidden md:flex[^"]*"/.test(src),
+      'one mobile-only bar and one desktop-only row',
+    );
+    // The three that were dead on desktop, and the one that was missing entirely.
+    for (const [needle, what] of [
+      ['onHistory', 'history'],
+      ['onNew', 'new conversation'],
+      ['onMemory', 'what the tutor remembers'],
+      ['href="/roadmap"', 'the way back to the learning track'],
+    ] as const) {
+      ok(src.includes(needle), `${what} is reachable`);
+    }
+  }
+
   console.log(
     failed === 0
       ? '\nOK tutor chain: one chain, both surfaces, and nothing answered that should not be\n'
