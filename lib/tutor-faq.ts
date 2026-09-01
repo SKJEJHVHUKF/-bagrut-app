@@ -598,6 +598,38 @@ function answered(focus: TutorFocus): boolean {
  * that matches nothing all return null and the caller goes to the model.
  */
 /**
+ * Words that make a message an ASK rather than a turn in a conversation.
+ * The same shape as ASK_WORD in lib/is-question: a closed list of words that
+ * carry the question by themselves.
+ */
+const ASKS =
+  /(?:^|[^\u05D0-\u05EA])(?:מה|למה|מדוע|איך|כיצד|מתי|איפה|היכן|כמה|האם|מי|מאיפה|מהיכן|מניין|תסביר|הסבר|הבדל|ההבדל|משמעות|בודקים|מזהים|קורה)(?:[^\u05D0-\u05EA]|$)/;
+
+/**
+ * Is there a QUESTION here, or just a turn in a conversation?
+ *
+ * WARNING: THE FIRST VERSION OF THIS FENCE COST 60% OF THE BANK'S REACH.
+ *
+ * It required the message to name mathematics or resolve to a topic. That does
+ * stop "החלק השני" - and it also stops "למה מכפילים כאן ולא מחברים" and "מה
+ * המלכודת הכי נפוצה", real questions with authored answers that happen not to
+ * name their subject. MEASURED over the banks' own phrasings: reach fell from
+ * 52.4% to 19.9%, for an error rate that was already 1.0%.
+ *
+ * The missing signal was the simplest one: a question word. A student asking
+ * anything reaches for מה, למה, איך, כמה, האם. A student continuing a
+ * conversation writes "החלק השני", "תמשיך", "הבנתי את זה" - no question word,
+ * no subject, nothing to look up.
+ *
+ * Any ONE of the three is enough, because each is independent evidence and the
+ * two failures are not the same size: a miss costs a model call, a false hit
+ * costs a confident wrong answer. Same asymmetry lib/is-question is built on.
+ */
+function looksLikeAQuestion(message: string): boolean {
+  return ASKS.test(message) || namesAMathsSubject(message) || resolveTopic(message) !== null;
+}
+
+/**
  * Words that carry any weight at all.
  *
  * ⚠️ TWO CHARACTERS, NOT THREE. A three-character floor reads "מה יש בדף
@@ -737,7 +769,7 @@ export async function answerTopicFaq(
   // fails both; "מה זה הסתברות מותנית" passes the first, "שליפה עם החזרה"
   // passes the second. A message that does neither belongs to the conversation,
   // and the conversation belongs to the model.
-  if (!namesAMathsSubject(message) && !resolveTopic(message)) return null;
+  if (!looksLikeAQuestion(message)) return null;
 
   // A message pointing at "this step" or "this exercise" is about something
   // the student is looking at, and on this screen there is nothing to look at.

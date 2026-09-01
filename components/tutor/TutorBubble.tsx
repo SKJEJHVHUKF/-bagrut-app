@@ -621,6 +621,29 @@ export default function TutorBubble() {
         }
       }
 
+      // ===== a bare topic name: answer with what we CAN answer =====
+      //
+      // "הסתברות", typed straight after the tutor asked which topic he is on.
+      // Four of these in one session, every one of them a model call, because
+      // fifteen authored cards cover the ideas INSIDE probability and none
+      // covers probability itself. See lib/topic-overview.
+      if (!focusNow?.question && cardTopic && isTopicOnly(text)) {
+        try {
+          const { topicOverview } = await import('@/lib/topic-overview');
+          const overview = await topicOverview(cardTopic);
+          if (overview) {
+            setMsgs((m) => [
+              ...m,
+              { id: `a-${Date.now()}`, role: 'assistant', text: overview, local: true },
+            ]);
+            setSending(false);
+            return;
+          }
+        } catch {
+          /* nothing authored for this topic — the model answers */
+        }
+      }
+
       // ===== and the bank that belongs to no topic at all =====
       //
       // "איך כדאי ללמוד", "מה יש בנוסחאון", "מה לעשות כשאני נתקע" — asked
