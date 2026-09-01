@@ -26,9 +26,24 @@
  * wall of LaTeX. Correct, and not a tutor.
  *
  * The cards themselves are the better answer, because the list of cards IS the
- * list of questions this app can already answer for free. So a bare topic name
- * comes back as a short menu of them, and every item the student then picks is
- * another local answer. A dead end becomes a fork with free branches.
+ * list of questions this app has already written answers for. So a bare topic
+ * name comes back as a short menu of them.
+ *
+ * ⚠️ THE FORK IS NOT FREE YET, AND THIS COMMENT USED TO CLAIM IT WAS. It said
+ * "every item the student then picks is another local answer — a dead end
+ * becomes a fork with free branches". MEASURED (npm run measure:topiccards):
+ * **0 of 25 menu items land on their own card today**, and 8 of 25 would with
+ * the compiler flag on. Two independent reasons, and neither was the menu:
+ *
+ *   1. `renderTopicCard` has exactly one caller — lib/tutor-compiler — and the
+ *      compiler is behind `tutorFlag('compiler')`, which is off for everyone.
+ *      With it off, NOTHING can serve a card as an answer, whatever the label.
+ *   2. `label()` below strips the leading "מה זה", and the residue that is left
+ *      ("עם החזרה", "בהינתן") falls under the matcher's two-content-word floor.
+ *
+ * The menu is still worth serving — it is a real list of what the app knows,
+ * and it replaced a turn that always went to the model. But it is a menu, not
+ * yet a fork, and the code should say so.
  *
  * Topics with no cards yet fall back to the authored formula NAMES — still the
  * shape of the topic, still no model call, and it is why this covers all

@@ -48,6 +48,7 @@
     "test:overview": "tsx scripts/test-topic-overview.ts",
     "test:chain": "tsx scripts/test-tutor-chain.ts",
     "measure:prompts": "tsx scripts/measure-suggested-prompts.ts",
+    "measure:topiccards": "tsx scripts/measure-topic-cards.ts",
     "test:generalfaq": "tsx scripts/test-general-faq.ts",
     "test:tracking": "tsx scripts/test-tracking-sync.ts",
     "measure:topicfaq": "tsx scripts/measure-topic-faq.ts",
