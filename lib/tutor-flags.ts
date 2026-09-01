@@ -69,11 +69,37 @@ function enabled(): Set<string> {
  * problem can be turned off for one device without a deploy, and on for one
  * device before a rollout.
  *
- * Fails closed: anything other than 'on' is off.
+ * ============================================================
+ * THE ROLLOUT IS OVER — THE DEFAULT IS NOW ON
+ * ============================================================
+ * This used to read `=== 'on'`, so the compiler was off for every student
+ * unless somebody set the variable. Nobody had: it was absent from .env.local,
+ * from next.config.ts, and there was no vercel.json. The 25 authored, approved
+ * Topic Cards were unreachable as answers, because `renderTopicCard` has
+ * exactly one caller and it is behind this flag.
+ *
+ * MEASURED before flipping it (npm run measure:topiccards), on a screen that
+ * names a topic:
+ *
+ *     free answers   16.7%  ->  52.4%   (+45 of 126 card phrasings)
+ *     wrong topic             0.0%
+ *
+ * The 0.0% was measured four ways, the sharpest being every alias fired at a
+ * DIFFERENT topic's screen, where any hit at all is wrong by construction. For
+ * comparison: the topic bank shipped at 1.0%, and 5.6% was rejected.
+ *
+ * Itay approved the rollout after seeing those numbers. Flipped HERE rather
+ * than by setting the variable in the Vercel dashboard, so the change travels
+ * with the deploy that was measured and is visible in this diff — an
+ * environment value set by hand is a behaviour change with no commit.
+ *
+ * Fails OPEN now, and 'off' is the kill switch: set NEXT_PUBLIC_TUTOR_COMPILER
+ * to 'off' to turn it back off for everyone without a code change. The
+ * per-browser `?flags=off` override still wins over both.
  */
 function envDefault(flag: TutorFlag): boolean {
   if (flag !== 'compiler') return false;
-  return process.env.NEXT_PUBLIC_TUTOR_COMPILER === 'on';
+  return process.env.NEXT_PUBLIC_TUTOR_COMPILER !== 'off';
 }
 
 export function tutorFlag(flag: TutorFlag): boolean {
@@ -104,8 +130,22 @@ export function activeTutorFlags(): string[] {
  * A rollout switch that needs a browser-specific workaround to reach is not a
  * switch. A query parameter needs no console, no paste, and no explanation.
  *
- * Still per browser and still off by default: it only ever writes what the URL
- * says, on a device the person is holding.
+ * Still per browser: it only ever writes what the URL says, on a device the
+ * person is holding.
+ *
+ * ⚠️ `off` AND `none` ARE NOT THE SAME THING, AND CONFLATING THEM SILENTLY
+ * DELETED THE KILL SWITCH.
+ *
+ * Both used to clear the key, which was correct only while the environment
+ * default was OFF — clearing something that defaults to off IS off. The moment
+ * the compiler rollout flipped the default to on, `?flags=off` started clearing
+ * the key and thereby turning the layer ON: the one per-browser escape hatch,
+ * the thing that exists so a problem can be killed on a device without a
+ * deploy, did the exact opposite of its name. Nothing failed loudly; the test
+ * that caught it asserted the behaviour, not the code.
+ *
+ *   ?flags=off              write 'off' — this browser, off, whatever the deploy says
+ *   ?flags=none  ?flags=    clear — go back to following the environment
  */
 export function adoptFlagsFromUrl(): void {
   if (typeof window === 'undefined') return;
@@ -113,7 +153,7 @@ export function adoptFlagsFromUrl(): void {
     const raw = new URL(window.location.href).searchParams.get('flags');
     if (raw === null) return;
     const wanted = raw.trim().toLowerCase();
-    if (!wanted || wanted === 'off' || wanted === 'none') {
+    if (!wanted || wanted === 'none' || wanted === 'clear') {
       window.localStorage.removeItem(KEY);
       return;
     }

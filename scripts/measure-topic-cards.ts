@@ -18,8 +18,8 @@
  * This script measures through `runTutorChain`, the function both surfaces
  * actually call, with the flag in the two positions that matter:
  *
- *   OFF  the state today — NEXT_PUBLIC_TUTOR_COMPILER absent from .env.local
- *   ON   the state after `NEXT_PUBLIC_TUTOR_COMPILER=on`
+ *   OFF  NEXT_PUBLIC_TUTOR_COMPILER=off — the kill switch
+ *   ON   the shipped default since the rollout was approved
  *
  * The DELTA between them is the whole payoff of turning it on. Anything the
  * chain already answers from a layer above the compiler is not a gain, and
@@ -84,8 +84,13 @@ const BANKS: Array<{ topic: string; cards: TopicCard[] }> = [
 // switch under evaluation: the localStorage key is a per-browser override that
 // no student holds.
 function setFlag(on: boolean): void {
-  if (on) process.env.NEXT_PUBLIC_TUTOR_COMPILER = 'on';
-  else delete process.env.NEXT_PUBLIC_TUTOR_COMPILER;
+  // ⚠️ BOTH DIRECTIONS ARE SET EXPLICITLY. The OFF pass used to `delete` the
+  // variable, which was "off" only while envDefault read `=== 'on'`. The
+  // rollout flipped it to `!== 'off'`, so deleting now means ON and this
+  // script quietly reported two identical passes labelled OFF and ON —
+  // the same shape of wrong measurement that hid the dark cards in the first
+  // place. Never infer a flag state from an absent variable.
+  process.env.NEXT_PUBLIC_TUTOR_COMPILER = on ? 'on' : 'off';
 }
 
 /** Which card produced this text, if any. Exact, because renderTopicCard is
