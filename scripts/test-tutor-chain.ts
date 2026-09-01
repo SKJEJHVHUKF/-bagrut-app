@@ -219,6 +219,22 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     }
     ok(looped === 0, looped === 0 ? 'and picking any item never returns it again' : `${looped} of ${items.length} items loop back to the menu`);
 
+    // ⚠️ AND THE ITEMS MUST ACTUALLY ANSWER. Not looping is only half of it: a
+    // menu whose items all fall through to the model is a free reply that buys
+    // a paid one. This was 0 of 25 across both topics before the compiler
+    // rollout and before `label()` stopped trimming "מה זה"; it is 20 of 25
+    // now. The floor is deliberately below that — the point is to catch a
+    // collapse, not to freeze today's number.
+    let free = 0;
+    for (const item of items) {
+      const back = await turn(item, { ...first.state, tutorSpoke: true });
+      if (back.answered) free++;
+    }
+    ok(
+      free >= Math.ceil(items.length * 0.6),
+      `and most items lead to a free answer (${free}/${items.length})`,
+    );
+
     // A DIFFERENT topic must still get its own menu — the guard is per topic,
     // not a global "menus are done now".
     const other = await turn('סדרות', { ...first.state, tutorSpoke: true });

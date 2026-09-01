@@ -29,21 +29,28 @@
  * list of questions this app has already written answers for. So a bare topic
  * name comes back as a short menu of them.
  *
- * ⚠️ THE FORK IS NOT FREE YET, AND THIS COMMENT USED TO CLAIM IT WAS. It said
- * "every item the student then picks is another local answer — a dead end
- * becomes a fork with free branches". MEASURED (npm run measure:topiccards):
- * **0 of 25 menu items land on their own card today**, and 8 of 25 would with
- * the compiler flag on. Two independent reasons, and neither was the menu:
+ * ⚠️ THE FORK WAS A CLAIM BEFORE IT WAS A FACT, AND IT TOOK TWO FIXES.
+ *
+ * This comment used to say "every item the student then picks is another local
+ * answer — a dead end becomes a fork with free branches", and nobody had
+ * measured it. MEASURED (npm run measure:topiccards): **0 of 25 menu items
+ * landed on their own card.** Two independent reasons, and neither was the
+ * menu itself:
  *
  *   1. `renderTopicCard` has exactly one caller — lib/tutor-compiler — and the
- *      compiler is behind `tutorFlag('compiler')`, which is off for everyone.
- *      With it off, NOTHING can serve a card as an answer, whatever the label.
- *   2. `label()` below strips the leading "מה זה", and the residue that is left
- *      ("עם החזרה", "בהינתן") falls under the matcher's two-content-word floor.
+ *      compiler sat behind `tutorFlag('compiler')`, which was off for everyone.
+ *      With it off NOTHING could serve a card, whatever the label said. The
+ *      rollout was approved on the numbers and the default is now on.
+ *   2. `label()` below stripped the leading "מה זה", and the residue fell under
+ *      the matcher's content-word floor. It no longer strips anything.
  *
- * The menu is still worth serving — it is a real list of what the app knows,
- * and it replaced a turn that always went to the model. But it is a menu, not
- * yet a fork, and the code should say so.
+ * With both fixed: **20 of 25**. The five that still miss are phrasings the
+ * matcher does not reach, which is a matcher question and not a menu one.
+ *
+ * A third guard sits in the chain, not here: `ChainState.overviewFor`. Card
+ * subjects resolve to their own topic and leave only filler behind, so each one
+ * is itself a bare topic name — without it, picking an item off the menu
+ * returned the identical menu.
  *
  * Topics with no cards yet fall back to the authored formula NAMES — still the
  * shape of the topic, still no model call, and it is why this covers all
@@ -58,19 +65,26 @@ import { MATH5_CURRICULUM } from '@/content/bagrut-curriculum';
 const MAX_OPTIONS = 6;
 
 /**
- * The first alias is the phrasing the card was written to answer, so it is
- * both the shortest label and one that is guaranteed to hit the card if the
- * student sends it back. Trimmed of a leading "מה זה" so the menu reads as a
- * list of subjects rather than a list of questions.
+ * The first alias is the phrasing the card was written to answer, so sending it
+ * back is guaranteed to reach that card.
+ *
+ * ⚠️ NOTHING IS STRIPPED, AND THE TIDIER VERSION COST NINE FREE ANSWERS.
+ *
+ * This used to remove a leading "מה זה", so the menu read as a list of subjects
+ * — "עם החזרה" — instead of a list of questions. It reads better and it breaks
+ * the menu: the residue drops under the matcher's two-content-word floor, so
+ * the item stops matching the card it was taken from. MEASURED with the
+ * compiler on, over the 25 approved cards:
+ *
+ *     stripped label   11/25 answered free
+ *     full alias       20/25 answered free
+ *
+ * Every single difference went the same way, and not one item was answered by
+ * the stripped form and lost by the full one. A menu item that reads a little
+ * longer but actually answers beats a tidy one that goes to the model.
  */
 function label(alias: string): string {
-  return alias
-    // ⚠️ ONLY "מה זה". Stripping "איך" as well turned "איך קוראים עץ הסתברות"
-    // into "קוראים עץ הסתברות" — a fragment, in a list a student is meant to
-    // read at a glance. A list item may be a question; it may not be a broken
-    // one.
-    .replace(/^\s*(?:מה\s*זה|מה\s*זו)\s*/, '')
-    .trim();
+  return alias.trim();
 }
 
 /**
