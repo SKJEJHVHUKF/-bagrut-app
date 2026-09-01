@@ -45,7 +45,8 @@ import { reportedValue, unambiguousReport, yesNo, type Pending } from '@/lib/tut
 import { followUp, ladderMove } from '@/lib/tutor-followup';
 import { deriveExpected } from '@/lib/derive-expected';
 
-type Ask = NonNullable<ReturnType<typeof classifyAsk>>;
+/** Exported so lib/tutor-chain can hold one between turns without restating it. */
+export type Ask = NonNullable<ReturnType<typeof classifyAsk>>;
 
 export type Route =
   /** A. the student typed a value to be graded. `spec` is what to grade against. */

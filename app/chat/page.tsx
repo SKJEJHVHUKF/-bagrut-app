@@ -13,6 +13,7 @@ import {
   type TutorGreeting,
 } from '@/lib/tutor-greeting';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
+import { runTutorChain, emptyChainState, type ChainState } from '@/lib/tutor-chain';
 import TutorMascot from '@/components/tutor/TutorMascot';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -32,6 +33,8 @@ import {
   Target,
   RotateCcw,
   Brain,
+  Map as MapIcon,
+  ShieldCheck,
 } from 'lucide-react';
 import { SolutionAudit } from '@/components/practice/SolutionAudit';
 import { MathText } from '@/components/practice/MathText';
@@ -55,6 +58,17 @@ type ChatMessage = {
    * button resurrected from last Tuesday is a worse thing than no button.
    */
   action?: ResolvedSuggestion;
+  /**
+   * Set when the reply came from authored content instead of the model. Shown
+   * to the student as "מהחומר המאומת" — a stronger claim than an AI answer,
+   * not a weaker one: a person wrote it and a person checked it.
+   *
+   * ponytail: not persisted. chat_messages is written by /api/chat, which a
+   * free turn never reaches, so a local answer is missing if the conversation
+   * is reloaded later. Same as the bubble. Give it its own insert only if the
+   * gap actually bothers anyone.
+   */
+  local?: boolean;
 };
 
 type Conversation = {
@@ -93,6 +107,14 @@ export default function ChatPage() {
   // writes, so the panel never shows a fact the student hasn't been told about.
   const [facts, setFacts] = useState<TutorFact[]>([]);
   const [showMemory, setShowMemory] = useState(false);
+
+  /**
+   * What the free chain remembers between turns on THIS conversation.
+   *
+   * A ref and not state: none of it is rendered, and re-rendering the whole
+   * thread because the tutor noticed an acknowledgement would be a waste.
+   */
+  const chainRef = useRef<ChainState>(emptyChainState());
 
   const listEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -151,6 +173,9 @@ export default function ChatPage() {
   // Start a brand-new empty conversation.
   const newChat = useCallback(() => {
     setMessages([]);
+    // A new thread establishes its own subject. Carrying the old one over
+    // would ground a brand-new conversation in the last one's topic.
+    chainRef.current = emptyChainState();
     setConversationId(null);
     setError(null);
     setSidebarOpen(false);
@@ -165,6 +190,7 @@ export default function ChatPage() {
       setLoadingHistory(true);
       setConversationId(id);
       setMessages([]);
+      chainRef.current = emptyChainState();
       const supabase = createClient();
       const { data } = await supabase
         .from('chat_messages')
@@ -233,6 +259,57 @@ export default function ChatPage() {
       setError(`הודעה ארוכה מדי (מקסימום ${MAX_MESSAGE_LEN} תווים)`);
       return;
     }
+    // ===== every free layer, before anything is spent =====
+    //
+    // ⚠️ ABOVE THE QUOTA GUARD ON PURPOSE, AND THAT IS A BUG FIX IN ITSELF.
+    // This page used to validate, check the daily cap, and then `fetch`. So a
+    // student who had used their ten messages was refused an answer that costs
+    // nothing — and every student, every turn, paid for asks the bubble in the
+    // corner of the same screen answers for free.
+    //
+    // Same chain, same order, same measurements — lib/tutor-chain.ts. /chat
+    // has no question on screen, so the layers that need one abstain by
+    // themselves; what is left is exactly the traffic this page gets: a topic
+    // name, a concept question, "איך כדאי ללמוד", an acknowledgement.
+    const chain = await runTutorChain({
+      message: trimmed,
+      // Always null here. /chat is a conversation, not an exercise — the
+      // question-fenced bank door can never open, which is what keeps an answer
+      // about some other exercise off this screen.
+      focus: null,
+      // What `?topic=` names, standing in for the focus's topic.
+      screenTopic: topic,
+      state: chainRef.current,
+    });
+    chainRef.current = chain.state;
+
+    if (chain.answered) {
+      setError(null);
+      setInput('');
+      setMessages((m) => [
+        ...m,
+        {
+          id: `u-${Date.now()}`,
+          role: 'user',
+          content: trimmed,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: `a-${Date.now() + 1}`,
+          role: 'assistant',
+          content: chain.text,
+          created_at: new Date().toISOString(),
+          local: true,
+        },
+      ]);
+      // The tutor has spoken, so the next message is a reply and not an
+      // opening. Only ever set to true — clearing it per turn is what once let
+      // a single paid turn lock the free layers for the rest of a session.
+      chainRef.current.tutorSpoke = true;
+      textareaRef.current?.focus();
+      return;
+    }
+
     if (remaining <= 0) {
       setError(
         dailyCap <= FREE_DAILY_CHAT
@@ -262,7 +339,10 @@ export default function ChatPage() {
       // into this turn, never persists it. Best-effort — never block sending.
       let studentContext = '';
       try {
-        studentContext = buildStudentSnapshot('math5', topic);
+        // The topic the turn is actually grounded in. Passing the bare URL
+        // param dropped the whole cognitive block — scope, insight, weakness,
+        // next step — on every entry that had no ?topic=.
+        studentContext = buildStudentSnapshot('math5', chain.topic);
       } catch {
         studentContext = '';
       }
@@ -292,8 +372,21 @@ export default function ChatPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: trimmed,
-          topic,
+          // ⚠️ THE TOPIC THE CHAIN RESOLVED, not the bare `?topic=` param. On a
+          // plain /chat entry the URL names nothing, so every turn was grounded
+          // in the generic curriculum map, could not reach a Topic Card, and
+          // landed in its own cold cache entry instead of sharing the one this
+          // app's traffic already warms.
+          topic: chain.topic,
           conversationId,
+          // ⚠️ WHAT THE STUDENT AND THE TUTOR ACTUALLY SAID, so the model and
+          // the verified answers cannot contradict each other. Without it the
+          // server rebuilds the window from the database, which does not yet
+          // contain this turn — and does not contain the free answers at all.
+          recent: messages.slice(-4).map((m) => ({
+            role: m.role,
+            content: m.content.slice(0, 500),
+          })),
           ...(studentContext ? { context: studentContext } : {}),
           ...(unitLevel ? { unitLevel } : {}),
           ...(formNumber ? { formNumber } : {}),
@@ -348,6 +441,11 @@ export default function ChatPage() {
           acc += data.text ?? '';
           if (!created) {
             created = true;
+            // ⚠️ A MODEL REPLY COUNTS TOO. `tutorSpoke` gates the follow-up
+            // layers — acknowledgements, "ואז?", a challenge to a verdict —
+            // and if only free answers set it, the whole conversation after one
+            // paid turn goes back to being paid.
+            chainRef.current.tutorSpoke = true;
             setMessages((m) => [
               ...m,
               { id: assistantId, role: 'assistant', content: acc, created_at: new Date().toISOString() },
@@ -427,6 +525,16 @@ export default function ChatPage() {
   const grounded = !!topic && hasLesson('math5', topic);
   const isEmpty = !loadingHistory && messages.length === 0;
 
+  // One object so the two breakpoints cannot be handed different props.
+  const actionProps = {
+    onNew: newChat,
+    onHistory: () => setSidebarOpen(true),
+    onMemory: () => setShowMemory((v) => !v),
+    showMemory,
+    factCount: facts.length,
+  };
+
+
   return (
     <div
       className="min-h-screen text-slate-900 relative overflow-x-hidden flex flex-col"
@@ -458,46 +566,27 @@ export default function ChatPage() {
               <div className="text-[10px] text-slate-600 -mt-0.5">המורה הפרטי שלך</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={newChat}
-              className="group flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">שיחה חדשה</span>
-            </button>
-            <button
-              onClick={() => setSidebarOpen(true)}
-              aria-label="היסטוריית שיחות"
-              className="flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-            >
-              <History className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">היסטוריה</span>
-            </button>
-            {/* Only shown once there is something to show. A student with no
-                remembered facts should not be handed a mystery button. */}
-            {facts.length > 0 && (
-              <button
-                onClick={() => setShowMemory((v) => !v)}
-                aria-label="מה המורה זוכר עליי"
-                aria-expanded={showMemory}
-                className="flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-              >
-                <Brain className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">מה אני זוכר</span>
-                <span className="text-violet-700">{facts.length}</span>
-              </button>
-            )}
-            <Link
-              href="/quiz"
-              className="group hidden sm:flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-            >
-              <span>לתרגול</span>
-              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-            </Link>
-          </div>
+          <ChatActions {...actionProps} />
         </div>
       </nav>
+
+      {/*
+        ⚠️ THE SAME CLUSTER, THE OTHER BREAKPOINT — AND THE REASON THE HISTORY
+        DISAPPEARED. The bar above is `md:hidden`, so from 768px up every one of
+        these buttons stopped existing: היסטוריה (the only trigger for
+        `setSidebarOpen(true)` anywhere in the file), שיחה חדשה, and מה אני זוכר.
+        The drawer, the query, the table and the RLS were all fine the whole
+        time — nothing could open it.
+
+        Rendered from ONE definition rather than a second copy of the markup,
+        because a duplicated cluster is how the two breakpoints drift apart
+        again. Not sticky here: AppHeader already owns the top of the desktop
+        screen, and a second sticky bar under it is exactly the duplication the
+        `md:hidden` was added to remove.
+      */}
+      <div className="hidden md:flex relative z-10 max-w-3xl w-full mx-auto px-4 pt-4 justify-end">
+        <ChatActions {...actionProps} />
+      </div>
 
       {/* Conversations sidebar (drawer) */}
       <ChatSidebar
@@ -576,7 +665,7 @@ export default function ChatPage() {
         ) : (
           <div className="space-y-3">
             {messages.map((m) => (
-              <MessageBubble key={m.id} role={m.role} content={m.content} action={m.action} />
+              <MessageBubble key={m.id} role={m.role} content={m.content} action={m.action} local={m.local} />
             ))}
             {/* Typing dots only until the streamed reply's first token lands
                 (while the last bubble is still the user's). */}
@@ -702,10 +791,12 @@ function MessageBubble({
   role,
   content,
   action,
+  local,
 }: {
   role: 'user' | 'assistant';
   content: string;
   action?: ResolvedSuggestion;
+  local?: boolean;
 }) {
   const isUser = role === 'user';
 
@@ -751,6 +842,15 @@ function MessageBubble({
             {content}
           </ReactMarkdown>
         </div>
+        {/* The same badge the bubble shows, for the same reason: an answer a
+            person wrote and checked is a STRONGER claim than one generated on
+            the spot, and the student should be able to tell them apart. */}
+        {local && (
+          <div className="mt-1 text-[10px] text-slate-500 flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+            <span>מהחומר המאומת — נכתב ונבדק, לא נוצר עכשיו</span>
+          </div>
+        )}
         {action && <ActionCard action={action} />}
       </div>
       <TutorAvatar />
@@ -892,6 +992,85 @@ function relativeDate(iso: string): string {
   const days = Math.floor(diff / day);
   if (days < 7) return `לפני ${days} ימים`;
   return new Date(iso).toLocaleDateString('he-IL', { day: 'numeric', month: 'short' });
+}
+
+/**
+ * The chat's own controls: new conversation, history, what the tutor remembers,
+ * a way to practise, and a way back to the learning track.
+ *
+ * ⚠️ ONE DEFINITION, RENDERED AT BOTH BREAKPOINTS. It used to be inline markup
+ * inside a `md:hidden` bar, which is how three live controls — including the
+ * only opener the conversations drawer has — became unreachable on desktop
+ * without anything appearing broken.
+ */
+function ChatActions({
+  onNew,
+  onHistory,
+  onMemory,
+  showMemory,
+  factCount,
+}: {
+  onNew: () => void;
+  onHistory: () => void;
+  onMemory: () => void;
+  showMemory: boolean;
+  factCount: number;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+            <button
+              onClick={onNew}
+              className="group flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">שיחה חדשה</span>
+            </button>
+            <button
+              onClick={onHistory}
+              aria-label="היסטוריית שיחות"
+              className="flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            >
+              <History className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">היסטוריה</span>
+            </button>
+            {/* Only shown once there is something to show. A student with no
+                remembered facts should not be handed a mystery button. */}
+            {factCount > 0 && (
+              <button
+                onClick={onMemory}
+                aria-label="מה המורה זוכר עליי"
+                aria-expanded={showMemory}
+                className="flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+              >
+                <Brain className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">מה אני זוכר</span>
+                <span className="text-violet-700">{factCount}</span>
+              </button>
+            )}
+            <Link
+              href="/quiz"
+              className="group hidden sm:flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            >
+              <span>לתרגול</span>
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+            </Link>
+            {/*
+              ⚠️ LAST CHILD ON PURPOSE. The page is dir="rtl", so the last item
+              in this row renders furthest LEFT — the corner the student asked
+              for. Points at /roadmap, not "/": "/" is the marketing landing and
+              middleware does not bounce a signed-in student off it, so sending
+              them there would drop them out of the app.
+            */}
+            <Link
+              href="/roadmap"
+              aria-label="חזרה למסלול הלמידה"
+              className="group flex items-center gap-1.5 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 hover:border-violet-500/50 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+            >
+              <MapIcon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">למסלול</span>
+            </Link>
+    </div>
+  );
 }
 
 function ChatSidebar({

@@ -50,11 +50,14 @@ const DISTINCTIVE: Record<string, string[]> = {
   'הסתברות': ['בלי החזרה', 'עם החזרה', 'הסתברות מותנית', 'בייס', 'ברנולי', 'תוחלת', 'דיאגרמת עץ'],
   'סדרות': ['סדרה חשבונית', 'סדרה הנדסית', 'איבר כללי', 'סכום סדרה'],
   'טריגונומטריה': ['משפט הסינוסים', 'משפט הקוסינוסים', 'סינוס', 'קוסינוס', 'טנגנס'],
-  'חשבון דיפרנציאלי': ['נגזרת', 'נקודות קיצון', 'אסימפטוט'],
-  'חשבון אינטגרלי': ['אינטגרל', 'פונקציה קדומה', 'שטח מתחת לגרף'],
+    // ⚠️ THE PLURAL IS A SEPARATE ENTRY. Matching is substring, and 'נגזרות'
+  // does not contain 'נגזרת' — the ו breaks it. Measured: 'הסבר לי על נגזרות'
+  // resolved to NO topic at all and went to the model every time.
+  'חשבון דיפרנציאלי': ['נגזרת', 'נגזרות', 'נקודות קיצון', 'אסימפטוט'],
+  'חשבון אינטגרלי': ['אינטגרל', 'אינטגרלים', 'פונקציה קדומה', 'שטח מתחת לגרף'],
   'גיאומטריה אוקלידית': ['משולשים חופפים', 'משולשים דומים', 'תיכון במשולש', 'טרפז'],
   'גאומטריה אנליטית': ['משוואת ישר', 'משוואת מעגל', 'שיפוע'],
-  'וקטורים במרחב': ['וקטור', 'מכפלה סקלרית'],
+  'וקטורים במרחב': ['וקטור', 'וקטורים', 'מכפלה סקלרית'],
   'מספרים מרוכבים': ['מספר מרוכב', 'מרוכבים', 'דה מואבר'],
   'סטטיסטיקה': ['סטיית תקן', 'שונות', 'חציון', 'שכיח'],
   'גדילה ודעיכה': ['גדילה ודעיכה', 'דעיכה'],
@@ -93,7 +96,12 @@ export const TOPIC_PHRASES = PHRASES;
  * Words that carry no ask of their own, so a message made only of these plus a
  * topic name is a message that names a topic and nothing else.
  */
-const FILLER = /^(?:על|את|של|לגבי|בנושא|נושא|ה|ב|ל|מ|תסביר|הסבר|לי|אני|עובד|עובדת|עכשיו|בבקשה|תודה|כן|אז|זה|זהו)$/;
+// 'תעזור', 'עם' and 'להבין' are here because "תעזור לי עם הסתברות" and
+// "תעזור לי להבין אינטגרלים" are two of the app's OWN suggested prompts, and
+// both were billed: they resolve a topic perfectly and then failed this test on
+// the residue. Safe despite 'עם החזרה' being a probability phrase — the bank
+// door runs before the topic-only branch, so the specific card still wins.
+const FILLER = /^(?:על|את|של|לגבי|בנושא|נושא|ה|ב|ל|מ|תסביר|הסבר|לי|אני|עובד|עובדת|עכשיו|בבקשה|תודה|כן|אז|זה|זהו|תעזור|תעזרי|עזור|עם|להבין|רוצה|ללמוד)$/;
 
 /**
  * Is this message nothing but the name of a topic?

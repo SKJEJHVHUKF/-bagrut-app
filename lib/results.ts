@@ -30,8 +30,49 @@ const MAX_SEEN = 5000;
 /**
  * `'fix'` = an answer inside a lib/remediation repair path. It is deliberately
  * never a MEASUREMENT — see the `repeat` handling in `recordResult`.
+ *
+ * `'scan'` / `'thinking'` mirror the members of the same name in
+ * `MistakeSource`, and are never measurements either — see NEVER_MEASURED.
  */
-export type ResultSource = 'quiz' | 'drill' | 'bagrut' | 'review' | 'fix';
+export type ResultSource = 'quiz' | 'drill' | 'bagrut' | 'review' | 'fix' | 'scan' | 'thinking';
+
+/**
+ * Sources whose answers are ALWAYS flagged as replays — activity, never a
+ * measurement.
+ *
+ *   'fix'      the remediation repair path (reasoned about in `recordResult`).
+ *   'scan'     a photographed solution audited by /api/analyze-solution.
+ *   'thinking' a free-text answer scored by /api/thinking/evaluate.
+ *
+ * The last two are here because neither surface has a stable `questionId` — one
+ * is a photo of arbitrary work, the other a question generated at runtime — so
+ * the `${source}:${questionId}` guard in `recordResult` can never fire for them.
+ * Re-scanning the same page, or re-answering a regenerated thinking question,
+ * would each log another "first attempt" and move the predicted grade. Their
+ * verdict is an AI judgement (an OCR'd audit, a rubric score threshold) rather
+ * than lib/answer-check against a key, which is weaker evidence again. What they
+ * were actually missing is ACTIVITY — streak, daily goal, the 14-day chart —
+ * and that counts replays.
+ *
+ * And no id can be invented to lift them out of here, because every consumer of
+ * `questionId` resolves it against the AUTHORED corpus rather than treating it
+ * as an opaque string:
+ *
+ *   `resolveQuestion` (lib/review-resolve.ts) looks the id up in the sub-topic
+ *   bank, then the lesson drills, then the concept bank — and
+ *   `pruneUnresolvable` deletes every card that misses all three.
+ *
+ *   `skillsForQuestion` (lib/cognition/observe.ts) needs either an authored
+ *   `questionSkills` entry or a `subTopicId` that `buildQuestionFacts` found in
+ *   the corpus, and returns [] for anything else, which `toObservations` skips.
+ *
+ * So a synthetic id — a content hash of a generated thinking question, say —
+ * would buy no observation at all, and would buy a review card that resolves to
+ * null and is pruned the next time the review screen opens. It would cost a
+ * queue slot in the meantime. A scan or thinking miss therefore reaches the
+ * error notebook (lib/mistakes) and nothing else, deliberately.
+ */
+const NEVER_MEASURED: ResultSource[] = ['fix', 'scan', 'thinking'];
 
 export type ResultEvent = {
   ts: number;
@@ -147,7 +188,7 @@ function writeSeen(seen: Set<string>) {
  *  accuracy aggregations (and thus the grade prediction) count only the first
  *  answer. Questions with no stable id (AI-generated) never repeat. */
 export function recordResult(event: Omit<ResultEvent, 'ts'>) {
-  // A repair-path answer is ALWAYS a replay, whatever the question is.
+  // A NEVER_MEASURED answer is ALWAYS a replay, whatever the question is.
   //
   // A fix path deliberately re-serves material around a weakness the student
   // just failed, immediately after showing them the worked solution. Letting
@@ -158,7 +199,7 @@ export function recordResult(event: Omit<ResultEvent, 'ts'>) {
   // goal, the 14-day chart) because the student really did the work, and
   // lib/cognition still reads them as weaker-but-real evidence via `isReplay`.
   // Whether the repair worked is judged by lib/remediation's own store.
-  let repeat = event.source === 'fix';
+  let repeat = NEVER_MEASURED.includes(event.source);
   if (!repeat && event.questionId) {
     const key = `${event.source}:${event.questionId}`;
     const seen = readSeen();

@@ -10,6 +10,7 @@ import { Camera, Upload, Loader2, X, CheckCircle, XCircle, Crown, ScanLine, Mess
 import Link from 'next/link';
 import { MathText } from './MathText';
 import { recordMistake, toErrorCategory } from '@/lib/mistakes';
+import { recordResult } from '@/lib/results';
 
 type AuditStep = { text: string; ok: boolean; issue?: string };
 type AuditResult = {
@@ -81,16 +82,39 @@ export function SolutionAudit({
         return;
       }
       setResult(data as AuditResult);
-      // A wrong solution goes to the error notebook with the AI category.
-      if (data.isCorrect === false) {
-        recordMistake({
+      // An audited photo is an ANSWERED question, so it goes to the answer log
+      // as well as the error notebook. It used to reach only the notebook: the
+      // scan counted for nothing — no streak, no daily goal, no 14-day chart.
+      //
+      // What it still cannot reach is the SRS/cognition fan-out inside
+      // recordResult, and no id passed from here would change that. This audits
+      // a photo of arbitrary work: the corpus holds no question for it, so a
+      // fabricated id would seed a review card that `resolveQuestion` returns
+      // null for and `pruneUnresolvable` deletes, and would yield zero skills in
+      // `skillsForQuestion`. The miss lands in the error notebook below, which
+      // is the store that CAN hold un-identified work. See NEVER_MEASURED in
+      // lib/results.ts for the full reasoning.
+      //
+      // Only when the API actually returned a verdict; `isCorrect` is optional
+      // and an absent one is "not judged", not "wrong".
+      if (typeof data.isCorrect === 'boolean') {
+        recordResult({
           subject,
           topic: topic ?? data.topic ?? '',
-          questionText: questionText || data.transcription,
-          correctAnswer: data.correctContinuation,
-          category: toErrorCategory(data.category),
           source: 'scan',
+          correct: data.isCorrect,
         });
+        // A wrong solution goes to the error notebook with the AI category.
+        if (!data.isCorrect) {
+          recordMistake({
+            subject,
+            topic: topic ?? data.topic ?? '',
+            questionText: questionText || data.transcription,
+            correctAnswer: data.correctContinuation,
+            category: toErrorCategory(data.category),
+            source: 'scan',
+          });
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

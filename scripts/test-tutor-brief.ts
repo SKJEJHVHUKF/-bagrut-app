@@ -183,6 +183,14 @@ assert(
 );
 assert(brief.length <= 1200, 'brief stays under the 1200-char budget');
 
+// The repair path is emitted BEFORE the mistake list for the same reason the
+// cognitive block is: the brief is sliced from the TAIL at MAX_LEN.
+const fixAt = brief.indexOf('fix_target:');
+assert(
+  fixAt === -1 || brief.indexOf('wrong:') === -1 || fixAt < brief.indexOf('wrong:'),
+  'the repair path precedes the mistake list (truncation-safe ordering)',
+);
+
 // The cognitive block is emitted BEFORE the mistake list precisely so a long
 // mistake list can never truncate it away. Lock the order, not just presence.
 const cogAt = brief.indexOf('next:');
@@ -237,12 +245,107 @@ const bare = buildStudentSnapshot(SUBJECT, '');
 assert(!bare.includes('scope:'), 'with no topic the brief names no topic');
 assert(!bare.includes('next:'), 'and recommends no next step, which would be about one');
 assert(!bare.includes('weak:') && !bare.includes('misc:'), 'and makes no claim about a topic');
+// `fix_target` is a RANKED weakness, i.e. the same kind of derived claim as the
+// four above — it joined this list the day it was added, not later, because the
+// bug it would re-open is the one this whole section exists to record.
+assert(!bare.includes('fix_target:'), 'and names no repair target, which is a claim about one too');
 assert(bare.includes('lvl:'), 'what is true without a topic survives — the unit level');
 
 // And the scoped brief is untouched: naming a topic still gets its full state.
 const scoped = buildStudentSnapshot(SUBJECT, TOPIC);
 assert(scoped.includes(`scope: ${TOPIC}`), 'a NAMED topic still names itself in the brief');
 assert(scoped.includes('next:'), 'and still carries its recommended next step');
+
+// The brief is hard-sliced at MAX_LEN, so it can never OVERFLOW — it can only
+// silently drop its own tail. Printing the real occupancy is the only way to
+// see a new line pushing `due:` (or the last mistake) off the end.
+console.log(`      → brief ${brief.length}/1200 chars · bare ${bare.length} · scoped ${scoped.length}`);
+
+// ============================================================
+section('the repair path — the tutor is told a fix-track already exists');
+// ============================================================
+//
+// lib/remediation has ranked what is worth repairing, and remembered a session
+// the student is part-way through, since the day it shipped. None of it reached
+// the tutor: a student who typed "אני תקוע" was re-diagnosed from scratch
+// against a fix-track that was already open, and the tutor could not say "we
+// already started on this".
+//
+// Both keys must be ABSENT rather than empty when there is nothing to say. An
+// empty `fix_open:` is not a harmless blank — it is a line the model pays for
+// on every uncached turn and then has to interpret, and to anything skimming
+// for the key it reads as "a fix exists".
+
+import { getWeaknesses, startFix, abandonFix } from '../lib/remediation';
+
+const weaknesses = getWeaknesses(SUBJECT);
+assert(
+  weaknesses.length > 0,
+  `fixture: the seeded log really produces a weakness (${weaknesses.length})`,
+);
+
+const want = weaknesses.find((w) => w.topic === TOPIC);
+assert(!!want, 'fixture: one of them is in the topic under test');
+assert(scoped.includes('fix_target: '), 'a named topic carries its repair target');
+assert(
+  !!want && scoped.includes(`fix_target: ${want.title.replace(/\s+/g, ' ').slice(0, 20)}`),
+  'and the line names the weakness the engine actually ranked, not a re-derived one',
+);
+
+// The live session is driven through the REAL engine. A hand-built store entry
+// would satisfy every assertion below and prove nothing about the shape the app
+// actually writes — the failure this guards is the two drifting apart.
+const started = startFix(weaknesses[0].id, SUBJECT);
+if (started.ok) {
+  const withFix = buildStudentSnapshot(SUBJECT, TOPIC);
+  assert(withFix.includes('fix_open: '), 'an open fix-track reaches the tutor');
+  assert(
+    /fix_open: [^\n]*\d+\/\d+/.test(withFix),
+    'and says how far through it the student is, not merely that it exists',
+  );
+  // The bare /chat entry is the screen where "what were we in the middle of" is
+  // the only question still answerable — the ranked weakness above is withheld
+  // there (it is a claim about a topic nobody named), but a session the student
+  // started himself is a fact about him, not a guess, so it must survive.
+  assert(
+    buildStudentSnapshot(SUBJECT, '').includes('fix_open: '),
+    'and survives the no-topic entry, where nothing else can answer it',
+  );
+
+  const openLine = withFix.split('\n').find((l) => l.startsWith('fix_open:')) ?? '';
+  if (started.fix.path.title === want?.title) {
+    assert(
+      /^fix_open: \d+\/\d+$/.test(openLine),
+      'and does not repeat a Hebrew title that is already on the fix_target line',
+    );
+  } else {
+    assert(
+      openLine.length > 'fix_open: 0/0'.length,
+      'a session aimed elsewhere names what it is aimed at',
+    );
+  }
+
+  abandonFix();
+  assert(
+    !buildStudentSnapshot(SUBJECT, TOPIC).includes('fix_open'),
+    'with no live session the key is absent, not blank',
+  );
+}
+
+// …and with no evidence at all, neither key exists. Checked on a cleared store
+// rather than a thin one: this is the brand-new visitor's first paint.
+store.clear();
+const nothingToFix = buildStudentSnapshot(SUBJECT, TOPIC);
+assert(!nothingToFix.includes('fix_target'), 'an empty store claims no repair target');
+assert(!nothingToFix.includes('fix_open'), 'and no open fix-track');
+assert(
+  !/fix_(target|open):\s*(\n|$)/.test(`${nothingToFix}\n${scoped}\n${bare}`),
+  'neither key is ever emitted with an empty value',
+);
+
+// Restore the seeded log for the sections below — `store.clear()` above wiped
+// both the answer log and the fix store.
+seed(hits(8));
 
 // ============================================================
 section('context markers — the per-turn blocks and the prompt must agree');
@@ -274,10 +377,35 @@ const emittedKeys = [...new Set([brief, bare].flatMap((b) =>
   b.split('\n').map((l) => /^([a-z_]+):/.exec(l)?.[1]).filter((k): k is string => !!k),
 ))];
 assert(emittedKeys.length >= 4, `fixture: the brief emits real keys (${emittedKeys.join(', ')})`);
-const undocumentedKeys = emittedKeys.filter((k) => !promptText.includes(k));
+// ⚠️ THE ONE EXCEPTION — A LITERAL LIST, AND A DEBT RATHER THAN A POLICY.
+//
+// TUTOR_CORE is the 1-hour cache prefix and its contents are gated on a measured
+// margin (npm run measure:cache), so adding a legend entry is a prompt edit that
+// has to be budgeted rather than a free line. The two repair keys shipped ahead
+// of that, named to be readable with NO legend: a shared `fix_` prefix, an
+// English noun for the target, and `n/m` progress for the live session.
+//
+// Spelled out as a list so the gate keeps binding: a THIRD undocumented key
+// still fails, and the list itself names exactly what to add to the legend the
+// next time TUTOR_CORE is opened.
+const UNDOCUMENTED_BY_DESIGN = ['fix_target', 'fix_open'];
+const undocumentedKeys = emittedKeys.filter(
+  (k) => !promptText.includes(k) && !UNDOCUMENTED_BY_DESIGN.includes(k),
+);
 assert(
   undocumentedKeys.length === 0,
   `every STATE key is documented in the prompt${undocumentedKeys.length ? ` — missing: ${undocumentedKeys.join(', ')}` : ''}`,
+);
+
+// …and the exception retires itself. The moment a legend entry is written for
+// one of these, this fails and the name comes off the list above — otherwise the
+// debt quietly becomes permanent, which is how every allowlist rots.
+const nowDocumented = UNDOCUMENTED_BY_DESIGN.filter((k) => promptText.includes(k));
+assert(
+  nowDocumented.length === 0,
+  nowDocumented.length === 0
+    ? 'the undocumented-by-design list is still accurate'
+    : `${nowDocumented.join(', ')} is documented now — drop it from UNDOCUMENTED_BY_DESIGN`,
 );
 
 // The block MARKERS, collected from every per-turn producer at once.

@@ -387,8 +387,18 @@ const fullQuestion = {
   {
     const fs = await import('fs');
     const { resolve } = await import('path');
-    const src = fs.readFileSync(resolve(process.cwd(), 'components/tutor/TutorBubble.tsx'), 'utf8');
-    ok(src.includes('tutor-compiler'), 'the bubble reaches the compiler');
+    // ⚠️ THE CHAIN, NOT THE BUBBLE. This used to read TutorBubble.tsx, because
+    // that is where every free layer lived. It also meant the gate was
+    // asserting a LOCATION while the property it protects is "the tutor reaches
+    // the compiler, behind the flag, after the FAQ" — and when the chain was
+    // lifted into lib/tutor-chain.ts so /chat could share it, all three
+    // remained true and the gate failed anyway.
+    //
+    // Reading the chain keeps the same three assertions and makes them cover
+    // BOTH surfaces at once, which the old one could not do: /chat had no
+    // compiler call to find.
+    const src = fs.readFileSync(resolve(process.cwd(), 'lib/tutor-chain.ts'), 'utf8');
+    ok(src.includes('tutor-compiler'), 'the tutor chain reaches the compiler');
     // The only call site must sit inside a flag check. Asserted on the source
     // because the alternative is rendering a React tree, and a regression here
     // would silently change what every student sees.

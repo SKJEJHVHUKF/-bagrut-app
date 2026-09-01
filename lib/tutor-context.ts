@@ -51,6 +51,7 @@ import { studentTier, tierLabel } from '@/lib/adaptive';
 import { getPlan, getUnitLevel, daysUntilBagrut } from '@/lib/study-plan';
 import { dueCount } from '@/lib/review';
 import { getCognitiveState, type CognitiveState } from '@/lib/cognition';
+import { getWeaknesses, getActiveFix } from '@/lib/remediation';
 
 /**
  * 1200, down from 1800.
@@ -171,6 +172,52 @@ export function buildStudentSnapshot(subject: string, topic: string): string {
       }
 
       lines.push(`next: ${cog.nextStep.title} — ${cog.nextStep.reason}`);
+    }
+  } catch {
+    /* skip */
+  }
+
+  // --- the repair path that already exists --------------------------------
+  // lib/remediation ranks what is worth repairing and remembers a session the
+  // student is part-way through — and none of it reached the tutor. So a
+  // student who asked for help was re-diagnosed from scratch against a
+  // fix-track that was already open, and the tutor could not say "we already
+  // started on this". Both reads are pure localStorage over getResults +
+  // getMistakes: the same data the blocks above already paid to compute.
+  //
+  // ⚠️ These two keys have NO entry in TUTOR_CORE's STATE legend — that block
+  // is the 1-hour cache prefix, gated on a measured margin (npm run
+  // measure:cache), so documenting them is a separate, budgeted prompt edit.
+  // Until then they carry their own meaning: a shared `fix_` prefix, an English
+  // noun for the target and `n/m` progress for the live session.
+  try {
+    // ⚠️ TOPIC-SCOPED, for the same reason scope/weak/misc/next are. A ranked
+    // weakness is a claim ABOUT a topic, and on the bare /chat entry nobody
+    // named one — emitting it there is the `scope:` bug again under a new key.
+    // A weakness in some OTHER topic is unattributable for the same reason:
+    // sitting under a `scope:` line, the model reads it as being about that one.
+    // So this is the top weakness IN WHAT HE IS LOOKING AT, or nothing.
+    const weak = topic
+      ? getWeaknesses(subject).find((w) => w.topic === topic) ?? null
+      : null;
+    if (weak) lines.push(`fix_target: ${short(weak.title, 40)}`);
+
+    // An open session is NOT a claim about a topic: it is something the student
+    // actually started and can see in the app, so — like `due:` — it survives
+    // the bare entry, where it is the only thing here that still has an answer
+    // to "what were we in the middle of".
+    const fix = getActiveFix();
+    if (fix) {
+      // Name the target ONLY when the live session is aimed at something other
+      // than the line above — repeating a Hebrew title costs real money on a
+      // block that is re-read at full price every single turn.
+      const aim = fix.path.title === weak?.title ? '' : `${short(fix.path.title, 40)} `;
+      // 'paused' is the student having hit the miss ceiling — the one state the
+      // tutor most needs to know about, so it is never silently folded in.
+      const stalled = fix.progress.status === 'active' ? '' : ` ${fix.progress.status}`;
+      lines.push(
+        `fix_open: ${aim}${fix.progress.answered.length}/${fix.path.steps.length}${stalled}`,
+      );
     }
   } catch {
     /* skip */
