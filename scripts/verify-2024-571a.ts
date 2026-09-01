@@ -175,7 +175,9 @@ const d1 = (fn: (x: number) => number, x: number, h = 1e-6) => (fn(x + h) - fn(x
 // ד — the cyclic quadrilateral with AD a diameter, rebuilt in coordinates
 {
   const R = 1;
-  const O = [0, 0];
+  // The centre is the origin — every point below is built from it by
+  // construction, so it is never referenced by name. Kept as a comment rather
+  // than an unused binding: `npm run check` runs eslint at max-warnings 0.
   const A = [Math.cos(2.2689), Math.sin(2.2689)]; // 130°
   const D = [-A[0], -A[1]];
   const B = [Math.cos(3.4907), Math.sin(3.4907)]; // 200°
