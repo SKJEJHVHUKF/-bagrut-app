@@ -126,12 +126,67 @@ export default function BagruyotArchivePage() {
       );
   }, [filterSession, filterYear, filterPaper, filterTopic, query]);
 
+  const anyFilter =
+    filterSession !== 'all' ||
+    filterYear !== 'all' ||
+    filterPaper !== 'all' ||
+    filterTopic !== 'all' ||
+    !!query.trim();
+
+  /**
+   * The results, grouped by exam session instead of served as one long queue.
+   *
+   * A flat list of 100+ identical rows gives a student no way to see "this is
+   * one bagrut, these are its eight questions" — which is exactly how the exam
+   * is written and how revision is planned. Grouping turns the page into an
+   * index of ~20 exams that opens into questions 1–8, in the paper's own order.
+   */
+  const groups = useMemo(() => {
+    const out: { key: string; session: Session; questions: PastBagrutQuestion[] }[] = [];
+    for (const q of filtered) {
+      const key = sessionKeyOf(q);
+      const last = out[out.length - 1];
+      if (last && last.key === key) last.questions.push(q);
+      else
+        out.push({
+          key,
+          session: {
+            key,
+            year: q.year,
+            season: q.season,
+            paper: q.paper,
+            moed: q.moed,
+            count: 0,
+          },
+          questions: [q],
+        });
+    }
+    for (const g of out) g.session.count = g.questions.length;
+    return out;
+  }, [filtered]);
+
+  /**
+   * Which groups are open. Closed by default so the page opens as a tidy index;
+   * but the moment a filter narrows the list, keeping everything shut would hide
+   * the very questions the student searched for — so a filtered view opens all.
+   */
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const groupIsOpen = (key: string) => (anyFilter ? !openGroups.has(key) : openGroups.has(key));
+  const toggleGroup = (key: string) =>
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
   const clearFilters = () => {
     setFilterSession('all');
     setFilterYear('all');
     setFilterPaper('all');
     setFilterTopic('all');
     setQuery('');
+    setOpenGroups(new Set());
   };
 
   // ---------- Auth gates ----------
@@ -193,7 +248,8 @@ export default function BagruyotArchivePage() {
         </h1>
         {totalCount > 0 ? (
           <p className="text-sm text-slate-600">
-            {totalCount} שאלות מ-{years.length} שאלוני בגרות. מסונן ל-{filtered.length} שאלות.
+            {totalCount} שאלות מתוך {sessions.length} בגרויות אמיתיות
+            {hasActiveFilter ? ` · מוצגות ${filtered.length} שאלות ב-${groups.length} בגרויות` : ''}.
           </p>
         ) : (
           <p className="text-sm text-slate-600">המאגר עדיין ריק — אנחנו בונים אותו משאלוני בגרות אמיתיים.</p>
@@ -217,7 +273,7 @@ export default function BagruyotArchivePage() {
       {sessions.length > 0 && (
         <section className="mb-5">
           <div className="text-xs font-black tracking-widest text-slate-600 uppercase mb-2">
-            בגרויות קודמות
+            קפיצה לבגרות מסוימת
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             <button
@@ -312,19 +368,22 @@ export default function BagruyotArchivePage() {
             </button>
           )}
 
-          {/* Results */}
+          {/* Results — one block per exam session, questions 1–8 inside it */}
           {filtered.length === 0 ? (
             <div className="surface-premium rounded-2xl p-8 text-center text-slate-600">
               לא נמצאו שאלות לסינון הנוכחי. נסה לשנות פילטרים.
             </div>
           ) : (
-            <div className="space-y-2">
-              {filtered.map((q) => (
-                <QuestionCard
-                  key={q.id}
-                  question={q}
-                  isOpen={expanded === q.id}
-                  onToggle={() => setExpanded(expanded === q.id ? null : q.id)}
+            <div className="space-y-3">
+              {groups.map((g) => (
+                <SessionGroup
+                  key={g.key}
+                  session={g.session}
+                  questions={g.questions}
+                  isOpen={groupIsOpen(g.key)}
+                  onToggle={() => toggleGroup(g.key)}
+                  expandedQuestion={expanded}
+                  onToggleQuestion={(id) => setExpanded(expanded === id ? null : id)}
                 />
               ))}
             </div>
@@ -377,6 +436,84 @@ function FilterSelect({
   );
 }
 
+// ============================================================
+// SessionGroup — one real bagrut, with its questions in the paper's own order
+// ============================================================
+//
+// The header carries the identity (שאלון · עונה+שנה · מועד) once, so the rows
+// below it can drop those three badges and show only what differs between
+// them: the question number and its topic. That is what turns the page from a
+// queue of look-alike rows into an index a student can scan.
+
+function SessionGroup({
+  session,
+  questions,
+  isOpen,
+  onToggle,
+  expandedQuestion,
+  onToggleQuestion,
+}: {
+  session: Session;
+  questions: PastBagrutQuestion[];
+  isOpen: boolean;
+  onToggle: () => void;
+  expandedQuestion: string | null;
+  onToggleQuestion: (id: string) => void;
+}) {
+  const seasonHeb = session.season === 'summer' ? 'קיץ' : 'חורף';
+  const moedHeb = session.moed ? MOED_LABEL[session.moed] : null;
+  const topics = Array.from(new Set(questions.map((q) => q.topic)));
+
+  return (
+    <section className="surface-premium rounded-2xl overflow-hidden">
+      <button
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        className="w-full text-right px-4 py-3.5 hover:bg-slate-900/[0.02] transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-violet-600/10 border border-violet-500/25 flex flex-col items-center justify-center leading-none">
+            <span className="text-[9px] font-bold text-violet-700">שאלון</span>
+            <span className="text-xs font-black text-violet-800">{session.paper}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="font-display text-base font-black text-slate-900">
+                {seasonHeb} {session.year}
+              </span>
+              {moedHeb && (
+                <span className="bg-amber-500/15 border border-amber-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                  {moedHeb}
+                </span>
+              )}
+              <span className="text-[11px] font-bold text-slate-600">
+                {questions.length} שאלות
+              </span>
+            </div>
+            <div className="mt-0.5 text-[11px] text-slate-500 truncate">{topics.join(' · ')}</div>
+          </div>
+          <div className="flex-shrink-0 text-slate-500">
+            {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="border-t border-slate-900/10 divide-y divide-slate-900/[0.06]">
+          {questions.map((q) => (
+            <QuestionCard
+              key={q.id}
+              question={q}
+              isOpen={expandedQuestion === q.id}
+              onToggle={() => onToggleQuestion(q.id)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function QuestionCard({
   question,
   isOpen,
@@ -386,48 +523,41 @@ function QuestionCard({
   isOpen: boolean;
   onToggle: () => void;
 }) {
-  const seasonHeb = question.season === 'summer' ? 'קיץ' : 'חורף';
-  const moedHeb =
-    question.moed === 'a'
-      ? 'מועד א\''
-      : question.moed === 'b'
-        ? 'מועד ב\''
-        : question.moed === 'special'
-          ? 'מועד מיוחד'
-          : null;
   return (
-    <article className="surface-premium rounded-2xl overflow-hidden">
-      <button onClick={onToggle} className="w-full text-right p-4 hover:bg-slate-900/[0.02] transition-colors">
-        {/* Collapsed row: identity only — שאלון, נושא, מועד, שנה, מספר שאלה.
-            No excerpt of the wording; the question itself opens on click. */}
+    <article className={isOpen ? 'bg-slate-900/[0.015]' : ''}>
+      <button
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        className="w-full text-right px-4 py-3 hover:bg-slate-900/[0.03] transition-colors"
+      >
+        {/* Inside a session block the שאלון/מועד/שנה are already in the header,
+            so the row shows only what separates one question from the next. */}
         <div className="flex items-center gap-3">
+          <div
+            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black transition-colors ${
+              isOpen
+                ? 'bg-violet-600 text-white'
+                : 'bg-slate-900/[0.05] text-slate-700 border border-slate-900/[0.08]'
+            }`}
+          >
+            {question.questionNumber}
+          </div>
           <div className="flex-1 min-w-0 flex flex-wrap items-center gap-1.5">
-            <span className="bg-violet-500/15 border border-violet-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-violet-800">
-              שאלון {question.paper}
-            </span>
             <span className="bg-violet-500/15 border border-violet-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-violet-800">
               {question.topic}
             </span>
-            {moedHeb && (
-              <span className="bg-amber-500/15 border border-amber-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-amber-800">
-                {moedHeb}
-              </span>
-            )}
-            <span className="text-sm font-black text-slate-800">
-              שאלה {question.questionNumber}
-            </span>
-            <span className="text-[10px] text-slate-600">
-              {seasonHeb} {question.year} • {question.totalPoints} נק׳
+            <span className="text-[10px] text-slate-500">
+              {question.parts.length} סעיפים • {question.totalPoints} נק׳
             </span>
           </div>
-          <div className="flex-shrink-0 text-slate-600">
-            {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          <div className="flex-shrink-0 text-slate-500">
+            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </div>
         </div>
       </button>
 
       {isOpen && (
-        <div className="px-4 pb-4 space-y-4 border-t border-slate-900/10 pt-4">
+        <div className="px-4 pb-4 space-y-4 pt-1">
           {/* The question exactly as it is printed in the official exam paper */}
           {question.imageSrc && (
             <ExamScan src={question.imageSrc} label={`שאלה ${question.questionNumber} כפי שהיא מופיעה בשאלון`} />
