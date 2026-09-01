@@ -34,7 +34,8 @@ import type { TutorFocus } from '@/lib/tutor-presence';
 import { loadFaqBank } from '@/content/tutor-faq';
 import type { TutorFaq, TutorFaqKind } from '@/content/tutor-faq';
 import { leaksAnswer } from '@/lib/help-ladder';
-import { foreignSubject } from '@/lib/maths-vocabulary';
+import { foreignSubject, namesAMathsSubject } from '@/lib/maths-vocabulary';
+import { resolveTopic } from '@/lib/resolve-topic';
 
 // ------------------------------------------------------------
 // Normalisation
@@ -597,6 +598,22 @@ function answered(focus: TutorFocus): boolean {
  * that matches nothing all return null and the caller goes to the model.
  */
 /**
+ * Words that carry any weight at all.
+ *
+ * ⚠️ TWO CHARACTERS, NOT THREE. A three-character floor reads "מה יש בדף
+ * הנוסחאות" as two words and refuses it — a real question, with an authored
+ * answer, thrown away because Hebrew function words are short and so are some
+ * of its content words. At two, that question counts four and "החלק הראשון"
+ * still counts two.
+ */
+function contentWords(message: string): string[] {
+  return (message ?? '')
+    .replace(/[^\u0590-\u05FFa-zA-Z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 2);
+}
+
+/**
  * An entry that is grounded in ITS OWN exercise, whatever kind it claims to be.
  *
  * A `concept` answer that opens "בשאלה שלנו מוציאים 2 כדורים" is a general
@@ -649,6 +666,12 @@ const BOUND_TO_ITS_EXERCISE =
 export async function answerGeneralFaq(message: string): Promise<FaqAnswer | null> {
   if (!message.trim()) return null;
   if (pointsAtSomethingOnScreen(message)) return null;
+  // WARNING: SAME FENCE AS THE TOPIC BANK, DIFFERENT SHAPE. These entries are
+  // about METHOD, so naming mathematics is not the test - "איך כדאי ללמוד"
+  // names none. What separates them from a conversational fragment is length:
+  // a question about how to study is a sentence, "החלק השני" is not. Three
+  // content words is the floor, measured against both sets.
+  if (contentWords(message).length < 3) return null;
 
   let pool: TutorFaq[];
   try {
@@ -694,6 +717,28 @@ export async function answerTopicFaq(
   subject = 'math5',
 ): Promise<FaqAnswer | null> {
   if (!message.trim()) return null;
+
+  // WARNING: THE BANK ANSWERS QUESTIONS. IT MUST NOT ANSWER CONVERSATION.
+  //
+  // Reported with a screenshot: mid-explanation the student typed "החלק השני"
+  // - two words meaning "the second part of what you just said" - and the bank
+  // served an authored answer about a completely different exercise, stamped
+  // "מהחומר המאומת". A confident wrong answer, which is worse than the model
+  // call it saved.
+  //
+  // It got through because the measurement that cleared this layer used the
+  // bank's OWN phrasings, which are all real questions. It never tested the
+  // messages a student actually sends INSIDE a conversation: "החלק הראשון",
+  // "תמשיך", "ומה עכשיו", "הבנתי את זה". Those carry two or three common words,
+  // and with a large pool some entry always scores.
+  //
+  // The separator that works, checked on both sets: a real question either
+  // names a piece of mathematics or resolves to a topic. Every fragment above
+  // fails both; "מה זה הסתברות מותנית" passes the first, "שליפה עם החזרה"
+  // passes the second. A message that does neither belongs to the conversation,
+  // and the conversation belongs to the model.
+  if (!namesAMathsSubject(message) && !resolveTopic(message)) return null;
+
   // A message pointing at "this step" or "this exercise" is about something
   // the student is looking at, and on this screen there is nothing to look at.
   if (pointsAtSomethingOnScreen(message)) return null;

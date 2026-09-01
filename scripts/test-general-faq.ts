@@ -64,6 +64,30 @@ const ok = (cond: boolean, name: string) => {
     ok(hit === null, `"${msg}" → null`);
   }
 
+  console.log('\n=== a conversational fragment is not a question ===\n');
+  // ⚠️ THE REGRESSION THIS SECTION EXISTS FOR, REPORTED WITH A SCREENSHOT.
+  //
+  // Mid-explanation the student typed "החלק השני" — two words meaning "the
+  // second part of what you just said" — and a bank served an authored answer
+  // about a different exercise entirely, stamped "מהחומר המאומת". A confident
+  // wrong answer, which is worse than the model call it saved.
+  //
+  // It got through because the measurement that cleared this layer used the
+  // bank's OWN phrasings, and those are all real questions. It never saw the
+  // messages a student sends INSIDE a conversation. Two or three common words
+  // against a pool of thousands: something always scores.
+  for (const msg of [
+    'החלק השני', 'החלק הראשון', 'השני', 'תמשיך', 'ומה עכשיו',
+    'הבנתי את זה', 'אפשר עוד פעם', 'עוד פעם בבקשה', 'לא ברור לי', 'אז מה',
+  ]) {
+    const t = await answerTopicFaq(msg, null);
+    const g = await answerGeneralFaq(msg);
+    ok(
+      t === null && g === null,
+      `"${msg}" gets nothing from any bank${t ? ` (topic→${t.faqId})` : ''}${g ? ` (general→${g.faqId})` : ''}`,
+    );
+  }
+
   console.log('\n=== the topic bank stays inside its topic ===\n');
   {
     // Taken from the bank itself rather than invented: a test that guesses at
