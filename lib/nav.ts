@@ -180,3 +180,19 @@ export function locate(pathname: string): { group: NavGroup; item: NavItem } | n
   }
   return best ? { group: best.group, item: best.item } : null;
 }
+
+/**
+ * The staff consoles: /admin (the owner's) and /teacher (a private tutor's).
+ *
+ * They are not the student app and must carry NONE of its chrome — no top
+ * nav, no bottom tab bar, no floating avatar, no tutor bubble. Each of those
+ * components keeps its own list of auth-flow exceptions, and before this
+ * existed the staff screens rendered underneath all four of them at once,
+ * which is exactly what made the admin area feel like a settings page taped
+ * onto the product. One list, so the fifth component cannot forget.
+ */
+const STAFF_PREFIXES = ['/admin', '/teacher'];
+
+export function isStaffPath(pathname: string): boolean {
+  return STAFF_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
+}

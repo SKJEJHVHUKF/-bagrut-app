@@ -21,14 +21,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, Search } from 'lucide-react';
 import MathUpLogo from '@/components/MathUpLogo';
-import { PRIMARY_ITEMS, isActive } from '@/lib/nav';
+import { PRIMARY_ITEMS, isActive, isStaffPath } from '@/lib/nav';
 
 // Pre-app flows own the whole viewport; the landing page ships its own nav.
 const HIDDEN_PREFIXES = ['/login', '/signup', '/auth', '/onboarding'];
+// isStaffPath below: /admin and /teacher have their own header.
 
 function isHidden(path: string): boolean {
   if (path === '/') return true;
-  return HIDDEN_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
+  return isStaffPath(path) || HIDDEN_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
 }
 
 export default function AppHeader() {

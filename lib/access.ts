@@ -44,7 +44,15 @@ const ADMIN_EMAILS = new Set(
 export type UserLike = {
   email?: string | null;
   /** Writable ONLY with the service role / dashboard — safe to gate on. */
-  app_metadata?: { pro?: boolean } & Record<string, unknown>;
+  app_metadata?: {
+    pro?: boolean;
+    /** Private-teacher role + terms. Set by the owner in /admin, never by the
+     *  teacher himself — see the teacher helpers at the bottom of this file. */
+    teacher?: boolean;
+    hourlyRate?: number;
+    weeklyHours?: number;
+    teacherSince?: string;
+  } & Record<string, unknown>;
   /** Writable by the user himself (`supabase.auth.updateUser({ data })`,
    *  which AppChrome does for the display name) — NEVER gate on it. */
   user_metadata?: Record<string, unknown>;
@@ -65,6 +73,49 @@ export function isProUser(user: UserLike): boolean {
   //     coalesce(raw_app_meta_data,'{}'::jsonb) || '{"pro":true}' where email = '…';
   // A payment provider's webhook will do the same write with the service role.
   return user?.app_metadata?.pro === true;
+}
+
+// ============================================================
+// Private teachers — the paid tutors Itay employs.
+// ============================================================
+//
+// Role and pay terms live in `app_metadata` rather than a `teachers` table for
+// the same reason `pro` does: it is service-role-writable ONLY, and it rides
+// along on the session, so gating a page costs zero queries. The three tables
+// this feature does add (supabase-teachers.sql) hold the things that are
+// genuinely relational — roster, assignments, per-week hour corrections.
+//
+// ⚠️ A teacher is NOT an admin. isTeacher gates /teacher, which shows only the
+// students on his own roster; /admin stays on the isAdmin email allowlist.
+
+/** Is this user one of the paid private teachers? */
+export function isTeacher(user: UserLike): boolean {
+  return user?.app_metadata?.teacher === true;
+}
+
+/** ₪ per hour, as set by the owner. 0 when unset — never a silent default,
+ *  because a made-up rate is a made-up salary. */
+export function teacherRate(user: UserLike): number {
+  const rate = user?.app_metadata?.hourlyRate;
+  return typeof rate === 'number' && Number.isFinite(rate) && rate >= 0 ? rate : 0;
+}
+
+/** Standing weekly hours, as set by the owner. 0 when unset. */
+export function teacherWeeklyHours(user: UserLike): number {
+  const hours = user?.app_metadata?.weeklyHours;
+  return typeof hours === 'number' && Number.isFinite(hours) && hours >= 0 ? hours : 0;
+}
+
+/**
+ * The day this account became a teacher (YYYY-MM-DD), or null.
+ *
+ * Stamped once, when the role is first granted, and it exists to stop the pay
+ * table from accruing weeks from before the person was hired — `created_at`
+ * would be wrong for a student later promoted to teacher.
+ */
+export function teacherSince(user: UserLike): string | null {
+  const since = user?.app_metadata?.teacherSince;
+  return typeof since === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(since) ? since : null;
 }
 
 // STRATEGY (2026-07): guided LEARNING is free for everyone, all topics — it's

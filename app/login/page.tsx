@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { isTeacher } from '@/lib/access';
 import MathUpLogo from '@/components/MathUpLogo';
 import {
   Mail,
@@ -18,7 +19,9 @@ import {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/roadmap';
+  // Where an explicit link asked to go. Absent, the destination depends on WHO
+  // signed in — resolved below, once we know.
+  const next = searchParams.get('next');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,7 +35,7 @@ function LoginForm() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
@@ -53,8 +56,13 @@ function LoginForm() {
 
     // Success — redirect. router.refresh() ensures the new auth cookie
     // is picked up by Server Components on the destination page.
+    //
+    // With no explicit destination, a private teacher goes to HIS BOARD. He
+    // signs in to see his students; landing him on the student roadmap is how
+    // a teacher concludes the system has nothing in it for him. (The same rule
+    // lives in lib/supabase/middleware for a session that is already valid.)
     router.refresh();
-    router.push(next);
+    router.push(next && next.startsWith('/') ? next : isTeacher(data.user) ? '/teacher' : '/roadmap');
   }
 
   return (
@@ -138,7 +146,7 @@ function LoginForm() {
       <div className="mt-6 text-center text-sm text-slate-600">
         עדיין אין לך חשבון?{' '}
         <Link
-          href={`/signup${next !== '/roadmap' ? `?next=${encodeURIComponent(next)}` : ''}`}
+          href={`/signup${next ? `?next=${encodeURIComponent(next)}` : ''}`}
           className="text-violet-700 hover:text-violet-800 font-bold underline-offset-2 hover:underline"
         >
           הירשם עכשיו

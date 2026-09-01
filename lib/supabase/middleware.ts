@@ -18,6 +18,7 @@
  */
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { isTeacher, type UserLike } from '@/lib/access';
 
 // The guided learning spine (/roadmap) is public; /practice now only redirects
 // into it, so it must be public too (else an anonymous old-link visitor hits a
@@ -25,7 +26,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 // /tutor is the agent workbench — every turn costs Anthropic money, so it is
 // gated like /chat rather than left public like /roadmap.
 // /admin is the owner's console — the page itself re-checks isAdmin().
-const PROTECTED_PREFIXES = ['/quiz', '/chat', '/history', '/learn', '/admin'];
+// /teacher is the private tutors' console — the page itself re-checks
+// isTeacher(), and a student who lands there is redirected to the app.
+const PROTECTED_PREFIXES = ['/quiz', '/chat', '/history', '/learn', '/admin', '/teacher'];
 
 const PUBLIC_PREFIXES = [
   '/login',
@@ -102,11 +105,16 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Logged-in user hitting /login or /signup → bounce them into the app
+  // Logged-in user hitting /login or /signup → bounce them into the app.
+  // A private teacher lands on HIS BOARD rather than the student roadmap: he
+  // signs in to see his students, and dropping him into the learning app with
+  // no sign that /teacher exists is how a teacher concludes the system has
+  // nothing for him.
   if (user && (pathname === '/login' || pathname === '/signup')) {
     const url = request.nextUrl.clone();
     const next = request.nextUrl.searchParams.get('next');
-    url.pathname = next && next.startsWith('/') ? next : '/roadmap';
+    const home = isTeacher(user as UserLike) ? '/teacher' : '/roadmap';
+    url.pathname = next && next.startsWith('/') ? next : home;
     url.search = '';
     return NextResponse.redirect(url);
   }
