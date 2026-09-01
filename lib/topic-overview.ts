@@ -37,6 +37,7 @@
 
 import { loadTopicCards } from '@/lib/topic-cards';
 import { getLesson } from '@/content/lessons';
+import { MATH5_CURRICULUM } from '@/content/bagrut-curriculum';
 
 /** How many options to name. More than this reads as a table of contents. */
 const MAX_OPTIONS = 6;
@@ -55,6 +56,36 @@ function label(alias: string): string {
     // one.
     .replace(/^\s*(?:מה\s*זה|מה\s*זו)\s*/, '')
     .trim();
+}
+
+/**
+ * The reply to "תסביר לי משהו מהחומר" — a topic to choose from.
+ *
+ * ⚠️ THIS IS ONE OF THE APP'S OWN BUTTONS. `IDLE_PROMPTS` in TutorBubble offers
+ * exactly two prompts when there is no question on screen. The first,
+ * "על מה כדאי לי לעבוד עכשיו", is answered locally by lib/tutor-plan-answer.
+ * The second was billed EVERY TIME — twice in one measured session — for a
+ * reply that can only be "which topic?", because with no topic named there is
+ * nothing else to say.
+ *
+ * The model's version of that reply costs ~$0.002 and asks the same question.
+ * This one asks it with the list attached, so the next message is a topic name
+ * and lands on `topicOverview` for free.
+ *
+ * Deliberately NOT in the general FAQ bank: the topic list has to come from the
+ * curriculum, and a bank entry is a fixed string that would rot the day a topic
+ * is added.
+ */
+export function chooseTopicPrompt(): string {
+  const names = MATH5_CURRICULUM.map((t) => String((t as { key?: unknown }).key ?? '')).filter(Boolean);
+  return (
+    'בשמחה. אלה הנושאים שאני מכיר:\n\n' +
+    names.map((n) => `\u00b7 ${n}`).join('\n') +
+    // ⚠️ ENDS ON THE QUESTION, same rule as topicOverview below: a card that
+    // ends in a full stop ends the conversation. The friendlier closing line
+    // goes BEFORE the ask, not after it.
+    '\n\nאפשר לבחור אחד, ואפשר פשוט לכתוב לי מה לא ברור. במה נתחיל?'
+  );
 }
 
 /**

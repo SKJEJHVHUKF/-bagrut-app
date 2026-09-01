@@ -53,7 +53,7 @@ import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
 import { AI_DAILY_LIMIT } from '@/lib/access';
 import { offTopicRedirect } from '@/lib/off-topic';
 import { planAnswer } from '@/lib/tutor-plan-answer';
-import { resolveTopic, isTopicOnly } from '@/lib/resolve-topic';
+import { resolveTopic, isTopicOnly, isVagueAsk } from '@/lib/resolve-topic';
 import { metaAnswer } from '@/lib/tutor-meta-asks';
 import { expectationOf, nextStepAfter, type Pending } from '@/lib/tutor-pending';
 import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
@@ -627,6 +627,18 @@ export default function TutorBubble() {
       // Four of these in one session, every one of them a model call, because
       // fifteen authored cards cover the ideas INSIDE probability and none
       // covers probability itself. See lib/topic-overview.
+      // The app's own idle prompt, "תסביר לי משהו מהחומר", names no topic and
+      // was billed on every press. See chooseTopicPrompt.
+      if (!focusNow?.question && !cardTopic && isVagueAsk(text)) {
+        const { chooseTopicPrompt } = await import('@/lib/topic-overview');
+        setMsgs((m) => [
+          ...m,
+          { id: `a-${Date.now()}`, role: 'assistant', text: chooseTopicPrompt(), local: true },
+        ]);
+        setSending(false);
+        return;
+      }
+
       if (!focusNow?.question && cardTopic && isTopicOnly(text)) {
         try {
           const { topicOverview } = await import('@/lib/topic-overview');

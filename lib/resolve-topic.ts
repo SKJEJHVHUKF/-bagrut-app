@@ -108,6 +108,27 @@ const FILLER = /^(?:על|את|של|לגבי|בנושא|נושא|ה|ב|ל|מ|תס
  * A message that is a topic name and nothing else can only mean one thing:
  * tell me about this topic. The caller turns it into a `concept` ask.
  */
+/**
+ * "תסביר לי משהו מהחומר" — the app's own idle button, and the ways a student
+ * rephrases it.
+ *
+ * ⚠️ IT IS A BUTTON, NOT A GUESS AT PHRASING. TutorBubble's IDLE_PROMPTS puts
+ * this one tap away on every screen that publishes no question, and every tap
+ * was a model call — twice in a single measured session. The reply it buys can
+ * only ever be "which topic?", because the message names none. That answer is
+ * knowable in advance, so buying it is buying nothing.
+ *
+ * ANCHORED TO THE WHOLE MESSAGE, deliberately. "תסביר לי משהו מהחומר על
+ * הסתברות" DOES name a topic and belongs to topicOverview and the banks; a
+ * prefix match would swallow it and answer a question the student already
+ * answered.
+ */
+export function isVagueAsk(message: string): boolean {
+  return /^\s*(?:תסביר\s*(?:לי)?\s*(?:משהו|משהוא)\s*מהחומר|תלמד\s*אותי\s*משהו|תסביר\s*לי\s*משהו|משהו\s*מהחומר)\s*[.!?]*\s*$/.test(
+    message ?? '',
+  );
+}
+
 export function isTopicOnly(message: string): boolean {
   const topic = resolveTopic(message);
   if (!topic) return false;
