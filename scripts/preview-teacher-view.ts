@@ -24,6 +24,9 @@ config({ path: resolve(process.cwd(), '.env.local'), override: true });
 import { createClient } from '@supabase/supabase-js';
 import { buildPay } from '../lib/teacher-pay';
 import { assignmentProgress } from '../lib/assignment-progress';
+import { buildReport } from '../lib/report';
+import { TAG_INFO } from '../lib/patterns/tags';
+import type { ResultEvent } from '../lib/results';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -143,6 +146,30 @@ async function main() {
         const pct = Math.round((b.ok / b.n) * 100);
         const stuck = b.n >= 3 && b.ok / b.n < 0.6 ? '  <-- STUCK' : '';
         console.log(`      ${topic}: ${b.ok}/${b.n} (${pct}%)${b.hints ? ` ${b.hints} hints` : ''}${stuck}`);
+      }
+
+      // The same call the board makes, so "the section never appears" is a
+      // thing this script can tell you BEFORE a teacher notices.
+      const rep = buildReport({
+        subject: 'math5',
+        events: all as unknown as ResultEvent[],
+        mistakes: [],
+        history: [],
+        healed: {},
+        healCount: {},
+        now: Date.now(),
+      });
+      console.log(
+        `      report: ${rep.profile.patterns.length} recurring pattern(s), ` +
+          `${rep.movement.filter((m) => m.delta !== null).length} topic(s) with movement` +
+          (rep.earlyDays ? ' [earlyDays: still measuring]' : '') +
+          ` · ${rep.profile.totalTagged} labelled misses of ${rep.totalAnswered}`
+      );
+      for (const pat of rep.profile.patterns.slice(0, 3)) {
+        console.log(`        PATTERN ${TAG_INFO[pat.tag].label} — ${pat.hits} hits, spread ${pat.spread}`);
+      }
+      for (const m of rep.movement.filter((x) => x.delta !== null)) {
+        console.log(`        MOVED ${m.topic}: ${Math.round((m.delta ?? 0) * 100)}%`);
       }
 
       for (const a of (tasks ?? []).filter((x) => String(x.student_id) === id)) {

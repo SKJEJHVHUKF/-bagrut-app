@@ -26,6 +26,9 @@ import { requireTeacher, roster, jsonError } from '@/lib/teacher-guard';
 import { teacherRate, teacherWeeklyHours, teacherSince } from '@/lib/access';
 import { buildPay, type HourOverride } from '@/lib/teacher-pay';
 import { assignmentProgress } from '@/lib/assignment-progress';
+import { buildReport } from '@/lib/report';
+import { TAG_INFO } from '@/lib/patterns/tags';
+import type { ResultEvent } from '@/lib/results';
 import { israelDay } from '@/lib/teacher-pay';
 import { getSubTopic } from '@/content/lessons';
 
@@ -47,6 +50,10 @@ type ResultRow = {
   repeat?: boolean;
   /** 'quiz' | 'drill' | 'bagrut' | 'review' | 'fix'. */
   source?: string;
+  /** REQUIRED by lib/report, which filters on it. A row typed without it
+   *  produces an empty report that reads as "not enough data yet" rather
+   *  than as the bug it is. */
+  subject?: string;
   /** Open questions: the student marked his own paper. Much weaker evidence
    *  than a machine-checked answer, so the board says how much of the score
    *  rests on it. */
@@ -186,6 +193,71 @@ export async function GET(request: Request): Promise<Response> {
     // is a bagrut grade, "80% overall" hiding "has never opened a real paper"
     // is the most expensive thing this board could fail to say. `source` has
     // been on every event since the log existed.
+    // ============================================================
+    // The recurring mistake, named — from lib/report, not from a model.
+    // ============================================================
+    // lib/patterns turns labelled wrong answers into "this same misconception
+    // keeps coming back, across four sub-topics", with the Hebrew name, what
+    // it looks like, and one habit that prevents it — all authored, none of it
+    // generated. One call over the array already in hand.
+    //
+    // ⚠️ IT PRODUCES NOTHING TODAY, AND THAT IS NOT A BUG HERE. A miss is only
+    // labelled when it came from a PARAMETRIC GENERATOR question (`gen:` id)
+    // whose template carries `distractorTags` — see tagFromChoice in
+    // lib/patterns/observe. Measured 2026-09-02 across every synced student:
+    // 716 answers, 712 with a question id, and ZERO of them generator ids,
+    // while 31 of the 37 templates do carry tags. So the raw material is
+    // authored and the wiring is sound; the questions simply never reach a
+    // student. `patterns` is therefore an empty array for everyone right now,
+    // the section self-hides, and it will light up on its own the day the
+    // generator serves questions. The student's own /report page is empty for
+    // exactly the same reason — this route did not cause it and cannot fix it.
+    //
+    // ⚠️ `repairs` is deliberately NOT passed through. It is derived from
+    // `healed`/`healCount`, which live only in the student's browser, so it is
+    // always empty here — and "0 תיקונים" would be exactly the false zero this
+    // route's header warns about. Same reason `mistakes` is empty: the error
+    // notebook is localStorage-only and never synced.
+    const raw = buildReport({
+      subject: 'math5',
+      // The rows were WRITTEN by lib/results, so they are ResultEvent at
+      // runtime; the local type above is optional-everywhere only because a
+      // JSON column deserves a defensive read.
+      events: results as unknown as ResultEvent[],
+      mistakes: [],
+      history: [],
+      healed: {},
+      healCount: {},
+      now: Date.now(),
+    });
+
+    const report = {
+      earlyDays: raw.earlyDays,
+      totalAnswered: raw.totalAnswered,
+      // Cross-topic patterns only: `local` ones are a single sub-topic's
+      // problem and the rung list above already points at those.
+      patterns: raw.profile.patterns.slice(0, 3).map((p) => ({
+        label: TAG_INFO[p.tag].label,
+        detail: TAG_INFO[p.tag].detail,
+        fix: TAG_INFO[p.tag].fix,
+        hits: p.hits,
+        share: p.share,
+        spread: p.spread,
+        topics: p.topics.slice(0, 4).map((t) => t.topic),
+      })),
+      // Movement needs both halves; the module already returns null rather
+      // than inventing a delta from a thin fortnight.
+      movement: raw.movement
+        .filter((m) => m.delta !== null)
+        .sort((a, b) => (a.delta ?? 0) - (b.delta ?? 0))
+        .map((m) => ({
+          topic: m.topic,
+          delta: m.delta,
+          recentAttempts: m.recent?.attempts ?? 0,
+          priorAttempts: m.prior?.attempts ?? 0,
+        })),
+    };
+
     const bagrutRows = measured.filter((r) => r.source === 'bagrut');
     const bagrut = {
       answered: bagrutRows.length,
@@ -297,6 +369,7 @@ export async function GET(request: Request): Promise<Response> {
       // How much of that accuracy the student graded himself.
       selfReported,
       difficulty,
+      report,
       bagrut,
       bagrutDate: planDate,
       daysToBagrut,

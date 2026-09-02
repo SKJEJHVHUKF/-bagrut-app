@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import MathUpLogo from '@/components/MathUpLogo';
+import { MathText } from '@/components/practice/MathText';
 import { PageHeader } from '@/components/PageHeader';
 import {
   ArrowLeft,
@@ -26,6 +27,7 @@ import {
   LogOut,
   Plus,
   RefreshCw,
+  Repeat,
   TriangleAlert,
   Trash2,
   Users,
@@ -84,6 +86,21 @@ type Student = {
   selfReported: number;
   difficulty: { easy: number; mid: number; hard: number };
   /** Real past-paper questions, kept apart from drills on purpose. */
+  /** From lib/report — the named recurring mistake and the fortnight trend. */
+  report: {
+    earlyDays: boolean;
+    totalAnswered: number;
+    patterns: {
+      label: string;
+      detail: string;
+      fix: string;
+      hits: number;
+      share: number;
+      spread: number;
+      topics: string[];
+    }[];
+    movement: { topic: string; delta: number; recentAttempts: number; priorAttempts: number }[];
+  };
   bagrut: { answered: number; correct: number };
   bagrutDate: string | null;
   daysToBagrut: number | null;
@@ -609,6 +626,86 @@ function StudentDetail({
             )}
             . חזרות על שאלה שכבר נענתה אינן נספרות באחוזים — כמו במסך של התלמיד.
           </p>
+
+          {/* ============================================================
+              THE RECURRING MISTAKE, NAMED.
+              Not "43% באלגברה" but "the same misconception, four sub-topics,
+              and here is the one habit that prevents it" — all of it authored
+              Hebrew from content/cognition, computed by lib/report, and shown
+              to the teacher for the first time. */}
+          {student.report.patterns.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Repeat aria-hidden="true" className="w-4 h-4 text-violet-600" />
+                <h3 className="text-xs font-black text-ink">הטעות שחוזרת אצלו</h3>
+              </div>
+              <div className="space-y-2">
+                {student.report.patterns.map((p) => (
+                  <div
+                    key={p.label}
+                    className="rounded-xl border border-violet-200 bg-violet-50/60 px-3 py-2.5"
+                  >
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-sm font-black text-violet-900">{p.label}</span>
+                      <span className="text-[11px] text-violet-700">
+                        {p.hits} פעמים · {Math.round(p.share * 100)}% מהטעויות המסומנות שלו
+                        {p.spread > 1 ? ` · ב-${p.spread} תתי-נושאים` : ''}
+                      </span>
+                    </div>
+                    <div className="text-[12px] text-slate-700 mt-1 leading-relaxed">
+                      <MathText inline>{p.detail}</MathText>
+                    </div>
+                    <div className="text-[12px] text-emerald-900 mt-1.5 leading-relaxed">
+                      <b>מה עוצר את זה: </b>
+                      <MathText inline>{p.fix}</MathText>
+                    </div>
+                    {p.topics.length > 0 && (
+                      <div className="text-[10px] text-slate-500 mt-1">
+                        הופיע ב: {p.topics.map((t) => label(t)).join(' · ')}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Two weeks against the two before them. The module returns null
+              rather than inventing a delta from a thin fortnight, so a topic
+              only appears here when both halves are real. */}
+          {student.report.movement.length > 0 && (
+            <div>
+              <h3 className="text-xs font-black text-ink mb-2">מה זז בשבועיים האחרונים</h3>
+              <div className="space-y-1">
+                {student.report.movement.map((m) => (
+                  <div
+                    key={m.topic}
+                    className="flex items-center gap-3 bg-white/70 rounded-xl px-3 py-1.5 text-sm"
+                  >
+                    <span className="flex-1 truncate">{label(m.topic)}</span>
+                    <span className="text-[10px] text-slate-400">
+                      {m.priorAttempts}→{m.recentAttempts} שאלות
+                    </span>
+                    <span
+                      className={`font-black w-14 text-left ${
+                        m.delta >= 0 ? 'text-emerald-600' : 'text-red-600'
+                      }`}
+                    >
+                      {m.delta > 0 ? '+' : ''}
+                      {Math.round(m.delta * 100)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {student.report.earlyDays && student.report.patterns.length === 0 && (
+            <p className="text-[11px] text-slate-500">
+              עוד אין מספיק תשובות מסומנות כדי לזהות דפוס טעות חוזר. זה לא אומר שאין —
+              זה אומר שאין עדיין מה למדוד.
+            </p>
+          )}
 
           {/* The ladder — the sentence that decides what to open with. */}
           {student.stuckRungs.length > 0 && (
