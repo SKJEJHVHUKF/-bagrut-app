@@ -45,6 +45,8 @@ import {
   Repeat,
   ClipboardCheck,
   Grid3x3,
+  Printer,
+  Download,
 } from 'lucide-react';
 import type { ClassBoard, AttentionRow, StudentRow } from '@/lib/class-board';
 import { demoBoard, demoFocuses } from '@/lib/demo-board';
@@ -124,7 +126,7 @@ export default function ClassBoardView({
 
   return (
     <main dir="rtl" className="mx-auto max-w-5xl px-4 pb-16 pt-6">
-      <Header klass={data.class} board={board} />
+      <Header klass={data.class} board={board} classId={isDemo ? null : classId} />
 
       {isDemo && <DemoBanner joinCode={data.class.joinCode} />}
 
@@ -212,6 +214,7 @@ export default function ClassBoardView({
       {openStudent && (
         <StudentPanel
           student={openStudent}
+          reportHref={isDemo || !classId ? null : `/console/class/${classId}/report?student=${openStudent.id}`}
           onClose={() => setOpenStudent(null)}
           onFocus={
             isDemo
@@ -242,7 +245,18 @@ export default function ClassBoardView({
 
 // ---------------------------------------------------------------- header
 
-function Header({ klass, board }: { klass: Payload['class']; board: ClassBoard }) {
+function Header({
+  klass,
+  board,
+  classId,
+}: {
+  klass: Payload['class'];
+  board: ClassBoard;
+  /** null in the sample view: both exports hit a real class through the guard,
+   *  and the demo has none. Offering a button that 403s is worse than not
+   *  offering it. */
+  classId: string | null;
+}) {
   const [copied, setCopied] = useState(false);
 
   const scored = board.students.map((s) => s.mastery).filter((m): m is number => m !== null);
@@ -300,6 +314,28 @@ function Header({ klass, board }: { klass: Payload['class']; board: ClassBoard }
           </button>
         )}
       </div>
+
+      {classId && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href={`/console/class/${classId}/report`}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+          >
+            <Printer className="h-4 w-4" aria-hidden />
+            דוח מודפס להורים
+          </Link>
+          {/* A plain link, not a fetch: the route answers with
+              Content-Disposition: attachment, so the browser saves the file and
+              the page never has to hold a blob in memory. */}
+          <a
+            href={`/api/school/classes/${classId}/export`}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+          >
+            <Download className="h-4 w-4" aria-hidden />
+            ייצוא לאקסל
+          </a>
+        </div>
+      )}
 
       {/* Four scalars with no shared axis — stat tiles, never a chart. The
           alert tone is on the one that costs the teacher time. */}

@@ -171,10 +171,17 @@ export const NAV_GROUPS: NavGroup[] = [
 /** Flat list — for anything that needs every destination without the grouping. */
 export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
-/** The four thumb-reachable destinations on a phone. Deliberately a SUBSET,
- *  not its own list: a fifth "עוד" tab opens the drawer, which carries the
- *  full grouped menu. Kept as hrefs so the labels and icons stay in one place. */
-const PRIMARY_HREFS = ['/roadmap', '/quiz', '/scan', '/chat'];
+/** The thumb-reachable destinations on a phone, and the desktop header's row.
+ *  Deliberately a SUBSET, not its own list: an "עוד" tab opens the drawer, which
+ *  carries the full grouped menu. Kept as hrefs so labels and icons stay in one
+ *  place.
+ *
+ *  ⚠️ /my-class is SECOND, not buried. A student handed a six-character code by
+ *  his teacher has to find where to type it in one look — it was reachable only
+ *  from the drawer, and the owner opened his own app and could not find it. If
+ *  he could not, thirty fifteen-year-olds will not either; they just will not
+ *  join, and nobody will report it. */
+const PRIMARY_HREFS = ['/roadmap', '/my-class', '/quiz', '/scan', '/chat'];
 
 export const PRIMARY_ITEMS: NavItem[] = PRIMARY_HREFS.map(
   (href) => NAV_ITEMS.find((i) => i.href === href)!,

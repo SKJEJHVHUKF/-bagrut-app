@@ -14,7 +14,8 @@
  * lose trust in a dashboard.
  */
 
-import { X, Target, Lightbulb } from 'lucide-react';
+import Link from 'next/link';
+import { X, Target, Lightbulb, Printer } from 'lucide-react';
 import type { StudentRow } from '@/lib/class-board';
 import { ACTIVITY_DAYS } from '@/lib/class-board';
 import { masteryCell } from '@/lib/mastery-scale';
@@ -34,11 +35,14 @@ export default function StudentPanel({
   student,
   onClose,
   onFocus,
+  reportHref = null,
 }: {
   student: StudentRow;
   onClose: () => void;
   /** null in the sample view — the ids are invented there. */
   onFocus: (() => void) | null;
+  /** The printable one-page report for THIS student. null in the sample view. */
+  reportHref?: string | null;
 }) {
   const activeDays = student.daily.filter((d) => d.attempts > 0).length;
 
@@ -180,16 +184,30 @@ export default function StudentPanel({
           )}
         </div>
 
-        {onFocus && (
-          <footer className="sticky bottom-0 mt-auto border-t border-slate-200 bg-white/95 px-5 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
-            <button
-              type="button"
-              onClick={onFocus}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 font-medium text-white transition hover:bg-violet-700"
-            >
-              <Target className="h-4 w-4" aria-hidden />
-              מקד את {student.name}
-            </button>
+        {(onFocus || reportHref) && (
+          <footer className="sticky bottom-0 mt-auto flex gap-2 border-t border-slate-200 bg-white/95 px-5 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
+            {onFocus && (
+              <button
+                type="button"
+                onClick={onFocus}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 font-medium text-white transition hover:bg-violet-700"
+              >
+                <Target className="h-4 w-4" aria-hidden />
+                מקד את {student.name}
+              </button>
+            )}
+            {reportHref && (
+              // One student's page, for the parents' evening he is on the
+              // agenda of — printing the whole class to hand over one sheet is
+              // how a teacher stops using a feature.
+              <Link
+                href={reportHref}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:text-slate-300"
+              >
+                <Printer className="h-4 w-4" aria-hidden />
+                דוח
+              </Link>
+            )}
           </footer>
         )}
       </aside>
