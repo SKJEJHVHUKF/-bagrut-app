@@ -112,10 +112,43 @@ create index if not exists focus_class_idx on public.focus(class_id, created_at 
 
 alter table public.focus enable row level security;
 
--- THE privacy rule, and the only direct-read policy in this file: a student
--- sees the focuses aimed at him, and nobody else's. Enforced here rather than
--- in the API because the student's own browser selects this table directly to
--- render "המורה ביקש" on his roadmap.
+-- ---- differentiated focus --------------------------------------------------
+--
+-- ⚠️ THIS TABLE MUST BE CREATED BEFORE THE POLICY BELOW, and that is the only
+-- reason it sits here rather than after it. The `own focus select` policy names
+-- public.focus_targets inside its USING clause, and Postgres resolves that name
+-- when the policy is CREATED, not when it is used. With the table declared
+-- afterwards the whole file aborted on
+--   ERROR: 42P01: relation "public.focus_targets" does not exist
+-- and — because the Supabase SQL editor runs the script as one transaction —
+-- nothing at all was created, including the four tables above it.
+--
+-- The dependency runs both ways, which is why the order is exactly this:
+-- focus_targets has a foreign key to focus(id), so `focus` must be created
+-- first; the policy reads focus_targets, so it must be created last.
+--
+-- EMPTY MEANS THE WHOLE CLASS. That is the common case and it costs zero rows;
+-- rows appear only when the teacher aims at specific students, which is the
+-- feature a generic homework system cannot do well and this one can, because
+-- the board already knows who is stuck in what.
+create table if not exists public.focus_targets (
+  focus_id   uuid not null references public.focus(id) on delete cascade,
+  student_id uuid not null references auth.users(id) on delete cascade,
+  primary key (focus_id, student_id)
+);
+
+create index if not exists focus_targets_student_idx on public.focus_targets(student_id);
+
+alter table public.focus_targets enable row level security;
+-- No policies. The student never reads this table directly — the policy below
+-- already resolves "is this one for me", so exposing the target list would only
+-- tell each student who else was singled out.
+
+-- ---- the privacy rule ------------------------------------------------------
+--
+-- The only direct-read policy in this file: a student sees the focuses aimed at
+-- him, and nobody else's. Enforced here rather than in the API because the
+-- student's own browser selects this table directly to render "המורה ביקש".
 --
 -- A focus with no rows in focus_targets is aimed at the WHOLE class, so both
 -- halves of the OR are needed.
@@ -136,24 +169,6 @@ create policy "own focus select" on public.focus
     )
   );
 
--- Deliberately NO insert/update/delete policy: RLS denies all three, so a
--- student cannot invent a focus, retarget one, or delete the one he was given.
--- Teachers write through /api/school/focus on the service role.
-
--- ---- differentiated focus --------------------------------------------------
--- EMPTY MEANS THE WHOLE CLASS. That is the common case and it costs zero rows;
--- rows appear only when the teacher aims at specific students, which is the
--- feature a generic homework system cannot do well and this one can, because
--- the board already knows who is stuck in what.
-create table if not exists public.focus_targets (
-  focus_id   uuid not null references public.focus(id) on delete cascade,
-  student_id uuid not null references auth.users(id) on delete cascade,
-  primary key (focus_id, student_id)
-);
-
-create index if not exists focus_targets_student_idx on public.focus_targets(student_id);
-
-alter table public.focus_targets enable row level security;
--- No policies. The student never reads this table directly — the policy on
--- `focus` above already resolves "is this one for me", so exposing the target
--- list would only tell each student who else was singled out.
+-- Deliberately NO insert/update/delete policy on `focus`: RLS denies all three,
+-- so a student cannot invent a focus, retarget one, or delete the one he was
+-- given. Teachers write through /api/school/focus on the service role.

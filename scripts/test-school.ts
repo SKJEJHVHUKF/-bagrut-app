@@ -16,6 +16,7 @@
  *   that stops a typo becoming a child's problem.
  */
 
+import { readFileSync } from 'node:fs';
 import {
   normalizeJoinCode,
   isValidJoinCode,
@@ -169,6 +170,84 @@ const catalogue = focusCatalogue();
   assert(
     describeFocus({ topic: 'סדרות', subTopicId: null, rung: null }) === 'סדרות',
     'a whole-topic focus describes as just the topic'
+  );
+}
+
+// ============================================================
+// The SQL files run TOP TO BOTTOM, in one transaction
+// ============================================================
+//
+// This exists because it already went wrong. `create policy "own focus select"`
+// names public.focus_targets inside its USING clause, and Postgres resolves
+// that name when the policy is CREATED — not when it is used. The table was
+// declared thirty lines further down, so the file aborted on
+//   ERROR: 42P01: relation "public.focus_targets" does not exist
+// and, because the Supabase SQL editor runs a script as ONE transaction,
+// nothing at all was created — including the four tables above the failure.
+//
+// Nothing else can catch this: the SQL is valid, tsc and eslint never read it,
+// and the only symptom is an error in a dashboard nobody runs twice. So the
+// ordering is asserted here, over the real files.
+{
+  const files = ['supabase-attempts.sql', 'supabase-school.sql'];
+
+  for (const file of files) {
+    const sql = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+
+    // Where each table becomes real. `if not exists` is optional in the match
+    // so a plain `create table` is covered too.
+    const created = new Map<string, number>();
+    for (const m of sql.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?public\.(\w+)/gi)) {
+      if (!created.has(m[1])) created.set(m[1], m.index ?? 0);
+    }
+    assert(created.size > 0, `${file}: declares at least one table`);
+
+    // Every statement that NAMES a table must come after that table exists.
+    // Policies are the dangerous ones (they resolve names at creation), but the
+    // same is true of `alter table` and `create index`.
+    const referencing = [
+      ...sql.matchAll(/create\s+policy\s+"[^"]+"\s+on\s+public\.\w+[\s\S]*?;/gi),
+      ...sql.matchAll(/alter\s+table\s+public\.\w+[^;]*;/gi),
+      ...sql.matchAll(/create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?[\s\S]*?;/gi),
+    ];
+
+    let violations = 0;
+    let firstViolation = '';
+    for (const stmt of referencing) {
+      const at = stmt.index ?? 0;
+      for (const ref of stmt[0].matchAll(/public\.(\w+)/g)) {
+        const table = ref[1];
+        const declaredAt = created.get(table);
+        // A table this file does not create (auth.users, or one from another
+        // file) is out of scope — only ordering WITHIN the file is asserted.
+        if (declaredAt === undefined) continue;
+        if (declaredAt > at) {
+          violations++;
+          if (!firstViolation) {
+            firstViolation = `public.${table} is used at char ${at} but created at ${declaredAt}`;
+          }
+        }
+      }
+    }
+
+    assert(
+      violations === 0,
+      `${file}: nothing references a table before it is created${firstViolation ? ` — ${firstViolation}` : ''}`
+    );
+  }
+
+  // The one that actually bit: prove the fix is in place, by name, so a future
+  // reorder cannot quietly undo it.
+  const school = readFileSync(new URL('../supabase-school.sql', import.meta.url), 'utf8');
+  assert(
+    school.indexOf('create table if not exists public.focus_targets') <
+      school.indexOf('create policy "own focus select"'),
+    'focus_targets is created BEFORE the policy that reads it'
+  );
+  assert(
+    school.indexOf('create table if not exists public.focus\n') <
+      school.indexOf('create table if not exists public.focus_targets'),
+    '...and after `focus`, which its foreign key points at'
   );
 }
 
