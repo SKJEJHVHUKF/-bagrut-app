@@ -56,19 +56,44 @@ type WrongRow = {
   note: string | null;
 };
 
+type StuckRung = {
+  topic: string;
+  subId: string;
+  title: string;
+  kind: string;
+  attempts: number;
+};
+
 type Student = {
   id: string;
   /** Display name only — the API deliberately sends no email. */
   name: string;
   syncedAt: string | null;
   lastAnswerAt: number | null;
+  /** First attempts only — replays are activity, not measurement. */
   answered: number;
   correct: number;
   accuracy: number;
+  selfReported: number;
+  difficulty: { easy: number; mid: number; hard: number };
+  /** Distinct days he practised in the last 30. */
+  activeDays: number;
+  totalDays: number;
   topics: TopicRow[];
   stuck: TopicRow[];
+  stuckRungs: StuckRung[];
   recentWrong: WrongRow[];
   assignments: Assignment[];
+};
+
+/** The ladder rungs, in the student's words. */
+const RUNG: Record<string, string> = {
+  learn: 'לימוד',
+  easy: 'תרגול קל',
+  mid: 'תרגול',
+  hard: 'אתגר',
+  ghost: 'חשיבה',
+  bagrut: 'בגרות',
 };
 
 type WeekRow = {
@@ -333,7 +358,19 @@ export default function TeacherDashboard({
                     </div>
 
                     {!neverSynced && (
-                      <div className="text-center shrink-0">
+                      <div className="text-center shrink-0 w-16">
+                        <div
+                          className={`font-display text-lg font-black leading-none ${
+                            s.activeDays === 0 ? 'text-red-600' : 'text-ink'
+                          }`}
+                        >
+                          {s.activeDays}
+                        </div>
+                        <div className="text-[10px] text-slate-500">ימים ב-30</div>
+                      </div>
+                    )}
+                    {!neverSynced && (
+                      <div className="text-center shrink-0 w-14">
                         <div className="font-display text-lg font-black text-ink leading-none">
                           {s.answered}
                         </div>
@@ -505,11 +542,57 @@ function StudentDetail({
         </p>
       ) : (
         <>
+          {/* One line of context before any percentage: how the work was
+              spread, and how much of the score he graded himself. An accuracy
+              with no volume behind it is not a measurement. */}
+          <p className="text-[11px] text-slate-500 bg-white/70 rounded-xl px-3 py-2">
+            תרגל ב-<b className="text-slate-700">{student.activeDays}</b> ימים מתוך 30 האחרונים
+            {student.totalDays > student.activeDays && ` (${student.totalDays} ימים בסך הכל)`}
+            {' · '}
+            {student.answered} שאלות ראשונות
+            {student.difficulty.hard > 0 && `, מתוכן ${student.difficulty.hard} ברמת אתגר`}
+            {student.selfReported > 0 && (
+              <>
+                {' · '}
+                <span className="text-amber-700 font-bold">
+                  {student.selfReported} מהן הוא בדק בעצמו
+                </span>
+              </>
+            )}
+            . חזרות על שאלה שכבר נענתה אינן נספרות באחוזים — כמו במסך של התלמיד.
+          </p>
+
+          {/* The ladder — the sentence that decides what to open with. */}
+          {student.stuckRungs.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <TriangleAlert aria-hidden="true" className="w-4 h-4 text-amber-500" />
+                <h3 className="text-xs font-black text-ink">שלבים שהוא ניסה ולא עבר</h3>
+              </div>
+              <div className="space-y-1">
+                {student.stuckRungs.map((r) => (
+                  <div
+                    key={`${r.topic}-${r.subId}-${r.kind}`}
+                    className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 text-sm"
+                  >
+                    <span className="font-bold flex-1 truncate">
+                      {r.title}
+                      <span className="text-slate-500 font-normal"> · {RUNG[r.kind] ?? r.kind}</span>
+                    </span>
+                    <span className="text-[11px] font-black text-amber-800 shrink-0">
+                      {r.attempts} ניסיונות
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* where he is stuck */}
           <div>
             <div className="flex items-center gap-2 mb-2">
               <TriangleAlert aria-hidden="true" className="w-4 h-4 text-red-500" />
-              <h3 className="text-xs font-black text-ink">איפה הוא נתקע</h3>
+              <h3 className="text-xs font-black text-ink">נושאים חלשים</h3>
             </div>
             {student.stuck.length === 0 ? (
               <p className="text-xs text-slate-500">

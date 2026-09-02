@@ -39,6 +39,7 @@ type ResultRow = {
   correct?: boolean;
   hintUsed?: boolean;
   subTopicId?: string;
+  repeat?: boolean;
   answerDiagnosis?: { kind?: string };
 };
 
@@ -113,7 +114,12 @@ async function main() {
         continue;
       }
 
-      const results: ResultRow[] = Array.isArray(state.results) ? (state.results as ResultRow[]) : [];
+      const all: ResultRow[] = Array.isArray(state.results) ? (state.results as ResultRow[]) : [];
+      // Same rule as the route and as the student's own screen: replays are
+      // activity, never measurement. A diagnostic that counts differently from
+      // the screen it is diagnosing is worse than no diagnostic.
+      const results = all.filter((r) => !r.repeat);
+      const replays = all.length - results.length;
       const byTopic = new Map<string, { n: number; ok: number; hints: number }>();
       for (const r of results) {
         const k = r.topic ?? '(no topic)';
@@ -126,7 +132,10 @@ async function main() {
       const ok = results.filter((r) => r.correct).length;
 
       console.log(`\n  ${who}`);
-      console.log(`    synced ${state.updated_at} · ${results.length} answers, ${ok} correct`);
+      console.log(
+        `    synced ${state.updated_at} · ${results.length} first attempts, ${ok} correct` +
+          (replays ? ` (+${replays} replays, not counted)` : '')
+      );
       if (results.length === 0) {
         console.log('    (synced, but has not answered a question yet)');
       }
@@ -137,7 +146,7 @@ async function main() {
       }
 
       for (const a of (tasks ?? []).filter((x) => String(x.student_id) === id)) {
-        const p = assignmentProgress(results, {
+        const p = assignmentProgress(all, {
           topic: String(a.topic),
           subTopicId: (a.sub_topic_id as string) ?? null,
           createdAt: String(a.created_at),

@@ -11,13 +11,29 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { PaySummary } from '@/lib/teacher-pay';
 
-export type Person = { id: string; email: string; name: string; missing: boolean };
+export type Person = {
+  id: string;
+  email: string;
+  name: string;
+  lastSignInAt: string | null;
+  missing: boolean;
+};
+
+/** A student on a roster, with his pulse. `syncedAt: null` means he has never
+ *  opened the app signed in — which is NOT the same as doing nothing, and the
+ *  screens must never render it as a zero. */
+export type RosterStudent = Person & {
+  lastAnswerAt: number | null;
+  syncedAt: string | null;
+};
 
 export type Teacher = Person & {
   hourlyRate: number;
   weeklyHours: number;
   since: string | null;
-  students: Person[];
+  students: RosterStudent[];
+  /** Tasks he has set, ever. The only action a tutor takes that leaves a row. */
+  assignmentsGiven: number;
   weeks: { weekStart: string; hours: number; note: string | null }[];
   pay: PaySummary;
 };
@@ -38,7 +54,8 @@ const ILS = new Intl.NumberFormat('he-IL', {
 
 export const shekel = (n: number) => ILS.format(n);
 
-export function useTeachers() {
+/** @param month 'YYYY-MM' to price a past month; omit for the current one. */
+export function useTeachers(month?: string) {
   const [teachers, setTeachers] = useState<Teacher[] | null>(null);
   const [candidates, setCandidates] = useState<Person[]>([]);
   const [error, setError] = useState('');
@@ -47,7 +64,9 @@ export function useTeachers() {
   const reload = useCallback(async () => {
     setError('');
     try {
-      const res = await fetch('/api/admin/teachers', { cache: 'no-store' });
+      const res = await fetch(`/api/admin/teachers${month ? `?month=${month}` : ''}`, {
+        cache: 'no-store',
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error ?? `HTTP ${res.status}`);
       setTeachers(json.teachers ?? []);
@@ -56,7 +75,7 @@ export function useTeachers() {
       setError(e instanceof Error ? e.message : 'הטעינה נכשלה');
       setTeachers([]);
     }
-  }, []);
+  }, [month]);
 
   useEffect(() => {
     void reload();

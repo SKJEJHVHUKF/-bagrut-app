@@ -26,6 +26,8 @@ import { requireTeacher, roster, jsonError } from '@/lib/teacher-guard';
 import { teacherRate, teacherWeeklyHours, teacherSince } from '@/lib/access';
 import { buildPay, type HourOverride } from '@/lib/teacher-pay';
 import { assignmentProgress } from '@/lib/assignment-progress';
+import { israelDay } from '@/lib/teacher-pay';
+import { getSubTopic } from '@/content/lessons';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +42,22 @@ type ResultRow = {
   subTopicId?: string;
   difficulty?: string;
   answerDiagnosis?: { kind?: string; note?: string };
+  /** A replay of a question already answered once. EXCLUDED from accuracy —
+   *  see the header. Still counts as activity. */
+  repeat?: boolean;
+  /** 'quiz' | 'drill' | 'bagrut' | 'review' | 'fix'. */
+  source?: string;
+  /** Open questions: the student marked his own paper. Much weaker evidence
+   *  than a machine-checked answer, so the board says how much of the score
+   *  rests on it. */
+  selfReported?: boolean;
 };
+
+/** The per-rung ladder progress, as lib/roadmap-progress writes it. */
+type RoadmapStore = Record<
+  string,
+  { levels?: Record<string, { cleared?: boolean; attempts?: number; stars?: number }> }
+>;
 
 /** A topic is "stuck" at this much failure, over at least this many tries —
  *  fewer than three answers is a bad day, not a weakness. */
@@ -83,7 +100,10 @@ export async function GET(request: Request): Promise<Response> {
   // the only thing standing between this teacher and every other teacher's
   // students, so it is applied in the query, not after it.
   const [states, assignmentRows, ...profiles] = await Promise.all([
-    ctx.db.from('learning_state').select('user_id, results, updated_at').in('user_id', studentIds),
+    ctx.db
+      .from('learning_state')
+      .select('user_id, results, roadmap, updated_at')
+      .in('user_id', studentIds),
     ctx.db
       .from('assignments')
       .select('id, student_id, title, topic, sub_topic_id, target_count, due_date, created_at')
@@ -92,10 +112,14 @@ export async function GET(request: Request): Promise<Response> {
     ...studentIds.map((id) => ctx.db.auth.admin.getUserById(id)),
   ]);
 
-  const stateOf = new Map<string, { results: ResultRow[]; updatedAt: string | null }>();
+  const stateOf = new Map<
+    string,
+    { results: ResultRow[]; roadmap: RoadmapStore; updatedAt: string | null }
+  >();
   for (const s of (states.data ?? []) as Record<string, unknown>[]) {
     stateOf.set(String(s.user_id), {
       results: Array.isArray(s.results) ? (s.results as ResultRow[]) : [],
+      roadmap: s.roadmap && typeof s.roadmap === 'object' ? (s.roadmap as RoadmapStore) : {},
       updatedAt: typeof s.updated_at === 'string' ? s.updated_at : null,
     });
   }
@@ -112,16 +136,33 @@ export async function GET(request: Request): Promise<Response> {
     const state = stateOf.get(id);
     const results = state?.results ?? [];
 
-    const topics = new Map<string, { answered: number; correct: number; hints: number }>();
-    let answered = 0;
-    let correct = 0;
-    let lastAnswerAt: number | null = null;
+    // ⚠️ ACCURACY IS MEASURED ON FIRST ATTEMPTS ONLY, and this is not a
+    // preference — it is the rule lib/results.ts already applies to every
+    // number the STUDENT sees (`measured()`, which drops `repeat`). Counting
+    // replays here made the same student read 72% on his own screen and 85%
+    // on his tutor's, and re-doing a cleared rung — which is learning, not a
+    // new measurement — silently raised the tutor's figure. Two people
+    // looking at one student must not see two numbers.
+    const measured = results.filter((r) => !r.repeat);
 
+    const topics = new Map<string, { answered: number; correct: number; hints: number }>();
+    const days = new Set<string>();
+    const difficulty = { easy: 0, mid: 0, hard: 0 };
+    let lastAnswerAt: number | null = null;
+    let selfReported = 0;
+
+    // ACTIVITY is every event, replays included: re-doing a rung is still a
+    // student who sat down to work, and the tutor needs to know he did.
     for (const r of results) {
-      answered++;
-      if (r.correct) correct++;
-      if (typeof r.ts === 'number' && (lastAnswerAt === null || r.ts > lastAnswerAt)) {
-        lastAnswerAt = r.ts;
+      if (typeof r.ts !== 'number') continue;
+      if (lastAnswerAt === null || r.ts > lastAnswerAt) lastAnswerAt = r.ts;
+      days.add(israelDay(new Date(r.ts)));
+    }
+
+    for (const r of measured) {
+      if (r.selfReported) selfReported++;
+      if (r.difficulty === 'easy' || r.difficulty === 'mid' || r.difficulty === 'hard') {
+        difficulty[r.difficulty]++;
       }
       const name = r.topic ?? '(ללא נושא)';
       const bucket = topics.get(name) ?? { answered: 0, correct: 0, hints: 0 };
@@ -131,6 +172,18 @@ export async function GET(request: Request): Promise<Response> {
       topics.set(name, bucket);
     }
 
+    const answered = measured.length;
+    const correct = measured.filter((r) => r.correct).length;
+
+    // Days worked in the last 30, not questions answered ever: 200 questions
+    // in one panic night and 20 spread over ten days are the same total and
+    // two completely different students.
+    const cutoff = Date.now() - 30 * 86400000;
+    const activeDays = [...new Set(
+      results.filter((r) => typeof r.ts === 'number' && r.ts >= cutoff)
+        .map((r) => israelDay(new Date(r.ts as number)))
+    )].length;
+
     const topicRows = [...topics.entries()]
       .map(([topic, t]) => ({ topic, ...t, accuracy: t.answered ? t.correct / t.answered : 0 }))
       .sort((a, b) => b.answered - a.answered);
@@ -139,7 +192,28 @@ export async function GET(request: Request): Promise<Response> {
       .filter((t) => t.answered >= STUCK_MIN_ATTEMPTS && t.accuracy < STUCK_MAX_ACCURACY)
       .sort((a, b) => b.answered - b.correct - (a.answered - a.correct));
 
-    const recentWrong = results
+    // The ladder: a rung played three times and still not cleared is the
+    // sentence that decides what to open Tuesday's lesson with. No percentage
+    // says it. `learning_state.roadmap` has carried this all along and nothing
+    // has ever rendered it.
+    const stuckRungs: { topic: string; subId: string; title: string; kind: string; attempts: number }[] = [];
+    for (const [key, node] of Object.entries(state?.roadmap ?? {})) {
+      const [topic, subId] = key.split('::');
+      if (!topic || !subId) continue;
+      for (const [kind, rung] of Object.entries(node?.levels ?? {})) {
+        if (rung?.cleared || (rung?.attempts ?? 0) < 3) continue;
+        stuckRungs.push({
+          topic,
+          subId,
+          title: getSubTopic('math5', topic, subId)?.title ?? subId,
+          kind,
+          attempts: rung?.attempts ?? 0,
+        });
+      }
+    }
+    stuckRungs.sort((a, b) => b.attempts - a.attempts);
+
+    const recentWrong = measured
       .filter((r) => r.correct === false)
       .sort((a, b) => (b.ts ?? 0) - (a.ts ?? 0))
       .slice(0, RECENT_WRONG)
@@ -191,8 +265,14 @@ export async function GET(request: Request): Promise<Response> {
       answered,
       correct,
       accuracy: answered ? correct / answered : 0,
+      // How much of that accuracy the student graded himself.
+      selfReported,
+      difficulty,
+      activeDays,
+      totalDays: days.size,
       topics: topicRows,
       stuck,
+      stuckRungs: stuckRungs.slice(0, 5),
       recentWrong,
       assignments,
     };

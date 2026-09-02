@@ -14,13 +14,23 @@ import { useParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { ArrowRight, Check, Eye, Trash2, UserPlus, Wallet } from 'lucide-react';
 import { addDays, israelDay, weekStartOf } from '@/lib/teacher-pay';
-import { personLabel, shekel, useTeachers, type Teacher } from '../../useTeachers';
+import { personLabel, shekel, useTeachers, type Person, type Teacher } from '../../useTeachers';
 
 /** The last 8 Sundays, newest first — the weeks a correction can target. */
 const recentWeeks = () => {
   const current = weekStartOf(israelDay(new Date()));
   return Array.from({ length: 8 }, (_, i) => addDays(current, -7 * i));
 };
+
+/** Coarse on purpose: the owner is deciding whether to make a phone call,
+ *  not reading a timestamp. */
+function timeAgo(when: number | null): string {
+  if (when === null) return 'לא תרגל מעולם';
+  const days = Math.floor((Date.now() - when) / 86400000);
+  if (days > 30) return `לפני ${Math.floor(days / 30)} חודשים`;
+  if (days > 0) return `לפני ${days} ימים`;
+  return 'היום';
+}
 
 const weekLabel = (weekStart: string) =>
   `שבוע ${new Date(`${weekStart}T00:00:00Z`).toLocaleDateString('he-IL', {
@@ -174,7 +184,7 @@ function Roster({
   call,
 }: {
   teacher: Teacher;
-  candidates: { id: string; email: string; name: string; missing: boolean }[];
+  candidates: Person[];
   busy: boolean;
   call: CallFn;
 }) {
@@ -199,7 +209,15 @@ function Roster({
           >
             <span className="flex-1 min-w-0">
               <span className="block text-sm font-bold text-ink truncate">{personLabel(s)}</span>
-              <span className="block text-[11px] text-slate-500 truncate">{s.email}</span>
+              <span className="block text-[11px] text-slate-500 truncate">
+                {s.email}
+                {' · '}
+                {s.syncedAt === null ? (
+                  <span className="text-amber-700 font-bold">לא נכנס לאפליקציה מעולם</span>
+                ) : (
+                  <>תרגל {timeAgo(s.lastAnswerAt)}</>
+                )}
+              </span>
             </span>
             <button
               onClick={() =>

@@ -89,6 +89,30 @@ export default function TeachersPage() {
                 <div className="text-[10px] text-slate-500">תלמידים</div>
               </div>
 
+              {/* The salary accrues by itself. These two are the only evidence
+                  that a person was on the other end of it. */}
+              <div className="text-center w-20">
+                <div
+                  className={`text-[11px] font-bold leading-tight ${
+                    t.lastSignInAt ? 'text-slate-600' : 'text-red-600'
+                  }`}
+                >
+                  {t.lastSignInAt
+                    ? `נכנס לפני ${Math.max(
+                        0,
+                        Math.floor((Date.now() - Date.parse(t.lastSignInAt)) / 86400000)
+                      )} ימים`
+                    : 'לא נכנס מעולם'}
+                </div>
+                <div
+                  className={`text-[10px] ${
+                    t.assignmentsGiven === 0 ? 'text-red-600 font-bold' : 'text-slate-500'
+                  }`}
+                >
+                  {t.assignmentsGiven} מטלות
+                </div>
+              </div>
+
               <div className="text-center w-24">
                 <div className="text-base font-black text-violet-700 leading-none">
                   {shekel(t.pay.month.pay)}
