@@ -39,9 +39,37 @@ export type BoardAttempt = {
   correct: boolean;
   is_repeat?: boolean | null;
   hint_used?: boolean | null;
+  /** answerDiagnosis, as lib/answer-check wrote it: WHICH wrong answer, not
+   *  just that it was wrong. This is what lets a student card say "he flips the
+   *  sign" instead of "42%". */
+  diagnosis?: { kind?: string; note?: string } | null;
   /** SERVER clock (attempts.created_at). Never the client's `ts` — "has not
    *  been here in nine days" must not be answerable by a device clock. */
   created_at: string;
+};
+
+/** One wrong answer, kept for the student card. The teacher opens this before
+ *  a conversation, and "he got 42%" is not something you can talk to a student
+ *  about — a specific mistake is. */
+export type WrongAnswer = {
+  topic: string;
+  subTopicId: string | null;
+  daysAgo: number;
+  hintUsed: boolean;
+  /** The shape of the error, when lib/answer-check could name it. */
+  kind: string | null;
+  note: string | null;
+};
+
+/** One day of the activity strip. Counted in 24h windows back from `now`
+ *  rather than calendar dates ON PURPOSE: a calendar day needs a timezone, the
+ *  server runs in UTC, and the student is in Israel — a sparkline is not worth
+ *  a class of bug where the last bar is empty until 3am. */
+export type DayCell = {
+  /** 0 = the last 24 hours. */
+  daysAgo: number;
+  attempts: number;
+  correct: number;
 };
 
 export type BoardStudent = { id: string; name: string };
@@ -83,6 +111,12 @@ export type StudentRow = {
   topics: TopicMastery[];
   /** Topics that tripped the stuck rule, worst first. */
   stuck: TopicMastery[];
+  /** The most recent wrong answers, newest first. Capped — a teacher opening a
+   *  student before a conversation needs the last few mistakes, not a log. */
+  recentWrong: WrongAnswer[];
+  /** ACTIVITY_DAYS of 24h buckets, oldest first. Counts every attempt including
+   *  replays: this strip answers "did he show up", not "does he know it". */
+  daily: DayCell[];
 };
 
 /** A line in "דורש התייחסות" — a student, and the reason, already worded. */
@@ -145,6 +179,12 @@ export const RETEACH_MIN_STUDENTS = 5;
 export const RETEACH_MAX_MASTERY = 0.55;
 /** The attention list is a list a person can act on, not a report. */
 export const ATTENTION_LIMIT = 5;
+/** Days in the per-student activity strip. Two school weeks — long enough to
+ *  show a habit forming or breaking, short enough to read at a glance. */
+export const ACTIVITY_DAYS = 14;
+/** Wrong answers kept per student. Enough to spot a repeating mistake, few
+ *  enough that the card stays a card. */
+export const RECENT_WRONG_LIMIT = 12;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -240,6 +280,38 @@ export function buildClassBoard(
       )
       .sort((a, b) => (a.mastery ?? 1) - (b.mastery ?? 1));
 
+    // ---- the student card's two extra views, from the SAME rows ------------
+    // Both are derived here rather than in a second query: the attempts are
+    // already in hand, and a card that re-fetched would be able to disagree
+    // with the row it was opened from.
+    const recentWrong: WrongAnswer[] = mine
+      .filter((a) => !a.correct)
+      .sort((x, y) => Date.parse(y.created_at) - Date.parse(x.created_at))
+      .slice(0, RECENT_WRONG_LIMIT)
+      .map((a) => ({
+        topic: a.topic,
+        subTopicId: a.sub_topic_id ?? null,
+        daysAgo: Math.max(0, Math.floor((now - Date.parse(a.created_at)) / DAY_MS)),
+        hintUsed: !!a.hint_used,
+        kind: a.diagnosis?.kind ?? null,
+        note: a.diagnosis?.note ?? null,
+      }));
+
+    const daily: DayCell[] = Array.from({ length: ACTIVITY_DAYS }, (_, i) => ({
+      daysAgo: ACTIVITY_DAYS - 1 - i,
+      attempts: 0,
+      correct: 0,
+    }));
+    for (const a of mine) {
+      const at = Date.parse(a.created_at);
+      if (!Number.isFinite(at)) continue;
+      const bucket = Math.floor((now - at) / DAY_MS);
+      if (bucket < 0 || bucket >= ACTIVITY_DAYS) continue;
+      const cell = daily[ACTIVITY_DAYS - 1 - bucket];
+      cell.attempts++;
+      if (a.correct) cell.correct++;
+    }
+
     const daysSinceActive =
       lastActiveAt === null ? null : Math.floor((now - lastActiveAt) / DAY_MS);
 
@@ -260,6 +332,8 @@ export function buildClassBoard(
       mastery: ratio(correct, measured),
       topics: topicRows,
       stuck,
+      recentWrong,
+      daily,
     };
   });
 

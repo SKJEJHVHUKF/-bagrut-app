@@ -111,18 +111,55 @@ const STUDENTS: {
  * `now` is passed through rather than read here so the day arithmetic lines up
  * with the rest of the screen, and so this is testable.
  */
+/**
+ * Named mistakes, so the student card demonstrates the thing that actually
+ * distinguishes this product: not "he got 42%", but WHERE he goes wrong. These
+ * mirror the shapes lib/answer-check reports.
+ */
+const DIAGNOSES: Record<string, { kind: string; note: string }[]> = {
+  סדרות: [
+    { kind: 'off-by-one', note: 'השתמש ב-n במקום n−1 בנוסחת האיבר הכללי' },
+    { kind: 'wrong-formula', note: 'הציב בנוסחת סדרה הנדסית במקום חשבונית' },
+    { kind: 'sign-flip', note: 'הפך את סימן ההפרש d' },
+  ],
+  טריגונומטריה: [
+    { kind: 'identity', note: 'פתח sin(2α) כ-2sinα במקום 2sinαcosα' },
+    { kind: 'domain', note: 'קיבל פתרון מחוץ לתחום שהשאלה הגדירה' },
+    { kind: 'degrees-radians', note: 'חישב במעלות כשהשאלה בערכים רדיאניים' },
+  ],
+  פונקציות: [
+    { kind: 'derivative', note: 'גזר את המכפלה כמכפלת הנגזרות' },
+    { kind: 'domain', note: 'לא פסל את הערך שמאפס את המכנה' },
+  ],
+  הסתברות: [{ kind: 'independence', note: 'הכפיל הסתברויות של מאורעות תלויים' }],
+};
+
 export function demoBoard(now: number = Date.now()): ClassBoard {
   const roster = STUDENTS.map((s, i) => ({ id: `demo-${i}`, name: s.name }));
 
   const attempts: BoardAttempt[] = [];
   STUDENTS.forEach((s, i) => {
     for (const [topic, total, correct, daysAgo] of s.work) {
+      const pool = DIAGNOSES[topic] ?? [];
+      let wrongSeen = 0;
       for (let k = 0; k < total; k++) {
+        const isCorrect = k < correct;
+        // A named mistake on some of the wrong answers, not all: in the real
+        // data lib/answer-check can only name the shapes it recognises, and a
+        // demo where every error is neatly labelled would set an expectation
+        // the product does not meet.
+        const diag = !isCorrect && pool.length > 0 && wrongSeen % 3 !== 2
+          ? pool[wrongSeen % pool.length]
+          : null;
+        if (!isCorrect) wrongSeen++;
+
         attempts.push({
           user_id: `demo-${i}`,
           topic,
-          correct: k < correct,
+          correct: isCorrect,
           is_repeat: false,
+          hint_used: !isCorrect && k % 4 === 0,
+          diagnosis: diag,
           // Spread across a few days around the anchor so "last active" is not
           // identical for every answer, while the anchor still decides whether
           // the student reads as away.

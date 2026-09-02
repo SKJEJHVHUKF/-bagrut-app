@@ -12,7 +12,17 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Users, Plus, LogIn, Copy, Check, School, ArrowLeft } from 'lucide-react';
+import {
+  Users,
+  Plus,
+  LogIn,
+  Copy,
+  Check,
+  School,
+  ArrowLeft,
+  Info,
+  ChevronDown,
+} from 'lucide-react';
 import StudentFocus from '@/components/StudentFocus';
 
 type ClassRow = {
@@ -86,6 +96,8 @@ export default function SchoolPage() {
           all when there is no focus aimed at this user. */}
       <StudentFocus />
 
+      <HowItWorks hasClasses={!!classes?.length} />
+
       {classes === null ? (
         <p className="text-sm text-slate-500">טוען…</p>
       ) : (
@@ -113,6 +125,99 @@ export default function SchoolPage() {
         </>
       )}
     </main>
+  );
+}
+
+/**
+ * The whole thing, in four steps, on the screen where someone first meets it.
+ *
+ * Written because the owner opened the page and said "כלום לא מובן" — and he
+ * was right: it showed a class card and two forms, and never once said what the
+ * product does or who does what. A teacher landing here has to understand the
+ * loop before he will spend a lesson's goodwill introducing it to a class.
+ *
+ * It collapses to a single line once he has a class: an explanation you cannot
+ * dismiss becomes furniture, and furniture is what people stop reading.
+ */
+function HowItWorks({ hasClasses }: { hasClasses: boolean }) {
+  const [open, setOpen] = useState(!hasClasses);
+
+  const steps = [
+    {
+      who: 'המורה',
+      title: 'פותח כיתה',
+      body: 'שם הכיתה ורמה, ומקבל קוד בן שש תווים.',
+    },
+    {
+      who: 'התלמידים',
+      title: 'מצטרפים עם הקוד',
+      body: 'בתפריט ״הכיתה שלי״, פעם אחת. בלי אימיילים ובלי הזמנות.',
+    },
+    {
+      who: 'התלמידים',
+      title: 'מתרגלים כרגיל',
+      body: 'אותה אפליקציה שהם כבר מכירים. כל תשובה נרשמת אוטומטית.',
+    },
+    {
+      who: 'המורה',
+      title: 'רואה ומכוון',
+      body: 'מי תקוע, מה הכיתה לא הבינה — ושולח כל אחד לתרגל בדיוק במקום שלו.',
+    },
+  ];
+
+  return (
+    <section className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-start"
+      >
+        <span className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-50">
+          <Info className="h-4 w-4 text-violet-600" aria-hidden />
+          איך זה עובד
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          aria-hidden
+        />
+      </button>
+
+      {open && (
+        <div className="border-t border-slate-100 px-5 py-4 dark:border-slate-800">
+          <ol className="grid gap-4 sm:grid-cols-2">
+            {steps.map((s, i) => (
+              <li key={s.title} className="flex gap-3">
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-violet-100 font-mono text-sm font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                    {s.title}
+                    <span className="ms-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      {s.who}
+                    </span>
+                  </p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                    {s.body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <p className="mt-4 border-t border-slate-100 pt-3 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+            רוצה לראות איך נראה הלוח לפני שאתה פותח כיתה?{' '}
+            <Link
+              href="/school/demo"
+              className="font-medium text-violet-700 underline underline-offset-4 dark:text-violet-300"
+            >
+              תצוגת דוגמה עם כיתה מלאה
+            </Link>
+          </p>
+        </div>
+      )}
+    </section>
   );
 }
 

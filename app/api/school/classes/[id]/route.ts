@@ -62,7 +62,9 @@ export async function GET(
     studentIds.length
       ? ctx.db
           .from('attempts')
-          .select('user_id, topic, sub_topic_id, correct, is_repeat, hint_used, created_at')
+          .select(
+            'user_id, topic, sub_topic_id, correct, is_repeat, hint_used, diagnosis, created_at'
+          )
           .in('user_id', studentIds)
           .gte('created_at', since)
           .order('created_at', { ascending: false })
@@ -84,6 +86,7 @@ export async function GET(
       correct: !!a.correct,
       is_repeat: !!a.is_repeat,
       hint_used: !!a.hint_used,
+      diagnosis: (a.diagnosis as { kind?: string; note?: string }) ?? null,
       created_at: String(a.created_at),
     })
   );
