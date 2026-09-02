@@ -191,3 +191,47 @@ export function POST(): Response {
   // students' answer history is a mistake waiting to be made.
   return jsonError('method not allowed', 405);
 }
+
+/**
+ * PATCH — the three things a teacher may change about a class: its name, its
+ * level, and whether the door is open. `archived: true` closes joining AND
+ * hides the class from students (the join route refuses archived classes; the
+ * student's focus policy still reads, so nothing he was asked to do vanishes).
+ * Nothing here touches the roster or any answer.
+ */
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Response> {
+  const { id } = await params;
+  const ctx = await requireClassTeacher(request, id, true);
+  if (ctx instanceof Response) return ctx;
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return jsonError('bad request', 400);
+  }
+
+  const patch: Record<string, unknown> = {};
+  if (typeof body.name === 'string') {
+    const name = body.name.trim().slice(0, 40);
+    if (!name) return jsonError('צריך שם לכיתה', 400);
+    patch.name = name;
+  }
+  if (body.units !== undefined) {
+    const u = Number(body.units);
+    if (![3, 4, 5].includes(u)) return jsonError('רמה לא תקינה', 400);
+    patch.units = u;
+  }
+  if (typeof body.archived === 'boolean') patch.archived = body.archived;
+  if (Object.keys(patch).length === 0) return jsonError('אין מה לעדכן', 400);
+
+  const { error } = await ctx.db.from('classes').update(patch).eq('id', ctx.classId);
+  if (error) {
+    console.error('[api/school/classes] patch failed:', error.message);
+    return jsonError('לא הצלחנו לשמור', 500);
+  }
+  return Response.json({ ok: true, ...patch });
+}
