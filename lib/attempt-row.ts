@@ -110,7 +110,11 @@ export function attemptRow(input: unknown, userId: string, now: number): Attempt
   return {
     user_id: userId,
     ts,
-    subject: str(e.subject, MAX_SUBJECT) ?? 'math',
+    // 'math5' and not 'math': that is the subject key the content and every
+    // practice route actually use (content/lessons allLessonKeys). The default
+    // only fires for a body that omitted it, and a default nothing else in the
+    // app agrees with would make those rows silently unmatchable.
+    subject: str(e.subject, MAX_SUBJECT) ?? 'math5',
     topic,
     sub_topic_id: str(e.subTopicId, MAX_ID),
     question_id: str(e.questionId, MAX_ID),

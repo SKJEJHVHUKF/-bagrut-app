@@ -116,7 +116,10 @@ assert(attemptRow('{}', USER, NOW) === null, 'a string body is rejected');
 // ---- what degrades instead of rejecting ------------------------------------
 const sparse = attemptRow({ topic: 'סדרות', source: 'quiz', correct: true }, USER, NOW);
 assert(sparse !== null, 'an event from an older client, with only the three required fields, is kept');
-assert(sparse?.subject === 'math', 'a missing subject defaults to math rather than dropping the answer');
+assert(
+  sparse?.subject === 'math5',
+  'a missing subject defaults to math5 — the key the content and the practice routes actually use'
+);
 assert(
   sparse?.sub_topic_id === null && sparse?.difficulty === null && sparse?.diagnosis === null,
   'absent optional fields are null, not undefined — a jsonb column will not take undefined'

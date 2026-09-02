@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Users, Plus, LogIn, Copy, Check, School } from 'lucide-react';
+import StudentFocus from '@/components/StudentFocus';
 
 type ClassRow = {
   id: string;
@@ -78,6 +79,12 @@ export default function SchoolPage() {
           {error}
         </p>
       )}
+
+      {/* The student's half of the loop, and deliberately ABOVE the class list:
+          a student who came here to see what his teacher asked for should not
+          have to scroll past a "פתיחת כיתה" form to find it. Renders nothing at
+          all when there is no focus aimed at this user. */}
+      <StudentFocus />
 
       {classes === null ? (
         <p className="text-sm text-slate-500">טוען…</p>
