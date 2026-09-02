@@ -21,21 +21,14 @@
 
 import { allLessonKeys, getSubTopics } from '@/content/lessons';
 import { buildSubTopicLevels } from '@/lib/roadmap-levels';
+// ⚠️ Re-exported, never re-declared. The rung names live in lib/rungs because
+// that file imports NOTHING: a client component that needs the Hebrew labels
+// can take them from there without dragging this module — and with it the
+// entire authored corpus behind `@/content/lessons` — into the browser bundle.
+import { RUNGS, RUNG_LABEL, type Rung } from '@/lib/rungs';
 
-/** The rungs of a sub-topic's ladder, as lib/roadmap-levels names them. */
-export const RUNGS = ['learn', 'easy', 'mid', 'hard', 'ghost', 'bagrut'] as const;
-export type Rung = (typeof RUNGS)[number];
-
-/** Hebrew labels, so the picker and the student's card say the same words the
- *  roadmap already says. */
-export const RUNG_LABEL: Record<Rung, string> = {
-  learn: 'לומדים',
-  easy: 'חימום',
-  mid: 'ביסוס',
-  hard: 'אתגר',
-  ghost: 'חשיבה',
-  bagrut: 'בגרות',
-};
+export { RUNGS, RUNG_LABEL };
+export type { Rung };
 
 export type CatalogueSubTopic = {
   id: string;

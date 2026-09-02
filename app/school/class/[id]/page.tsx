@@ -25,7 +25,12 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Users, Copy, Check, Target, AlertTriangle, Clock, Sparkles } from 'lucide-react';
 import type { ClassBoard, AttentionRow, StudentRow } from '@/lib/class-board';
-import { RUNG_LABEL, type Rung, type CatalogueTopic } from '@/lib/focus-target';
+// ⚠️ VALUES from lib/rungs (which imports nothing), TYPES from lib/focus-target.
+// A value import of RUNG_LABEL from focus-target would pull `@/content/lessons`
+// — the whole authored corpus — into this page's browser bundle. Type imports
+// are erased at compile time and cost nothing, so CatalogueTopic is safe here.
+import { RUNG_LABEL, type Rung } from '@/lib/rungs';
+import type { CatalogueTopic } from '@/lib/focus-target';
 
 type FocusRow = {
   id: string;
