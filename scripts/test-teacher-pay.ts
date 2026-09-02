@@ -26,6 +26,7 @@ import {
   weekStartsInMonth,
 } from '../lib/teacher-pay';
 import { assignmentProgress } from '../lib/assignment-progress';
+import { mergeAnswerLog } from '../lib/answer-log';
 
 let checks = 0;
 let failures = 0;
@@ -218,6 +219,42 @@ assert(
 assert(
   assignmentProgress(answers, { topic: 'אלגברה', createdAt: 'not-a-date' }).answered === 4,
   'an unparseable given-at counts from the beginning rather than pinning the counter at 0'
+);
+
+// ============================================================
+// The two answer logs, merged — the number a duplicate would double.
+// ============================================================
+// Once /api/attempt shipped, every new answer exists in BOTH the durable
+// `attempts` table and the blob the browser still syncs. Counted twice, a
+// student's "answered" doubles while his accuracy stays put: a wrong number
+// plausible enough for a tutor to act on.
+const t1 = { ts: 1000, questionId: 'q1', correct: true };
+const t2 = { ts: 2000, questionId: 'q2', correct: false };
+const t3 = { ts: 3000, questionId: 'q3', correct: true };
+
+assert(
+  mergeAnswerLog([t2, t3], [t1, t2]).length === 3,
+  'an answer present in both logs is counted once, not twice'
+);
+assert(
+  mergeAnswerLog([t3], [t1, t2]).map((r) => r.ts).join() === '1000,2000,3000',
+  'the merged log is oldest-first regardless of which source it came from'
+);
+assert(
+  mergeAnswerLog([], [t1, t2]).length === 2,
+  'before the durable log exists, the synced blob is the whole history'
+);
+assert(
+  mergeAnswerLog([t1, t2], []).length === 2,
+  'and after the blob truncates, the durable log is'
+);
+assert(
+  mergeAnswerLog([{ ...t1, correct: false }], [t1])[0].correct === false,
+  'on a collision the server-written row wins over the browser blob'
+);
+assert(
+  mergeAnswerLog([], [{ ts: 5, questionId: 'a' }, { ts: 5, questionId: 'b' }]).length === 2,
+  'two answers in the same millisecond stay two answers'
 );
 
 // ============================================================

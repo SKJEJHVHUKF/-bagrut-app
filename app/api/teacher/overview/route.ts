@@ -10,10 +10,22 @@
  * ever call Anthropic. "Where is he stuck" is a threshold over answers he
  * already gave, not a model's opinion.
  *
- * WHERE THE PROGRESS DATA COMES FROM
- * `learning_state.results` — the answer log the student's own browser syncs on
- * every app load (lib/sync/roadmap-sync.ts, called from AppChrome). Nothing new
- * is recorded for this feature.
+ * WHERE THE PROGRESS DATA COMES FROM — TWO SOURCES, UNIONED
+ *
+ * `public.attempts` is the durable one: one append-only row per answer, written
+ * server-side by /api/attempt, never truncated, with the SERVER's clock on it.
+ * It is the source of record from the day that writer shipped.
+ *
+ * `learning_state.results` is the older one: a JSONB blob the student's browser
+ * syncs on every app load — and lib/results.ts caps it at MAX_EVENTS = 1000 and
+ * truncates from the FRONT. The busiest student measured 543 answers, so within
+ * months a tutor's accuracy and fortnight trend would have quietly started
+ * resting on partial history with nothing on screen saying so.
+ *
+ * Both are read and merged, deduped on (ts, questionId). Not one or the other:
+ * `attempts` holds nothing from before it shipped, and the blob holds nothing
+ * after it truncates. The union is the only thing that is complete on both
+ * sides of that date, and it needs no migration and no backfill.
  *
  * ⚠️ AND WHAT THAT MEANS WHEN IT IS EMPTY. A student who never signed in has no
  * learning_state row at all, and an empty answer log is indistinguishable from
@@ -26,6 +38,7 @@ import { requireTeacher, roster, jsonError } from '@/lib/teacher-guard';
 import { teacherRate, teacherWeeklyHours, teacherSince } from '@/lib/access';
 import { buildPay, type HourOverride } from '@/lib/teacher-pay';
 import { assignmentProgress } from '@/lib/assignment-progress';
+import { mergeAnswerLog } from '@/lib/answer-log';
 import { buildReport } from '@/lib/report';
 import { TAG_INFO } from '@/lib/patterns/tags';
 import type { ResultEvent } from '@/lib/results';
@@ -106,11 +119,22 @@ export async function GET(request: Request): Promise<Response> {
   // Scoped by student id on purpose — never a full-table scan. The roster is
   // the only thing standing between this teacher and every other teacher's
   // students, so it is applied in the query, not after it.
-  const [states, assignmentRows, ...profiles] = await Promise.all([
+  const [states, attemptRows, assignmentRows, ...profiles] = await Promise.all([
     ctx.db
       .from('learning_state')
       .select('user_id, results, roadmap, plan, updated_at')
       .in('user_id', studentIds),
+    // The durable log. Scoped to the roster like everything else here, newest
+    // first, capped high enough to cover any real student and low enough that
+    // one query cannot become the page's problem.
+    ctx.db
+      .from('attempts')
+      .select(
+        'user_id, ts, topic, sub_topic_id, question_id, source, difficulty, correct, is_repeat, hint_used, self_reported, diagnosis'
+      )
+      .in('user_id', studentIds)
+      .order('ts', { ascending: false })
+      .limit(20000),
     ctx.db
       .from('assignments')
       .select('id, student_id, title, topic, sub_topic_id, target_count, due_date, created_at')
@@ -137,6 +161,30 @@ export async function GET(request: Request): Promise<Response> {
     });
   }
 
+  // attempts rows → the same shape the aggregation below already speaks. The
+  // column names differ (snake_case in Postgres) and nothing else does; the
+  // table was deliberately built to mirror ResultEvent field for field.
+  const attemptsOf = new Map<string, ResultRow[]>();
+  for (const a of (attemptRows.data ?? []) as Record<string, unknown>[]) {
+    const id = String(a.user_id);
+    const list = attemptsOf.get(id) ?? [];
+    list.push({
+      ts: Number(a.ts),
+      topic: (a.topic as string) ?? undefined,
+      subTopicId: (a.sub_topic_id as string) ?? undefined,
+      questionId: (a.question_id as string) ?? undefined,
+      source: (a.source as string) ?? undefined,
+      difficulty: (a.difficulty as string) ?? undefined,
+      correct: a.correct === true,
+      repeat: a.is_repeat === true,
+      hintUsed: a.hint_used === true,
+      selfReported: (a.self_reported as boolean) ?? undefined,
+      answerDiagnosis: (a.diagnosis as { kind?: string; note?: string }) ?? undefined,
+      subject: 'math5',
+    });
+    attemptsOf.set(id, list);
+  }
+
   const assignmentsOf = new Map<string, Record<string, unknown>[]>();
   for (const a of (assignmentRows.data ?? []) as Record<string, unknown>[]) {
     const list = assignmentsOf.get(String(a.student_id)) ?? [];
@@ -147,7 +195,12 @@ export async function GET(request: Request): Promise<Response> {
   const students = studentIds.map((id, i) => {
     const user = profiles[i]?.data?.user ?? null;
     const state = stateOf.get(id);
-    const results = state?.results ?? [];
+
+    // The durable rows win where both sources describe the same answer: they
+    // are server-stamped and cannot be edited from a browser. The blob then
+    // contributes only what predates the writer.
+    const durable = attemptsOf.get(id) ?? [];
+    const results = mergeAnswerLog(durable, state?.results ?? []) as ResultRow[];
 
     // ⚠️ ACCURACY IS MEASURED ON FIRST ATTEMPTS ONLY, and this is not a
     // preference — it is the rule lib/results.ts already applies to every
@@ -360,8 +413,11 @@ export async function GET(request: Request): Promise<Response> {
       // when a name is unset would leak it for exactly the accounts created in
       // a hurry. Four hex characters keep two unnamed students apart instead.
       name: (user?.user_metadata?.name as string) || `תלמיד ${id.slice(0, 4)}`,
-      // null = no learning_state row at all. NOT zero — see the header.
-      syncedAt: state?.updatedAt ?? null,
+      // null = nothing from EITHER source. NOT zero — see the header. A student
+      // with durable rows but no synced blob is a real, measurable student.
+      syncedAt: state?.updatedAt ?? (durable.length ? new Date(durable[durable.length - 1].ts ?? 0).toISOString() : null),
+      /** How much of this student's history is on the durable log. */
+      durableAnswers: durable.length,
       lastAnswerAt,
       answered,
       correct,
