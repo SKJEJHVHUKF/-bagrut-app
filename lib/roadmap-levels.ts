@@ -22,6 +22,8 @@ import type {
   SubTopic,
 } from '@/content/lessons/types';
 import { getBagrutQuestionsForSubTopic } from '@/content/lessons';
+import { generateBatch } from '@/lib/generator';
+import type { Difficulty } from '@/lib/remediation/types';
 import { getGhostReplaysForSubTopic } from '@/content/ghost-replay';
 import type { GhostReplay } from '@/content/ghost-replay/types';
 
@@ -65,6 +67,36 @@ const XP: Record<RoadmapLevelKind, number> = {
  */
 export const CORE_LEVELS: RoadmapLevelKind[] = ['learn', 'easy', 'mid'];
 
+/**
+ * Generated variants appended to each drill rung.
+ *
+ * Two, not five. The point is not volume — the authored bank is already the
+ * spine — it is that a student actually MEETS a generated question, because
+ * every wrong answer to one is a labelled misconception (lib/patterns reads
+ * the template's `distractorTags`) and a wrong answer to an authored one is
+ * not. Two per rung is roughly a 15% longer rung and turns the whole
+ * diagnosis chain on.
+ */
+const GENERATED_PER_RUNG = 2;
+
+/**
+ * A stable seed per (sub-topic, rung).
+ *
+ * ⚠️ It MUST NOT be random. `buildSubTopicLevels` runs on every render of the
+ * ladder and on the server, and a fresh seed each time would hand the student
+ * a different question mid-run, break the retry set (which tracks missed ids),
+ * and make the server and client render disagree. Same input, same questions,
+ * always.
+ */
+function rungSeed(subTopicId: string, kind: string): number {
+  let h = 2166136261;
+  for (const ch of `${subTopicId}:${kind}`) {
+    h ^= ch.charCodeAt(0);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
 /** Build the ordered level ladder for one sub-topic from its content. */
 export function buildSubTopicLevels(
   subject: string,
@@ -73,9 +105,30 @@ export function buildSubTopicLevels(
 ): RoadmapLevel[] {
   const steps = st.lesson ?? [];
   const qs = st.questions ?? [];
-  const easy = qs.filter((q) => q.difficulty === 'easy');
-  const mid = qs.filter((q) => q.difficulty === 'mid');
-  const hard = qs.filter((q) => q.difficulty === 'hard');
+  // Authored first, then the generated variants for that rung.
+  //
+  // ⚠️ Only rungs the CONTENT already has are extended. A sub-topic with no
+  // authored 'easy' questions must not sprout an easy rung made entirely of
+  // generated ones — that would change the shape of the ladder the whole
+  // product is built around, and it is not what "wire the generator into
+  // practice" was asked to mean. `generateBatch` returns [] where there is no
+  // template, so this is a no-op for the 70 of 92 sub-topics without one.
+  const withGenerated = (authored: PracticeQuestion[], difficulty: Difficulty) => {
+    if (authored.length === 0) return authored;
+    const extra = generateBatch(
+      subject,
+      topic,
+      st.id,
+      difficulty,
+      GENERATED_PER_RUNG,
+      rungSeed(st.id, difficulty),
+    ).map((g) => g.question);
+    return extra.length ? [...authored, ...extra] : authored;
+  };
+
+  const easy = withGenerated(qs.filter((q) => q.difficulty === 'easy'), 'easy');
+  const mid = withGenerated(qs.filter((q) => q.difficulty === 'mid'), 'mid');
+  const hard = withGenerated(qs.filter((q) => q.difficulty === 'hard'), 'hard');
   const bag = getBagrutQuestionsForSubTopic(subject, topic, st.id);
   const ghost = getGhostReplaysForSubTopic(subject, topic, st.id);
 
