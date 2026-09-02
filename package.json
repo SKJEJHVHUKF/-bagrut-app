@@ -109,6 +109,7 @@
     "test:daily-plan": "tsx scripts/test-daily-plan.ts",
     "test:storage": "tsx scripts/test-storage.ts",
     "test:pay": "tsx scripts/test-teacher-pay.ts",
+    "test:access": "tsx scripts/test-access-boundaries.ts",
     "check:notation": "tsx scripts/check-tichon-notation.ts",
     "verify:rules": "tsx scripts/verify-rule-lines.ts",
     "test:geo": "tsx scripts/test-geo-figure.ts",
