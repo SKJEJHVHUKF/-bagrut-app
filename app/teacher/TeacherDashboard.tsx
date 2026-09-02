@@ -193,6 +193,11 @@ export default function TeacherDashboard({
   }, [query]);
 
   useEffect(() => {
+  // The rule does not analyse `await` boundaries: an async function called from
+  // an effect is flagged even when every setState in it happens after the first
+  // await. Nothing here setStates synchronously, so there is no cascading
+  // render to fix. Same reasoning and same suppression as AdminDashboard.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
 
