@@ -457,22 +457,76 @@ export const TRACK_571: TrackTree = {
       id: 'trig-functions',
       title: 'פונקציות טריגונומטריות',
       emoji: '〰️',
+      // Six stations in the owner's own order and wording (2026-08-30), one per
+      // level he sent. No `groups` here: levels are consecutive stops on the
+      // journey, never a tab switcher — סדרות is the only topic that gets tabs.
+      //
+      // The angle measure is NOT uniform across these six, by mathematical
+      // necessity: רמת בסיס solves equations and stays in degrees like the rest
+      // of טריגונומטריה, and from רמה 1 on everything differentiates, where
+      // (sin x)' = cos x holds in radians alone. The base level's last teach
+      // step hands the switch over explicitly, and verify-trig-angles is the gate.
       tiles: [
-        { kind: 'ladder', subId: 'trig-identities', title: 'זהויות טריגונומטריות', review: true },
-        { kind: 'ladder', subId: 'trig-equations', title: 'פתירת משוואות טריגונומטריות', review: true },
         {
           kind: 'ladder',
-          subId: 'trig-calculus',
-          title: 'נגזרות של פונקציות טריגונומטריות',
+          subId: 'tf-equations',
+          title: 'רמת בסיס · משוואות וזהויות טריגונומטריות',
           bullets: [
-            'נגזרות של $\\sin$ וגם $\\cos$',
-            'כלל השרשרת',
-            'אינטגרלים טריגונומטריים',
-            'צורת $R\\sin(x+\\varphi)$: קיצון בלי גזירה',
+            'הפתרון הכללי, וצמצום לתחום נתון',
+            'איחוד בזהות הפיתגורית ומשתנה עזר',
+            'למה לעולם לא מחלקים בביטוי טריגונומטרי',
           ],
         },
-        { kind: 'soon', title: 'חקירה מלאה של פונקציה טריגונומטרית — קיצון' },
-        { kind: 'soon', title: 'עבודה עם פרמטרים' },
+        {
+          kind: 'ladder',
+          subId: 'tf-domain',
+          title: 'רמה 1 · תחום הגדרה, חיתוכים ואסימפטוטות',
+          bullets: [
+            'מה פוסל זווית: מכנה מתאפס או שורש שלילי',
+            'חיתוך עם הצירים',
+            'אסימפטוטה אנכית מול חור: מתי המכנה מתאפס לבדו',
+          ],
+        },
+        {
+          kind: 'ladder',
+          subId: 'tf-derivative',
+          title: 'רמה 2 · נגזרות בשילוב מנה ושורש',
+          bullets: [
+            'שלוש הנגזרות היסודיות',
+            'גוזרים את הפונקציה הטריגונומטרית ואז מכפילים בנגזרת הפנימית',
+            'כלל המנה וכלל השורש עם ביטוי טריגונומטרי בפנים',
+          ],
+        },
+        {
+          kind: 'ladder',
+          subId: 'tf-investigation',
+          title: 'רמה 3 · חקירה מלאה',
+          bullets: [
+            'קיצון, עלייה וירידה',
+            'קיצון מקומי מול הערך הגדול ביותר בתחום סגור',
+            'זוגיות ומחזוריות',
+          ],
+        },
+        {
+          kind: 'ladder',
+          subId: 'tf-integral',
+          title: 'רמה 4 · אינטגרל וחישובי שטחים',
+          bullets: [
+            'שני האינטגרלים היסודיים, והסימן שמתהפך',
+            'אינטגרל אינו שטח: מפצלים בנקודות החיתוך',
+            'שטח בין שני גרפים',
+          ],
+        },
+        {
+          kind: 'ladder',
+          subId: 'tf-bagrut',
+          title: 'רמה 5 · שאלות בגרות משולבות',
+          bullets: [
+            'השרשרת: סעיף א מזין את ב, וב מזין את ד',
+            'הסקיצה היא שקובעת לכמה חלקים מפצלים',
+            'ארבע הטעויות שחוזרות בבגרות',
+          ],
+        },
         {
           kind: 'link',
           title: 'סעיפי חשיבה ושאלות בגרות',

@@ -67,6 +67,11 @@ export const EXCLUDED_571: readonly string[] = [
   // Superseded by the five ext-* stages (owner's own breakdown, 2026-08-30). The
   // module stays authored and reachable; it is only off the 571 track.
   'optimization',
+  // Superseded by the six tf-* stages (owner's own breakdown, 2026-08-30): its
+  // derivatives are רמה 2 and its integrals are רמה 4, both taught there at
+  // length instead of as four bullets on one tile. Still authored, still
+  // reachable from /practice and the quiz; only this track stops pointing at it.
+  'trig-calculus',
 ];
 
 /** Every sub-topic a paper's track leaves out on purpose — the sub-topic list

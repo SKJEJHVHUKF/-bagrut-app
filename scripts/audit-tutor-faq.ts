@@ -14,6 +14,7 @@ import { join } from 'path';
 import { allLessonKeys, getLesson } from '../content/lessons';
 import { conceptBankEntries, getConceptQuestions, CONCEPT_LEVELS } from '../content/concept-quiz';
 import { conceptAsQuestion } from '../lib/tutor-presence';
+import { loadFaqBank } from '../content/tutor-faq';
 
 const [topicArg, outDir, sliceArg = '15'] = process.argv.slice(2);
 if (!topicArg || !outDir) {
@@ -144,17 +145,36 @@ for (const e of conceptBankEntries()) {
   }
 }
 
-mkdirSync(outDir, { recursive: true });
-// The rows file stays COMPLETE even when slicing a subset: merge-tutor-faq
-// validates every authored unit against it, and a filtered rows file would
-// reject entries for units it simply did not list.
-writeFileSync(join(outDir, `rows-${topicArg}.json`), JSON.stringify(rows, null, 1), 'utf8');
-const selected = KINDS ? rows.filter((r) => KINDS.has(r.kind)) : rows;
-const slices: FaqRow[][] = [];
-for (let i = 0; i < selected.length; i += SLICE) slices.push(selected.slice(i, i + SLICE));
-slices.forEach((s, i) => writeFileSync(join(outDir, `slice-${String(i + 1).padStart(2, '0')}.json`), JSON.stringify(s, null, 1), 'utf8'));
-console.log(
-  `${topicArg}: ${rows.length} units total` +
-  (KINDS ? `, ${selected.length} of kind [${[...KINDS].join(',')}]` : '') +
-  ` → ${slices.length} slices of ≤${SLICE} in ${outDir}`,
-);
+// `async function main`, not top-level await: these scripts compile to CJS
+// where top-level await is a hard error, and `tsc --noEmit` runs under an ESM
+// target and says nothing about it.
+async function main() {
+  mkdirSync(outDir, { recursive: true });
+  // The rows file stays COMPLETE even when slicing a subset: merge-tutor-faq
+  // validates every authored unit against it, and a filtered rows file would
+  // reject entries for units it simply did not list.
+  writeFileSync(join(outDir, `rows-${topicArg}.json`), JSON.stringify(rows, null, 1), 'utf8');
+
+  // The header above has always PROMISED this skip; until now nothing
+  // implemented it, so a re-run on a partly-banked topic handed out every
+  // finished unit again — thirteen slices of done work at ~150k tokens each.
+  // `--all` overrides, for a deliberate re-author.
+  const bank = process.argv.includes('--all') ? null : await loadFaqBank('math5', topicArg);
+  const banked = new Set(Object.keys(bank ?? {}));
+  const fresh = banked.size ? rows.filter((r) => !banked.has(r.unit)) : rows;
+
+  const selected = KINDS ? fresh.filter((r) => KINDS.has(r.kind)) : fresh;
+  const slices: FaqRow[][] = [];
+  for (let i = 0; i < selected.length; i += SLICE) slices.push(selected.slice(i, i + SLICE));
+  slices.forEach((s, i) =>
+    writeFileSync(join(outDir, `slice-${String(i + 1).padStart(2, '0')}.json`), JSON.stringify(s, null, 1), 'utf8'),
+  );
+  console.log(
+    `${topicArg}: ${rows.length} units total` +
+    (banked.size ? `, ${banked.size} already banked → ${fresh.length} units` : '') +
+    (KINDS ? `, ${selected.length} of kind [${[...KINDS].join(',')}]` : '') +
+    ` → ${slices.length} slices of ≤${SLICE} in ${outDir}`,
+  );
+}
+
+main();

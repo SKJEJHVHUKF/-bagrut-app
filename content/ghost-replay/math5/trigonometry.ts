@@ -24,6 +24,7 @@
 // NO `mistakeCategory`: the content/cognition catalog covers מספרים מרוכבים
 // only, and verify-ghost rejects an id outside it.
 
+import { TF_GHOST_REPLAYS } from './trig-functions';
 import type { TopicGhostReplays } from '../types';
 
 const SUBJECT = 'math5';
@@ -2338,5 +2339,9 @@ $$S = S_{ABC} + S_{ACD}$$
 - **$\\sin(180° - \\alpha) = \\sin\\alpha$** — ולכן שני המשולשים כאן חולקים את אותו סינוס.
 - **לקרוא מה נשאל.** "שטח המרובע" איננו "שטח המשולש", וזו הנפילה השכיחה בסעיף האחרון.`,
     },
+    // The six stages of the פונקציות טריגונומטריות track, authored in
+    // ./trig-functions.ts — same topic, own file, because this one is already
+    // long enough.
+    ...TF_GHOST_REPLAYS,
   ],
 };

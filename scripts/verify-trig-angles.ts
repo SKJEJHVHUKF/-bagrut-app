@@ -29,6 +29,21 @@ const C = (d: number) => Math.cos((d * Math.PI) / 180);
 const DEG_SUBTOPICS = ['trig-equations', 'special-angles-reduction'];
 const RAD_SUBTOPICS = ['trig-calculus'];
 
+// The פונקציות טריגונומטריות track (רמת בסיס + רמות 1-5). It is split by
+// mathematical necessity, not style: the base level only SOLVES equations, so it
+// is in degrees like the rest of the topic, and from רמה 1 on everything
+// differentiates or integrates, where (sin x)' = cos x holds in radians alone.
+//
+// Its base level is checked on formulas and questions only, NOT on lesson steps:
+// its last teach step deliberately hands the switch over and names π while doing
+// so. The radian levels are checked the other way round, and `tf-bagrut` is the
+// mirror image — its lesson steps deliberately show `60°` as the WRONG answer
+// inside a derivative part, which is the whole point of that drill. So the
+// binding check for them is questions and final answers, where a stray degree
+// sign would reach a student as an answer rather than as a warning.
+const TF_DEG = ['tf-equations'];
+const TF_RAD = ['tf-domain', 'tf-derivative', 'tf-investigation', 'tf-integral', 'tf-bagrut'];
+
 const sub = (id: string) => (math5Trigonometry.subTopics ?? []).find((s) => s.id === id);
 const blob = (o: unknown) => JSON.stringify(o);
 
@@ -55,6 +70,36 @@ for (const id of RAD_SUBTOPICS) {
   if (!st) { fails.push(`${id}: sub-topic missing`); continue; }
   st.formulas.forEach((f, i) =>
     ok(`${id}.formulas[${i}] stays radian`, !/°/.test(f.latex), f.latex),
+  );
+}
+
+for (const id of TF_DEG) {
+  const st = sub(id);
+  if (!st) { fails.push(`${id}: sub-topic missing — the track is not wired into subTopics`); continue; }
+  st.formulas.forEach((f, i) =>
+    ok(`${id}.formulas[${i}] is degree-only`, !/\\pi/.test(f.latex + (f.note ?? '')), f.latex),
+  );
+  st.questions.forEach((q, i) =>
+    ok(`${id}.questions[${i}] (${q.id}) is degree-only`, !/\\pi/.test(blob(q)), q.question.slice(0, 60)),
+  );
+}
+
+for (const id of TF_RAD) {
+  const st = sub(id);
+  if (!st) { fails.push(`${id}: sub-topic missing — the track is not wired into subTopics`); continue; }
+  st.formulas.forEach((f, i) =>
+    ok(`${id}.formulas[${i}] stays radian`, !/°/.test(f.latex + (f.note ?? '')), f.latex),
+  );
+  st.questions.forEach((q, i) => {
+    ok(`${id}.questions[${i}] (${q.id}) stays radian`, !/°/.test(blob(q)), q.question.slice(0, 60));
+    ok(`${id}.questions[${i}] (${q.id}) answers in radians`, !/°/.test(q.solution.finalAnswer), q.solution.finalAnswer);
+  });
+  (st.lesson ?? []).forEach((s, i) =>
+    ok(
+      `${id}.lesson[${i}] drill answers in radians`,
+      !s.drill || !/°/.test(s.drill.solution.finalAnswer),
+      s.title,
+    ),
   );
 }
 

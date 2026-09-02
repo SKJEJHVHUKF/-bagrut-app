@@ -6,6 +6,11 @@ import type { Lesson } from '../types';
 import { TRIG_PLANE_BASICS, TRIG_PLANE_BASICS_BAGRUT } from './trigonometry-plane-basics';
 import { TRIG_RIGHT_TRIANGLE, TRIG_RIGHT_TRIANGLE_BAGRUT } from './trigonometry-right-triangle';
 import { TRIG_PLANE_MIXED, TRIG_PLANE_MIXED_BAGRUT } from './trigonometry-plane-mixed';
+// פונקציות טריגונומטריות (owner's spec, 2026-08-30) — the numbered levels of
+// the trig-functions track. רמת בסיס is in DEGREES because nothing in it
+// differentiates; from רמה 2 onward the stages are in RADIANS, which is
+// mandatory rather than stylistic. See CLAUDE.md and verify-trig-angles.ts.
+import { TF_STAGES } from './trig-functions';
 
 export const math5Trigonometry: Lesson = {
   subject: 'math5',
@@ -1583,6 +1588,7 @@ $$x = x_0 + k\\pi$$
     TRIG_PLANE_BASICS,
     TRIG_RIGHT_TRIANGLE,
     TRIG_PLANE_MIXED,
+    ...TF_STAGES,
     {
       id: 'trig-identities',
       title: 'זהויות טריגונומטריות',
