@@ -65,6 +65,35 @@ async function main() {
   // exercised. Without it the check passes on an empty table — which is how a
   // policy that was never written looks identical to one that works. Removed
   // again in the finally block.
+  // ---- and a throwaway TEACHER, so the ALLOWED path is tested too --------
+  // Proving who is refused is only half of it. A board that refuses everyone,
+  // including its own teacher, passes every negative check ever written — and
+  // that is exactly what a missing service-role key produced on the preview
+  // deployment: 503 for the student (which looked like a refusal) and 503 for
+  // the teacher (which was the board being broken).
+  const teacherEmail = `boundary-teacher-${Date.now()}@example.com`;
+  const teacherPassword = `Probe!${Date.now()}t`;
+  const { data: madeT } = await admin.auth.admin.createUser({
+    email: teacherEmail,
+    password: teacherPassword,
+    email_confirm: true,
+  });
+  const teacherId = madeT?.user?.id ?? null;
+  if (teacherId) {
+    await admin.auth.admin.updateUserById(teacherId, {
+      app_metadata: {
+        teacher: true,
+        hourlyRate: 100,
+        weeklyHours: 5,
+        teacherSince: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(
+          new Date()
+        ),
+      },
+    });
+    await admin.from('teacher_students').insert({ teacher_id: teacherId, student_id: studentId });
+  }
+
+
   let plantedTask: string | null = null;
   const { data: aTeacher } = await admin
     .from('teacher_students')
@@ -180,8 +209,40 @@ async function main() {
       // key happens to be set.
       assert(r.status === 403, `${api} answers 403 to a student (got ${r.status})`);
     }
+
+    // ---- 8. the teacher himself IS served, and sees exactly his one student
+    if (teacherId) {
+      const asTeacher = anonClient();
+      const { data: tIn } = await asTeacher.auth.signInWithPassword({
+        email: teacherEmail,
+        password: teacherPassword,
+      });
+      if (tIn.session) {
+        const tCookie = `sb-${PROJECT_REF}-auth-token=base64-${Buffer.from(
+          JSON.stringify(tIn.session)
+        ).toString('base64url')}`;
+        const res = await fetch(`${BASE}/api/teacher/overview`, { headers: { cookie: tCookie } });
+        assert(res.status === 200, `the teacher's own board loads (got ${res.status})`);
+        if (res.status === 200) {
+          const body = await res.json();
+          const ids = (body.students ?? []).map((s: { id: string }) => s.id);
+          assert(
+            ids.length === 1 && ids[0] === studentId,
+            `he is served exactly his own roster (${ids.length} student(s))`
+          );
+          const first = (body.students ?? [])[0] ?? {};
+          assert(!('email' in first), "the payload carries no student email");
+          assert(
+            body.pay?.week?.pay === 500,
+            `his pay is computed (5h x 100 = 500, got ${body.pay?.week?.pay})`
+          );
+        }
+      }
+    }
+
   } finally {
     if (plantedTask) await admin.from('assignments').delete().eq('id', plantedTask);
+    if (teacherId) await admin.auth.admin.deleteUser(teacherId);
     await admin.auth.admin.deleteUser(studentId);
     console.log('\nprobe account deleted.');
   }
