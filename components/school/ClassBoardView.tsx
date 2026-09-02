@@ -52,6 +52,7 @@ import { masteryCell, MASTERY_LEGEND } from '@/lib/mastery-scale';
 import { RUNG_LABEL, type Rung } from '@/lib/rungs';
 import type { CatalogueTopic } from '@/lib/focus-target';
 import StudentPanel from '@/components/school/StudentPanel';
+import StudentsTable from '@/components/school/StudentsTable';
 
 export type FocusRow = {
   id: string;
@@ -112,6 +113,7 @@ export default function ClassBoardView({
   const board = useMemo(() => (isDemo ? demoBoard() : data.board), [isDemo, data.board]);
   const focuses = useMemo(() => (isDemo ? demoFocuses() : data.focuses), [isDemo, data.focuses]);
 
+  const [tab, setTab] = useState<'overview' | 'students'>('overview');
   const [openStudent, setOpenStudent] = useState<StudentRow | null>(null);
   const [focusFor, setFocusFor] = useState<{ studentId: string; name: string } | null | 'class'>(
     null
@@ -126,7 +128,20 @@ export default function ClassBoardView({
 
       {isDemo && <DemoBanner joinCode={data.class.joinCode} />}
 
-      <div className="mt-6 flex flex-col gap-5">
+      <Tabs value={tab} onChange={setTab} studentCount={board.studentCount} />
+
+      {tab === 'students' ? (
+        <section className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+          <StudentsTable
+            students={board.students}
+            onOpen={setOpenStudent}
+            onFocus={
+              isDemo ? null : (s) => setFocusFor({ studentId: s.id, name: s.name })
+            }
+          />
+        </section>
+      ) : (
+      <div className="mt-5 flex flex-col gap-5">
         <Section
           icon={LifeBuoy}
           title="מי צריך אותך"
@@ -192,6 +207,7 @@ export default function ClassBoardView({
 
         <Heatmap board={board} windowDays={data.windowDays} onOpen={setOpenStudent} />
       </div>
+      )}
 
       {openStudent && (
         <StudentPanel
@@ -353,6 +369,52 @@ function DemoBanner({ joinCode }: { joinCode: string | null }) {
           </>
         )}
       </p>
+    </div>
+  );
+}
+
+/**
+ * Two modes, because a teacher has two jobs and they want opposite screens.
+ *
+ * סקירה answers "who needs me this week" in four lines — the 08:15,
+ * between-lessons question, where a list of thirty-one is the wrong answer.
+ * תלמידים is for sitting down with the whole class: a sortable table, which is
+ * the thing a heatmap structurally cannot be and a stack of cards cannot be
+ * scanned as.
+ *
+ * The board shipped with only the first, and the owner kept saying the tracking
+ * was uncomfortable. He was describing the missing mode, not a broken one.
+ */
+function Tabs({
+  value,
+  onChange,
+  studentCount,
+}: {
+  value: 'overview' | 'students';
+  onChange: (v: 'overview' | 'students') => void;
+  studentCount: number;
+}) {
+  const tabs: { id: 'overview' | 'students'; label: string; hint: string }[] = [
+    { id: 'overview', label: 'סקירה', hint: 'מי צריך אותך עכשיו' },
+    { id: 'students', label: `תלמידים · ${studentCount}`, hint: 'הרשימה המלאה, ממוינת' },
+  ];
+  return (
+    <div className="mt-6 flex gap-2 border-b border-slate-200 dark:border-slate-800">
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          onClick={() => onChange(t.id)}
+          title={t.hint}
+          className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition ${
+            value === t.id
+              ? 'border-violet-600 text-violet-700 dark:text-violet-300'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          {t.label}
+        </button>
+      ))}
     </div>
   );
 }

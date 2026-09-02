@@ -23,6 +23,7 @@ import { getPaper, setPaper } from '@/lib/study-plan';
 import { countCompleted, nodeLevelSummary } from '@/lib/roadmap-progress';
 import { getResumePoint } from '@/lib/roadmap-resume';
 import { useClientState, useHydrated } from '@/lib/use-client-value';
+import ClassInvite from '@/components/school/ClassInvite';
 
 const PAPER_BLURB: Record<BagrutPaper, string> = {
   '571': 'סדרות, הסתברות, גאומטריה, טריגונומטריה, חקירת פונקציות ובעיות קיצון',
@@ -92,6 +93,11 @@ export default function RoadmapHubPage() {
   return (
     <PracticeShell subtitle="מסלול הלמידה" backHref="/" backLabel="בית" wide>
       <div className="space-y-6">
+        {/* The one place a student reliably opens. A join code that can only be
+            reached from a drawer menu is a code nobody types. Renders nothing
+            once he is in a class, or if he waves it away. */}
+        <ClassInvite />
+
         <div className="space-y-1.5 text-center sm:text-right">
           <div className="text-[11px] font-black tracking-[0.14em] text-violet-700 uppercase">מסלול הלמידה</div>
           <h1 className="font-display text-2xl sm:text-3xl font-black text-ink leading-tight">לאיזה שאלון אתה מתכונן?</h1>
