@@ -16,6 +16,7 @@
 
 import { requireTeacher, roster, jsonError } from '@/lib/teacher-guard';
 import { roadmapTopicOrder } from '@/constants/roadmapData';
+import { getSubTopics } from '@/content/lessons';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,11 @@ const MAX_TITLE = 120;
 
 /** The topics answers are actually recorded under — the curriculum, not free text. */
 const ASSIGNABLE = new Set([...roadmapTopicOrder('571'), ...roadmapTopicOrder('572')]);
+
+/** And, per topic, the sub-topic ids that exist inside it. */
+const SUBS = new Map(
+  [...ASSIGNABLE].map((t) => [t, new Set(getSubTopics('math5', t).map((st) => st.id))])
+);
 
 export async function POST(request: Request): Promise<Response> {
   const ctx = await requireTeacher(request, true);
@@ -45,6 +51,12 @@ export async function POST(request: Request): Promise<Response> {
   // only offers real topics; this is the same rule on the server, where it
   // cannot be bypassed by anything hand-crafting a request.
   if (!ASSIGNABLE.has(topic)) return jsonError('נושא לא מוכר', 400);
+  // Same trap one level down: progress is matched on topic AND sub-topic, so a
+  // sub-topic that does not live in this topic freezes the counter at 0 just
+  // as effectively as a misspelled topic does.
+  if (subTopicId && !SUBS.get(topic)?.has(subTopicId)) {
+    return jsonError('תת-הנושא לא שייך לנושא שנבחר', 400);
+  }
   if (!Number.isInteger(targetCount) || targetCount < 1 || targetCount > 100) {
     return jsonError('מספר השאלות חייב להיות בין 1 ל-100', 400);
   }
