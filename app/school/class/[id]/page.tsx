@@ -21,10 +21,11 @@
  * zero — "אין נתונים" and "0%" are different sentences about a child.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Users, Copy, Check, Target, AlertTriangle, Clock, Sparkles } from 'lucide-react';
+import { ArrowRight, Users, Copy, Check, Target, AlertTriangle, Clock, Sparkles, Eye } from 'lucide-react';
 import type { ClassBoard, AttentionRow, StudentRow } from '@/lib/class-board';
+import { demoBoard, demoFocuses } from '@/lib/demo-board';
 // ⚠️ VALUES from lib/rungs (which imports nothing), TYPES from lib/focus-target.
 // A value import of RUNG_LABEL from focus-target would pull `@/content/lessons`
 // — the whole authored corpus — into this page's browser bundle. Type imports
@@ -117,15 +118,41 @@ export default function ClassBoardPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const { board, focuses } = data;
+  return <Board data={data} classId={id} onReload={load} focusFor={focusFor} setFocusFor={setFocusFor} />;
+}
+
+function Board({
+  data,
+  classId,
+  onReload,
+  focusFor,
+  setFocusFor,
+}: {
+  data: Payload;
+  classId: string | null;
+  onReload: () => void;
+  focusFor: { studentId: string; name: string } | null | 'class';
+  setFocusFor: (v: { studentId: string; name: string } | null | 'class') => void;
+}) {
+  // AN EMPTY CLASS SHOWS THE REAL BOARD ON SAMPLE DATA.
+  //
+  // A teacher's first visit is always to a class nobody has joined yet, and
+  // "עוד אף תלמיד לא הצטרף" teaches him nothing about why he should hand this
+  // to thirty students. The sample is INPUT to the same buildClassBoard that
+  // will run on his own class, so what he sees here is what he will get —
+  // it cannot drift, and it is labelled as an example in the banner below.
+  const isDemo = data.board.studentCount === 0;
+  const board = useMemo(() => (isDemo ? demoBoard() : data.board), [isDemo, data.board]);
+  const focuses = useMemo(() => (isDemo ? demoFocuses() : data.focuses), [isDemo, data.focuses]);
+  const id = classId;
 
   return (
     <main dir="rtl" className="mx-auto max-w-4xl px-4 py-6">
-      <Header klass={data.class} board={board} />
+      <Header klass={data.class} board={data.board} />
 
-      {board.studentCount === 0 ? (
-        <EmptyClass joinCode={data.class.joinCode} />
-      ) : (
+      {isDemo && <DemoBanner joinCode={data.class.joinCode} />}
+
+      {(
         <>
           <Zone
             n={1}
@@ -137,7 +164,14 @@ export default function ClassBoardPage({ params }: { params: Promise<{ id: strin
               <AttentionLine
                 key={row.studentId}
                 row={row}
-                onFocus={() => setFocusFor({ studentId: row.studentId, name: row.name })}
+                // No action on a sample student: the ids are invented, so the
+                // API would reject them and the teacher would meet an error
+                // instead of a demonstration.
+                onFocus={
+                  isDemo
+                    ? null
+                    : () => setFocusFor({ studentId: row.studentId, name: row.name })
+                }
               />
             ))}
           </Zone>
@@ -158,13 +192,15 @@ export default function ClassBoardPage({ params }: { params: Promise<{ id: strin
                   {Math.round(r.mastery * 100)}%
                 </span>
                 <span className="flex-1 text-sm text-slate-500 dark:text-slate-400">{r.reason}</span>
-                <button
-                  type="button"
-                  onClick={() => setFocusFor('class')}
-                  className="rounded bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700 transition hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-300"
-                >
-                  מקד את הכיתה
-                </button>
+                {!isDemo && (
+                  <button
+                    type="button"
+                    onClick={() => setFocusFor('class')}
+                    className="rounded bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700 transition hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-300"
+                  >
+                    מקד את הכיתה
+                  </button>
+                )}
               </div>
             ))}
           </Zone>
@@ -179,7 +215,7 @@ export default function ClassBoardPage({ params }: { params: Promise<{ id: strin
         </>
       )}
 
-      {focusFor !== null && id && (
+      {focusFor !== null && id && !isDemo && (
         <FocusDialog
           classId={id}
           students={board.students}
@@ -187,11 +223,34 @@ export default function ClassBoardPage({ params }: { params: Promise<{ id: strin
           onClose={() => setFocusFor(null)}
           onSaved={() => {
             setFocusFor(null);
-            void load();
+            onReload();
           }}
         />
       )}
     </main>
+  );
+}
+
+/**
+ * Says, in one line, that the numbers below are an example — and immediately
+ * gives the one action that turns them real. A preview that does not say it is
+ * a preview is a lie; a preview that only says so is a dead end.
+ */
+function DemoBanner({ joinCode }: { joinCode: string | null }) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 dark:border-violet-900 dark:bg-violet-950/50">
+      <Eye className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" aria-hidden />
+      <p className="text-sm font-medium text-violet-900 dark:text-violet-200">
+        זו תצוגת דוגמה — כך ייראה הלוח כשהתלמידים יתחילו לתרגל.
+      </p>
+      {joinCode && (
+        <p className="text-sm text-violet-800 dark:text-violet-300">
+          תן לכיתה את הקוד{' '}
+          <span className="font-mono font-semibold tracking-widest">{joinCode}</span> והנתונים
+          האמיתיים יחליפו אותה.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -251,20 +310,6 @@ function Header({ klass, board }: { klass: Payload['class']; board: ClassBoard }
   );
 }
 
-function EmptyClass({ joinCode }: { joinCode: string | null }) {
-  return (
-    <div className="rounded-xl border border-dashed border-slate-300 px-6 py-10 text-center dark:border-slate-700">
-      <p className="text-slate-700 dark:text-slate-300">עוד אף תלמיד לא הצטרף.</p>
-      {joinCode && (
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          תן להם את הקוד <span className="font-mono tracking-widest">{joinCode}</span> — הם נכנסים
-          ל־/school ומקלידים אותו.
-        </p>
-      )}
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------- zones
 
 function Zone({
@@ -312,7 +357,7 @@ const STATE_STYLE: Record<AttentionRow['state'], { label: string; cls: string; I
     },
   };
 
-function AttentionLine({ row, onFocus }: { row: AttentionRow; onFocus: () => void }) {
+function AttentionLine({ row, onFocus }: { row: AttentionRow; onFocus: (() => void) | null }) {
   const s = STATE_STYLE[row.state];
   return (
     <div className="flex flex-wrap items-center gap-3 py-2.5">
@@ -324,13 +369,15 @@ function AttentionLine({ row, onFocus }: { row: AttentionRow; onFocus: () => voi
       </span>
       <span className="min-w-20 font-semibold text-slate-900 dark:text-slate-50">{row.name}</span>
       <span className="flex-1 text-sm text-slate-600 dark:text-slate-400">{row.reason}</span>
-      <button
-        type="button"
-        onClick={onFocus}
-        className="rounded bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700 transition hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-300"
-      >
-        מקד
-      </button>
+      {onFocus && (
+        <button
+          type="button"
+          onClick={onFocus}
+          className="rounded bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700 transition hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-300"
+        >
+          מקד
+        </button>
+      )}
     </div>
   );
 }

@@ -20,6 +20,7 @@ import {
   MessageCircle,
   ScanLine,
   ScrollText,
+  School,
   Sigma,
   Library,
   BookOpen,
@@ -141,6 +142,24 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'ההיסטוריה שלי',
         icon: History,
         blurb: 'כל מה שפתרת, לפי תאריך',
+      },
+    ],
+  },
+  {
+    id: 'class',
+    label: 'כיתה',
+    items: [
+      {
+        // ⚠️ THE ONLY WAY A STUDENT FINDS THE CLASS. A teacher reads out a
+        // six-character code in a lesson; without a menu entry the student has
+        // the code and nowhere to type it, and "go to slash school" is not an
+        // instruction a fifteen-year-old follows. One entry serves both sides:
+        // a teacher lands on his classes, a student on the join box.
+        href: '/school',
+        label: 'הכיתה שלי',
+        icon: School,
+        blurb: 'הצטרפות עם קוד מהמורה, ומה שהמורה ביקש לתרגל',
+        match: ['/school'],
       },
     ],
   },
