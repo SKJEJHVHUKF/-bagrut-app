@@ -15,11 +15,15 @@
  */
 
 import { requireTeacher, roster, jsonError } from '@/lib/teacher-guard';
+import { roadmapTopicOrder } from '@/constants/roadmapData';
 
 export const dynamic = 'force-dynamic';
 
 /** Long enough for a real instruction, short enough not to be a document. */
 const MAX_TITLE = 120;
+
+/** The topics answers are actually recorded under — the curriculum, not free text. */
+const ASSIGNABLE = new Set([...roadmapTopicOrder('571'), ...roadmapTopicOrder('572')]);
 
 export async function POST(request: Request): Promise<Response> {
   const ctx = await requireTeacher(request, true);
@@ -35,6 +39,12 @@ export async function POST(request: Request): Promise<Response> {
 
   if (!title) return jsonError('חסרה כותרת למטלה', 400);
   if (!topic) return jsonError('חסר נושא למטלה', 400);
+  // The topic is matched string-for-string against ResultEvent.topic on every
+  // answer the student gives, so an unrecognised one produces a task whose
+  // progress counter reads 0/5 forever with nothing to explain it. The form
+  // only offers real topics; this is the same rule on the server, where it
+  // cannot be bypassed by anything hand-crafting a request.
+  if (!ASSIGNABLE.has(topic)) return jsonError('נושא לא מוכר', 400);
   if (!Number.isInteger(targetCount) || targetCount < 1 || targetCount > 100) {
     return jsonError('מספר השאלות חייב להיות בין 1 ל-100', 400);
   }
