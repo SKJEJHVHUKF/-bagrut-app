@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   CircleAlert,
   GraduationCap,
+  PhoneCall,
   RefreshCw,
   Users,
   Wallet,
@@ -54,6 +55,27 @@ export default function AdminOverview() {
   }
 
   const unassigned = candidates.filter((c) => !assigned.has(c.id)).length;
+
+  // THE SILENCE LIST. Parents cancel after three quiet weeks, not after a bad
+  // grade — and the tutor deliberately holds no email or phone number, so a
+  // student who stops showing up can only be reached from here. Fourteen days
+  // is the threshold because a weekly lesson means two missed cycles.
+  const QUIET_DAYS = 14;
+  const quiet = (teachers ?? [])
+    .flatMap((t) =>
+      t.students.map((s) => ({
+        ...s,
+        teacherName: personLabel(t),
+        teacherId: t.id,
+        days:
+          s.lastAnswerAt === null
+            ? null
+            : Math.floor((Date.now() - s.lastAnswerAt) / 86400000),
+      }))
+    )
+    .filter((s) => s.syncedAt === null || s.days === null || s.days >= QUIET_DAYS)
+    // Never-synced first: that student is not quiet, he was never here at all.
+    .sort((a, b) => (b.days ?? 9999) - (a.days ?? 9999));
 
   return (
     <div className="space-y-6">
@@ -153,6 +175,48 @@ export default function AdminOverview() {
           </ul>
         )}
       </section>
+
+      {/* Quiet students — the one screen that turns a number into a phone call. */}
+      {quiet.length > 0 && (
+        <section className="glass-card rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <PhoneCall aria-hidden="true" className="w-4 h-4 text-red-500" />
+            <h2 className="text-sm font-black text-ink">תלמידים ששתקו</h2>
+          </div>
+          <p className="text-[11px] text-slate-500 mb-3">
+            לא תרגלו {QUIET_DAYS} ימים או יותר. המורה לא מחזיק את פרטי הקשר שלהם — הפנייה היא ממך.
+          </p>
+          <div className="space-y-1">
+            {quiet.slice(0, 10).map((s) => (
+              <div
+                key={s.id}
+                className="flex flex-wrap items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2"
+              >
+                <span className="flex-1 min-w-[140px]">
+                  <span className="block text-sm font-bold text-ink">{personLabel(s)}</span>
+                  <span className="block text-[11px] text-slate-600">{s.email}</span>
+                </span>
+                <span className="text-[11px] font-bold text-red-700">
+                  {s.syncedAt === null
+                    ? 'לא נכנס לאפליקציה מעולם'
+                    : s.days === null
+                      ? 'לא ענה על שאלה מעולם'
+                      : `לא תרגל ${s.days} ימים`}
+                </span>
+                <Link
+                  href={`/admin/teachers/${s.teacherId}`}
+                  className="text-[11px] font-bold text-slate-500 hover:text-violet-700"
+                >
+                  אצל {s.teacherName}
+                </Link>
+              </div>
+            ))}
+          </div>
+          {quiet.length > 10 && (
+            <p className="text-[11px] text-slate-500 mt-2">ועוד {quiet.length - 10}.</p>
+          )}
+        </section>
+      )}
 
       <section className="glass-card rounded-2xl p-4">
         <h2 className="text-sm font-black text-ink mb-2">איך זה עובד</h2>

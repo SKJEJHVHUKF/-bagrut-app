@@ -7,18 +7,34 @@
 // balance: change a rate or fix a week and this screen re-prices immediately,
 // including retroactively.
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/PageHeader';
 import { CircleAlert, RefreshCw } from 'lucide-react';
+import { israelDay } from '@/lib/teacher-pay';
 import { personLabel, shekel, useTeachers } from '../useTeachers';
 
+/** Coarse on purpose — this column answers "has he shown up at all". */
+function signedInAgo(iso: string | null): { text: string; cold: boolean } {
+  if (!iso) return { text: 'לא נכנס מעולם', cold: true };
+  const days = Math.floor((Date.now() - Date.parse(iso)) / 86400000);
+  if (days > 30) return { text: `לפני ${Math.floor(days / 30)} חודשים`, cold: true };
+  if (days > 7) return { text: `לפני ${days} ימים`, cold: true };
+  if (days > 0) return { text: `לפני ${days} ימים`, cold: false };
+  return { text: 'היום', cold: false };
+}
+
 export default function PayPage() {
-  const { teachers, error, reload } = useTeachers();
+  // Empty = the current month. Payday is the 1st, and on the 1st the screen
+  // has already rolled over to a month nobody has worked yet.
+  const [month, setMonth] = useState('');
+  const { teachers, error, reload } = useTeachers(month || undefined);
+  const thisMonth = israelDay(new Date()).slice(0, 7);
 
   const rows = teachers ?? [];
   const weekTotal = rows.reduce((sum, t) => sum + t.pay.week.pay, 0);
   const monthTotal = rows.reduce((sum, t) => sum + t.pay.month.pay, 0);
-  const month = rows[0]?.pay.month.month ?? '';
+  const monthLabel = rows[0]?.pay.month.month ?? (month || thisMonth);
 
   return (
     <div className="space-y-6">
@@ -26,13 +42,25 @@ export default function PayPage() {
         title="שכר"
         description="כמה מגיע לכל מורה — השבוע והחודש. מחושב מהשעות השבועיות שקבעת, בתוספת תיקונים."
         actions={
-          <button
-            onClick={() => void reload()}
-            className="flex items-center gap-2 bg-white/70 hover:bg-white border border-slate-200 hover:border-violet-400 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 transition-all"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${teachers === null ? 'animate-spin' : ''}`} />
-            <span>רענון</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600">
+              חודש
+              <input
+                type="month"
+                max={thisMonth}
+                value={month || thisMonth}
+                onChange={(e) => setMonth(e.target.value === thisMonth ? '' : e.target.value)}
+                className="rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900"
+              />
+            </label>
+            <button
+              onClick={() => void reload()}
+              className="flex items-center gap-2 bg-white/70 hover:bg-white border border-slate-200 hover:border-violet-400 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 transition-all"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${teachers === null ? 'animate-spin' : ''}`} />
+              <span>רענון</span>
+            </button>
+          </div>
         }
       />
 
@@ -60,6 +88,8 @@ export default function PayPage() {
               <thead>
                 <tr className="text-right text-[11px] font-black text-slate-500 border-b border-slate-200">
                   <th className="px-4 py-3">מורה</th>
+                  <th className="px-4 py-3">נכנס ללוח</th>
+                  <th className="px-4 py-3">מטלות</th>
                   <th className="px-4 py-3">תעריף</th>
                   <th className="px-4 py-3">ש״ש</th>
                   <th className="px-4 py-3">השבוע</th>
@@ -85,6 +115,16 @@ export default function PayPage() {
                             {corrected} שבועות תוקנו ידנית
                           </div>
                         )}
+                      </td>
+                      <td className={`px-4 py-3 text-[11px] font-bold ${
+                        signedInAgo(t.lastSignInAt).cold ? 'text-red-600' : 'text-slate-600'
+                      }`}>
+                        {signedInAgo(t.lastSignInAt).text}
+                      </td>
+                      <td className={`px-4 py-3 font-bold ${
+                        t.assignmentsGiven === 0 ? 'text-red-600' : 'text-slate-700'
+                      }`}>
+                        {t.assignmentsGiven}
                       </td>
                       <td className="px-4 py-3">
                         {incomplete ? (
@@ -112,8 +152,8 @@ export default function PayPage() {
               </tbody>
               <tfoot>
                 <tr className="bg-slate-50 font-black">
-                  <td className="px-4 py-3" colSpan={3}>
-                    סה״כ {month}
+                  <td className="px-4 py-3" colSpan={5}>
+                    סה״כ {monthLabel}
                   </td>
                   <td className="px-4 py-3">{shekel(weekTotal)}</td>
                   <td className="px-4 py-3" />
@@ -127,7 +167,9 @@ export default function PayPage() {
 
       <p className="text-[11px] text-slate-500 leading-relaxed">
         &quot;החודש&quot; כולל רק שבועות שכבר התחילו, כך שבאמצע החודש זה מה שנצבר עד עכשיו ולא תחזית.
-        המספרים אינם נשמרים בשום מקום — שינוי תעריף או תיקון שבוע משנה גם את החישוב אחורה.
+        המספרים אינם נשמרים בשום מקום — שינוי תעריף או תיקון שבוע משנה גם את החישוב אחורה, כולל
+        לחודשים שכבר שולמו. &quot;נכנס ללוח&quot; ו&quot;מטלות&quot; הן שתי העדויות היחידות שמישהו
+        באמת עבד: השכר נצבר מעצמו גם אם המורה לא פתח את המסך אף פעם.
       </p>
     </div>
   );

@@ -73,10 +73,20 @@ export async function GET(request: Request): Promise<Response> {
   const byId = new Map(users.map((u) => [u.id, u]));
   const teachers = users.filter((u) => isTeacher(u));
 
-  const [links, weeks] = await Promise.all([
+  const [links, weeks, tasks] = await Promise.all([
     db.from('teacher_students').select('teacher_id, student_id').limit(5000),
     db.from('teacher_week_hours').select('teacher_id, week_start, hours, note').limit(5000),
+    // The only action a tutor takes that leaves a row. Salary accrues whether
+    // or not anybody does anything; this and last_sign_in_at are the two
+    // signals that somebody did.
+    db.from('assignments').select('teacher_id, created_at').limit(5000),
   ]);
+
+  const taskCount = new Map<string, number>();
+  for (const t of (tasks.data ?? []) as Record<string, unknown>[]) {
+    const id = String(t.teacher_id);
+    taskCount.set(id, (taskCount.get(id) ?? 0) + 1);
+  }
 
   const person = (id: string) => {
     const u = byId.get(id);
@@ -84,16 +94,49 @@ export async function GET(request: Request): Promise<Response> {
       id,
       email: u?.email ?? '',
       name: (u?.user_metadata?.name as string) || '',
+      lastSignInAt: u?.last_sign_in_at ?? null,
       // A student deleted from auth cascades out of teacher_students, so this
       // only shows for a row written against an id that never existed.
       missing: !u,
     };
   };
 
-  const rosterOf = new Map<string, ReturnType<typeof person>[]>();
+  // Every assigned student's last sign of life. Parents cancel after three
+  // quiet weeks, not after a bad grade — and the tutor deliberately has no
+  // email or phone number, so a student who goes silent can only be reached
+  // by the owner. This is the column that makes that call happen.
+  const assignedIds = [
+    ...new Set(((links.data ?? []) as Record<string, unknown>[]).map((l) => String(l.student_id))),
+  ];
+  const pulse = new Map<string, { lastAnswerAt: number | null; syncedAt: string | null }>();
+  if (assignedIds.length > 0) {
+    const { data: states } = await db
+      .from('learning_state')
+      .select('user_id, results, updated_at')
+      .in('user_id', assignedIds);
+    for (const st of (states ?? []) as Record<string, unknown>[]) {
+      const rows = Array.isArray(st.results) ? (st.results as { ts?: number }[]) : [];
+      let last: number | null = null;
+      for (const r of rows) {
+        if (typeof r.ts === 'number' && (last === null || r.ts > last)) last = r.ts;
+      }
+      pulse.set(String(st.user_id), {
+        lastAnswerAt: last,
+        syncedAt: typeof st.updated_at === 'string' ? st.updated_at : null,
+      });
+    }
+  }
+
+  const rosterOf = new Map<string, (ReturnType<typeof person> & {
+    lastAnswerAt: number | null;
+    syncedAt: string | null;
+  })[]>();
   for (const l of (links.data ?? []) as Record<string, unknown>[]) {
+    const sid = String(l.student_id);
     const list = rosterOf.get(String(l.teacher_id)) ?? [];
-    list.push(person(String(l.student_id)));
+    // null syncedAt = never opened the app signed in. NOT a zero — the owner's
+    // screens must say the difference, same rule as the teacher's board.
+    list.push({ ...person(sid), ...(pulse.get(sid) ?? { lastAnswerAt: null, syncedAt: null }) });
     rosterOf.set(String(l.teacher_id), list);
   }
 
@@ -108,7 +151,18 @@ export async function GET(request: Request): Promise<Response> {
     weeksOf.set(String(w.teacher_id), list);
   }
 
-  const now = new Date();
+  // `?month=YYYY-MM` — on the 1st, the one day the owner actually pays, the
+  // screen has already rolled over and shows ₪0 for the month he owes. For a
+  // past month every week is counted; for the current one it stays "so far",
+  // because a date in the future would pay for weeks nobody has worked yet.
+  const monthParam = new URL(request.url).searchParams.get('month');
+  const today = new Date();
+  let now = today;
+  if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+    const [y, m] = monthParam.split('-').map(Number);
+    const lastDay = new Date(Date.UTC(y, m, 0, 12));
+    now = lastDay < today ? lastDay : today;
+  }
 
   return Response.json({
     teachers: teachers.map((t) => {
@@ -121,6 +175,7 @@ export async function GET(request: Request): Promise<Response> {
         weeklyHours: teacherWeeklyHours(t),
         since: teacherSince(t),
         students: rosterOf.get(t.id) ?? [],
+        assignmentsGiven: taskCount.get(t.id) ?? 0,
         weeks,
         // The same computation the teacher sees on his own dashboard, from the
         // same module — the payroll screen and his screen cannot disagree.
