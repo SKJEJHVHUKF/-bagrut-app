@@ -141,8 +141,14 @@ export async function PATCH(request: Request) {
       // Stamp the hire date once, on the first grant — lib/teacher-pay refuses
       // to accrue weeks before it, and `created_at` would be wrong for a
       // student later promoted to teacher.
-      const { data } = await ctx.admin.auth.admin.getUserById(id);
-      if (!teacherSince(data?.user ?? null)) patch.teacherSince = israelDay(new Date());
+      // ⚠️ Only when the read SUCCEEDED. `data` is null on a transient API
+      // failure too, and `teacherSince(null)` is also null — so a blip here
+      // would re-stamp the hire date of a teacher hired months ago, and
+      // lib/teacher-pay would stop accruing every week before today. The
+      // salary would quietly drop with nothing on screen to say why.
+      const { data, error: readErr } = await ctx.admin.auth.admin.getUserById(id);
+      if (readErr || !data?.user) return jsonError('לא ניתן לקרוא את החשבון, נסה שוב', 502);
+      if (!teacherSince(data.user)) patch.teacherSince = israelDay(new Date());
     }
   }
 
