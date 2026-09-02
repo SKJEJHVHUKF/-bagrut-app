@@ -144,7 +144,7 @@ function JoinClass({ onJoined, compact = false }: { onJoined: () => void; compac
       {!compact && (
         <h2 className="mb-1 flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-50">
           <LogIn className="h-4 w-4 text-violet-600" aria-hidden />
-          הצטרפות לכיתה
+          כניסה לכיתה שלי
         </h2>
       )}
       <label className="block text-sm text-slate-600 dark:text-slate-400" htmlFor="join-code">

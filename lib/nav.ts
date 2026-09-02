@@ -81,7 +81,9 @@ export const NAV_GROUPS: NavGroup[] = [
         // is deliberately absent from this menu: it is not part of the app a
         // student navigates.
         href: '/my-class',
-        label: 'הכיתה שלי',
+        // The full phrase the owner asked for, three times. The mobile tab bar
+        // maps this to a shorter name via TAB_LABELS — a 10px label wraps.
+        label: 'כניסה לכיתה שלי',
         icon: School,
         blurb: 'הצטרפות עם הקוד מהמורה, ומה שהמורה ביקש לתרגל',
         match: ['/my-class'],

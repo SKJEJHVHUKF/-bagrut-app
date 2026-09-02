@@ -52,6 +52,10 @@ function isHiddenPath(path: string): boolean {
 // drawer. Short tab labels are derived below rather than re-authored.
 const TAB_LABELS: Record<string, string> = {
   '/roadmap': 'מסלול',
+  // The nav item's full label is "כניסה לכיתה שלי" — the phrase the owner
+  // asked for — and the desktop header shows it whole. At 10px on a phone it
+  // wraps to two lines, so the tab keeps the short form.
+  '/my-class': 'הכיתה שלי',
   '/quiz': 'בוחן',
   '/scan': 'סריקה',
   '/chat': 'מורה',
