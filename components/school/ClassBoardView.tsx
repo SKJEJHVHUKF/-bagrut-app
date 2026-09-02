@@ -4,7 +4,7 @@
  * ClassBoardView — the class board's rendering, with no data fetching in it.
  *
  * Split out from the page so the SAME view can be rendered from two places:
- * the real route, which fetches one teacher's class, and /school/demo, which
+ * the real route, which fetches one teacher's class, and /console-demo, which
  * feeds it a sample and needs no account at all. A second copy of this markup
  * would drift within a week, and the demo would quietly stop being a preview of
  * the product.
@@ -235,7 +235,7 @@ function Header({ klass, board }: { klass: Payload['class']; board: ClassBoard }
   return (
     <header>
       <Link
-        href="/school"
+        href="/console"
         className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-violet-700 dark:text-slate-400 dark:hover:text-violet-300"
       >
         <ArrowRight className="h-4 w-4" aria-hidden />

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /school/demo — the board, with a sample class, and no account needed.
+ * /console-demo — the board, with a sample class, and no account needed.
  *
  * Two jobs, and the second is the one that matters commercially:
  *
@@ -20,8 +20,9 @@
  */
 
 import ClassBoardView, { type Payload } from '@/components/school/ClassBoardView';
+import ConsoleShell from '@/components/school/ConsoleShell';
 
-export default function SchoolDemoPage() {
+export default function ConsoleDemoPage() {
   // studentCount 0 is what puts the view into its sample mode — the same branch
   // a real, newly-opened class takes on the teacher's first visit.
   const data: Payload = {
@@ -47,5 +48,11 @@ export default function SchoolDemoPage() {
     windowDays: 120,
   };
 
-  return <ClassBoardView data={data} classId={null} onReload={() => {}} />;
+  // ConsoleShell without a name: the same chrome a signed-in teacher sees,
+  // minus the identity and the sign-out button he does not have yet.
+  return (
+    <ConsoleShell>
+      <ClassBoardView data={data} classId={null} onReload={() => {}} />
+    </ConsoleShell>
+  );
 }

@@ -18,7 +18,7 @@
  * would keep showing whatever was true on the day it was written.
  *
  * The screen that renders this must say it is an example. See the banner in
- * app/school/class/[id].
+ * components/school/ClassBoardView.
  */
 
 import { buildClassBoard, type BoardAttempt, type ClassBoard } from '@/lib/class-board';

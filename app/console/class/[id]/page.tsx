@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * /school/class/[id] — fetches one class and hands it to the board view.
+ * /console/class/[id] — fetches one class and hands it to the board view.
  *
  * Deliberately thin. Everything that decides what a teacher SEES lives in
- * components/school/ClassBoardView, so that /school/demo can render the same
+ * components/school/ClassBoardView, so that /console-demo can render the same
  * screen from a sample with no account — and so a change to the board reaches
  * both without anyone remembering to copy it.
  */
@@ -55,7 +55,7 @@ export default function ClassBoardPage({ params }: { params: Promise<{ id: strin
         >
           {error}
         </p>
-        <Link href="/school" className="mt-4 inline-block text-violet-700 dark:text-violet-300">
+        <Link href="/console" className="mt-4 inline-block text-violet-700 dark:text-violet-300">
           חזרה לכיתות
         </Link>
       </main>

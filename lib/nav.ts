@@ -68,6 +68,27 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    id: 'class',
+    label: 'כיתה',
+    items: [
+      {
+        // ⚠️ THE ONLY WAY A STUDENT FINDS HIS CLASS. A teacher sends a
+        // six-character code; without a menu entry the student has the code and
+        // nowhere to type it, and "go to slash my-class" is not an instruction a
+        // fifteen-year-old follows.
+        //
+        // The STUDENT's route only. The teacher's console is /console, and it
+        // is deliberately absent from this menu: it is not part of the app a
+        // student navigates.
+        href: '/my-class',
+        label: 'הכיתה שלי',
+        icon: School,
+        blurb: 'הצטרפות עם הקוד מהמורה, ומה שהמורה ביקש לתרגל',
+        match: ['/my-class'],
+      },
+    ],
+  },
+  {
     id: 'help',
     label: 'עזרה עכשיו',
     items: [
@@ -145,24 +166,6 @@ export const NAV_GROUPS: NavGroup[] = [
       },
     ],
   },
-  {
-    id: 'class',
-    label: 'כיתה',
-    items: [
-      {
-        // ⚠️ THE ONLY WAY A STUDENT FINDS THE CLASS. A teacher reads out a
-        // six-character code in a lesson; without a menu entry the student has
-        // the code and nowhere to type it, and "go to slash school" is not an
-        // instruction a fifteen-year-old follows. One entry serves both sides:
-        // a teacher lands on his classes, a student on the join box.
-        href: '/school',
-        label: 'הכיתה שלי',
-        icon: School,
-        blurb: 'הצטרפות עם קוד מהמורה, ומה שהמורה ביקש לתרגל',
-        match: ['/school'],
-      },
-    ],
-  },
 ];
 
 /** Flat list — for anything that needs every destination without the grouping. */
@@ -201,7 +204,8 @@ export function locate(pathname: string): { group: NavGroup; item: NavItem } | n
 }
 
 /**
- * The staff consoles: /admin (the owner's) and /teacher (a private tutor's).
+ * The staff consoles: /admin (the owner's), /teacher (a private tutor's) and
+ * /console (a school teacher's class board).
  *
  * They are not the student app and must carry NONE of its chrome — no top
  * nav, no bottom tab bar, no floating avatar, no tutor bubble. Each of those
@@ -209,8 +213,14 @@ export function locate(pathname: string): { group: NavGroup; item: NavItem } | n
  * existed the staff screens rendered underneath all four of them at once,
  * which is exactly what made the admin area feel like a settings page taped
  * onto the product. One list, so the fifth component cannot forget.
+ *
+ * ⚠️ /console but NOT /my-class. The class has two sides and they are opposite
+ * cases: the teacher gets a console with none of the learner's furniture, and
+ * the student joins his class from INSIDE the app he already uses, keeping
+ * every bit of it. Putting both on one route was the mistake — a teacher was
+ * shown "בוחן מהיר" and a tutor bubble while reading his class's results.
  */
-const STAFF_PREFIXES = ['/admin', '/teacher'];
+const STAFF_PREFIXES = ['/admin', '/teacher', '/console', '/console-demo'];
 
 export function isStaffPath(pathname: string): boolean {
   return STAFF_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
