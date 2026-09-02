@@ -174,7 +174,11 @@ async function main() {
 
     for (const api of ['/api/teacher/overview', '/api/teacher/overview?as=x', '/api/admin/teachers']) {
       const r = await hit(api);
-      assert(r.status === 403, `${api} answers 403 to a student`);
+      // The status is in the message on purpose: a guard that refuses for the
+      // WRONG reason (503 for a missing service key, say) still looks like a
+      // refusal, and would pass a bare === 403 check on the machine where the
+      // key happens to be set.
+      assert(r.status === 403, `${api} answers 403 to a student (got ${r.status})`);
     }
   } finally {
     if (plantedTask) await admin.from('assignments').delete().eq('id', plantedTask);

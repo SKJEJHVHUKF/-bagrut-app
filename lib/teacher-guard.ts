@@ -55,22 +55,32 @@ export async function requireTeacher(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return jsonError('forbidden', 403);
-  const db = createAdminClient();
-  if (!db) return jsonError('SUPABASE_SERVICE_ROLE_KEY is not configured', 503);
+
+  // ⚠️ AUTHORISATION FIRST, RESOURCES SECOND. The service-role client used to
+  // be created here, above the role checks — so on a deployment where the key
+  // was missing, an ordinary student asking for a teacher's board got a 503
+  // ("not configured") instead of a 403. Nothing leaked, but the refusal was
+  // for the wrong reason, and a guard that refuses by accident is one env var
+  // away from not refusing at all. Whether someone MAY do a thing cannot
+  // depend on whether the machine is able to do it.
+  const as = new URL(request.url).searchParams.get('as');
+  const impersonating = !!as && as !== user.id;
 
   // `?as=<teacherId>` — the owner opening a teacher's board. Gated on isAdmin
   // (the email allowlist), so a teacher cannot pass another teacher's id and
   // read his students. The screen it feeds says whose board is on display;
   // silent impersonation would be the wrong kind of convenience.
-  const as = new URL(request.url).searchParams.get('as');
-  if (as && as !== user.id) {
-    if (!isAdmin(user)) return jsonError('forbidden', 403);
+  if (impersonating ? !isAdmin(user) : !isTeacher(user)) return jsonError('forbidden', 403);
+
+  const db = createAdminClient();
+  if (!db) return jsonError('SUPABASE_SERVICE_ROLE_KEY is not configured', 503);
+
+  if (impersonating) {
     const { data } = await db.auth.admin.getUserById(as);
     if (!data?.user || !isTeacher(data.user)) return jsonError('לא נמצא מורה כזה', 404);
     return { db, teacher: data.user, asAdmin: true };
   }
 
-  if (!isTeacher(user)) return jsonError('forbidden', 403);
   return { db, teacher: user, asAdmin: false };
 }
 
