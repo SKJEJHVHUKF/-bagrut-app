@@ -202,6 +202,39 @@ function writeSeen(seen: Set<string>) {
   safeSetJSON(SEEN_KEY, trimmed);
 }
 
+/**
+ * Mirror one answered question to the server, durably.
+ *
+ * THE POINT: this store is a localStorage log capped at MAX_EVENTS and synced
+ * as a blob. Both properties are right for the student and wrong for anyone
+ * else — a school year passes 1,000 answers, so the early part of it silently
+ * disappears, and a cleared browser reads downstream as "did nothing". Rows in
+ * `public.attempts` never truncate and cannot be edited or deleted, which is
+ * what makes them safe to show a teacher.
+ *
+ * Fire-and-forget in the strongest sense: never awaited, never retried, and a
+ * failure never reaches the caller. The local write above already happened, so
+ * a student on a dead network loses nothing he had before — and an answer must
+ * never be blocked on a fetch.
+ *
+ * `keepalive` so the request survives the navigation that often follows the
+ * last answer of a drill; the payload is a few hundred bytes, far under the
+ * 64KB that flag allows.
+ */
+function postAttempt(event: ResultEvent) {
+  if (!isBrowser() || typeof fetch !== 'function') return;
+  try {
+    void fetch('/api/attempt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    // Privacy-mode browsers can throw synchronously here.
+  }
+}
+
 /** Record a single answered question. Fire-and-forget.
  *  The event is always logged (so activity/streak counts every answer), but a
  *  replay of the same `${source}:${questionId}` is flagged `repeat: true` so the
@@ -230,10 +263,17 @@ export function recordResult(event: Omit<ResultEvent, 'ts'>) {
       writeSeen(seen);
     }
   }
+  const full: ResultEvent = { ...event, ts: Date.now(), ...(repeat ? { repeat: true } : {}) };
   const events = readAll();
-  events.push({ ...event, ts: Date.now(), ...(repeat ? { repeat: true } : {}) });
+  events.push(full);
   // Cap the log so localStorage never bloats — oldest events fall off.
   writeAll(events.length > MAX_EVENTS ? events.slice(events.length - MAX_EVENTS) : events);
+
+  // The SAME event, sent to the durable log. One call site for the whole app,
+  // which is why it belongs here — every future surface that records an answer
+  // gets it for free, exactly as the review loop below does. `full` and not
+  // `event`: `ts` and `repeat` are decided here.
+  postAttempt(full);
 
   // Spaced repetition, wired HERE and not at the call sites.
   //
