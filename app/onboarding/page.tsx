@@ -1,6 +1,24 @@
 'use client';
 
 import { useState } from 'react';
+import { useClientValue } from '@/lib/use-client-value';
+
+/** Today as YYYY-MM-DD. Module-level so `useClientValue` sees a stable reader. */
+const readToday = () => new Date().toISOString().slice(0, 10);
+
+/** Today, or null until hydration. Reading the clock during render is impure —
+ *  and the server's date is not necessarily the student's, so the value genuinely
+ *  does not exist until we are on their machine. */
+function useToday(): string | null {
+  return useClientValue<string | null>(readToday, null);
+}
+
+/** Whole days from `today` to `date` (both YYYY-MM-DD), or null before hydration.
+ *  Calendar days, not elapsed hours: "3 days away" must not become 2 at teatime. */
+function daysUntil(date: string, today: string | null): number | null {
+  if (!today) return null;
+  return Math.ceil((new Date(date).getTime() - new Date(today).getTime()) / (1000 * 60 * 60 * 24));
+}
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -244,10 +262,8 @@ function DateStep({
   onBack: () => void;
   onNext: () => void;
 }) {
-  const today = new Date().toISOString().slice(0, 10);
-  const daysAway = Math.ceil(
-    (new Date(value).getTime() - new Date(today).getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const today = useToday();
+  const daysAway = daysUntil(value, today);
 
   return (
     <div className="space-y-6">
@@ -272,11 +288,11 @@ function DateStep({
         <input
           type="date"
           value={value}
-          min={today}
+          min={today ?? undefined}
           onChange={(e) => onChange(e.target.value)}
           className="w-full bg-[var(--background)]/80 border border-slate-900/10 focus:border-violet-500/60 rounded-xl px-4 py-3 text-base text-slate-900 outline-none transition-colors"
         />
-        {daysAway > 0 && (
+        {daysAway !== null && daysAway > 0 && (
           <div className="text-sm text-slate-700">
             ⏱️ <strong className="text-amber-700">{daysAway} ימים</strong> עד הבגרות שלך.
           </div>
@@ -348,7 +364,7 @@ function DateStep({
         </p>
       </div>
 
-      <NavButtons onBack={onBack} onNext={onNext} nextDisabled={daysAway <= 0} />
+      <NavButtons onBack={onBack} onNext={onNext} nextDisabled={daysAway === null || daysAway <= 0} />
     </div>
   );
 }
@@ -477,9 +493,8 @@ function SummaryStep({
   onBack: () => void;
   onFinish: () => void;
 }) {
-  const daysAway = Math.ceil(
-    (new Date(bagrutDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-  );
+  const today = useToday();
+  const daysAway = daysUntil(bagrutDate, today);
 
   return (
     <div className="space-y-6">
@@ -498,7 +513,7 @@ function SummaryStep({
         <div className="text-xs font-black tracking-widest text-amber-700 mb-1 uppercase">
           ספירה לאחור
         </div>
-        <div className="text-3xl sm:text-4xl font-black text-amber-800">{daysAway} ימים</div>
+        <div className="text-3xl sm:text-4xl font-black text-amber-800">{daysAway ?? '—'} ימים</div>
         <div className="text-xs text-amber-800 mt-1">עד הבגרות ב-{bagrutDate}</div>
       </div>
 

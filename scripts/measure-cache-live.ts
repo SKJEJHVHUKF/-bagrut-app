@@ -22,6 +22,7 @@ config({ path: resolve(process.cwd(), '.env.local'), override: true });
 
 import Anthropic from '@anthropic-ai/sdk';
 import { buildTutorSystem } from '../lib/agents/prompts';
+import { TUTOR_TOOLS } from '../lib/agents/tools';
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
@@ -30,8 +31,13 @@ if (!apiKey) {
 }
 const client = new Anthropic({ apiKey });
 
-const MODEL = 'claude-sonnet-4-6';
-const IN_PRICE = 3.0; // $/MTok
+// WARNING: HAIKU, NOT SONNET, AND THE HEADER ABOVE WAS STALE FOR A WEEK.
+// `useSonnet` needs TUTOR_SONNET_TOPICS to name the topic; the variable is
+// unset, so EVERY tutor turn in production runs on Haiku. Probing Sonnet
+// measured a model no student reaches, at 3x the price, against a different
+// cache minimum (1,024 vs 4,096) - the one number this probe turns on.
+const MODEL = 'claude-haiku-4-5';
+const IN_PRICE = 1.0; // $/MTok
 
 const [topicA, topicB] = process.argv.slice(2);
 if (!topicA || !topicB) {
@@ -40,13 +46,19 @@ if (!topicA || !topicB) {
 }
 
 async function turn(topic: string, label: string) {
-  const system = buildTutorSystem({ unitLevel: 5, formNumber: '572', topic });
+  // `hasQuestion: true` is the shape of a real turn: a student on an exercise.
+  const system = buildTutorSystem({ unitLevel: 5, formNumber: '572', topic, hasQuestion: true });
   const breakpoints = system.filter((b) => b.cache_control).length;
 
   const msg = await client.messages.create({
     model: MODEL,
     max_tokens: 16,
     system,
+    // WARNING: TOOLS, because they SERIALISE AHEAD OF `system` in the cached
+    // prefix. Without them this probe measures a prefix that differs from
+    // production by ~1,035 tokens at the very front, which is a different cache
+    // entry entirely - every read would miss for the wrong reason.
+    tools: TUTOR_TOOLS,
     messages: [{ role: 'user', content: 'שלום' }],
   });
 
@@ -54,7 +66,8 @@ async function turn(topic: string, label: string) {
   const write = msg.usage.cache_creation_input_tokens ?? 0;
   const fresh = msg.usage.input_tokens;
   // What you are actually billed, in base-input-token equivalents.
-  const billed = read * 0.1 + write * 1.25 + fresh;
+  // 1h TTL: the write is 2x, not the 5-minute 1.25x this line assumed.
+  const billed = read * 0.1 + write * 2.0 + fresh;
 
   console.log(
     `  ${label.padEnd(22)} breakpoints=${breakpoints}  read=${String(read).padStart(5)}  ` +
@@ -66,11 +79,16 @@ async function turn(topic: string, label: string) {
 }
 
 async function main() {
-  console.log(`\nLive cache probe on ${MODEL} — 2 calls, ~$0.03\n`);
-  console.log(`  (billed tok-eq = read×0.1 + write×1.25 + fresh×1.0)\n`);
+  console.log(`\nLive cache probe on ${MODEL} — 3 calls, ~$0.02\n`);
+  console.log(`  (billed tok-eq = read x0.1 + write x2.0 + fresh x1.0)\n`);
 
-  await turn(topicA, `1. ${topicA}`);
-  const second = await turn(topicB, `2. ${topicB}`);
+  await turn(topicA, `1. ${topicA} (cold)`);
+  const second = await turn(topicB, `2. ${topicB} (new topic)`);
+  // WARNING: THE CONTROL. Without it a read=0 on call 2 proves nothing - it
+  // could mean the shared core is not reused, or that NOTHING caches at all.
+  // Repeating topic A must read its own full prefix; if that also reads 0, the
+  // problem is caching itself and not the breakpoint layout.
+  await turn(topicA, `3. ${topicA} again`);
 
   console.log(
     `\n  The second call is the one that matters: it is a DIFFERENT topic, so its\n` +

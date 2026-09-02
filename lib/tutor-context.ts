@@ -51,7 +51,7 @@ import { studentTier, tierLabel } from '@/lib/adaptive';
 import { getPlan, getUnitLevel, daysUntilBagrut } from '@/lib/study-plan';
 import { dueCount } from '@/lib/review';
 import { getCognitiveState, type CognitiveState } from '@/lib/cognition';
-import { cognitionEntries } from '@/content/cognition';
+import { getWeaknesses, getActiveFix } from '@/lib/remediation';
 
 /**
  * 1200, down from 1800.
@@ -71,24 +71,36 @@ const MAX_LEN = 1200;
 const MIN_OBSERVATIONS = 3;
 
 /**
- * The cognitive state to brief the tutor on.
+ * The cognitive state to brief the tutor on — for a NAMED topic, or nothing.
  *
- * Prefers the topic the student is actually looking at. On the generic /chat
- * entry there is no topic, and without this fallback the richest signal the app
- * owns would reach the tutor ONLY from inside a lesson — so we pick whichever
- * mapped topic the student has the most evidence in. `getCognitiveState`
- * returns null for unmapped topics, so this is a no-op until a topic has a
- * catalog in content/cognition (today: complex numbers only).
+ * `getCognitiveState` returns null for unmapped topics, so this is already a
+ * no-op until a topic has a catalog in content/cognition.
  */
 export function resolveCognitive(subject: string, topic: string): CognitiveState | null {
   if (topic) return getCognitiveState(subject, topic);
-  let best: CognitiveState | null = null;
-  for (const map of cognitionEntries()) {
-    if (map.subject !== subject) continue;
-    const st = getCognitiveState(subject, map.topic);
-    if (st && (!best || st.totalObservations > best.totalObservations)) best = st;
-  }
-  return best;
+  // ⚠️ NO TOPIC MEANS NO COGNITIVE BLOCK. IT USED TO MEAN "GUESS ONE", AND THE
+  // GUESS WAS SHOWN TO THE STUDENT AS A FACT.
+  //
+  // This used to return the topic with the most observations, which is a
+  // reasonable default for a report and a disaster for a tutor. Reported twice
+  // with screenshots, on the roadmap where no topic is published:
+  //
+  //   תלמיד: תסביר לי משהו מהחומר
+  //   מורה:  אני רואה שאתה עובד על מספרים מרוכבים…
+  //   תלמיד: לא, אני עובד על הסתברות
+  //   מורה:  אבל STATE אומר שאתה עובד על מספרים מרוכבים
+  //
+  // The model invented nothing. It was handed `scope: מספרים מרוכבים` — the
+  // topic this student has practised most — and reported it faithfully. Two
+  // rounds of prompt rules ("never announce the topic", "never name a context
+  // block") could not beat it, because a prompt cannot stop a model from using
+  // data it can see. The fix is to stop showing it.
+  //
+  // What survives without a topic is what is true regardless of one: the unit
+  // level, the days to the exam, the frequent error type. Everything below —
+  // scope, weak, misc, next — is a claim ABOUT a topic, and on this screen
+  // nobody named one.
+  return null;
 }
 
 /** Trim a possibly-long answer string for the brief. */
@@ -160,6 +172,52 @@ export function buildStudentSnapshot(subject: string, topic: string): string {
       }
 
       lines.push(`next: ${cog.nextStep.title} — ${cog.nextStep.reason}`);
+    }
+  } catch {
+    /* skip */
+  }
+
+  // --- the repair path that already exists --------------------------------
+  // lib/remediation ranks what is worth repairing and remembers a session the
+  // student is part-way through — and none of it reached the tutor. So a
+  // student who asked for help was re-diagnosed from scratch against a
+  // fix-track that was already open, and the tutor could not say "we already
+  // started on this". Both reads are pure localStorage over getResults +
+  // getMistakes: the same data the blocks above already paid to compute.
+  //
+  // ⚠️ These two keys have NO entry in TUTOR_CORE's STATE legend — that block
+  // is the 1-hour cache prefix, gated on a measured margin (npm run
+  // measure:cache), so documenting them is a separate, budgeted prompt edit.
+  // Until then they carry their own meaning: a shared `fix_` prefix, an English
+  // noun for the target and `n/m` progress for the live session.
+  try {
+    // ⚠️ TOPIC-SCOPED, for the same reason scope/weak/misc/next are. A ranked
+    // weakness is a claim ABOUT a topic, and on the bare /chat entry nobody
+    // named one — emitting it there is the `scope:` bug again under a new key.
+    // A weakness in some OTHER topic is unattributable for the same reason:
+    // sitting under a `scope:` line, the model reads it as being about that one.
+    // So this is the top weakness IN WHAT HE IS LOOKING AT, or nothing.
+    const weak = topic
+      ? getWeaknesses(subject).find((w) => w.topic === topic) ?? null
+      : null;
+    if (weak) lines.push(`fix_target: ${short(weak.title, 40)}`);
+
+    // An open session is NOT a claim about a topic: it is something the student
+    // actually started and can see in the app, so — like `due:` — it survives
+    // the bare entry, where it is the only thing here that still has an answer
+    // to "what were we in the middle of".
+    const fix = getActiveFix();
+    if (fix) {
+      // Name the target ONLY when the live session is aimed at something other
+      // than the line above — repeating a Hebrew title costs real money on a
+      // block that is re-read at full price every single turn.
+      const aim = fix.path.title === weak?.title ? '' : `${short(fix.path.title, 40)} `;
+      // 'paused' is the student having hit the miss ceiling — the one state the
+      // tutor most needs to know about, so it is never silently folded in.
+      const stalled = fix.progress.status === 'active' ? '' : ` ${fix.progress.status}`;
+      lines.push(
+        `fix_open: ${aim}${fix.progress.answered.length}/${fix.path.steps.length}${stalled}`,
+      );
     }
   } catch {
     /* skip */

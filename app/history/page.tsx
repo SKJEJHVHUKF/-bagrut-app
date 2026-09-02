@@ -5,7 +5,7 @@ import MathUpLogo from '@/components/MathUpLogo';
 import { PageHeader } from '@/components/PageHeader';
 import {
   ArrowLeft,
-  ArrowRight,
+  
   Sparkles,
   Trophy,
   Target,

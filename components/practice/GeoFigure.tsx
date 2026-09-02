@@ -205,15 +205,24 @@ export function GeoFigure({ spec }: { spec: GeoSpec }) {
 
 /** JSON-fence entry point used by MathText; a broken spec degrades to a quiet note. */
 export function GeoFigureFromJson({ json }: { json: string }) {
+  // Parse inside the try, render outside it: JSX is lazy, so <GeoFigure/> only
+  // builds an element here and its own render errors were never caught by this
+  // catch. Only parseGeo/validateGeo can actually throw.
+  let spec: ReturnType<typeof parseGeo> | null = null;
   try {
-    const spec = parseGeo(json);
-    if (validateGeo(spec).some((e) => /unknown point|must be|needs|nothing to draw/.test(e))) throw new Error('invalid');
-    return <GeoFigure spec={spec} />;
+    const parsed = parseGeo(json);
+    if (!validateGeo(parsed).some((e) => /unknown point|must be|needs|nothing to draw/.test(e))) {
+      spec = parsed;
+    }
   } catch {
+    spec = null;
+  }
+  if (!spec) {
     return (
       <div dir="rtl" className="my-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
         (הסרטוט אינו זמין)
       </div>
     );
   }
+  return <GeoFigure spec={spec} />;
 }

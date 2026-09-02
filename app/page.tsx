@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hasPlan } from '@/lib/study-plan';
@@ -43,6 +43,7 @@ import {
   availableYears as bagruyotYears,
   availableTopics as bagruyotTopics,
 } from '@/content/past-bagruyot';
+import { useClientValue } from '@/lib/use-client-value';
 
 /** Small section eyebrow label — muted indigo, calm. */
 function Eyebrow({ children }: { children: React.ReactNode }) {
@@ -790,11 +791,8 @@ function BagruyotStat({ value, label }: { value: number; label: string }) {
  * for SSR; the localStorage check runs after mount.
  */
 function PrimaryCTA() {
-  const [planExists, setPlanExists] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    setPlanExists(hasPlan());
-  }, []);
+  // null until hydration: the server cannot know whether a plan exists.
+  const planExists = useClientValue<boolean | null>(hasPlan, null);
 
   const className =
     'group relative inline-flex items-center gap-3 btn-primary px-8 py-4 rounded-2xl font-bold text-white hover:-translate-y-1';

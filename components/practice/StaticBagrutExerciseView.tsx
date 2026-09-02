@@ -38,13 +38,20 @@ export function StaticBagrutExerciseView({
 }: Props) {
   const [pickedIndex, setPickedIndex] = useState<number>(() => pickRandom(questions.length));
   const [contextOpen, setContextOpen] = useState(true);
-  const [partsDone, setPartsDone] = useState<Set<number>>(new Set());
+  // Write-only: the set is read inside the updater below (to spot the last part
+  // being finished), never during render.
+  const [, setPartsDone] = useState<Set<number>>(new Set());
 
-  // Reset done-tracking each time we move to a new question.
-  useEffect(() => {
+  // Reset done-tracking each time we move to a new question. Adjusted during
+  // render rather than in an effect: React re-runs this component immediately
+  // with the new state and never commits the stale UI, so there is no flash of
+  // the previous question's ticks.
+  const [shownIndex, setShownIndex] = useState(pickedIndex);
+  if (shownIndex !== pickedIndex) {
+    setShownIndex(pickedIndex);
     setPartsDone(new Set());
     setContextOpen(true);
-  }, [pickedIndex]);
+  }
 
   // ===== publish to the floating tutor =====
   // Published from the CONTAINER, not from QuestionPartCard. A bagrut question

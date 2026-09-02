@@ -1,24 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useReducer, useState } from 'react';
 import Link from 'next/link';
 import { Camera, Trash2, ChevronDown, ChevronUp, Calendar, Sparkles } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { PageHeader } from '@/components/PageHeader';
 import { scansByTopic, deleteScan, type Scan } from '@/lib/scans';
+import { useClientValue, useHydrated } from '@/lib/use-client-value';
+
+/** Stable empty snapshot for the server render. */
+const NO_GROUPS: { topic: string; scans: Scan[] }[] = [];
 
 export default function LibraryPage() {
-  const [groups, setGroups] = useState<{ topic: string; scans: Scan[] }[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHydrated();
 
-  // Read from localStorage on mount only (avoids SSR hydration mismatch).
-  useEffect(() => {
-    setMounted(true);
-    setGroups(scansByTopic());
-  }, []);
-
-  const refresh = () => setGroups(scansByTopic());
+  // Read from localStorage at hydration (not during the server render), and
+  // again after a delete — the store stays the source of truth.
+  const [version, refresh] = useReducer((n: number) => n + 1, 0);
+  // `version` is not read inside — it is the re-read trigger.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const readGroups = useCallback(() => scansByTopic(), [version]);
+  const groups = useClientValue(readGroups, NO_GROUPS);
 
   const handleDelete = (id: string) => {
     if (!confirm('למחוק את השאלה הזו מהספרייה?')) return;
@@ -71,7 +74,7 @@ export default function LibraryPage() {
           <ol className="text-sm text-slate-700 space-y-1 inline-block text-right">
             <li>1. צלמי שאלת בגרות מספר תרגול / מבחן</li>
             <li>2. ה-AI יזהה את הנושא ויפתור צעד-אחר-צעד</li>
-            <li>3. לחצי "שמרי לספרייה" — והשאלה תופיע פה</li>
+            <li>3. לחצי &quot;שמרי לספרייה&quot; — והשאלה תופיע פה</li>
             <li>4. בכל זמן, חזרי לעיין בפתרון</li>
           </ol>
         </div>

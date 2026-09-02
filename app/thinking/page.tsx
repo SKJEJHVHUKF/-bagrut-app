@@ -4,7 +4,7 @@
 // then answer AI-generated qualitative conceptual questions in free Hebrew
 // and get a rubric-style evaluation. Pro-only (gated server-side).
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { ThinkingPractice } from '@/components/thinking/ThinkingPractice';
 import { allLessonKeys } from '@/content/lessons';
@@ -12,17 +12,14 @@ import {
   curriculumIndex,
   getTopicMapping,
   isTopicInActivePaper,
-  type BagrutPaper,
 } from '@/content/bagrut-curriculum';
 import { getPaper } from '@/lib/study-plan';
+import { useClientValue } from '@/lib/use-client-value';
 
 export default function ThinkingPage() {
-  const [paper, setPaper] = useState<BagrutPaper | null>(null);
+  // localStorage — client-only, so it cannot be read during the server render.
+  const paper = useClientValue(getPaper, null);
   const [topic, setTopic] = useState<string | null>(null);
-
-  useEffect(() => {
-    setPaper(getPaper());
-  }, []);
 
   const topics = allLessonKeys()
     .filter((k) => k.subject === 'math5')

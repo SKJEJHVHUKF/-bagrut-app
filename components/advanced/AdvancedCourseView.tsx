@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, ReactNode } from 'react';
+import { useCallback, useReducer, ReactNode } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Rocket, Clock, Lock, AlertTriangle, BookOpen, ArrowLeft } from 'lucide-react';
@@ -10,7 +10,7 @@ import {
   getAdvancedProgress,
   getCompletedAdvancedSections,
   markGatePassed,
-  markAdvancedSectionDone,
+  
   markSimulationPassed,
   toggleAdvancedSection,
 } from '@/lib/advanced-progress';
@@ -23,41 +23,58 @@ import { TechniqueCard } from './TechniqueCard';
 import { WorkedExamView } from './WorkedExamView';
 import { ExamQuestionCard } from './ExamQuestionCard';
 import { ExamSimulation } from './ExamSimulation';
+import { useClientValue } from '@/lib/use-client-value';
+
+/** Stable server-render snapshot. */
+const NO_ADVANCED = {
+  gatePassed: false,
+  gateSkipped: false,
+  simPassed: false,
+  done: new Set() as ReadonlySet<string>,
+};
 
 export function AdvancedCourseView({ course }: { course: AdvancedCourse }) {
   const { subject, topic } = course;
-  const [done, setDone] = useState<Set<string>>(new Set());
-  const [gatePassed, setGatePassed] = useState(false);
-  const [gateSkipped, setGateSkipped] = useState(false);
-  const [simPassed, setSimPassed] = useState(false);
-
-  useEffect(() => {
-    const p = getAdvancedProgress(subject, topic);
-    setGatePassed(!!p.gatePassed);
-    setGateSkipped(!!p.gateSkipped);
-    setSimPassed(!!p.simulationPassed);
-    setDone(getCompletedAdvancedSections(subject, topic));
-  }, [subject, topic]);
+  // The progress store IS the state: it is read as one snapshot at hydration
+  // (it lives in localStorage, so it does not exist during the server render)
+  // and re-read after each write, instead of being mirrored into four pieces of
+  // React state that can drift out of step with it.
+  const [version, bumpVersion] = useReducer((n: number) => n + 1, 0);
+  const readProgress = useCallback(
+    () => {
+      const p = getAdvancedProgress(subject, topic);
+      return {
+        gatePassed: !!p.gatePassed,
+        gateSkipped: !!p.gateSkipped,
+        simPassed: !!p.simulationPassed,
+        done: getCompletedAdvancedSections(subject, topic) as ReadonlySet<string>,
+      };
+    },
+    // `version` is not read inside — it is the re-read trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [subject, topic, version],
+  );
+  const { gatePassed, gateSkipped, simPassed, done } = useClientValue(readProgress, NO_ADVANCED);
 
   const onToggle = useCallback(
-    (sectionId: string) => setDone(toggleAdvancedSection(subject, topic, sectionId)),
+    (sectionId: string) => {
+      toggleAdvancedSection(subject, topic, sectionId);
+      bumpVersion();
+    },
     [subject, topic],
   );
 
   const handleGatePassed = useCallback(
     (viaSkip: boolean) => {
-      const p = markGatePassed(subject, topic, viaSkip);
-      setGatePassed(true);
-      setGateSkipped(viaSkip);
-      setDone(new Set(p.completedSections ?? []));
+      markGatePassed(subject, topic, viaSkip);
+      bumpVersion();
     },
     [subject, topic],
   );
 
   const handleSimulationPassed = useCallback(() => {
-    const p = markSimulationPassed(subject, topic);
-    setSimPassed(true);
-    setDone(new Set(p.completedSections ?? []));
+    markSimulationPassed(subject, topic);
+    bumpVersion();
   }, [subject, topic]);
 
   const totalSections = ADVANCED_SECTIONS.length;

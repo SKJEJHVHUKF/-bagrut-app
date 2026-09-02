@@ -64,7 +64,7 @@ const TREND_UI: Record<Trend, { label: string; className: string; Icon: typeof T
 
 // ---------------------------------------------------------------------------
 
-function PatternCard({ finding, total }: { finding: PatternFinding; total: number }) {
+function PatternCard({ finding, total, now }: { finding: PatternFinding; total: number; now: number }) {
   const info = TAG_INFO[finding.tag];
   const trend = TREND_UI[finding.trend];
 
@@ -104,7 +104,7 @@ function PatternCard({ finding, total }: { finding: PatternFinding; total: numbe
       </div>
 
       <p className="text-xs text-slate-500">
-        לאחרונה {daysAgo(finding.lastTs, Date.now())}
+        לאחרונה {daysAgo(finding.lastTs, now)}
       </p>
     </article>
   );
@@ -181,6 +181,10 @@ function WeeksChart({ data }: { data: ReportData }) {
 export default function ReportPage() {
   const [data, setData] = useState<ReportData | null>(null);
 
+  // The subject list comes from localStorage, which does not exist during the
+  // server render, so this genuinely cannot move into render — the same reason
+  // main documents on /roadmap/review. One extra render on mount is the cost.
+  /* eslint-disable react-hooks/set-state-in-effect -- see the note above. */
   useEffect(() => {
     // math5 is the flagship — first when present, same rule /insights applies.
     // A bare `subjects[0]` would show a math5 student their מתמטיקה 4 יח"ל
@@ -189,6 +193,7 @@ export default function ReportPage() {
     subjects.sort((a, b) => (a === DEFAULT_SUBJECT ? -1 : b === DEFAULT_SUBJECT ? 1 : 0));
     setData(getReport(subjects[0] ?? DEFAULT_SUBJECT));
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (!data) {
     return (
@@ -241,7 +246,7 @@ export default function ReportPage() {
             {profile.patterns.length > 0 ? (
               <div className="space-y-3">
                 {profile.patterns.map((f) => (
-                  <PatternCard key={f.tag} finding={f} total={profile.totalTagged} />
+                  <PatternCard key={f.tag} finding={f} total={profile.totalTagged} now={data.now} />
                 ))}
               </div>
             ) : (

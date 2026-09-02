@@ -6,7 +6,7 @@
 // over just the missed questions, and after two attempts a "continue anyway"
 // escape so the hardest rung can't dead-end the climb.
 
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { orderQuestions, studentTier } from '@/lib/adaptive';
 import { retrySet } from '@/lib/roadmap-mastery';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
@@ -14,6 +14,7 @@ import type { AttemptResult } from '@/lib/roadmap-progress';
 import type { PracticeQuestion } from '@/content/lessons/types';
 import { QuestionRunnerCard } from './QuestionRunnerCard';
 import { LevelClearedPanel, LevelFailedPanel } from './ladder-ui';
+import { useClientValue } from '@/lib/use-client-value';
 
 export function RoadmapLevelRunner({
   subject,
@@ -41,7 +42,13 @@ export function RoadmapLevelRunner({
 
   // The full question list, ordered once for the student's tier. Constant across
   // retries (retrySet filters it by the missed ids).
-  const [orderedFull, setOrderedFull] = useState<PracticeQuestion[]>(level.questions);
+  // studentTier reads localStorage, so the ordering does not exist during the
+  // server render — until hydration the questions stand in their authored order.
+  const readOrdered = useCallback(
+    () => orderQuestions(level.questions, studentTier(subject, topic, subId)),
+    [subject, topic, subId, level],
+  );
+  const orderedFull = useClientValue<PracticeQuestion[]>(readOrdered, level.questions);
   const [pool, setPool] = useState<PracticeQuestion[]>(level.questions); // current round
   const [pos, setPos] = useState(0);
   const [roundCorrect, setRoundCorrect] = useState(0);
@@ -50,19 +57,20 @@ export function RoadmapLevelRunner({
   const [isRetry, setIsRetry] = useState(false);
   const [result, setResult] = useState<AttemptResult | null>(null);
 
-  // Order for the student's tier on mount; this also (re)starts the first round.
-  useEffect(() => {
-    const ordered = orderQuestions(level.questions, studentTier(subject, topic, subId));
-    setOrderedFull(ordered);
-    setPool(ordered);
+  // A new ordering means a new level (or a newly-known tier) — restart the run.
+  // Adjusted during render rather than in an effect so the stale round is never
+  // committed: React re-runs this component with the reset state immediately.
+  const [shownOrder, setShownOrder] = useState(orderedFull);
+  if (shownOrder !== orderedFull) {
+    setShownOrder(orderedFull);
+    setPool(orderedFull);
     setPos(0);
     setRoundCorrect(0);
     setRoundWrong(new Set());
     setBaseCorrect(0);
     setIsRetry(false);
     setResult(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subject, topic, subId, level]);
+  }
 
   if (total === 0) {
     return <div className="text-sm text-slate-500 text-center py-6">אין תרגילים ברמה הזו.</div>;

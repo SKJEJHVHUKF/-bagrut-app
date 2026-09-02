@@ -6,7 +6,15 @@
  *
  * Traversal mirrors scripts/verify-rule-lines.ts, so unit ids match the gate's
  * and `partAsQuestion` (`${bagrutId}/${label}`). Units that already have FAQ
- * entries in the merged bank are skipped, so re-runs only hand out new work.
+ * entries in the merged bank are skipped, so re-runs only hand out new work;
+ * pass --all to re-issue everything.
+ *
+ * ⚠️ That skip was DOCUMENTED HERE AND NEVER IMPLEMENTED until 2026-08-31. A
+ * re-run on a partly-banked topic handed out all 215 units instead of the 62
+ * outstanding ones — thirteen slices of work already done, at roughly 150k
+ * tokens each. Same class as the gates that cannot see new content: here the
+ * comment described behaviour the code did not have, and nothing contradicted
+ * it, because the output looks identical either way.
  */
 
 import { mkdirSync, writeFileSync } from 'fs';
@@ -18,7 +26,7 @@ import { loadFaqBank } from '../content/tutor-faq';
 
 const [topicArg, outDir, sliceArg = '15'] = process.argv.slice(2);
 if (!topicArg || !outDir) {
-  console.error('usage: npx tsx scripts/audit-tutor-faq.ts <topic> <outdir> [sliceSize] [--kind k,k]');
+  console.error('usage: npx tsx scripts/audit-tutor-faq.ts <topic> <outdir> [sliceSize] [--kind k,k] [--sub prefix,prefix]');
   process.exit(1);
 }
 const SLICE = Number(sliceArg);
@@ -28,6 +36,16 @@ const KINDS = (() => {
   const i = process.argv.indexOf('--kind');
   return i >= 0 ? new Set(process.argv[i + 1].split(',')) : null;
 })();
+/** `--sub <prefix,prefix>` restricts the audit to sub-topics whose id starts
+ *  with one of the prefixes. A topic is not always banked all at once: the five
+ *  ext-* stages of בעיות קיצון were authored as their own track and get their
+ *  own bank, while the older חשבון דיפרנציאלי modules are still unbanked.
+ *  Without this the audit hands out work nobody asked for. */
+const SUBS = (() => {
+  const i = process.argv.indexOf('--sub');
+  return i >= 0 ? process.argv[i + 1].split(',') : null;
+})();
+const wantedSub = (id: string) => !SUBS || SUBS.some((pre) => id.startsWith(pre));
 
 export type FaqRow = {
   unit: string;
@@ -51,6 +69,7 @@ for (const { subject, topic } of allLessonKeys()) {
   const L = getLesson(subject, topic);
   if (!L) continue;
   for (const st of L.subTopics ?? []) {
+    if (!wantedSub(st.id)) continue;
     const meta = {
       subId: st.id,
       subTitle: st.title,
@@ -74,6 +93,8 @@ for (const { subject, topic } of allLessonKeys()) {
     }
   }
   for (const q of L.questions ?? []) {
+    // These belong to no sub-topic, so a --sub run must not pick them up.
+    if (SUBS) break;
     if (!q.solution?.steps?.length) continue;
     rows.push({
       unit: q.id, kind: 'question-top', subId: '', subTitle: '', subSummary: '', formulas: [], keyPoints: [],
@@ -83,6 +104,7 @@ for (const { subject, topic } of allLessonKeys()) {
     });
   }
   for (const b of L.bagrutQuestions ?? []) {
+    if (!wantedSub(b.subTopicId ?? '')) continue;
     const st = b.subTopicId ? (L.subTopics ?? []).find((s) => s.id === b.subTopicId) : undefined;
     for (const p of b.parts ?? []) {
       if (!p.solution?.steps?.length) continue;
@@ -114,6 +136,9 @@ for (const { subject, topic } of allLessonKeys()) {
 // notes are the ready-made source for the why-not entries.
 for (const e of conceptBankEntries()) {
   if (e.topic !== topicArg) continue;
+  // The /quiz bank belongs to the topic, not to any one sub-topic, so a --sub
+  // run (banking one track inside a bigger topic) must leave it alone.
+  if (SUBS) break;
   for (const lvl of CONCEPT_LEVELS) {
     for (const q of getConceptQuestions(e.subject, e.topic, lvl)) {
       // ⚠️ THE SAME MAPPING THE STUDENT'S TUTOR USES, not a second one.
@@ -145,35 +170,28 @@ for (const e of conceptBankEntries()) {
   }
 }
 
-// `async function main`, not top-level await: these scripts compile to CJS
-// where top-level await is a hard error, and `tsc --noEmit` runs under an ESM
-// target and says nothing about it.
+// Wrapped in a main(): the bank is lazy-imported, and tsx compiles these scripts
+// to CJS, where a top-level await is a hard build error. tsc --noEmit does NOT
+// catch it — it type-checks under the ESM target and passes.
 async function main() {
   mkdirSync(outDir, { recursive: true });
   // The rows file stays COMPLETE even when slicing a subset: merge-tutor-faq
   // validates every authored unit against it, and a filtered rows file would
   // reject entries for units it simply did not list.
   writeFileSync(join(outDir, `rows-${topicArg}.json`), JSON.stringify(rows, null, 1), 'utf8');
-
-  // The header above has always PROMISED this skip; until now nothing
-  // implemented it, so a re-run on a partly-banked topic handed out every
-  // finished unit again — thirteen slices of done work at ~150k tokens each.
-  // `--all` overrides, for a deliberate re-author.
-  const bank = process.argv.includes('--all') ? null : await loadFaqBank('math5', topicArg);
-  const banked = new Set(Object.keys(bank ?? {}));
-  const fresh = banked.size ? rows.filter((r) => !banked.has(r.unit)) : rows;
-
-  const selected = KINDS ? fresh.filter((r) => KINDS.has(r.kind)) : fresh;
+  const banked = process.argv.includes('--all')
+    ? new Set<string>()
+    : new Set(Object.keys((await loadFaqBank('math5', topicArg)) ?? {}));
+  const byKind = KINDS ? rows.filter((r) => KINDS.has(r.kind)) : rows;
+  const selected = byKind.filter((r) => !banked.has(r.unit));
   const slices: FaqRow[][] = [];
   for (let i = 0; i < selected.length; i += SLICE) slices.push(selected.slice(i, i + SLICE));
-  slices.forEach((s, i) =>
-    writeFileSync(join(outDir, `slice-${String(i + 1).padStart(2, '0')}.json`), JSON.stringify(s, null, 1), 'utf8'),
-  );
+  slices.forEach((s, i) => writeFileSync(join(outDir, `slice-${String(i + 1).padStart(2, '0')}.json`), JSON.stringify(s, null, 1), 'utf8'));
   console.log(
     `${topicArg}: ${rows.length} units total` +
-    (banked.size ? `, ${banked.size} already banked → ${fresh.length} units` : '') +
-    (KINDS ? `, ${selected.length} of kind [${[...KINDS].join(',')}]` : '') +
-    ` → ${slices.length} slices of ≤${SLICE} in ${outDir}`,
+    (KINDS ? `, ${byKind.length} of kind [${[...KINDS].join(',')}]` : '') +
+    (banked.size ? `, ${banked.size} already banked` : '') +
+    ` → ${selected.length} units in ${slices.length} slices of ≤${SLICE} in ${outDir}`,
   );
 }
 

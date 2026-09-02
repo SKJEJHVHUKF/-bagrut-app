@@ -18,7 +18,6 @@ import { LevelClearedPanel, LevelFailedPanel } from './ladder-ui';
 export function BagrutLevel({
   subject,
   topic,
-  subId,
   level,
   onSubmit,
   onBack,

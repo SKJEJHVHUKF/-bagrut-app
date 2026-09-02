@@ -4,7 +4,6 @@
 //   <StarRow>          a 1-3 star rating strip
 //   <LevelClearedPanel> the celebration shown when a rung is cleared
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Star, ArrowLeft, RefreshCw, Trophy, Crown, Map, RotateCcw, BookOpen } from 'lucide-react';
 import { buttonTap } from '@/lib/animations';
@@ -154,7 +153,7 @@ export function LevelFailedPanel({
       <div className="rounded-3xl p-6 text-center space-y-2 border bg-gradient-to-br from-amber-500/10 to-rose-500/[0.05] border-amber-500/40">
         <div className="text-4xl" aria-hidden="true">💪</div>
         <h3 className="font-display text-xl font-black text-ink">
-          כמעט — רמת "{level.title}" עוד קצת
+          כמעט — רמת &quot;{level.title}&quot; עוד קצת
         </h3>
         <p className="text-sm text-slate-600">
           ענית נכון על {score} מתוך {total}. כדי לעבור צריך {required}. בוא נחזק את מה שפספסת.
@@ -177,7 +176,7 @@ export function LevelFailedPanel({
             className="w-full inline-flex items-center justify-center gap-2 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 px-5 py-3 rounded-2xl font-bold text-sky-800 transition-colors"
           >
             <BookOpen className="w-4 h-4" />
-            <span>חזור לרמת "לומדים"</span>
+            <span>חזור לרמת &quot;לומדים&quot;</span>
           </motion.button>
         )}
         <motion.button

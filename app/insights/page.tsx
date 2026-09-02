@@ -10,7 +10,7 @@
 // All data is client-side (localStorage) — the page renders after mount to
 // avoid a hydration mismatch.
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -53,6 +53,28 @@ import {
 import { getTopWeakness, healedCountSince, type Weakness } from '@/lib/remediation';
 import ShareCardButton from '@/components/ShareCardButton';
 import { MathText } from '@/components/practice/MathText';
+import { useClientValue } from '@/lib/use-client-value';
+
+/** Stable server-render snapshot; a fresh object per call would re-render forever. */
+const EMPTY_INSIGHTS: {
+  data: SubjectData[] | null;
+  fixTargets: Record<string, Weakness>;
+  habit: Habit | null;
+  week: WeeklyDelta | null;
+  healedThisWeek: number;
+  topMistake: CategoryStat | null;
+  prediction: OverallPrediction | null;
+  impact: TopicImpact[];
+} = {
+  data: null,
+  fixTargets: {},
+  habit: null,
+  week: null,
+  healedThisWeek: 0,
+  topMistake: null,
+  prediction: null,
+  impact: [],
+};
 
 const SUBJECT_NAMES: Record<string, string> = {
   math5: 'מתמטיקה 5 יח׳',
@@ -97,59 +119,57 @@ type Habit = {
 };
 
 export default function InsightsPage() {
-  const [data, setData] = useState<SubjectData[] | null>(null);
-  const [habit, setHabit] = useState<Habit | null>(null);
-  const [prediction, setPrediction] = useState<OverallPrediction | null>(null);
-  const [impact, setImpact] = useState<TopicImpact[]>([]);
   const [pro, setPro] = useState(true); // assume pro until known → no upsell flash
-  /** subject → the top repairable weakness (absent when evidence is thin). */
-  const [fixTargets, setFixTargets] = useState<Record<string, Weakness>>({});
-  const [week, setWeek] = useState<WeeklyDelta | null>(null);
-  const [healedThisWeek, setHealedThisWeek] = useState(0);
-  const [topMistake, setTopMistake] = useState<CategoryStat | null>(null);
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setPro(isProUser(data.user)));
   }, []);
 
-  function refreshHabit() {
-    setHabit({
-      streak: currentStreak(),
-      today: todayCount(),
-      goal: getDailyGoal(),
-      days: lastNDays(14),
-    });
-    setWeek(weeklyDelta());
-    setHealedThisWeek(healedCountSince(Date.now() - 7 * 24 * 60 * 60 * 1000));
-    setTopMistake(topCategory());
-  }
-
-  useEffect(() => {
-    const subjects = subjectsWithResults();
-    // math5 is the flagship — always first when present.
-    subjects.sort((a, b) => (a === 'math5' ? -1 : b === 'math5' ? 1 : 0));
-    setData(
-      subjects.map((subject) => ({
-        subject,
-        totals: totalStats(subject),
-        topics: topicStats(subject),
-        weakSubs: weakestSubTopics(subject, { minAttempts: 3, limit: 4 }),
-      }))
-    );
-    const targets: Record<string, Weakness> = {};
-    for (const subject of subjects) {
-      const w = getTopWeakness(subject);
-      if (w) targets[subject] = w;
-    }
-    setFixTargets(targets);
-    refreshHabit();
-    setPrediction(predictOverall('math5'));
-    setImpact(topImpactTopics('math5', 3));
-  }, []);
+  // Everything below is derived from localStorage, so none of it exists during
+  // the server render. One snapshot read at hydration, re-read when the daily
+  // goal changes — instead of nine pieces of state filled in by a mount effect.
+  const [version, refresh] = useReducer((n: number) => n + 1, 0);
+  const readInsights = useCallback(
+    () => {
+      const subjects = subjectsWithResults();
+      // math5 is the flagship — always first when present.
+      subjects.sort((a, b) => (a === 'math5' ? -1 : b === 'math5' ? 1 : 0));
+      const fixTargets: Record<string, Weakness> = {};
+      for (const subject of subjects) {
+        const w = getTopWeakness(subject);
+        if (w) fixTargets[subject] = w;
+      }
+      return {
+        data: subjects.map((subject) => ({
+          subject,
+          totals: totalStats(subject),
+          topics: topicStats(subject),
+          weakSubs: weakestSubTopics(subject, { minAttempts: 3, limit: 4 }),
+        })),
+        fixTargets,
+        habit: {
+          streak: currentStreak(),
+          today: todayCount(),
+          goal: getDailyGoal(),
+          days: lastNDays(14),
+        },
+        week: weeklyDelta(),
+        healedThisWeek: healedCountSince(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        topMistake: topCategory(),
+        prediction: predictOverall('math5'),
+        impact: topImpactTopics('math5', 3),
+      };
+    },
+    // `version` is not read inside — it is the re-read trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [version],
+  );
+  const { data, fixTargets, habit, week, healedThisWeek, topMistake, prediction, impact } =
+    useClientValue(readInsights, EMPTY_INSIGHTS);
 
   function bumpGoal(delta: number) {
     setDailyGoal(getDailyGoal() + delta);
-    refreshHabit();
+    refresh();
   }
 
   return (

@@ -303,23 +303,43 @@ const fullQuestion = {
     };
     const { tutorFlag, activeTutorFlags } = await import('../lib/tutor-flags');
 
-    ok(!tutorFlag('compiler'), 'with nothing set and no env var, the compiler is OFF');
-
-    // ⚠️ THE ENV DEFAULT IS THE ONLY SWITCH THAT REACHES A STUDENT.
+    // ⚠️ THE DEFAULT IS NOW ON, AND THAT IS THE ROLLOUT DECISION, NOT A BUG.
     //
-    // The localStorage key is per browser, so the layer was off for everyone
-    // while `measure-quiz-gap` — which calls the compiler directly — reported
-    // 86%. Right about the code, wrong about the product.
-    process.env.NEXT_PUBLIC_TUTOR_COMPILER = 'on';
-    ok(tutorFlag('compiler'), 'the env var turns it on for everyone');
-    store.set('mathup-flags', 'off');
-    ok(!tutorFlag('compiler'), 'and ONE browser can still turn it back off, without a deploy');
-    store.delete('mathup-flags');
-    process.env.NEXT_PUBLIC_TUTOR_COMPILER = 'anything-else';
-    ok(!tutorFlag('compiler'), 'any value other than "on" fails closed');
+    // These assertions used to read the other way round, because the compiler
+    // shipped off-for-everyone pending a measurement. The measurement came in
+    // (npm run measure:topiccards: 16.7% -> 52.4% free on a topic screen, at
+    // 0.0% wrong-topic) and Itay approved the rollout, so `envDefault` flipped
+    // from `=== 'on'` to `!== 'off'`.
+    //
+    // What is asserted here did not get weaker: it moved. The property that
+    // matters is no longer "off unless someone opts in" — it is "on, and every
+    // way of turning it off still works".
     delete process.env.NEXT_PUBLIC_TUTOR_COMPILER;
-    ok(!tutorFlag('compiler'), 'and removing it returns to off');
-    ok(activeTutorFlags().length === 0, 'and nothing reports as active');
+    ok(tutorFlag('compiler'), 'with nothing set, the compiler is ON for everyone');
+
+    // ---- and every kill switch still kills ----------------------------
+    process.env.NEXT_PUBLIC_TUTOR_COMPILER = 'off';
+    ok(!tutorFlag('compiler'), 'the env var turns it off for everyone, without a code change');
+    delete process.env.NEXT_PUBLIC_TUTOR_COMPILER;
+
+    store.set('mathup-flags', 'off');
+    ok(!tutorFlag('compiler'), 'and ONE browser can turn it off, without a deploy');
+    store.delete('mathup-flags');
+
+    process.env.NEXT_PUBLIC_TUTOR_COMPILER = 'on';
+    store.set('mathup-flags', 'off');
+    ok(!tutorFlag('compiler'), 'the browser beats the environment in the OFF direction');
+    store.delete('mathup-flags');
+    delete process.env.NEXT_PUBLIC_TUTOR_COMPILER;
+
+    // Only the exact word disables it. A typo must not silently take the layer
+    // away from every student — that is the same failure as before, mirrored.
+    for (const nearly of ['on', 'OFF ', 'false', '0', 'disabled', 'anything-else']) {
+      process.env.NEXT_PUBLIC_TUTOR_COMPILER = nearly;
+      ok(tutorFlag('compiler'), `only the exact word "off" disables it, not ${JSON.stringify(nearly)}`);
+    }
+    delete process.env.NEXT_PUBLIC_TUTOR_COMPILER;
+    ok(activeTutorFlags().length === 0, 'and nothing reports as active from the key alone');
 
     store.set('mathup-flags', 'compiler');
     ok(tutorFlag('compiler'), 'it turns on when the key says so');
@@ -331,11 +351,18 @@ const fullQuestion = {
     ok(tutorFlag('compiler'), 'a comma list still turns the compiler on');
     ok(activeTutorFlags().join() === 'compiler,future', 'and an unknown name is kept, not dropped');
 
-    // A flag must fail CLOSED. Every one of these is a real browser state.
+    // A malformed key must not be read as a kill. Every one of these is a real
+    // browser state, and under the new default the dangerous reading is the
+    // opposite of before: junk that happens to parse as "off" would take the
+    // layer away from a student who never asked for that.
     for (const junk of ['', '   ', ',,,', '{"compiler":true}']) {
       store.set('mathup-flags', junk);
-      ok(!tutorFlag('compiler'), `malformed value stays off: ${JSON.stringify(junk)}`);
+      ok(tutorFlag('compiler'), `malformed value falls back to the deploy: ${JSON.stringify(junk)}`);
     }
+    store.set('mathup-flags', 'off');
+    ok(!tutorFlag('compiler'), 'but the literal word still kills it');
+    store.delete('mathup-flags');
+
     (globalThis as unknown as { window: unknown }).window = {
       localStorage: {
         getItem: () => {
@@ -343,7 +370,9 @@ const fullQuestion = {
         },
       },
     };
-    ok(!tutorFlag('compiler'), 'a throwing localStorage stays off, not on');
+    // A browser with storage blocked gets what the deploy says, which is the
+    // only answer available — there is no per-browser setting to read.
+    ok(tutorFlag('compiler'), 'a throwing localStorage falls back to the deploy, and does not crash');
 
     // ---- ?flags= in the URL ----------------------------------------
     // The console route did not work in practice: Chrome and Edge block the
@@ -367,9 +396,19 @@ const fullQuestion = {
     flags.adoptFlagsFromUrl();
     ok(flags.tutorFlag('compiler'), '?flags=compiler turns it on');
 
+    // ⚠️ `off` WRITES, `none` CLEARS — and they used to be the same branch.
+    // While the deploy default was off, clearing the key WAS off, so nobody
+    // noticed. The moment the default flipped, `?flags=off` started clearing
+    // the key and therefore turning the layer ON: the one escape hatch that
+    // exists to kill a problem on a device without a deploy did the opposite
+    // of its name.
     withUrl('https://x.test/roadmap?flags=off');
     flags.adoptFlagsFromUrl();
-    ok(!flags.tutorFlag('compiler'), '?flags=off turns it off again');
+    ok(!flags.tutorFlag('compiler'), '?flags=off turns it off even though the deploy says on');
+
+    withUrl('https://x.test/roadmap?flags=none');
+    flags.adoptFlagsFromUrl();
+    ok(flags.tutorFlag('compiler'), '?flags=none clears, which means following the deploy again');
 
     jar.set('mathup-flags', 'compiler');
     withUrl('https://x.test/roadmap');
@@ -387,8 +426,18 @@ const fullQuestion = {
   {
     const fs = await import('fs');
     const { resolve } = await import('path');
-    const src = fs.readFileSync(resolve(process.cwd(), 'components/tutor/TutorBubble.tsx'), 'utf8');
-    ok(src.includes('tutor-compiler'), 'the bubble reaches the compiler');
+    // ⚠️ THE CHAIN, NOT THE BUBBLE. This used to read TutorBubble.tsx, because
+    // that is where every free layer lived. It also meant the gate was
+    // asserting a LOCATION while the property it protects is "the tutor reaches
+    // the compiler, behind the flag, after the FAQ" — and when the chain was
+    // lifted into lib/tutor-chain.ts so /chat could share it, all three
+    // remained true and the gate failed anyway.
+    //
+    // Reading the chain keeps the same three assertions and makes them cover
+    // BOTH surfaces at once, which the old one could not do: /chat had no
+    // compiler call to find.
+    const src = fs.readFileSync(resolve(process.cwd(), 'lib/tutor-chain.ts'), 'utf8');
+    ok(src.includes('tutor-compiler'), 'the tutor chain reaches the compiler');
     // The only call site must sit inside a flag check. Asserted on the source
     // because the alternative is rendering a React tree, and a regression here
     // would silently change what every student sees.

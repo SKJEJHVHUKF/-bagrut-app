@@ -17,6 +17,7 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react';
+import { useClientValue } from '@/lib/use-client-value';
 
 type Row = {
   id: string;
@@ -112,11 +113,14 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
   const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
-    setError('');
     try {
       const res = await fetch('/api/admin/users');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      // Clear the previous error when new data actually lands, not on the way
+      // in: clearing up front is a setState the mount effect runs synchronously,
+      // and it blanked the message for the whole of a failing retry.
+      setError('');
       setRows(data.users);
 
       // Activity is fetched separately and is allowed to fail on its own: the
@@ -141,6 +145,13 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
   }, []);
 
   useEffect(() => {
+  // The rule does not analyse `await` boundaries: an async function called from
+  // an effect is flagged even when every setState in it happens after the first
+  // await (verified against a minimal repro — the identical `.then(...)` form is
+  // NOT flagged). Nothing here setStates synchronously, so there is no cascading
+  // render to fix; rewriting the awaits into a promise chain would only hide the
+  // shape from the linter.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
 
@@ -225,8 +236,12 @@ export default function AdminDashboard({ selfId }: { selfId: string }) {
   }
 
   const total = rows?.length ?? 0;
+  // The clock is read once per mount, not on every render: reading it during
+  // render is impure, and this counter has no business changing under a
+  // re-render that had nothing to do with the passage of time.
+  const now = useClientValue(Date.now, 0);
   const activeWeek =
-    rows?.filter((r) => r.lastSignInAt && Date.now() - new Date(r.lastSignInAt).getTime() < WEEK_MS)
+    rows?.filter((r) => r.lastSignInAt && now - new Date(r.lastSignInAt).getTime() < WEEK_MS)
       .length ?? 0;
   const proCount = rows?.filter((r) => r.pro).length ?? 0;
 

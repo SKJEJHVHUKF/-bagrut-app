@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Sparkles, Target, AlertTriangle, Lightbulb, ArrowLeft, CheckCircle, Award, GraduationCap, PlayCircle, Lock as LockIcon, MessageCircle } from 'lucide-react';
+import { BookOpen, Sparkles, Target, AlertTriangle, Lightbulb, ArrowLeft, CheckCircle, Award, GraduationCap, PlayCircle, Lock as MessageCircle } from 'lucide-react';
 import type { Lesson } from '@/content/lessons/types';
 import { MathText } from './MathText';
 import { FormulaCard } from './FormulaCard';
@@ -16,22 +16,35 @@ import { hasLearningPath } from '@/content/learning-paths';
 import { CourseTracks } from '@/components/learn/CourseTracks';
 import { markStep, getTopicLevel, type ProficiencyLevel } from '@/lib/study-plan';
 import { TopicJourney } from './TopicJourney';
-import { fadeUp, staggerContainer, inViewProps, buttonTap } from '@/lib/animations';
+import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
+import { useClientValue } from '@/lib/use-client-value';
+
+/** Stable server-render snapshot. */
+const NO_PROGRESS: { completedSubs: ReadonlySet<string>; planLevel: ProficiencyLevel | null } = {
+  completedSubs: new Set(),
+  planLevel: null,
+};
 
 export function LessonView({ lesson }: { lesson: Lesson }) {
   // Track sub-topic completion to render checkmarks + progress bar.
   // Re-read on mount and after returning from the practice page (handled
   // implicitly because Next.js re-mounts when the route changes back).
-  const [completedSubs, setCompletedSubs] = useState<Set<string>>(new Set());
-  // Self-assessed level for this topic (study plan) — light-touch guidance
-  // banner only, never a forced flow.
-  const [planLevel, setPlanLevel] = useState<ProficiencyLevel | null>(null);
+  // Both come from localStorage, so neither exists during the server render.
+  // `planLevel` is the self-assessed level for this topic (study plan) — a
+  // light-touch guidance banner only, never a forced flow.
+  const readProgress = useCallback(
+    () => ({
+      completedSubs: getCompletedSubTopics(lesson.subject, lesson.topic) as ReadonlySet<string>,
+      planLevel: getTopicLevel(lesson.subject, lesson.topic),
+    }),
+    [lesson.subject, lesson.topic],
+  );
+  const { completedSubs, planLevel } = useClientValue(readProgress, NO_PROGRESS);
 
+  // The two WRITES are genuine side effects and stay here.
   useEffect(() => {
     markLessonViewed(lesson.subject, lesson.topic);
     markStep(lesson.subject, lesson.topic, 'understand');
-    setCompletedSubs(getCompletedSubTopics(lesson.subject, lesson.topic));
-    setPlanLevel(getTopicLevel(lesson.subject, lesson.topic));
   }, [lesson.subject, lesson.topic]);
 
   return (

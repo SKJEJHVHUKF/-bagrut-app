@@ -4,13 +4,19 @@
 // can DO to a teacher happens on his own screen, not in a card wedged into a
 // list. That is the whole reason this screen is boring.
 
+import { useCallback } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/PageHeader';
 import { ArrowLeft, CircleAlert, RefreshCw, UserPlus } from 'lucide-react';
+import { useClientValue } from '@/lib/use-client-value';
 import { personLabel, shekel, useTeachers } from '../useTeachers';
 
 export default function TeachersPage() {
   const { teachers, error, reload } = useTeachers();
+  // `Date.now()` is not a pure render input — read it once through the
+  // codebase's own helper so the server render and the first client render
+  // agree, instead of producing a different "N days ago" in each.
+  const now = useClientValue(useCallback(() => Date.now(), []), 0);
 
   return (
     <div className="space-y-6">
@@ -97,12 +103,14 @@ export default function TeachersPage() {
                     t.lastSignInAt ? 'text-slate-600' : 'text-red-600'
                   }`}
                 >
-                  {t.lastSignInAt
-                    ? `נכנס לפני ${Math.max(
-                        0,
-                        Math.floor((Date.now() - Date.parse(t.lastSignInAt)) / 86400000)
-                      )} ימים`
-                    : 'לא נכנס מעולם'}
+                  {!t.lastSignInAt
+                    ? 'לא נכנס מעולם'
+                    : now === 0
+                      ? '—'
+                      : `נכנס לפני ${Math.max(
+                          0,
+                          Math.floor((now - Date.parse(t.lastSignInAt)) / 86400000)
+                        )} ימים`}
                 </div>
                 <div
                   className={`text-[10px] ${

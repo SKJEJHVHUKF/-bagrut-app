@@ -35,8 +35,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { X, Send, Loader2, Sparkles, ArrowLeft, ShieldCheck, CalendarCheck } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, ArrowLeft, ShieldCheck } from 'lucide-react';
 import TutorMascot, { type MascotExpression } from './TutorMascot';
+import TodayPlanCard from './TodayPlanCard';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
 import { isStaffPath } from '@/lib/nav';
 import {
@@ -46,14 +47,11 @@ import {
   focusPrompts,
   type TutorFocus,
 } from '@/lib/tutor-presence';
-import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
-import { routeMessage, answerGradedLocally, canonicalFor } from '@/lib/tutor-router';
-import { examMetaAnswer } from '@/lib/tutor-exam-meta';
+import { type LocalAnswerKind } from '@/lib/tutor-local';
+import { runTutorChain } from '@/lib/tutor-chain';
+import type { Ask } from '@/lib/tutor-router';
 import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
 import { AI_DAILY_LIMIT } from '@/lib/access';
-import { offTopicRedirect } from '@/lib/off-topic';
-import { planAnswer } from '@/lib/tutor-plan-answer';
-import { metaAnswer } from '@/lib/tutor-meta-asks';
 import { expectationOf, nextStepAfter, type Pending } from '@/lib/tutor-pending';
 import { canonicalIntent, groundingFor } from '@/lib/tutor-intent';
 import { decideFallbackReason } from '@/lib/tutor-telemetry';
@@ -69,7 +67,6 @@ import { decideFallbackReason } from '@/lib/tutor-telemetry';
 // changes — no signatures, no other pages, no test rewrites.
 import type { TutorGreeting } from '@/lib/tutor-greeting';
 import type { ResolvedSuggestion } from '@/lib/agents/tools';
-import { MathText } from '@/components/practice/MathText';
 
 const MAX_LEN = 500;
 
@@ -159,7 +156,7 @@ export default function TutorBubble() {
    *  no meaning and every one of them was a billed call. Cleared with the
    *  served rungs when the question changes, since a continuation refers to
    *  this conversation and not the previous question's. */
-  const lastAskRef = useRef<Parameters<typeof canonicalFor>[0] | null>(null);
+  const lastAskRef = useRef<Ask | null>(null);
   // Bumped whenever the conversation is reset; an API stream that started under
   // an older generation must not write into the fresh chat (see below).
   const genRef = useRef(0);
@@ -250,6 +247,27 @@ export default function TutorBubble() {
    * when the callback was last built — the same stale-closure bug that once
    * made every turn report its screen as "login".
    */
+  /**
+   * The topic this CONVERSATION is about, once anything has established one.
+   *
+   * WARNING: WITHOUT IT EVERY FOLLOW-UP IS TOPIC-LESS. The student names the
+   * topic once — "על הסתברות" — and every message after it is "ולמה זה ככה",
+   * "תן דוגמה", "לא הבנתי". None of those contains a topic, so `resolveTopic`
+   * returns null on all of them, the grounding falls back to the generic
+   * curriculum map, and the topic bank cannot be searched. The conversation
+   * forgets what it is about between one message and the next.
+   *
+   * Set from the screen when it publishes one and from the message when it
+   * names one. Never guessed: it only ever holds a topic somebody actually
+   * stated, which is the whole difference between this and the cognitive
+   * fallback that had to be removed (see lib/tutor-context resolveCognitive).
+   *
+   * Cleared with the conversation, not with the question — a student who moves
+   * between exercises inside one topic is still in that topic.
+   */
+  const convTopicRef = useRef('');
+  /** The topic whose menu was already shown — see ChainState.overviewFor. */
+  const overviewForRef = useRef('');
   const msgsRef = useRef<Msg[]>([]);
   useEffect(() => {
     msgsRef.current = msgs;
@@ -343,6 +361,12 @@ export default function TutorBubble() {
       genRef.current++;
       setMsgs([]);
       setError(null);
+      // The visible thread starts fresh, so what the previous thread had
+      // established about its subject goes with it. Keeping it would ground a
+      // brand-new conversation in the last one's topic — quietly, and exactly
+      // the failure `resolveCognitive` was just stripped for.
+      convTopicRef.current = '';
+      overviewForRef.current = '';
     }
     if (k) lastQKeyRef.current = k;
   }, [focus]);
@@ -400,184 +424,61 @@ export default function TutorBubble() {
         // A new question means "ואז?" no longer refers to anything.
         lastAskRef.current = null;
       }
-      // ===== the router decides who answers, before anything is sent =====
-      // A typed answer is arithmetic, and arithmetic belongs to mathjs, not to
-      // a model that judges it by eye. MEASURED before this: none of nine
-      // realistic typed answers were recognised, and every one was graded by
-      // the model. See lib/tutor-router.ts.
-      // `probe` is what the local tutor is asked. Normally the student's own
-      // words; for a resolved continuation ("ואז?" → the previous ask) it is
-      // the canonical phrasing of that ask, because answerLocally classifies
-      // the words it is given and "ואז?" classifies as nothing.
-      let probe = text;
-      // Remembered for the trace: whether the router understood the message at
-      // all is the difference between 'unknown_intent' and 'no_local_content'.
-      let routeKind: string = 'open';
-      if (focusNow) {
-        const route = routeMessage(text, focusNow, {
+      // ===== every free layer, in one call =====
+      //
+      // ⚠️ THE CHAIN LIVES IN lib/tutor-chain.ts NOW, AND THAT IS THE POINT.
+      // It used to be ~430 lines inline here, which meant /chat — the page
+      // devoted to asking the tutor things — had none of it: not one import
+      // from tutor-router, tutor-faq, tutor-local, off-topic or the rest. The
+      // same question was free in this bubble and billed on that page.
+      //
+      // Copying the layers over would have started the next drift. Both
+      // surfaces call this instead, so a layer added there is live on both by
+      // construction, and scripts/test-tutor-chain.ts can finally exercise it
+      // without mounting React.
+      //
+      // Everything that made it un-extractable stays here: setMsgs, the
+      // spinner, the mascot's face, and the refs. The chain is handed their
+      // values and hands back what changed.
+      const chain = await runTutorChain({
+        message: text,
+        focus: focusNow,
+        state: {
           lastAsk: lastAskRef.current,
-          served: servedRef.current.kinds,
+          servedKinds: servedRef.current.kinds,
           pending: pendingNow,
           tutorSpoke,
           lastVerdict: lastVerdictNow,
-        });
-        routeKind = route.kind;
-        if (route.kind === 'answer') {
-          const graded = answerGradedLocally(route, focusNow);
-          if (graded) {
-            // Remembered so that a challenge to THIS verdict is answered by the
-            // layer that made it, instead of by a model that cannot see it.
-            // See TurnState.lastVerdict in lib/tutor-router.
-            lastVerdictRef.current = graded.verdict === 'correct' ? 'correct' : 'wrong';
-            // The face reacts to the same verdict the text does.
-            react(graded.verdict === 'correct' ? 'happy' : 'oops');
-            setMsgs((m) => [
-              ...m,
-              { id: `a-${Date.now()}`, role: 'assistant', text: graded.text, local: true },
-            ]);
-            return;
-          }
-          // `unparseable` — the router guessed wrong about this being a value.
-          // Fall through: the model is the right place for it after all.
-        } else if (route.kind === 'ack') {
-          // "תודה" / "אוקיי". Paying a model to say "בכיף" was 4 of every 32
-          // turns in a measured session (scripts/sim-tutor-session.ts).
-          setMsgs((m) => [
-            ...m,
-            { id: `a-${Date.now()}`, role: 'assistant', text: route.text, local: true },
-          ]);
-          return;
-        } else if (route.kind === 'ask') {
-          probe = canonicalFor(route.ask);
-          lastAskRef.current = route.ask;
-        }
-      }
-
-      // ===== about the TUTOR, or about studying — not about the exercise =====
-      //
-      // Placed here, early, because none of the layers below can ever catch
-      // these: they are not maths questions, so no bank entry and no intent
-      // rule would match them however much content is written. Found by
-      // report:worklist in real traffic, in the students' own words.
-      //
-      // ⚠️ A SECOND COMPLAINT IN A ROW IS HANDED TO THE MODEL. `metaAnswer`
-      // returns null for it deliberately: a student who has told us twice that
-      // we answered the wrong thing, and gets the same stock sentence back, has
-      // been shown that the tutor is not listening — which is what they said.
-      // One paid call is far cheaper than that.
-      const metaAsk = metaAnswer(text, {
-        lastWasComplaint: lastComplaintRef.current,
-        hasQuestion: Boolean(focusNow?.question),
+          lastComplaint: lastComplaintRef.current,
+          convTopic: convTopicRef.current,
+          overviewFor: overviewForRef.current,
+        },
+        // The spinner rises where it always did — after the instant layers and
+        // before the first awaited bank import — so an answered "אוקיי" still
+        // appears without one flashing.
+        onSlow: () => setSending(true),
       });
-      lastComplaintRef.current = metaAsk?.kind === 'complaint';
-      if (metaAsk) {
+
+      lastAskRef.current = chain.state.lastAsk;
+      servedRef.current.kinds = chain.state.servedKinds;
+      lastVerdictRef.current = chain.state.lastVerdict;
+      lastComplaintRef.current = chain.state.lastComplaint;
+      convTopicRef.current = chain.state.convTopic;
+      overviewForRef.current = chain.state.overviewFor;
+
+      if (chain.answered) {
+        // The face reacts to the same verdict the text does.
+        if (chain.reaction) react(chain.reaction);
         setMsgs((m) => [
           ...m,
-          { id: `a-${Date.now()}`, role: 'assistant', text: metaAsk.text, local: true },
+          { id: `a-${Date.now()}`, role: 'assistant', text: chain.text, local: true },
         ]);
         setSending(false);
         return;
       }
 
-      // "זה יבוא בבגרות?" / "כמה נקודות זה שווה?" — exact answers that already
-      // exist as data in content/bagrut-curriculum.ts. A model would invent a
-      // plausible number; the table has the right one, and it is the same one
-      // /roadmap shows the student elsewhere.
-      const meta = examMetaAnswer(text, focusNow?.topic);
-      if (meta) {
-        setMsgs((m) => [
-          ...m,
-          { id: `a-${Date.now()}`, role: 'assistant', text: meta, local: true },
-        ]);
-        return;
-      }
-
-      const local = answerLocally(probe, focusNow, servedRef.current.kinds);
-      if (local) {
-        servedRef.current.kinds.push(local.kind);
-        setMsgs((m) => [
-          ...m,
-          { id: `a-${Date.now()}`, role: 'assistant', text: local.text, local: true },
-        ]);
-        return;
-      }
-
+      const { routeKind, faqMissed } = chain;
       setSending(true);
-
-      // ===== second local stage: what students ask about THIS solution =====
-      // The six recurring asks were handled above. Everything else used to be
-      // a paid call — but on a given solution the "everything else" is a short
-      // list asked in many phrasings, and that list is authored per question
-      // (content/tutor-faq, matched by lib/tutor-faq). Lazy: the bank for a
-      // topic is imported the first time a student here types something.
-      let faqMissed = false;
-      if (focusNow?.question && focusNow.topic) {
-        try {
-          const { answerFromFaq } = await import('@/lib/tutor-faq');
-          const faq = await answerFromFaq(text, focusNow);
-          if (faq) {
-            setMsgs((m) => [
-              ...m,
-              { id: `a-${Date.now()}`, role: 'assistant', text: faq.text, local: true },
-            ]);
-            setSending(false);
-            return;
-          }
-          faqMissed = true;
-        } catch {
-          /* no bank for this topic yet — the model handles it, as before */
-        }
-      }
-
-      // ===== third local stage: the response compiler (FLAGGED OFF) =====
-      //
-      // Placed HERE and not earlier, and the position is a measurement rather
-      // than a preference. The authored hint, the authored FAQ entry and the
-      // distractor note are all written for THIS question by a person; the
-      // compiler assembles from the same content but generically. Whenever the
-      // layers above have something, theirs is better, so the compiler only
-      // ever sees what they declined.
-      //
-      // Measured before wiring (scripts/report-tutor-usage.ts): it takes 1,609
-      // of the turns that reach the model — local 50.6% → 61.4% — with the
-      // unsafe count unchanged at 8. It answers only from this question's own
-      // steps, rule line, hint and explanation, or from an authored Topic Card
-      // for a question about the TOPIC.
-      //
-      // Off for everyone until `localStorage.setItem('mathup-flags','compiler')`.
-      if (tutorFlag('compiler') && focusNow) {
-        try {
-          const { compileTutorResponse } = await import('@/lib/tutor-compiler');
-          const compiled = await compileTutorResponse({
-            message: text,
-            activeQuestion: (focusNow.question ?? null) as Record<string, unknown> | null,
-            selectedAnswer: typeof focusNow.chosenIndex === 'number' ? focusNow.chosenIndex : null,
-            topic: focusNow.topic ?? '',
-            formulas: focusNow.subTopic?.formulas,
-            keyPoints: focusNow.subTopic?.keyPoints,
-            // A lesson screen already has its sub-topic's questions; /quiz
-            // publishes `siblings` because it has no sub-topic at all.
-            siblings:
-              focusNow.siblings ??
-              focusNow.subTopic?.questions?.map((x) => ({
-                id: x.id,
-                question: x.question,
-                hint: x.hint,
-              })),
-          });
-          if (compiled.handled && compiled.safeToServe && compiled.message.trim()) {
-            setMsgs((m) => [
-              ...m,
-              { id: `a-${Date.now()}`, role: 'assistant', text: compiled.message, local: true },
-            ]);
-            setSending(false);
-            return;
-          }
-        } catch {
-          /* the compiler is additive — a failure here must cost nothing more
-             than the model call that was already about to happen */
-        }
-      }
 
       // Focus FIRST, student snapshot second. The server truncates `context`
       // from the end at 4000 chars (MAX_CONTEXT_LEN), and the snapshot alone
@@ -589,7 +490,12 @@ export default function TutorBubble() {
       let context = renderFocusContext(f);
       try {
         const { buildStudentSnapshot } = await import('@/lib/tutor-context');
-        const snap = buildStudentSnapshot('math5', f?.topic ?? '');
+        // The topic the request is actually grounded in — the screen's when it
+        // has one, otherwise the one named in the message. Passing '' here would
+        // drop the cognitive block on a turn that DID resolve a topic and is
+        // properly grounded in it. See resolveCognitive for why '' must never
+        // mean "pick the student's most-practised topic".
+        const snap = buildStudentSnapshot('math5', chain.topic);
         context = [context, snap].filter(Boolean).join('\n\n').slice(0, 4000);
       } catch {
         /* snapshot is best-effort — never block the question */
@@ -602,70 +508,6 @@ export default function TutorBubble() {
         formNumber = getPaper() ?? undefined;
       } catch {
         /* server defaults to 5 units / 572 */
-      }
-
-      // ===== "על מה כדאי לעבוד עכשיו" — from the student's own plan =====
-      //
-      // The only phrasing that appeared TWICE in the live trace, and it came
-      // back `missing_question_context`. The model does not know this student;
-      // `buildTodayPlan` has their results, their mistakes and their target,
-      // and is what /my-plan renders. Silent whenever a question is on screen:
-      // there "מה לעשות עכשיו" means the exercise, and `what_to_do_here` owns it.
-      const fromPlan = planAnswer(text, Boolean(focusNow?.question));
-      if (fromPlan) {
-        setMsgs((m) => [
-          ...m,
-          { id: `a-${Date.now()}`, role: 'assistant', text: fromPlan, local: true },
-        ]);
-        setSending(false);
-        return;
-      }
-
-      // ===== "יש לך טיפים?" — the one ask no screen can improve =====
-      //
-      // The compiler serves this too, but only behind a focus and behind the
-      // rollout flag, and the screen where a student asks for exam tips is
-      // usually the one with no question on it at all. Same answer either way,
-      // so serving it here costs nothing and closes the gap.
-      //
-      // AFTER the plan layer, because "על מה כדאי לעבוד" is a better answer
-      // than five general tips when there is a plan to name.
-      if (canonicalIntent(text, undefined).intent === 'study_tips') {
-        const { studyTips } = await import('@/lib/study-tips');
-        setMsgs((m) => [
-          ...m,
-          {
-            id: `a-${Date.now()}`,
-            role: 'assistant',
-            text: studyTips(focusNow?.topic || undefined),
-            local: true,
-          },
-        ]);
-        setSending(false);
-        return;
-      }
-
-      // ===== last local layer: the message is not about maths at all =====
-      //
-      // Placed LAST on purpose. Every layer above has already declined, so
-      // nothing that could have been answered is being redirected instead —
-      // and a redirect that lands on a real question is the expensive failure
-      // here, far worse than paying for one model call. `offTopicRedirect` is
-      // built the same way round: a long list of reasons to stay silent and a
-      // short one to speak.
-      const redirect = offTopicRedirect(
-        text,
-        focusNow?.question
-          ? `${String((focusNow.question as Record<string, unknown>).question ?? '')} ${focusNow.topic ?? ''}`
-          : undefined,
-      );
-      if (redirect) {
-        setMsgs((m) => [
-          ...m,
-          { id: `a-${Date.now()}`, role: 'assistant', text: redirect, local: true },
-        ]);
-        setSending(false);
-        return;
       }
 
       // ===== the trace: why this turn is reaching the model =====
@@ -690,7 +532,15 @@ export default function TutorBubble() {
         // refs), which is why the answer itself was about the right question
         // and only the label was wrong. This reads live too.
         screen: (typeof window === 'undefined' ? '' : window.location.pathname).split('/')[1] ?? '',
-        topic: focusNow?.topic ?? '',
+        // ⚠️ THE SAME TOPIC THE REQUEST WAS GROUNDED IN, resolved from the
+        // message when the screen had none. The first version recorded only
+        // `focusNow?.topic`, so a turn that DID resolve a topic and DID read
+        // the right grounding still appeared in every report as "(ריק)" — the
+        // fix looked like it had not deployed.
+        // The topic the chain itself resolved and grounded on — not a
+        // second hand-rolled copy of the same expression that can drift
+        // from it.
+        topic: chain.topic,
         subtopic: focusNow?.subTopicId ?? '',
         questionId: String(traceQ?.id ?? ''),
         normalizedUserMessage: traceIntent.canonical,
@@ -729,7 +579,15 @@ export default function TutorBubble() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: text,
-            topic: f?.topic ?? '',
+            // ⚠️ THE SCREEN FIRST, THE SENTENCE ONLY WHEN THE SCREEN IS SILENT.
+            //
+            // On the roadmap index nothing publishes a topic, so seven turns
+            // about probability were grounded in the generic curriculum map,
+            // could not reach a Topic Card, and landed in their own cold cache
+            // entry instead of sharing the one the app's probability traffic
+            // already warms. `resolveTopic` reads the topic out of the message
+            // and returns null unless it is certain — see lib/resolve-topic.
+            topic: chain.topic,
             conversationId: convIdRef.current,
             // A question was on screen, the local tutor AND its FAQ bank both
             // abstained — the server logs it as `[faq-miss]`, and that log is
@@ -1011,42 +869,7 @@ export default function TutorBubble() {
               {/* messages */}
               <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
                 {msgs.length === 0 && !focus?.questionText && greeting?.today && (
-                  <div className="mb-4 rounded-2xl border border-violet-500/25 bg-violet-500/[0.06] p-3.5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CalendarCheck className="w-4 h-4 text-violet-700 flex-shrink-0" aria-hidden />
-                      <span className="text-xs font-black text-slate-900">התוכנית להיום</span>
-                      <span className="text-[11px] text-slate-500">{greeting.today.summary}</span>
-                    </div>
-                    {greeting.today.goalLine && (
-                      <p className="text-[11px] text-slate-600 mb-2 leading-snug">
-                        {greeting.today.goalLine}
-                      </p>
-                    )}
-                    <Link
-                      href={greeting.today.first.href}
-                      onClick={() => setOpen(false)}
-                      className="group block rounded-xl bg-white/70 border border-violet-500/25 hover:border-violet-500/50 px-3 py-2.5 transition-colors"
-                    >
-                      <span className="flex items-center gap-2">
-                        <span className="flex-1 min-w-0">
-                          {/* MathText: a 'fix' task's title is the misconception
-                              title, which carries $…$ islands. */}
-                          <span className="block text-sm font-bold text-slate-800">
-                            <MathText inline>{greeting.today.first.title}</MathText>
-                          </span>
-                          <span className="block text-[11px] text-slate-600 leading-snug">
-                            <MathText inline>{greeting.today.first.why}</MathText>
-                          </span>
-                        </span>
-                        <ArrowLeft className="w-4 h-4 text-violet-700 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
-                      </span>
-                    </Link>
-                    {greeting.today.more > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        ואחר כך עוד {greeting.today.more}, נעבור אחת-אחת.
-                      </p>
-                    )}
-                  </div>
+                  <TodayPlanCard today={greeting.today} onNavigate={() => setOpen(false)} />
                 )}
 
                 {msgs.length === 0 && (

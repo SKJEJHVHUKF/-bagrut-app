@@ -20,33 +20,36 @@
 // 3:1 for large text and UI borders) in BOTH themes — this repo has shipped
 // a 2.48:1 disabled state before and had to fix it after the fact.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
+import { useClientValue } from '@/lib/use-client-value';
 
 export type ScanTheme = 'light' | 'dark';
 
 const STORAGE_KEY = 'bagrut.scan.theme.v1';
 
-export function useScanTheme(): [ScanTheme, () => void] {
-  // Always start 'light' so the server-rendered markup and the first client
-  // render agree; the stored preference is applied in an effect. Reading
-  // localStorage during render is a hydration mismatch, which React 19
-  // reports as an error in the console the owner reads.
-  const [theme, setTheme] = useState<ScanTheme>('light');
+/** The stored choice, or the device preference when there is none. Module-level
+ *  so `useClientValue` sees a stable reader. */
+function readStoredTheme(): ScanTheme {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === 'dark' || stored === 'light') return stored;
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } catch {
+    /* private mode — light is a fine default */
+    return 'light';
+  }
+}
 
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored === 'dark' || stored === 'light') {
-        setTheme(stored);
-        return;
-      }
-      // No stored choice → follow the device.
-      if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) setTheme('dark');
-    } catch {
-      /* private mode — light is a fine default */
-    }
-  }, []);
+export function useScanTheme(): [ScanTheme, () => void] {
+  // Server and first client render both see 'light' so the markup agrees;
+  // useClientValue swaps in the stored preference at hydration. Reading
+  // localStorage during render would be a hydration mismatch, which React 19
+  // reports as an error in the console the owner reads.
+  const stored = useClientValue<ScanTheme>(readStoredTheme, 'light');
+  // Set only once the student toggles; until then the stored value rules.
+  const [chosen, setChosen] = useState<ScanTheme | null>(null);
+  const theme = chosen ?? stored;
 
   const toggle = useCallback(() => {
     /**
@@ -66,8 +69,8 @@ export function useScanTheme(): [ScanTheme, () => void] {
      */
     const root = document.documentElement;
     root.classList.add('scan-no-transition');
-    setTheme((current) => {
-      const next: ScanTheme = current === 'dark' ? 'light' : 'dark';
+    setChosen((current) => {
+      const next: ScanTheme = (current ?? readStoredTheme()) === 'dark' ? 'light' : 'dark';
       try {
         window.localStorage.setItem(STORAGE_KEY, next);
       } catch {

@@ -64,6 +64,7 @@ import {
   ScanThemeToggle,
   useScanTheme,
 } from '@/components/scan/ScanTheme';
+import { useClientValue } from '@/lib/use-client-value';
 
 type Access = 'loading' | 'anonymous' | 'free' | 'pro';
 
@@ -77,7 +78,8 @@ const OCR_STAGE_LABEL: Record<OcrProgress['stage'], string> = {
 export default function ScanPage() {
   const [theme, toggleTheme] = useScanTheme();
   const [access, setAccess] = useState<Access>('loading');
-  const [unitLevel, setUnitLevel] = useState<UnitLevel>(5);
+  // localStorage: 5 units is the default until hydration reads the real choice.
+  const unitLevel = useClientValue<UnitLevel>(getUnitLevel, 5);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -108,7 +110,6 @@ export default function ScanPage() {
         // an anonymous student can still scan and solve for $0.
         if (!cancelled) setAccess('anonymous');
       });
-    setUnitLevel(getUnitLevel());
     return () => {
       cancelled = true;
     };
@@ -788,11 +789,8 @@ function UpsellCard({
 /** The measured cost of the student's own scans. Reads the local trace log,
  *  so it is their real history, not a marketing claim. */
 function CostFooter() {
-  const [summary, setSummary] = useState<ReturnType<typeof summarizeCost> | null>(null);
-
-  useEffect(() => {
-    setSummary(summarizeCost());
-  }, []);
+  // Their real scan history, read from localStorage after hydration.
+  const summary = useClientValue<ReturnType<typeof summarizeCost> | null>(summarizeCost, null);
 
   if (!summary || summary.scans === 0) return null;
 

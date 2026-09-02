@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { Loader2, Brain, CheckCircle, XCircle, Crown, ArrowLeft, Sparkles } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { recordMistake } from '@/lib/mistakes';
+import { recordResult } from '@/lib/results';
 
 type Question = {
   question: string;
@@ -88,6 +89,13 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
   }, [topic]);
 
   useEffect(() => {
+  // The rule does not analyse `await` boundaries: an async function called from
+  // an effect is flagged even when every setState in it happens after the first
+  // await (verified against a minimal repro — the identical `.then(...)` form is
+  // NOT flagged). Nothing here setStates synchronously, so there is no cascading
+  // render to fix; rewriting the awaits into a promise chain would only hide the
+  // shape from the linter.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
     loadQuestion();
   }, [loadQuestion]);
 
@@ -116,7 +124,22 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
       }
       const ev = data as Evaluation;
       setEvaluation(ev);
-      if (ev.score < 60) {
+      // A graded rubric is an ANSWERED question, so it goes to the answer log as
+      // well as the error notebook. It used to reach only the notebook: a whole
+      // thinking session counted for nothing — no streak, no daily goal, no
+      // 14-day chart. One threshold decides both, so they cannot drift apart.
+      //
+      // What it still cannot reach is the SRS/cognition fan-out inside
+      // recordResult, and there is no honest id to pass. /api/thinking asks the
+      // model for a question that is deliberately different every call (it sends
+      // a diversity seed), so a content hash is a NEW id on every regeneration —
+      // an unbounded queue of review cards, none of which resolves to anything
+      // in the corpus. The topic picker on /thinking offers topics only, so
+      // there is no subTopicId to carry either. See NEVER_MEASURED in
+      // lib/results.ts for what the ids are checked against.
+      const passed = ev.score >= 60;
+      recordResult({ subject, topic, source: 'thinking', correct: passed });
+      if (!passed) {
         recordMistake({
           subject,
           topic,

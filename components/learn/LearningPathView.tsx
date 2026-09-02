@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useReducer } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { GraduationCap, Clock, ArrowLeft, Target, Sparkles, Rocket } from 'lucide-react';
@@ -26,21 +26,39 @@ import { GuidedExampleCard } from './GuidedExampleCard';
 import { GradedQuestionCard } from './GradedQuestionCard';
 import { BagrutQuestionBlock } from './BagrutQuestionBlock';
 import { ComprehensionCheck } from './ComprehensionCheck';
+import { useClientValue } from '@/lib/use-client-value';
+
+/** Stable empty snapshot for the server render — a fresh Set each time would
+ *  make useSyncExternalStore re-render forever. */
+const NO_SECTIONS: ReadonlySet<string> = new Set();
 
 export function LearningPathView({ path }: { path: LearningPath }) {
   const { subject, topic } = path;
-  const [done, setDone] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    setDone(getCompletedSections(subject, topic));
-  }, [subject, topic]);
+  // The completed-sections store IS the state; `version` re-reads it after a
+  // write instead of keeping a second copy in React that can drift.
+  const [version, bumpVersion] = useReducer((n: number) => n + 1, 0);
+  const readDone = useCallback(
+    () => getCompletedSections(subject, topic) as ReadonlySet<string>,
+    // `version` is not read inside the callback — it is here on purpose, as the
+    // re-read trigger: bumping it gives `readDone` a new identity, which is what
+    // makes useClientValue go back to the store after a write.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [subject, topic, version],
+  );
+  const done = useClientValue(readDone, NO_SECTIONS);
 
   const onToggle = useCallback(
-    (sectionId: string) => setDone(toggleSection(subject, topic, sectionId)),
+    (sectionId: string) => {
+      toggleSection(subject, topic, sectionId);
+      bumpVersion();
+    },
     [subject, topic],
   );
   const onMarkDone = useCallback(
-    (sectionId: string) => setDone(markSectionDone(subject, topic, sectionId)),
+    (sectionId: string) => {
+      markSectionDone(subject, topic, sectionId);
+      bumpVersion();
+    },
     [subject, topic],
   );
 

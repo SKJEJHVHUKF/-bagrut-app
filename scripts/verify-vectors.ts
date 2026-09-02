@@ -27,12 +27,14 @@ let fail = 0;
 const approx = (x: number, y: number) => Math.abs(x - y) < 1e-9;
 function num(desc: string, got: number, want: number) {
   const ok = approx(got, want);
-  ok ? pass++ : fail++;
+  if (ok) pass++;
+  else fail++;
   console.log(`  ${ok ? '✓' : '✗ FAIL'}  ${desc}   (${got} vs ${want})`);
 }
 function vec(desc: string, got: V, want: V) {
   const ok = got.every((g, i) => approx(g, want[i]));
-  ok ? pass++ : fail++;
+  if (ok) pass++;
+  else fail++;
   console.log(`  ${ok ? '✓' : '✗ FAIL'}  ${desc}   ([${got}] vs [${want}])`);
 }
 

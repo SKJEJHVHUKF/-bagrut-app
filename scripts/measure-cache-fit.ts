@@ -48,6 +48,30 @@ const MINIMUM: Record<string, number> = {
 };
 
 /**
+ * How far above the floor a breakpoint has to sit before this script calls it
+ * safe — and the reason this file now FAILS instead of only reporting.
+ *
+ * ⚠️ TWO SEPARATE THINGS MAKE "IT CLEARS THE FLOOR" AN UNSAFE VERDICT.
+ *
+ * 1. `countTokens` DOES NOT AGREE WITH THE BILLED PREFIX. Measured against a
+ *    live call on the same blocks: countTokens said 6,149, the API wrote 5,833.
+ *    It over-reports by roughly 300, and always in the dangerous direction — a
+ *    prefix this script calls "+281 over" was really 35 UNDER.
+ *
+ * 2. EVERY EDIT TO A PROMPT IS A REDUCTION. The last three here were: worked
+ *    examples out, summary and exam tips out, TUTOR_CORE translated to English
+ *    (4,502 → 3,098). A breakpoint sitting 35 tokens over the floor does not
+ *    survive that, and it fails SILENTLY: no error, no warning, just the whole
+ *    prefix rewritten on every topic instead of a shared entry read at 0.1x.
+ *    It cost 47% of the bill for a week and looked like "the tutor got hungry
+ *    again".
+ *
+ * 1,000 is comfortably past the measurement error and past a normal edit.
+ */
+const MARGIN = 1000;
+let failures = 0;
+
+/**
  * ⚠️ TOOLS ARE PART OF THE CACHED PREFIX AND THIS SCRIPT USED TO OMIT THEM.
  *
  * Anthropic serialises tool definitions BEFORE the system blocks, so the prefix
@@ -110,22 +134,39 @@ const TOPICS = ['סדרות', 'הסתברות', 'מספרים מרוכבים', '
       continue;
     }
 
-    // Only blocks carrying cache_control form the cacheable prefix.
-    const cachedText = blocks
-      .filter((b) => b.cache_control)
-      .map((b) => b.text ?? '')
-      .join('');
     const model = topic && allowlist.includes(topic) ? 'claude-sonnet-4-6' : 'claude-haiku-4-5';
     const min = MINIMUM[model];
-    const tokens = cachedText ? await count(model, cachedText) : 0;
-    const verdict =
-      tokens >= min ? `CACHES on ${model}` : `NO-OP — ${min - tokens} short of ${min}`;
 
-    console.log(
-      `  ${String(tokens).padStart(5)} tok cacheable  ` +
-        `hebrew ${String(Math.round(hebrewShare(cachedText) * 100)).padStart(3)}%  ` +
-        `${verdict}   ← ${topic || '(no topic — ungrounded chat)'}`,
-    );
+    // WARNING: EVERY BREAKPOINT IS ITS OWN PREFIX, AND EACH HAS TO CLEAR THE
+    // FLOOR ON ITS OWN. This script used to join ALL the cached blocks and
+    // measure that one string, which only ever tested the LAST breakpoint. The
+    // first one - the shared core, the entry every topic and every student is
+    // supposed to reuse - was never measured, and it spent a week 35 tokens
+    // under the floor as a silent no-op while this script printed CACHES.
+    const marks: number[] = [];
+    blocks.forEach((b, i) => { if (b.cache_control) marks.push(i); });
+
+    for (const [n, upto] of marks.entries()) {
+      // WARNING: TOOLS COUNT. They serialise AHEAD of `system` in the cached
+      // prefix, so a measurement without them is short by ~1,035 tokens at the
+      // very front - and that error is in the SAFE direction for the last
+      // breakpoint and the dangerous one for the first.
+      const text = blocks.slice(0, upto + 1).map((b) => b.text ?? '').join('');
+      const tokens = await count(model, text);
+      const margin = tokens - min;
+      const ok = margin >= MARGIN;
+      if (!ok) failures++;
+      const verdict = ok
+        ? `caches, +${margin} over the floor`
+        : margin >= 0
+          ? `⛔ ONLY +${margin} OVER THE FLOOR — one edit from a silent no-op`
+          : `⛔ SILENT NO-OP — ${-margin} short of ${min}`;
+      console.log(
+        `  ${String(tokens).padStart(5)} tok  breakpoint ${n}  ` +
+          `hebrew ${String(Math.round(hebrewShare(text) * 100)).padStart(3)}%  ` +
+          `${verdict}   ← ${topic || '(no topic — ungrounded chat)'}`,
+      );
+    }
   }
 
   console.log('\nhebrew share is of letters only — 0% means the block is already English.');
@@ -134,4 +175,15 @@ const TOPICS = ['סדרות', 'הסתברות', 'מספרים מרוכבים', '
   console.log('   cache into a silent no-op: a cached 2,200-token prefix bills ~220 tok-eq');
   console.log('   per turn, an uncached 550-token English one bills 550. Re-run this after');
   console.log('   any translation and compare tok-eq, not raw tokens.');
+
+  // ⚠️ IT FAILS NOW. This script printed "CACHES on claude-haiku-4-5" for a week
+  // while the shared core was a silent no-op, because printing is not a gate and
+  // nobody re-reads a report that has always looked fine.
+  console.log(
+    failures === 0
+      ? `\nOK cache fit: every breakpoint clears its floor by at least ${MARGIN} tokens\n`
+      : `\n⛔ ${failures} breakpoint(s) too close to the floor — a cached prefix is about to\n` +
+          '   stop caching, silently. Grow the block or drop its marker; do not ship this.\n',
+  );
+  process.exitCode = failures === 0 ? 0 : 1;
 })();

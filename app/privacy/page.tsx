@@ -33,7 +33,7 @@ export default function PrivacyPolicyPage() {
         <article className="surface-premium rounded-3xl p-6 sm:p-8 space-y-1 text-sm sm:text-base text-slate-700 leading-relaxed">
           <Section title="1. מי אנחנו">
             <p>
-              <strong className="text-slate-900">"MathUp"</strong> (להלן: "השירות" או "האתר") הוא פלטפורמת תרגול עצמית לתלמידי תיכון לקראת בחינות הבגרות. השירות מופעל באופן עצמאי על-ידי בעלים פרטי בישראל.
+              <strong className="text-slate-900">&quot;MathUp&quot;</strong> (להלן: &quot;השירות&quot; או &quot;האתר&quot;) הוא פלטפורמת תרגול עצמית לתלמידי תיכון לקראת בחינות הבגרות. השירות מופעל באופן עצמאי על-ידי בעלים פרטי בישראל.
             </p>
             <p>
               לכל פנייה בנושאי פרטיות, ניתן ליצור קשר בכתובת:{' '}
@@ -52,8 +52,8 @@ export default function PrivacyPolicyPage() {
             <p>במסגרת השימוש בשירות, נאסף עליך המידע הבא:</p>
             <ul className="list-disc pr-5 space-y-2">
               <li><strong className="text-slate-900">פרטי חשבון:</strong> כתובת אימייל וסיסמה (הסיסמה נשמרת ב-hash בלבד — אין לנו גישה לסיסמה עצמה).</li>
-              <li><strong className="text-slate-900">תוכן שיצרת בשירות:</strong> הודעות צ'אט עם המורה הווירטואלי, תשובות לתרגילים, התקדמות בנושאים, תוכניות לימוד שיצרת.</li>
-              <li><strong className="text-slate-900">תמונות:</strong> אם השתמשת בפיצ'ר "צילום שאלה", התמונה מועברת לעיבוד AI ואינה נשמרת באופן קבוע אצלנו.</li>
+              <li><strong className="text-slate-900">תוכן שיצרת בשירות:</strong> הודעות צ&apos;אט עם המורה הווירטואלי, תשובות לתרגילים, התקדמות בנושאים, תוכניות לימוד שיצרת.</li>
+              <li><strong className="text-slate-900">תמונות:</strong> אם השתמשת בפיצ&apos;ר &quot;צילום שאלה&quot;, התמונה מועברת לעיבוד AI ואינה נשמרת באופן קבוע אצלנו.</li>
               <li><strong className="text-slate-900">מטא-דאטה טכנית:</strong> כתובת IP, סוג דפדפן ומערכת הפעלה — לצורך אבטחה והגנה מפני ניצול לרעה.</li>
             </ul>
           </Section>
@@ -61,7 +61,7 @@ export default function PrivacyPolicyPage() {
           <Section title="3. למה אנחנו אוספים את המידע">
             <ul className="list-disc pr-5 space-y-2">
               <li>כדי לספק לך את השירות — לאמת את החשבון שלך, לשמור התקדמות, להציג תוכניות לימוד מותאמות.</li>
-              <li>כדי לשפר את השירות — לזהות תקלות, להבין אילו פיצ'רים פעילים, לבדוק שאיכות התוכן עומדת בסטנדרט.</li>
+              <li>כדי לשפר את השירות — לזהות תקלות, להבין אילו פיצ&apos;רים פעילים, לבדוק שאיכות התוכן עומדת בסטנדרט.</li>
               <li>כדי למנוע ניצול לרעה — לחסום בוטים, להגביל קצב בקשות, להגן מפני התקפות.</li>
             </ul>
           </Section>
@@ -82,7 +82,7 @@ export default function PrivacyPolicyPage() {
                 </a>.
               </li>
               <li>
-                <strong className="text-slate-900">Anthropic</strong> — מעבד את הודעות הצ'אט והבקשות ל-AI דרך מודלי Claude.
+                <strong className="text-slate-900">Anthropic</strong> — מעבד את הודעות הצ&apos;אט והבקשות ל-AI דרך מודלי Claude.
                 {' '}
                 <a
                   href="https://www.anthropic.com/legal/privacy"
@@ -128,7 +128,7 @@ export default function PrivacyPolicyPage() {
           </Section>
 
           <Section title="8. הזכויות שלך">
-            <p>על-פי חוק הגנת הפרטיות, התשמ"א-1981 (וכן תיקון 13 משנת 2025), עומדות לרשותך הזכויות הבאות:</p>
+            <p>על-פי חוק הגנת הפרטיות, התשמ&quot;א-1981 (וכן תיקון 13 משנת 2025), עומדות לרשותך הזכויות הבאות:</p>
             <ul className="list-disc pr-5 space-y-2">
               <li><strong className="text-slate-900">זכות עיון</strong> — לבקש לראות איזה מידע אנחנו מחזיקים עליך.</li>
               <li><strong className="text-slate-900">זכות תיקון</strong> — לבקש לתקן מידע שגוי.</li>

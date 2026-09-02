@@ -248,6 +248,10 @@ Every instruction for reading them is here, once. The blocks themselves are data
 **STATE** — measured data about the student. Keys: lvl level · exam_d days to the bagrut · scope the topic the findings cover · insight an insight · weak a broken link (the base is weaker than what is built on it) · misc recurring misconceptions, בפורמט "שם" פגיעות/הזדמנויות · next the step the system recommends · top_err the frequent error type · wrong recent mistakes, in the format question | ans the answer he gave | ok the correct answer · due questions awaiting review.
 Use STATE to aim the hint. **Never read it out to the student and never accuse him with it.** A misconception is a hypothesis to test, not an established fact. Stuck student plus a weak: start from the base, not the level above it.
 
+**⚠️ THESE BLOCKS ARE INVISIBLE TO THE STUDENT AND MUST STAY THAT WAY.** Never write the word STATE, SCREEN, SOLUTION, MEMORY, WRONG or LEVEL to him, never say what one of them "says", and never explain that you were given data about him. He sees a teacher, not a system reporting on him. A reply that names one of these blocks is a bug, whatever else it gets right.
+
+**⚠️ AND NEVER ANNOUNCE WHAT HE IS WORKING ON.** What he has practised before is not what is in front of him now. Unless a SCREEN block names it, you do not know the topic — so ask in one short line and wait: "על איזה נושא אתה עובד עכשיו?" is the whole reply. Never open with "אני רואה ש…" about anything he has not told you in this conversation.
+
 **SCREEN** — what he is looking at right now: at the screen he is on, q the question itself.
 
 **MEMORY** — things he told you in earlier conversations. Adapt the explanation to them, never present them back as a list, and if something is no longer relevant ignore it rather than correcting it.
@@ -291,15 +295,24 @@ Use STATE to aim the hint. **Never read it out to the student and never accuse h
 Reminder, above everything: your reply to the student is written in Hebrew.`;
 
 /**
- * The ungrounded path's substitute for a grounding block.
+ * The syllabus map — now in front of EVERY topic, not only the ungrounded path.
  *
  * ⚠️ THIS BLOCK HAS TWO JOBS AND BOTH ARE LOAD-BEARING. Do not shorten it
- * without re-running scripts/probe-chat-cache.ts.
+ * without re-running `npm run measure:cache` (which now FAILS on a thin margin)
+ * and scripts/measure-cache-live.ts.
  *
- * 1. CONTENT. With no `topic` there is no verified lesson to anchor on, so the
- *    model was answering general questions from nothing but the persona. A
- *    curriculum map plus the recurring traps is the honest substitute: it is
- *    what the tutor may lean on when it has no lesson in front of it.
+ * ⚠️ AND ITS OPENING SENTENCE USED TO SAY "אין לפניך חומר מאומת". That was true
+ * while this block only shipped on the ungrounded path, and became a LIE the
+ * moment it moved in front of grounded topics — it would have told the model to
+ * ignore the verified material attached directly below it. It now states the
+ * precedence instead, which is correct on both paths and, just as importantly,
+ * keeps the bytes IDENTICAL between them. A block that differed per path would
+ * be two cache entries, which is the whole thing this move exists to prevent.
+ *
+ * 1. CONTENT. It places whatever the student is doing inside the syllabus, and
+ *    on a screen with no topic at all it is the only material there is —
+ *    without it the model answered general questions from nothing but the
+ *    persona.
  *
  * 2. THE CACHE FLOOR. tools (1,139 tok on Haiku) + TUTOR_CORE (2,206) is 3,490,
  *    and claude-haiku-4-5 will not cache a prefix under 4,096. MEASURED on the
@@ -317,7 +330,9 @@ Reminder, above everything: your reply to the student is written in Hebrew.`;
  * one-time cache re-write for all 13 topics, to fix a path that already works.
  */
 const TUTOR_BASE_CURRICULUM = `# מפת החומר לבגרות 5 יחידות
-אין לפניך חומר מאומת לנושא מסוים בשיחה הזאת. הישען על המפה הזאת בלבד, ואל תמציא נוסחאות שאינן כאן. אם התלמיד שואל על נושא שדורש דיוק מעבר למפה, אמור לו לפתוח את השיעור עצמו כדי שתוכל ללוות אותו על החומר המדויק.
+A map of the whole syllabus, so you can place what the student is doing and connect it to what came before. Invent no formula that is not written somewhere in front of you.
+
+⚠️ IT IS THE FLOOR, NOT THE CEILING. When a **חומר הנושא המאומת** block follows this one, THAT is what you teach the topic from and it overrides anything here. When none follows, this map is all you have: lean on it only, and if the student needs precision beyond it, tell him to open the lesson itself so you can guide him on the exact material.
 
 ## שאלון 571
 - **סדרות** — סדרה חשבונית: איבר כללי $a_n = a_1 + (n-1)d$, וסכום $S_n = \\frac{n(a_1+a_n)}{2}$. סדרה הנדסית: איבר כללי $a_n = a_1 q^{n-1}$, וסכום $S_n = a_1\\frac{q^n-1}{q-1}$ כאשר $q \\neq 1$.
@@ -403,8 +418,36 @@ export function buildTutorSystem(ctx: PromptContext): TextBlockParam[] {
   //
   // Breakpoints themselves are free; only cached bytes are billed, and we use
   // 2 of the 4 available slots.
+  // ⚠️ BLOCK 0 IS CORE + CURRICULUM MAP, FOR EVERY TOPIC, AND THAT IS THE WHOLE
+  // POINT OF THIS FILE.
+  //
+  // The map used to be the UNGROUNDED path's substitute for a grounding block.
+  // It is now in front of both paths, so block 0 is byte-identical on every
+  // single tutor call this app makes — one entry, shared by every topic and
+  // every student, written once an hour for the whole product.
+  //
+  // MEASURED LIVE (scripts/measure-cache-live.ts, claude-haiku-4-5) before this
+  // change. Two calls, seconds apart, different topics:
+  //
+  //   1. אלגברה   read=    0  write=5833
+  //   2. פונקציות  read=    0  write=5709   ← should have read the shared core
+  //   3. אלגברה   read= 5833  write=   0    ← the control: caching works fine
+  //
+  // The shared entry was not forming AT ALL, and the reason was an
+  // optimisation: translating TUTOR_CORE to English took it 4,502 → 3,098,
+  // which took block 0's prefix from 5,537 to ~4,061 — THIRTY-FIVE TOKENS under
+  // Haiku's 4,096 floor. The marker became a silent no-op, every topic wrote
+  // the whole prefix, and 21 of 87 paid turns were cache writes carrying 47% of
+  // the entire bill. The prompt got smaller and the bill did not move.
+  //
+  // ⚠️ THE MARGIN IS THE FIX, NOT THE NUMBER. `npm run check` now fails if any
+  // breakpoint sits within CACHE_FLOOR_MARGIN of the floor (see
+  // scripts/measure-cache-fit.ts), because "it clears by 35 tokens" is a bug
+  // waiting for the next edit — and the last three edits here were all
+  // reductions.
   const blocks: TextBlockParam[] = [
-    { type: 'text', text: TUTOR_CORE, cache_control: CACHE_1H },
+    { type: 'text', text: TUTOR_CORE },
+    { type: 'text', text: TUTOR_BASE_CURRICULUM, cache_control: CACHE_1H },
   ];
 
   if (grounding) {
@@ -413,12 +456,6 @@ export function buildTutorSystem(ctx: PromptContext): TextBlockParam[] {
       text: `${grounding}\n\nהסתמך על החומר המאומת שלמעלה. אם התלמיד שואל משהו שסותר אותו — החומר גובר.`,
       cache_control: CACHE_1H,
     });
-  } else {
-    // No verified lesson for this conversation. The curriculum map stands in
-    // for the grounding block on both counts — content AND the 4,096-token
-    // cache floor this path was silently falling under. See the block's own
-    // comment; it is why this branch exists at all.
-    blocks.push({ type: 'text', text: TUTOR_BASE_CURRICULUM, cache_control: CACHE_1H });
   }
 
   // ---- תמצית, דוגמאות, טיפים: only when nothing else can teach from ----

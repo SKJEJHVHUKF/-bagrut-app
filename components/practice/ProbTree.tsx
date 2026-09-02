@@ -145,15 +145,22 @@ export function ProbTree({ spec }: { spec: ProbTreeSpec }) {
 
 /** JSON-fence entry point used by MathText; malformed JSON degrades to a quiet note. */
 export function ProbTreeFromJson({ json }: { json: string }) {
+  // Parse inside the try, render outside it: JSX is lazy, so <ProbTree/> only
+  // builds an element here and its own render errors were never caught by this
+  // catch. Only JSON.parse can actually throw.
+  let spec: ProbTreeSpec | null = null;
   try {
-    const spec = JSON.parse(json) as ProbTreeSpec;
-    if (!spec || !Array.isArray(spec.children) || spec.children.length === 0) throw new Error('empty');
-    return <ProbTree spec={spec} />;
+    const parsed = JSON.parse(json) as ProbTreeSpec;
+    if (parsed && Array.isArray(parsed.children) && parsed.children.length > 0) spec = parsed;
   } catch {
+    spec = null;
+  }
+  if (!spec) {
     return (
       <div dir="rtl" className="my-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
         (תרשים העץ אינו זמין)
       </div>
     );
   }
+  return <ProbTree spec={spec} />;
 }

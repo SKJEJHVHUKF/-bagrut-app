@@ -18,7 +18,6 @@ let pass = 0;
 let fail = 0;
 const fails: string[] = [];
 
-const EPS = 1e-9;
 function C(re: number, im = 0): Complex {
   return complex(re, im) as Complex;
 }

@@ -78,6 +78,11 @@ export function useTeachers(month?: string) {
   }, [month]);
 
   useEffect(() => {
+    // The rule does not analyse `await` boundaries: an async function called
+    // from an effect is flagged even when every setState in it happens after
+    // the first await. Nothing here setStates synchronously. Same reasoning
+    // and same suppression as AdminDashboard.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void reload();
   }, [reload]);
 

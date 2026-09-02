@@ -20,7 +20,6 @@ const SUBJECT_LABELS: Record<string, string> = {
 
 export default async function ExercisePage({
   params,
-  searchParams,
 }: {
   params: Promise<{ subject: string; topic: string }>;
   searchParams: Promise<{ mode?: string }>;

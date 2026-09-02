@@ -98,7 +98,6 @@ class FakeSupabase {
 
   from(table: string) {
     if (table !== 'question_bank') throw new Error(`unexpected table ${table}`);
-    const self = this;
     let filtered = [...this.rows];
     let limit = Infinity;
     let pending: { kind: 'insert'; values: Partial<Row> } | { kind: 'update'; values: Partial<Row> } | null =
@@ -127,16 +126,16 @@ class FakeSupabase {
         return builder;
       },
       // Thenable: the real client resolves on await, not on a .execute().
-      then(resolve: (result: { data: Row[] | null; error: null }) => unknown) {
+      then: (resolve: (result: { data: Row[] | null; error: null }) => unknown) => {
         if (pending?.kind === 'insert') {
           const v = pending.values;
           // The unique constraint on question_hash is real — respect it, or
           // the test would let a duplicate-hash insert silently succeed.
-          if (self.rows.some((r) => r.question_hash === v.question_hash)) {
+          if (this.rows.some((r) => r.question_hash === v.question_hash)) {
             return resolve({ data: null, error: null });
           }
-          self.rows.push({
-            id: `row-${self.nextId++}`,
+          this.rows.push({
+            id: `row-${this.nextId++}`,
             question_hash: v.question_hash!,
             normalized_text: v.normalized_text!,
             canonical_text: v.canonical_text!,

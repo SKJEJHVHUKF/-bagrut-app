@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -10,10 +10,10 @@ import {
   ArrowLeft,
   Crown,
   CheckCircle,
-  Sparkles,
+  
   Trash2,
   Home,
-  GraduationCap,
+  
   Camera,
   BookOpen,
   Sigma,
@@ -43,31 +43,39 @@ import { isProUser, isAdmin, type UserLike } from '@/lib/access';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
 import { MathText } from '@/components/practice/MathText';
+import { useClientValue, useHydrated } from '@/lib/use-client-value';
 
 export default function MyPlanPage() {
   const router = useRouter();
-  const [plan, setPlan] = useState<StudyPlan | null>(null);
+  // The plan is localStorage-only, so it does not exist during the server render.
+  // `reloadPlan` re-reads it after the target picker writes.
+  const [planVersion, reloadPlan] = useReducer((n: number) => n + 1, 0);
+  // `planVersion` is not read inside — it is the re-read trigger.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const readPlan = useCallback(() => getPlan(), [planVersion]);
+  const plan = useClientValue<StudyPlan | null>(readPlan, null);
   const [user, setUser] = useState<UserLike>(null);
-  const [loading, setLoading] = useState(true);
+  const [userResolved, setUserResolved] = useState(false);
+  const hydrated = useHydrated();
+  // Derived, not stored: we are loading until the plan has been read AND — when
+  // there is one — Supabase has answered. With no plan the render below still
+  // shows the spinner via `!plan` while the redirect runs.
+  const loading = !hydrated || (!!plan && !userResolved);
 
   useEffect(() => {
-    // Load plan + user in parallel
-    const p = getPlan();
-    setPlan(p);
-
-    if (!p) {
-      setLoading(false);
+    if (!hydrated) return;
+    if (!plan) {
       // No plan — bounce to onboarding
       router.replace('/onboarding');
       return;
     }
-
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user as UserLike);
-      setLoading(false);
-    });
-  }, [router]);
+    createClient()
+      .auth.getUser()
+      .then(({ data }) => {
+        setUser(data.user as UserLike);
+        setUserResolved(true);
+      });
+  }, [router, plan, hydrated]);
 
   if (loading || !plan) {
     return (
@@ -119,7 +127,7 @@ export default function MyPlanPage() {
             amber countdown panel with a 60px number and three stat tiles, so
             the one thing a student came here to act on was below the fold and
             the thing above it was a fact they could not do anything about. */}
-        <TodaySection plan={plan} onTargetSet={() => setPlan(getPlan())} />
+        <TodaySection plan={plan} onTargetSet={reloadPlan} />
 
         {/* Countdown + totals, as one quiet strip. Same demotion as the
             progress panel on /roadmap: still here, no longer shouting. */}
@@ -402,12 +410,10 @@ function TopBar() {
 const TARGETS: TargetGrade[] = ['pass', '80', '90', 'boost'];
 
 function TodaySection({ plan, onTargetSet }: { plan: StudyPlan; onTargetSet: () => void }) {
-  const [daily, setDaily] = useState<DailyPlan | null>(null);
-
-  // Everything here reads localStorage and static content, so it runs after
-  // mount. Rebuilt whenever the target changes — that is the whole point of the
-  // control below.
-  useEffect(() => {
+  // Everything here reads localStorage and static content, so it cannot run on
+  // the server. Rebuilt whenever the target changes — that is the whole point of
+  // the control below.
+  const readDaily = useCallback((): DailyPlan => {
     const paper = getPaper() ?? DEFAULT_PAPER;
     // The study track (content/tracks) — the same tree /roadmap walks, so the
     // "next step" here and on the track page agree.
@@ -415,8 +421,7 @@ function TodaySection({ plan, onTargetSet }: { plan: StudyPlan; onTargetSet: () 
     const mainTopics = trackMainTopics(tree);
     const levelsBySub = trackLevelsBySub(tree);
     const resume = getResumePoint(mainTopics, levelsBySub);
-    setDaily(
-      buildDailyPlan({
+    return buildDailyPlan({
         target: plan.targetGrade ?? null,
         minutesPerDay: plan.minutesPerDay ?? null,
         prediction: predictOverall('math5'),
@@ -429,10 +434,10 @@ function TodaySection({ plan, onTargetSet }: { plan: StudyPlan; onTargetSet: () 
         weaknesses: getWeaknesses('math5'),
         dueCount: dueCount(),
         resume: resume ? { href: resume.href, title: resume.title } : null,
-        pacing: computePacing(mainTopics, levelsBySub, plan),
-      }),
-    );
+      pacing: computePacing(mainTopics, levelsBySub, plan),
+    });
   }, [plan]);
+  const daily = useClientValue<DailyPlan | null>(readDaily, null);
 
   return (
     <motion.section {...inViewProps} variants={staggerContainer} className="space-y-3">

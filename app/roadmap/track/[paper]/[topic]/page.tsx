@@ -33,6 +33,7 @@ import { ladderHref, levelsForNodes, topicGroups, topicNodes, trackEntries, trac
 import { countCompleted, nodeLevelSummary, type NodeLevelSummary } from '@/lib/roadmap-progress';
 import { getResumePoint } from '@/lib/roadmap-resume';
 import { dueCountBySubTopic } from '@/lib/review';
+import { useHydrated, useUrlParam } from '@/lib/use-client-value';
 
 export default function TrackTopicPage() {
   const params = useParams();
@@ -70,15 +71,13 @@ function TopicJourneyPage({ paper, topicId }: { paper: BagrutPaper; topicId: str
 
   const groups = useMemo(() => topicGroups(topic), [topic]);
 
-  const [ready, setReady] = useState(false);
+  const ready = useHydrated();
   const [syncTick, setSyncTick] = useState(0);
-  // The chosen sub-track: `?group=` on mount (read from window.location rather
-  // than useSearchParams, which forces a Suspense boundary at build time).
-  const [groupFromUrl, setGroupFromUrl] = useState<string | null>(null);
+  // The chosen sub-track: `?group=`, read after hydration (not useSearchParams,
+  // which forces a Suspense boundary at build time).
+  const groupFromUrl = useUrlParam('group');
   const [chosenGroup, setChosenGroup] = useState<string | null>(null);
   useEffect(() => {
-    setReady(true);
-    setGroupFromUrl(new URLSearchParams(window.location.search).get('group'));
     const onSynced = () => setSyncTick((t) => t + 1);
     window.addEventListener('bagrut-state-synced', onSynced);
     return () => window.removeEventListener('bagrut-state-synced', onSynced);
@@ -91,6 +90,9 @@ function TopicJourneyPage({ paper, topicId }: { paper: BagrutPaper; topicId: str
     return map;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, nodes, levelsBySub, syncTick]);
+  // `syncTick` is not read inside — it is the recompute trigger: the value comes
+  // from localStorage, which React cannot see changing.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const dueBySub = useMemo(() => (ready ? dueCountBySubTopic() : {}), [ready, syncTick]);
 
   const done = ready ? countCompleted(nodes) : 0;
