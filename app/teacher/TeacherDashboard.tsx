@@ -56,6 +56,13 @@ type WrongRow = {
   note: string | null;
 };
 
+type TopicOption = {
+  key: string;
+  label: string;
+  /** The rungs inside it — a task can name one instead of the whole topic. */
+  subs: { id: string; title: string }[];
+};
+
 type StuckRung = {
   topic: string;
   subId: string;
@@ -76,6 +83,11 @@ type Student = {
   accuracy: number;
   selfReported: number;
   difficulty: { easy: number; mid: number; hard: number };
+  /** Real past-paper questions, kept apart from drills on purpose. */
+  bagrut: { answered: number; correct: number };
+  bagrutDate: string | null;
+  daysToBagrut: number | null;
+  targetGrade: number | null;
   /** Distinct days he practised in the last 30. */
   activeDays: number;
   totalDays: number;
@@ -165,7 +177,7 @@ export default function TeacherDashboard({
   name: string;
   rate: number;
   weeklyHours: number;
-  topics: { key: string; label: string }[];
+  topics: TopicOption[];
   /** Set when the OWNER is looking at this teacher's board — see app/teacher/page. */
   viewingAs: string | null;
 }) {
@@ -482,13 +494,14 @@ function StudentDetail({
   onChanged,
 }: {
   student: Student;
-  topics: { key: string; label: string }[];
+  topics: TopicOption[];
   /** `?as=` when the owner is acting on a teacher's board; '' otherwise. */
   query: string;
   onChanged: () => Promise<void>;
 }) {
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState(topics[0]?.key ?? '');
+  const [subTopicId, setSubTopicId] = useState('');
   const [targetCount, setTargetCount] = useState(5);
   const [dueDate, setDueDate] = useState('');
   const [busy, setBusy] = useState(false);
@@ -506,6 +519,7 @@ function StudentDetail({
           studentId: student.id,
           title,
           topic,
+          subTopicId: subTopicId || undefined,
           targetCount,
           dueDate: dueDate || null,
         }),
@@ -514,6 +528,7 @@ function StudentDetail({
       if (!res.ok) throw new Error(json?.error ?? 'שגיאה');
       setTitle('');
       setDueDate('');
+      setSubTopicId('');
       await onChanged();
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'שגיאה');
@@ -547,6 +562,34 @@ function StudentDetail({
         </p>
       ) : (
         <>
+          {(student.daysToBagrut !== null || student.bagrut.answered > 0) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-violet-50 border border-violet-100 px-3 py-2 text-sm">
+              {student.daysToBagrut !== null && (
+                <span className="font-bold text-violet-900">
+                  {student.daysToBagrut > 0
+                    ? `בגרות בעוד ${student.daysToBagrut} ימים`
+                    : student.daysToBagrut === 0
+                      ? 'הבגרות היום'
+                      : 'תאריך הבגרות עבר'}
+                </span>
+              )}
+              {student.targetGrade !== null && (
+                <span className="text-[11px] text-violet-800">יעד: {student.targetGrade}</span>
+              )}
+              <span
+                className={`text-[11px] font-bold ${
+                  student.bagrut.answered === 0 ? 'text-red-700' : 'text-violet-800'
+                }`}
+              >
+                {student.bagrut.answered === 0
+                  ? 'עוד לא פתר שאלת בגרות אחת'
+                  : `שאלות בגרות: ${student.bagrut.correct}/${student.bagrut.answered} (${pct(
+                      student.bagrut.correct / student.bagrut.answered
+                    )})`}
+              </span>
+            </div>
+          )}
+
           {/* One line of context before any percentage: how the work was
               spread, and how much of the score he graded himself. An accuracy
               with no volume behind it is not a measurement. */}
@@ -701,6 +744,13 @@ function StudentDetail({
                 <div className="font-bold truncate">{a.title}</div>
                 <div className="text-[11px] text-slate-500">
                   {label(a.topic)}
+                  {a.subTopicId
+                    ? ` · ${
+                        topics
+                          .find((t) => t.key === a.topic)
+                          ?.subs.find((st) => st.id === a.subTopicId)?.title ?? a.subTopicId
+                      }`
+                    : ''}
                   {a.dueDate ? ` · עד ${dayLabel(a.dueDate)}` : ''}
                 </div>
               </div>
@@ -735,7 +785,12 @@ function StudentDetail({
           />
           <select
             value={topic}
-            onChange={(e) => setTopic(e.target.value)}
+            onChange={(e) => {
+              setTopic(e.target.value);
+              // A sub-topic from the previous topic would silently freeze the
+              // counter at 0, since progress is matched on both.
+              setSubTopicId('');
+            }}
             aria-label="נושא"
             className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           >
@@ -745,6 +800,23 @@ function StudentDetail({
               </option>
             ))}
           </select>
+          {(topics.find((t) => t.key === topic)?.subs.length ?? 0) > 0 && (
+            <select
+              value={subTopicId}
+              onChange={(e) => setSubTopicId(e.target.value)}
+              aria-label="תת-נושא"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+            >
+              <option value="">כל הנושא</option>
+              {topics
+                .find((t) => t.key === topic)
+                ?.subs.map((st) => (
+                  <option key={st.id} value={st.id}>
+                    {st.title}
+                  </option>
+                ))}
+            </select>
+          )}
           <input
             type="number"
             min={1}

@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdmin, isTeacher, teacherRate, teacherWeeklyHours } from '@/lib/access';
 import { roadmapTopicOrder } from '@/constants/roadmapData';
 import { getTopicMapping } from '@/content/bagrut-curriculum';
+import { getSubTopics } from '@/content/lessons';
 import TeacherDashboard from './TeacherDashboard';
 
 // Per-teacher, and about other people's children — never cache.
@@ -26,9 +27,21 @@ export const metadata: Metadata = {
  * 2. Deriving it here keeps the whole content tree (every lesson) out of the
  *    client bundle — `roadmapTopicOrder` reaches into content/lessons.
  */
-function assignableTopics(): { key: string; label: string }[] {
+function assignableTopics(): {
+  key: string;
+  label: string;
+  subs: { id: string; title: string }[];
+}[] {
   const keys = [...new Set([...roadmapTopicOrder('571'), ...roadmapTopicOrder('572')])];
-  return keys.map((key) => ({ key, label: getTopicMapping(key)?.displayName ?? key }));
+  return keys.map((key) => ({
+    key,
+    label: getTopicMapping(key)?.displayName ?? key,
+    // The sub-topics travel with the topic so the task can be as precise as
+    // the diagnosis is. `assignments.sub_topic_id` and assignmentProgress()
+    // have both handled this since day one; only the form never filled it,
+    // so every task was topic-wide while the board pointed at one rung.
+    subs: getSubTopics('math5', key).map((st) => ({ id: st.id, title: st.title })),
+  }));
 }
 
 export default async function TeacherPage({

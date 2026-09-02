@@ -102,7 +102,7 @@ export async function GET(request: Request): Promise<Response> {
   const [states, assignmentRows, ...profiles] = await Promise.all([
     ctx.db
       .from('learning_state')
-      .select('user_id, results, roadmap, updated_at')
+      .select('user_id, results, roadmap, plan, updated_at')
       .in('user_id', studentIds),
     ctx.db
       .from('assignments')
@@ -114,12 +114,18 @@ export async function GET(request: Request): Promise<Response> {
 
   const stateOf = new Map<
     string,
-    { results: ResultRow[]; roadmap: RoadmapStore; updatedAt: string | null }
+    {
+      results: ResultRow[];
+      roadmap: RoadmapStore;
+      plan: { bagrutDate?: string; targetGrade?: number } | null;
+      updatedAt: string | null;
+    }
   >();
   for (const s of (states.data ?? []) as Record<string, unknown>[]) {
     stateOf.set(String(s.user_id), {
       results: Array.isArray(s.results) ? (s.results as ResultRow[]) : [],
       roadmap: s.roadmap && typeof s.roadmap === 'object' ? (s.roadmap as RoadmapStore) : {},
+      plan: s.plan && typeof s.plan === 'object' ? (s.plan as { bagrutDate?: string }) : null,
       updatedAt: typeof s.updated_at === 'string' ? s.updated_at : null,
     });
   }
@@ -174,6 +180,29 @@ export async function GET(request: Request): Promise<Response> {
 
     const answered = measured.length;
     const correct = measured.filter((r) => r.correct).length;
+
+    // ⚠️ A PAST-PAPER QUESTION AND A WARM-UP DRILL ARE NOT THE SAME EVIDENCE,
+    // and until now they landed in one bucket. In an app whose entire purpose
+    // is a bagrut grade, "80% overall" hiding "has never opened a real paper"
+    // is the most expensive thing this board could fail to say. `source` has
+    // been on every event since the log existed.
+    const bagrutRows = measured.filter((r) => r.source === 'bagrut');
+    const bagrut = {
+      answered: bagrutRows.length,
+      correct: bagrutRows.filter((r) => r.correct).length,
+    };
+
+    // The date the whole plan points at, and the grade he told the app he
+    // wants. Both are already synced in learning_state.plan and shown to
+    // nobody but the student.
+    const planDate = state?.plan?.bagrutDate ?? null;
+    const daysToBagrut =
+      planDate && /^\d{4}-\d{2}-\d{2}$/.test(planDate)
+        ? Math.round(
+            (Date.parse(`${planDate}T00:00:00Z`) - Date.parse(`${israelDay(new Date())}T00:00:00Z`)) /
+              86400000
+          )
+        : null;
 
     // Days worked in the last 30, not questions answered ever: 200 questions
     // in one panic night and 20 spread over ten days are the same total and
@@ -268,6 +297,10 @@ export async function GET(request: Request): Promise<Response> {
       // How much of that accuracy the student graded himself.
       selfReported,
       difficulty,
+      bagrut,
+      bagrutDate: planDate,
+      daysToBagrut,
+      targetGrade: state?.plan?.targetGrade ?? null,
       activeDays,
       totalDays: days.size,
       topics: topicRows,
