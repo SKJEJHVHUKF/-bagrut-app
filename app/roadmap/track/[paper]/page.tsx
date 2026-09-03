@@ -209,7 +209,11 @@ function Track({ paper }: { paper: BagrutPaper }) {
               <span className="font-display text-2xl font-black text-ink tabular-nums">{overallPct}%</span>
               <span className="text-xs text-slate-600 truncate">{overallDone} מתוך {allNodes.length} שלבים</span>
             </span>
-            <span className="flex items-center gap-2 shrink-0 flex-wrap">
+            {/* NOT shrink-0: a flex item's basis is its max-content width, so with
+                four chips (streak day) the row was 56px wider than a 360px phone
+                and clipped off the edge — its own flex-wrap never got a chance.
+                Let it shrink, and the chips wrap inside. */}
+            <span className="flex items-center justify-end gap-2 flex-wrap min-w-0">
               {habit && (
                 <>
                   <span
@@ -278,7 +282,7 @@ function Track({ paper }: { paper: BagrutPaper }) {
             h-full): emoji · number · title · what's inside · progress pinned
             to the bottom. Content is clamped, never allowed to resize the tile. */}
         <div>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between flex-wrap gap-x-3 gap-y-1 mb-3">
             <h2 className="text-[11px] font-black tracking-[0.14em] text-slate-500 uppercase">הנושאים במסלול</h2>
             <span className="text-[11px] text-slate-500">{tree.topics.length} נושאים · לפי סדר הלימוד</span>
           </div>
