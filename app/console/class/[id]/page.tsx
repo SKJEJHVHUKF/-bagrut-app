@@ -5,7 +5,7 @@
  */
 
 import Overview from '@/components/console/Overview';
-import PageHeader from '@/components/console/PageHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { useClass } from '@/components/console/ClassContext';
 
 export default function ClassOverviewPage() {
@@ -14,7 +14,7 @@ export default function ClassOverviewPage() {
     <>
       <PageHeader
         title={data.class.name}
-        subtitle={`${board.studentCount} תלמידים${data.class.units ? ` · ${data.class.units} יח״ל` : ''} · ${data.class.schoolYear}`}
+        description={`${board.studentCount} תלמידים${data.class.units ? ` · ${data.class.units} יח״ל` : ''} · ${data.class.schoolYear}`}
       />
       <Overview />
     </>

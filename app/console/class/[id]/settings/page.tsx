@@ -9,10 +9,10 @@
  */
 
 import { useState } from 'react';
-import { Trash2, DoorClosed, DoorOpen } from 'lucide-react';
+import { Trash2, DoorClosed, DoorOpen, Settings, KeyRound, Users } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
 import { useClass } from '@/components/console/ClassContext';
-import PageHeader from '@/components/console/PageHeader';
-import { Panel, Btn, inputCls } from '@/components/console/Panel';
+import { Btn, inputCls, SectionHead, Avatar } from '@/components/console/ui';
 
 export default function SettingsPage() {
   const { data, board, classId, reload, isDemo } = useClass();
@@ -62,10 +62,11 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="הגדרות" subtitle="שם, רמה, הצטרפות, ומי בכיתה." />
+      <PageHeader title="הגדרות" description="שם, רמה, הצטרפות, ומי בכיתה." />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="פרטי הכיתה">
+        <section className="surface-premium rounded-2xl p-5">
+          <SectionHead icon={Settings} title="פרטי הכיתה" />
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -74,11 +75,11 @@ export default function SettingsPage() {
             className="flex flex-col gap-3"
           >
             <label className="block">
-              <span className="mb-1 block text-sm text-slate-600 dark:text-slate-400">שם הכיתה</span>
+              <span className="mb-1 block text-sm font-bold text-slate-700">שם הכיתה</span>
               <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} className={inputCls} />
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm text-slate-600 dark:text-slate-400">רמה</span>
+              <span className="mb-1 block text-sm font-bold text-slate-700">רמה</span>
               <select value={units} onChange={(e) => setUnits(Number(e.target.value))} className={inputCls}>
                 <option value={5}>5 יחידות</option>
                 <option value={4}>4 יחידות</option>
@@ -89,27 +90,22 @@ export default function SettingsPage() {
               <Btn kind="primary" type="submit" disabled={busy || !name.trim()}>
                 שמירה
               </Btn>
-              {msg && <span className="text-sm text-slate-500">{msg}</span>}
+              {msg && <span className="text-sm text-slate-600">{msg}</span>}
             </div>
           </form>
-        </Panel>
+        </section>
 
-        <Panel
-          title="הצטרפות"
-          blurb={
-            open
-              ? 'הקוד פעיל. תלמידים חדשים יכולים להצטרף.'
-              : 'הכיתה סגורה. הקוד לא עובד, והכיתה לא מופיעה לתלמידים.'
-          }
-        >
+        <section className="surface-premium rounded-2xl p-5">
+          <SectionHead
+            icon={KeyRound}
+            title="הצטרפות"
+            hint={open ? 'הקוד פעיל — תלמידים חדשים יכולים להצטרף.' : 'הכיתה סגורה — הקוד לא עובד.'}
+          />
           <div className="flex flex-wrap items-center gap-3">
-            <span className="font-mono text-2xl font-semibold tracking-widest text-slate-900 dark:text-slate-50">
+            <span className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-1.5 font-mono text-2xl font-black tracking-widest text-ink">
               {data.class.joinCode ?? '—'}
             </span>
-            <Btn
-              onClick={() => void patch({ archived: open }, open ? 'ההצטרפות נסגרה' : 'ההצטרפות נפתחה')}
-              disabled={busy}
-            >
+            <Btn onClick={() => void patch({ archived: open }, open ? 'ההצטרפות נסגרה' : 'ההצטרפות נפתחה')} disabled={busy}>
               {open ? (
                 <>
                   <DoorClosed className="h-4 w-4" aria-hidden />
@@ -123,37 +119,31 @@ export default function SettingsPage() {
               )}
             </Btn>
           </div>
-          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-3 text-xs leading-relaxed text-slate-500">
             הדרך הזולה ביותר למנוע שהקוד יעבור בין שכבות: לסגור אחרי שכולם בפנים.
           </p>
-        </Panel>
+        </section>
 
-        <div className="lg:col-span-2">
-          <Panel title="תלמידים בכיתה" count={board.students.length} flush>
-            {board.students.length === 0 ? (
-              <p className="px-4 py-6 text-center text-sm text-slate-400">עוד אף אחד לא הצטרף.</p>
-            ) : (
-              <table className="w-full text-sm">
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {board.students.map((s) => (
-                    <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="px-4 py-2 font-medium text-slate-900 dark:text-slate-50">{s.name}</td>
-                      <td className="px-4 py-2 text-slate-500">
-                        {s.attempts === 0 ? 'טרם התחיל' : `${s.attempts} תרגילים`}
-                      </td>
-                      <td className="px-4 py-2 text-end">
-                        <Btn kind="ghost" onClick={() => void removeStudent(s.id, s.name)}>
-                          <Trash2 className="h-4 w-4" aria-hidden />
-                          הסר
-                        </Btn>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </Panel>
-        </div>
+        <section className="surface-premium rounded-2xl p-5 lg:col-span-2">
+          <SectionHead icon={Users} title="תלמידים בכיתה" count={board.students.length} />
+          {board.students.length === 0 ? (
+            <p className="py-4 text-center text-sm text-slate-500">עוד אף אחד לא הצטרף.</p>
+          ) : (
+            <ul className="divide-y divide-slate-900/[0.06]">
+              {board.students.map((s) => (
+                <li key={s.id} className="flex items-center gap-3 py-2">
+                  <Avatar name={s.name} />
+                  <span className="flex-1 font-bold text-ink">{s.name}</span>
+                  <span className="text-sm text-slate-500">{s.attempts === 0 ? 'טרם התחיל' : `${s.attempts} תרגילים`}</span>
+                  <Btn kind="ghost" onClick={() => void removeStudent(s.id, s.name)}>
+                    <Trash2 className="h-4 w-4" aria-hidden />
+                    הסר
+                  </Btn>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </>
   );

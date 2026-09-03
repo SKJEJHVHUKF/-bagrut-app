@@ -7,17 +7,17 @@
 
 import { Target } from 'lucide-react';
 import { useClass } from '@/components/console/ClassContext';
-import PageHeader from '@/components/console/PageHeader';
-import { Btn } from '@/components/console/Panel';
-import { FocusListPanel } from '@/components/console/panels';
+import { PageHeader } from '@/components/PageHeader';
+import { Btn } from '@/components/console/ui';
+import FocusList from '@/components/console/FocusList';
 
 export default function FocusPage() {
-  const { focuses, openFocus, isDemo } = useClass();
+  const { openFocus, isDemo } = useClass();
   return (
     <>
       <PageHeader
         title="תרגולים"
-        subtitle="הצבעה על תוכן קיים — נושא, תת-נושא, שלב — למי שצריך, עד מתי."
+        description="הצבעה על תוכן קיים — נושא, תת-נושא, שלב — למי שצריך, עד מתי."
         actions={
           !isDemo && (
             <Btn kind="primary" onClick={() => openFocus('class')}>
@@ -27,7 +27,7 @@ export default function FocusPage() {
           )
         }
       />
-      <FocusListPanel rows={focuses} />
+      <FocusList />
     </>
   );
 }

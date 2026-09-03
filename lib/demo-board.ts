@@ -18,7 +18,7 @@
  * would keep showing whatever was true on the day it was written.
  *
  * The screen that renders this must say it is an example. See the banner in
- * components/school/ClassBoardView.
+ * components/console/Overview.
  */
 
 import { buildClassBoard, type BoardAttempt, type ClassBoard } from '@/lib/class-board';
@@ -187,6 +187,7 @@ export function demoFocuses(now: number = Date.now()) {
       dueOn: due(4),
       note: null,
       targetedCount: null,
+      studentIds: null,
       totalCount: 8,
       started: 6,
       done: 5,
@@ -201,6 +202,7 @@ export function demoFocuses(now: number = Date.now()) {
       dueOn: due(1),
       note: 'רן, שיר — התחילו מכאן',
       targetedCount: 2,
+      studentIds: ['demo-4', 'demo-3'],
       totalCount: 2,
       started: 2,
       done: 1,

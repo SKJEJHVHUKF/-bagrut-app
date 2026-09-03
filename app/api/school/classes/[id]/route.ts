@@ -162,6 +162,7 @@ export async function GET(
       createdAt: String(f.created_at),
       /** null = the whole class. */
       targetedCount: targetsOf.has(id) ? targeted.length : null,
+      studentIds: targetsOf.get(id) ?? null,
       totalCount: targeted.length,
       started,
       done,

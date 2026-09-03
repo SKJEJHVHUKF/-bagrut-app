@@ -20,12 +20,15 @@
 
 import {
   buildClassBoard,
+  topicSummary,
   AWAY_DAYS,
   STUCK_MIN_ATTEMPTS,
   RETEACH_MIN_STUDENTS,
   ATTENTION_LIMIT,
+  STRONG_MIN_MASTERY,
   type BoardAttempt,
 } from '../lib/class-board';
+import { demoBoard } from '../lib/demo-board';
 
 let checks = 0;
 let failures = 0;
@@ -243,6 +246,125 @@ function rows(
   assert(
     noWork.reteach.length === 0 && noWork.students[0].mastery === null,
     'a class where nobody has started makes no claims about anyone'
+  );
+}
+
+// ============================================================
+// topicSummary — the class's topics as three words
+// ============================================================
+//
+// This is what the teacher's first screen shows instead of a heatmap, so the
+// things pinned here are the sentences: a topic under the sample gate makes
+// NO claim (absent, not "borderline"); "ללמד שוב" is exactly board.reteach and
+// never a second opinion; a student with no data neither drags a topic down
+// nor appears as stuck in it; and the order is what to fix first.
+{
+  const few = Array.from({ length: RETEACH_MIN_STUDENTS - 1 }, (_, i) => ({ id: `u${i}`, name: `ת${i}` }));
+  const fewBoard = buildClassBoard(few, few.flatMap((s) => rows(s.id, 'סדרות', 5, 1)), NOW);
+  assert(
+    topicSummary(fewBoard).length === 0,
+    `fewer than ${RETEACH_MIN_STUDENTS} students with data → the topic is ABSENT, not "borderline"`
+  );
+
+  const six = Array.from({ length: 6 }, (_, i) => ({ id: `u${i}`, name: `ת${i}` }));
+  const strong = topicSummary(buildClassBoard(six, six.flatMap((s) => rows(s.id, 'הסתברות', 3, 3)), NOW));
+  assert(strong.length === 1 && strong[0].state === 'strong', 'six students at 3/3 → הכיתה שולטת');
+  assert(strong[0].stuckStudents.length === 0, '…and nobody is listed as stuck in it');
+
+  const five = six.slice(0, 5);
+  const boundary = topicSummary(buildClassBoard(five, five.flatMap((s) => rows(s.id, 'פונקציות', 10, 7)), NOW));
+  assert(
+    boundary[0]?.state === 'strong' && boundary[0].mean === STRONG_MIN_MASTERY,
+    `a class mean of exactly ${STRONG_MIN_MASTERY} is strong, not borderline (boundary is inclusive)`
+  );
+
+  const border = topicSummary(buildClassBoard(six, six.flatMap((s) => rows(s.id, 'פונקציות', 3, 2)), NOW));
+  assert(border[0]?.state === 'borderline', 'six students at 2/3 (0.67) → על הגבול');
+  assert(border[0].stuckStudents.length === 0, '…and 0.67 is above the stuck rule, so no one is listed');
+
+  const eight = Array.from({ length: 8 }, (_, i) => ({ id: `u${i}`, name: `ת${i}` }));
+  const reteachBoard = buildClassBoard(eight, eight.flatMap((s) => rows(s.id, 'סדרות', 5, 1)), NOW);
+  const reteachRows = topicSummary(reteachBoard);
+  assert(
+    reteachRows[0]?.state === 'reteach' && reteachRows[0].topic === reteachBoard.reteach[0].topic,
+    'eight students at 1/5 → ללמד שוב, and it is the SAME topic the board\'s reteach zone names'
+  );
+  assert(reteachRows[0].stuckStudents.length === 8, 'all eight are listed under it, so the teacher sees who');
+
+  // Both directions: every reteach row is in board.reteach and vice versa.
+  const mixed = buildClassBoard(
+    eight,
+    [...eight.flatMap((s) => rows(s.id, 'סדרות', 5, 1)), ...eight.flatMap((s) => rows(s.id, 'הסתברות', 3, 3))],
+    NOW
+  );
+  const mixedRows = topicSummary(mixed);
+  const fromSummary = mixedRows.filter((r) => r.state === 'reteach').map((r) => r.topic).sort();
+  const fromBoard = mixed.reteach.map((r) => r.topic).sort();
+  assert(JSON.stringify(fromSummary) === JSON.stringify(fromBoard), '"ללמד שוב" ⇔ board.reteach, both directions');
+
+  const three = buildClassBoard(
+    six,
+    [
+      ...six.flatMap((s) => rows(s.id, 'סדרות', 5, 1)),
+      ...six.flatMap((s) => rows(s.id, 'פונקציות', 3, 2)),
+      ...six.flatMap((s) => rows(s.id, 'הסתברות', 3, 3)),
+    ],
+    NOW
+  );
+  const order = topicSummary(three).map((r) => r.state);
+  assert(
+    order.indexOf('reteach') < order.indexOf('borderline') && order.indexOf('borderline') < order.indexOf('strong'),
+    'order is what to fix first: ללמד שוב, then על הגבול, then הכיתה שולטת'
+  );
+
+  const worst = buildClassBoard(
+    [...six.slice(0, 4), { id: 'a', name: 'קצת' }, { id: 'b', name: 'מאוד' }],
+    [
+      ...six.slice(0, 4).flatMap((s) => rows(s.id, 'סדרות', 3, 3)),
+      ...rows('a', 'סדרות', 5, 2),
+      ...rows('b', 'סדרות', 5, 1),
+    ],
+    NOW
+  );
+  assert(
+    topicSummary(worst)[0]?.stuckStudents[0] === 'מאוד' && topicSummary(worst)[0]?.stuckStudents.length === 2,
+    'the students under a topic are listed worst first'
+  );
+
+  const withEmpty = buildClassBoard(
+    [...six, { id: 'z', name: 'ריק' }],
+    six.flatMap((s) => rows(s.id, 'הסתברות', 3, 3)),
+    NOW
+  );
+  const we = topicSummary(withEmpty)[0];
+  assert(
+    we?.state === 'strong' && we.students === 6 && !we.stuckStudents.includes('ריק'),
+    'a student with no data neither lowers the class mean nor appears as stuck — no fake zero at topic level'
+  );
+
+  const withAway = buildClassBoard(
+    [...six.slice(0, 5), { id: 'w', name: 'נעלם' }],
+    [...six.slice(0, 5).flatMap((s) => rows(s.id, 'סדרות', 3, 3)), ...rows('w', 'סדרות', 5, 1, { daysAgo: AWAY_DAYS + 2 })],
+    NOW
+  );
+  assert(
+    topicSummary(withAway)[0]?.stuckStudents.includes('נעלם'),
+    'a student who is away but stuck in the topic is still listed under it — attendance is a different question'
+  );
+
+  const demo = topicSummary(demoBoard(NOW));
+  assert(
+    JSON.stringify(demo.map((r) => r.topic)) === JSON.stringify(['סדרות', 'טריגונומטריה', 'פונקציות']),
+    'the sample class reads: סדרות, טריגונומטריה, פונקציות — in that order'
+  );
+  assert(
+    JSON.stringify(demo.map((r) => r.state)) === JSON.stringify(['reteach', 'borderline', 'strong']),
+    '…as ללמד שוב / על הגבול / הכיתה שולטת'
+  );
+  assert(!demo.some((r) => r.topic === 'הסתברות'), 'הסתברות has four students with data and makes no claim');
+  assert(
+    demo[0].stuckStudents.includes('שיר מ.') && demo[0].stuckStudents.includes('רן כ.'),
+    'and the names under סדרות include the two the demo is built around'
   );
 }
 

@@ -185,6 +185,10 @@ export const ACTIVITY_DAYS = 14;
 /** Wrong answers kept per student. Enough to spot a repeating mistake, few
  *  enough that the card stays a card. */
 export const RECENT_WRONG_LIMIT = 12;
+/** A topic whose per-student class mean is at or above this is one the class
+ *  "שולטת" in. Between here and RETEACH_MAX_MASTERY it is "על הגבול"; at or
+ *  below RETEACH_MAX_MASTERY it is "ללמד שוב". */
+export const STRONG_MIN_MASTERY = 0.7;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -385,29 +389,17 @@ export function buildClassBoard(
 
   // ---- zone 2: what to teach again -----------------------------------------
   //
-  // A per-STUDENT mean, not a pooled ratio over raw attempts. Pooling would let
-  // one student who answered 200 questions decide the class average for 31
-  // people. Students with no data in the topic are excluded from the mean
-  // rather than counted as zero — that is the no-fake-zero rule at class level.
+  // Reads the SAME per-topic means topicSummary() reads (classMeans below), so
+  // "ללמד שוב" on the topic list and "מה ללמד שוב" here can never disagree.
   const reteach: ReteachRow[] = [];
-  for (const topic of topics) {
-    const masteries: number[] = [];
-    for (const s of students) {
-      const t = s.topics.find((x) => x.topic === topic);
-      if (t && t.measured >= STUCK_MIN_ATTEMPTS && t.mastery !== null) masteries.push(t.mastery);
-    }
-    if (masteries.length < RETEACH_MIN_STUDENTS) continue;
-
-    const mean = masteries.reduce((a, b) => a + b, 0) / masteries.length;
-    if (mean > RETEACH_MAX_MASTERY) continue;
-
-    const belowHalf = masteries.filter((m) => m < 0.5).length;
+  for (const [topic, m] of classMeans(students, topics)) {
+    if (m.mean > RETEACH_MAX_MASTERY) continue;
     reteach.push({
       topic,
-      mastery: mean,
-      measuredStudents: masteries.length,
-      belowHalf,
-      reason: `${belowHalf} מתוך ${masteries.length} מתחת ל-50% — זה שיעור, לא תלמיד`,
+      mastery: m.mean,
+      measuredStudents: m.n,
+      belowHalf: m.belowHalf,
+      reason: `${m.belowHalf} מתוך ${m.n} מתחת ל-50% — זה שיעור, לא תלמיד`,
     });
   }
   reteach.sort((a, b) => a.mastery - b.mastery);
@@ -425,4 +417,89 @@ export function buildClassBoard(
     students,
     topics,
   };
+}
+
+// ============================================================
+// Topics, as a class sees them
+// ============================================================
+
+/**
+ * Per-topic class means, computed ONE way for every consumer.
+ *
+ * A per-STUDENT mean, never a pooled ratio over raw attempts: pooling let one
+ * student who answered 200 questions decide what 31 people were re-taught.
+ * Students with fewer than STUCK_MIN_ATTEMPTS measured answers in the topic,
+ * or no data at all, are excluded rather than counted as zero — the
+ * no-fake-zero rule at class level. A topic with fewer than
+ * RETEACH_MIN_STUDENTS such students is ABSENT from the map: no claim is made
+ * about it, which is different from "borderline".
+ */
+function classMeans(
+  students: StudentRow[],
+  topics: string[]
+): Map<string, { mean: number; n: number; belowHalf: number }> {
+  const out = new Map<string, { mean: number; n: number; belowHalf: number }>();
+  for (const topic of topics) {
+    const masteries: number[] = [];
+    for (const s of students) {
+      const t = s.topics.find((x) => x.topic === topic);
+      if (t && t.measured >= STUCK_MIN_ATTEMPTS && t.mastery !== null) masteries.push(t.mastery);
+    }
+    if (masteries.length < RETEACH_MIN_STUDENTS) continue;
+    const mean = masteries.reduce((a, b) => a + b, 0) / masteries.length;
+    out.set(topic, {
+      mean,
+      n: masteries.length,
+      belowHalf: masteries.filter((m) => m < 0.5).length,
+    });
+  }
+  return out;
+}
+
+export type TopicState = 'strong' | 'borderline' | 'reteach';
+
+export type TopicSummaryRow = {
+  topic: string;
+  state: TopicState;
+  /** Kept for tests and the student page. The class's first screen never
+   *  renders either — it shows the word. */
+  mean: number;
+  students: number;
+  /** Names of students whose stuck list includes this topic, worst first.
+   *  Includes students who are currently away: the topic's truth is not an
+   *  attendance question. */
+  stuckStudents: string[];
+};
+
+/**
+ * The class's topics as three words — הכיתה שולטת / על הגבול / ללמד שוב.
+ *
+ * `reteach` is not recomputed here: a topic is "ללמד שוב" exactly when it is
+ * in `board.reteach`, so the topic list and the "מה ללמד שוב" zone can never
+ * name different topics. The other two words split the remaining topics at
+ * STRONG_MIN_MASTERY. Topics under the sample-size gate are omitted rather
+ * than labelled — the caller prints one footnote for them.
+ *
+ * Order: what to fix first — reteach, then borderline, then strong, and within
+ * a band the weaker topic first.
+ */
+export function topicSummary(board: ClassBoard): TopicSummaryRow[] {
+  const reteachTopics = new Set(board.reteach.map((r) => r.topic));
+  const rows: TopicSummaryRow[] = [];
+  for (const [topic, m] of classMeans(board.students, board.topics)) {
+    const state: TopicState = reteachTopics.has(topic)
+      ? 'reteach'
+      : m.mean >= STRONG_MIN_MASTERY
+        ? 'strong'
+        : 'borderline';
+    const stuckStudents = board.students
+      .map((s) => ({ name: s.name, t: s.stuck.find((x) => x.topic === topic) }))
+      .filter((x): x is { name: string; t: TopicMastery } => x.t !== undefined)
+      .sort((a, b) => (a.t.mastery ?? 0) - (b.t.mastery ?? 0))
+      .map((x) => x.name);
+    rows.push({ topic, state, mean: m.mean, students: m.n, stuckStudents });
+  }
+  const rank: Record<TopicState, number> = { reteach: 0, borderline: 1, strong: 2 };
+  rows.sort((a, b) => rank[a.state] - rank[b.state] || a.mean - b.mean);
+  return rows;
 }

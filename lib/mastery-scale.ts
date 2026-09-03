@@ -40,16 +40,16 @@ const BANDS: { min: number; band: MasteryBand }[] = [
   {
     min: 0.85,
     band: {
-      cell: 'bg-teal-500/30 text-teal-900 dark:bg-teal-400/25 dark:text-teal-100',
-      bar: 'bg-teal-600 dark:bg-teal-500',
+      cell: 'bg-teal-500/30 text-teal-900',
+      bar: 'bg-teal-600',
       label: 'שולט',
     },
   },
   {
     min: 0.7,
     band: {
-      cell: 'bg-teal-500/12 text-teal-800 dark:bg-teal-400/12 dark:text-teal-200',
-      bar: 'bg-teal-400 dark:bg-teal-600',
+      cell: 'bg-teal-500/12 text-teal-800',
+      bar: 'bg-teal-400',
       label: 'כמעט שם',
     },
   },
@@ -59,24 +59,24 @@ const BANDS: { min: number; band: MasteryBand }[] = [
     // teacher scanning for trouble should not have her eye caught by it.
     min: 0.55,
     band: {
-      cell: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
-      bar: 'bg-slate-300 dark:bg-slate-600',
+      cell: 'bg-slate-100 text-slate-500',
+      bar: 'bg-slate-300',
       label: 'על הגבול',
     },
   },
   {
     min: 0.4,
     band: {
-      cell: 'bg-orange-500/12 text-orange-800 dark:bg-orange-400/12 dark:text-orange-200',
-      bar: 'bg-orange-300 dark:bg-orange-700',
+      cell: 'bg-orange-500/12 text-orange-800',
+      bar: 'bg-orange-300',
       label: 'מתקשה',
     },
   },
   {
     min: 0,
     band: {
-      cell: 'bg-orange-500/30 text-orange-900 dark:bg-orange-500/25 dark:text-orange-100',
-      bar: 'bg-orange-600 dark:bg-orange-600',
+      cell: 'bg-orange-500/30 text-orange-900',
+      bar: 'bg-orange-600',
       label: 'תקוע',
     },
   },

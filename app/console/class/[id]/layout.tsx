@@ -15,11 +15,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { AnimatePresence } from 'framer-motion';
 import { Printer, Download, Target } from 'lucide-react';
 import { ClassProvider, useClass, type ClassPayload } from '@/components/console/ClassContext';
-import StudentPanel from '@/components/school/StudentPanel';
 import FocusDialog from '@/components/console/FocusDialog';
-import { Btn } from '@/components/console/Panel';
+import { Btn, btnSecondary } from '@/components/console/ui';
 
 export default function ClassLayout({
   params,
@@ -63,7 +63,7 @@ export default function ClassLayout({
       <main className="px-6 py-8">
         <p
           role="status"
-          className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200"
+          className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
         >
           {error}
         </p>
@@ -78,7 +78,7 @@ export default function ClassLayout({
   return (
     <ClassProvider data={data} reload={load}>
       <CommandBar />
-      <main className="px-6 pb-16 pt-5 lg:px-8">{children}</main>
+      <main className="px-6 pb-16 pt-6 lg:px-8">{children}</main>
       <Overlays />
     </ClassProvider>
   );
@@ -96,37 +96,32 @@ function CommandBar() {
     focus: 'תרגולים',
     report: 'דוחות',
     settings: 'הגדרות',
+    student: 'תלמיד',
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-6 py-3 lg:px-8 print:hidden dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-100 bg-white/50 px-6 py-3 lg:px-8 print:hidden">
       <nav className="flex items-center gap-2 text-sm" aria-label="מיקום">
-        <Link href="/console" className="text-slate-500 hover:text-slate-900 dark:text-slate-400">
+        <Link href="/console" className="text-slate-600 hover:text-violet-700">
           הכיתות שלי
         </Link>
         <span className="text-slate-300" aria-hidden>
           /
         </span>
-        <span className="font-semibold text-slate-900 dark:text-slate-50">{data.class.name}</span>
+        <span className="font-display font-black text-ink">{data.class.name}</span>
         <span className="text-slate-300" aria-hidden>
           /
         </span>
-        <span className="text-slate-600 dark:text-slate-300">{label[section] ?? section}</span>
+        <span className="text-slate-600">{label[section] ?? section}</span>
       </nav>
 
       {!isDemo && classId && (
         <div className="flex items-center gap-2">
-          <a
-            href={`/api/school/classes/${classId}/export`}
-            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-          >
+          <a href={`/api/school/classes/${classId}/export`} className={btnSecondary}>
             <Download className="h-4 w-4" aria-hidden />
             אקסל
           </a>
-          <Link
-            href={`/console/class/${classId}/report`}
-            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-          >
+          <Link href={`/console/class/${classId}/report`} className={btnSecondary}>
             <Printer className="h-4 w-4" aria-hidden />
             דוח
           </Link>
@@ -141,32 +136,16 @@ function CommandBar() {
 }
 
 function Overlays() {
-  const { openStudent, showStudent, focusFor, closeFocus, openFocus, classId, isDemo, board, reload } =
-    useClass();
+  const { focusFor, focusTopic, closeFocus, classId, isDemo, board, reload } = useClass();
   return (
-    <>
-      {openStudent && (
-        <StudentPanel
-          student={openStudent}
-          reportHref={
-            isDemo || !classId ? null : `/console/class/${classId}/report?student=${openStudent.id}`
-          }
-          onClose={() => showStudent(null)}
-          onFocus={
-            isDemo
-              ? null
-              : () => {
-                  openFocus({ studentId: openStudent.id, name: openStudent.name });
-                  showStudent(null);
-                }
-          }
-        />
-      )}
+    <AnimatePresence>
       {focusFor !== null && classId && !isDemo && (
         <FocusDialog
+          key="send"
           classId={classId}
           students={board.students}
           preselect={focusFor === 'class' ? null : focusFor.studentId}
+          presetTopic={focusTopic}
           onClose={closeFocus}
           onSaved={() => {
             closeFocus();
@@ -174,6 +153,6 @@ function Overlays() {
           }}
         />
       )}
-    </>
+    </AnimatePresence>
   );
 }

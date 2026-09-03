@@ -15,8 +15,8 @@
 import { useSearchParams } from 'next/navigation';
 import { Printer } from 'lucide-react';
 import { useClass } from '@/components/console/ClassContext';
-import PageHeader from '@/components/console/PageHeader';
-import { Btn } from '@/components/console/Panel';
+import { PageHeader } from '@/components/PageHeader';
+import { Btn } from '@/components/console/ui';
 import type { StudentRow } from '@/lib/class-board';
 import { ACTIVITY_DAYS } from '@/lib/class-board';
 
@@ -40,7 +40,7 @@ export default function ClassReportPage() {
       <div className="print:hidden">
         <PageHeader
           title="דוחות"
-          subtitle={
+          description={
             only
               ? 'דוח לתלמיד אחד. הדפסה מפיקה עמוד אחד.'
               : 'עמוד לכל תלמיד, מוכן להדפסה. הדפסה מפיקה את כל הכיתה, כל תלמיד בדף משלו.'
@@ -57,7 +57,7 @@ export default function ClassReportPage() {
         )}
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-white px-8 py-8 print:rounded-none print:border-0 print:px-0 print:py-0 dark:border-slate-800 dark:bg-slate-900 print:dark:bg-white">
+      <div className="surface-premium rounded-2xl px-8 py-8 print:rounded-none print:border-0 print:bg-white print:px-0 print:py-0 print:shadow-none">
         {students.map((s) => (
           <StudentReport key={s.id} student={s} klass={data.class} windowDays={data.windowDays} />
         ))}
@@ -86,29 +86,29 @@ function StudentReport({
     <article className="mb-12 break-after-page last:mb-0 last:break-after-auto print:text-black">
       <header className="border-b-2 border-slate-800 pb-3">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50 print:text-black">
+          <h2 className="font-display text-2xl font-black text-ink print:text-black">
             {student.name}
           </h2>
-          <span className="text-sm text-slate-600 dark:text-slate-400">
+          <span className="text-sm text-slate-600">
             {klass.name}
             {klass.units ? ` · ${klass.units} יח״ל` : ''} · {klass.schoolYear}
           </span>
         </div>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+        <p className="mt-1 text-sm text-slate-600">
           דוח תרגול · {windowDays} הימים האחרונים · הופק ב-{printed}
         </p>
       </header>
 
       {student.attempts === 0 ? (
-        <p className="mt-6 text-slate-700 dark:text-slate-300">
+        <p className="mt-6 text-slate-700">
           התלמיד מחובר לכיתה אך טרם פתר שאלות במערכת, ולכן אין עדיין נתונים לדווח עליהם. זה אינו
           ציון אפס — פשוט טרם התקיימה פעילות שניתן למדוד.
         </p>
       ) : (
         <>
           <section className="mt-5">
-            <h3 className="mb-2 font-bold text-slate-900 dark:text-slate-50">תמונת מצב</h3>
-            <p className="leading-relaxed text-slate-700 dark:text-slate-300">
+            <h3 className="mb-2 font-bold text-slate-900">תמונת מצב</h3>
+            <p className="leading-relaxed text-slate-700">
               {student.name} פתר <strong>{student.attempts}</strong> תרגילים בתקופה זו, מתוכם{' '}
               <strong>{student.measured}</strong> נספרו למדידת שליטה (תרגילים שנפתרו בשנית נספרים
               כתרגול ולא כמדידה).
@@ -124,7 +124,7 @@ function StudentReport({
           </section>
 
           <section className="mt-5">
-            <h3 className="mb-2 font-bold text-slate-900 dark:text-slate-50">שליטה לפי נושא</h3>
+            <h3 className="mb-2 font-bold text-slate-900">שליטה לפי נושא</h3>
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-slate-300 text-slate-600">
@@ -136,11 +136,11 @@ function StudentReport({
               <tbody>
                 {student.topics.map((t) => (
                   <tr key={t.topic} className="border-b border-slate-200">
-                    <td className="py-1.5 text-slate-800 dark:text-slate-200">{t.topic}</td>
-                    <td className="py-1.5 text-center tabular-nums text-slate-700 dark:text-slate-300">
+                    <td className="py-1.5 text-slate-800">{t.topic}</td>
+                    <td className="py-1.5 text-center tabular-nums text-slate-700">
                       {t.correct} מתוך {t.measured}
                     </td>
-                    <td className="py-1.5 text-center font-semibold tabular-nums text-slate-900 dark:text-slate-50">
+                    <td className="py-1.5 text-center font-semibold tabular-nums text-slate-900">
                       {t.mastery === null ? '—' : `${Math.round(t.mastery * 100)}%`}
                     </td>
                   </tr>
@@ -151,8 +151,8 @@ function StudentReport({
 
           {student.stuck.length > 0 && (
             <section className="mt-5">
-              <h3 className="mb-2 font-bold text-slate-900 dark:text-slate-50">נושאים הדורשים חיזוק</h3>
-              <ul className="list-inside list-disc space-y-1 text-slate-700 dark:text-slate-300">
+              <h3 className="mb-2 font-bold text-slate-900">נושאים הדורשים חיזוק</h3>
+              <ul className="list-inside list-disc space-y-1 text-slate-700">
                 {student.stuck.map((t) => (
                   <li key={t.topic}>
                     <strong>{t.topic}</strong> — פתר נכון {t.correct} מתוך {t.measured} תרגילים שנמדדו.
@@ -164,8 +164,8 @@ function StudentReport({
 
           {named.length > 0 && (
             <section className="mt-5">
-              <h3 className="mb-2 font-bold text-slate-900 dark:text-slate-50">טעויות חוזרות שזוהו</h3>
-              <ul className="list-inside list-disc space-y-1 text-slate-700 dark:text-slate-300">
+              <h3 className="mb-2 font-bold text-slate-900">טעויות חוזרות שזוהו</h3>
+              <ul className="list-inside list-disc space-y-1 text-slate-700">
                 {named.map((w, i) => (
                   <li key={i}>
                     {w.note} <span className="text-slate-500">({w.topic})</span>

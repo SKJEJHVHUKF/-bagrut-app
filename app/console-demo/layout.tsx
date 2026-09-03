@@ -13,9 +13,8 @@
  * rail's other four links; this layout is why it no longer does.
  */
 
-import ConsoleShell from '@/components/school/ConsoleShell';
-import { ClassProvider, useClass, type ClassPayload } from '@/components/console/ClassContext';
-import StudentPanel from '@/components/school/StudentPanel';
+import ConsoleShell from '@/components/console/ConsoleShell';
+import { ClassProvider, type ClassPayload } from '@/components/console/ClassContext';
 
 const DEMO: ClassPayload = {
   class: {
@@ -45,26 +44,18 @@ export default function ConsoleDemoLayout({ children }: { children: React.ReactN
   return (
     <ConsoleShell demo>
       <ClassProvider data={DEMO} reload={() => {}}>
-        <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-6 py-3 text-sm lg:px-8 print:hidden dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-wrap items-center gap-3 border-b border-violet-100 bg-white/50 px-6 py-3 text-sm lg:px-8 print:hidden">
           <span className="text-slate-500">תצוגת דוגמה</span>
           <span className="text-slate-300" aria-hidden>
             /
           </span>
-          <span className="font-semibold text-slate-900 dark:text-slate-50">י׳3 — כיתת דוגמה</span>
-          <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <span className="font-display font-black text-ink">י׳3 — כיתת דוגמה</span>
+          <span className="chip-primary rounded-full px-2.5 py-0.5 text-xs font-bold">
             נתונים לדוגמה — אותם חישובים שרצים על כיתה אמיתית
           </span>
         </div>
-        <main className="px-6 pb-16 pt-5 lg:px-8">{children}</main>
-        <DemoOverlay />
+        <main className="px-6 pb-16 pt-6 lg:px-8">{children}</main>
       </ClassProvider>
     </ConsoleShell>
   );
-}
-
-function DemoOverlay() {
-  const { openStudent, showStudent } = useClass();
-  return openStudent ? (
-    <StudentPanel student={openStudent} onClose={() => showStudent(null)} onFocus={null} />
-  ) : null;
 }

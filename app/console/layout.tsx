@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import ConsoleShell from '@/components/school/ConsoleShell';
+import ConsoleShell from '@/components/console/ConsoleShell';
 
 // About real students, and per-teacher — never cache.
 export const dynamic = 'force-dynamic';

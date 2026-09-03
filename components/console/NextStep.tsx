@@ -4,30 +4,29 @@
  * NextStep — the console, in one sentence and one button.
  *
  * THE DESIGN PRINCIPLE FOR A TEACHER WHO DOES NOT LIKE SOFTWARE: the screen
- * says what to do next, in words, before it shows any number. Data is for the
- * teacher who wants to check; the sentence is for the teacher who wants to be
- * told. Both get what they came for, and the second one does not have to learn
- * the first one's dashboard.
+ * says what to do next, in words, before it shows anything else. The sentence
+ * is derived, not written: it reads the same board the cards read, in a fixed
+ * priority — a class-wide gap first (one lesson fixes many students), then who
+ * is stuck, then who has vanished, then who never started, then "all quiet".
+ * It carries the one button that does that thing, and it can never disagree
+ * with the cards below it because it is computed from them.
  *
- * The sentence is derived, not written: it reads the same board the panels
- * read, in a fixed priority — a class-wide gap first (it is one lesson and
- * fixes many students), then the students who need the teacher, then the
- * onboarding stragglers, then "all quiet". So it can never disagree with the
- * panels below it.
+ * No percentage in it, ever. Headcounts and day counts are allowed — those are
+ * things a teacher says out loud.
  */
 
-import { Sparkles, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Sparkles, ArrowLeft } from 'lucide-react';
 import { useClass } from '@/components/console/ClassContext';
-import { Btn } from '@/components/console/Panel';
+import { Btn, btnSecondary } from '@/components/console/ui';
+import { BTN } from '@/components/console/copy';
 
 export default function NextStep() {
-  const { board, isDemo, classId, openFocus } = useClass();
-  const base = isDemo ? '/console-demo' : `/console/class/${classId}`;
+  const { board, isDemo, base, openFocus } = useClass();
 
-  const stuck = board.needsAttention.filter((r) => r.state === 'stuck');
-  const away = board.needsAttention.filter((r) => r.state === 'away');
-  const fresh = board.neverStarted;
+  const stuck = board.students.filter((s) => s.state === 'stuck');
+  const away = board.students.filter((s) => s.state === 'away');
+  const fresh = board.students.filter((s) => s.state === 'no-data');
   const gap = board.reteach[0] ?? null;
 
   let headline: string;
@@ -36,43 +35,44 @@ export default function NextStep() {
 
   if (board.studentCount === 0) {
     headline = 'הכיתה ריקה עדיין.';
-    detail = 'שלח לתלמידים את קוד ההצטרפות. ברגע שהם יתחילו לתרגל, הלוח הזה יתמלא מעצמו.';
+    detail = 'שלח לתלמידים את קוד ההצטרפות. ברגע שהם יתחילו לתרגל, המסך הזה יתמלא מעצמו.';
   } else if (gap) {
     headline = `הכיתה נופלת ב${gap.topic}.`;
-    detail = `${gap.belowHalf} מתוך ${gap.measuredStudents} תלמידים מתחת לחצי — זה שיעור שכדאי ללמד שוב, לא תלמיד אחד. אפשר לשלוח לכולם תרגול ממוקד בנושא, ולראות כאן מחר מי סגר.`;
+    detail = 'רוב הכיתה מתחת לחצי — זה שיעור, לא תלמיד. שלח לכולם תרגול קצר בנושא, ומחר תראה כאן מי סגר.';
     action = !isDemo && (
-      <Btn kind="primary" onClick={() => openFocus('class')}>
+      <Btn kind="primary" onClick={() => openFocus('class', gap.topic)}>
         שלח לכיתה תרגול ב{gap.topic}
         <ArrowLeft className="h-4 w-4" aria-hidden />
       </Btn>
     );
   } else if (stuck.length > 0) {
     const first = stuck[0];
-    headline =
-      stuck.length === 1
-        ? `${first.name} תקוע ב${first.topic}.`
-        : `${stuck.length} תלמידים תקועים.`;
+    const topic = first.stuck[0]?.topic ?? '';
+    headline = stuck.length === 1 ? `${first.name} תקוע ב${topic}.` : `${stuck.length} תלמידים תקועים.`;
     detail =
       stuck.length === 1
-        ? `${first.reason}. הצעד הקל: לשלוח לו תרגול קצר בדיוק בנושא הזה.`
-        : `כל אחד בנושא אחר — הרשימה למטה אומרת מי ובמה. לחיצה על "שלח תרגול" ליד שם שולחת לו בדיוק את זה.`;
-    action = !isDemo && stuck.length === 1 && (
-      <Btn kind="primary" onClick={() => openFocus({ studentId: first.studentId, name: first.name })}>
-        שלח ל{first.name} תרגול
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-      </Btn>
-    );
+        ? 'הצעד הקל: לשלוח לו תרגול קצר בדיוק בנושא הזה.'
+        : 'כל אחד בנושא אחר — הכרטיסים למטה אומרים מי ובמה.';
+    action =
+      !isDemo && stuck.length === 1 ? (
+        <Btn kind="primary" onClick={() => openFocus({ studentId: first.id, name: first.name }, topic)}>
+          שלח ל{first.name} תרגול
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+        </Btn>
+      ) : null;
   } else if (away.length > 0) {
-    headline = away.length === 1 ? `${away[0].name} לא נכנס כבר ${away[0].reason.split(' ')[0]} ימים.` : `${away.length} תלמידים לא נכנסו השבוע.`;
+    const a = away[0];
+    headline =
+      away.length === 1
+        ? `${a.name} לא נכנס כבר ${a.daysSinceActive ?? 0} ימים.`
+        : `${away.length} תלמידים לא נכנסו השבוע.`;
     detail = 'לא בעיה של הבנה — בעיה של הרגל. מילה בכיתה מחר בדרך כלל מספיקה.';
-  } else if (fresh > 0) {
-    headline = fresh === 1 ? 'תלמיד אחד הצטרף ועוד לא התחיל.' : `${fresh} תלמידים הצטרפו ועוד לא התחילו.`;
+  } else if (fresh.length > 0) {
+    headline =
+      fresh.length === 1 ? 'תלמיד אחד הצטרף ועוד לא התחיל.' : `${fresh.length} תלמידים הצטרפו ועוד לא התחילו.`;
     detail = 'אין להם עדיין נתונים — זה לא אפס, פשוט לא פתרו כלום. שווה לוודא שהם יודעים מאיפה מתחילים.';
     action = (
-      <Link
-        href={`${base}/students`}
-        className="inline-flex items-center gap-1.5 text-sm font-medium underline underline-offset-4"
-      >
+      <Link href={`${base}/students`} className={btnSecondary}>
         מי הם
         <ArrowLeft className="h-4 w-4" aria-hidden />
       </Link>
@@ -83,13 +83,17 @@ export default function NextStep() {
   }
 
   return (
-    <section className="flex flex-wrap items-center gap-4 rounded-md border border-slate-900 bg-slate-900 px-5 py-4 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900">
-      <Sparkles className="h-5 w-5 shrink-0 opacity-70" aria-hidden />
+    <section className="surface-premium flex flex-wrap items-center gap-4 rounded-2xl px-5 py-4">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-100 text-violet-700">
+        <Sparkles className="h-5 w-5" aria-hidden />
+      </span>
       <div className="min-w-0 flex-1">
-        <p className="text-base font-semibold">{headline}</p>
-        <p className="mt-0.5 text-sm leading-relaxed opacity-80">{detail}</p>
+        <p className="font-display text-lg font-black text-ink">{headline}</p>
+        <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{detail}</p>
       </div>
-      {action && <div className="shrink-0 [&_button]:bg-white [&_button]:text-slate-900 [&_button:hover]:bg-slate-200 dark:[&_button]:bg-slate-900 dark:[&_button]:text-white">{action}</div>}
+      {action && <div className="shrink-0">{action}</div>}
+      {/* BTN is imported so the file fails to compile if the vocabulary moves. */}
+      <span className="sr-only">{BTN.send}</span>
     </section>
   );
 }
