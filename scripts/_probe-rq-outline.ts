@@ -24,7 +24,6 @@ for (const id of STAGES) {
   console.log(`lesson steps:`);
   for (const s of st.lesson ?? []) {
     console.log(`  · ${s.title}`);
-    if (s.formulas?.length) for (const f of s.formulas) console.log(`      ƒ ${f.latex ?? f.name}`);
   }
   console.log(`existing questions:`);
   for (const q of st.questions ?? []) {
