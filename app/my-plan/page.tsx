@@ -42,7 +42,7 @@ import { trackLevelsBySub, trackMainTopics } from '@/lib/track';
 import { isProUser, isAdmin, type UserLike } from '@/lib/access';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
-import { MathText } from '@/components/practice/MathText';
+import { TodayList } from '@/components/roadmap/TodayList';
 import { useClientValue, useHydrated } from '@/lib/use-client-value';
 
 export default function MyPlanPage() {
@@ -497,48 +497,9 @@ function TodaySection({ plan, onTargetSet }: { plan: StudyPlan; onTargetSet: () 
         </div>
       </div>
 
-      {/* Today's tasks, in priority order, each saying why it is on the list. */}
-      {daily && daily.tasks.length > 0 && (
-        <div className="surface-premium rounded-3xl p-5 space-y-3">
-          <div className="flex items-baseline justify-between">
-            <div className="text-[11px] font-black tracking-widest text-violet-700 uppercase">
-              המשימות של היום
-            </div>
-            <span className="text-[11px] font-bold text-slate-500">
-              {`כ-${daily.totalMinutes} דק׳`}
-            </span>
-          </div>
-
-          {daily.tasks.map((task, i) => (
-            <Link
-              key={task.href}
-              href={task.href}
-              className="flex items-start gap-3 rounded-2xl border border-slate-900/10 bg-slate-900/[0.02] hover:bg-slate-900/[0.05] px-3.5 py-3 transition-colors"
-            >
-              <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-violet-500/15 border border-violet-400/30 flex items-center justify-center text-[11px] font-black text-violet-800">
-                {i + 1}
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="block text-sm font-black text-slate-900 leading-tight">
-                  <MathText inline>{task.title}</MathText>
-                </span>
-                <span className="block text-[11px] text-slate-600 leading-snug mt-0.5">
-                  <MathText inline>{task.why}</MathText>
-                </span>
-              </span>
-              <ArrowLeft className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
-            </Link>
-          ))}
-
-          {daily.deferred > 0 && (
-            <p className="text-[11px] text-slate-500">
-              {daily.deferred === 1
-                ? 'עוד משימה אחת מחכה — היא תיכנס כשיתפנה זמן.'
-                : `עוד ${daily.deferred} משימות מחכות — הן ייכנסו כשיתפנה זמן.`}
-            </p>
-          )}
-        </div>
-      )}
+      {/* Today's tasks — the same list the track page shows (one arbiter).
+          The goal headline is already printed above, so hand a copy without it. */}
+      {daily && <TodayList daily={{ ...daily, goal: { ...daily.goal, headline: null } }} title="המשימות של היום" />}
     </motion.section>
   );
 }

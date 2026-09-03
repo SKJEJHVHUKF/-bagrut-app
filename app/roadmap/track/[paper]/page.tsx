@@ -1,8 +1,13 @@
 'use client';
 
-// /roadmap/track/[paper] — the study track of one שאלון: the student's action
-// cards (repair / next step / daily review / resume), one status strip, and
-// then every TOPIC of the track as a tile → /roadmap/track/[paper]/[topic].
+// /roadmap/track/[paper] — the study track of one שאלון: ONE "today" list
+// (lib/daily-plan — repair / review / climb / drill in its order), one status
+// strip, and then every TOPIC of the track as a tile → /roadmap/track/[paper]/[topic].
+//
+// Until 2026-09-03 this page stacked four action cards (repair, cognition
+// NextStepCard, daily review, resume) from four engines that did not always
+// agree, while the daily plan — the only engine that knows the goal — lived on
+// /my-plan behind the "עוד" drawer. Now the plan is the arbiter here too.
 //
 // This is the old /roadmap dashboard with the paper taken from the URL instead
 // of localStorage and the topic accordion replaced by tiles; the tree it walks
@@ -14,21 +19,21 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowLeftRight, CalendarClock, Crown, Gauge, RotateCcw, Sparkles, Wrench } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, CalendarClock, Crown, Flame, Gauge, Sparkles, Target } from 'lucide-react';
 import { PracticeShell } from '@/components/practice/PracticeShell';
 import { MathText } from '@/components/practice/MathText';
-import { NextStepCard } from '@/components/roadmap/NextStepCard';
-import { TopicIcon, levelIconFor } from '@/components/roadmap/TopicIcon';
+import { TodayList } from '@/components/roadmap/TodayList';
+import { TopicIcon } from '@/components/roadmap/TopicIcon';
 import { getTrack, isTrackPaper } from '@/content/tracks';
 import { paperLabel, type BagrutPaper } from '@/content/bagrut-curriculum';
-import { ladderHref, levelsForNodes, trackMainTopics, trackNodes } from '@/lib/track';
+import { levelsForNodes, trackMainTopics, trackNodes } from '@/lib/track';
 import { getPaper, getPlan, type StudyPlan } from '@/lib/study-plan';
 import { countCompleted, nodeLevelSummary, type NodeLevelSummary } from '@/lib/roadmap-progress';
 import { getResumePoint } from '@/lib/roadmap-resume';
 import { computePacing } from '@/lib/pacing';
-import { dueCount } from '@/lib/review';
 import { backfillFromMistakes } from '@/lib/review-resolve';
-import { getTopWeakness } from '@/lib/remediation';
+import { buildTodayPlan } from '@/lib/daily-plan-client';
+import { currentStreak, getDailyGoal, todayCount } from '@/lib/results';
 import { getCognitiveState } from '@/lib/cognition';
 import { createClient } from '@/lib/supabase/client';
 import { useClientState, useHydrated } from '@/lib/use-client-value';
@@ -112,54 +117,53 @@ function Track({ paper }: { paper: BagrutPaper }) {
   const totalXp = ready ? Object.values(summaries).reduce((s, x) => s + x.xp, 0) : 0;
   const masteredCount = ready ? Object.values(summaries).filter((x) => x.mastered).length : 0;
 
-  // "Continue where you left off" + exam-date pacing (both localStorage-derived).
+  // The resume point — only for the "כאן אתה" tile marker now; the list below
+  // carries the actual "continue" link.
   const resume = useMemo(
     () => (ready ? getResumePoint(groups, levelsBySub) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ready, groups, levelsBySub, summaries],
   );
-  // The track topic the resume point sits in — for the tile marker and so the
-  // resume link keeps its ?ctx (a sub-topic can appear in two track topics).
   const resumeTopicId = useMemo(
     () => (resume ? groups.find((g) => g.nodes.some((n) => n.subId === resume.subId))?.topic ?? null : null),
     [resume, groups],
   );
-  const resumeHref = resume
-    ? ladderHref(resume.subId, resumeTopicId ? { paper, topicId: resumeTopicId } : null, resume.levelKind)
-    : null;
   const pacing = useMemo(
     () => (ready ? computePacing(groups, levelsBySub, plan) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ready, groups, levelsBySub, plan, summaries],
   );
 
-  // Spaced-repetition: how many questions are due for review today.
-  // `syncTick` is not read inside — it is the recompute trigger: the value comes
-  // from localStorage, which React cannot see changing.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const reviewDue = useMemo(() => (ready ? dueCount() : 0), [ready, syncTick]);
+  // THE list. `syncTick`/`summaries` are recompute triggers, not inputs: every
+  // value comes from localStorage, which React cannot see changing.
+  const daily = useMemo(
+    () => (ready ? buildTodayPlan({ paper, withoutPlan: true }) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ready, paper, plan, syncTick, summaries],
+  );
 
-  // The diagnostic engine's single recommendation, for the lesson topic the
-  // student is actually in. It already weighs resume, review and weakness
-  // against each other, so when it speaks it REPLACES those two cards rather
-  // than adding a third — the whole reason lib/cognition/next-step.ts exists.
-  // It speaks only when it has something the plain cards CANNOT say ('start'
-  // = no evidence yet; 'continue-ladder' = the resume card says it better).
-  const guidance = useMemo(() => {
+  // One sentence from the diagnostic layer about the topic the student is in.
+  // The card it used to render is gone — the list already orders repair/review/
+  // climb the way next-step does — but the insight is the one thing the list
+  // cannot say ("your sign errors come from the conjugate rule").
+  const insight = useMemo(() => {
     if (!ready || !resume?.topic) return null;
-    const state = getCognitiveState(SUBJECT, resume.topic);
-    if (!state) return null;
-    const kind = state.nextStep.kind;
-    return kind !== 'start' && kind !== 'continue-ladder' ? state : null;
+    return getCognitiveState(SUBJECT, resume.topic)?.insight ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, resume?.topic, syncTick, summaries]);
 
-  // The single most worthwhile repair, when there is enough evidence for one.
-  const fixTarget = useMemo(
-    () => (ready ? getTopWeakness(SUBJECT) : null),
+  // Habit signals, on the page where the habit happens (they used to live only
+  // on /insights). The goal is the exam-date pace when there is a date, else
+  // the manual daily goal.
+  const habit = useMemo(() => {
+    if (!ready) return null;
+    const goal =
+      pacing && pacing.status !== 'no-date' && pacing.status !== 'done' && pacing.todayTarget > 0
+        ? pacing.todayTarget
+        : getDailyGoal();
+    return { streak: currentStreak(SUBJECT), today: todayCount(SUBJECT), goal };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ready, syncTick, summaries],
-  );
+  }, [ready, pacing, syncTick, summaries]);
 
   return (
     <PracticeShell subtitle="מסלול הלמידה" backHref="/roadmap" backLabel="שאלונים" wide>
@@ -178,58 +182,10 @@ function Track({ paper }: { paper: BagrutPaper }) {
           </Link>
         </div>
 
-        {/* Repair first — a broken idea outranks retention (lib/cognition/next-step
-            ordering: repair 100 > review 60). The review card drops its "הכי
-            חשוב היום" label whenever this one is showing. */}
-        {fixTarget && (
+        {/* The one "what now" — repair → review → climb → drill, with the why. */}
+        {daily && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
-            <Link
-              href={`/fix/${encodeURIComponent(fixTarget.id)}`}
-              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-rose-600 to-orange-500 shadow-lg shadow-rose-500/25 hover:from-rose-500 hover:to-orange-400 transition-colors"
-            >
-              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white">
-                <Wrench aria-hidden="true" className="w-6 h-6" strokeWidth={1.75} />
-              </div>
-              <div className="flex-1 min-w-0 text-white">
-                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">הכי חשוב היום</div>
-                {/* MathText, not a bare string: weakness titles/details carry
-                    $…$ islands from the misconception map. Raw, they print the
-                    dollars and RTL flips "q^{n-1}" into "q^{1-n}". line-clamp,
-                    not truncate — a KaTeX inline-block doesn't ellipsis. */}
-                <div className="text-sm font-black leading-tight mt-0.5 line-clamp-2">
-                  <MathText inline>{`מסלול תיקון · ${fixTarget.title}`}</MathText>
-                </div>
-                <div className="text-[11px] text-white/80 mt-0.5 line-clamp-2">
-                  <MathText inline>{`${fixTarget.topic} · ${fixTarget.detail}`}</MathText>
-                </div>
-              </div>
-              <ArrowLeft className="w-5 h-5 text-white group-hover:-translate-x-1 transition-transform flex-shrink-0" />
-            </Link>
-          </motion.div>
-        )}
-
-        {/* The diagnostic engine's single recommendation — replaces the two cards below. */}
-        {guidance && <NextStepCard state={guidance} />}
-
-        {/* Daily spaced-repetition review — retention, once nothing is broken */}
-        {!guidance && reviewDue > 0 && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
-            <Link
-              href="/roadmap/review"
-              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-rose-500 to-orange-500 shadow-lg shadow-rose-500/25 hover:from-rose-400 hover:to-orange-400 transition-colors"
-            >
-              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white">
-                <RotateCcw aria-hidden="true" className="w-6 h-6" strokeWidth={1.75} />
-              </div>
-              <div className="flex-1 min-w-0 text-white">
-                <div className="text-[10px] font-black tracking-widest uppercase text-white/70">
-                  {fixTarget ? 'ואחר כך' : 'הכי חשוב היום'}
-                </div>
-                <div className="text-sm font-black leading-tight mt-0.5">חזרה יומית · {reviewDue} שאלות</div>
-                <div className="text-[11px] text-white/80 mt-0.5">מחזק את מה שכבר למדת כדי שלא יישכח</div>
-              </div>
-              <RotateCcw className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-500 flex-shrink-0" />
-            </Link>
+            <TodayList daily={daily} insight={insight} />
           </motion.div>
         )}
 
@@ -246,44 +202,38 @@ function Track({ paper }: { paper: BagrutPaper }) {
           </Link>
         )}
 
-        {/* Continue where you left off — only when the engine stayed silent */}
-        {!guidance && resume && resumeHref && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
-            {/* -600 not -500: white 10-14px labels need ≥4.5:1; violet-600 gives 6.3:1. */}
-            {/* The one dark moment on the screen — the logo's own aesthetic:
-                a deep-indigo object with a neon cyan glow. */}
-            <Link
-              href={resumeHref}
-              className="group flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-l from-[#241E7A] to-[#1E1B4B] border border-violet-500/25 shadow-xl shadow-indigo-950/25 transition-all hover:shadow-2xl hover:shadow-indigo-950/30 hover:-translate-y-0.5"
-            >
-              <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/[0.08] border border-cyan-400/25 flex items-center justify-center text-cyan-300">
-                {(() => {
-                  const LevelIcon = levelIconFor(resume.levelKind);
-                  return <LevelIcon aria-hidden="true" className="w-6 h-6" strokeWidth={1.75} />;
-                })()}
-              </div>
-              <div className="flex-1 min-w-0 text-white">
-                <div className="text-[10px] font-black tracking-widest uppercase text-cyan-200/90">
-                  {resume.reason === 'in-progress' ? 'המשך מאיפה שהפסקת' : resume.reason === 'mastery' ? 'להשלמת שליטה' : 'הצעד הבא שלך'}
-                </div>
-                <div className="text-sm font-black leading-tight mt-0.5 truncate">
-                  <MathText inline>{resume.title}</MathText>
-                </div>
-                <div className="text-[11px] text-white/80 mt-0.5">רמת {resume.levelTitle}</div>
-              </div>
-              <ArrowLeft className="w-5 h-5 text-white group-hover:-translate-x-1 transition-transform flex-shrink-0" />
-            </Link>
-          </motion.div>
-        )}
-
         {/* ===== Status strip — "how am I doing", one quiet row under the action ===== */}
         <div className="surface-premium rounded-2xl p-4 sm:p-5 space-y-3">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <span className="flex items-baseline gap-2 min-w-0">
               <span className="font-display text-2xl font-black text-ink tabular-nums">{overallPct}%</span>
               <span className="text-xs text-slate-600 truncate">{overallDone} מתוך {allNodes.length} שלבים</span>
             </span>
-            <span className="flex items-center gap-2 shrink-0">
+            <span className="flex items-center gap-2 shrink-0 flex-wrap">
+              {habit && (
+                <>
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums border ${
+                      habit.today >= habit.goal
+                        ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-800'
+                        : 'bg-slate-900/[0.04] border-slate-900/10 text-slate-700'
+                    }`}
+                    title="שאלות שענית היום מול היעד היומי"
+                  >
+                    <Target aria-hidden="true" className="w-3.5 h-3.5" />
+                    היום {habit.today}/{habit.goal}
+                  </span>
+                  {habit.streak > 0 && (
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/10 border border-orange-500/25 text-orange-800 px-2.5 py-1 text-[11px] font-bold tabular-nums"
+                      title="ימים ברצף עם תרגול"
+                    >
+                      <Flame aria-hidden="true" className="w-3.5 h-3.5 text-orange-600" />
+                      {habit.streak === 1 ? 'יום אחד ברצף' : `${habit.streak} ימים ברצף`}
+                    </span>
+                  )}
+                </>
+              )}
               <span className="inline-flex items-center gap-1.5 rounded-full chip-primary px-2.5 py-1 text-[11px] font-bold tabular-nums">
                 <Sparkles aria-hidden="true" className="w-3.5 h-3.5" />
                 {totalXp} XP

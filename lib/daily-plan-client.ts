@@ -24,6 +24,7 @@
 import { buildDailyPlan, type DailyPlan } from '@/lib/daily-plan';
 import { getPlan, getPaper } from '@/lib/study-plan';
 import { DEFAULT_PAPER } from '@/constants/roadmapData';
+import type { BagrutPaper } from '@/content/bagrut-curriculum';
 import { getTrack } from '@/content/tracks';
 import { trackLevelsBySub, trackMainTopics } from '@/lib/track';
 import { getResumePoint } from '@/lib/roadmap-resume';
@@ -32,19 +33,31 @@ import { getWeaknesses } from '@/lib/remediation';
 import { dueCount } from '@/lib/review';
 import { computePacing } from '@/lib/pacing';
 
+export type TodayPlanOptions = {
+  /** The track being viewed. Defaults to the stored paper. */
+  paper?: BagrutPaper;
+  /**
+   * Build the list even without a study plan (no target, no pacing). The track
+   * page wants this: an anonymous visitor still has a resume point and a review
+   * queue. The tutor greeting keeps the default — it must not invent a plan.
+   */
+  withoutPlan?: boolean;
+};
+
 /**
  * Today's plan, or null when there is no study plan yet (a visitor who has not
- * onboarded has no target and no paper, and inventing one would be a guess).
+ * onboarded has no target and no paper, and inventing one would be a guess) —
+ * unless `withoutPlan` asks for the target-less list.
  *
  * Every failure is swallowed: this feeds a greeting, and a greeting that throws
  * takes down the screen the student just opened.
  */
-export function buildTodayPlan(): DailyPlan | null {
+export function buildTodayPlan(opts: TodayPlanOptions = {}): DailyPlan | null {
   try {
     const plan = getPlan();
-    if (!plan) return null;
+    if (!plan && !opts.withoutPlan) return null;
 
-    const paper = getPaper() ?? DEFAULT_PAPER;
+    const paper = opts.paper ?? getPaper() ?? DEFAULT_PAPER;
     // The study track (content/tracks) — the same tree the /roadmap pages walk,
     // so "next step" here and there agree.
     const tree = getTrack(paper);
@@ -54,8 +67,8 @@ export function buildTodayPlan(): DailyPlan | null {
     const resume = getResumePoint(mainTopics, levelsBySub);
 
     return buildDailyPlan({
-      target: plan.targetGrade ?? null,
-      minutesPerDay: plan.minutesPerDay ?? null,
+      target: plan?.targetGrade ?? null,
+      minutesPerDay: plan?.minutesPerDay ?? null,
       prediction: predictOverall('math5'),
       // ⚠️ UNCAPPED on purpose. The table does two jobs: picking the best lever
       // only needs the head, but looking up "how many points is the topic I'm
