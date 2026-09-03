@@ -40,14 +40,20 @@ let _index: SearchItem[] | null = null;
  *  of the palette is free. */
 export async function loadIndex(): Promise<SearchItem[]> {
   if (_index) return _index;
-  const [curriculum, lessons, past] = await Promise.all([
+  // ⚠️ lib/track is imported HERE and not at the top for the same reason the
+  // content modules are: it reaches content/tracks and content/lessons, and a
+  // static import would put the whole corpus back into the first load of every
+  // route — this module is mounted from the root layout.
+  const [curriculum, lessons, past, track] = await Promise.all([
     import('@/content/bagrut-curriculum'),
     import('@/content/lessons'),
     import('@/content/past-bagruyot'),
+    import('@/lib/track'),
   ]);
   const { MATH5_CURRICULUM } = curriculum;
   const { allLessonKeys, getLesson } = lessons;
   const { ALL_PAST_BAGRUYOT } = past;
+  const { topicHref } = track;
   const items: SearchItem[] = [];
 
   // Topics (curriculum — includes emoji + paper for context)
@@ -58,7 +64,9 @@ export async function loadIndex(): Promise<SearchItem[]> {
       title: t.displayName,
       subtitle: `שאלון ${t.paper}${t.alsoIn ? ` + ${t.alsoIn}` : ''}`,
       emoji: t.emoji,
-      href: `/practice/math5/${encodeURIComponent(t.key)}`,
+      // The topic's page in the study track. All 13 in-scope curriculum keys
+      // resolve to one; the sub-topic rows below already pointed at /roadmap.
+      href: topicHref(t.key),
       norm: normalizeQuestionText(`${t.displayName} ${t.examStyle}`),
     });
   }

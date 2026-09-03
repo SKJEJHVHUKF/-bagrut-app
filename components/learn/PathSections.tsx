@@ -11,6 +11,10 @@ import {
   BookMarked,
 } from 'lucide-react';
 import Link from 'next/link';
+// The prerequisite link opens the roadmap, never the retired /practice hub.
+// Bundle-neutral here: all three screens that render this section already pull
+// lib/track (roadmap) or the lesson corpus (learn, advanced).
+import { topicHref } from '@/lib/track';
 import type {
   Prerequisite,
   IntuitionSection as IntuitionData,
@@ -123,7 +127,7 @@ export function PrerequisitesView({ items }: { items: Prerequisite[] }) {
           )}
           {p.link && (
             <Link
-              href={`/practice/${p.link.subject}/${encodeURIComponent(p.link.topic)}`}
+              href={topicHref(p.link.topic)}
               className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-sky-300 hover:text-sky-200 transition-colors"
             >
               <span>{p.link.label}</span>
