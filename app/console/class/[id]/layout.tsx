@@ -78,9 +78,43 @@ export default function ClassLayout({
   return (
     <ClassProvider data={data} reload={load}>
       <CommandBar />
+      <EmptyClassNotice />
       <main className="px-6 pb-16 pt-6 lg:px-8">{children}</main>
       <Overlays />
     </ClassProvider>
+  );
+}
+
+/**
+ * A REAL class with nobody in it yet shows the sample board — a teacher's first
+ * visit is always to an empty class, and "עוד אף תלמיד לא הצטרף" teaches him
+ * nothing about why he should hand this to thirty students. But eight
+ * invented names with no explanation is worse. This says what he is looking
+ * at, and gives the one thing that turns it real. The demo route has its own
+ * banner; this one is for the teacher's own class.
+ */
+function EmptyClassNotice() {
+  const { isDemo, data } = useClass();
+  if (!isDemo) return null;
+  return (
+    <div className="mx-6 mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-violet-200 bg-violet-50/80 px-4 py-3 text-sm lg:mx-8 print:hidden">
+      <span className="chip-primary rounded-full px-2.5 py-0.5 text-xs font-bold">תצוגת דוגמה</span>
+      <p className="min-w-0 flex-1 leading-relaxed text-violet-950">
+        <strong className="font-bold">הכיתה ריקה עדיין.</strong> התלמידים שמוצגים כאן מומצאים — כך ייראה
+        הלוח כשהתלמידים שלך יתחילו לתרגל.
+        {data.class.joinCode && (
+          <>
+            {' '}
+            שלח להם את הקוד{' '}
+            <span className="font-mono font-black tracking-widest text-ink">{data.class.joinCode}</span> והנתונים
+            האמיתיים יחליפו אותה.
+          </>
+        )}
+      </p>
+      <Link href="/console" className="text-xs font-bold text-violet-700 underline-offset-4 hover:underline">
+        להודעה המוכנה לכיתה ←
+      </Link>
+    </div>
   );
 }
 
