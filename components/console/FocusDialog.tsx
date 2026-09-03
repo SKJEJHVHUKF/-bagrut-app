@@ -38,6 +38,7 @@ export default function FocusDialog({
   const [picked, setPicked] = useState<string[]>(preselect ? [preselect] : []);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [more, setMore] = useState(false);
 
   useEffect(() => {
     void fetch('/api/school/focus')
@@ -99,10 +100,10 @@ export default function FocusDialog({
       >
         <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-50">
           <Target className="h-5 w-5 text-slate-500" aria-hidden />
-          מיקוד
+          שליחת תרגול
         </h2>
         <p className="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">
-          בחר מה שיתרגלו מתוך התוכן הקיים. הם יראו את זה כשלב מסומן במסלול שלהם.
+          בחר נושא, כמה תרגילים, ולמי. התלמידים יראו את זה כשלב מסומן במסלול שלהם — בלי שתכתוב שאלה אחת.
         </p>
 
         <Field label="נושא">
@@ -125,6 +126,31 @@ export default function FocusDialog({
           </select>
         </Field>
 
+        <Field label="כמה תרגילים">
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={targetCount}
+            onChange={(e) => setTargetCount(Number(e.target.value))}
+            className={inputCls}
+          />
+        </Field>
+
+        {/* Topic, how many, who — that is the whole task for most teachers.
+            The precise controls exist, folded, for the teacher who wants
+            "ביסוס בסדרה חשבונית עד יום ה׳" rather than "סדרות". */}
+        <button
+          type="button"
+          onClick={() => setMore((v) => !v)}
+          aria-expanded={more}
+          className="mt-3 text-sm text-slate-600 underline underline-offset-4 hover:text-slate-900 dark:text-slate-400"
+        >
+          {more ? 'פחות אפשרויות' : 'אפשרויות נוספות — תת-נושא, רמה, תאריך, הערה'}
+        </button>
+
+        {more && (
+          <>
         {entry && entry.subTopics.length > 0 && (
           <Field label="תת-נושא (אופציונלי)">
             <select
@@ -159,36 +185,25 @@ export default function FocusDialog({
           </Field>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="כמה תרגילים">
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={targetCount}
-              onChange={(e) => setTargetCount(Number(e.target.value))}
-              className={inputCls}
-            />
-          </Field>
-          <Field label="עד מתי (אופציונלי)">
-            <input
-              type="date"
-              value={dueOn}
-              onChange={(e) => setDueOn(e.target.value)}
-              className={inputCls}
-            />
-          </Field>
-        </div>
-
-        <Field label="הערה (אופציונלי)">
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            maxLength={200}
-            placeholder="שורה אחת לתלמיד"
-            className={inputCls}
-          />
-        </Field>
+            <Field label="עד מתי (אופציונלי)">
+              <input
+                type="date"
+                value={dueOn}
+                onChange={(e) => setDueOn(e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="הערה (אופציונלי)">
+              <input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                maxLength={200}
+                placeholder="שורה אחת לתלמיד"
+                className={inputCls}
+              />
+            </Field>
+          </>
+        )}
 
         <fieldset className="mt-4">
           <legend className="text-sm text-slate-600 dark:text-slate-400">
@@ -226,7 +241,7 @@ export default function FocusDialog({
 
         <div className="mt-5 flex gap-2">
           <Btn kind="primary" type="submit" disabled={busy || !topic} className="flex-1 justify-center">
-            {busy ? 'שולח…' : picked.length ? `מקד ${picked.length} תלמידים` : 'מקד את כל הכיתה'}
+            {busy ? 'שולח…' : picked.length ? `שלח ל-${picked.length} תלמידים` : 'שלח לכל הכיתה'}
           </Btn>
           <Btn type="button" onClick={onClose}>
             ביטול

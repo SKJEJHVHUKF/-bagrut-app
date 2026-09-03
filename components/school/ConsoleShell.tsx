@@ -14,6 +14,7 @@ import {
   BookOpen,
   ChevronDown,
   Gauge,
+  HelpCircle,
 } from 'lucide-react';
 import MathUpLogo from '@/components/MathUpLogo';
 
@@ -42,7 +43,7 @@ type ClassLite = { id: string; name: string };
 const SECTIONS = [
   { seg: '', label: 'סקירה', icon: Gauge, hint: 'מי צריך אותך עכשיו' },
   { seg: 'students', label: 'תלמידים', icon: Users, hint: 'הרשימה המלאה, ממוינת' },
-  { seg: 'focus', label: 'מיקודים', icon: Target, hint: 'מה שלחת, ומי סגר' },
+  { seg: 'focus', label: 'תרגולים', icon: Target, hint: 'מה שלחת לתרגל, ומי סגר' },
   { seg: 'report', label: 'דוחות', icon: Printer, hint: 'להורים, לרכז, לתיק' },
   { seg: 'settings', label: 'הגדרות', icon: Settings, hint: 'שם, רמה, הצטרפות' },
 ] as const;
@@ -93,7 +94,7 @@ export default function ConsoleShell({
     }`;
 
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div dir="rtl" className="min-h-screen bg-slate-100 text-[15px] text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="flex min-h-screen">
         {/* ---- rail ------------------------------------------------------ */}
         <aside className="hidden w-64 shrink-0 flex-col bg-slate-900 text-slate-200 lg:flex">
@@ -121,6 +122,16 @@ export default function ConsoleShell({
             >
               <Eye className="h-4 w-4" aria-hidden />
               תצוגת דוגמה
+            </Link>
+            {/* One page that explains every word on the screen. For the
+                teacher who would rather read than click around. */}
+            <Link
+              href={demo ? '/console-demo/help' : '/console/help'}
+              aria-current={pathname.endsWith('/help') ? 'page' : undefined}
+              className={railLink(pathname.endsWith('/help'))}
+            >
+              <HelpCircle className="h-4 w-4" aria-hidden />
+              עזרה
             </Link>
           </nav>
 
@@ -200,6 +211,12 @@ export default function ConsoleShell({
             <nav className="flex items-center gap-1 overflow-x-auto" aria-label="ניווט">
               <Link href="/console" className="rounded px-2 py-1 text-xs whitespace-nowrap hover:bg-white/10">
                 הכיתות
+              </Link>
+              <Link
+                href={demo ? '/console-demo/help' : '/console/help'}
+                className="rounded px-2 py-1 text-xs whitespace-nowrap hover:bg-white/10"
+              >
+                עזרה
               </Link>
               {base &&
                 SECTIONS.filter((s) => !demo || s.seg !== 'settings').map((s) => (

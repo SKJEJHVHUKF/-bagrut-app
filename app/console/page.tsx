@@ -85,20 +85,7 @@ export default function ConsoleHome() {
       {classes === null ? (
         <p className="text-sm text-slate-500">טוען…</p>
       ) : classes.length === 0 && !error ? (
-        <div className="rounded-md border border-dashed border-slate-300 bg-white px-6 py-14 text-center dark:border-slate-700 dark:bg-slate-900">
-          <p className="text-slate-700 dark:text-slate-300">עוד אין לך כיתות.</p>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            פתיחת כיתה לוקחת חצי דקה: שם, רמה, ומתקבל קוד שהתלמידים מזינים באפליקציה.
-          </p>
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
-            className="mt-4 inline-flex items-center gap-2 rounded-md bg-slate-900 px-3.5 py-2 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900"
-          >
-            <Plus className="h-4 w-4" aria-hidden />
-            פתיחת כיתה ראשונה
-          </button>
-        </div>
+        <FirstClass onCreated={load} />
       ) : (
         <div className="overflow-x-auto rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
           <table className="w-full min-w-[52rem] text-sm">
@@ -123,6 +110,130 @@ export default function ConsoleHome() {
 
       {creating && <CreateClassDialog onClose={() => setCreating(false)} onCreated={load} />}
     </main>
+  );
+}
+
+/**
+ * The first visit, for a teacher who has never used software like this.
+ *
+ * Not a table and a button: the three things that will happen, in order, and
+ * the only field she has to fill in right now. Everything technical — the
+ * code, the message, the join — is generated for her the moment the class
+ * exists, on the row that appears in place of this.
+ */
+function FirstClass({ onCreated }: { onCreated: () => void }) {
+  const [name, setName] = useState('');
+  const [units, setUnits] = useState(5);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || busy) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/school/classes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), units }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMessage(data.error ?? 'לא הצלחנו לפתוח את הכיתה');
+        return;
+      }
+      onCreated();
+    } catch {
+      setMessage('לא הצלחנו לפתוח את הכיתה. נסה שוב.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const steps = [
+    { n: 1, title: 'תן שם לכיתה', body: 'זה כל מה שצריך ממך עכשיו. חצי דקה.' },
+    { n: 2, title: 'שלח לתלמידים את הקוד', body: 'תקבל קוד בן שש תווים והודעה מוכנה לוואטסאפ — לחיצה אחת מעתיקה אותה.' },
+    { n: 3, title: 'חזור מחר', body: 'התלמידים מתרגלים כרגיל. הלוח יגיד לך במשפט אחד מי צריך אותך ומה ללמד שוב.' },
+  ];
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-5">
+      <ol className="flex flex-col gap-3 lg:col-span-3">
+        {steps.map((s) => (
+          <li
+            key={s.n}
+            className={`flex gap-4 rounded-md border px-5 py-4 ${
+              s.n === 1
+                ? 'border-slate-900 bg-white dark:border-slate-200 dark:bg-slate-900'
+                : 'border-slate-200 bg-white/60 text-slate-500 dark:border-slate-800 dark:bg-slate-900/60'
+            }`}
+          >
+            <span
+              className={`grid h-8 w-8 shrink-0 place-items-center rounded-full font-mono text-sm font-semibold ${
+                s.n === 1
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                  : 'bg-slate-100 text-slate-500 dark:bg-slate-800'
+              }`}
+            >
+              {s.n}
+            </span>
+            <div>
+              <p className={`font-semibold ${s.n === 1 ? 'text-slate-900 dark:text-slate-50' : ''}`}>
+                {s.title}
+              </p>
+              <p className="mt-0.5 text-sm leading-relaxed">{s.body}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <form
+        onSubmit={submit}
+        className="rounded-md border border-slate-200 bg-white p-5 lg:col-span-2 dark:border-slate-800 dark:bg-slate-900"
+      >
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="first-class-name">
+          איך קוראים לכיתה?
+        </label>
+        <input
+          id="first-class-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="למשל: י׳3"
+          maxLength={40}
+          autoFocus
+          className={`${inputCls} mt-1 py-2.5 text-base`}
+        />
+        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="first-class-units">
+          כמה יחידות?
+        </label>
+        <select
+          id="first-class-units"
+          value={units}
+          onChange={(e) => setUnits(Number(e.target.value))}
+          className={`${inputCls} mt-1 py-2.5 text-base`}
+        >
+          <option value={5}>5 יחידות</option>
+          <option value={4}>4 יחידות</option>
+          <option value={3}>3 יחידות</option>
+        </select>
+        <button
+          type="submit"
+          disabled={busy || !name.trim()}
+          className="mt-5 w-full rounded-md bg-slate-900 px-4 py-3 text-base font-medium text-white transition hover:bg-slate-700 disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900"
+        >
+          {busy ? 'פותח…' : 'פתח את הכיתה'}
+        </button>
+        {message && (
+          <p role="status" className="mt-2 text-sm text-rose-600 dark:text-rose-400">
+            {message}
+          </p>
+        )}
+        <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+          אפשר לשנות הכל אחר כך ב״הגדרות״. שום דבר כאן לא סופי.
+        </p>
+      </form>
+    </div>
   );
 }
 

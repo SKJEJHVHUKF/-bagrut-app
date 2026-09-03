@@ -93,7 +93,7 @@ function CommandBar() {
   const label: Record<string, string> = {
     '': 'סקירה',
     students: 'תלמידים',
-    focus: 'מיקודים',
+    focus: 'תרגולים',
     report: 'דוחות',
     settings: 'הגדרות',
   };
@@ -132,7 +132,7 @@ function CommandBar() {
           </Link>
           <Btn kind="primary" onClick={() => openFocus('class')}>
             <Target className="h-4 w-4" aria-hidden />
-            מיקוד חדש
+            שלח תרגול
           </Btn>
         </div>
       )}

@@ -113,13 +113,17 @@ export function KpiStrip({ board }: { board: ClassBoard }) {
       alert: board.needsAttention.length > 0,
       hint: 'תקועים, נעלמו, או טרם התחילו',
     },
-    { label: 'פעילים השבוע', value: `${board.activeThisWeek} / ${board.studentCount}` },
+    {
+      label: 'פעילים השבוע',
+      value: `${board.activeThisWeek} / ${board.studentCount}`,
+      hint: 'פתרו לפחות תרגיל אחד בשבעת הימים האחרונים',
+    },
     {
       label: 'שליטה ממוצעת',
       value: avg === null ? '—' : `${Math.round(avg * 100)}%`,
       hint: 'ממוצע לפי תלמיד, בלי מי שלא התחיל',
     },
-    { label: 'טרם התחילו', value: String(board.neverStarted) },
+    { label: 'טרם התחילו', value: String(board.neverStarted), hint: 'הצטרפו, עוד לא פתרו כלום — לא אפס' },
   ];
   return (
     <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 sm:grid-cols-4 dark:border-slate-800 dark:bg-slate-800">
@@ -138,7 +142,10 @@ export function KpiStrip({ board }: { board: ClassBoard }) {
           >
             {t.value}
           </div>
-          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{t.label}</div>
+          <div className="mt-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">{t.label}</div>
+          {t.hint && (
+            <div className="mt-0.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400">{t.hint}</div>
+          )}
         </div>
       ))}
     </div>
@@ -187,7 +194,7 @@ export function AttentionPanel({ rows }: { rows: AttentionRow[] }) {
                         kind="primary"
                         onClick={() => openFocus({ studentId: r.studentId, name: r.name })}
                       >
-                        מקד
+                        שלח תרגול
                       </Btn>
                     )}
                   </span>
@@ -235,7 +242,7 @@ export function ReteachPanel({ rows }: { rows: ClassBoard['reteach'] }) {
                 <td className={`${td} w-32 text-end`}>
                   {!isDemo && (
                     <Btn kind="primary" onClick={() => openFocus('class')}>
-                      מקד את הכיתה
+                      שלח לכיתה תרגול
                     </Btn>
                   )}
                 </td>
@@ -260,14 +267,14 @@ export function FocusListPanel({
   return (
     <Panel
       icon={ClipboardCheck}
-      title="מיקודים"
+      title="תרגולים ששלחתי"
       blurb="מה ששלחת לתרגל, למי, וכמה באמת סגרו את זה."
       count={rows.length}
       actions={actions}
       flush
     >
       {rows.length === 0 ? (
-        <Empty>עוד לא שלחת מיקוד. אפשר להתחיל מ״מי צריך אותך״.</Empty>
+        <Empty>עוד לא שלחת תרגול. אפשר להתחיל מ״מי צריך אותך״.</Empty>
       ) : (
         <table className="w-full">
           <thead className="bg-slate-50 dark:bg-slate-950/50">

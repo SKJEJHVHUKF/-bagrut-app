@@ -16,13 +16,13 @@ export default function FocusPage() {
   return (
     <>
       <PageHeader
-        title="מיקודים"
+        title="תרגולים"
         subtitle="הצבעה על תוכן קיים — נושא, תת-נושא, שלב — למי שצריך, עד מתי."
         actions={
           !isDemo && (
             <Btn kind="primary" onClick={() => openFocus('class')}>
               <Target className="h-4 w-4" aria-hidden />
-              מיקוד חדש
+              שלח תרגול
             </Btn>
           )
         }

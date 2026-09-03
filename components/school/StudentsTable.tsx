@@ -185,7 +185,7 @@ export default function StudentsTable({
                       className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:text-slate-300"
                     >
                       <Target className="h-3.5 w-3.5" aria-hidden />
-                      מקד
+                      שלח תרגול
                     </button>
                   )}
                 </td>

@@ -11,6 +11,7 @@
 
 import Link from 'next/link';
 import { useClass } from '@/components/console/ClassContext';
+import NextStep from '@/components/console/NextStep';
 import {
   KpiStrip,
   AttentionPanel,
@@ -26,6 +27,9 @@ export default function Overview() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* The sentence before the numbers: what to do, for the teacher who
+          wants to be told rather than to read a dashboard. */}
+      <NextStep />
       <KpiStrip board={board} />
       <AttentionPanel rows={board.needsAttention} />
       <ReteachPanel rows={board.reteach} />
@@ -33,7 +37,7 @@ export default function Overview() {
         rows={focuses.slice(0, 5)}
         actions={
           !isDemo && (
-            <PanelLink href={`${base}/focus`}>כל המיקודים ←</PanelLink>
+            <PanelLink href={`${base}/focus`}>כל התרגולים ←</PanelLink>
           )
         }
       />
