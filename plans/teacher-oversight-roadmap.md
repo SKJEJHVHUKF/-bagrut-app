@@ -125,3 +125,36 @@ No median, average or percentile exists anywhere in the app. Without one, neithe
 ## One more thing nobody is looking at
 
 `learning_state.tutor_memory` — durable facts the student told the chat about himself, written and read **only** by `lib/tutor-memory.ts`, not part of the sync payload, and never surfaced anywhere. Adding the column name to the line-86 select is trivial, but this is a **decision for Itay, not an engineering call**: the student was promised he sees and deletes these himself (`app/api/chat/memory/route.ts`) and was never told a human would read them. If it ships, the memory screen needs one line saying so, and each fact must render with its `ts` — the store is FIFO-capped at 12, so "הבגרות שלי ב-12" outlives the exam.
+
+---
+
+## Investigated 2026-09-03: the "105 undiagnosed open answers" is NOT a bug
+
+An earlier commit message called it "a separate investigation". It was, and
+this is the result: **the diagnosis engine is healthy and deliberately narrow.**
+Nothing to fix. Measured against the real content and the live log:
+
+| measurement | result |
+|---|---|
+| open questions with a numeric `expected`, sign flip fed in | **149 / 149 diagnosed** |
+| authored predictable wrong answers, fed back verbatim to `matchKnownMistake` | **528 / 528 recognised** |
+| open questions carrying authored `wrongAnswers` | 298 of 444 (67%) |
+| an off-by-one, or any other arbitrary wrong number | **0 diagnosed — by design** |
+
+`checkAnswer` names a mistake only when the wrong answer has a RECOGNISABLE
+SHAPE — sign-flip, conjugate, partial-set, extra-root, swapped — or matches an
+authored `wrongAnswers` value exactly. A student who simply miscalculated gets
+no diagnosis, and that is correct: silence beats a guess dressed as a finding.
+
+So the 116 wrong open answers in the live log carry none because those students'
+answers were not one of those shapes. Two further things that look like causes
+and are not:
+- `app/quiz` records no `answerDiagnosis`. It is MCQ-only (`kind: 'mcq'`,
+  `chosenIndex`); the MCQ branch is tagged from distractor tags instead, which
+  is the generator-reach issue, already fixed in 855e962.
+- 93 of 444 open questions have `expected.kind === 'manual'` and are
+  self-graded. `submitOpen` returns early on those, on purpose.
+
+**The only lever that widens this is authoring more `wrongAnswers`** — and even
+then it fires only when a student lands on the exact predicted value. Do not
+re-open this expecting to find a broken wire.
