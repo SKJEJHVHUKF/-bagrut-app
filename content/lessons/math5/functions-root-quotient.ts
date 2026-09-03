@@ -42,6 +42,7 @@
 //     real misconception with a note that also points back at the right answer.
 
 import type { StaticBagrutQuestion, SubTopic } from '../types';
+import { RQ_EXTRA } from './rq-extra';
 
 // ---------------------------------------------------------------------------
 // Shared figure: the parabola y = x² − 4, used to SOLVE √(x²−4)'s condition.
@@ -454,7 +455,7 @@ const SOL_BG002_FIGURE = `
 <text x="177.7" y="162.8" font-size="10.5" fill="#0F172A">(0,-1.5)</text>
 `;
 
-export const ROOT_QUOTIENT_STAGES: SubTopic[] = [
+const BASE_STAGES: SubTopic[] = [
   // =========================================================================
   // רמה 1 — תחום הגדרה
   // =========================================================================
@@ -6258,6 +6259,14 @@ $$f'(x) = 1 - \\frac{4}{x^2}$$
     ],
   },
 ];
+
+/** The eight stages, each with its EXTRA questions (./rq-extra) appended after
+ *  the originals — the ladder groups by `difficulty`, so order within a rung is
+ *  authoring order: reviewed baseline first, widening second. */
+export const ROOT_QUOTIENT_STAGES: SubTopic[] = BASE_STAGES.map((s) => {
+  const extra = RQ_EXTRA[s.id] ?? [];
+  return extra.length ? { ...s, questions: [...s.questions, ...extra] } : s;
+});
 
 /** One multi-part bagrut question per stage of the מנה ושורש track.
  *  Spread into math5Functions.bagrutQuestions; `subTopicId` is what makes each
