@@ -30,8 +30,10 @@ export default function ThinkingPage() {
     <div className="min-h-screen bg-[var(--background)] text-slate-800 px-4 py-8">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <Link href="/practice" className="text-sm text-slate-600 hover:text-slate-800 transition-colors">
-            → חזרה לתרגול
+          {/* /practice is the retired hub — the way back is the journey.
+              scripts/verify-retired-links.ts keeps it that way. */}
+          <Link href="/roadmap" className="text-sm text-slate-600 hover:text-slate-800 transition-colors">
+            → חזרה למסלול
           </Link>
         </div>
 
