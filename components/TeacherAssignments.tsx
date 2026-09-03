@@ -20,6 +20,7 @@ import { ArrowLeft, ClipboardList } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getResults } from '@/lib/results';
 import { assignmentProgress } from '@/lib/assignment-progress';
+import { subTopicHref, topicHref } from '@/lib/track';
 
 type Row = {
   id: string;
@@ -92,7 +93,12 @@ export default function TeacherAssignments() {
           return (
             <Link
               key={a.id}
-              href={`/practice/${SUBJECT}/${encodeURIComponent(a.topic)}`}
+              // The sub-topic form when the tutor narrowed the task, because
+              // landing the student on the whole topic throws away exactly the
+              // precision the tutor chose. Every one of the 95 sub-topics
+              // resolves to a ladder, so this needs no fallback; topicHref
+              // matches on the topic's TITLE, which is what `a.topic` holds.
+              href={a.sub_topic_id ? subTopicHref(a.sub_topic_id) : topicHref(a.topic)}
               className={`group flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
                 complete
                   ? 'bg-emerald-50 border-emerald-200'
