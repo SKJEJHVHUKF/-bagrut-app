@@ -184,6 +184,12 @@ export function SubTopicLadder({
                 level={openLevel}
                 onSubmit={onSubmit}
                 onBack={onBack}
+                nextSubTopic={
+                  nextSubId
+                    ? { href: nextHref ?? `/roadmap/${encodeURIComponent(nextSubId)}`, title: nextTitle }
+                    : { href: mapHref }
+                }
+                subTopicTitle={subTopic.title}
               />
             ) : (
               <RoadmapLevelRunner
@@ -196,6 +202,7 @@ export function SubTopicLadder({
                 onNext={onNext}
                 onBack={onBack}
                 onBackToLearn={onBackToLearn}
+                subTopicTitle={subTopic.title}
               />
             )}
         </motion.div>

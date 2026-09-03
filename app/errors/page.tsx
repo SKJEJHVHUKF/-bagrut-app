@@ -27,6 +27,8 @@ import { getTopWeakness, type Weakness } from '@/lib/remediation';
 import { createClient } from '@/lib/supabase/client';
 import { isProUser } from '@/lib/access';
 import { MathText } from '@/components/practice/MathText';
+import { subTopicHref, topicHref } from '@/lib/track';
+import { getPaper } from '@/lib/study-plan';
 import {
   getMistakes,
   mistakesByCategory,
@@ -125,7 +127,7 @@ export default function ErrorsPage() {
               לזהות בדיוק על מה כדאי לחזור.
             </p>
             <Link
-              href="/practice"
+              href="/roadmap"
               className="btn-primary inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold text-white"
             >
               <span>🎯 התחל לתרגל</span>
@@ -242,7 +244,7 @@ export default function ErrorsPage() {
                 {topics.map((t) => (
                   <Link
                     key={t.topic}
-                    href={`/practice/math5/${encodeURIComponent(t.topic)}`}
+                    href={topicHref(t.topic, getPaper())}
                     className="flex items-center justify-between gap-3 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 rounded-xl px-4 py-3 transition-colors group"
                   >
                     <div className="min-w-0">
@@ -341,9 +343,11 @@ export default function ErrorsPage() {
 // plus a link to re-practice its sub-topic / topic.
 function ReviewCard({ mistake }: { mistake: MistakeRecord }) {
   const [showAnswer, setShowAnswer] = useState(false);
+  // The ladder (opened on its first practice rung), never the retired
+  // /practice screen.
   const practiceHref = mistake.subTopicId
-    ? `/practice/${mistake.subject}/${encodeURIComponent(mistake.topic)}/sub/${mistake.subTopicId}/practice`
-    : `/practice/${mistake.subject}/${encodeURIComponent(mistake.topic)}`;
+    ? subTopicHref(mistake.subTopicId, 'easy', getPaper())
+    : topicHref(mistake.topic, getPaper());
 
   return (
     <div className="bg-white border border-slate-900/10 rounded-2xl p-4 space-y-3">

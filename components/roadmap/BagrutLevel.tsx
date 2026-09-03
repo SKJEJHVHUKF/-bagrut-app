@@ -21,6 +21,8 @@ export function BagrutLevel({
   level,
   onSubmit,
   onBack,
+  nextSubTopic,
+  subTopicTitle,
 }: {
   subject: string;
   topic: string;
@@ -28,6 +30,9 @@ export function BagrutLevel({
   level: RoadmapLevel;
   onSubmit: (score: number, total: number, opts?: { viaRetry?: boolean; force?: boolean }) => AttemptResult;
   onBack: () => void;
+  /** The bagrut rung is the top of the ladder: "next" is the next sub-topic. */
+  nextSubTopic?: { href: string; title?: string | null };
+  subTopicTitle?: string;
 }) {
   const [result, setResult] = useState<AttemptResult | null>(null);
   // Per-part outcome keyed by a stable "<qIndex>.<partIndex>" id.
@@ -68,6 +73,8 @@ export function BagrutLevel({
         <LevelClearedPanel
           level={level}
           result={result}
+          nextSubTopic={nextSubTopic}
+          subTopicTitle={subTopicTitle}
           onBack={onBack}
           onReplay={result.stars < 3 ? retry : undefined}
           />

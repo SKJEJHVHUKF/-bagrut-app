@@ -6,6 +6,7 @@ import { ArrowLeft, Search, BookOpen, Printer } from 'lucide-react';
 import { allLessonKeys, getLesson } from '@/content/lessons';
 import { sheetFormulas } from '@/content/formula-sheet';
 import { MathText } from '@/components/practice/MathText';
+import { topicHref } from '@/lib/track';
 import { PageHeader } from '@/components/PageHeader';
 
 /**
@@ -120,11 +121,11 @@ export default function FormulasPage() {
                   </span>
                 </h2>
                 <Link
-                  href={`/practice/${block.subject}/${encodeURIComponent(block.topic)}`}
+                  href={topicHref(block.topic)}
                   className="text-xs text-violet-700 hover:text-violet-800 inline-flex items-center gap-1 transition-colors"
                 >
                   <BookOpen className="w-3 h-3" />
-                  <span>לשיעור המלא</span>
+                  <span>למסלול הלמידה</span>
                 </Link>
               </div>
 

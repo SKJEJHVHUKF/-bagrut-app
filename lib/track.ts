@@ -13,9 +13,9 @@
  * Nothing here reads localStorage except through lib/roadmap-progress.
  */
 
-import { getTrack, type TrackGroup, type TrackTile, type TrackTopic, type TrackTree } from '@/content/tracks';
+import { getTrack, TRACK_PAPERS, type TrackGroup, type TrackTile, type TrackTopic, type TrackTree } from '@/content/tracks';
 import { resolveRoadmapNode } from '@/constants/roadmapData';
-import { getSubTopic } from '@/content/lessons';
+import { getSubTopic, getSubTopics } from '@/content/lessons';
 import { buildSubTopicLevels, type RoadmapLevel } from '@/lib/roadmap-levels';
 import { nodeStatus } from '@/lib/roadmap-progress';
 import type { BagrutPaper } from '@/content/bagrut-curriculum';
@@ -157,6 +157,42 @@ export function ladderHref(subId: string, ctx?: { paper: BagrutPaper; topicId: s
   if (level) params.set('level', level);
   const q = params.toString();
   return `/roadmap/${encodeURIComponent(subId)}${q ? `?${q}` : ''}`;
+}
+
+/**
+ * Where a SUB-TOPIC opens from anywhere in the app: its ladder, with the track
+ * context when it sits on a track (82 of 95 do — ctx only adds the back link
+ * and the next station, so the null fallback is complete). `preferPaper` is
+ * the student's own שאלון, tried first so a 572 student is not sent into 571.
+ *
+ * This replaced the retired `/practice/<subject>/<topic>/sub/<id>/practice`
+ * links (2026-09-04) — the owner: that screen is "long out of use".
+ */
+export function subTopicHref(subId: string, level?: string, preferPaper?: BagrutPaper | null): string {
+  for (const paper of papersFirst(preferPaper)) {
+    const loc = locateInTrack(paper, subId);
+    if (loc) return ladderHref(subId, { paper, topicId: loc.topic.id }, level);
+  }
+  return ladderHref(subId, null, level);
+}
+
+/**
+ * Where a lesson TOPIC (its Hebrew title) opens: the track's topic page, else
+ * — for the five lesson topics that predate the tracks — the ladder of its
+ * first sub-topic, so the student starts practising instead of choosing.
+ * Matched on title, never id: 571 uses English ids and 572 Hebrew ones.
+ */
+export function topicHref(topic: string, preferPaper?: BagrutPaper | null): string {
+  for (const paper of papersFirst(preferPaper)) {
+    const t = getTrack(paper).topics.find((x) => x.title === topic);
+    if (t) return `/roadmap/track/${paper}/${encodeURIComponent(t.id)}`;
+  }
+  const first = getSubTopics(SUBJECT, topic)[0];
+  return first ? subTopicHref(first.id, undefined, preferPaper) : '/roadmap';
+}
+
+function papersFirst(prefer?: BagrutPaper | null): BagrutPaper[] {
+  return prefer ? [prefer, ...TRACK_PAPERS.filter((p) => p !== prefer)] : [...TRACK_PAPERS];
 }
 
 export type TrackLocation = {

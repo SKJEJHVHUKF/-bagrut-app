@@ -40,7 +40,7 @@ import {
   type CheckResult,
 } from '@/lib/answer-check';
 import { recordResult, type ResultSource } from '@/lib/results';
-import { recordMistake } from '@/lib/mistakes';
+import { recordMistake, diagnosisCategory } from '@/lib/mistakes';
 import type { ErrorCategory } from '@/lib/mistakes';
 import { getWeaknesses } from '@/lib/remediation';
 import { getSubTopic } from '@/content/lessons';
@@ -234,6 +234,11 @@ export function QuestionRunnerCard({
     // already counted by lib/remediation, and the question is still scheduled
     // for tomorrow's review above.
     if (!correct && source !== 'fix') {
+      // The grader's shape diagnosis (sign flip, extra root, …) is the tag
+      // the student would otherwise have to pick by hand — and almost never
+      // did, so the notebook was all 'אחר'. Pre-select it in the tagger too;
+      // the student can still re-tag.
+      const known = diagnosisCategory(diagnosis);
       const id = recordMistake({
         subject,
         topic,
@@ -242,10 +247,11 @@ export function QuestionRunnerCard({
         questionText: q.question,
         userAnswer,
         correctAnswer: q.solution.finalAnswer,
-        category: 'אחר',
+        category: known ?? 'אחר',
         source,
       });
       setMistakeId(id);
+      if (known) setAiCategory(known);
     }
   }
 

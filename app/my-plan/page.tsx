@@ -38,7 +38,7 @@ import { getResumePoint } from '@/lib/roadmap-resume';
 import { computePacing } from '@/lib/pacing';
 import { DEFAULT_PAPER } from '@/constants/roadmapData';
 import { getTrack } from '@/content/tracks';
-import { trackLevelsBySub, trackMainTopics } from '@/lib/track';
+import { trackLevelsBySub, trackMainTopics, topicHref } from '@/lib/track';
 import { isProUser, isAdmin, type UserLike } from '@/lib/access';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
@@ -310,7 +310,8 @@ function TopicCard({
   index: number;
   topic: { subject: string; topic: string; completion: number; level: string };
 }) {
-  const href = `/practice/${topic.subject}/${encodeURIComponent(topic.topic)}`;
+  // The track's topic page, never the retired /practice screen.
+  const href = topicHref(topic.topic, getPaper());
 
   const card = (
     <div className="card-3d bg-white/70 hover:bg-white border-slate-900/[0.06] hover:border-violet-500/40 rounded-2xl p-4 border transition-all block">

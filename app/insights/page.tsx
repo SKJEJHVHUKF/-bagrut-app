@@ -53,6 +53,8 @@ import {
 import { getTopWeakness, healedCountSince, type Weakness } from '@/lib/remediation';
 import ShareCardButton from '@/components/ShareCardButton';
 import { MathText } from '@/components/practice/MathText';
+import { subTopicHref, topicHref } from '@/lib/track';
+import { getPaper } from '@/lib/study-plan';
 import { useClientValue } from '@/lib/use-client-value';
 
 /** Stable server-render snapshot; a fresh object per call would re-render forever. */
@@ -266,7 +268,7 @@ export default function InsightsPage() {
                   {impact.map((t) => (
                     <Link
                       key={t.topic}
-                      href={`/practice/math5/${encodeURIComponent(t.topic)}`}
+                      href={topicHref(t.topic, getPaper())}
                       className="inline-flex items-center gap-1.5 text-xs font-bold bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/25 text-violet-800 rounded-full px-3 py-1.5 transition-colors"
                     >
                       <span>{t.emoji}</span>
@@ -535,7 +537,7 @@ export default function InsightsPage() {
               {boostTarget && (
                 <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Link
-                    href={`/practice/${subject}/${encodeURIComponent(boostTarget.topic)}/sub/${boostTarget.subTopicId}/practice`}
+                    href={subTopicHref(boostTarget.subTopicId, 'easy', getPaper())}
                     className="group flex items-center gap-4 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 rounded-3xl p-5 shadow-xl shadow-violet-500/25 transition-colors"
                   >
                     <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center">
@@ -565,7 +567,7 @@ export default function InsightsPage() {
                   {weakSubs.map((s) => (
                     <Link
                       key={`${s.topic}|${s.subTopicId}`}
-                      href={`/practice/${subject}/${encodeURIComponent(s.topic)}/sub/${s.subTopicId}/practice`}
+                      href={subTopicHref(s.subTopicId, 'easy', getPaper())}
                       className="flex items-center justify-between gap-3 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 rounded-xl px-4 py-3 transition-colors group"
                     >
                       <div className="min-w-0">
@@ -600,7 +602,7 @@ export default function InsightsPage() {
                     <div key={t.topic} className="space-y-1.5">
                       <div className="flex items-center justify-between text-sm">
                         <Link
-                          href={`/practice/${subject}/${encodeURIComponent(t.topic)}`}
+                          href={topicHref(t.topic, getPaper())}
                           className="font-bold text-slate-800 hover:text-violet-700 transition-colors"
                         >
                           {t.topic}

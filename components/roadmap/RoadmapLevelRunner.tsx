@@ -26,6 +26,7 @@ export function RoadmapLevelRunner({
   onNext,
   onBack,
   onBackToLearn,
+  subTopicTitle,
 }: {
   subject: string;
   topic: string;
@@ -37,6 +38,8 @@ export function RoadmapLevelRunner({
   onNext?: () => void;
   onBack: () => void;
   onBackToLearn?: () => void;
+  /** For the share card on mastery / core-done. */
+  subTopicTitle?: string;
 }) {
   const total = level.questions.length;
 
@@ -126,6 +129,7 @@ export function RoadmapLevelRunner({
           result={result}
           nextTitle={nextTitle}
           onNext={onNext}
+          subTopicTitle={subTopicTitle}
           onBack={onBack}
           onReplay={result.stars < 3 ? replay : undefined}
           />

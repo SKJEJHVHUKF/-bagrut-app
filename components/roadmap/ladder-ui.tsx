@@ -4,11 +4,14 @@
 //   <StarRow>          a 1-3 star rating strip
 //   <LevelClearedPanel> the celebration shown when a rung is cleared
 
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Star, ArrowLeft, RefreshCw, Trophy, Crown, Map, RotateCcw, BookOpen } from 'lucide-react';
 import { buttonTap } from '@/lib/animations';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
 import type { ClearResult } from '@/lib/roadmap-progress';
+import ShareCardButton from '@/components/ShareCardButton';
+import { MathText } from '@/components/practice/MathText';
 
 export function StarRow({
   value,
@@ -38,6 +41,8 @@ export function LevelClearedPanel({
   result,
   nextTitle,
   onNext,
+  nextSubTopic,
+  subTopicTitle,
   onBack,
   onReplay,
 }: {
@@ -46,10 +51,26 @@ export function LevelClearedPanel({
   /** Title of the next rung (if any). */
   nextTitle?: string;
   onNext?: () => void;
+  /** The top rung has no next rung — its "next" is the next sub-topic (or the
+   *  map). Without this the ladder ended in "חזרה לסולם" and nothing else. */
+  nextSubTopic?: { href: string; title?: string | null };
+  /** For the share card on mastery / core-done. */
+  subTopicTitle?: string;
   onBack: () => void;
   onReplay?: () => void;
 }) {
   const { stars, xpGained, justMastered, justCoreDone } = result;
+  // The share moment: the ladder's real milestones, not every rung. The card
+  // renderer already exists (insights used it for streaks only).
+  const share =
+    (justMastered || justCoreDone) && subTopicTitle
+      ? {
+          headline: justMastered ? 'שליטה מלאה' : 'עברתי את הליבה',
+          bigStat: String(stars),
+          statLabel: stars === 1 ? 'כוכב' : 'כוכבים',
+          sub: subTopicTitle,
+        }
+      : null;
 
   const headline = justMastered
     ? 'שליטה מלאה בתת-הנושא!'
@@ -89,6 +110,30 @@ export function LevelClearedPanel({
             <span>עלה לרמה הבאה: {nextTitle}</span>
             <ArrowLeft className="w-4 h-4" />
           </motion.button>
+        )}
+        {!onNext && nextSubTopic && (
+          <Link
+            href={nextSubTopic.href}
+            className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-emerald-500/25 transition-colors"
+          >
+            <span className="chat-md">
+              {nextSubTopic.title ? (
+                <>
+                  המשך לתת-הנושא הבא: <MathText inline>{nextSubTopic.title}</MathText>
+                </>
+              ) : (
+                'סיימת את הנושא! חזרה למפה'
+              )}
+            </span>
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+        )}
+        {share && (
+          <ShareCardButton
+            card={share}
+            label="שתף את ההישג"
+            className="w-full inline-flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/30 px-5 py-3 rounded-2xl font-bold text-amber-900 transition-colors"
+          />
         )}
         <motion.button
           {...buttonTap}

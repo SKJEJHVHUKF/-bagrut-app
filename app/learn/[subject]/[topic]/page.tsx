@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getLearningPath } from '@/content/learning-paths';
 import { LearningPathView } from '@/components/learn/LearningPathView';
 import { PracticeShell } from '@/components/practice/PracticeShell';
+import { topicHref } from '@/lib/track';
 
 // Server component: loads the static learning path and hands it to the
 // client view. The path contains only JSON-serialisable data (no function
@@ -22,8 +23,8 @@ export default async function LearnPage({
   return (
     <PracticeShell
       subtitle="לימוד מ-0"
-      backHref={`/practice/${subject}/${encodeURIComponent(topic)}`}
-      backLabel="לדף הנושא"
+      backHref={topicHref(topic)}
+      backLabel="למסלול הלמידה"
     >
       <LearningPathView path={path} />
     </PracticeShell>

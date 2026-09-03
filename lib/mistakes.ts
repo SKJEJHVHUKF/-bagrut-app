@@ -9,6 +9,7 @@
  */
 
 import { safeSetJSON } from '@/lib/storage';
+import type { AnswerDiagnosis } from '@/lib/answer-check';
 
 const STORAGE_KEY = 'bagrut-mistakes-v1';
 const MAX_MISTAKES = 300;
@@ -39,6 +40,28 @@ export function toErrorCategory(raw: unknown): ErrorCategory {
   return (ERROR_CATEGORIES as string[]).includes(raw as string)
     ? (raw as ErrorCategory)
     : 'אחר';
+}
+
+/**
+ * The category the grader's shape diagnosis already implies, or null.
+ *
+ * Every runner used to log 'אחר' and wait for the student to tag the mistake
+ * by hand, which almost nobody does — so lib/remediation's `dominantCategory`
+ * (which ignores 'אחר') fell back to the generic sentence. The grader knows
+ * the shape of most wrong open answers; this turns that into the tag.
+ */
+export function diagnosisCategory(d?: AnswerDiagnosis | null): ErrorCategory | null {
+  switch (d?.kind) {
+    case 'sign-flip':
+    case 'conjugate':
+      return 'טעות סימן';
+    case 'extra-root':
+      return 'תחום הגדרה';
+    case 'partial-set':
+      return 'טעות אלגברית';
+    default:
+      return null;
+  }
 }
 
 /**
