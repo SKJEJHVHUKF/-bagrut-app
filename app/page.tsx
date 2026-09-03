@@ -785,10 +785,14 @@ function BagruyotStat({ value, label }: { value: number; label: string }) {
 
 /**
  * Hero CTA — adapts to whether the visitor has a saved study plan.
- * - With plan: deep-link to /my-plan and label "המשך לתוכנית".
- * - Without plan: link to /onboarding and label "צור תוכנית אישית".
- * Renders an empty placeholder on first paint to keep the markup stable
- * for SSR; the localStorage check runs after mount.
+ * - With plan: straight into /roadmap, "המשך למסלול הלמידה".
+ * - Without plan: /onboarding FIRST (one time — it saves the plan and then
+ *   pushes to /roadmap itself). Until 2026-09-03 both branches linked to
+ *   /roadmap, so a first-time student never set an exam date / paper / unit
+ *   level, and pacing, the grade prediction, the adaptive tier and the daily
+ *   plan all ran on "unknown student" defaults for everyone who used the main
+ *   button. The onboarding is the only screen that writes those.
+ * Renders a stable placeholder on first paint (SSR cannot read localStorage).
  */
 function PrimaryCTA() {
   // null until hydration: the server cannot know whether a plan exists.
@@ -809,7 +813,7 @@ function PrimaryCTA() {
   }
 
   return (
-    <Link href="/roadmap" className={className}>
+    <Link href={planExists ? '/roadmap' : '/onboarding'} className={className}>
       <Sparkles className="w-5 h-5" />
       <span className="text-lg">{planExists ? 'המשך למסלול הלמידה' : 'התחל את מסלול הלמידה'}</span>
       <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />

@@ -217,7 +217,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         <div className="flex items-start gap-3">
           <CheckCircle className="w-5 h-5 text-violet-700 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-slate-800">
-            <strong>שלוש שלבים לכל נושא</strong> — קריאה → מבחן הבנה → תרגול בגרות.
+            <strong>סולם לכל תת-נושא</strong>: לומדים, מתרגלים מהקל לקשה, ומסיימים בשאלת בגרות.
           </div>
         </div>
         <div className="flex items-start gap-3">
