@@ -7,11 +7,12 @@
  * until the student sees it, and sees it where he already is rather than in a
  * separate inbox he has to remember to open.
  *
- * ⚠️ NO API ROUTE. This reads `public.focus` straight from the browser with the
- * student's own session, because the RLS policy in supabase-school.sql already
- * answers the only question that matters — "is this one for me" — including the
- * whole-class case. A route here would re-implement that policy in TypeScript
- * and cost a serverless invocation to reach the same answer.
+ * ⚠️ THE ROWS ARE HANDED IN, not fetched here. This component used to select
+ * `public.focus` straight from the browser and trust an RLS policy to answer
+ * "is this one for me" — and that policy could never be true, so a task a
+ * teacher sent never showed up at all. lib/focus-visibility.ts has the full
+ * post-mortem. /api/school/my-classes answers it now, on a client that can
+ * actually read the tables, in the same call the page already made.
  *
  * ⚠️ PROGRESS IS COUNTED LOCALLY, from the student's own answer log, with the
  * SAME function the teacher's board uses server-side (lib/assignment-progress).
@@ -19,28 +20,12 @@
  * with what the teacher sees, because it is not a second implementation.
  */
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Target, Check } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { getResults } from '@/lib/results';
 import { assignmentProgress } from '@/lib/assignment-progress';
 import { RUNG_LABEL, type Rung } from '@/lib/rungs';
-
-type FocusRow = {
-  id: string;
-  topic: string;
-  sub_topic_id: string | null;
-  rung: string | null;
-  target_count: number | null;
-  due_on: string | null;
-  note: string | null;
-  created_at: string;
-};
-
-/** Focuses older than this stop being shown. A task from three months ago is
- *  not a task any more, and a list that only grows is a list nobody reads. */
-const MAX_AGE_DAYS = 45;
+import type { StudentFocusRow } from '@/lib/focus-visibility';
 
 /** The app is single-subject, and the practice routes spell it `math5`
  *  (app/insights, app/errors build the same links). Stored nowhere on the focus
@@ -59,31 +44,7 @@ function practiceHref(topic: string, subTopicId: string | null): string {
   return subTopicId ? `${base}/sub/${encodeURIComponent(subTopicId)}/practice` : base;
 }
 
-export default function StudentFocus() {
-  const [rows, setRows] = useState<FocusRow[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    const since = new Date(Date.now() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000).toISOString();
-
-    void createClient()
-      .from('focus')
-      .select('id, topic, sub_topic_id, rung, target_count, due_on, note, created_at')
-      .gte('created_at', since)
-      .order('created_at', { ascending: false })
-      .limit(20)
-      .then(({ data }) => {
-        // A student in no class, or a database without the school tables yet,
-        // both land here as an empty list rather than an error. Nothing on this
-        // screen is worth showing a student a failure for.
-        if (!cancelled) setRows((data as FocusRow[]) ?? []);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+export default function StudentFocus({ rows }: { rows: StudentFocusRow[] | null }) {
   if (!rows || rows.length === 0) return null;
 
   const answers = getResults();

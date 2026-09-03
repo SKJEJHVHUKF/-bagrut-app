@@ -16,11 +16,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { School, LogIn, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import StudentFocus from '@/components/StudentFocus';
+import type { StudentFocusRow } from '@/lib/focus-visibility';
 
 type Membership = { classId: string; name: string };
 
 export default function MyClassPage() {
   const [classes, setClasses] = useState<Membership[] | null>(null);
+  const [focus, setFocus] = useState<StudentFocusRow[] | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -32,15 +34,18 @@ export default function MyClassPage() {
         setClasses([]);
         return;
       }
-      // class_members has RLS with no policies (service-role only), so the
-      // student's own memberships come through the API rather than a direct
-      // select. One call, and it fails soft: a student with no class sees the
-      // join box, which is the right screen either way.
+      // Every school table has RLS with no policies (service-role only), so the
+      // student's memberships AND the tasks aimed at him both come through the
+      // API rather than a direct select — one call for both, and it fails soft:
+      // a student with no class sees the join box, which is the right screen
+      // either way.
       const res = await fetch('/api/school/my-classes');
-      const data = res.ok ? await res.json() : { classes: [] };
+      const data = res.ok ? await res.json() : { classes: [], focus: [] };
       setClasses(data.classes ?? []);
+      setFocus(data.focus ?? []);
     } catch {
       setClasses([]);
+      setFocus([]);
     }
   }, []);
 
@@ -62,7 +67,7 @@ export default function MyClassPage() {
         </div>
       </header>
 
-      <StudentFocus />
+      <StudentFocus rows={focus} />
 
       {classes === null ? (
         <p className="text-sm text-slate-500">טוען…</p>

@@ -25,6 +25,7 @@ import {
   JOIN_CODE_LENGTH,
 } from '../lib/join-code';
 import { validateFocus, focusCatalogue, describeFocus, RUNG_LABEL } from '../lib/focus-target';
+import { visibleFocus } from '../lib/focus-visibility';
 
 let checks = 0;
 let failures = 0;
@@ -174,6 +175,69 @@ const catalogue = focusCatalogue();
 }
 
 // ============================================================
+// Which tasks reach which student
+// ============================================================
+//
+// This was a row-level security policy, and the policy could never be true: it
+// asked `exists (select 1 from public.class_members ...)`, a subquery inside a
+// policy runs with the READER's privileges, and class_members has RLS on with
+// no policies -- so it was empty for every student and every focus was hidden.
+// A teacher sent a task and the student's screen stayed blank. Proven against
+// the real database with a throwaway student: 0 rows.
+//
+// Its other half failed the opposite way. `not exists (... focus_targets ...)`
+// means "aimed at the whole class", and focus_targets is policy-less too, so
+// that subquery was empty as well and the clause was ALWAYS true -- a task
+// aimed at one struggling student would have gone to all thirty.
+//
+// Both directions are asserted here, because one of them is a blank screen and
+// the other is a child's name on a screen it should not be on.
+{
+  const ME = 'student-1';
+  const OTHER = 'student-2';
+  const all = [{ id: 'f-all' }, { id: 'f-mine' }, { id: 'f-other' }];
+  const targets = [
+    { focus_id: 'f-mine', student_id: ME },
+    { focus_id: 'f-other', student_id: OTHER },
+  ];
+
+  const seen = visibleFocus(all, targets, ME);
+  assert(seen.length === 2, 'a student sees exactly the tasks that are his');
+  assert(
+    seen.some((f) => f.id === 'f-all'),
+    'no targets at all = the whole class, so he sees it'
+  );
+  assert(
+    seen.some((f) => f.id === 'f-mine'),
+    'a task naming him reaches him'
+  );
+  assert(
+    !seen.some((f) => f.id === 'f-other'),
+    'a task naming ANOTHER student never reaches him'
+  );
+
+  assert(
+    visibleFocus(all, [], ME).length === 3,
+    'an empty target table means every task is a whole-class task'
+  );
+  assert(visibleFocus([], targets, ME).length === 0, 'no tasks in, no tasks out');
+  assert(
+    visibleFocus(all, [...targets, { focus_id: 'f-other', student_id: ME }], ME).length === 3,
+    'a task naming him AND someone else still reaches him'
+  );
+
+  const order = visibleFocus(
+    [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+    [{ focus_id: 'b', student_id: OTHER }],
+    ME
+  );
+  assert(
+    order.map((f) => f.id).join(',') === 'a,c',
+    'the given order survives -- newest first stays newest first'
+  );
+}
+
+// ============================================================
 // The SQL files run TOP TO BOTTOM, in one transaction
 // ============================================================
 //
@@ -236,18 +300,27 @@ const catalogue = focusCatalogue();
     );
   }
 
-  // The one that actually bit: prove the fix is in place, by name, so a future
-  // reorder cannot quietly undo it.
+  // The one that actually bit, and the one that came after it.
   const school = readFileSync(new URL('../supabase-school.sql', import.meta.url), 'utf8');
+
+  // The paren matters. `public.focus` alone is a PREFIX of `public.focus_targets`,
+  // and the version of this check that shipped looked for `public.focus` followed
+  // by a newline -- which appears nowhere, so indexOf returned -1, and -1 is less
+  // than everything. It passed on a file it had never actually inspected.
+  const focusAt = school.indexOf('create table if not exists public.focus (');
+  const targetsAt = school.indexOf('create table if not exists public.focus_targets (');
+  assert(focusAt > 0 && targetsAt > 0, 'both focus tables are declared in the file');
+  assert(focusAt < targetsAt, '`focus` is created before the table whose FK points at it');
+
+  // The policy that could never be true is gone, and the file DROPS it, so
+  // re-running this script repairs a database that already has it.
   assert(
-    school.indexOf('create table if not exists public.focus_targets') <
-      school.indexOf('create policy "own focus select"'),
-    'focus_targets is created BEFORE the policy that reads it'
+    !/create\s+policy[^;]*on\s+public\.focus/i.test(school),
+    'no select policy on public.focus -- the rule lives in lib/focus-visibility.ts'
   );
   assert(
-    school.indexOf('create table if not exists public.focus\n') <
-      school.indexOf('create table if not exists public.focus_targets'),
-    '...and after `focus`, which its foreign key points at'
+    school.includes('drop policy if exists "own focus select" on public.focus;'),
+    'the file drops the old policy, so re-running it fixes a live database'
   );
 }
 

@@ -24,11 +24,12 @@
 --     first, and the student's screen and the teacher's screen would disagree.
 --
 -- ⚠️ RLS POSTURE — the same one supabase-teachers.sql uses, for the same reason.
--- `classes`, `class_members` and `focus_targets` have RLS enabled and NO
--- policies: the database denies every logged-in user, and lib/school-guard.ts
--- is the single place that decides which class a teacher may read. `focus` is
--- the one exception and carries a SELECT policy, because the STUDENT's own
--- browser reads it directly to show "המורה ביקש".
+-- EVERY table here has RLS enabled and NO policies: the database denies every
+-- logged-in user, and lib/school-guard.ts is the single place that decides who
+-- may read what. There is no exception, including `focus` — the student's own
+-- "המורה ביקש" list comes through /api/school/my-classes. `focus` did carry a
+-- select policy once; it could never be true, and the block further down says
+-- exactly why, because that failure is worth reading before writing another.
 -- ============================================================
 
 -- ---- a class ---------------------------------------------------------------
@@ -114,18 +115,14 @@ alter table public.focus enable row level security;
 
 -- ---- differentiated focus --------------------------------------------------
 --
--- ⚠️ THIS TABLE MUST BE CREATED BEFORE THE POLICY BELOW, and that is the only
--- reason it sits here rather than after it. The `own focus select` policy names
--- public.focus_targets inside its USING clause, and Postgres resolves that name
--- when the policy is CREATED, not when it is used. With the table declared
--- afterwards the whole file aborted on
---   ERROR: 42P01: relation "public.focus_targets" does not exist
+-- ⚠️ ORDER MATTERS IN THIS FILE. focus_targets has a foreign key to focus(id),
+-- so `focus` must exist first. A statement that names a table Postgres has not
+-- created yet aborts on
+--   ERROR: 42P01: relation "public.…" does not exist
 -- and — because the Supabase SQL editor runs the script as one transaction —
--- nothing at all was created, including the four tables above it.
---
--- The dependency runs both ways, which is why the order is exactly this:
--- focus_targets has a foreign key to focus(id), so `focus` must be created
--- first; the policy reads focus_targets, so it must be created last.
+-- nothing at all is created, including every table above the failure. That
+-- already happened once here. scripts/test-school.ts now asserts the ordering
+-- over the real file.
 --
 -- EMPTY MEANS THE WHOLE CLASS. That is the common case and it costs zero rows;
 -- rows appear only when the teacher aims at specific students, which is the
@@ -140,34 +137,39 @@ create table if not exists public.focus_targets (
 create index if not exists focus_targets_student_idx on public.focus_targets(student_id);
 
 alter table public.focus_targets enable row level security;
--- No policies. The student never reads this table directly — the policy below
--- already resolves "is this one for me", so exposing the target list would only
--- tell each student who else was singled out.
+-- No policies. The student never reads this table at all: /api/school/my-classes
+-- resolves "is this one for me" on the service role and sends him only the
+-- answer. Exposing the target list would tell each student who else was singled
+-- out, which is the one thing differentiated practice must never do.
 
 -- ---- the privacy rule ------------------------------------------------------
 --
--- The only direct-read policy in this file: a student sees the focuses aimed at
--- him, and nobody else's. Enforced here rather than in the API because the
--- student's own browser selects this table directly to render "המורה ביקש".
+-- ⚠️ THERE IS NO SELECT POLICY ON `focus`, AND THAT IS THE FIX, NOT AN OVERSIGHT.
 --
--- A focus with no rows in focus_targets is aimed at the WHOLE class, so both
--- halves of the OR are needed.
+-- There was one. It read "the student is in this class, and the focus is either
+-- for the whole class or names him", and it could never be true:
+--
+--   * its first half asked `exists (select 1 from public.class_members …)`, and
+--     a subquery inside a policy runs with the READER's privileges, so row
+--     security on class_members applied to it too. That table has RLS on and no
+--     policies by design, so the subquery was empty for every student and the
+--     `exists` was false for every row. A task a teacher sent showed up nowhere.
+--
+--   * its second half, `not exists (… focus_targets …)`, meant "aimed at the
+--     whole class". focus_targets is policy-less too, so that subquery was also
+--     empty and the clause was ALWAYS true — a focus aimed at one struggling
+--     student would have been shown to all thirty.
+--
+-- Both halves were unfixable in SQL without a security-definer function, and a
+-- function would only move the same rule somewhere harder to test. So `focus`
+-- now matches every other table in this file: RLS on, no policies, service role
+-- only. The student's screen reads it through /api/school/my-classes, and the
+-- rule itself is a pure function with tests — lib/focus-visibility.ts,
+-- `npm run test:school`.
+--
+-- Re-running this file DROPS the old policy (the line below), which is the only
+-- action an already-provisioned database needs.
 drop policy if exists "own focus select" on public.focus;
-create policy "own focus select" on public.focus
-  for select using (
-    exists (
-      select 1 from public.class_members m
-       where m.class_id = focus.class_id
-         and m.user_id = auth.uid()
-    )
-    and (
-      not exists (select 1 from public.focus_targets t where t.focus_id = focus.id)
-      or exists (
-        select 1 from public.focus_targets t
-         where t.focus_id = focus.id and t.student_id = auth.uid()
-      )
-    )
-  );
 
 -- Deliberately NO insert/update/delete policy on `focus`: RLS denies all three,
 -- so a student cannot invent a focus, retarget one, or delete the one he was
