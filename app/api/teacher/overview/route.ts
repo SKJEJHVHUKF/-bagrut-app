@@ -212,6 +212,11 @@ export async function GET(request: Request): Promise<Response> {
     const measured = results.filter((r) => !r.repeat);
 
     const topics = new Map<string, { answered: number; correct: number; hints: number }>();
+    // Same counters one level down. Every answer has carried subTopicId all
+    // along and the board threw the resolution away at the last step, so a
+    // tutor read "טריגונומטריה 62%" for a student who is fine everywhere in it
+    // except one sub-topic at 40%. 62% is not a lesson plan; the sub-topic is.
+    const subTopics = new Map<string, { answered: number; correct: number }>();
     const days = new Set<string>();
     const difficulty = { easy: 0, mid: 0, hard: 0 };
     let lastAnswerAt: number | null = null;
@@ -236,6 +241,16 @@ export async function GET(request: Request): Promise<Response> {
       if (r.correct) bucket.correct++;
       if (r.hintUsed) bucket.hints++;
       topics.set(name, bucket);
+
+      // Keyed by topic AND sub-topic: the same sub-topic id can legitimately
+      // exist under two topics, and merging them would invent a weakness.
+      if (r.subTopicId) {
+        const k = `${name} ${r.subTopicId}`;
+        const sb = subTopics.get(k) ?? { answered: 0, correct: 0 };
+        sb.answered++;
+        if (r.correct) sb.correct++;
+        subTopics.set(k, sb);
+      }
     }
 
     const answered = measured.length;
@@ -342,9 +357,39 @@ export async function GET(request: Request): Promise<Response> {
       .map(([topic, t]) => ({ topic, ...t, accuracy: t.answered ? t.correct / t.answered : 0 }))
       .sort((a, b) => b.answered - a.answered);
 
+    /** The weakest sub-topic inside one topic, if any clears the same bar. */
+    const worstSubTopicIn = (topic: string) => {
+      let worst: {
+        subTopicId: string;
+        title: string;
+        answered: number;
+        correct: number;
+        accuracy: number;
+      } | null = null;
+      for (const [k, v] of subTopics) {
+        const [t, subId] = k.split(' ');
+        if (t !== topic || v.answered < STUCK_MIN_ATTEMPTS) continue;
+        const accuracy = v.correct / v.answered;
+        if (accuracy >= STUCK_MAX_ACCURACY) continue;
+        if (worst && accuracy >= worst.accuracy) continue;
+        worst = {
+          subTopicId: subId,
+          // Never the raw id on screen: `trig-right-triangle` is not a thing a
+          // tutor recognises. Falls back to the id only if the content was
+          // renamed since the answer was recorded.
+          title: getSubTopic('math5', topic, subId)?.title ?? subId,
+          answered: v.answered,
+          correct: v.correct,
+          accuracy,
+        };
+      }
+      return worst;
+    };
+
     const stuck = topicRows
       .filter((t) => t.answered >= STUCK_MIN_ATTEMPTS && t.accuracy < STUCK_MAX_ACCURACY)
-      .sort((a, b) => b.answered - b.correct - (a.answered - a.correct));
+      .sort((a, b) => b.answered - b.correct - (a.answered - a.correct))
+      .map((t) => ({ ...t, worstSubTopic: worstSubTopicIn(t.topic) }));
 
     // The ladder: a rung played three times and still not cleared is the
     // sentence that decides what to open Tuesday's lesson with. No percentage

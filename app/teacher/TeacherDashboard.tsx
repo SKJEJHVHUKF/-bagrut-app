@@ -49,6 +49,17 @@ type Assignment = {
 
 type TopicRow = { topic: string; answered: number; correct: number; hints: number; accuracy: number };
 
+/** A weak topic, plus the one sub-topic inside it that is weakest. */
+type StuckRow = TopicRow & {
+  worstSubTopic: {
+    subTopicId: string;
+    title: string;
+    answered: number;
+    correct: number;
+    accuracy: number;
+  } | null;
+};
+
 type WrongRow = {
   topic: string;
   ts: number | null;
@@ -109,7 +120,7 @@ type Student = {
   activeDays: number;
   totalDays: number;
   topics: TopicRow[];
-  stuck: TopicRow[];
+  stuck: StuckRow[];
   stuckRungs: StuckRung[];
   recentWrong: WrongRow[];
   assignments: Assignment[];
@@ -748,14 +759,24 @@ function StudentDetail({
                 {student.stuck.map((t) => (
                   <div
                     key={t.topic}
-                    className="flex items-center gap-3 bg-red-50 border border-red-100 rounded-xl px-3 py-2 text-sm"
+                    className="bg-red-50 border border-red-100 rounded-xl px-3 py-2"
                   >
-                    <span className="font-bold flex-1">{label(t.topic)}</span>
-                    <span className="text-[11px] text-slate-600">
-                      {t.answered - t.correct} טעויות מתוך {t.answered}
-                      {t.hints > 0 ? ` · ${t.hints} רמזים` : ''}
-                    </span>
-                    <span className="font-black text-red-600">{pct(t.accuracy)}</span>
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="font-bold flex-1">{label(t.topic)}</span>
+                      <span className="text-[11px] text-slate-600">
+                        {t.answered - t.correct} טעויות מתוך {t.answered}
+                        {t.hints > 0 ? ` · ${t.hints} רמזים` : ''}
+                      </span>
+                      <span className="font-black text-red-600">{pct(t.accuracy)}</span>
+                    </div>
+                    {/* The topic percentage is the alarm; this is the address.
+                        A tutor cannot teach "טריגונומטריה 62%" on Tuesday. */}
+                    {t.worstSubTopic && (
+                      <div className="text-[11px] text-red-800 mt-1">
+                        הכי חלש בתוכו: <b>{t.worstSubTopic.title}</b> — {t.worstSubTopic.correct}/
+                        {t.worstSubTopic.answered} ({pct(t.worstSubTopic.accuracy)})
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
