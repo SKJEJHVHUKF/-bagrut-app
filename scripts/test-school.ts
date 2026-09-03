@@ -24,7 +24,7 @@ import {
   generateJoinCode,
   JOIN_CODE_LENGTH,
 } from '../lib/join-code';
-import { validateFocus, focusCatalogue, describeFocus, RUNG_LABEL } from '../lib/focus-target';
+import { validateFocus, focusCatalogue, describeFocus, focusHref, RUNG_LABEL } from '../lib/focus-target';
 import { visibleFocus } from '../lib/focus-visibility';
 
 let checks = 0;
@@ -172,6 +172,74 @@ const catalogue = focusCatalogue();
     describeFocus({ topic: 'סדרות', subTopicId: null, rung: null }) === 'סדרות',
     'a whole-topic focus describes as just the topic'
   );
+}
+
+// ============================================================
+// Where a task OPENS
+// ============================================================
+//
+// The student's card used to link to /practice/math5/<topic>/sub/<id>/practice.
+// The owner tapped his teacher's task on his phone, landed on that screen and
+// said it plainly: that path has long been out of use. Practice lives on the
+// roadmap ladder now. A link is not a detail here -- it is the entire point of
+// the feature, and a wrong one takes the student out of the product without
+// erroring, which is why it is asserted over the WHOLE catalogue rather than a
+// sample.
+{
+  const cat = focusCatalogue();
+  let hrefs = 0;
+  const offRoadmap: string[] = [];
+  const wrongLadder: string[] = [];
+
+  for (const t of cat) {
+    hrefs++;
+    const topicOnly = focusHref({ topic: t.topic, subTopicId: null, rung: null });
+    if (!topicOnly.startsWith('/roadmap')) offRoadmap.push(`${t.topic} -> ${topicOnly}`);
+
+    for (const sub of t.subTopics) {
+      for (const rung of [null, ...sub.rungs] as const) {
+        hrefs++;
+        const href = focusHref({ topic: t.topic, subTopicId: sub.id, rung });
+        if (!href.startsWith('/roadmap')) offRoadmap.push(`${t.topic}/${sub.id} -> ${href}`);
+        // The ladder of the sub-topic the teacher pointed at, not its topic's.
+        if (!href.startsWith(`/roadmap/${encodeURIComponent(sub.id)}`)) {
+          wrongLadder.push(`${sub.id} -> ${href}`);
+        }
+        if (rung && !href.includes(`level=${rung}`)) {
+          wrongLadder.push(`${sub.id} lost its rung -> ${href}`);
+        }
+      }
+    }
+  }
+
+  assert(hrefs > 100, `every focus in the catalogue resolves to a link (${hrefs} of them)`);
+  assert(
+    offRoadmap.length === 0,
+    `no task opens outside the roadmap${offRoadmap.length ? ` -- ${offRoadmap[0]}` : ''}`
+  );
+  assert(
+    wrongLadder.length === 0,
+    `each task opens its own sub-topic, on the rung the teacher chose${wrongLadder.length ? ` -- ${wrongLadder[0]}` : ''}`
+  );
+
+  // The shape, spelled out, so a future refactor cannot quietly go back.
+  const trig = focusHref({ topic: 'טריגונומטריה', subTopicId: 'trig-right-triangle', rung: 'easy' });
+  assert(
+    trig.startsWith('/roadmap/trig-right-triangle?') && trig.includes('level=easy'),
+    'a sub-topic task opens the ladder on its rung'
+  );
+  assert(trig.includes('ctx=571'), '...with the track context, so "back" returns to the journey');
+  assert(
+    focusHref({ topic: 'סדרות', subTopicId: null, rung: null }) === '/roadmap/track/571/sequences',
+    'a whole-topic task opens that topic in the track'
+  );
+  assert(
+    focusHref({ topic: 'פונקציות', subTopicId: null, rung: null }).startsWith('/roadmap/'),
+    'a topic with no track page still opens a station, not a list of exam papers'
+  );
+
+  const source = readFileSync(new URL('../components/StudentFocus.tsx', import.meta.url), 'utf8');
+  assert(!source.includes('/practice/'), 'the student card no longer builds a /practice link');
 }
 
 // ============================================================

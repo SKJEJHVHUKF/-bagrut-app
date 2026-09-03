@@ -40,6 +40,10 @@ export type StudentFocusRow = {
   due_on: string | null;
   note: string | null;
   created_at: string;
+  /** Where tapping it opens — always inside the roadmap. Resolved on the
+   *  server (lib/focus-target focusHref), because working it out needs the
+   *  authored corpus and this row is rendered in the browser. */
+  href: string;
 };
 
 /** Focuses older than this stop being shown. A task from three months ago is

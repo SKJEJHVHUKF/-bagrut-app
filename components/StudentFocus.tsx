@@ -14,6 +14,12 @@
  * post-mortem. /api/school/my-classes answers it now, on a client that can
  * actually read the tables, in the same call the page already made.
  *
+ * ⚠️ THE LINK IS THE ROADMAP, never /practice. The owner tapped his teacher's
+ * task on his phone and landed on a screen from before מסלול הלמידה existed —
+ * "a path that has long been out of use". A task that opens outside the journey
+ * is a task that takes the student out of the product. The URL is built server
+ * side (lib/focus-target focusHref) and arrives on the row.
+ *
  * ⚠️ PROGRESS IS COUNTED LOCALLY, from the student's own answer log, with the
  * SAME function the teacher's board uses server-side (lib/assignment-progress).
  * That is deliberate: the counter is instant and free, and it cannot disagree
@@ -26,23 +32,6 @@ import { getResults } from '@/lib/results';
 import { assignmentProgress } from '@/lib/assignment-progress';
 import { RUNG_LABEL, type Rung } from '@/lib/rungs';
 import type { StudentFocusRow } from '@/lib/focus-visibility';
-
-/** The app is single-subject, and the practice routes spell it `math5`
- *  (app/insights, app/errors build the same links). Stored nowhere on the focus
- *  row because a second subject would need far more than a column. */
-const SUBJECT = 'math5';
-
-/**
- * The deepest link the focus justifies.
- *
- * This is the difference between "go practise sequences" and landing on the
- * exact sub-topic drill the teacher meant — which is the whole promise of
- * pointing at something precise. Same shape app/errors and app/insights use.
- */
-function practiceHref(topic: string, subTopicId: string | null): string {
-  const base = `/practice/${SUBJECT}/${encodeURIComponent(topic)}`;
-  return subTopicId ? `${base}/sub/${encodeURIComponent(subTopicId)}/practice` : base;
-}
 
 export default function StudentFocus({ rows }: { rows: StudentFocusRow[] | null }) {
   if (!rows || rows.length === 0) return null;
@@ -95,7 +84,7 @@ export default function StudentFocus({ rows }: { rows: StudentFocusRow[] | null 
                 )}
 
                 <Link
-                  href={practiceHref(f.topic, f.sub_topic_id)}
+                  href={f.href}
                   className="mr-auto rounded bg-violet-600 px-3 py-1 text-sm font-medium text-white transition hover:bg-violet-700"
                 >
                   {done ? 'לתרגל שוב' : 'לתרגול'}

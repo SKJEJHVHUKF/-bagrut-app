@@ -21,6 +21,8 @@
 
 import { allLessonKeys, getSubTopics } from '@/content/lessons';
 import { buildSubTopicLevels } from '@/lib/roadmap-levels';
+import { getTrack, TRACK_PAPERS } from '@/content/tracks';
+import { ladderHref, locateInTrack } from '@/lib/track';
 // ⚠️ Re-exported, never re-declared. The rung names live in lib/rungs because
 // that file imports NOTHING: a client component that needs the Hebrew labels
 // can take them from there without dragging this module — and with it the
@@ -135,4 +137,56 @@ export function describeFocus(target: FocusTarget, subTopicTitle?: string | null
   else if (target.subTopicId) parts.push(target.subTopicId);
   if (target.rung) parts.push(RUNG_LABEL[target.rung]);
   return parts.join(' · ');
+}
+
+// ---- where a focus opens ----------------------------------------------------
+
+/**
+ * The URL a student lands on when he taps the task his teacher sent.
+ *
+ * ⚠️ IT MUST BE THE ROADMAP, and this function exists because it was not.
+ * The student's card used to build `/practice/math5/<topic>/sub/<id>/practice`,
+ * a screen from before the מסלול הלמידה existed. The owner opened his teacher's
+ * task on his phone, landed there and said so plainly: that path is not in use
+ * any more. Practice lives on the ladder now — `/roadmap/<subId>` — and a task
+ * that opens anywhere else is a task that leaves the product.
+ *
+ * ⚠️ SERVER-SIDE ONLY, like the rest of this file. It reaches the track and the
+ * roadmap node registry, which is the authored corpus; a client component that
+ * imported this would ship the whole corpus. /api/school/my-classes resolves
+ * the href per row and sends the finished string down. (lib/rungs.ts documents
+ * the same trap.)
+ *
+ * Measured over the whole catalogue: all 95 sub-topics resolve to a ladder, and
+ * 82 of them also sit on a track, which is the only thing `ctx` adds — the back
+ * link and the next station. So the sub-topic case never needs a fallback.
+ */
+export function focusHref(target: FocusTarget): string {
+  if (target.subTopicId) return ladderFor(target.subTopicId, target.rung);
+
+  // A whole-topic task. The track's own topic page is the right screen: it is
+  // the journey, with every station in the syllabus order.
+  for (const paper of TRACK_PAPERS) {
+    const topic = getTrack(paper).topics.find((t) => t.title === target.topic);
+    if (topic) return `/roadmap/track/${paper}/${encodeURIComponent(topic.id)}`;
+  }
+
+  // Five of the fifteen lesson topics (אלגברה, פונקציות, סטטיסטיקה…) predate the
+  // 571/572 tracks and have no page of their own. The first station of the topic
+  // beats a list of exam papers: the student starts practising instead of
+  // choosing. Nothing at all only if the topic is empty, which validateFocus
+  // already refuses.
+  const key = allLessonKeys().find((k) => k.topic === target.topic);
+  const first = key ? getSubTopics(key.subject, key.topic)[0] : undefined;
+  return first ? ladderFor(first.id, null) : '/roadmap';
+}
+
+/** `/roadmap/<subId>?ctx=<paper|topicId>&level=<rung>` — the ladder, opened on
+ *  the rung the teacher chose, with the track context when there is one. */
+function ladderFor(subId: string, rung: Rung | null): string {
+  for (const paper of TRACK_PAPERS) {
+    const loc = locateInTrack(paper, subId);
+    if (loc) return ladderHref(subId, { paper, topicId: loc.topic.id }, rung ?? undefined);
+  }
+  return ladderHref(subId, null, rung ?? undefined);
 }

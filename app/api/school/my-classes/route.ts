@@ -18,6 +18,8 @@
  */
 
 import { requireUser, jsonError } from '@/lib/school-guard';
+import { focusHref } from '@/lib/focus-target';
+import { RUNGS, type Rung } from '@/lib/rungs';
 import {
   visibleFocus,
   FOCUS_MAX_AGE_DAYS,
@@ -66,18 +68,25 @@ export async function GET(request: Request): Promise<Response> {
     .order('created_at', { ascending: false })
     .limit(FOCUS_LIMIT);
 
-  const focuses = (focusRows ?? []).map(
-    (f): StudentFocusRow => ({
+  const focuses = (focusRows ?? []).map((f): StudentFocusRow => {
+    const topic = String(f.topic ?? '');
+    const sub_topic_id = (f.sub_topic_id as string) ?? null;
+    // The column is plain text, so a rung the app no longer has is possible.
+    // Dropping it costs the student the level, not the task.
+    const raw = (f.rung as string) ?? null;
+    const rung: Rung | null = RUNGS.includes(raw as Rung) ? (raw as Rung) : null;
+    return {
       id: String(f.id),
-      topic: String(f.topic ?? ''),
-      sub_topic_id: (f.sub_topic_id as string) ?? null,
-      rung: (f.rung as string) ?? null,
+      topic,
+      sub_topic_id,
+      rung,
       target_count: (f.target_count as number) ?? null,
       due_on: (f.due_on as string) ?? null,
       note: (f.note as string) ?? null,
       created_at: String(f.created_at),
-    })
-  );
+      href: focusHref({ topic, subTopicId: sub_topic_id, rung }),
+    };
+  });
 
   // The whole target list for these focuses, not just the caller's rows: "aimed
   // at nobody in particular" and "aimed at someone else" are the same thing
