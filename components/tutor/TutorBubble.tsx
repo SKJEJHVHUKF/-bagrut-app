@@ -355,21 +355,45 @@ export default function TutorBubble() {
   // leaving to a question-less screen keeps it too (nothing new to talk about
   // yet). The server conversation id is deliberately kept: the transcript stays
   // one conversation per visit; only the visible thread starts fresh.
+  const resetThread = useCallback(() => {
+    genRef.current++;
+    setMsgs([]);
+    setError(null);
+    // The visible thread starts fresh, so what the previous thread had
+    // established about its subject goes with it. Keeping it would ground a
+    // brand-new conversation in the last one's topic — quietly, and exactly
+    // the failure `resolveCognitive` was just stripped for.
+    convTopicRef.current = '';
+    overviewForRef.current = '';
+    tutorSpokeRef.current = false;
+    pendingRef.current = null;
+    lastVerdictRef.current = null;
+    lastAskRef.current = null;
+  }, []);
+
   useEffect(() => {
     const k = focus?.question?.id ?? focus?.questionText ?? '';
-    if (k && lastQKeyRef.current && k !== lastQKeyRef.current) {
-      genRef.current++;
-      setMsgs([]);
-      setError(null);
-      // The visible thread starts fresh, so what the previous thread had
-      // established about its subject goes with it. Keeping it would ground a
-      // brand-new conversation in the last one's topic — quietly, and exactly
-      // the failure `resolveCognitive` was just stripped for.
-      convTopicRef.current = '';
-      overviewForRef.current = '';
-    }
+    if (k && lastQKeyRef.current && k !== lastQKeyRef.current) resetThread();
     if (k) lastQKeyRef.current = k;
-  }, [focus]);
+  }, [focus, resetThread]);
+
+  // ===== leaving the screen ends the conversation =====
+  // The bubble is mounted once in app/layout.tsx, so its state survives client
+  // navigation. A student who finished a repair path and went back to the
+  // roadmap or home was still looking at the chat about the question they had
+  // just left (owner, 2026-09-04). A route change is a new conversation: the
+  // thread clears and the drawer closes. Query-string changes (ladder levels)
+  // are not route changes, and a new question on the same route is handled by
+  // the effect above.
+  const lastPathRef = useRef<string | null>(null);
+  useEffect(() => {
+    const p = pathname ?? '';
+    if (lastPathRef.current !== null && p !== lastPathRef.current) {
+      resetThread();
+      setOpen(false);
+    }
+    lastPathRef.current = p;
+  }, [pathname, resetThread]);
 
   const nudgeKey = focus?.wrongAnswer ? `${focus.where}::${focus.wrongAnswer}` : null;
   const showNudge = !!nudgeKey && nudgeKey !== nudgeDismissed && !open;
