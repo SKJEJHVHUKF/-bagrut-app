@@ -315,6 +315,25 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
       'a number, or a word the exercise uses, is content',
     );
     ok(!hasContentBeyondAsk('למה מותר להפעיל פיתגורס כאן', null), 'no exercise on screen → never content');
+
+    // ⚠️ FOCUS-DEPENDENT, with the exercise text spelled out here on purpose.
+    // Containment once ran in both directions, so "לא יודע" read as content
+    // whenever the exercise's steps said "אנחנו יודעים ש…" — a large share of
+    // them. Only the forward direction (the student's word contains the
+    // exercise's word, prefix and all) carries the intent.
+    const pyth = {
+      question: {
+        id: 'fixture-pyth', kind: 'open', difficulty: 'easy',
+        question: 'במשולש ישר זווית הניצבים 3 ו-4. מצא את היתר.',
+        solution: { steps: ['אנחנו יודעים שמשפט פיתגורס מתאים כאן', 'c^2 = 9 + 16 = 25', 'c = 5'], finalAnswer: '5' },
+      },
+      subTopic: { id: 'fixture', title: 'משולש ישר זווית' },
+      topic: 'גיאומטריה אוקלידית', where: 'תרגול',
+    } as never;
+    ok(!hasContentBeyondAsk('לא יודע', pyth), '"לא יודע" stays bare even when the steps say "יודעים"');
+    ok(hasContentBeyondAsk('מה עושים עם היתר', pyth), '"מה עושים עם היתר" names the exercise');
+    ok(hasContentBeyondAsk('מה בנתונים מרמז שצריך את היתר', pyth), 'a prefixed noun from the exercise is content');
+    ok(!hasContentBeyondAsk('איך פותרים את זה', pyth), '"איך פותרים את זה" stays bare');
   }
 
   console.log(

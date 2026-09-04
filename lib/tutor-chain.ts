@@ -95,8 +95,11 @@ function tokenise(s: string): string[] {
  * that is not an ask word. "מה בנתונים מרמז שצריך את משפט קטע האמצעים"
  * shares קטע/אמצעים with the exercise; "לא הצלחתי" shares nothing.
  *
- * Matching is by containment at ≥3 letters, because Hebrew prefixes glue
- * onto the noun: האמצעים ⊃ אמצעים, ובנתונים ⊃ נתונים.
+ * Matching is FORWARD containment only, at ≥3 letters: the student's word
+ * contains the exercise's word, possibly with a Hebrew prefix glued on
+ * (בנתונים ⊃ נתונים). Never the reverse — "יודעים".includes("יודע") would
+ * turn the bare "לא יודע" into content on every exercise whose steps say
+ * "אנחנו יודעים ש…", which is a large share of them. Found in review.
  */
 export function hasContentBeyondAsk(message: string, focus: TutorFocus | null): boolean {
   const q = focus?.question;
@@ -109,7 +112,7 @@ export function hasContentBeyondAsk(message: string, focus: TutorFocus | null): 
       /[0-9a-z]/i.test(tok) ||
       (tok.length >= 3 &&
         !ASK_WORDS.has(tok) &&
-        own.some((o) => o.includes(tok) || tok.includes(o))),
+        own.some((o) => tok.includes(o))),
   );
 }
 
