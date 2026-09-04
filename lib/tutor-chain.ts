@@ -57,6 +57,36 @@ import type { TutorFocus } from '@/lib/tutor-presence';
 import type { Pending } from '@/lib/tutor-pending';
 
 /**
+ * The words that make up a generic ask and nothing else — question words,
+ * deictics, the ask nouns (רמז / נוסחה / פתרון …) and the verbs around them.
+ * A message made only of these is a BARE ask and belongs to the router.
+ * Anything else — a maths noun, a number, "בנתונים", "המכנה" — is content.
+ */
+const ASK_WORDS = new Set([
+  'מה', 'מהו', 'מהי', 'למה', 'מדוע', 'איך', 'כיצד', 'איפה', 'מאיפה', 'איזה', 'איזו', 'כמה',
+  'זה', 'זאת', 'זו', 'פה', 'כאן', 'עכשיו', 'שלי', 'שלך', 'לי', 'לך', 'את', 'של', 'על', 'עם', 'אם',
+  'או', 'לא', 'כן', 'גם', 'רק', 'שוב', 'עוד', 'פעם', 'ואז', 'אז', 'נו', 'טוב', 'אוקיי', 'אוקי', 'בדיוק',
+  'בכלל', 'בבקשה', 'אפשר', 'אני', 'אתה', 'יכול', 'יכולה', 'תוכל', 'תוכלי',
+  'נכון', 'נכונה', 'שגוי', 'שגויה', 'טעות', 'הטעות', 'טעיתי', 'בסדר', 'עשיתי',
+  'תשובה', 'התשובה', 'פתרון', 'הפתרון', 'מלא', 'המלא', 'תפתור', 'תפתרי', 'לפתור',
+  'רמז', 'תרמז', 'רמזים', 'תסביר', 'תסבירי', 'הסבר', 'הסבירי', 'תראה', 'תראי', 'תן', 'תני',
+  'הבנתי', 'מבין', 'מבינה', 'תקוע', 'תקועה', 'נתקעתי', 'מצליח', 'מצליחה',
+  'יותר', 'פשוט', 'בפשטות', 'נוסחה', 'נוסחא', 'נוסחאות', 'הנוסחה',
+  'חשוב', 'לזכור', 'לדעת', 'הכי', 'סיכום', 'מתחילים', 'להתחיל', 'הצעד', 'הראשון', 'ניגשים',
+  'עובד', 'קשור', 'הולך', 'מסתדר', 'יוצא', 'קורה', 'השאלה', 'מבקשת', 'רוצה', 'מבקשים', 'רוצים',
+  'אומר', 'אומרת', 'הכוונה', 'בשאלה', 'דוגמה', 'דוגמא', 'טבלה', 'שלב', 'צעד', 'שורה', 'הבא',
+]);
+
+/** Does the message say anything beyond a generic ask? See ASK_WORDS. */
+export function hasContentBeyondAsk(message: string): boolean {
+  const tokens = message
+    .replace(/[?!.,:;"'׳״\-–—()[\]]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  return tokens.some((tok) => /[0-9a-z]/i.test(tok) || (tok.length > 1 && !ASK_WORDS.has(tok)));
+}
+
+/**
  * What the chain needs to remember BETWEEN turns.
  *
  * All of it lives in refs on the caller. It is passed in and handed back
@@ -260,6 +290,36 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   const meta = examMetaAnswer(text, focus?.topic || screenTopic || undefined);
   if (meta) return hit(meta, 'exam-meta');
 
+  // ===== 3½. an authored answer in the student's OWN words beats the template =====
+  //
+  // `classifyAsk` matches substrings, so "למה זה לא 2:3?" and "מה בנתונים
+  // מרמז שצריך את משפט קטע האמצעים" classify as the generic why-wrong / hint
+  // asks, and step 4 serves the exercise's stock note — while the bank holds
+  // an entry written for exactly that sentence. MEASURED (scripts/
+  // measure-faq-intercept.ts, 2026-09-04): 2,811 of 51,109 authored phrasings
+  // (5.5%) were swallowed this way; the bank's own test read 100% because it
+  // never calls the router.
+  //
+  // The rule: a BARE ask ("מה הטעות שלי", "רמז", "לא הבנתי") stays with the
+  // router — it needs the student's answer state, which no bank entry has.
+  // Only a message that carries content beyond the ask phrase is offered to
+  // the bank first, and the bank keeps every guard it already had: fenced to
+  // this question's sub-topic, FAQ_THRESHOLD + FAQ_MARGIN, the foreign-subject
+  // and foreign-number screens, `reveals`. A miss here falls through to step 4
+  // exactly as before, and step 5 does not search twice.
+  let faqTriedEarly = false;
+  if (routeKind === 'ask' && focus?.question && focus.topic && hasContentBeyondAsk(text)) {
+    onSlow?.();
+    faqTriedEarly = true;
+    try {
+      const { answerFromFaq } = await import('@/lib/tutor-faq');
+      const early = await answerFromFaq(text, focus);
+      if (early) return hit(early.text, 'faq:question');
+    } catch {
+      /* no bank for this topic — the template answers, as before */
+    }
+  }
+
   // ===== 4. the authored content for THIS question =====
   //
   // Most of what a student asks mid-exercise ("רמז", "למה טעיתי", "מאיפה
@@ -302,10 +362,17 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   // ===== 5. the banks, entered through the door that fits the screen =====
   if (focus?.question && focus.topic) {
     try {
-      const { answerFromFaq } = await import('@/lib/tutor-faq');
-      const faq = await answerFromFaq(text, focus);
-      if (faq) return hit(faq.text, 'faq:question');
-      faqMissed = true;
+      // Already searched in step 3½ for this exact message — same fence, same
+      // thresholds — so a second pass could only return the same null. The
+      // layers below still run, exactly as after any other bank miss.
+      if (faqTriedEarly) {
+        faqMissed = true;
+      } else {
+        const { answerFromFaq } = await import('@/lib/tutor-faq');
+        const faq = await answerFromFaq(text, focus);
+        if (faq) return hit(faq.text, 'faq:question');
+        faqMissed = true;
+      }
     } catch {
       /* no bank for this topic yet — the model handles it, as before */
     }

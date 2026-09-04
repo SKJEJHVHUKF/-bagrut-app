@@ -267,6 +267,44 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     }
   }
 
+  console.log('\n=== an authored answer in the student\'s own words beats the template ===\n');
+  {
+    // ⚠️ classifyAsk matches SUBSTRINGS. "מה בנתונים מרמז שצריך את משפט קטע
+    // האמצעים" classified as the generic hint ask and step 4 served the
+    // exercise's stock hint, while the bank held an entry written for that
+    // exact sentence. MEASURED (scripts/measure-faq-intercept.ts): 2,811 of
+    // 51,109 authored phrasings were swallowed this way; step 3½ offers a
+    // content-bearing ask to the bank first. A BARE ask must still go to the
+    // router — it needs the student's answer state that no bank entry has.
+    const { getLesson } = await import('../content/lessons');
+    const { hasContentBeyondAsk } = await import('../lib/tutor-chain');
+    const L = getLesson('math5', 'גיאומטריה אוקלידית');
+    let q: unknown = null;
+    let st: unknown = null;
+    for (const s of L?.subTopics ?? [])
+      for (const x of s.questions ?? []) if (x.id === 'eg-sub-thales-002') { q = x; st = s; }
+    ok(Boolean(q), 'the fixture question exists (eg-sub-thales-002)');
+    const focus = {
+      where: 'תרגול', topic: 'גיאומטריה אוקלידית', subTopicId: (st as { id: string })?.id ?? '',
+      questionText: (q as { question: string })?.question ?? '', question: q, subTopic: st,
+      chosenIndex: 1, wrongAnswer: 'x',
+    } as never;
+    for (const [msg, layer] of [
+      ['מה בנתונים מרמז שצריך את משפט קטע האמצעים', 'faq:question'], // content → the bank
+      ['מה הטעות שלי', 'local:why-wrong'],                        // bare → the router
+      ['רמז', 'local:hint'],
+      ['למה התשובה שלי לא נכונה', 'local:why-wrong'],
+      ['לא הבנתי', 'local:hint'],
+      ['מה הנוסחה', 'local:formulas'],
+    ] as Array<[string, string]>) {
+      const r = await runTutorChain({ message: msg, focus, state: emptyChainState() });
+      const got = r.answered ? r.layer : 'miss';
+      ok(got === layer, `"${msg}" → ${got}${got === layer ? '' : ` (expected ${layer})`}`);
+    }
+    ok(!hasContentBeyondAsk('מה הטעות שלי') && !hasContentBeyondAsk('רמז בבקשה'), 'bare asks carry no content');
+    ok(hasContentBeyondAsk('למה זה לא 2:3') && hasContentBeyondAsk('למה מותר להפעיל פיתגורס כאן'), 'a number or a noun is content');
+  }
+
   console.log(
     failed === 0
       ? '\nOK tutor chain: one chain, both surfaces, and nothing answered that should not be\n'
