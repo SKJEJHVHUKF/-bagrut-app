@@ -336,6 +336,28 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     ok(!hasContentBeyondAsk('איך פותרים את זה', pyth), '"איך פותרים את זה" stays bare');
   }
 
+  console.log('\n=== "כמה נקודות" is exam scoring only next to a scoring word ===\n');
+  {
+    // ⚠️ "כמה נקודות חיתוך יש עם ציר y" was answered with what the topic is
+    // worth in the bagrut. A maths question about points on a graph must never
+    // reach the exam-meta layer; the scoring ask still must.
+    for (const [msg, isScoring] of [
+      ['כמה נקודות זה שווה', true],
+      ['כמה נקודות מקבלים על הנושא הזה', true],
+      ['כמה נקודות זה', true],
+      ['כמה נקודות חיתוך יש עם ציר y', false],
+      ['כמה נקודות קיצון יש לפונקציה הזאת', false],
+      ['כמה נקודות משותפות יש לשני הגרפים', false],
+    ] as Array<[string, boolean]>) {
+      const r = await turn(msg, {}, 'פונקציות');
+      const got = r.answered ? r.layer : 'miss';
+      ok(
+        (got === 'exam-meta') === isScoring,
+        `"${msg}" → ${got}${(got === 'exam-meta') === isScoring ? '' : isScoring ? ' (expected exam-meta)' : ' (must NOT be exam-meta)'}`,
+      );
+    }
+  }
+
   console.log(
     failed === 0
       ? '\nOK tutor chain: one chain, both surfaces, and nothing answered that should not be\n'

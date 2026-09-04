@@ -22,7 +22,22 @@ import { getTopicMapping, paperLabel } from '@/content/bagrut-curriculum';
 /** Does it come up in the exam, and in which שאלון. */
 const APPEARS = /יבוא\s*בבגרות|יופיע\s*בבגרות|נשאל\s*בבגרות|בבגרות\?|יש\s*את\s*זה\s*בבגרות|שואלים\s*את\s*זה|חשוב\s*לבגרות|צריך\s*לדעת\s*(?:את\s*)?זה\s*לבגרות|זה\s*בשאלון/;
 /** What is it worth. */
-const POINTS = /כמה\s*נקודות|כמה\s*זה\s*שווה|כמה\s*אחוז(?:ים)?\s*מהציון|שווה\s*הרבה/;
+const POINTS = /כמה\s*זה\s*שווה|כמה\s*אחוז(?:ים)?\s*מהציון|שווה\s*הרבה/;
+/**
+ * "כמה נקודות" is exam scoring ONLY next to a scoring word. Bare, it is at
+ * least as often a maths question — "כמה נקודות חיתוך יש עם ציר y", "כמה
+ * נקודות קיצון יש לפונקציה" — and a student asking one was told what the
+ * topic is worth in the bagrut (found by scripts/measure-faq-intercept.ts,
+ * 2026-09-04). Boundaries are explicit whitespace, not \b: JS \b does not
+ * see Hebrew letters as word characters.
+ */
+const HOW_MANY_POINTS = /כמה\s*נקודות/;
+const SCORING =
+  /(?:^|\s)(?:זה|שווה|מקבלים|נותנים|ניקוד|ציון|בציון|בגרות|בבגרות|בשאלון|בשאלה|השאלה|הסעיף|סעיף|הנושא)(?=\s|$|[?!.,])/;
+
+function asksPoints(message: string): boolean {
+  return POINTS.test(message) || (HOW_MANY_POINTS.test(message) && SCORING.test(message));
+}
 /** How is it examined — "is it always like this". */
 const STYLE = /תמיד\s*ככה|איך\s*(?:זה\s*)?(?:נשאל|שואלים)|באיזה\s*אופן\s*שואלים|איך\s*נראית\s*שאלה|מה\s*הסגנון/;
 
@@ -39,7 +54,7 @@ export function examMetaAnswer(message: string, topic: string | undefined): stri
 
   const paper = `שאלון ${t.paper}${t.alsoIn ? ` (ומופיע גם ב-${t.alsoIn})` : ''}`;
 
-  if (POINTS.test(message)) {
+  if (asksPoints(message)) {
     return (
       `לפי הבגרויות האחרונות, שאלה ב${t.displayName} שווה בדרך כלל ${t.typicalPoints} נקודות, ` +
       `והנושא מופיע ${t.appearsIn}. שאלה מלאה בבגרות היא 20–25 נקודות, אז זה משקל אמיתי.\n\n` +
