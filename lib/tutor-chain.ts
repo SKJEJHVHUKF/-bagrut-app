@@ -49,7 +49,14 @@ import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
 import { metaAnswer } from '@/lib/tutor-meta-asks';
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 import { offTopicRedirect } from '@/lib/off-topic';
-import { planAnswer } from '@/lib/tutor-plan-answer';
+// lib/tutor-plan-answer is imported DYNAMICALLY at step 10, not here. It pulls
+// lib/daily-plan-client, and through it content/lessons (all 15 topics),
+// content/tracks, content/ghost-replay, content/concept-quiz and lib/cognition
+// — 97 content modules, a 4.4 MB chunk. This chain is reached from the tutor
+// bubble in the ROOT LAYOUT, so a static import put that chunk in the first
+// load of every page, /login included (measured 2026-09-04: 8.86 MB floor on
+// all 57 routes). The bubble already defers tutor-context and tutor-greeting
+// for exactly this reason; this was the one path left.
 import { resolveTopic, isTopicOnly, isVagueAsk } from '@/lib/resolve-topic';
 import { canonicalIntent } from '@/lib/tutor-intent';
 import { tutorFlag } from '@/lib/tutor-flags';
@@ -528,6 +535,7 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   // `buildTodayPlan` has their results, their mistakes and their target, and
   // is what /my-plan renders. Silent whenever a question is on screen: there
   // "מה לעשות עכשיו" means the exercise, and `what_to_do_here` owns it.
+  const { planAnswer } = await import('@/lib/tutor-plan-answer');
   const fromPlan = planAnswer(text, Boolean(focus?.question));
   if (fromPlan) return hit(fromPlan, 'plan');
 

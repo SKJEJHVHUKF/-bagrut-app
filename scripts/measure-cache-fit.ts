@@ -35,6 +35,30 @@ import Anthropic from '@anthropic-ai/sdk';
 import { buildTutorSystem } from '@/lib/agents/prompts';
 import { TUTOR_TOOLS } from '@/lib/agents/tools';
 
+// countTokens is free but still needs a key, and this is the ONE step of the
+// chain that touches the network. Without a key it skips — the same way in
+// both places, so a run is reproducible — and says so where it will be seen:
+//   · on a laptop, a banner in the terminal;
+//   · in CI, ALSO a GitHub workflow annotation (`::warning::`), which shows in
+//     the run summary without anyone opening the log. A green run with a
+//     yellow "skipped" badge is honest; a red main on a forgotten secret or an
+//     API blip is a gate people learn to bypass.
+// The check stays in the chain because it IS a regression gate: a prompt edit
+// that drops a cached prefix under its model's floor silently costs the 1.25x
+// write premium on every request (that happened once, −35 tokens, +47% bill).
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.log(
+    '\n⚠️  measure:cache SKIPPED — ANTHROPIC_API_KEY is not set, the cache-floor check did not run.\n' +
+      '    countTokens is free (no model call) but needs a key. Locally: put it in .env.local.\n' +
+      '    In GitHub Actions: Settings → Secrets and variables → Actions → New repository secret →\n' +
+      '    name ANTHROPIC_API_KEY. The workflow passes it through as env.\n',
+  );
+  if (process.env.GITHUB_ACTIONS) {
+    console.log('::warning title=measure:cache skipped::ANTHROPIC_API_KEY secret not set — the cache-floor check did not run');
+  }
+  process.exit(0);
+}
+
 const client = new Anthropic();
 
 /** Cacheable-prefix minimums, per shared/prompt-caching.md. */

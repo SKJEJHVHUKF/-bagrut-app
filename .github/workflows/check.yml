@@ -1,0 +1,54 @@
+# The gate, run by a machine instead of by whoever remembers.
+#
+# `npm run check` is the same chain every session is supposed to run before
+# pushing: typecheck, every content/tutor/ladder verifier, and the production
+# build. It takes 10–15 minutes serially, which is exactly why it was being
+# run by hand and in part. Several sessions push to `main` in parallel; each
+# push now gets the full chain, and a red run reaches the owner by email.
+#
+# This does NOT block the Vercel deploy on its own — Vercel builds on push.
+# To make it blocking: GitHub → Settings → Branches → protect `main`, require
+# the "check" status, and land changes through pull requests.
+#
+# ⚠️ Deliberately NOT in the chain, and must stay out of CI: `test:access`
+# (creates a real Supabase account, signs in, hits a running server, deletes
+# it — a manual check run against a deployment) and `check:db` (needs the
+# service-role key). Everything in `npm run check` is pure: content + code +
+# build. The one keyed step, measure:cache, uses the free countTokens.
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  # A newer push to the same branch supersedes the run in flight.
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      CI: 'true'
+      # measure:cache uses messages.countTokens — free, no model call, but
+      # keyed, and the only network step in the chain. Without the secret it
+      # SKIPS (exit 0) and raises a yellow workflow annotation so the skip is
+      # visible in the run summary; with it, the cache-floor check runs for
+      # real. Fork PRs never see secrets and simply show the annotation.
+      # Add it once: Settings → Secrets and variables → Actions → New secret.
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Under a second: every `npm run X` in the chain is a script whose file
+      # exists — so a renamed script fails here, not 12 minutes in.
+      - run: node scripts/verify-check-chain.mjs
+      - run: npm run check

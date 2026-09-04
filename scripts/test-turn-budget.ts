@@ -53,7 +53,25 @@ import { renderFocusContext } from '../lib/tutor-presence';
 import { getLesson } from '../content/lessons';
 
 const MODEL = 'claude-haiku-4-5';
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+
+// countTokens is free but keyed. Without a key: skip, identically everywhere,
+// and say so where it is seen — the terminal, and in GitHub Actions a
+// `::warning::` annotation on the run summary. Same contract as
+// scripts/measure-cache-fit.ts; a step that behaves differently in two
+// places is one nobody can reproduce, and a red main on a missing secret
+// is a gate people learn to bypass.
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.log(
+    '\n⚠️  test:budget SKIPPED — ANTHROPIC_API_KEY is not set, the turn-budget check did not run.\n' +
+      '    countTokens is free (no model call) but needs a key. Locally: .env.local.\n' +
+      '    In GitHub Actions: Settings → Secrets and variables → Actions → New repository secret → ANTHROPIC_API_KEY.\n',
+  );
+  if (process.env.GITHUB_ACTIONS) {
+    console.log('::warning title=test:budget skipped::ANTHROPIC_API_KEY secret not set — the turn-budget check did not run');
+  }
+  process.exit(0);
+}
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ---- the budgets, and what each one is protecting -----------------
 
