@@ -22,6 +22,7 @@ import type { Difficulty } from '@/lib/remediation/types';
 import { makeRng } from './rng';
 import type { GeneratedQuestion, GenTemplate } from './types';
 import { EUCLIDEAN_TEMPLATES } from './templates/euclidean';
+import { FUNCTIONS_TEMPLATES } from './templates/functions';
 import { GEOMETRY_TEMPLATES } from './templates/geometry';
 import { PROBABILITY_TEMPLATES } from './templates/probability';
 import { SEQUENCES_TEMPLATES } from './templates/sequences';
@@ -34,6 +35,7 @@ const TEMPLATES: GenTemplate[] = [
   ...PROBABILITY_TEMPLATES,
   ...GEOMETRY_TEMPLATES,
   ...EUCLIDEAN_TEMPLATES,
+  ...FUNCTIONS_TEMPLATES,
 ];
 
 const BY_ID = new Map(TEMPLATES.map((t) => [t.id, t]));
