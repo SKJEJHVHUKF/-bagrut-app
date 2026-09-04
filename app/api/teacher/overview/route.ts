@@ -301,6 +301,33 @@ export async function GET(request: Request): Promise<Response> {
 
     const report = {
       earlyDays: raw.earlyDays,
+      // ⚠️ THE ONE THING ON THIS BOARD THAT NAMES THE MISTAKE, and it works
+      // today. `weaknesses` was left out of this payload at first on the
+      // reasoning that the topic rows and the ladder already say "where" —
+      // that was wrong. They say where; this says WHAT, in a sentence a
+      // person wrote: "מחשב שליפה עם החזרה כשנדרשת שליפה בלי החזרה", with
+      // the explanation underneath.
+      //
+      // It does NOT depend on the parametric generator. lib/patterns needs a
+      // `gen:` id and is therefore still dark; detectWeaknesses reads the
+      // cognition maps' trigger index over AUTHORED mcq ids via chosenIndex,
+      // which every quiz and drill answer has carried all along. Measured on
+      // live data the day it was added: 3, 7 and 28 weaknesses on the three
+      // students with real history, including named misconceptions.
+      //
+      // Misconceptions first: a named cause outranks "6 of 8 were wrong".
+      weaknesses: [...raw.weaknesses]
+        .sort((a, b) => Number(b.kind === 'misconception') - Number(a.kind === 'misconception'))
+        .slice(0, 5)
+        .map((w) => ({
+          kind: w.kind,
+          topic: w.topic,
+          subTopicId: w.subTopicId,
+          title: w.title,
+          detail: w.detail,
+          band: w.band,
+          chronic: raw.chronic.some((c) => c.id === w.id),
+        })),
       totalAnswered: raw.totalAnswered,
       // Cross-topic patterns only: `local` ones are a single sub-topic's
       // problem and the rung list above already points at those.

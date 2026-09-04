@@ -28,6 +28,7 @@ import {
   Plus,
   RefreshCw,
   Repeat,
+  Target,
   TriangleAlert,
   Trash2,
   Users,
@@ -100,6 +101,16 @@ type Student = {
   /** From lib/report — the named recurring mistake and the fortnight trend. */
   report: {
     earlyDays: boolean;
+    /** Named, authored diagnoses — the only thing here that says WHAT broke. */
+    weaknesses: {
+      kind: string;
+      topic: string;
+      subTopicId: string;
+      title: string;
+      detail: string;
+      band: string;
+      chronic: boolean;
+    }[];
     totalAnswered: number;
     patterns: {
       label: string;
@@ -637,6 +648,51 @@ function StudentDetail({
             )}
             . חזרות על שאלה שכבר נענתה אינן נספרות באחוזים — כמו במסך של התלמיד.
           </p>
+
+          {/* ============================================================
+              WHAT IS BROKEN, IN WORDS SOMEBODY WROTE.
+              The rows below say where he is weak; this says what the mistake
+              IS — "מחשב שליפה עם החזרה כשנדרשת שליפה בלי החזרה" — with the
+              authored explanation under it. A misconception outranks an
+              accuracy row, so those sort first and carry a badge. */}
+          {student.report.weaknesses.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Target aria-hidden="true" className="w-4 h-4 text-violet-600" />
+                <h3 className="text-xs font-black text-ink">מה בדיוק שבור</h3>
+              </div>
+              <div className="space-y-2">
+                {student.report.weaknesses.map((w) => (
+                  <div
+                    key={`${w.topic}-${w.subTopicId}-${w.title}`}
+                    className={`rounded-xl border px-3 py-2.5 ${
+                      w.kind === 'misconception'
+                        ? 'border-violet-200 bg-violet-50/60'
+                        : 'border-slate-200 bg-white/70'
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      {w.kind === 'misconception' && (
+                        <span className="text-[10px] font-black bg-violet-600 text-white rounded-full px-2 py-0.5">
+                          טעות מזוהה
+                        </span>
+                      )}
+                      {w.chronic && (
+                        <span className="text-[10px] font-black bg-red-100 text-red-700 rounded-full px-2 py-0.5">
+                          חזרה אחרי תיקון
+                        </span>
+                      )}
+                      <span className="text-sm font-black text-ink">{w.title}</span>
+                      <span className="text-[10px] text-slate-500">{label(w.topic)}</span>
+                    </div>
+                    <div className="text-[12px] text-slate-700 mt-1 leading-relaxed">
+                      <MathText inline>{w.detail}</MathText>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ============================================================
               THE RECURRING MISTAKE, NAMED.
