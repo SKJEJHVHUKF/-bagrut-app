@@ -42,6 +42,12 @@ const DAY = 24 * 60 * 60 * 1000;
 export const MIN_ATTEMPTS = 3;
 /** Accuracy at or below this counts as failing (over MIN_ATTEMPTS answers). */
 export const MAX_ACCURACY = 0.65;
+/**
+ * Wrong answers in the SAME sub-topic (or on the same misconception) before it
+ * is a weakness at all. One miss is an accident; a repair path offered after it
+ * is a diagnosis nobody made (owner, 2026-09-04). Applies to both detectors.
+ */
+export const MIN_WRONG = 2;
 /** Below this we stay silent, whatever the score says. */
 export const MIN_CONFIDENCE = 0.5;
 /**
@@ -223,6 +229,7 @@ function coarseWeaknesses(input: DetectInput, claimed: Set<string>): Weakness[] 
   for (const s of subTopicStatsFrom(input.events, input.subject)) {
     if (claimed.has(s.subTopicId)) continue;
     if (s.attempts < MIN_ATTEMPTS) continue;
+    if (s.attempts - s.correct < MIN_WRONG) continue;
     const accuracy = s.correct / s.attempts;
     if (accuracy > MAX_ACCURACY) continue;
     if (!hasSubTopics(input.subject, s.topic)) continue;
@@ -280,10 +287,9 @@ function sharpWeaknesses(input: DetectInput): Weakness[] {
     for (const state of states) {
       // 'fading' and 'resolved' are the layer's way of saying the student has
       // been getting this right lately. Re-drilling it would spend their evening
-      // proving something we already believe.
-      const live =
-        state.status === 'active' || (state.status === 'suspected' && state.opportunities >= 3);
-      if (!live) continue;
+      // proving something we already believe. 'suspected' is a single hit —
+      // never enough on its own (MIN_WRONG).
+      if (state.status !== 'active' || state.hits < MIN_WRONG) continue;
 
       const mc = map.misconceptions.find((m) => m.id === state.id);
       if (!mc) continue;

@@ -43,8 +43,8 @@ export function FixSummary({
   // source, and only a charCode dump showed the digit sitting directly against
   // the next letter. A template literal has no JSX whitespace rules to get
   // wrong.
-  const healedLine = `פתרת ${correct} מתוך ${answered} נכון, בקושי עולה, והאחרונות היו ברצף. זה בדיוק מה שמפריד בין "הבנתי את ההסבר" לבין "אני יודע לעשות את זה".`;
-  const outOfSupplyLine = `עברת על ${answered} שאלות (${correct} נכונות), ועוד לא יצא רצף שמוכיח שהנושא יושב. השלב הבא הוא לחזור להסבר עצמו, לא לעוד תרגיל מאותו סוג.`;
+  const healedLine = `פתרת ${correct} מתוך ${answered} נכון, בקושי עולה. זה בדיוק מה שמפריד בין "הבנתי את ההסבר" לבין "אני יודע לעשות את זה".`;
+  const outOfSupplyLine = `עברת על ${answered} שאלות (${correct} נכונות), ועוד לא הגעת לשלוש נכונות שמוכיחות שהנושא יושב. השלב הבא הוא לחזור להסבר עצמו, לא לעוד תרגיל מאותו סוג.`;
 
   return (
     <motion.div

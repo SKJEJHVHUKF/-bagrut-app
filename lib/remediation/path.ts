@@ -38,18 +38,12 @@ export const MAX_STEPS = 5;
 export const MAX_MISSES = 3;
 /** Wrong answers that trigger the re-teach card + an easier question. */
 export const RETEACH_AFTER_MISSES = 2;
-/** Consecutive correct answers, the last at or above the band, that close it. */
-export const HEAL_STREAK = 2;
 /**
- * Questions that must be answered before a repair can be claimed at all.
- *
- * Without this the streak alone closes the session after TWO questions — one
- * warm-up below the band and one at it — and the app tells a student who got
- * three of four wrong that the weakness is gone. Three is also what makes the
- * ladder the escalating easy→band→above sequence the feature promises, because
- * the selector raises the rung after every correct answer.
+ * Correct answers that close the weakness — 3 of the 5-step ladder (owner,
+ * 2026-09-04). Not a streak: a miss in between does not reset it. With
+ * MAX_MISSES = 3 the two verdicts are exclusive on a 5-step path.
  */
-export const MIN_ANSWERED_TO_HEAL = 3;
+export const HEAL_CORRECT = 3;
 
 // ---------------------------------------------------------------------------
 // Building
@@ -189,16 +183,6 @@ function remainingSteps(path: FixPath, progress: FixProgress): FixStep[] {
   return path.steps.filter((s) => !done.has(s.questionId));
 }
 
-/** Trailing run of correct answers. */
-function streakOf(progress: FixProgress): number {
-  let n = 0;
-  for (let i = progress.answered.length - 1; i >= 0; i--) {
-    if (!progress.answered[i].correct) break;
-    n += 1;
-  }
-  return n;
-}
-
 /**
  * What to render now.
  *
@@ -245,11 +229,9 @@ export function dismissReteach(progress: FixProgress, now: number): FixProgress 
 /**
  * Record one answered question and recompute the session state.
  *
- * Healing requires THREE things together: at least MIN_ANSWERED_TO_HEAL
- * questions answered, HEAL_STREAK consecutive correct, and the last of them at
- * or above the band. One correct answer after a miss is not evidence of repair —
- * it is what the escalating selector serves next, one rung down — and a streak
- * of two that never reached the band only proves the warm-up was warm.
+ * Healing = HEAL_CORRECT correct answers in the session, whatever the order.
+ * The selector still escalates one rung per correct answer, so the third
+ * correct answer is at or above the band whenever the path has such a rung.
  */
 export function recordFixAnswer(
   path: FixPath,
@@ -273,11 +255,7 @@ export function recordFixAnswer(
   };
 
   if (correct) {
-    if (
-      next.answered.length >= MIN_ANSWERED_TO_HEAL &&
-      streakOf(next) >= HEAL_STREAK &&
-      rank >= rankOf(path.band)
-    ) {
+    if (next.answered.filter((a) => a.correct).length >= HEAL_CORRECT) {
       next.status = 'healed';
       return next;
     }

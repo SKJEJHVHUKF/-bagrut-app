@@ -47,8 +47,8 @@ import {
   decideNext,
   dismissReteach,
   MAX_MISSES,
+  HEAL_CORRECT,
   MAX_STEPS,
-  MIN_ANSWERED_TO_HEAL,
   MIN_STEPS,
   recordFixAnswer,
   startProgress,
@@ -373,7 +373,7 @@ function fixture(): FixPath {
     assert(first.position === 1 && first.total === path.steps.length, 'position/total are 1-based and honest');
   }
 
-  // Two consecutive correct, the second at or above the band → healed.
+  // HEAL_CORRECT correct answers → healed.
   let guard = 0;
   while (p.status === 'active' && guard++ < 20) {
     const d = decideNext(path, p);
@@ -383,8 +383,8 @@ function fixture(): FixPath {
   assert(guard < 20, 'an all-correct walk terminates');
   assert(p.status === 'healed', 'a clean run closes the weakness');
   assert(
-    p.answered.length >= MIN_ANSWERED_TO_HEAL,
-    `a repair is never claimed on fewer than ${MIN_ANSWERED_TO_HEAL} questions (got ${p.answered.length})`,
+    p.answered.length === HEAL_CORRECT,
+    `a clean run closes after exactly ${HEAL_CORRECT} correct answers (got ${p.answered.length})`,
   );
   const walked = p.answered.map((a) => a.rank);
   assert(
@@ -408,8 +408,25 @@ function fixture(): FixPath {
   if (d2.kind === 'question') p = recordFixAnswer(path, p, d2.step.questionId, false, NOW + 2);
   const d3 = decideNext(path, p);
   if (d3.kind === 'question') p = recordFixAnswer(path, p, d3.step.questionId, true, NOW + 3);
-  assert(p.status === 'active', 'correct → wrong → correct is not a repair (the streak reset)');
+  assert(p.status === 'active', `correct → wrong → correct is not a repair (2 correct < ${HEAL_CORRECT})`);
   assert(p.misses === 1, 'exactly one miss was counted');
+
+  // A third correct answer closes it even though a miss sits in between — 3 of 5, not a streak.
+  const d4 = decideNext(path, p);
+  if (d4.kind === 'question') p = recordFixAnswer(path, p, d4.step.questionId, true, NOW + 4);
+  assert(p.status === 'healed', 'correct → wrong → correct → correct IS a repair (3 correct of 4)');
+}
+
+{
+  // One miss among several correct answers in a sub-topic is not a weakness.
+  assert(
+    detectWeaknesses(input(coarseEvents(3, 2))).length === 0,
+    'a single wrong answer out of 3 raises no weakness (MIN_WRONG)',
+  );
+  assert(
+    detectWeaknesses(input(coarseEvents(3, 1))).length === 1,
+    'two wrong answers out of 3 in one sub-topic DO raise a weakness',
+  );
 }
 
 {
