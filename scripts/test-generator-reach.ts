@@ -59,7 +59,7 @@ const templated = new Set(
 // ---- 1 + 2: reach, measured over the whole curriculum ----------------------
 let subTopicsWithGenerated = 0;
 let generatedQuestions = 0;
-let coveredButEmpty: string[] = [];
+const coveredButEmpty: string[] = [];
 
 for (const { topic, id } of allSubTopics) {
   const st = getSubTopics(SUBJECT, topic).find((x) => x.id === id);
