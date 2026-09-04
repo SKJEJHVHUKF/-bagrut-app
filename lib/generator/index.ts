@@ -21,11 +21,20 @@
 import type { Difficulty } from '@/lib/remediation/types';
 import { makeRng } from './rng';
 import type { GeneratedQuestion, GenTemplate } from './types';
+import { ALGEBRA_TEMPLATES } from './templates/algebra';
+import { COMPLEX_TEMPLATES } from './templates/complex';
+import { DERIVATIVES_TEMPLATES } from './templates/derivatives';
 import { EUCLIDEAN_TEMPLATES } from './templates/euclidean';
+import { EXP_TEMPLATES } from './templates/exp';
 import { FUNCTIONS_TEMPLATES } from './templates/functions';
 import { GEOMETRY_TEMPLATES } from './templates/geometry';
+import { GROWTH_TEMPLATES } from './templates/growth';
+import { INTEGRALS_TEMPLATES } from './templates/integrals';
+import { LN_TEMPLATES } from './templates/ln';
 import { PROBABILITY_TEMPLATES } from './templates/probability';
 import { SEQUENCES_TEMPLATES } from './templates/sequences';
+import { TRIGONOMETRY_TEMPLATES } from './templates/trigonometry';
+import { VECTORS_TEMPLATES } from './templates/vectors';
 
 export * from './types';
 export { makeRng, Frac, choose, fact } from './rng';
@@ -36,6 +45,15 @@ const TEMPLATES: GenTemplate[] = [
   ...GEOMETRY_TEMPLATES,
   ...EUCLIDEAN_TEMPLATES,
   ...FUNCTIONS_TEMPLATES,
+  ...DERIVATIVES_TEMPLATES,
+  ...TRIGONOMETRY_TEMPLATES,
+  ...COMPLEX_TEMPLATES,
+  ...LN_TEMPLATES,
+  ...EXP_TEMPLATES,
+  ...VECTORS_TEMPLATES,
+  ...ALGEBRA_TEMPLATES,
+  ...INTEGRALS_TEMPLATES,
+  ...GROWTH_TEMPLATES,
 ];
 
 const BY_ID = new Map(TEMPLATES.map((t) => [t.id, t]));
