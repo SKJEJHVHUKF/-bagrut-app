@@ -77,13 +77,40 @@ const ASK_WORDS = new Set([
   'אומר', 'אומרת', 'הכוונה', 'בשאלה', 'דוגמה', 'דוגמא', 'טבלה', 'שלב', 'צעד', 'שורה', 'הבא',
 ]);
 
-/** Does the message say anything beyond a generic ask? See ASK_WORDS. */
-export function hasContentBeyondAsk(message: string): boolean {
-  const tokens = message
-    .replace(/[?!.,:;"'׳״\-–—()[\]]/g, ' ')
-    .split(/\s+/)
-    .filter(Boolean);
-  return tokens.some((tok) => /[0-9a-z]/i.test(tok) || (tok.length > 1 && !ASK_WORDS.has(tok)));
+function tokenise(s: string): string[] {
+  return s.replace(/[?!.,:;"'׳״\-–—()[\]$\\{}^_]/g, ' ').split(/\s+/).filter(Boolean);
+}
+
+/**
+ * Does the message point at something SPECIFIC in the exercise on screen,
+ * beyond a generic ask?
+ *
+ * A POSITIVE test, deliberately. The first version was a stop-list alone,
+ * and a stop-list is right only for the words it enumerates: "לא הצלחתי",
+ * "תעזור לי", "איך פותרים את זה" all read as content because הצלחתי,
+ * תעזור and פותרים were not in it — Hebrew has more ways to say "help me"
+ * than any list holds, and every future one would have defaulted to the
+ * bank. So content now means: a number / latin symbol, or a word that the
+ * exercise itself uses (question text, solution steps, sub-topic title) and
+ * that is not an ask word. "מה בנתונים מרמז שצריך את משפט קטע האמצעים"
+ * shares קטע/אמצעים with the exercise; "לא הצלחתי" shares nothing.
+ *
+ * Matching is by containment at ≥3 letters, because Hebrew prefixes glue
+ * onto the noun: האמצעים ⊃ אמצעים, ובנתונים ⊃ נתונים.
+ */
+export function hasContentBeyondAsk(message: string, focus: TutorFocus | null): boolean {
+  const q = focus?.question;
+  if (!q) return false;
+  const own = tokenise(
+    `${q.question} ${q.solution?.steps?.join(' ') ?? ''} ${focus?.subTopic?.title ?? ''}`,
+  ).filter((t) => t.length >= 3 && !ASK_WORDS.has(t));
+  return tokenise(message).some(
+    (tok) =>
+      /[0-9a-z]/i.test(tok) ||
+      (tok.length >= 3 &&
+        !ASK_WORDS.has(tok) &&
+        own.some((o) => o.includes(tok) || tok.includes(o))),
+  );
 }
 
 /**
@@ -307,14 +334,19 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   // this question's sub-topic, FAQ_THRESHOLD + FAQ_MARGIN, the foreign-subject
   // and foreign-number screens, `reveals`. A miss here falls through to step 4
   // exactly as before, and step 5 does not search twice.
+  //
+  // No onSlow here: the lookup is local and usually instant, and on a miss
+  // the chain reaches the existing onSlow below within microseconds. Labelled
+  // 'faq:early' so the trace can tell this hit from a step-5 one.
   let faqTriedEarly = false;
-  if (routeKind === 'ask' && focus?.question && focus.topic && hasContentBeyondAsk(text)) {
-    onSlow?.();
-    faqTriedEarly = true;
+  if (routeKind === 'ask' && focus?.question && focus.topic && hasContentBeyondAsk(text, focus)) {
     try {
       const { answerFromFaq } = await import('@/lib/tutor-faq');
       const early = await answerFromFaq(text, focus);
-      if (early) return hit(early.text, 'faq:question');
+      // Only a lookup that RAN counts as tried: a throw ("no bank for this
+      // topic") must leave step 5 to report faqMissed exactly as before.
+      faqTriedEarly = true;
+      if (early) return hit(early.text, 'faq:early');
     } catch {
       /* no bank for this topic — the template answers, as before */
     }

@@ -290,8 +290,8 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
       chosenIndex: 1, wrongAnswer: 'x',
     } as never;
     for (const [msg, layer] of [
-      ['מה בנתונים מרמז שצריך את משפט קטע האמצעים', 'faq:question'], // content → the bank
-      ['מה הטעות שלי', 'local:why-wrong'],                        // bare → the router
+      ['מה בנתונים מרמז שצריך את משפט קטע האמצעים', 'faq:early'], // names the exercise → the bank
+      ['מה הטעות שלי', 'local:why-wrong'],                     // bare → the router
       ['רמז', 'local:hint'],
       ['למה התשובה שלי לא נכונה', 'local:why-wrong'],
       ['לא הבנתי', 'local:hint'],
@@ -301,8 +301,20 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
       const got = r.answered ? r.layer : 'miss';
       ok(got === layer, `"${msg}" → ${got}${got === layer ? '' : ` (expected ${layer})`}`);
     }
-    ok(!hasContentBeyondAsk('מה הטעות שלי') && !hasContentBeyondAsk('רמז בבקשה'), 'bare asks carry no content');
-    ok(hasContentBeyondAsk('למה זה לא 2:3') && hasContentBeyondAsk('למה מותר להפעיל פיתגורס כאן'), 'a number or a noun is content');
+    // ⚠️ A stop-list alone is wrong for every phrasing it did not enumerate —
+    // "לא הצלחתי" / "תעזור לי" / "איך פותרים את זה" read as content under
+    // the first version. Content must come from the exercise on screen.
+    const bare = [
+      'מה הטעות שלי', 'רמז בבקשה', 'מה עושים עכשיו', 'איך פותרים את זה', 'למה זה ככה',
+      'לא הצלחתי', 'תעזור לי', 'לא יודע', 'תסביר שוב', 'אפשר עוד רמז', 'אני לא מבין',
+    ];
+    const leaked = bare.filter((m) => hasContentBeyondAsk(m, focus));
+    ok(leaked.length === 0, leaked.length === 0 ? 'no bare ask reads as content' : `bare asks read as content: ${leaked.join(' · ')}`);
+    ok(
+      hasContentBeyondAsk('למה זה לא 2:3', focus) && hasContentBeyondAsk('מה בנתונים מרמז על משפט קטע האמצעים', focus),
+      'a number, or a word the exercise uses, is content',
+    );
+    ok(!hasContentBeyondAsk('למה מותר להפעיל פיתגורס כאן', null), 'no exercise on screen → never content');
   }
 
   console.log(
