@@ -1,6 +1,7 @@
 import type { Lesson } from '../types';
 import { PROBABILITY_BAGRUT_A, PROBABILITY_STAGES_A } from './probability-stages-a';
 import { PROBABILITY_BAGRUT_B, PROBABILITY_STAGES_B } from './probability-stages-b';
+import { withProbExtra } from './prob-extra';
 
 export const math5Probability: Lesson = {
   subject: 'math5',
@@ -627,7 +628,9 @@ $$P(k) = \\binom{n}{k}\\, p^k\\, (1-p)^{n-k}, \\quad k = 0, 1, \\ldots, n$$
     // the four older modules (prob-basics / prob-conditional /
     // prob-combinatorics / prob-tables); their questions moved into the
     // stages with their ids unchanged.
-    ...PROBABILITY_STAGES_A,
-    ...PROBABILITY_STAGES_B,
+    // Each stage carries its EXTRA questions (./prob-extra) after the originals;
+    // the ladder groups by `difficulty`, so order within a rung is authoring
+    // order: reviewed baseline first, widening second.
+    ...withProbExtra([...PROBABILITY_STAGES_A, ...PROBABILITY_STAGES_B]),
   ],
 };
