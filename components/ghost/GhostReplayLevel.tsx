@@ -34,6 +34,8 @@ import {
   isComplete,
   isRevealed,
   progress,
+  triesLeft,
+  wrongPicksNow,
   type GhostState,
 } from '@/lib/ghost/machine';
 import { LevelClearedPanel } from '@/components/roadmap/ladder-ui';
@@ -221,6 +223,8 @@ export function GhostReplayLevel({
             // which is the same trade the question bank makes with ids.
             optionSeed={`${attempt}-${step.stepNumber}-${replay.id}-${step.commitPrompt.question}`}
             committedOptionId={state.commits[state.stepIndex]?.optionId ?? null}
+            wrongPicks={wrongPicksNow(state)}
+            triesLeft={triesLeft(state, replay)}
             branch={branch}
             revealed={isRevealed(state)}
             isLast={state.stepIndex === replay.steps.length - 1}

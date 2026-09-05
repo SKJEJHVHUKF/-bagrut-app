@@ -33,15 +33,49 @@ export type GhostState = {
   /** 0-based index into `replay.steps`. */
   stepIndex: number;
   phase: GhostPhase;
-  /** One commit per step index. A step is answered exactly once — committing
-   *  is a position, not an attempt, so there is no retry to game. */
+  /** The commit a step SETTLED on — set only once the step stops accepting
+   *  further tries (a correct pick, or the last allowed wrong one). */
   commits: Record<number, GhostCommit>;
-  /** How many steps were committed correctly. Drives the rung's stars. */
+  /** Wrong option ids already tried on each step, in order. Those options stay
+   *  on screen marked ✗ and are not offered again. */
+  wrongPicks: Record<number, string[]>;
+  /** How many steps were answered correctly ON THE FIRST TRY. Drives the rung's
+   *  stars — retries deliberately do NOT earn it back. */
   firstTryCorrect: number;
 };
 
+/**
+ * Wrong tries a student gets on one step before the answer is shown.
+ *
+ * Owner, 2026-09-05: "ברמת חשיבה במשולשים חופפים אני רוצה שתיתן כמה ניסיונות
+ * לענות את התשובה הנכונה ולא שישר יתן את התשובה." This used to be a single
+ * shot — one wrong pick painted the correct option emerald immediately.
+ *
+ * Capped at `options.length - 1` as well, so the last remaining option is never
+ * "guess the only one left": on a 3-option step the reveal comes after 2 wrong
+ * tries, not 3. `firstTryCorrect` is unchanged by any of this, so the stars
+ * still measure what they always measured.
+ */
+export const GHOST_MAX_TRIES = 3;
+
+export function maxTries(step: GhostReplayStep): number {
+  return Math.max(1, Math.min(GHOST_MAX_TRIES, step.commitPrompt.options.length - 1));
+}
+
 export function initGhost(): GhostState {
-  return { stepIndex: 0, phase: 'thinking', commits: {}, firstTryCorrect: 0 };
+  return { stepIndex: 0, phase: 'thinking', commits: {}, wrongPicks: {}, firstTryCorrect: 0 };
+}
+
+/** Wrong options already tried on the CURRENT step. */
+export function wrongPicksNow(state: GhostState): string[] {
+  return state.wrongPicks[state.stepIndex] ?? [];
+}
+
+/** Wrong tries still available on the current step (0 once it has settled). */
+export function triesLeft(state: GhostState, replay: GhostReplay): number {
+  const step = currentStep(state, replay);
+  if (!step || state.commits[state.stepIndex]) return 0;
+  return Math.max(0, maxTries(step) - wrongPicksNow(state).length);
 }
 
 export function currentStep(state: GhostState, replay: GhostReplay): GhostReplayStep | null {
@@ -61,9 +95,14 @@ export function activeBranch(state: GhostState, replay: GhostReplay): GhostBranc
 }
 
 /**
- * Take a position. Legal only while `thinking`; committing twice is a no-op,
- * and an unknown option id is ignored rather than throwing (the UI can only
- * offer real ids, but a stale render must not crash a student's session).
+ * Take a position. Legal only while `thinking`; an unknown option id, or one
+ * already tried and found wrong, is ignored rather than throwing (the UI can
+ * only offer live ids, but a stale render must not crash a student's session).
+ *
+ * A wrong pick with tries left keeps the step OPEN: it is recorded in
+ * `wrongPicks`, the phase stays `thinking`, and nothing below the prompt
+ * renders. Only a correct pick, or the last allowed wrong one, settles the step
+ * into `commits` and opens the branch/reveal.
  */
 export function commit(state: GhostState, replay: GhostReplay, optionId: string): GhostState {
   if (state.phase !== 'thinking') return state;
@@ -71,6 +110,16 @@ export function commit(state: GhostState, replay: GhostReplay, optionId: string)
   if (!step) return state;
   const option = optionById(step, optionId);
   if (!option) return state;
+
+  const already = wrongPicksNow(state);
+  if (already.includes(optionId)) return state;
+
+  if (!option.isCorrect && already.length + 1 < maxTries(step)) {
+    return {
+      ...state,
+      wrongPicks: { ...state.wrongPicks, [state.stepIndex]: [...already, optionId] },
+    };
+  }
 
   // A wrong option with no authored branch would land in `branching` with
   // nothing to render and nothing to click — options locked, no acknowledge
@@ -84,7 +133,12 @@ export function commit(state: GhostState, replay: GhostReplay, optionId: string)
     ...state,
     phase: hasBranch && !option.isCorrect ? 'branching' : 'revealed',
     commits: { ...state.commits, [state.stepIndex]: { optionId, correct: option.isCorrect } },
-    firstTryCorrect: state.firstTryCorrect + (option.isCorrect ? 1 : 0),
+    wrongPicks: option.isCorrect
+      ? state.wrongPicks
+      : { ...state.wrongPicks, [state.stepIndex]: [...already, optionId] },
+    // FIRST try only: a student who got there on try 2 has learned something,
+    // but the stars measure the first position they took, exactly as before.
+    firstTryCorrect: state.firstTryCorrect + (option.isCorrect && already.length === 0 ? 1 : 0),
   };
 }
 

@@ -21,7 +21,10 @@ import {
   initGhost,
   isComplete,
   isRevealed,
+  maxTries,
   progress,
+  triesLeft,
+  wrongPicksNow,
   type GhostState,
 } from '../lib/ghost/machine';
 import { complexNumbersGhostReplays } from '../content/ghost-replay/math5/complex-numbers';
@@ -36,6 +39,26 @@ function assert(cond: boolean, msg: string) {
 }
 function section(title: string) {
   console.log(`\n── ${title} ${'─'.repeat(Math.max(0, 58 - title.length))}`);
+}
+
+/**
+ * Take wrong options on the current step until it settles.
+ *
+ * Since 2026-09-05 one wrong pick no longer ends a step, so every "walk it
+ * wrong" path has to exhaust the tries. Returns the state plus the option that
+ * actually settled it — the one whose branch should be on screen.
+ */
+function settleWrong(state: GhostState, replay: GhostReplay): { state: GhostState; settledOn: string } {
+  const step = currentStep(state, replay)!;
+  const wrongs = step.commitPrompt.options.filter((o) => !o.isCorrect);
+  let s = state;
+  let settledOn = '';
+  for (const o of wrongs) {
+    s = commit(s, replay, o.id);
+    settledOn = o.id;
+    if (s.commits[s.stepIndex]) break;
+  }
+  return { state: s, settledOn };
 }
 
 /** A two-step fixture: mechanics are clearer without real content in the way. */
@@ -100,9 +123,20 @@ section('Commit-First — the rule the product rests on');
   );
   assert(notMoved === s0 || JSON.stringify(notMoved) === JSON.stringify(s0), 'and it changes nothing at all');
 
-  // Wrong commit → must read the branch before the step opens.
-  const wrong = commit(s0, FIXTURE, 'b');
-  assert(wrong.phase === 'branching', 'a wrong commit opens the failure branch');
+  // Step 1 has 3 options ⇒ 2 wrong tries. The FIRST wrong pick must not open
+  // anything: that is the whole of the owner's 2026-09-05 correction.
+  const try1 = commit(s0, FIXTURE, 'b');
+  assert(try1.phase === 'thinking', 'a wrong pick with tries left keeps the step open');
+  assert(!isRevealed(try1), 'and reveals nothing');
+  assert(try1.commits[0] === undefined, 'and does not settle the step');
+  assert(
+    advance(try1, FIXTURE).stepIndex === 0,
+    'advance() after a non-final wrong pick is still a NO-OP',
+  );
+
+  // Exhausting them does.
+  const wrong = commit(try1, FIXTURE, 'c');
+  assert(wrong.phase === 'branching', 'the LAST allowed wrong pick opens the failure branch');
   assert(!isRevealed(wrong), 'the real step is still hidden while branching');
   const blocked = advance(wrong, FIXTURE);
   assert(
@@ -123,16 +157,33 @@ section('Committing');
   assert(right.firstTryCorrect === 1, 'and scores');
   assert(activeBranch(right, FIXTURE) === null, 'a correct commit has no branch');
 
-  const wrongB = commit(s0, FIXTURE, 'b');
+  // The branch shown is the one belonging to the pick that SETTLED the step.
+  const wrongB = commit(commit(s0, FIXTURE, 'c'), FIXTURE, 'b');
   assert(activeBranch(wrongB, FIXTURE)?.whyItFails === 'fails-b', 'branch matches the option chosen (b)');
-  const wrongC = commit(s0, FIXTURE, 'c');
+  const wrongC = commit(commit(s0, FIXTURE, 'b'), FIXTURE, 'c');
   assert(activeBranch(wrongC, FIXTURE)?.whyItFails === 'fails-c', 'branch matches the option chosen (c)');
   assert(wrongB.firstTryCorrect === 0, 'a wrong commit scores nothing');
 
-  // No retry: a second commit must not overwrite the record or inflate the score.
-  const twice = commit(commit(s0, FIXTURE, 'b'), FIXTURE, 'a');
-  assert(twice.commits[0].optionId === 'b', 'a second commit does not overwrite the first');
-  assert(twice.firstTryCorrect === 0, 'and cannot raise the score after a miss');
+  // THE property the old "no retry" rule was really protecting, and it still
+  // holds now that retries exist: reaching the right answer on try 2 reveals
+  // the step but must NOT earn the star.
+  const fixedIt = commit(commit(s0, FIXTURE, 'b'), FIXTURE, 'a');
+  assert(fixedIt.phase === 'revealed', 'a correct pick after a miss reveals the step');
+  assert(fixedIt.commits[0].optionId === 'a', 'and is what the step settles on');
+  assert(fixedIt.commits[0].correct === true, 'and is recorded as correct');
+  assert(fixedIt.firstTryCorrect === 0, 'but cannot raise the score after a miss');
+
+  // A wrong option already tried is off the table — it must not burn a second try.
+  const repeat = commit(commit(s0, FIXTURE, 'b'), FIXTURE, 'b');
+  assert(JSON.stringify(repeat) === JSON.stringify(commit(s0, FIXTURE, 'b')), 're-picking a spent wrong option is ignored');
+
+  // Tries are capped by the option count, so the last option is never a freebie.
+  assert(maxTries(FIXTURE.steps[0]) === 2, 'a 3-option step allows 2 wrong tries');
+  assert(maxTries(FIXTURE.steps[1]) === 1, 'a 2-option step allows only 1 — no "guess the survivor"');
+  assert(triesLeft(s0, FIXTURE) === 2, 'triesLeft starts at the cap');
+  assert(triesLeft(commit(s0, FIXTURE, 'b'), FIXTURE) === 1, 'and drops with each wrong pick');
+  assert(triesLeft(wrongB, FIXTURE) === 0, 'and is 0 once the step has settled');
+  assert(wrongPicksNow(commit(s0, FIXTURE, 'b')).join() === 'b', 'the spent option is reported to the UI');
 
   const bogus = commit(s0, FIXTURE, 'zzz');
   assert(JSON.stringify(bogus) === JSON.stringify(s0), 'an unknown option id is ignored, not thrown on');
@@ -162,7 +213,9 @@ section('Dead ends');
       FIXTURE.steps[1],
     ],
   };
-  const stuck = commit(initGhost(), ORPHAN, 'c');
+  // 'c' must be the pick that SETTLES the step — that is the only moment a
+  // branchless option could hang anyone. 'b' first, to spend the other try.
+  const stuck = commit(commit(initGhost(), ORPHAN, 'b'), ORPHAN, 'c');
   assert(activeBranch(stuck, ORPHAN) === null, 'the orphaned option genuinely has no branch');
   assert(
     stuck.phase === 'revealed',
@@ -188,10 +241,10 @@ section('Walking the whole thing');
 
   // All wrong — must still reach the end, because the branches ARE the lesson.
   let t: GhostState = initGhost();
-  t = commit(t, FIXTURE, 'b');
+  t = settleWrong(t, FIXTURE).state;
   t = acknowledgeBranch(t);
   t = advance(t, FIXTURE);
-  t = commit(t, FIXTURE, 'a');
+  t = settleWrong(t, FIXTURE).state;
   t = acknowledgeBranch(t);
   t = advance(t, FIXTURE);
   assert(isComplete(t), 'a student who gets everything wrong still completes the walk');
@@ -209,6 +262,7 @@ section('Determinism');
   const run = () => {
     let s = initGhost();
     s = commit(s, FIXTURE, 'c');
+    s = commit(s, FIXTURE, 'b');
     s = acknowledgeBranch(s);
     s = advance(s, FIXTURE);
     s = commit(s, FIXTURE, 'b');
@@ -231,14 +285,13 @@ section('The real authored replay');
   let s: GhostState = initGhost();
   let branchesSeen = 0;
   for (let i = 0; i < replay.steps.length; i++) {
-    const step = currentStep(s, replay)!;
-    const wrong = step.commitPrompt.options.find((o) => !o.isCorrect)!;
-    s = commit(s, replay, wrong.id);
+    const settled = settleWrong(s, replay);
+    s = settled.state;
     const b = activeBranch(s, replay);
-    assert(b !== null, `step ${i + 1}: the first wrong option has a branch`);
+    assert(b !== null, `step ${i + 1}: exhausting the wrong options opens a branch`);
     assert(
-      b?.optionId === wrong.id,
-      `step ${i + 1}: the branch belongs to the option chosen`,
+      b?.optionId === settled.settledOn,
+      `step ${i + 1}: the branch belongs to the option that settled the step`,
     );
     if (b) branchesSeen++;
     s = acknowledgeBranch(s);

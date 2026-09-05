@@ -29,6 +29,8 @@ export function GhostStepCard({
   totalSteps,
   optionSeed,
   committedOptionId,
+  wrongPicks,
+  triesLeft,
   branch,
   revealed,
   isLast,
@@ -43,6 +45,10 @@ export function GhostStepCard({
   /** Seeds the deterministic option order — unique per replay AND per step. */
   optionSeed: string;
   committedOptionId: string | null;
+  /** Option ids already tried and found wrong on THIS step. */
+  wrongPicks: string[];
+  /** Wrong tries still available before the answer is shown. */
+  triesLeft: number;
   /** Non-null only while the student is reading their own wrong road. */
   branch: GhostBranch | null;
   revealed: boolean;
@@ -89,6 +95,8 @@ export function GhostStepCard({
         options={step.commitPrompt.options}
         seed={optionSeed}
         committedOptionId={committedOptionId}
+        wrongPicks={wrongPicks}
+        triesLeft={triesLeft}
         onCommit={onCommit}
       />
 
