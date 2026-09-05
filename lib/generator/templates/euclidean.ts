@@ -602,6 +602,234 @@ const shapesTrapezoid: GenTemplate = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// 6 · eg-angles — the named pairs a transversal creates
+// ---------------------------------------------------------------------------
+
+/**
+ * The three named pairs this stage teaches, all reachable from ONE given angle
+ * at `M`. `supp` decides the arithmetic — equal, or complete to `180°` — and
+ * `at/from/to` is the arc the figure accents: a mark with NO label, so the
+ * sketch shows which angle is asked without asserting the value being asked for.
+ *
+ * The option order is identical in all three cases, which is what keeps
+ * `distractorTags` (a positional contract) honest: index 1 is always the other
+ * rule of the pair, index 2 always the `90°` confusion, index 3 always the full
+ * turn. All three are the distractors the authored bank of this very sub-topic
+ * uses (`eg-ang-001`: 110, 20, 290 against a given 70).
+ */
+const TRANSVERSAL_CASES = [
+  {
+    id: 'alt',
+    supp: false,
+    asked: 'MNC',
+    at: 'N',
+    from: 'M',
+    to: 'C',
+    rule: 'הזווית המבוקשת והזווית הנתונה יושבות משני צדדים שונים של החותך ושתיהן בין שני המקבילים, ולכן זהו זוג זוויות מתחלפות; לפי משפט המתחלפות בין מקבילים הן שוות זו לזו.',
+    named: 'הזוויות $\\angle BMN$ וגם $\\angle MNC$ הן מתחלפות בין מקבילים, ולכן הן שוות.',
+    hint: 'שתי הזוויות יושבות משני צדדים שונים של החותך, ושתיהן בין המקבילים. איזה שם יש לזוג כזה, ומה המשפט אומר עליו?',
+    pair: 'מתחלפות',
+  },
+  {
+    id: 'co',
+    supp: true,
+    asked: 'MND',
+    at: 'N',
+    from: 'M',
+    to: 'D',
+    rule: 'הזווית המבוקשת והזווית הנתונה יושבות באותו צד של החותך ושתיהן בין שני המקבילים, ולכן זהו זוג זוויות חד-צדדיות; לפי המשפט סכומן $180°$, ומכאן שמחסרים את הזווית הנתונה מ-$180°$.',
+    named: 'הזוויות $\\angle BMN$ וגם $\\angle MND$ הן חד-צדדיות בין מקבילים, ולכן סכומן $180°$.',
+    hint: 'שתי הזוויות יושבות באותו צד של החותך, ושתיהן בין שני המקבילים. חפש את צורת האות U.',
+    pair: 'חד-צדדיות',
+  },
+  {
+    id: 'adj',
+    supp: true,
+    asked: 'AMN',
+    at: 'M',
+    from: 'N',
+    to: 'A',
+    rule: 'הזווית המבוקשת והזווית הנתונה יושבות יחד על הישר $AB$, ולכן זהו זוג זוויות צמודות; סכום זוויות צמודות הוא $180°$, ומכאן שמחסרים את הזווית הנתונה מ-$180°$.',
+    named: 'הזוויות $\\angle AMN$ וגם $\\angle BMN$ צמודות על הישר $AB$, ולכן סכומן $180°$.',
+    hint: 'שתי הזוויות יושבות יחד על הישר $AB$, בלי שהמקבילות נכנסות לעניין. איזה גודל יש לישר שלם?',
+    pair: 'צמודות',
+  },
+];
+
+/**
+ * One given angle, one named pair, one asked angle — the move every נימוק in
+ * the geometry track rests on.
+ *
+ * The figure is derived from the angle itself: `AB` runs along `y = 6` and `CD`
+ * along `y = 0`, `M` sits at `x = -6`, and `N` is placed exactly where a ray
+ * leaving `M` at `ang` degrees below `MB` meets `CD`. So the drawn `∠BMN`
+ * MEASURES the labelled value, the two lines really are parallel, and the
+ * accented arc really is the angle the question names.
+ */
+const anglesTransversal: GenTemplate = {
+  id: 'eg-angles-transversal-pair',
+  distractorTags: [null, 'formula-mismatch', 'condition-ignored', 'formula-mismatch'],
+  subject: SUBJECT,
+  topic: TOPIC,
+  subTopicId: 'eg-angles',
+  title: 'זוויות בין מקבילים — איזה זוג ומה הכלל',
+  skill: 'formula-choice',
+  difficulties: ['easy', 'mid'],
+  build(rng, difficulty) {
+    // `45°` is skipped rather than rejected: it is the one value where the
+    // given angle and its own `90° - ang` distractor collide, and a rejection
+    // loop would eat into the acceptance floor for no reason.
+    const raw = rng.int(35, 79);
+    const ang = raw >= 45 ? raw + 1 : raw;
+    // The range starts at 35° so `N` stays on the drawn segment `CD`: the run
+    // from `M` to `N` is `6 / tan(ang)`, which grows without bound as the angle
+    // shrinks and would push `N` past `D`.
+    const c = rng.pick(
+      difficulty === 'easy' ? TRANSVERSAL_CASES.filter((x) => x.id !== 'co') : TRANSVERSAL_CASES,
+    );
+    const correct = c.supp ? 180 - ang : ang;
+
+    const rad = (ang * Math.PI) / 180;
+    const nx = -6 + 6 / Math.tan(rad);
+    const ext = 2.5; // how far the transversal runs past M and past N
+    const M: Pt = [-6, 6];
+    const N: Pt = round([nx, 0]);
+    const E: Pt = round([-6 - ext * Math.cos(rad), 6 + ext * Math.sin(rad)]);
+    const F: Pt = round([nx + ext * Math.cos(rad), -ext * Math.sin(rad)]);
+
+    const figure = fence({
+      points: { A: [-10, 6], B: [6, 6], C: [-10, 0], D: [6, 0], M, N, E, F },
+      segments: ['AB', 'CD', 'EF'],
+      parallel: [{ on: 'AB', n: 1 }, { on: 'CD', n: 1 }],
+      angles: [
+        { at: 'M', from: 'B', to: 'N', label: `${ang}°` },
+        { at: c.at, from: c.from, to: c.to, accent: true },
+      ],
+      hidden: ['E', 'F'],
+      width: 320,
+    });
+
+    const answers = [
+      `$${correct}°$`,
+      `$${180 - correct}°$`,
+      `$${90 - ang}°$`,
+      `$${360 - correct}°$`,
+    ];
+    if (new Set(answers).size !== 4) return null;
+
+    return mcq({
+      question: `נתון $AB \\parallel CD$ וחותך שפוגש אותם בנקודות $M$ וגם $N$. ידוע $\\angle BMN = ${ang}°$. מהי הזווית $\\angle ${c.asked}$?\n\n${figure}`,
+      answers,
+      correct: 0,
+      distractorNotes: [
+        '',
+        c.supp
+          ? `זו הזווית הנתונה עצמה, כלומר הופעל כאן כלל השוויון. הזוג כאן הוא ${c.pair}, ולכן סכום שתי הזוויות הוא $180°$ ואין ביניהן שוויון; השוויון שייך לזוגות המתאימות והמתחלפות.`
+          : `זו המשלימה ל-$180°$ של הזווית הנתונה. הזוג כאן הוא מתחלפות, והמשפט אומר שהן שוות זו לזו; הסכום $180°$ שייך לזוג החד-צדדיות ולזוג הצמודות.`,
+        'זה $90°$ פחות הזווית הנתונה, כלומר הזוויות טופלו כזוויות משלימות. השם "משלימות" שמור לסכום $90°$ ודורש זווית ישרה בנתונים, ואין כאן אף זווית ישרה.',
+        'זה מה שנשאר מסיבוב שלם של $360°$ סביב נקודת החיתוך, ולא זווית בודדת מבין הזוויות שנוצרו. הכלל הרלוונטי כאן הוא ישר שלם, $180°$, ולא סיבוב שלם.',
+      ],
+      hint: c.hint,
+      solution: {
+        steps: [
+          `**הכלל:** ${c.rule}`,
+          `נתון $\\angle BMN = ${ang}°$.`,
+          c.named,
+          c.supp
+            ? `לכן $\\angle ${c.asked} = 180° - ${ang}° = ${correct}°$.`
+            : `לכן $\\angle ${c.asked} = \\angle BMN = ${ang}°$.`,
+        ],
+        finalAnswer: `$\\angle ${c.asked} = ${correct}°$`,
+        explanation:
+          'בין מקבילים: מתאימות שוות, מתחלפות שוות, וחד-צדדיות משלימות ל-$180°$. על ישר שלם, זוויות צמודות משלימות ל-$180°$.',
+      },
+    });
+  },
+};
+
+/**
+ * Vertex namings for the segment family. The maths has few outcomes per draw,
+ * so the naming carries part of the variety — same reason as `NAME_SETS` above.
+ * All names are single letters: a geo reference like `AM` is split into two
+ * point names by position.
+ */
+const SEGMENT_NAMES: [string, string, string, string][] = [
+  ['A', 'B', 'C', 'M'],
+  ['A', 'B', 'C', 'K'],
+  ['P', 'Q', 'R', 'M'],
+  ['K', 'L', 'N', 'M'],
+];
+
+/**
+ * Segment arithmetic with a midpoint: build the whole, halve it, subtract the
+ * part already known.
+ *
+ * `AB` is drawn EVEN and `BC` as `AB + 2d`, so both the answer and the two
+ * predictable wrong answers come out whole. `wrongAnswers` is aligned by
+ * POSITION with `wrongAnswerTags`, so a wrong answer that is sometimes a
+ * fraction and sometimes an integer would be a worse question, not a richer one.
+ */
+const anglesMidpointSegment: GenTemplate = {
+  id: 'eg-angles-midpoint-segment',
+  wrongAnswerTags: ['operation-swap', 'dropped-factor'],
+  subject: SUBJECT,
+  topic: TOPIC,
+  subTopicId: 'eg-angles',
+  title: 'חשבון קטעים עם נקודת אמצע',
+  skill: 'substitution',
+  difficulties: ['easy', 'mid'],
+  build(rng, difficulty) {
+    const [a, b, c, mid] = rng.pick(SEGMENT_NAMES);
+    const p = 2 * rng.int(1, difficulty === 'easy' ? 7 : 10); // AB
+    const d = rng.int(1, difficulty === 'easy' ? 6 : 12); // the answer, MB
+    const q = p + 2 * d; // BC
+    const half = p + d; // AM = MC
+
+    const figure = fence({
+      points: { [a]: [0, 0], [b]: [p, 0], [mid]: [half, 0], [c]: [2 * half, 0] },
+      segments: [`${a}${c}`],
+      labels: [
+        { on: `${a}${b}`, text: String(p) },
+        { on: `${b}${c}`, text: String(q) },
+      ],
+      ticks: [
+        { on: `${a}${mid}`, n: 1 },
+        { on: `${mid}${c}`, n: 1 },
+      ],
+      width: 340,
+    });
+
+    return open({
+      question: `על ישר סדורות הנקודות $${a}$, $${b}$, $${c}$ לפי הסדר. נתון $${a}${b} = ${p}$ ס"מ וגם $${b}${c} = ${q}$ ס"מ. הנקודה $${mid}$ היא אמצע הקטע $${a}${c}$. מצא את $${mid}${b}$ (בסנטימטרים).\n\n${figure}`,
+      expected: { kind: 'value', value: String(d) },
+      wrongAnswers: [
+        {
+          value: String(half),
+          note: `זהו האורך $${a}${mid}$, מחצית הקטע כולו. הנקודה $${mid}$ רחוקה מ$${a}$ יותר מהנקודה $${b}$, ולכן $${mid}${b}$ הוא ההפרש $${a}${mid} - ${a}${b}$: מחסרים ולא מחברים.`,
+        },
+        {
+          value: String(p / 2 + d),
+          note: `כאן נחצה הקטע $${b}${c}$ במקום הקטע $${a}${c}$. הנקודה $${mid}$ מוגדרת כאמצע הקטע השלם $${a}${c}$, ולכן החצייה חלה עליו ולא על אחד מחלקיו.`,
+        },
+      ],
+      hint: `חשב קודם את הקטע השלם $${a}${c}$ בחיבור קטעים, ואז את מחציתו $${a}${mid}$. הנקודה $${b}$ יושבת בין $${a}$ ל$${mid}$, כמה נשאר?`,
+      solution: {
+        steps: [
+          '**הכלל:** הנקודות סדורות על ישר ומופיעה נקודת אמצע, ולכן אורך הקטע השלם הוא סכום חלקיו ונקודת האמצע מחלקת אותו לשני חלקים שווים. לפי זה בונים תחילה את הקטע השלם, לוקחים ממנו מחצית, ורק אז מחסרים את החלק הידוע.',
+          `חיבור קטעים: $${a}${c} = ${a}${b} + ${b}${c} = ${p} + ${q} = ${2 * half}$ ס"מ.`,
+          `הנקודה $${mid}$ היא אמצע $${a}${c}$, ולכן $${a}${mid} = \\dfrac{${2 * half}}{2} = ${half}$ ס"מ.`,
+          `חיסור קטעים: $${mid}${b} = ${a}${mid} - ${a}${b} = ${half} - ${p} = ${d}$ ס"מ.`,
+          `בדיקה: $${a}${b} + ${b}${mid} = ${p} + ${d} = ${half} = ${a}${mid}$ ✓.`,
+        ],
+        finalAnswer: `$${mid}${b} = ${d}$ ס"מ`,
+        explanation:
+          'חיבור קטעים בונה את השלם, נקודת אמצע חוצה אותו, וחיסור קטעים מוציא ממנו את החלק הידוע.',
+      },
+    });
+  },
+};
+
 export const EUCLIDEAN_TEMPLATES: GenTemplate[] = [
   congruenceCriterion,
   similarityAreaRatio,
@@ -610,4 +838,6 @@ export const EUCLIDEAN_TEMPLATES: GenTemplate[] = [
   circleCyclicQuad,
   shapesMidsegment,
   shapesTrapezoid,
+  anglesTransversal,
+  anglesMidpointSegment,
 ];
