@@ -47,13 +47,39 @@ export default function TopicLights() {
               <span className="font-display text-base font-black text-ink">{r.topic}</span>
               <span className={`text-sm font-bold ${LOOK[r.state].text}`}>{TOPIC_WORD[r.state]}</span>
               {r.state === 'reteach' && !isDemo && (
-                <Btn kind="primary" className="ms-auto" onClick={() => openFocus('class', r.topic)}>
-                  <Target className="h-4 w-4" aria-hidden />
-                  {BTN.sendClass}
-                </Btn>
+                <span className="ms-auto flex items-center gap-2">
+                  {/* The whole class is the reteach signal's own answer, so it
+                      stays primary. But it is rarely the whole class that is
+                      stuck, and picking those four names out of thirty by hand
+                      is the work this board exists to remove — so the aimed
+                      send sits right next to it, with its count on the button
+                      so the choice is visible rather than guessed. */}
+                  <Btn kind="primary" onClick={() => openFocus('class', r.topic)}>
+                    <Target className="h-4 w-4" aria-hidden />
+                    {BTN.sendClass}
+                  </Btn>
+                  {r.stuckStudents.length > 0 && (
+                    <Btn
+                      kind="secondary"
+                      onClick={() =>
+                        openFocus(
+                          {
+                            studentIds: r.stuckStudents.map((s) => s.id),
+                            label: `${r.stuckStudents.length} שנתקעו ב${r.topic}`,
+                          },
+                          r.topic
+                        )
+                      }
+                    >
+                      {`${BTN.sendStuck} (${r.stuckStudents.length})`}
+                    </Btn>
+                  )}
+                </span>
               )}
               {r.stuckStudents.length > 0 && (
-                <span className="basis-full text-xs text-slate-500">{stuckUnder(r.stuckStudents)}</span>
+                <span className="basis-full text-xs text-slate-500">
+                  {stuckUnder(r.stuckStudents.map((s) => s.name))}
+                </span>
               )}
             </li>
           ))}

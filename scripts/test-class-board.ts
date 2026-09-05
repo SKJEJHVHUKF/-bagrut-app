@@ -28,7 +28,7 @@ import {
   STRONG_MIN_MASTERY,
   type BoardAttempt,
 } from '../lib/class-board';
-import { demoBoard } from '../lib/demo-board';
+import { demoBoard, demoFocuses } from '../lib/demo-board';
 
 let checks = 0;
 let failures = 0;
@@ -327,7 +327,8 @@ function rows(
     NOW
   );
   assert(
-    topicSummary(worst)[0]?.stuckStudents[0] === 'מאוד' && topicSummary(worst)[0]?.stuckStudents.length === 2,
+    topicSummary(worst)[0]?.stuckStudents[0]?.name === 'מאוד' &&
+      topicSummary(worst)[0]?.stuckStudents.length === 2,
     'the students under a topic are listed worst first'
   );
 
@@ -338,7 +339,7 @@ function rows(
   );
   const we = topicSummary(withEmpty)[0];
   assert(
-    we?.state === 'strong' && we.students === 6 && !we.stuckStudents.includes('ריק'),
+    we?.state === 'strong' && we.students === 6 && !we.stuckStudents.some((x) => x.name === 'ריק'),
     'a student with no data neither lowers the class mean nor appears as stuck — no fake zero at topic level'
   );
 
@@ -348,7 +349,7 @@ function rows(
     NOW
   );
   assert(
-    topicSummary(withAway)[0]?.stuckStudents.includes('נעלם'),
+    topicSummary(withAway)[0]?.stuckStudents.some((x) => x.name === 'נעלם'),
     'a student who is away but stuck in the topic is still listed under it — attendance is a different question'
   );
 
@@ -362,9 +363,56 @@ function rows(
     '…as ללמד שוב / על הגבול / הכיתה שולטת'
   );
   assert(!demo.some((r) => r.topic === 'הסתברות'), 'הסתברות has four students with data and makes no claim');
+  {
+    // ⚠️ The ids, not just the names. The console sends a task to exactly these
+    // students in one click, so an id that does not match a student on the
+    // board would silently aim at nobody — the send would succeed and reach
+    // no one.
+    const ids = new Set(demoBoard(NOW).students.map((s) => s.id));
+    const listed = demo.flatMap((r) => r.stuckStudents);
+    assert(listed.length > 0, 'the demo board lists someone as stuck, so the check has something to check');
+    assert(
+      listed.every((x) => ids.has(x.id)),
+      'every stuck student carries an id that exists on the board, so a task can be aimed at them'
+    );
+  }
+
   assert(
-    demo[0].stuckStudents.includes('שיר מ.') && demo[0].stuckStudents.includes('רן כ.'),
+    demo[0].stuckStudents.some((x) => x.name === 'שיר מ.') &&
+      demo[0].stuckStudents.some((x) => x.name === 'רן כ.'),
     'and the names under סדרות include the two the demo is built around'
+  );
+}
+
+// ============================================================
+// The demo's sent-tasks list names who has not closed each one
+// ============================================================
+//
+// The console shows "5 מתוך 8 סגרו" and, under it, the names. The names are
+// what a teacher acts on; the count only tells her to go looking. The demo is
+// the screen the owner opens, so it has to carry the same shape as real data -
+// a sample that quietly lacks the feature is how a screen gets called cheap.
+{
+  const focuses = demoFocuses(NOW);
+  assert(focuses.length > 0, 'the demo has sent tasks to show');
+  assert(
+    focuses.every((f) => Array.isArray(f.notDone)),
+    'every demo task carries a list of who has not closed it'
+  );
+  const rosterIds = new Set(demoBoard(NOW).students.map((s) => s.id));
+  const listed = focuses.flatMap((f) => f.notDone);
+  assert(listed.length > 0, 'at least one demo task is unfinished, so the line has something to say');
+  assert(
+    listed.every((x) => rosterIds.has(x.id)),
+    'each of them is a real student on the board, so "send it again" can aim at them'
+  );
+  assert(
+    focuses.every((f) => f.notDone.length === f.totalCount - f.done),
+    'the names and the count agree - a list shorter than the gap is the bug that makes a teacher trust neither'
+  );
+  assert(
+    focuses.every((f) => f.notDone.every((x, i, a) => i === 0 || a[i - 1].answered <= x.answered)),
+    'the ones who never opened it come first, which is the order she will work in'
   );
 }
 

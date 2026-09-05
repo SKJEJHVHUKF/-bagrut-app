@@ -191,6 +191,11 @@ export function demoFocuses(now: number = Date.now()) {
       totalCount: 8,
       started: 6,
       done: 5,
+      notDone: [
+        { id: 'demo-7', name: 'מאיה פ.', answered: 0 },
+        { id: 'demo-6', name: 'תמר א.', answered: 0 },
+        { id: 'demo-3', name: 'שיר מ.', answered: 3 },
+      ],
     },
     {
       id: 'demo-focus-2',
@@ -206,6 +211,7 @@ export function demoFocuses(now: number = Date.now()) {
       totalCount: 2,
       started: 2,
       done: 1,
+      notDone: [{ id: 'demo-4', name: 'רן כ.', answered: 2 }],
     },
   ];
 }

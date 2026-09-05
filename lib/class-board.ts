@@ -465,10 +465,15 @@ export type TopicSummaryRow = {
    *  renders either — it shows the word. */
   mean: number;
   students: number;
-  /** Names of students whose stuck list includes this topic, worst first.
-   *  Includes students who are currently away: the topic's truth is not an
-   *  attendance question. */
-  stuckStudents: string[];
+  /** Students whose stuck list includes this topic, worst first. Includes
+   *  students who are currently away: the topic's truth is not an attendance
+   *  question.
+   *
+   *  Ids as well as names, because the console does not only PRINT this list —
+   *  it sends a task to exactly these students in one click. A name cannot be
+   *  aimed at, and making a teacher re-find these people in a checkbox list is
+   *  the manual work the board exists to remove. */
+  stuckStudents: { id: string; name: string }[];
 };
 
 /**
@@ -493,10 +498,10 @@ export function topicSummary(board: ClassBoard): TopicSummaryRow[] {
         ? 'strong'
         : 'borderline';
     const stuckStudents = board.students
-      .map((s) => ({ name: s.name, t: s.stuck.find((x) => x.topic === topic) }))
-      .filter((x): x is { name: string; t: TopicMastery } => x.t !== undefined)
+      .map((s) => ({ id: s.id, name: s.name, t: s.stuck.find((x) => x.topic === topic) }))
+      .filter((x): x is { id: string; name: string; t: TopicMastery } => x.t !== undefined)
       .sort((a, b) => (a.t.mastery ?? 0) - (b.t.mastery ?? 0))
-      .map((x) => x.name);
+      .map((x) => ({ id: x.id, name: x.name }));
     rows.push({ topic, state, mean: m.mean, students: m.n, stuckStudents });
   }
   const rank: Record<TopicState, number> = { reteach: 0, borderline: 1, strong: 2 };

@@ -1,45 +1,30 @@
-import { notFound } from 'next/navigation';
-import { getLesson } from '@/content/lessons';
-import { LessonView } from '@/components/practice/LessonView';
-import { PracticeShell } from '@/components/practice/PracticeShell';
+import { redirect } from 'next/navigation';
+import { topicHref } from '@/lib/track';
 
-// Server component: loads the static lesson and hands it to the client view.
-// If the topic doesn't have a lesson yet we fall back to 404 — the picker
-// only routes here when a lesson exists.
-export default async function LessonPage({
+/**
+ * /practice/<subject>/<topic> — retired.
+ *
+ * This is the screen the owner landed on when he tapped the task his teacher
+ * had sent him, and recognised it as one the product stopped using months ago
+ * ("מסלול ישן שכבר לא בשימוש"). Every link to it was rewritten to the roadmap;
+ * this redirect is for what links cannot reach — a bookmark, a URL a teacher
+ * sent a class last term, a browser autocompleting an address.
+ *
+ * It lands on the topic's own page in the study track, not on a generic list,
+ * so the arrival is still an answer to what the URL asked for. topicHref falls
+ * back to the topic's first station for the five lesson topics that predate the
+ * 571/572 tracks, and to /roadmap for a topic it cannot place at all.
+ *
+ * ⚠️ The child route /exercise is NOT retired and is unaffected by this: a
+ * page-level redirect does not apply to a nested route. The mixed bagrut run
+ * and the quick quiz are the roadmap's own gate stations and content/tracks
+ * links to them on purpose.
+ */
+export default async function RetiredTopicScreen({
   params,
 }: {
   params: Promise<{ subject: string; topic: string }>;
 }) {
-  const { subject, topic: rawTopic } = await params;
-  const topic = decodeURIComponent(rawTopic);
-  const lesson = getLesson(subject, topic);
-
-  if (!lesson) {
-    notFound();
-  }
-
-  return (
-    <PracticeShell subtitle="סיכום ותרגול" backHref="/practice" backLabel="בחר נושא אחר">
-      <LessonView lesson={lesson} />
-    </PracticeShell>
-  );
-}
-
-// `params` is a PROMISE in Next 16 — awaiting it is not optional.
-//
-// This was typed as a plain object and read synchronously, so `params.topic`
-// was `undefined` and every lesson and practice page shipped a title of just
-// " — MathUp": in the browser tab, in history, in a WhatsApp preview, and in
-// Google. It passed `tsc` because Next's generated page contract ends in
-// `& any` (see .next/types/validator.ts), which swallows a narrower hand-written
-// annotation. The type below is the framework's real shape, so the next person
-// to touch it gets a compile error instead of a silent blank.
-export async function generateMetadata({ params }: { params: Promise<{ topic?: string }> }) {
-  const { topic: raw } = await params;
-  const topic = raw ? decodeURIComponent(raw) : '';
-  return {
-    title: `${topic} — MathUp`,
-    description: `סיכום ותרגול בנושא ${topic}`,
-  };
+  const { topic: rawTopic } = await params;
+  redirect(topicHref(decodeURIComponent(rawTopic)));
 }

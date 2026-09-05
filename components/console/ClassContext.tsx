@@ -39,6 +39,10 @@ export type FocusRow = {
   done: number;
   /** Who it was aimed at. null = the whole class. */
   studentIds: string[] | null;
+  /** Who has NOT closed it, the ones who never opened it first. This is the
+   *  list a teacher acts on; the count alone only tells her that she has to
+   *  go looking. */
+  notDone: { id: string; name: string; answered: number }[];
 };
 
 export type ClassPayload = {
@@ -56,7 +60,19 @@ export type ClassPayload = {
   windowDays: number;
 };
 
-export type FocusTarget = { studentId: string; name: string } | 'class';
+/**
+ * Who a task is aimed at.
+ *
+ * The third variant is the one that saves a teacher real work: the board
+ * already knows exactly which students are stuck in a topic, or which never
+ * closed a task she sent, so she should never have to find those names in a
+ * list and tick them one by one. `label` is what the button that opened the
+ * dialog promised, so the dialog can say it back.
+ */
+export type FocusTarget =
+  | 'class'
+  | { studentId: string; name: string }
+  | { studentIds: string[]; label: string };
 
 type Ctx = {
   data: ClassPayload;
@@ -74,6 +90,11 @@ type Ctx = {
    *  it already knew one. */
   focusTopic: string | null;
   openFocus: (f: FocusTarget, topic?: string | null) => void;
+  /** The student ids the opening button already chose, or null for none. */
+  focusPreselect: string[] | null;
+  /** What that button promised, in its own words, so the dialog can say it
+   *  back instead of making a teacher count ticked names. */
+  focusPreselectLabel: string | null;
   closeFocus: () => void;
 };
 
@@ -105,6 +126,14 @@ export function ClassProvider({
     reload,
     focusFor,
     focusTopic,
+    focusPreselect:
+      focusFor === null || focusFor === 'class'
+        ? null
+        : 'studentId' in focusFor
+          ? [focusFor.studentId]
+          : focusFor.studentIds,
+    focusPreselectLabel:
+      focusFor === null || focusFor === 'class' || 'studentId' in focusFor ? null : focusFor.label,
     // No sending in sample mode — the ids are invented, and a button that 403s
     // is worse than no button.
     openFocus: (f, topic = null) => {

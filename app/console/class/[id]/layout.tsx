@@ -170,7 +170,17 @@ function CommandBar() {
 }
 
 function Overlays() {
-  const { focusFor, focusTopic, closeFocus, classId, isDemo, board, reload } = useClass();
+  const {
+    focusFor,
+    focusTopic,
+    focusPreselect,
+    focusPreselectLabel,
+    closeFocus,
+    classId,
+    isDemo,
+    board,
+    reload,
+  } = useClass();
   return (
     <AnimatePresence>
       {focusFor !== null && classId && !isDemo && (
@@ -178,7 +188,8 @@ function Overlays() {
           key="send"
           classId={classId}
           students={board.students}
-          preselect={focusFor === 'class' ? null : focusFor.studentId}
+          preselect={focusPreselect}
+          preselectLabel={focusPreselectLabel}
           presetTopic={focusTopic}
           onClose={closeFocus}
           onSaved={() => {

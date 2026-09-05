@@ -48,6 +48,8 @@ export const BTN = {
   print: 'הדפסה',
   back: 'חזרה לכיתה',
   more: 'לכל הרשימה ←',
+  again: 'שלח להם שוב',
+  sendStuck: 'שלח לתקועים',
 } as const;
 
 // ---- empties and small sentences -------------------------------------------
@@ -80,6 +82,20 @@ export function thinTopics(topics: string[]): string {
 /** "תקועים: שיר מ. · רן כ." */
 export function stuckUnder(names: string[]): string {
   return `תקועים: ${names.join(' · ')}`;
+}
+
+/**
+ * "לא סגרו: מאיה פ. · תמר א. ועוד 3"
+ *
+ * The names, not the count. "3 מתוך 8 סגרו" tells a teacher a task is
+ * unfinished and then makes her open eight cards to find out who. Six names is
+ * about what fits on one line on a phone; past that the number is honest and
+ * the full list is one tap away on the student page.
+ */
+export function notDoneUnder(names: string[], cap = 6): string {
+  const shown = names.slice(0, cap).join(' · ');
+  const rest = names.length - cap;
+  return `לא סגרו: ${shown}${rest > 0 ? ` ועוד ${rest}` : ''}`;
 }
 
 // ---- time, in a teacher's words --------------------------------------------

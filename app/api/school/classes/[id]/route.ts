@@ -123,6 +123,8 @@ export async function GET(
     userId: a.user_id,
   }));
 
+  const nameOf = new Map(roster.map((r) => [r.id, r.name]));
+
   const focuses = focusRows.map((f) => {
     const id = String(f.id);
     // No target rows means the whole class — the common case, and it costs no
@@ -137,6 +139,14 @@ export async function GET(
 
     let done = 0;
     let started = 0;
+    // ⚠️ WHO has not closed it, not just how many. "3 מתוך 8 סגרו" tells a
+    // teacher a task is unfinished; it does not tell her whom to talk to, so
+    // she opens eight student cards to find five names. The board already
+    // walks every targeted student here, so the names cost nothing.
+    //
+    // Ordered the way she will act: the ones who never opened it first, then
+    // the ones who started and stopped, fewest answers first.
+    const notDone: { id: string; name: string; answered: number }[] = [];
     for (const sid of targeted) {
       const p = assignmentProgress(
         countable.filter((c) => c.userId === sid),
@@ -144,7 +154,9 @@ export async function GET(
       );
       if (p.answered > 0) started++;
       if (target === null ? p.answered > 0 : p.answered >= target) done++;
+      else notDone.push({ id: sid, name: nameOf.get(sid) ?? 'תלמיד', answered: p.answered });
     }
+    notDone.sort((a, b) => a.answered - b.answered);
 
     return {
       id,
@@ -166,6 +178,7 @@ export async function GET(
       totalCount: targeted.length,
       started,
       done,
+      notDone,
     };
   });
 

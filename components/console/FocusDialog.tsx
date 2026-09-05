@@ -30,13 +30,18 @@ export default function FocusDialog({
   classId,
   students,
   preselect,
+  preselectLabel = null,
   presetTopic = null,
   onClose,
   onSaved,
 }: {
   classId: string;
   students: StudentRow[];
-  preselect: string | null;
+  /** Student ids ticked when the dialog opens. Empty or null = the whole class. */
+  preselect: string[] | null;
+  /** What the button that opened this promised — "3 שלא סגרו". Shown above the
+   *  picker so the teacher reads the choice rather than counting pills. */
+  preselectLabel?: string | null;
   /** A topic the opening button already knew. Applied once the catalogue
    *  loads, and only if the name exists in it. */
   presetTopic?: string | null;
@@ -50,7 +55,7 @@ export default function FocusDialog({
   const [targetCount, setTargetCount] = useState(5);
   const [dueOn, setDueOn] = useState('');
   const [note, setNote] = useState('');
-  const [picked, setPicked] = useState<string[]>(preselect ? [preselect] : []);
+  const [picked, setPicked] = useState<string[]>(preselect ?? []);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [more, setMore] = useState(false);
@@ -228,7 +233,11 @@ export default function FocusDialog({
         )}
 
         <fieldset className="mt-4">
-          <legend className="text-sm text-slate-600">למי — בלי בחירה, זה הולך לכל הכיתה</legend>
+          <legend className="text-sm text-slate-600">
+            {preselectLabel && picked.length > 0
+              ? `למי — נבחרו ${preselectLabel}. אפשר לשנות.`
+              : 'למי — בלי בחירה, זה הולך לכל הכיתה'}
+          </legend>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {students.map((s) => {
               const on = picked.includes(s.id);

@@ -90,9 +90,55 @@ for (const base of SEARCH) {
   }
 }
 
-console.log(`scanned ${scanned} files`);
+// ---------------------------------------------------------------------------
+// ...and the retired screens themselves send people on.
+//
+// Cleaning the links only helps people who click one. A teacher who sent a
+// class a /practice URL last term, a bookmark, a browser autocompleting an
+// address — none of those go through a link, so each retired route redirects.
+// Asserted here because a redirect that quietly turns back into a page is
+// invisible: the URL still answers 200 either way.
+const REDIRECTS: [string, string][] = [
+  ['app/practice/page.tsx', "redirect('/roadmap')"],
+  ['app/practice/[subject]/[topic]/page.tsx', 'topicHref('],
+  ['app/practice/[subject]/[topic]/sub/[subId]/page.tsx', 'subTopicHref('],
+  ['app/practice/[subject]/[topic]/sub/[subId]/practice/page.tsx', 'subTopicHref('],
+];
+
+for (const [file, marker] of REDIRECTS) {
+  let src = '';
+  try {
+    src = readFileSync(join(ROOT, file), 'utf8');
+  } catch {
+    offenders.push(`${file}  MISSING — the retired route must exist to redirect`);
+    continue;
+  }
+  if (!src.includes('redirect(') || !src.includes(marker)) {
+    offenders.push(`${file}  does not redirect to the roadmap (expected ${marker})`);
+  }
+}
+
+// ⚠️ The one that must NOT redirect. /exercise is the roadmap's own gate
+// station — the mixed bagrut run and the quick quiz — and content/tracks links
+// to it on purpose. If a future sweep "finishes the job" by redirecting it too,
+// the journey loses its last station and nothing else would notice.
+{
+  const exercise = 'app/practice/[subject]/[topic]/exercise/page.tsx';
+  let src = '';
+  try {
+    src = readFileSync(join(ROOT, exercise), 'utf8');
+  } catch {
+    src = '';
+  }
+  if (!src) offenders.push(`${exercise}  MISSING — the bagrut run and quick quiz live here`);
+  else if (/redirect\(/.test(src)) {
+    offenders.push(`${exercise}  must NOT redirect — it is a live gate station, not a retired screen`);
+  }
+}
+
+console.log(`scanned ${scanned} files, ${REDIRECTS.length} retired routes, 1 live one`);
 if (offenders.length === 0) {
-  console.log('PASS  nothing links to the retired /practice screens');
+  console.log('PASS  nothing links to the retired /practice screens, and each of them redirects');
   process.exit(0);
 }
 
