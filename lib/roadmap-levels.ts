@@ -113,17 +113,42 @@ export function buildSubTopicLevels(
   // product is built around, and it is not what "wire the generator into
   // practice" was asked to mean. `generateBatch` returns [] where there is no
   // template, so this is a no-op for the 70 of 92 sub-topics without one.
+  // ⚠️ ONE TEMPLATE FEEDS ONE RUNG OF A SUB-TOPIC, NEVER TWO.
+  //
+  // Each rung used to ask generateBatch independently, and a template that
+  // declares both 'easy' and 'mid' answered both — so the student met the same
+  // question shape in חימום and again in ביסוס with different numbers, which
+  // reads as "it is repeating the same question". Measured before this fix:
+  // 93 of 93 sub-topics with generated questions had at least one template
+  // spanning two rungs. Reported by students, not inferred.
+  //
+  // The rungs are built in order and share this set, so easy claims a template
+  // first and mid moves on to the next one. A sub-topic whose only template
+  // was already spent simply gets no generated question on the later rung —
+  // fewer is the right trade against a repeat, and the authored bank is still
+  // the spine of every rung.
+  const usedTemplates = new Set<string>();
   const withGenerated = (authored: PracticeQuestion[], difficulty: Difficulty) => {
     if (authored.length === 0) return authored;
-    const extra = generateBatch(
+    // Over-ask, then keep only the templates this sub-topic has not spent.
+    // generateBatch round-robins across the pool, so a wider ask reaches more
+    // distinct templates rather than more variants of the same one.
+    const picked: PracticeQuestion[] = [];
+    for (const g of generateBatch(
       subject,
       topic,
       st.id,
       difficulty,
-      GENERATED_PER_RUNG,
+      GENERATED_PER_RUNG * 4,
       rungSeed(st.id, difficulty),
-    ).map((g) => g.question);
-    return extra.length ? [...authored, ...extra] : authored;
+    )) {
+      const templateId = g.question.id.split(':')[1];
+      if (!templateId || usedTemplates.has(templateId)) continue;
+      usedTemplates.add(templateId);
+      picked.push(g.question);
+      if (picked.length === GENERATED_PER_RUNG) break;
+    }
+    return picked.length ? [...authored, ...picked] : authored;
   };
 
   const easy = withGenerated(qs.filter((q) => q.difficulty === 'easy'), 'easy');

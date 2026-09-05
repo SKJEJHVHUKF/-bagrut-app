@@ -86,6 +86,42 @@ if (coveredButEmpty.length) {
   console.log(`      note: ${coveredButEmpty.length} templated sub-topic(s) gained nothing (rung has no authored questions): ${coveredButEmpty.slice(0, 3).join(', ')}`);
 }
 
+// ---- 2b: one template feeds one rung of a sub-topic, never two ------------
+// A template that declares both 'easy' and 'mid' used to answer both, so the
+// student met the same question shape in חימום and again in ביסוס with
+// different numbers — which reads as the app repeating itself. Students
+// reported it; it was 93 of 93 sub-topics before the fix.
+let spanning = 0;
+const spanExamples: string[] = [];
+for (const { topic, id } of allSubTopics) {
+  const st = getSubTopics(SUBJECT, topic).find((x) => x.id === id);
+  if (!st) continue;
+  const byRung = new Map<string, Set<string>>();
+  for (const level of buildSubTopicLevels(SUBJECT, topic, st)) {
+    const tpls = new Set<string>();
+    for (const q of level.questions) if (isGen(q.id)) tpls.add(q.id.split(':')[1]);
+    if (tpls.size) byRung.set(level.kind, tpls);
+  }
+  const rungs = [...byRung.entries()];
+  outer: for (let i = 0; i < rungs.length; i++) {
+    for (let j = i + 1; j < rungs.length; j++) {
+      for (const t of rungs[i][1]) {
+        if (rungs[j][1].has(t)) {
+          spanning++;
+          if (spanExamples.length < 3) {
+            spanExamples.push(`${topic}::${id} template ${t} in ${rungs[i][0]}+${rungs[j][0]}`);
+          }
+          break outer;
+        }
+      }
+    }
+  }
+}
+assert(
+  spanning === 0,
+  `no template feeds two rungs of the same sub-topic${spanExamples.length ? ` — ${spanExamples.join('; ')}` : ''}`
+);
+
 // ---- 3: the ladder's shape is unchanged ------------------------------------
 // A rung with no authored questions must not appear just because a template
 // could fill it. The product's climb is authored, not generated.
