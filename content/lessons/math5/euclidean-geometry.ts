@@ -2478,22 +2478,29 @@ $$CH^2 = AH \\cdot HB, \\qquad CA^2 = AH \\cdot AB, \\qquad CB^2 = HB \\cdot AB.
           id: 'eg-sub-sim-005',
           difficulty: 'hard',
           kind: 'open',
+          // Re-aimed 2026-09-05: this and eg-sub-sim-008 were BOTH on the
+          // "נקודה D על AB ונקודה E על AC" configuration, and both read like
+          // eg-bag-002/א — the whole אתגר rung was one configuration, previewed
+          // by its own bagrut question. This is a different source of similarity
+          // entirely: two ALTITUDES, where the equal angles are the right angles
+          // plus the shared vertex angle, and nothing is parallel.
           question:
-            'במשולש $\\triangle ABC$, נקודה $D$ על $AB$ ונקודה $E$ על $AC$ כך שמתקיים $\\angle ADE = \\angle ACB$. הוכח כי $\\triangle ADE \\sim \\triangle ACB$, וכן כי $AD \\cdot AB = AE \\cdot AC$.\n\n```geo\n{"points":{"A":[3,8],"B":[0,0],"C":[10,0],"D":[1.134,3.023],"E":[5.813,4.785]},"polygons":["ABC"],"segments":["DE"],"angles":[{"at":"D","from":"A","to":"E","n":1},{"at":"C","from":"A","to":"B","n":1}]}\n```',
-          hint: 'חפש זווית משותפת, ונצל את הזוויות השוות הנתונות לקבלת דמיון בז.ז.',
+            'במשולש חד-זווית $\\triangle ABC$ מעבירים את הגובה $AD$ (הנקודה $D$ על $BC$) ואת הגובה $BE$ (הנקודה $E$ על $AC$). הוכח כי $\\triangle ADC \\sim \\triangle BEC$, ובהינתן $AC = 12$ ס"מ, $CB = 8$ ס"מ וגם $CD = 6$ ס"מ — מצא את $CE$.\n\n```geo\n{"points":{"C":[0,0],"B":[8,0],"A":[6,10.3923],"D":[6,0],"E":[2,3.4641],"H":[6,1.1547]},"polygons":["ABC"],"segments":[{"s":"AD","accent":true},{"s":"BE","accent":true}],"right":[{"at":"D","from":"A","to":"B"},{"at":"E","from":"B","to":"C"}],"labels":[{"on":"AC","text":"12"},{"on":"CB","text":"8"},{"on":"CD","text":"6"}],"width":320}\n```',
+          hint: 'שני הגבהים נותנים לך שתי זוויות ישרות. ואיזו זווית משותפת לשני המשולשים $\\triangle ADC$ ו-$\\triangle BEC$?',
           solution: {
             steps: [
-              '**הכלל:** משפט דמיון ז.ז, שתי זוויות שוות בהתאמה מספיקות. נתונה זווית שווה אחת, $\\angle ADE = \\angle ACB$, והזווית $\\angle A$ משותפת לשני המשולשים, ומהדמיון נובעת פרופורציה שמכפלה צולבת שלה נותנת את שוויון המכפלות.',
-              'נתון: $\\angle ADE = \\angle ACB$. צריך להוכיח: $\\triangle ADE \\sim \\triangle ACB$, ואז $AD \\cdot AB = AE \\cdot AC$.',
-              'בסרטוט מסמנים את שני המשולשים, הקטן $\\triangle ADE$ בתוך הגדול $\\triangle ACB$, עם הזוויות השוות:\n\n```geo\n{"points":{"A":[3,8],"B":[0,0],"C":[10,0],"D":[1.134,3.023],"E":[5.813,4.785]},"polygons":["ABC",{"s":"ADE","accent":true}],"angles":[{"at":"D","from":"A","to":"E","n":1,"accent":true},{"at":"C","from":"A","to":"B","n":1,"accent":true},{"at":"A","from":"B","to":"C","n":2}]}\n```',
-              '$\\angle DAE = \\angle CAB$, זווית משותפת לשני המשולשים.',
-              '$\\angle ADE = \\angle ACB$, נתון.',
-              'לכן $\\triangle ADE \\sim \\triangle ACB$, לפי ז.ז.',
-              'לפי סדר הקודקודים בדמיון ($A \\to A$, $D \\to C$, $E \\to B$), הצלעות המתאימות פרופורציוניות: $\\dfrac{AD}{AC} = \\dfrac{AE}{AB}$.',
-              'מכפלה צולבת: $AD \\cdot AB = AE \\cdot AC$, מש״ל.',
+              '**הכלל:** משפט דמיון ז.ז — שתי זוויות שוות בהתאמה מספיקות. גובה יוצר זווית ישרה, ולכן שני גבהים נותנים זוג זוויות ישרות שוות; הזווית השנייה מגיעה מהקודקוד המשותף לשני המשולשים.',
+              'נתון: $AD$ ו-$BE$ גבהים. צריך להוכיח: $\\triangle ADC \\sim \\triangle BEC$.',
+              '$\\angle ADC = 90°$, כי $AD$ גובה לצלע $BC$. וגם $\\angle BEC = 90°$, כי $BE$ גובה לצלע $AC$. לכן $\\angle ADC = \\angle BEC$.',
+              '$\\angle ACD = \\angle BCE$, זו אותה זווית $\\angle C$ עצמה — היא משותפת לשני המשולשים.',
+              'לכן $\\triangle ADC \\sim \\triangle BEC$ לפי ז.ז, מש״ל.',
+              'לפי סדר הקודקודים בדמיון ($A \\to B$, $D \\to E$, $C \\to C$): $\\dfrac{AC}{BC} = \\dfrac{DC}{EC}$.',
+              'מציבים: $\\dfrac{12}{8} = \\dfrac{6}{CE}$.',
+              'מכפלה צולבת: $12 \\cdot CE = 48$, ולכן $CE = 4$ ס"מ.',
+              'בדיקה: $\\dfrac{12}{8} = 1.5$ וגם $\\dfrac{6}{4} = 1.5$ ✓.',
             ],
-            finalAnswer: '$\\triangle ADE \\sim \\triangle ACB$ לפי ז.ז, ומכאן $AD \\cdot AB = AE \\cdot AC$.',
-            explanation: 'התאמת הקודקודים $A\\to A$, $D\\to C$, $E\\to B$ קובעת את הפרופורציה הנכונה.',
+            finalAnswer: '$\\triangle ADC \\sim \\triangle BEC$ לפי ז.ז, ומכאן $CE = 4$ ס"מ',
+            explanation: 'שני גבהים = שתי זוויות ישרות שוות. הזווית השנייה היא תמיד הזווית של הקודקוד שהגבהים "פונים אליו" — כאן $\\angle C$.',
           },
         },
         {
@@ -3298,26 +3305,33 @@ $$PT^2 = PA \\cdot PB.$$
           id: 'eg-sub-circ-002',
           difficulty: 'easy',
           kind: 'mcq',
+          // Re-aimed 2026-09-05: this was "AB קוטר, מהי ∠ACB?" — word for word
+          // eg-bag-003/ג, and the same fact eg-bag-009/א asks to prove. It now
+          // teaches the OTHER inscribed-angle corollary: two inscribed angles on
+          // the same side of a chord are equal to each other. That also sets up
+          // the contrast with eg-bag-003/ב, where the point is on the far side
+          // and the angles are supplementary instead.
           question:
-            'במעגל, הקטע $AB$ קוטר והנקודה $C$ על המעגל. מהי הזווית $\\angle ACB$?\n\n```geo\n{"points":{"O":[0,0],"A":[-5,0],"B":[5,0],"C":[1.4,4.8]},"circles":[{"center":"O","r":5,"on":["A","B","C"]}],"polygons":["ABC"],"hidden":["O"]}\n```',
-          answers: ['$45°$', '$60°$', '$90°$', '$180°$'],
-          correct: 2,
+            'במעגל, הנקודות $C$ ו-$D$ נמצאות **באותו צד** של המיתר $AB$. נתון שהזווית $\\angle ACB = 42°$. מהי הזווית $\\angle ADB$?\n\n```geo\n{"points":{"O":[0,0],"A":[-3.3457,-3.7157],"B":[3.3457,-3.7157],"C":[-3.2139,3.8302],"D":[3.2139,3.8302]},"circles":[{"center":"O","r":5,"on":["A","B","C","D"]}],"segments":["AB","CA","CB","DA","DB"],"angles":[{"at":"C","from":"A","to":"B","label":"42°"},{"at":"D","from":"A","to":"B","label":"?"}],"width":320}\n```',
+          answers: ['$42°$', '$84°$', '$138°$', '$21°$'],
+          correct: 0,
           distractorNotes: [
-            'זהו חצי מהתשובה הנכונה — כנראה חילקת בשניים פעמיים. הזווית המרכזית של הקוטר היא $180°$, וחלוקה אחת בשניים נותנת $90°$.',
-            '$60°$ מתאים למשולש שווה-צלעות, אך $C$ היא נקודה כלשהי על המעגל ואין נתון על אורכי הצלעות. העובדה שהקטע $AB$ קוטר מחייבת $90°$ בכל מיקום של $C$.',
             '',
-            'זוהי הזווית המרכזית הפרושה על הקוטר (זווית שטוחה), וההיקפית היא מחציתה: $\\dfrac{180°}{2}=90°$. זווית של $180°$ בתוך משולש אינה אפשרית כלל.',
+            'זו הזווית ה**מרכזית** $\\angle AOB$, שגדולה פי שניים מההיקפית. השאלה מבקשת זווית היקפית נוספת, וזו שווה להיקפית הראשונה.',
+            'זהו $180° - 42°$ — התשובה למקרה שבו $D$ נמצאת בצד ה**שני** של המיתר, ואז $ACBD$ מרובע חסום והזוויות הנגדיות משלימות ל-$180°$. כאן נתון במפורש שהנקודות באותו צד.',
+            'זהו חצי מ-$42°$. אין כאן חלוקה בשניים: שתי הזוויות ההיקפיות נשענות על אותה קשת בדיוק, ולכן הן פשוט שוות.',
           ],
-          hint: 'מהי הזווית המרכזית שקוטר פותח?',
+          hint: 'שתי הזוויות נשענות על אותה קשת. מה הקשר בין כל אחת מהן לזווית המרכזית שמעליה?',
           solution: {
             steps: [
-              '**הכלל:** זווית היקפית שווה למחצית הזווית המרכזית הנשענת על אותה קשת, וקוטר פותח זווית מרכזית שטוחה. נתון שהקטע $AB$ קוטר והנקודה $C$ על המעגל, לכן $\\angle ACB$ היא זווית היקפית הנשענת על קוטר.',
-              'הקוטר $AB$ עובר דרך המרכז, לכן הזווית המרכזית הנשענת על הקשת $AB$ היא זווית שטוחה, $180°$.',
-              'הזווית ההיקפית $\\angle ACB$ נשענת על אותה קשת, לכן $\\angle ACB = \\tfrac{1}{2} \\cdot 180° = 90°$, תשובה $90°$.',
-              'התשובה $180°$ היא הזווית המרכזית ולא ההיקפית. הזווית שקודקודה $C$ על המעגל היא תמיד מחציתה.',
+              '**הכלל:** זווית היקפית שווה למחצית הזווית המרכזית הנשענת על אותה קשת. לכן שתי זוויות היקפיות הנשענות על אותה קשת שוות זו לזו — שתיהן מחצית של אותה זווית מרכזית אחת.',
+              'הנקודות $C$ ו-$D$ נמצאות באותו צד של המיתר $AB$, ולכן שתי הזוויות $\\angle ACB$ ו-$\\angle ADB$ נשענות על אותה קשת $AB$.',
+              'הזווית המרכזית הנשענת על קשת זו: $\\angle AOB = 2 \\cdot 42° = 84°$.',
+              'הזווית $\\angle ADB$ נשענת על אותה קשת, ולכן גם היא מחצית ממנה: $\\angle ADB = \\dfrac{84°}{2} = 42°$.',
+              'שים לב להבדל: אילו $D$ היתה בצד השני של המיתר, המרובע היה חסום והזוויות היו משלימות ל-$180°$, כלומר $138°$.',
             ],
-            finalAnswer: '$\\angle ACB = 90°$',
-            explanation: 'תכונה מרכזית — זווית על קוטר תמיד ישרה.',
+            finalAnswer: '$\\angle ADB = 42°$',
+            explanation: 'אותה קשת ⇐ זוויות היקפיות שוות. הצד של המיתר הוא מה שקובע אם שוות או משלימות ל-$180°$.',
           },
         },
         {
@@ -3381,21 +3395,27 @@ $$PT^2 = PA \\cdot PB.$$
           id: 'eg-sub-circ-005',
           difficulty: 'hard',
           kind: 'open',
+          // Re-aimed 2026-09-05: this opened on "AB קוטר + נקודה על המעגל", the
+          // same configuration and the same opening move as eg-bag-009/א, so the
+          // אתגר rung was a preview of its own בגרות question. The chord here is
+          // equal to the RADIUS instead — no diameter anywhere — so the way in is
+          // the two-radii isosceles triangle from שלב 2, and only then the
+          // inscribed angle.
           question:
-            'במעגל שמרכזו $O$ הקטע $AB$ קוטר, והנקודה $C$ על המעגל כך שהזווית $\\angle CAB = 30°$. הוכח שהזווית $\\angle ABC = 60°$, ומצא את הזווית המרכזית $\\angle BOC$.\n\n```geo\n{"points":{"O":[0,0],"A":[-5,0],"B":[5,0],"C":[2.5,4.33]},"circles":[{"center":"O","r":5,"on":["A","B","C"]}],"polygons":["ABC"],"segments":["OC"],"angles":[{"at":"A","from":"C","to":"B","label":"30°"}]}\n```',
-          hint: 'נצל את הזווית ההיקפית על קוטר, ואז את הקשר היקפית-מרכזית.',
+            'במעגל שמרכזו $O$ נתון מיתר $AB$ שאורכו שווה לרדיוס המעגל. הנקודה $C$ נמצאת על הקשת הגדולה. הוכח שהמשולש $\\triangle AOB$ שווה-צלעות, ומצא את הזווית ההיקפית $\\angle ACB$.\n\n```geo\n{"points":{"O":[0,0],"A":[-5.1962,-3],"B":[0,-6],"C":[3,5.1962]},"circles":[{"center":"O","r":6,"on":["A","B","C"]}],"segments":["OA","OB","AB","CA","CB"],"ticks":[{"on":"OA","n":1},{"on":"OB","n":1},{"on":"AB","n":1}],"angles":[{"at":"O","from":"A","to":"B","n":2},{"at":"C","from":"A","to":"B","label":"?"}],"width":300}\n```',
+          hint: 'שתי הצלעות שיוצאות מ-$O$ הן רדיוסים. אם גם המיתר שווה להם — מה זה אומר על המשולש, ומהי אז הזווית המרכזית?',
           solution: {
             steps: [
-              '**הכלל:** זווית היקפית הנשענת על קוטר היא זווית ישרה, וזווית מרכזית גדולה פי שניים מהזווית ההיקפית הנשענת על אותה קשת. נתון שהקטע $AB$ קוטר, לכן $\\angle ACB = 90°$, ואת $\\angle BOC$ מוצאים מהזווית ההיקפית הנשענת על הקשת $BC$.',
-              '$\\angle ACB = 90°$, זווית היקפית הנשענת על הקוטר $AB$.',
-              'במשולש $\\triangle ABC$ סכום הזוויות $180°$: $\\angle ABC = 180° - 90° - 30° = 60°$, מש״ל.',
-              'בסרטוט מסמנים את הזווית הישרה ואת הזווית המרכזית המבוקשת:\n\n```geo\n{"points":{"O":[0,0],"A":[-5,0],"B":[5,0],"C":[2.5,4.33]},"circles":[{"center":"O","r":5,"on":["A","B","C"]}],"polygons":["ABC",{"s":"OBC","accent":true}],"right":[{"at":"C","from":"A","to":"B"}],"angles":[{"at":"A","from":"C","to":"B","label":"30°"},{"at":"B","from":"A","to":"C","label":"60°"},{"at":"O","from":"B","to":"C","label":"60°","accent":true}]}\n```',
-              'הזווית $\\angle CAB = 30°$ היא זווית היקפית הנשענת על הקשת $BC$, והזווית $\\angle BOC$ היא הזווית המרכזית הנשענת על אותה קשת.',
-              'לכן $\\angle BOC = 2 \\cdot 30° = 60°$.',
-              'בדיקה: $OB = OC$ רדיוסים, והנקודה $O$ על הקוטר $AB$, לכן $\\angle OCB = \\angle OBC = \\angle ABC = 60°$, ובמשולש $\\triangle OBC$ נשאר $\\angle BOC = 180° - 60° - 60° = 60°$.',
+              '**הכלל:** כל הרדיוסים באותו מעגל שווים, ולכן משולש שקודקודו במרכז ושתי צלעותיו רדיוסים הוא שווה-שוקיים; אם גם המיתר שווה להם — הוא שווה-צלעות. וזווית היקפית שווה למחצית הזווית המרכזית הנשענת על אותה קשת.',
+              'הצלעות $OA$ ו-$OB$ הן רדיוסים של אותו מעגל, ולכן $OA = OB = r$.',
+              'נתון שהמיתר שווה לרדיוס: $AB = r$.',
+              'לכן $OA = OB = AB$, כלומר שלוש צלעות המשולש $\\triangle AOB$ שוות והוא שווה-צלעות, מש״ל.',
+              'במשולש שווה-צלעות כל הזוויות $60°$, ולכן הזווית המרכזית $\\angle AOB = 60°$.',
+              'הנקודה $C$ נמצאת על הקשת הגדולה, ולכן $\\angle ACB$ היא זווית היקפית הנשענת על אותה קשת $AB$ כמו הזווית המרכזית.',
+              '$\\angle ACB = \\dfrac{\\angle AOB}{2} = \\dfrac{60°}{2} = 30°$.',
             ],
-            finalAnswer: '$\\angle ABC = 60°$, $\\angle BOC = 60°$',
-            explanation: 'זווית על קוטר נותנת את הזווית הישרה; היחס היקפית-מרכזית נותן את $\\angle BOC$.',
+            finalAnswer: '$\\triangle AOB$ שווה-צלעות, ולכן $\\angle AOB = 60°$ וגם $\\angle ACB = 30°$',
+            explanation: 'המיתר ששווה לרדיוס הוא הרמז: הוא הופך את המשולש המרכזי לשווה-צלעות, ומשם הזווית המרכזית ידועה בלי חישוב.',
           },
         },
         {
