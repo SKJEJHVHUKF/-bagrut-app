@@ -149,10 +149,18 @@ export function QuestionRunnerCard({
   /** The answer the student actually gave on a wrong FIRST attempt, captured at
    *  the moment it happened. The render state it used to be derived from is
    *  cleared by retryMCQ, so it could not survive to the tutor. */
-  const [missedWith, setMissedWith] = useState<string | null>(null);
+  //
+  // Restored on a revisit from the snapshot's FIRST wrong pick, which is what
+  // `missedIndex` has always meant. Without this the "למה טעית?" box — the whole
+  // reason to walk back to a question you got wrong — rendered blank.
+  const missedOnFirstTry =
+    saved && !saved.firstTryCorrect && saved.wrongPicks.length > 0 ? saved.wrongPicks[0] : null;
+  const [missedWith, setMissedWith] = useState<string | null>(
+    missedOnFirstTry !== null ? (question.answers?.[missedOnFirstTry] ?? null) : null,
+  );
   /** ORIGINAL index of the wrong first pick — the key into distractorNotes,
    *  which is what lets the tutor answer "why is my answer wrong" for $0. */
-  const [missedIndex, setMissedIndex] = useState<number | null>(null);
+  const [missedIndex, setMissedIndex] = useState<number | null>(missedOnFirstTry);
 
   // "למד אותי" — three graded rungs of help derived from what the question and
   // its sub-topic already carry (lib/help-ladder). `openedLevels` is the whole
