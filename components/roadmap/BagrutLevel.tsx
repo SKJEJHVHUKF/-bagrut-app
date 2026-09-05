@@ -123,7 +123,15 @@ export function BagrutLevel({
               and scrolled away as soon as the student opened a part, so working
               on סעיף ג meant scrolling back up to re-read the givens. */}
           {q.context && (
-            <div className="sticky top-[58px] md:top-[104px] z-30 rounded-2xl border border-slate-900/10 bg-[var(--background)]/95 backdrop-blur-md p-4 chat-md text-sm text-slate-900 leading-relaxed shadow-sm max-h-[35vh] overflow-y-auto">
+            {/* 35vh was about a third of the screen, so a question carrying a
+                figure scrolled inside its own box — Itay, 2026-09-05: "שלא תהיה
+                את הגלילה הזו בשאלה אלא שפשוט השאלה תהיה על דף מלא". 65vh fits
+                the geometry questions with their sketches whole, and
+                `overflow-y-auto` shows no scrollbar at all when the content
+                fits, so the bar disappears rather than just moving. The cap
+                cannot go away entirely while the box is sticky: without one, a
+                long question would cover the answer area it is pinned above. */}
+            <div className="sticky top-[58px] md:top-[104px] z-30 rounded-2xl border border-slate-900/10 bg-[var(--background)]/95 backdrop-blur-md p-4 chat-md text-sm text-slate-900 leading-relaxed shadow-sm max-h-[65vh] overflow-y-auto">
               <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase mb-1">השאלה</div>
               <MathText>{q.context}</MathText>
             </div>

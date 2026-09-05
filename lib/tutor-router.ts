@@ -242,13 +242,49 @@ const VERIFY_FORM =
  * Requires a digit, and refuses anything with a Hebrew letter left in the
  * captured part: "האם הסדרה חשבונית" must not be read as a value.
  */
+/**
+ * A value offered at the END of a short sentence the student wrote themselves.
+ *
+ * VERIFY_FORM only matches a fixed set of wrappers, so any Hebrew the student
+ * puts in front of the number defeats it. Itay, 2026-09-05, image4: a student
+ * typed "זאת הוא חצי ממנו 13?" — a value being checked, in his own words — and
+ * it went to the model to have `13` confirmed, costing a call from the daily 10.
+ *
+ * The veto is what keeps this safe rather than a longer wrapper list: ASKING
+ * still rejects anything carrying a question word, so the counter-example from
+ * the SAME screenshot, "למה זה לא 26?", is untouched and still reaches the FAQ
+ * layer that explains it. Without a question word, a short sentence ending in a
+ * number is a student showing their arithmetic — which is mathjs's job, not the
+ * model's.
+ */
+const TRAILING_VALUE = /(-?\d+(?:[.,]\d+)?(?:\s*\/\s*\d+)?)\s*[?!]*\s*$/;
+
 export function verificationValue(message: string): string | null {
-  const m = VERIFY_FORM.exec(message.trim());
-  if (!m) return null;
-  const v = m[1].trim();
-  if (!v || !/[0-9]/.test(v)) return null;
-  if (/[֐-׿]/.test(v)) return null;
-  return v;
+  const raw = message.trim();
+  const m = VERIFY_FORM.exec(raw);
+  if (m) {
+    const v = m[1].trim();
+    if (!v || !/[0-9]/.test(v)) return null;
+    if (/[֐-׿]/.test(v)) return null;
+    return v;
+  }
+  if (raw.length > MAX_ANSWER_LEN) return null;
+  if (ASKING.test(raw)) return null;
+  // Hebrew REQUIRED, and it must sit before the value. This fallback exists for
+  // a sentence the student wrote around a number; a bare mathematical string is
+  // already handled by looksLikeAnswer, which parses multi-value answers
+  // properly. Without this guard "x=2, x=3" came back as just "3" — measured,
+  // it broke test:router immediately.
+  // EXACTLY ONE number, or we are guessing. "יצא 16 69" is a student who typed
+  // two values with no separator: which one is the answer is unknowable, and
+  // test:followup pins that it must not be graded. Taking the trailing one would
+  // be a confident wrong verdict, which is worse than passing it on.
+  if ((raw.match(/\d+(?:[.,]\d+)?/g) ?? []).length !== 1) return null;
+  const t = TRAILING_VALUE.exec(raw);
+  if (!t) return null;
+  const before = raw.slice(0, t.index);
+  if (!/[֐-׿]/.test(before)) return null;
+  return t[1].replace(/\s+/g, '');
 }
 
 /** Longest a plain answer gets. A value is short; prose is not. */

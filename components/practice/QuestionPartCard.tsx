@@ -429,9 +429,15 @@ export function QuestionPartCard({
           <div className="text-[10px] font-black tracking-widest text-violet-700 uppercase">
             סעיף {part.label}
           </div>
-          <div className="text-sm text-slate-800 line-clamp-1 chat-md">
-            <MathText inline>{part.prompt}</MathText>
-          </div>
+          {/* The one-line preview is what tells the sections apart while they are
+              closed. Once a section is OPEN the body below prints the same prompt
+              in full, so keeping the clamped copy showed the question twice —
+              Itay, 2026-09-05: "בסעיף ג שהשאלה כתובה פעמיים". */}
+          {!open && (
+            <div className="text-sm text-slate-800 line-clamp-1 chat-md">
+              <MathText inline>{part.prompt}</MathText>
+            </div>
+          )}
         </div>
         <div className="flex-shrink-0 flex items-center gap-2">
           {checkResult?.verdict === 'correct' && (
