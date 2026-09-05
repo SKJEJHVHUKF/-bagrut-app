@@ -521,21 +521,26 @@ $$AB + BC = CD + BC \\;\\Longrightarrow\\; AC = BD$$
         id: 'eg-ang-007',
         difficulty: 'mid',
         kind: 'open',
+        // Re-aimed 2026-09-05. This was step3.example with the letters changed:
+        // "AC = BD ⇒ AB = CD" versus "AE = BF ⇒ AB = EF" — the same proof, the
+        // same line, the same reasoning. The teach section introduces the ANGLE
+        // form of subtraction ("אותו רעיון בזוויות") and nothing ever drilled it,
+        // so that is what this asks now: same principle, different object.
         question:
-          'הנקודות $A$, $B$, $E$, $F$ נמצאות על ישר אחד לפי הסדר. נתון $AE = BF$. הוכח כי $AB = EF$.\n\n\`\`\`geo\n{"points":{"A":[0,0],"B":[3,0],"E":[8,0],"F":[11,0]},"segments":["AF"],"ticks":[{"on":"AE","n":1},{"on":"BF","n":1}],"width":340}\n\`\`\`',
-        hint: 'איזה קטע משותף לשני הקטעים $AE$ וגם $BF$? רשום כל אחד מהם כסכום של שני חלקים.',
-        expected: { kind: 'manual', reason: 'הוכחה קצרה בחיסור קטעים' },
+          'ארבע קרניים $OA$, $OB$, $OC$, $OD$ יוצאות מהנקודה $O$ לפי הסדר הזה. נתון $\\angle AOC = \\angle BOD$. הוכח כי $\\angle AOB = \\angle COD$.\n\n\`\`\`geo\n{"points":{"O":[0,0],"A":[5.6382,2.0521],"B":[3.4415,4.9149],"C":[-1.0419,5.9088],"D":[-4.2426,4.2426]},"segments":["OA","OB","OC","OD"],"angles":[{"at":"O","from":"A","to":"C","n":1},{"at":"O","from":"B","to":"D","n":1}],"width":300}\n\`\`\`',
+        hint: 'איזו זווית משותפת לשתי הזוויות הנתונות? פרק כל אחת מהן לסכום של שתי זוויות לפי סדר הקרניים.',
+        expected: { kind: 'manual', reason: 'הוכחה קצרה בחיסור זוויות' },
         solution: {
           steps: [
-            '**הכלל:** שוויון בין שני קטעים על אותו ישר שחולקים חלק משותף נפתר בחיסור החלק המשותף משני האגפים. לכן קודם מפרקים כל קטע לסכום חלקיו לפי סדר הנקודות, ואז מחסרים.',
-            'נסרטט לפי סדר הנקודות:\n\n```geo\n{"points":{"A":[0,0],"B":[3,0],"E":[8,0],"F":[11,0]},"segments":["AF"],"ticks":[{"on":"AE","n":1},{"on":"BF","n":1}],"width":340}\n```',
-            'נתון: $AE = BF$.',
-            'לפי סדר הנקודות: $AE = AB + BE$, וגם $BF = BE + EF$.',
-            'מציבים בשוויון הנתון: $AB + BE = BE + EF$.',
-            'הקטע $BE$ משותף לשני האגפים; מחסרים אותו: $AB = EF$, מש״ל.',
+            '**הכלל:** שוויון בין שתי זוויות שחולקות חלק משותף נפתר בחיסור החלק המשותף משני האגפים, בדיוק כמו בקטעים. הנימוק נקרא "חיסור זוויות". קודם מפרקים כל זווית לסכום חלקיה לפי סדר הקרניים, ואז מחסרים.',
+            'נתון: $\\angle AOC = \\angle BOD$.',
+            'הקרניים יוצאות לפי הסדר $OA$, $OB$, $OC$, $OD$, ולכן $\\angle AOC = \\angle AOB + \\angle BOC$.',
+            'ומאותו סדר: $\\angle BOD = \\angle BOC + \\angle COD$.',
+            'מציבים בשוויון הנתון: $\\angle AOB + \\angle BOC = \\angle BOC + \\angle COD$.',
+            'הזווית $\\angle BOC$ משותפת לשני האגפים; מחסרים אותה: $\\angle AOB = \\angle COD$, מש״ל.',
           ],
-          finalAnswer: '$AB = EF$, בחיסור הקטע המשותף $BE$ משני האגפים',
-          explanation: 'זו שורת "חיסור קטעים" — קצרה, אבל בלעדיה ההוכחה קופצת ומאבדת נקודות.',
+          finalAnswer: '$\\angle AOB = \\angle COD$, בחיסור הזווית המשותפת $\\angle BOC$ משני האגפים',
+          explanation: 'אותה שורה בדיוק כמו בחיסור קטעים, על זוויות. סדר הקרניים הוא מה שמתיר את הפירוק — בלעדיו אין לכתוב אותו.',
         },
       },
       // ---------------- אתגר (hard) ----------------

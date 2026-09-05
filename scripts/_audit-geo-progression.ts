@@ -31,7 +31,18 @@ function overlap(a: Set<string>, b: Set<string>): number {
   const [small, big] = a.size <= b.size ? [a, b] : [b, a];
   let hit = 0;
   for (const w of small) if (big.has(w)) hit++;
-  return hit / Math.max(1, small.size);
+  const contained = hit / Math.max(1, small.size);
+
+  // ⚠️ CONTAINMENT IS MEANINGLESS ON A TINY SET. Once the math islands are
+  // stripped, "במשולש ABC, DE ∥ BC. נתון AD=3, DB=6, AE=4. מצא EC" leaves three
+  // content words — במשולש / נתון / מצא — and every longer geometry question
+  // contains all three, so it scored 100% against questions it has nothing to do
+  // with. That fired on six pairs at once and would have sent me rewriting
+  // content that was already fine. Below the floor, fall back to Jaccard, which
+  // divides by the union and cannot be gamed by brevity.
+  const MIN_FOR_CONTAINMENT = 6;
+  if (small.size >= MIN_FOR_CONTAINMENT) return contained;
+  return hit / Math.max(1, new Set([...a, ...b]).size);
 }
 
 /**
@@ -73,9 +84,17 @@ for (const st of G.subTopics ?? []) {
     const rung = q.difficulty === 'easy' ? 'חימום' : q.difficulty === 'mid' ? 'ביסוס' : 'אתגר';
     items.push({ rung, id: q.id, text: q.question, w: words(q.question), n: nums(q.question) });
   }
+  // CONTEXT + PART, not the part alone. A bagrut part reads "חשב את שטח המעוין"
+  // — four words, no numbers, because the givens live in the shared context the
+  // student is looking at while they answer it. Comparing the part on its own
+  // made the whole בגרות rung invisible to this audit, and that is precisely
+  // where Itay found the worst repeat: eg-shp-006 (אתגר) is the same rhombus
+  // with the same 12 and 16 as eg-bag-010, asking for the same area and side.
   for (const b of getBagrutQuestionsForSubTopic('math5', TOPIC, st.id))
-    for (const [i, p] of (b.parts ?? []).entries())
-      items.push({ rung: 'בגרות', id: `${b.id}/${i}`, text: p.question ?? '', w: words(p.question ?? ''), n: nums(p.question ?? '') });
+    for (const [i, p] of (b.parts ?? []).entries()) {
+      const text = `${b.context ?? ''} ${p.prompt ?? ''}`.trim();
+      items.push({ rung: 'בגרות', id: `${b.id}/${p.label ?? i}`, text, w: words(text), n: nums(text) });
+    }
 
   const n = (r: string) => items.filter((x) => x.rung === r).length;
   const hard = n('אתגר');
