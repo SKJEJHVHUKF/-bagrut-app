@@ -422,6 +422,25 @@ export function QuestionRunnerCard({
 
   const wrong = firstTryCorrect === false;
 
+  /**
+   * He pressed "נסה שוב" and has not answered again yet.
+   *
+   * ⚠️ WHY THIS EXISTS. `retryMCQ` is `setSelected(null)` and `retryOpen` is
+   * `setCheck(null)` — that is the whole of the retry. `wrong` is
+   * `firstTryCorrect === false` and never flips back, so before this the press
+   * changed nothing a student could see: his answer vanished, the same
+   * "נסה שוב" button stayed sitting there, and the "כבר נספר" line stayed under
+   * it. Reported as "there is no sign I can try again", and that is exactly
+   * what it was — a button that reads as broken.
+   *
+   * DERIVED rather than stored, on purpose. A `retrying` flag would be a third
+   * thing to keep in step with `selected` and `check`, and it would have to be
+   * added to AnswerSnapshot for the back button — where its correct value is
+   * precisely what this expression already computes. A student who walks back
+   * into a question mid-retry lands in the retry state for free.
+   */
+  const retrying = wrong && !revealed && (q.kind === 'mcq' ? selected === null : check === null);
+
   // The repair offer, at the only moment it is genuinely welcome: the student
   // has just seen the worked solution for a question they got wrong.
   //
@@ -611,7 +630,7 @@ export function QuestionRunnerCard({
           live here — it is the last rung of the ladder above, so there is one
           graded path to the answer instead of two competing buttons that reach
           it at different depths. */}
-      {!revealed && wrong && (
+      {!revealed && wrong && !retrying && (
         <motion.div
           key="retry"
           initial={{ opacity: 0, y: -6 }}
@@ -628,6 +647,33 @@ export function QuestionRunnerCard({
           </motion.button>
           <div className="text-[10px] text-slate-400 text-center">
             הניסיון הראשון כבר נספר — הניסיון הנוסף הוא בשבילך, ללמוד.
+          </div>
+        </motion.div>
+      )}
+
+      {/* The retry, once he has taken it. The button is gone — an offer he has
+          already accepted must stop looking like an offer, or pressing it again
+          is the obvious next move and nothing happens. What replaces it says
+          the two things he needs: that he is now IN a second attempt, and where
+          to put it. */}
+      {retrying && (
+        <motion.div
+          key="retrying"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          className="rounded-xl border border-violet-500/40 bg-violet-500/[0.07] px-4 py-3"
+        >
+          <div className="flex items-center justify-center gap-2 text-sm font-black text-violet-800">
+            <RotateCcw className="w-4 h-4" />
+            <span>
+              {q.kind === 'mcq' ? 'ניסיון שני — בחר תשובה אחרת' : 'ניסיון שני — תקן את התשובה ושלח'}
+            </span>
+          </div>
+          <div className="text-[10px] text-violet-700/80 text-center mt-1">
+            {q.kind === 'mcq'
+              ? 'התשובה שסימנת קודם מסומנת ואינה ניתנת לבחירה.'
+              : 'התשובה שכתבת נשארה בתיבה — ערוך אותה ושלח שוב.'}
           </div>
         </motion.div>
       )}
