@@ -7,12 +7,13 @@
 // escape so the hardest rung can't dead-end the climb.
 
 import { useCallback, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 import { orderQuestions, studentTier } from '@/lib/adaptive';
 import { retrySet } from '@/lib/roadmap-mastery';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
 import type { AttemptResult } from '@/lib/roadmap-progress';
 import type { PracticeQuestion } from '@/content/lessons/types';
-import { QuestionRunnerCard } from './QuestionRunnerCard';
+import { QuestionRunnerCard, type AnswerSnapshot } from './QuestionRunnerCard';
 import { LevelClearedPanel, LevelFailedPanel } from './ladder-ui';
 import { useClientValue } from '@/lib/use-client-value';
 
@@ -59,6 +60,10 @@ export function RoadmapLevelRunner({
   const [baseCorrect, setBaseCorrect] = useState(0); // cumulative from prior rounds
   const [isRetry, setIsRetry] = useState(false);
   const [result, setResult] = useState<AttemptResult | null>(null);
+  /** What the student answered, per question id. Feeds the back button: a
+   *  revisited question is re-rendered from its snapshot instead of coming back
+   *  blank, and is never scored or logged a second time. */
+  const [answers, setAnswers] = useState<Record<string, AnswerSnapshot>>({});
 
   // A new ordering means a new level (or a newly-known tier) — restart the run.
   // Adjusted during render rather than in an effect so the stale round is never
@@ -73,14 +78,25 @@ export function RoadmapLevelRunner({
     setBaseCorrect(0);
     setIsRetry(false);
     setResult(null);
+    setAnswers({});
   }
 
   if (total === 0) {
     return <div className="text-sm text-slate-500 text-center py-6">אין תרגילים ברמה הזו.</div>;
   }
 
-  function handleResolved(correct: boolean) {
+  function handleResolved(correct: boolean, snapshot: AnswerSnapshot) {
     const q = pool[pos];
+
+    // Re-answering a question reached through the back button must not score it
+    // twice. The FIRST pass is the one that counts, exactly as before.
+    if (answers[q.id]) {
+      if (pos + 1 < pool.length) setPos(pos + 1);
+      else setResult(onSubmit(baseCorrect + roundCorrect, total, { viaRetry: isRetry }));
+      return;
+    }
+    setAnswers({ ...answers, [q.id]: snapshot });
+
     const nextCorrect = roundCorrect + (correct ? 1 : 0);
     const nextWrong = new Set(roundWrong);
     if (!correct) nextWrong.add(q.id);
@@ -104,6 +120,7 @@ export function RoadmapLevelRunner({
     setRoundWrong(new Set());
     setIsRetry(true);
     setResult(null);
+    setAnswers({}); // the missed questions are being answered again, for score
   }
 
   function continueAnyway() {
@@ -118,6 +135,7 @@ export function RoadmapLevelRunner({
     setBaseCorrect(0);
     setIsRetry(false);
     setResult(null);
+    setAnswers({});
   }
 
   // ===== Result: cleared or failed =====
@@ -156,9 +174,22 @@ export function RoadmapLevelRunner({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-xs">
-        <button onClick={onBack} className="text-slate-500 hover:text-slate-800 inline-flex items-center gap-1">
-          → לסולם
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="text-slate-500 hover:text-slate-800 inline-flex items-center gap-1">
+            → לסולם
+          </button>
+          {/* Owner, 2026-09-05: "תעשה שיהיה אפשר לחזור אחורה בשאלות". The rung
+              used to move forward only, so a student who wanted to re-read a
+              question they had just answered had no way back to it. */}
+          {pos > 0 && (
+            <button
+              onClick={() => setPos(pos - 1)}
+              className="text-slate-500 hover:text-slate-800 inline-flex items-center gap-1 font-bold"
+            >
+              <ArrowRight className="w-3.5 h-3.5" /> לשאלה הקודמת
+            </button>
+          )}
+        </div>
         <span className="font-black text-violet-700">
           {level.emoji} רמת {level.title}
           {isRetry ? ' · חזרה על הטעויות' : ''}
@@ -174,6 +205,7 @@ export function RoadmapLevelRunner({
         topic={topic}
         subId={subId}
         source="drill"
+        saved={answers[current.id] ?? null}
         onResolved={handleResolved}
         onBackToLearn={onBackToLearn}
       />

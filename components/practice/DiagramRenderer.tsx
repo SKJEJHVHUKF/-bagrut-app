@@ -383,8 +383,23 @@ function TwoTrianglesSVG({
       <Label x={Ra.x} y={Ra.y} text={D} dx={-8} dy={6} />
       <Label x={Rb.x} y={Rb.y} text={E} dx={10} dy={6} />
       <Label x={Rc.x} y={Rc.y} text={F} dx={0} dy={-8} />
-      {/* Symbol */}
-      <text x="100" y="100" fill={ACCENT} fontSize="20" fontWeight="bold" textAnchor="middle" fontFamily="serif">
+      {/* Symbol — owner, 2026-09-05: "כדי שסימן החפיפה (בצבע אדום) יהיה באמצע".
+          It was pinned at x=100, which is the left triangle's own B label, so
+          the sign read as belonging to that triangle instead of relating the
+          two. Derived from the layout instead: halfway between the B label on
+          the left (Lb.x + 10) and the D label on the right (Ra.x − 8), which is
+          the same gap for `similar` because Ra.x does not scale. y=97 puts the
+          glyph's body on the triangles' own vertical middle (they span 50→130,
+          and a 20px baseline sits ~7px under its visual centre). */}
+      <text
+        x={(Lb.x + 10 + (Ra.x - 8)) / 2}
+        y="97"
+        fill={ACCENT}
+        fontSize="20"
+        fontWeight="bold"
+        textAnchor="middle"
+        fontFamily="serif"
+      >
         {spec.relation === 'congruent' ? '≅' : '∼'}
       </text>
     </svg>

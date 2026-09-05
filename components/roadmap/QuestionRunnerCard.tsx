@@ -53,6 +53,30 @@ import type { PracticeQuestion } from '@/content/lessons/types';
 
 const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה'];
 
+/**
+ * Everything needed to put an already-answered question back on screen exactly
+ * as the student left it.
+ *
+ * Owner, 2026-09-05: "תעשה שיהיה אפשר לחזור אחורה בשאלות" — and going back is
+ * only worth anything if the answer is still there when you arrive. The runner
+ * keeps one of these per question id and hands it back on re-entry; the card is
+ * remounted (it is keyed by position), so without it a revisit would show a
+ * blank question the student would be invited to answer a second time.
+ */
+export type AnswerSnapshot = {
+  firstTryCorrect: boolean;
+  /** ORIGINAL option index the student ended on (MCQ). */
+  selected: number | null;
+  /** ORIGINAL indices of every option picked and found wrong (MCQ). */
+  wrongPicks: number[];
+  /** The open answer as one string — what the review line shows. */
+  typed: string;
+  /** Per-box values for a multi-quantity answer. */
+  parts: string[];
+  /** They reached the right answer in the end, on try 1 or a later one. */
+  solved: boolean;
+};
+
 export function QuestionRunnerCard({
   question,
   position,
@@ -61,6 +85,7 @@ export function QuestionRunnerCard({
   topic,
   subId,
   source,
+  saved,
   onResolved,
   onBackToLearn,
 }: {
@@ -72,9 +97,11 @@ export function QuestionRunnerCard({
   topic: string;
   subId: string;
   source: ResultSource;
-  /** Called once, when the student presses "next" — `firstTryCorrect` is what
-   *  the rung scores on. */
-  onResolved: (firstTryCorrect: boolean) => void;
+  /** Set when the student is REVISITING a question they already answered. */
+  saved?: AnswerSnapshot | null;
+  /** Called when the student presses "next" — `firstTryCorrect` is what the
+   *  rung scores on, and the snapshot is what a later revisit renders from. */
+  onResolved: (firstTryCorrect: boolean, snapshot: AnswerSnapshot) => void;
   onBackToLearn?: () => void;
 }) {
   const q = question;
@@ -86,27 +113,36 @@ export function QuestionRunnerCard({
     [q],
   );
 
-  const [selected, setSelected] = useState<number | null>(null); // MCQ original index
-  const [input, setInput] = useState('');
+  const [selected, setSelected] = useState<number | null>(saved?.selected ?? null); // MCQ original index
+  /** Every option picked and found wrong. Kept SEPARATELY from `selected`
+   *  because a retry clears the selection, and the owner asked for the wrong
+   *  answer to stay on screen with its ✗ rather than vanish. */
+  const [wrongPicks, setWrongPicks] = useState<number[]>(saved?.wrongPicks ?? []);
+  const [input, setInput] = useState(saved && !question.answerLabels ? saved.typed : '');
   // A question that asks for several named quantities ("מצא את $a_1$ ואת $d$")
   // gets one labelled box per quantity (question.answerLabels) instead of one
   // box for all of them. `typed` is the whole answer as one string — what the
   // logs, the tutor and the "למה טעית?" box read; grading uses the boxes.
   const labels = q.answerLabels;
-  const [parts, setParts] = useState<string[]>(() => (q.answerLabels ?? []).map(() => ''));
+  const [parts, setParts] = useState<string[]>(
+    () => saved?.parts ?? (q.answerLabels ?? []).map(() => ''),
+  );
   const typed = labels ? labels.map((l, i) => `${l} = ${(parts[i] ?? '').trim()}`).join(', ') : input;
   const filled = labels ? parts.every((p) => p.trim()) : input.trim().length > 0;
   // Boxes already graded right. They stay right (green, not editable), so a
   // retry only has to fix the box that missed.
   const [lockedParts, setLockedParts] = useState<boolean[]>(() => (q.answerLabels ?? []).map(() => false));
-  const [tries, setTries] = useState(0);
-  const [firstTryCorrect, setFirstTryCorrect] = useState<boolean | null>(null);
-  const [revealed, setRevealed] = useState(false);
+  const [tries, setTries] = useState(saved ? 1 : 0);
+  const [firstTryCorrect, setFirstTryCorrect] = useState<boolean | null>(saved?.firstTryCorrect ?? null);
+  // A revisit opens fully resolved: the answer, the marks and the solution are
+  // all on screen, and every answer handler early-returns on `resolved`, so the
+  // question can never be logged or scored twice.
+  const [revealed, setRevealed] = useState(!!saved);
   /** The student got there IN THE END — on the first try or a later one. The
    *  rung still scores `firstTryCorrect`, but the screen must not tell someone
    *  who fixed their own mistake that they were wrong: that is the one message
    *  guaranteed to stop them from retrying next time. */
-  const [solved, setSolved] = useState(false);
+  const [solved, setSolved] = useState(saved?.solved ?? false);
   /** A student who solved it can still open the worked solution — on request.
    *  It is not pushed at them, which is what "הסבר מלא רק אחרי כישלון" means. */
   const [showSolution, setShowSolution] = useState(false);
@@ -307,11 +343,12 @@ export function QuestionRunnerCard({
   }
 
   function pickMCQ(origIdx: number) {
-    if (resolved) return;
+    if (resolved || wrongPicks.includes(origIdx)) return;
     const correct = origIdx === q.correct;
     const nextTries = tries + 1;
     setTries(nextTries);
     setSelected(origIdx);
+    if (!correct) setWrongPicks((prev) => (prev.includes(origIdx) ? prev : [...prev, origIdx]));
     if (nextTries === 1) {
       setFirstTryCorrect(correct);
       logFirst(correct, q.answers?.[origIdx], origIdx);
@@ -320,8 +357,13 @@ export function QuestionRunnerCard({
     else gradeWrong();
   }
 
+  // Clears only the ACTIVE selection, so the untried options become clickable
+  // again. The wrong pick itself stays on screen in `wrongPicks`, marked ✗ —
+  // owner, 2026-09-05: "התשובה תישאר ולא תיעלם ושפשוט יסומן וי ירוק או איקס
+  // אדום". It used to be wiped here, so a student who missed lost every trace
+  // of what they had actually answered.
   function retryMCQ() {
-    setSelected(null); // let them pick again (they haven't seen the correct one)
+    setSelected(null);
   }
 
   function submitOpen() {
@@ -415,21 +457,32 @@ export function QuestionRunnerCard({
         <div className="space-y-2">
           {order.map((origIdx, i) => {
             const isCorrect = origIdx === q.correct;
-            const isSelected = selected === origIdx;
+            // Every wrong pick keeps its ✗, not just the current selection —
+            // `selected` is cleared by retryMCQ and cannot carry the history.
+            const isWrongPick = wrongPicks.includes(origIdx);
             let cls = 'bg-slate-900/[0.03] hover:bg-slate-900/5 border-slate-900/10 text-slate-900';
             if (revealed && isCorrect) cls = 'bg-emerald-500/15 border-emerald-500/50 text-emerald-900';
-            else if (isSelected && !isCorrect) cls = 'bg-rose-500/15 border-rose-500/50 text-rose-800';
+            else if (isWrongPick) cls = 'bg-rose-500/15 border-rose-500/50 text-rose-800';
             else if (revealed) cls = 'bg-slate-900/[0.02] border-slate-900/[0.06] text-slate-500';
             return (
               <motion.button
                 key={origIdx}
                 {...buttonTap}
                 onClick={() => pickMCQ(origIdx)}
-                disabled={resolved || selected !== null}
-                className={`w-full text-right px-4 py-3 rounded-xl border transition-colors chat-md text-sm ${cls}`}
+                disabled={resolved || selected !== null || isWrongPick}
+                className={`w-full flex items-center gap-2 text-right px-4 py-3 rounded-xl border transition-colors chat-md text-sm disabled:cursor-default ${cls}`}
               >
-                <span className="font-bold opacity-60 ml-2">{LETTERS[i]}.</span>
-                <MathText inline>{q.answers![origIdx]}</MathText>
+                <span className="font-bold text-slate-500 flex-shrink-0">{LETTERS[i]}.</span>
+                <span className="min-w-0 flex-1">
+                  <MathText inline>{q.answers![origIdx]}</MathText>
+                </span>
+                {/* A GLYPH, not only a colour — the owner asked for a green ✓ or
+                    a red ✗, and it is also the only cue a colour-blind student
+                    gets. */}
+                {revealed && isCorrect && (
+                  <CheckCircle className="w-4 h-4 flex-shrink-0 text-emerald-700" />
+                )}
+                {isWrongPick && <XCircle className="w-4 h-4 flex-shrink-0 text-rose-700" />}
               </motion.button>
             );
           })}
@@ -483,6 +536,40 @@ export function QuestionRunnerCard({
             <CheckCircle className="w-4 h-4" />
             <span>בדוק תשובה</span>
           </motion.button>
+        </div>
+      )}
+
+      {/* The answer they actually gave, kept on screen after the reveal.
+          The input block above is `!revealed`, so it UNMOUNTS the moment the
+          question resolves and the student's own answer disappeared with it —
+          on a revisit there was nothing at all to look at. Owner, 2026-09-05:
+          "אחרי שעונים את התשובה התשובה תישאר ולא תיעלם ושפשוט יסומן וי ירוק או
+          איקס אדום". Read-only: this is a record, not a second attempt. */}
+      {q.kind === 'open' && revealed && typed.trim() && (
+        <div
+          className={`rounded-2xl border px-4 py-3 ${
+            solved
+              ? 'border-emerald-500/40 bg-emerald-500/[0.08]'
+              : 'border-rose-500/30 bg-rose-500/[0.06]'
+          }`}
+        >
+          <div className="text-[10px] font-black tracking-widest text-slate-500 uppercase mb-1">
+            התשובה שלך
+          </div>
+          <div className="flex items-center gap-2">
+            {solved ? (
+              <CheckCircle className="w-4 h-4 flex-shrink-0 text-emerald-700" />
+            ) : (
+              <XCircle className="w-4 h-4 flex-shrink-0 text-rose-700" />
+            )}
+            <div
+              className={`chat-md math-content min-w-0 flex-1 text-sm font-bold ${
+                solved ? 'text-emerald-900' : 'text-rose-900'
+              }`}
+            >
+              <MathText inline>{typed}</MathText>
+            </div>
+          </div>
         </div>
       )}
 
@@ -725,7 +812,16 @@ export function QuestionRunnerCard({
             {(firstTryCorrect !== null) && (
               <motion.button
                 {...buttonTap}
-                onClick={() => onResolved(firstTryCorrect === true)}
+                onClick={() =>
+                  onResolved(firstTryCorrect === true, {
+                    firstTryCorrect: firstTryCorrect === true,
+                    selected,
+                    wrongPicks,
+                    typed,
+                    parts,
+                    solved,
+                  })
+                }
                 className="w-full inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 px-4 py-3 rounded-xl font-black text-white text-sm transition-colors"
               >
                 <span>{position >= total ? 'סיים את הרמה' : 'השאלה הבאה'}</span>
