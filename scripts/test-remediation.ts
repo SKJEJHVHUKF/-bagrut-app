@@ -291,9 +291,20 @@ section('supply');
   assert(new Set(ids).size === ids.length, 'no question appears twice in the supply');
 
   const firstEasyOrigins = supply.filter((s) => s.difficulty === 'easy').map((s) => s.origin);
+  // The tier order within one rung, asserted as ORDER rather than as "which
+  // origin is first". It used to read `firstEasyOrigins[0] === 'subtopic-bank'`,
+  // which passed only while the fixture sub-topic had no generator templates —
+  // authoring templates for אלגברה turned a correct supply into a red gate.
   assert(
-    firstEasyOrigins[0] === 'subtopic-bank',
+    firstEasyOrigins.indexOf('subtopic-bank') < firstEasyOrigins.indexOf('concept-bank'),
     'the sub-topic bank outranks the concept bank at the same difficulty',
+  );
+  // Unseen generated variants come before ANY bank question: a repair that
+  // re-serves the questions the learning path already showed measures whether
+  // the student remembers which option was green.
+  assert(
+    firstEasyOrigins[0] === 'generated',
+    'generated variants outrank both banks at the same difficulty',
   );
 
   const trigger = coarseQuestions[0].id;
