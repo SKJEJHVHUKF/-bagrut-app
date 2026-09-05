@@ -29,23 +29,33 @@ import {
   Sparkles,
   GraduationCap,
 } from 'lucide-react';
-import { allLessonKeys } from '@/content/lessons';
 import { createPlan, type ProficiencyLevel, type UnitLevel } from '@/lib/study-plan';
 import {
-  curriculumIndex,
+  MATH5_CURRICULUM,
   isTopicInActivePaper,
   paperLabel,
   type BagrutPaper,
 } from '@/content/bagrut-curriculum';
 import { BagrutBadge } from '@/components/practice/BagrutBadge';
 
-// All math5 topics, sorted into the canonical bagrut curriculum order
-// (שאלון 581 first, then 582 — see content/bagrut-curriculum.ts).
-// This way the onboarding picker matches the order the student will
-// encounter in their actual exam preparation.
-const ALL_TOPICS = allLessonKeys()
-  .filter((k) => k.subject === 'math5')
-  .sort((a, b) => curriculumIndex(a.topic) - curriculumIndex(b.topic));
+/**
+ * All math5 topics, in the canonical bagrut curriculum order (שאלון 571 first,
+ * then 572 — MATH5_CURRICULUM is literally [...PAPER_571, ...PAPER_572]).
+ *
+ * ⚠️ DERIVED FROM THE CURRICULUM TABLE, NOT FROM content/lessons, and that is a
+ * WEIGHT decision, not a style one. This screen is the first thing a new student
+ * ever sees — the hero CTA sends every visitor without a plan straight here — and
+ * `allLessonKeys` is an import of the whole authored corpus. It was pulling a
+ * 4.57 MB chunk into this route for the sole purpose of listing fifteen Hebrew
+ * strings: measured 6.58 MB first-load here against 2.21 MB for /login on the
+ * same shell (2026-09-05, .next/diagnostics/route-bundle-stats.json).
+ *
+ * The two lists are the same set in the same order — verified, and now asserted
+ * by scripts/verify-tracks.ts so they cannot drift apart silently. The field is
+ * `key`, not `topic`. `curriculumIndex` is no longer needed here because this
+ * array IS the order it used to sort by.
+ */
+const ALL_TOPICS = MATH5_CURRICULUM.map((c) => ({ subject: 'math5', topic: c.key }));
 
 const LEVEL_LABELS: Record<ProficiencyLevel, string> = {
   weak: '🟢 חלש',
@@ -235,6 +245,21 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         <Sparkles className="w-5 h-5" />
         <span>בוא נתחיל</span>
       </button>
+
+      {/* THE WAY OUT.
+          This is a four-step flow with no exit but the logo, and since the hero
+          CTA started sending every plan-less visitor here it became the first
+          screen a curious student meets. A visitor who only wants to look at the
+          learning path must never be held in a form to do it — /roadmap is
+          public by design (CLAUDE.md). The door stays open: /my-plan sends a
+          visitor with no plan straight back here (app/my-plan/page.tsx:68), so
+          skipping postpones the plan rather than losing it. */}
+      <Link
+        href="/roadmap"
+        className="mt-3 block text-center text-sm text-slate-500 hover:text-violet-700 underline underline-offset-4 py-2 min-h-[44px]"
+      >
+        אני רק רוצה להסתכל — קח אותי למסלול
+      </Link>
     </div>
   );
 }

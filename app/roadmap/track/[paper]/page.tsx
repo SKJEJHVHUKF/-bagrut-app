@@ -112,10 +112,16 @@ function Track({ paper }: { paper: BagrutPaper }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, allNodes, levelsBySub, syncTick]);
 
-  const overallDone = ready ? countCompleted(allNodes) : 0;
-  const overallPct = allNodes.length ? Math.round((overallDone / allNodes.length) * 100) : 0;
-  const totalXp = ready ? Object.values(summaries).reduce((s, x) => s + x.xp, 0) : 0;
-  const masteredCount = ready ? Object.values(summaries).filter((x) => x.mastered).length : 0;
+  // null until hydration, NOT 0. Progress lives in localStorage, so the server
+  // render cannot know it — and rendering a confident "0%  ·  0 מתוך 50 שלבים"
+  // to a student who has finished half the track, for the moment before
+  // hydration, reads as lost work rather than as a loading state. The strip
+  // keeps its size either way, so nothing shifts when the real numbers land.
+  const overallDone = ready ? countCompleted(allNodes) : null;
+  const overallPct =
+    overallDone === null || !allNodes.length ? null : Math.round((overallDone / allNodes.length) * 100);
+  const totalXp = ready ? Object.values(summaries).reduce((s, x) => s + x.xp, 0) : null;
+  const masteredCount = ready ? Object.values(summaries).filter((x) => x.mastered).length : null;
 
   // The resume point — only for the "כאן אתה" tile marker now; the list below
   // carries the actual "continue" link.
@@ -190,7 +196,7 @@ function Track({ paper }: { paper: BagrutPaper }) {
         )}
 
         {/* Anonymous students: nudge to sign in so progress isn't device-bound */}
-        {signedIn === false && overallDone > 0 && (
+        {signedIn === false && (overallDone ?? 0) > 0 && (
           <Link
             href={`/signup?next=${encodeURIComponent(`/roadmap/track/${paper}`)}`}
             className="flex items-center gap-2.5 rounded-2xl p-3.5 bg-amber-500/[0.08] border border-amber-500/30 hover:bg-amber-500/[0.12] transition-colors"
@@ -206,8 +212,14 @@ function Track({ paper }: { paper: BagrutPaper }) {
         <div className="surface-premium rounded-2xl p-4 sm:p-5 space-y-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <span className="flex items-baseline gap-2 min-w-0">
-              <span className="font-display text-2xl font-black text-ink tabular-nums">{overallPct}%</span>
-              <span className="text-xs text-slate-600 truncate">{overallDone} מתוך {allNodes.length} שלבים</span>
+              <span className="font-display text-2xl font-black text-ink tabular-nums">
+                {overallPct === null ? '—' : `${overallPct}%`}
+              </span>
+              <span className="text-xs text-slate-600 truncate">
+                {overallDone === null
+                  ? `${allNodes.length} שלבים במסלול`
+                  : `${overallDone} מתוך ${allNodes.length} שלבים`}
+              </span>
             </span>
             {/* NOT shrink-0: a flex item's basis is its max-content width, so with
                 four chips (streak day) the row was 56px wider than a 360px phone
@@ -240,11 +252,11 @@ function Track({ paper }: { paper: BagrutPaper }) {
               )}
               <span className="inline-flex items-center gap-1.5 rounded-full chip-primary px-2.5 py-1 text-[11px] font-bold tabular-nums">
                 <Sparkles aria-hidden="true" className="w-3.5 h-3.5" />
-                {totalXp} XP
+                {totalXp ?? '—'} XP
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-800 px-2.5 py-1 text-[11px] font-bold tabular-nums">
                 <Crown aria-hidden="true" className="w-3.5 h-3.5 text-amber-600" />
-                {masteredCount}/{allNodes.length}
+                {masteredCount ?? '—'}/{allNodes.length}
               </span>
             </span>
           </div>
@@ -253,10 +265,13 @@ function Track({ paper }: { paper: BagrutPaper }) {
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={overallPct}
+            aria-valuenow={overallPct ?? 0}
             aria-label="התקדמות במסלול"
           >
-            <div className="h-full bg-gradient-to-l from-cyan-700 to-violet-600 transition-all duration-500" style={{ width: `${overallPct}%` }} />
+            <div
+              className="h-full bg-gradient-to-l from-cyan-700 to-violet-600 transition-all duration-500"
+              style={{ width: `${overallPct ?? 0}%` }}
+            />
           </div>
           {pacing && pacing.status !== 'no-date' && (
             <div className="flex items-start gap-2 pt-0.5">

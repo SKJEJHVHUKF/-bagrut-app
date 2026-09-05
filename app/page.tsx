@@ -99,6 +99,10 @@ const FAQ_ITEMS = [
 
 export default function Landing() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  // Used by the two buttons on this page that mean "begin" — the featured
+  // roadmap banner and the free-plan card. Deliberately NOT by the navbar link
+  // or the closing CTA; see useStartHref.
+  const startHref = useStartHref();
 
   return (
     <div className="min-h-screen text-slate-800 relative overflow-x-hidden">
@@ -257,7 +261,7 @@ export default function Landing() {
           {/* The one dark moment on the page — the logo's own aesthetic: a
               deep-indigo object with a neon cyan glow. */}
           <Link
-            href="/roadmap"
+            href={startHref}
             className="card-3d-strong group relative block rounded-3xl p-6 sm:p-8 bg-gradient-to-l from-[#241E7A] to-[#1E1B4B] border border-violet-500/25 shadow-xl shadow-indigo-950/25 overflow-hidden"
           >
             <div className="absolute -top-24 -left-16 w-72 h-72 rounded-full bg-cyan-400/15 blur-[90px] pointer-events-none" />
@@ -534,7 +538,7 @@ export default function Landing() {
               ))}
             </ul>
             <Link
-              href="/roadmap"
+              href={startHref}
               className="block w-full text-center bg-slate-900/[0.04] hover:bg-slate-900/5 border border-slate-900/[0.12] px-6 py-3.5 rounded-xl font-bold text-slate-800 transition-all"
             >
               התחל עכשיו - חינם
@@ -794,6 +798,28 @@ function BagruyotStat({ value, label }: { value: number; label: string }) {
  *   button. The onboarding is the only screen that writes those.
  * Renders a stable placeholder on first paint (SSR cannot read localStorage).
  */
+/**
+ * Where a "start" button should send this visitor.
+ *
+ * With a plan: the learning path. Without one: the onboarding, ONCE, because it
+ * is the only screen that sets the exam date, the שאלון and the unit level —
+ * without them pacing, the predicted grade, the adaptive difficulty and the
+ * daily plan all run on defaults for that student.
+ *
+ * ⚠️ Only for buttons that mean "begin". The navbar link and the closing
+ * "לחיצה אחת. בלי רישום" CTA deliberately still go straight to /roadmap:
+ * navigation is not a start, and that CTA's own copy promises one click.
+ * /roadmap is public by design and must stay browsable without a form
+ * (CLAUDE.md), which is also why the onboarding now carries a way out.
+ *
+ * Returns /roadmap until hydration tells us otherwise — the server cannot read
+ * localStorage, and a visitor who clicks before then lands on the safe one.
+ */
+function useStartHref(): string {
+  const planExists = useClientValue<boolean | null>(hasPlan, null);
+  return planExists === false ? '/onboarding' : '/roadmap';
+}
+
 function PrimaryCTA() {
   // null until hydration: the server cannot know whether a plan exists.
   const planExists = useClientValue<boolean | null>(hasPlan, null);

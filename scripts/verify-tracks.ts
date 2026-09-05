@@ -20,7 +20,8 @@
  * Runs in `npm run check` (before verify:a11y). Reads static content only.
  */
 
-import { getSubTopics, hasBagrutBank } from '../content/lessons';
+import { allLessonKeys, getSubTopics, hasBagrutBank } from '../content/lessons';
+import { MATH5_CURRICULUM } from '../content/bagrut-curriculum';
 import { excludedFor, getTrack, TRACK_PAPERS } from '../content/tracks';
 import { resolveRoadmapNode, roadmapTopicOrder } from '../constants/roadmapData';
 import { locateInTrack, trackEntries, trackNodes } from '../lib/track';
@@ -143,6 +144,43 @@ for (const paper of TRACK_PAPERS) {
 
 console.log('─'.repeat(70));
 console.log(`${ladders} ladder tiles · ${soon} coming-soon · ${links} links`);
+
+// ── the onboarding picker's source of truth ────────────────────────────────
+// app/onboarding/page.tsx builds ALL_TOPICS from MATH5_CURRICULUM instead of
+// from content/lessons, so that the first screen a new student sees does not
+// carry the 4.57 MB authored corpus for the sake of fifteen Hebrew strings.
+// That substitution is only correct while the two lists are the same SET, and
+// they are not equivalent by construction: isTopicInActivePaper returns true
+// for a topic with no curriculum entry ("never hide"), so a lesson authored
+// without one used to appear in the picker and would now silently vanish from
+// it — a new topic no student could ever add to their plan, with nothing on
+// screen to show it went missing.
+const lessonTopics = allLessonKeys()
+  .filter((k) => k.subject === 'math5')
+  .map((k) => k.topic);
+const curriculumTopics = MATH5_CURRICULUM.map((c) => c.key);
+for (const t of lessonTopics) {
+  if (!curriculumTopics.includes(t)) {
+    errors.push(
+      `content/lessons has math5 topic "${t}" with no MATH5_CURRICULUM entry — it would disappear from the onboarding picker (app/onboarding ALL_TOPICS). Add it to content/bagrut-curriculum.ts.`,
+    );
+  }
+}
+for (const t of curriculumTopics) {
+  if (!lessonTopics.includes(t)) {
+    errors.push(
+      `MATH5_CURRICULUM lists "${t}" but content/lessons has no such math5 topic — the onboarding picker would offer a topic with no content behind it.`,
+    );
+  }
+}
+console.log(
+  `onboarding picker: ${curriculumTopics.length} curriculum topics · ${lessonTopics.length} authored math5 topics · ${
+    lessonTopics.length === curriculumTopics.length &&
+    lessonTopics.every((t) => curriculumTopics.includes(t))
+      ? 'in step'
+      : 'DRIFTED'
+  }`,
+);
 
 if (warnings.length) {
   console.log(`\n⚠️  ${warnings.length} warning(s):`);
