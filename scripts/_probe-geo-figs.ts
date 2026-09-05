@@ -1,6 +1,6 @@
 import { math5EuclideanGeometry as G } from '../content/lessons/math5/euclidean-geometry';
 import { getBagrutQuestionsForSubTopic } from '../content/lessons';
-const st = G.subTopics.find((s) => s.id === 'eg-angles')!;
+const st = (G.subTopics ?? []).find((s) => s.id === 'eg-angles')!;
 const has = (s?: string) => (s && s.includes('```geo') ? 'FIG ' : '--- ');
 console.log('== lesson steps (teach) ==');
 (st.lesson ?? []).forEach((l, i) => {

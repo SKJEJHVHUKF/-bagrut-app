@@ -3,7 +3,7 @@ import { math5EuclideanGeometry as G } from '../content/lessons/math5/euclidean-
 
 const TOPIC = 'גיאומטריה אוקלידית';
 let spanning = 0, subs = 0;
-for (const st of G.subTopics) {
+for (const st of G.subTopics ?? []) {
   const levels = buildSubTopicLevels('math5', TOPIC, st);
   const drill = levels.filter((l) => ['easy','mid','hard'].includes(l.kind));
   const tplByRung = new Map<string, Set<string>>();

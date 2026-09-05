@@ -4,19 +4,12 @@
 // against the daily 10. Measured THROUGH runTutorChain, not through the
 // matcher: the router runs first and eats phrasings the bank would have caught.
 
-import { runTutorChain, type ChainState } from '../lib/tutor-chain';
+import { runTutorChain, emptyChainState } from '../lib/tutor-chain';
 import { getSubTopic } from '../content/lessons';
 
 const TOPIC = 'גיאומטריה אוקלידית';
-const subTopic = getSubTopic('math5', TOPIC, 'eg-congruence');
+const subTopic = getSubTopic('math5', TOPIC, 'eg-congruence') ?? undefined;
 const question = (subTopic?.questions ?? []).find((q) => q.id === 'eg-sub-cong-004');
-
-const freshState = (): ChainState => ({
-  lastAsk: null,
-  servedKinds: [],
-  pending: null,
-  spoke: false,
-} as ChainState);
 
 const ASKS = [
   'AD משותף לשני המשולשים?',
@@ -38,7 +31,7 @@ const ASKS = [
         question,
         subTopic,
       },
-      state: freshState(),
+      state: emptyChainState(),
     });
     if (r.answered) {
       console.log(`✅ LOCAL  [${r.layer}]  "${message}"`);

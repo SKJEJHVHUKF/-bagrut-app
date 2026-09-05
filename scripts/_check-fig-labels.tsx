@@ -10,7 +10,7 @@ import { math5EuclideanGeometry } from '../content/lessons/math5/euclidean-geome
 
 // Every figure the geometry topic renders next to a question, example or drill.
 const items: [string, string][] = [];
-for (const st of math5EuclideanGeometry.subTopics) {
+for (const st of math5EuclideanGeometry.subTopics ?? []) {
   (st.lesson ?? []).forEach((l, n) => {
     if (l.example) items.push([`${st.id}/step${n}.example`, l.example.problem]);
     if (l.drill) items.push([l.drill.id, l.drill.question]);
