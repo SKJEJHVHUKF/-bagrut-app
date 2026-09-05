@@ -45,6 +45,19 @@ for (const [label, text] of items) {
   const texts = [...svg.matchAll(/<text[^>]*\sx="([-\d.]+)"[^>]*\sy="([-\d.]+)"[^>]*>([^<]*)<\/text>/g)]
     .map((t) => ({ x: +t[1], y: +t[2], s: t[3] }));
 
+  // Self-check the MEASUREMENT, not just the figure (claude-4f's suggestion).
+  // The regex needs `x` before `y` and no nested <tspan>, so a change to how
+  // GeoFigure emits text would make labels unmeasurable — and their collisions
+  // structurally unreportable, i.e. this script would go quiet rather than red.
+  // Asserting the count per figure turns the one-off 320/320 audit into a
+  // guarantee that re-runs forever.
+  const tagCount = (svg.match(/<text[\s>]/g) ?? []).length;
+  if (tagCount !== texts.length) {
+    problems++;
+    console.log(`❌ ${label}: MEASUREMENT GAP — ${tagCount} <text> tags but only ${texts.length} parsed; the regex no longer matches GeoFigure's output`);
+    continue;
+  }
+
   const bad: string[] = [];
   for (let i = 0; i < texts.length; i++)
     for (let j = i + 1; j < texts.length; j++) {
