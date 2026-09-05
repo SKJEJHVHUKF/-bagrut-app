@@ -6,15 +6,17 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { GeoFigure } from '../components/practice/GeoFigure';
 import { parseGeo, GEO_FENCE } from '../lib/geo-figure';
-import { EUCLIDEAN_ANGLE_STAGE } from '../content/lessons/math5/euclidean-angles';
+import { math5EuclideanGeometry } from '../content/lessons/math5/euclidean-geometry';
 
-const st = EUCLIDEAN_ANGLE_STAGE[0];
+// Every figure the geometry topic renders next to a question, example or drill.
 const items: [string, string][] = [];
-(st.lesson ?? []).forEach((l, n) => {
-  if (l.example) items.push([`step${n}.example`, l.example.problem]);
-  if (l.drill) items.push([l.drill.id, l.drill.question]);
-});
-(st.questions ?? []).forEach((q) => items.push([q.id, q.question]));
+for (const st of math5EuclideanGeometry.subTopics) {
+  (st.lesson ?? []).forEach((l, n) => {
+    if (l.example) items.push([`${st.id}/step${n}.example`, l.example.problem]);
+    if (l.drill) items.push([l.drill.id, l.drill.question]);
+  });
+  (st.questions ?? []).forEach((q) => items.push([q.id, q.question]));
+}
 
 /** Minimum centre-to-centre gap, in SVG user units, for two labels to be readable. */
 const MIN_GAP = 13;
@@ -22,7 +24,7 @@ const MIN_GAP = 13;
 let problems = 0;
 for (const [label, text] of items) {
   const m = [...text.matchAll(GEO_FENCE)][0];
-  if (!m) { console.log(`❌ ${label}: no figure`); problems++; continue; }
+  if (!m) { console.log(`·  ${label}: no figure`); continue; }
   const svg = renderToStaticMarkup(React.createElement(GeoFigure, { spec: parseGeo(m[1]) }));
 
   const vb = svg.match(/viewBox="([-\d.]+) ([-\d.]+) ([-\d.]+) ([-\d.]+)"/);
