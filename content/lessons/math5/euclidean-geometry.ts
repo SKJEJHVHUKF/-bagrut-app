@@ -1516,7 +1516,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
             // appears only once the solution is opened leaves the student reading
             // about a point (D) that nothing on screen shows. Owner, 2026-08-30.
             problem:
-              'במשולש שווה-שוקיים $\\triangle ABC$ ($AB = AC$), הקטע $AD$ חוצה את $\\angle A$ ($D$ על $BC$). הסבר מדוע $\\triangle ABD \\cong \\triangle ACD$ לפי צ.ז.צ.\n\n```geo\n{"points":{"A":[4,6],"B":[0,0],"C":[8,0],"D":[4,0]},"polygons":["ABC"],"segments":["AD"],"ticks":[{"on":"AB","n":1},{"on":"AC","n":1}],"angles":[{"at":"A","from":"B","to":"D","n":1},{"at":"A","from":"D","to":"C","n":1}],"width":240}\n```',
+              'במשולש שווה-שוקיים $\\triangle ABC$ ($AB = AC$), הקטע $AD$ חוצה את $\\angle A$ ($D$ על $BC$). הסבר מדוע $\\triangle ABD \\cong \\triangle ACD$ לפי צ.ז.צ.',
             steps: [
               '**הכלל:** משפט צ.ז.צ: אם בשני משולשים שתי צלעות והזווית הכלואה ביניהן שוות בהתאמה, המשולשים חופפים. נתון $AB = AC$, הקטע $AD$ חוצה את הזווית $\\angle A$ ולכן נותן זוג זוויות שוות, והזווית הזו כלואה בין השוק לבין הצלע המשותפת $AD$.',
               'נסרטט לפי הנתונים:\n\n```geo\n{"points":{"A":[4,6],"B":[0,0],"C":[8,0],"D":[4,0]},"polygons":[{"s":"ABD","accent":true},{"s":"ACD","accent":true}],"ticks":[{"on":"AB","n":1},{"on":"AC","n":1}],"angles":[{"at":"A","from":"B","to":"D","n":1},{"at":"A","from":"D","to":"C","n":1}]}\n```',

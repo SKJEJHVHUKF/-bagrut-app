@@ -8,14 +8,28 @@ import { GeoFigure } from '../components/practice/GeoFigure';
 import { parseGeo, GEO_FENCE } from '../lib/geo-figure';
 import { math5EuclideanGeometry } from '../content/lessons/math5/euclidean-geometry';
 
-// Every figure the geometry topic renders next to a question, example or drill.
+// EVERY string in the topic that can hold a figure. The first version of this
+// script looked only at question / drill / example.problem text, which silently
+// skipped `teach` and every `solution.steps` — i.e. most of the figures in the
+// lessons, and all of the ones in worked solutions.
 const items: [string, string][] = [];
+const add = (label: string, text?: string) => {
+  if (text?.includes('```geo')) items.push([label, text]);
+};
 for (const st of math5EuclideanGeometry.subTopics ?? []) {
   (st.lesson ?? []).forEach((l, n) => {
-    if (l.example) items.push([`${st.id}/step${n}.example`, l.example.problem]);
-    if (l.drill) items.push([l.drill.id, l.drill.question]);
+    add(`${st.id}/step${n}.teach`, l.teach);
+    add(`${st.id}/step${n}.example.problem`, l.example?.problem);
+    (l.example?.steps ?? []).forEach((s: string, i: number) => add(`${st.id}/step${n}.example.steps[${i}]`, s));
+    if (l.drill) {
+      add(l.drill.id, l.drill.question);
+      (l.drill.solution?.steps ?? []).forEach((s: string, i: number) => add(`${l.drill!.id}.steps[${i}]`, s));
+    }
   });
-  (st.questions ?? []).forEach((q) => items.push([q.id, q.question]));
+  (st.questions ?? []).forEach((q) => {
+    add(q.id, q.question);
+    (q.solution?.steps ?? []).forEach((s: string, i: number) => add(`${q.id}.steps[${i}]`, s));
+  });
 }
 
 /** Minimum centre-to-centre gap, in SVG user units, for two labels to be readable. */

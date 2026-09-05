@@ -114,6 +114,24 @@ function checkString(file: string, path: string, key: string, value: string) {
   // question it illustrates.
   if (value.includes('```geo')) for (const e of checkGeoFences(value)) add('geo-figure', 'error', file, path, e);
 
+  // A figure in an INLINE-rendered field never becomes a figure.
+  // MathText splits ```geo fences only when `inline` is false (MathText.tsx:145);
+  // WorkedExampleCard renders `example.problem` with <MathText inline>, so a fence
+  // there falls through to react-markdown and ships as a raw JSON code block.
+  // Shipped that way twice — once here before 2026-09-05 and four more times by me
+  // that day — because it is invisible to every other gate and to typecheck.
+  // The figure belongs in `example.steps` (after the rule line), which is block-rendered.
+  // WARNING, not error, ON PURPOSE: 10 trigonometry examples already ship this
+  // way (20 findings — the two stage files are spread into trigonometry.ts, so
+  // each is counted twice). Promote to 'error' once those are moved into their
+  // `steps`; a gate that fails on every run gets bypassed within a day, which is
+  // the same reasoning as PROMOTED_TO_ERROR in verify-concept.ts. Geometry is
+  // clean as of 2026-09-05.
+  if (key === 'problem' && value.includes('```geo')) {
+    add('figure-in-inline-field', 'warn', file, path,
+      'a ```geo fence in `example.problem` renders as raw JSON — WorkedExampleCard uses <MathText inline>, and it line-clamps the problem while collapsed. Move it into example.steps, e.g. "נסרטט לפי הנתונים:\\n\\n```geo…".');
+  }
+
   for (const span of mathSpans(value)) {
     if (HEB.test(span)) add('hebrew-in-math', 'error', file, path, span);
   }
