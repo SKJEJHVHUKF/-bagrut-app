@@ -52,9 +52,14 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
   checkSet('102 f\' = 0 ⇔ x^2 = 16', [E('sqrt(16)'), -E('sqrt(16)')], [4, -4]);
   check('102 candidate -4 is outside x > 0', sgn(-E('sqrt(16)')), -1);
   check('102 height from the ORIGINAL function f(4)', f(F)(4), 11);
-  const fpp = math.derivative('1 - 16/x^2', 'x');
-  check('102 f\'\'(4) > 0 → minimum', sgn(fpp.evaluate({ x: 4 })), 1);
-  dcheck('102 f\'\' = 32/x^3 as the step says', '1 - 16/x^2', '32/x^3', [0.5, 1, 4, -1, -3]);
+  // classification by the SIGN TABLE of f', not by f''
+  dcheck('102 f\' on a common denominator is (x^2-16)/x^2', F, '(x^2 - 16)/x^2', [0.5, 1, 2, 4, -1, -2.5]);
+  const fp102 = f('(x^2 - 16)/x^2');
+  check('102 table col x < -4: f\' > 0', sgn(fp102(-5)), 1);
+  check('102 table col -4 < x < 0: f\' < 0', sgn(fp102(-2)), -1);
+  check('102 table col 0 < x < 4: f\' < 0', sgn(fp102(2)), -1);
+  check('102 table col x > 4: f\' > 0', sgn(fp102(5)), 1);
+  check('102 sign flips - → + at 4, so (4, 11) is a MINIMUM', sgn(fp102(5)) - sgn(fp102(2)), 2);
   // d1 (4, 0): height read off the derivative → f'(4)
   check('102 d1 f\'(4) = 0', f('1 - 16/x^2')(4), 0);
   // d2 (4, 8): 3x term dropped → (16 + 16)/4
@@ -62,7 +67,7 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
   check('102 d2 note: 16 + 12 + 16 = 44', E('16 + 12 + 16'), 44);
   // d3 (-4, -5): the left-branch maximum
   check('102 d3 f(-4)', f(F)(-4), -5);
-  check('102 d3 f\'\'(-4) < 0 → maximum', sgn(fpp.evaluate({ x: -4 })), -1);
+  check('102 d3 sign flips + → - at -4, so (-4, -5) is the left-branch MAXIMUM', sgn(fp102(-5)) - sgn(fp102(-2)), 2);
 }
 
 // rq-sub-bg-103 — f = (x-6)/(x^2-9): y-intercept height 2/3 (0 in domain, double negative)
@@ -194,13 +199,20 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
 // rq-sub-bg-110 — f = (x^2-4x+36)/x: minimum (6, 8) on x > 0; lowest value 8 > 0 → graph above axis
 {
   const F = '(x^2 - 4x + 36)/x';
-  dcheck('110 simplified form x - 4 + 36/x', F, math.derivative('x - 4 + 36/x', 'x').toString(), [0.5, 1, 3, 6, -1]);
-  dcheck('110 f\' = 1 - 36/x^2', F, '1 - 36/x^2', [0.5, 1, 2, 3, 6, -1]);
+  // the quotient-rule route: (u'v - uv')/v^2 with u = x^2-4x+36, v = x, expanded and collected
+  dcheck('110 quotient rule, unexpanded', F, '((2x - 4)*x - (x^2 - 4x + 36)*1)/x^2', [0.5, 1, 3, 6, -1]);
+  dcheck('110 numerator collects to x^2 - 36', F, '(x^2 - 36)/x^2', [0.5, 1, 2, 3, 6, -1]);
+  dcheck('110 factored numerator (x-6)(x+6) is the same', F, '((x - 6)*(x + 6))/x^2', [0.5, 2, 6, -1, -7]);
   checkSet('110 f\' = 0 ⇔ x^2 = 36', [E('sqrt(36)'), -E('sqrt(36)')], [6, -6]);
   check('110 candidate -6 outside x > 0', sgn(-E('sqrt(36)')), -1);
   check('110 f(6) = 8', f(F)(6), 8);
-  dcheck('110 f\'\' = 72/x^3', '1 - 36/x^2', '72/x^3', [0.5, 1, 6, -1, -2]);
-  check('110 f\'\'(6) > 0 → minimum', sgn(f('72/x^3')(6)), 1);
+  // classification by the SIGN TABLE of f', not by f'': every column of the table
+  const fp = f('(x^2 - 36)/x^2');
+  check('110 table col x < -6: f\' > 0', sgn(fp(-7)), 1);
+  check('110 table col -6 < x < 0: f\' < 0', sgn(fp(-3)), -1);
+  check('110 table col 0 < x < 6: f\' < 0', sgn(fp(3)), -1);
+  check('110 table col x > 6: f\' > 0', sgn(fp(7)), 1);
+  check('110 sign flips - → + at 6, so (6, 8) is a MINIMUM', sgn(fp(7)) - sgn(fp(3)), 2);
   check('110 נמק: minimum of f on x > 0 grid is 8', gridMin(F, 0.05, 100), 8, 1e-4);
   check('110 נמק: f never changes sign on x > 0', signChanges(F, 0.01, 200), 0);
   check('110 numerator discriminant negative (consistent)', E('(-4)^2 - 4*1*36'), -128);
