@@ -20,13 +20,19 @@
 // Ids: `pr-x-<stage>-1NN`, distinct from every existing scheme in the topic.
 // Same house rules as the stage files; the gate enforces them per file.
 
-import type { PracticeQuestion } from '../../types';
-import { EXTRA as BASICS } from './basics';
-import { EXTRA as TREE } from './tree';
-import { EXTRA as TABLES } from './tables';
-import { EXTRA as BERNOULLI } from './bernoulli';
-import { EXTRA as CONDITIONAL } from './conditional';
-import { EXTRA as PRACTICE } from './practice';
+import type { PracticeQuestion, StaticBagrutQuestion } from '../../types';
+import { EXTRA as BASICS, EXTRA_BAGRUT as BASICS_BAG } from './basics';
+import { EXTRA as TREE, EXTRA_BAGRUT as TREE_BAG } from './tree';
+import { EXTRA as TABLES, EXTRA_BAGRUT as TABLES_BAG } from './tables';
+import { EXTRA as BERNOULLI, EXTRA_BAGRUT as BERNOULLI_BAG } from './bernoulli';
+import { EXTRA as CONDITIONAL, EXTRA_BAGRUT as CONDITIONAL_BAG } from './conditional';
+import { EXTRA as PRACTICE, EXTRA_BAGRUT as PRACTICE_BAG } from './practice';
+
+/** Extra multi-part bagrut questions, one file per stage so parallel authors
+ *  never share a file; `subTopicId` on each is what makes it a stage's 🎓 rung. */
+export const PROB_EXTRA_BAGRUT: StaticBagrutQuestion[] = [
+  ...BASICS_BAG, ...TREE_BAG, ...TABLES_BAG, ...BERNOULLI_BAG, ...CONDITIONAL_BAG, ...PRACTICE_BAG,
+];
 
 /** Stage sub-topic id → the questions appended to that stage. */
 export const PROB_EXTRA: Record<string, PracticeQuestion[]> = {

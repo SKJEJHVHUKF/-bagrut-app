@@ -38,14 +38,34 @@
  * numbers; a human reads for interest.
  */
 import { getSubTopic } from '../content/lessons';
-import { PROB_EXTRA } from '../content/lessons/math5/prob-extra';
+import { PROB_EXTRA, PROB_EXTRA_BAGRUT } from '../content/lessons/math5/prob-extra';
 import type { PracticeQuestion, SubTopic } from '../content/lessons/types';
 import { checkAnswer, checkAnswerParts, matchKnownMistake } from '../lib/answer-check';
 import { leaksAnswer } from '../lib/help-ladder';
 import { ALL_PAST_BAGRUYOT } from '../content/past-bagruyot';
+import { checkProbTreeFences, checkProbTables, hasProbTree, hasTable, pickedTotal, numeric } from '../lib/prob-figure';
 
 const TOPIC = 'הסתברות';
 const BASELINE = process.argv.includes('--baseline');
+/** Figure rules error on SHIPPED questions too (the figures round), not only on extras. */
+const STRICT_FIGURES = process.argv.includes('--strict-figures');
+
+/**
+ * ROUND 2 (2026-09-06, owner): "עוד שאלות לרמות ביסוס, אתגר ובגרות — שבאמת יהיו
+ * בעלייה הדרגתית … ולא משהו קליל". A round-2 question (id …-2NN) must score at
+ * least what its rung ALREADY averaged when round 1 closed — the numbers below
+ * are that snapshot. Adding a question under its rung's mean is adding
+ * something light, however it is labelled.
+ */
+const ROUND2_FLOOR: Record<string, { mid: number; hard: number }> = {
+  'pr-basics': { mid: 11.4, hard: 18.3 },
+  'pr-tree': { mid: 12.4, hard: 18.5 },
+  'pr-tables': { mid: 13.9, hard: 19.6 },
+  'pr-bernoulli': { mid: 14.8, hard: 18.2 },
+  'pr-conditional': { mid: 12.7, hard: 15.6 },
+  'pr-practice': { mid: 14.9, hard: 19.2 },
+};
+const ROUND2_MIN = { mid: 4, hard: 4 };
 
 /** Stage → id prefix, minimum EXTRA questions per rung, and minimum distinct
  *  ask-shapes the stage's whole rung set must show. */
@@ -220,7 +240,7 @@ function checkText(where: string, value: string) {
 
 function checkQuestion(q: PracticeQuestion, prefix: string) {
   const w = q.id || '(no id)';
-  if (!new RegExp(`^${prefix}1\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN`);
+  if (!new RegExp(`^${prefix}[12]\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN (round 1) or ${prefix}2NN (round 2)`);
   checkText(`${w}.question`, q.question ?? '');
   if (!q.hint?.trim()) err(w, 'missing-hint'); else checkText(`${w}.hint`, q.hint);
   (q.answers ?? []).forEach((a, i) => checkText(`${w}.answers[${i}]`, a));
@@ -280,6 +300,102 @@ function checkQuestion(q: PracticeQuestion, prefix: string) {
   }
 }
 
+/**
+ * FIGURES (2026-09-06, owner): "איפה שצריך ציורים של העץ או הטבלה אז יהיה אותם".
+ * A solution that builds a tree must draw it (```probtree, rendered by
+ * components/practice/ProbTree); one that fills a table must draw it (a
+ * markdown table, the answer cell ringed with ((…))). And a drawn figure must
+ * agree with itself and with the answer — lib/prob-figure checks that.
+ * Applies to every question on the rung, shipped ones included; a shipped
+ * question without its figure is a warning until --strict-figures.
+ */
+function checkFigures(q: PracticeQuestion, stageId: string, shipped: boolean) {
+  const text = (q.solution?.steps ?? []).join('\n');
+  const sev: Sev = shipped && !STRICT_FIGURES ? 'warn' : 'error';
+  const push = (rule: string, detail: string) => findings.push({ sev, where: q.id, rule, detail });
+  if (stageId !== 'pr-basics' && /עץ/.test(text) && !hasProbTree(text)) {
+    push('tree-without-figure', 'the solution builds a tree — draw it with a ```probtree fence in the step that builds it');
+  }
+  if (/טבלה/.test(text) && !hasTable(text)) {
+    push('table-without-figure', 'the solution fills a table — draw it as a markdown table and ring the answer cell with ((…))');
+  }
+  for (const e of checkProbTreeFences(text)) err(q.id, 'probtree-inconsistent', e);
+  for (const e of checkProbTables(text)) err(q.id, 'table-inconsistent', e);
+  const picked = pickedTotal(text);
+  const spec = q.expected as { kind: string; value?: string } | undefined;
+  if (picked !== null && spec?.kind === 'value') {
+    const v = numeric(spec.value);
+    // A WARNING, not an error: in a conditional the ✓ paths are the DENOMINATOR
+    // (prob-px-003 picks 0.5 = P(walked), answer 0.05/0.5), and in a complement
+    // they are the event being subtracted (prob-sub-basics-005 picks 0.08,
+    // answer 0.92). Both are correct drawings. Only a plain "sum the ✓ paths"
+    // question should match, so the author reads this line and decides.
+    if (v !== null && Math.abs(v - picked) > 1e-3 && Math.abs(1 - picked - v) > 1e-3) {
+      warn(q.id, 'tree-picks-not-the-answer', `the ✓ leaves sum to ${picked.toFixed(4)}, expected is ${spec.value} — fine for a conditional's denominator, otherwise check the picks`);
+    }
+  }
+}
+
+/**
+ * BAGRUT RUNG (2026-09-06, owner): more multi-part questions, exam-shaped. A
+ * real שאלון 571 question has 4–5 parts, opens on a recovered parameter or
+ * turns backwards with "ידוע ש…", and its hardest part sits at the exam bar.
+ */
+function checkBagrut(stageId: string, prefix: string) {
+  const abbr = prefix.replace('pr-x-', '').replace(/-$/, '');
+  const mine = PROB_EXTRA_BAGRUT.filter((b) => b.subTopicId === stageId);
+  if (!mine.length) { err(stageId, 'bagrut-below-minimum', 'no EXTRA_BAGRUT question for this stage'); return; }
+  const LABELS = ['א', 'ב', 'ג', 'ד', 'ה'];
+  for (const b of mine) {
+    const w = b.id;
+    if (!new RegExp(`^prob-bag-x-${abbr}-\\d{2}$`).test(w)) err(w, 'bad-bagrut-id', `expected prob-bag-x-${abbr}-NN`);
+    if (!b.context?.trim()) err(w, 'bagrut-no-context'); else checkText(`${w}.context`, b.context);
+    const parts = b.parts ?? [];
+    if (parts.length < 4 || parts.length > 5) err(w, 'bagrut-parts-count', `${parts.length} (a real 571 question has 4–5)`);
+    const scores: number[] = [];
+    let anyParam = false, anyReverse = false;
+    parts.forEach((p, i) => {
+      const pw = `${w}/${p.label}`;
+      if (p.label !== LABELS[i]) err(pw, 'bagrut-part-label', `expected ${LABELS[i]}`);
+      checkText(`${pw}.prompt`, p.prompt ?? '');
+      if ((p.hints ?? []).length !== 3) err(pw, 'bagrut-hints-count', `${(p.hints ?? []).length} (exactly 3, gentle → almost-the-answer)`);
+      (p.hints ?? []).forEach((h, j) => checkText(`${pw}.hints[${j}]`, h));
+      const steps = p.solution?.steps ?? [];
+      steps.forEach((s, j) => checkText(`${pw}.steps[${j}]`, s));
+      if (steps.length < 3) err(pw, 'bagrut-too-few-steps', `${steps.length}`);
+      if (steps.length > 12) warn(pw, 'long-part', `${steps.length} steps`);
+      if (!steps[0]?.startsWith(RULE)) err(pw, 'no-rule-line');
+      const fa = p.solution?.final_answer ?? '';
+      checkText(`${pw}.final_answer`, fa);
+      if (steps[0] && leaksAnswer(steps[0], fa)) err(pw, 'rule-line-leaks-answer');
+      for (const h of p.hints ?? []) if (leaksAnswer(h, fa)) err(pw, 'hint-leaks-answer');
+      if (/^\s*\$?[\d.,/\\]+\$?\s*$/.test(fa)) err(pw, 'bare-number-answer', 'name the event: P(תיאור) $= ערך$');
+      if (/\$P\(\$/.test(fa)) err(pw, 'split-island-P');
+      const spec = p.expected as { kind: string; value?: string; values?: string[] } | undefined;
+      if (!spec) err(pw, 'missing-expected');
+      else if (spec.kind === 'value' || spec.kind === 'set') {
+        const input = spec.kind === 'value' ? (spec.value ?? '') : (spec.values ?? []).join(' , ');
+        const res = p.answerLabels?.length ? checkAnswerParts(spec.values ?? [], p.expected as never) : checkAnswer(input, p.expected as never);
+        if (res.verdict !== 'correct') err(pw, 'expected-does-not-grade', `verdict=${res.verdict}`);
+        if (p.answerLabels && spec.kind === 'set' && p.answerLabels.length !== (spec.values ?? []).length) err(pw, 'answerLabels-length');
+      }
+      const text = steps.join('\n');
+      if (/עץ/.test(text) && !hasProbTree(text)) err(pw, 'tree-without-figure', 'draw the tree with a ```probtree fence');
+      if (/טבלה/.test(text) && !hasTable(text)) err(pw, 'table-without-figure', 'draw the table as a markdown table');
+      for (const e of checkProbTreeFences(text)) err(pw, 'probtree-inconsistent', e);
+      for (const e of checkProbTables(text)) err(pw, 'table-inconsistent', e);
+      const pseudo = { id: pw, difficulty: 'hard', kind: 'open', question: `${b.context} ${p.prompt}`, solution: { steps, finalAnswer: '', explanation: '' } } as PracticeQuestion;
+      scores.push(difficulty(pseudo).score);
+      if (hasParameter({ question: p.prompt } as PracticeQuestion) || askShape({ question: p.prompt } as PracticeQuestion) === 'find-parameter') anyParam = true;
+      if (isReverse({ question: p.prompt } as PracticeQuestion)) anyReverse = true;
+    });
+    const max = scores.length ? Math.max(...scores) : 0;
+    if (max < BAR.score * 0.9) err(w, 'bagrut-below-exam-bar', `hardest part ${max.toFixed(1)} vs the real 571 bar ${BAR.score.toFixed(1)}`);
+    if (!anyParam && !anyReverse) err(w, 'bagrut-no-parameter-or-reverse', 'a real 571 question opens on "מצאו את P/x" or turns backwards with "ידוע ש…"');
+    console.log(`   🎓 ${w}: ${parts.length} parts · part scores ${scores.map((s) => s.toFixed(0)).join('/')} · hardest ${max.toFixed(1)} = ${((max / (BAR.score || 1)) * 100).toFixed(0)}% of the exam bar`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 function checkStage(stageId: string): boolean {
   const cfg = STAGES[stageId];
@@ -295,6 +411,36 @@ function checkStage(stageId: string): boolean {
   if (!BASELINE) {
     for (const q of extra) if (!(st.questions ?? []).some((x) => x.id === q.id)) err(q.id, 'not-reaching-ladder');
     for (const q of extra) checkQuestion(q, cfg.prefix);
+
+    // ---- figures, on the whole rung the student sees ----
+    for (const q of all) checkFigures(q, stageId, !extraIds.has(q.id));
+
+    // ---- round 2: mid/hard only, and harder than the rung already was ----
+    const round2 = extra.filter((q) => /-2\d\d$/.test(q.id));
+    if (round2.length) {
+      const floor = ROUND2_FLOOR[stageId];
+      const older = extra.filter((q) => !/-2\d\d$/.test(q.id)).concat(existing);
+      const lowerSigsR1 = new Map<string, string>();
+      for (const q of older) if (q.difficulty !== 'hard') lowerSigsR1.set(signature(q), q.id);
+      for (const q of round2) {
+        if (q.difficulty === 'easy') { err(q.id, 'round2-easy', 'this round adds ביסוס/אתגר/בגרות only'); continue; }
+        const s = difficulty(q).score;
+        const f = floor[q.difficulty];
+        if (s < f) err(q.id, 'round2-not-harder', `scores ${s.toFixed(1)}, but the ${q.difficulty} rung already averaged ${f} — "לא משהו קליל"`);
+        if (q.difficulty === 'mid') {
+          const twin = lowerSigsR1.get(signature(q));
+          if (twin) err(q.id, 'round2-mid-restatement', `same ask + mechanisms as ${twin}`);
+        }
+      }
+      for (const d of ['mid', 'hard'] as const) {
+        const n = round2.filter((q) => q.difficulty === d).length;
+        if (n < ROUND2_MIN[d]) err(stageId, 'round2-below-minimum', `${d}: ${n} < ${ROUND2_MIN[d]}`);
+      }
+    }
+
+    // ---- the bagrut rung ----
+    checkBagrut(stageId, cfg.prefix);
+
     for (const d of ['easy', 'mid', 'hard'] as const) {
       const n = extra.filter((q) => q.difficulty === d).length;
       if (n < cfg.min[d]) err(stageId, 'below-minimum', `${d}: ${n} < ${cfg.min[d]}`);

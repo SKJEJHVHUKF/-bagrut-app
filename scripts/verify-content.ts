@@ -18,6 +18,7 @@ import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import { pathToFileURL } from 'url';
 import { checkGeoFences } from '../lib/geo-figure';
+import { checkProbTreeFences, checkProbTables } from '../lib/prob-figure';
 
 const STRICT = process.argv.includes('--strict');
 const HEB = /[֐-׿]/;
@@ -113,6 +114,12 @@ function checkString(file: string, path: string, key: string, value: string) {
   // checked against its own coordinates, so a figure can never contradict the
   // question it illustrates.
   if (value.includes('```geo')) for (const e of checkGeoFences(value)) add('geo-figure', 'error', file, path, e);
+  // A ```probtree fence is a model too: sibling branches must sum to 1 and a
+  // leaf's number must be the product along its path, else the drawing
+  // contradicts the steps beside it. Markdown probability tables: a total
+  // cell must equal the sum of its row/column.
+  if (value.includes('```probtree')) for (const e of checkProbTreeFences(value)) add('prob-figure', 'error', file, path, e);
+  if (/^\s*\|.*\|\s*$/m.test(value)) for (const e of checkProbTables(value)) add('prob-figure', 'error', file, path, e);
 
   // A figure in an INLINE-rendered field never becomes a figure.
   // MathText splits ```geo fences only when `inline` is false (MathText.tsx:145);

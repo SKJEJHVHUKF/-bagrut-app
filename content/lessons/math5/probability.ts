@@ -1,7 +1,7 @@
 import type { Lesson } from '../types';
 import { PROBABILITY_BAGRUT_A, PROBABILITY_STAGES_A } from './probability-stages-a';
 import { PROBABILITY_BAGRUT_B, PROBABILITY_STAGES_B } from './probability-stages-b';
-import { withProbExtra } from './prob-extra';
+import { withProbExtra, PROB_EXTRA_BAGRUT } from './prob-extra';
 
 export const math5Probability: Lesson = {
   subject: 'math5',
@@ -619,6 +619,7 @@ $$P(k) = \\binom{n}{k}\\, p^k\\, (1-p)^{n-k}, \\quad k = 0, 1, \\ldots, n$$
     // One or two bagrut questions per stage of the הסתברות track (prob-bag-004 … 009).
     ...PROBABILITY_BAGRUT_A,
     ...PROBABILITY_BAGRUT_B,
+    ...PROB_EXTRA_BAGRUT,
   ],
 
   subTopics: [
