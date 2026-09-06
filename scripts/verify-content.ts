@@ -99,6 +99,16 @@ const dollarCount = (s: string) => (s.replace(/\\+\$/g, '¤').match(/\$/g) ?? []
 const proseOnly = (s: string) =>
   s.replace(/\\+\$/g, '¤').replace(/\$\$[\s\S]*?\$\$/g, '').replace(/\$[^$\n]+?\$/g, '');
 
+/** Figures that are wrong ON PURPOSE — a find-the-error question prints the
+ *  student's table so the reader can spot the two bad cells. The corrected
+ *  figure in the same solution IS validated, so the answer stays covered. */
+const FIGURE_AS_WRITTEN: { needle: string; why: string }[] = [
+  {
+    needle: 'בטבלה שכתב יש בדיוק שתי משבצות שגויות',
+    why: 'find-the-error question: the student\'s table is faulty by design; the corrected table in its solution is checked',
+  },
+];
+
 function checkString(file: string, path: string, key: string, value: string) {
   if (!value.trim()) return;
 
@@ -118,12 +128,18 @@ function checkString(file: string, path: string, key: string, value: string) {
   // leaf's number must be the product along its path, else the drawing
   // contradicts the steps beside it. Markdown probability tables: a total
   // cell must equal the sum of its row/column.
-  // …but only where the figure is PRESENTED AS CORRECT. A question statement may
-  // show a faulty table on purpose ("בטבלה שכתב יש שתי משבצות שגויות") or leave a
-  // cell for the student to fill, so statements and hints are not checked.
-  const asserted = !/\.(question|prompt|hint|hints\[\d+\])$/.test(path);
-  if (asserted && value.includes('```probtree')) for (const e of checkProbTreeFences(value)) add('prob-figure', 'error', file, path, e);
-  if (asserted && /^\s*\|.*\|\s*$/m.test(value)) for (const e of checkProbTables(value)) add('prob-figure', 'error', file, path, e);
+  // …with ONE narrow exception, declared here rather than by field class: a
+  // find-the-error question shows the student's faulty figure on purpose. Keyed
+  // by a phrase from the question itself, so rewording it (or authoring a new
+  // faulty figure nobody meant) fails the gate instead of inheriting the pass,
+  // and the skip is printed rather than silent.
+  const asWritten = FIGURE_AS_WRITTEN.find((x) => value.includes(x.needle));
+  if (asWritten) {
+    add('prob-figure-as-written', 'warn', file, path, `figure not validated — ${asWritten.why}`);
+  } else {
+    if (value.includes('```probtree')) for (const e of checkProbTreeFences(value)) add('prob-figure', 'error', file, path, e);
+    if (/^\s*\|.*\|\s*$/m.test(value)) for (const e of checkProbTables(value)) add('prob-figure', 'error', file, path, e);
+  }
 
   // A figure in an INLINE-rendered field never becomes a figure.
   // MathText splits ```geo fences only when `inline` is false (MathText.tsx:145);
