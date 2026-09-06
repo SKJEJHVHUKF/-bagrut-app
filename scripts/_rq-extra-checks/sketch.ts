@@ -310,4 +310,64 @@ const sgn = (v: number) => (v > 0 ? 1 : v < 0 ? -1 : 0);
   check('202 wrong (8,2) = only the root substituted, without the factor x', f('sqrt(12-x)')(8), 2);
 }
 
+// ---------------------------------------------------------------------------
+// 2026-09-06, exam-style round — sk-103/104/106/112 kept their mathematics and
+// changed their ASK, so what is re-derived here is what the NEW ask returns:
+// the two asymptote equations, the range of a branch, the missing point AND the
+// intercept. Every `got` is computed from the question's own function.
+// ---------------------------------------------------------------------------
+
+// rq-sub-sk-103 — 5/(x-4): the two asymptotes, then the signs the sketch needs
+{
+  const fx = '5/(x-4)';
+  checkSet('103 ask a: the vertical asymptote is exactly x = 4', vAsyms('5', 'x-4'), [4]);
+  check('103 ask a: the numerator does not vanish there, so it is an asymptote and not a hole', f('5')(4), 5);
+  check('103 ask b: the horizontal asymptote is y = 0', HA(fx), 0, 1e-4);
+  check('103 ask b: far out the value is already tiny', Math.abs(f(fx)(1e6)) < 1e-5 ? 1 : 0, 1);
+  check('103 sketch: left of 4 the branch runs down', sgn(f(fx)(3.999)), -1);
+  check('103 sketch: right of 4 it runs up', sgn(f(fx)(4.001)), 1);
+  check('103 sketch: the y-intercept is -1.25', f(fx)(0), -1.25, 1e-9);
+  check('103 wrong "-4": the denominator at -4 is -8, not zero', f('x-4')(-4), -8);
+  check('103 wrong "y = 5": the numerator is not the asymptote height', Math.abs(HA(fx) - 5) > 4 ? 1 : 0, 1);
+  check('103 wrong "0, 4": swapping them would need f to blow up at 0', Number.isFinite(f(fx)(0)) ? 1 : 0, 1);
+}
+
+// rq-sub-sk-104 — "סקיצה אפשרית": HA y = 2 with the computed point (0,-3) below it
+{
+  const m1 = '2-5/(x^2+1)', m2 = '2-5/(x^4+1)';
+  check('104 model 1 has HA y = 2', HA(m1), 2, 1e-4);
+  check('104 model 1 passes through (0,-3)', f(m1)(0), -3);
+  check('104 the computed point sits BELOW the asymptote', sgn(f(m1)(0) - 2), -1);
+  check('104 model 2 has the same two findings — HA', HA(m2), 2, 1e-4);
+  check('104 model 2 passes through (0,-3) as well', f(m2)(0), -3);
+  check('104 so the sketch is not unique: the two models differ at x = 2', Math.abs(f(m1)(2) - f(m2)(2)) > 0.5 ? 1 : 0, 1);
+  check('104 both climb back toward 2 on the right', sgn(2 - f(m1)(50)), 1);
+  check('104 a horizontal asymptote is no floor: the graph is below it at 0 and near it far out', f(m1)(0) < 2 && Math.abs(f(m1)(1e4) - 2) < 1e-6 ? 1 : 0, 1);
+}
+
+// rq-sub-sk-106 — VA 2, HA 1, rising: the LEFT branch takes exactly the values y > 1
+{
+  const fx = '1-1/(x-2)';
+  check('106 range: every value on the left branch exceeds 1 — at x = -10', sgn(f(fx)(-10) - 1), 1);
+  check('106 range: and at x = 1.9, close to the asymptote', sgn(f(fx)(1.9) - 1), 1);
+  check('106 the bound 1 is approached but not reached far left', Math.abs(f(fx)(-1e6) - 1) < 1e-5 ? 1 : 0, 1);
+  check('106 f never equals 1 on the branch: 1 - 1/(x-2) = 1 has no solution', roots('1/(x-2)', -50, 1.99).length, 0);
+  check('106 unbounded above: f(1.999) is huge', f(fx)(1.999) > 900 ? 1 : 0, 1);
+  check('106 wrong "1 < y < 2": the branch passes 2 already at x = 1.9', f(fx)(1.9) > 2 ? 1 : 0, 1);
+  check('106 wrong "y < 1": that is the RIGHT branch — f(3) is below 1', sgn(f(fx)(3) - 1), -1);
+}
+
+// rq-sub-sk-112 — the missing point AND the x-intercept of (x^2-16)/(x-4)
+{
+  const num = 'x^2-16', den = 'x-4', fx = `(${num})/(${den})`;
+  check('112 the missing point sits at height 8, from the reduced form', limitAt(fx, 8 - 4), 8, 1e-6);
+  check('112 f itself has no value at 4', Number.isNaN(f(fx)(4)) ? 1 : 0, 1);
+  checkSet('112 the graph meets the x axis where the reduced form vanishes: x = -4', roots(fx, -20, 3.9), [-4]);
+  check('112 and -4 is inside the domain: the denominator there is -8', f(den)(-4), -8);
+  check('112 the intercept height is 0', f(fx)(-4), 0, 1e-9);
+  check('112 wrong "(4,0)": the reduced form at 4 gives 8, not 0', f('x+4')(4), 8);
+  check('112 wrong "no intercept": f(-4) is exactly 0', Math.abs(f(fx)(-4)) < 1e-12 ? 1 : 0, 1);
+  check('112 wrong "no missing point": 4 does zero the original denominator', f(den)(4), 0);
+}
+
 summary('sketch');

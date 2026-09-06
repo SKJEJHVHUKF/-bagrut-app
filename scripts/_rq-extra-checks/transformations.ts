@@ -57,34 +57,32 @@ const kind = (expr: string, x0: number, h = 0.05) => {
   check('tr-101 distractor D has 2 excluded values', crossings('x^2-3'), 2);
 }
 
-// rq-sub-tr-102 — min (1,-4), g = 3f → min (1,-12) (MCQ)
+// rq-sub-tr-102 — 2026-09-06 exam-style rewrite: f = sqrt(x-6), g = 3f.
+// The ask is now g's own domain and x-intercept, so that is what is re-derived.
 {
-  const fm = '(x-1)^2 - 4'; // model with minimum at (1, -4)
-  check('tr-102 model f(1) = -4', f(fm)(1), -4);
-  check('tr-102 model has a min at x=1', kind(fm, 1), 1);
-  const g = `3*(${fm})`;
-  check('tr-102 g(1) = 3*(-4) = -12', f(g)(1), E('3*(-4)'));
-  check('tr-102 x of the extremum unchanged (g still min at x=1)', kind(g, 1), 1);
-  check('tr-102 g(3) is not an extremum (distractor B x=3)', kind(g, 3), 0);
-  check('tr-102 distractor C = f(x) - 3 at x=1', f(`${fm} - 3`)(1), -7);
-  check('tr-102 distractor D = -3f(1) = 12', f(`-3*(${fm})`)(1), 12);
-  check('tr-102 distractor D would be a max', kind(`-3*(${fm})`, 1), -1);
+  const fx = 'sqrt(x-6)', gx = '3*sqrt(x-6)';
+  check('tr-102 the expression under the root vanishes exactly at 6', f('x-6')(6), 0);
+  check('tr-102 g is undefined just left of 6 (the root turns negative)', notReal(f(gx)(5.95)) ? 1 : 0, 1);
+  check('tr-102 g is defined at 6 itself', f(gx)(6), 0);
+  for (const t of [6, 7, 10, 22]) check(`tr-102 g(t) = 3f(t) at t=${t}`, f(gx)(t), 3 * f(fx)(t));
+  check('tr-102 the x-intercept stays at 6: the stretch keeps 0 at 0', f(gx)(6), f(fx)(6));
+  check('tr-102 distractor "x >= 18": g is already defined at 10', notReal(f(gx)(10)) ? 0 : 1, 1);
+  check('tr-102 distractor "(6,3)": the height at 6 is 0, not 3', f(gx)(6), 0);
+  check('tr-102 distractor "x >= 2": at x = 3 the root is of a negative number', notReal(f(gx)(3)) ? 1 : 0, 1);
 }
 
-// rq-sub-tr-103 — min (4,-2), g = f(-x) → min (-4,-2) (MCQ)
+// rq-sub-tr-103 — 2026-09-06 exam-style rewrite: f = 2x/(x-3), g = f(-x).
+// The reflection is the same; the ask is now g's two asymptote equations.
 {
-  const fm = '(x-4)^2 - 2'; // model with minimum at (4, -2)
-  check('tr-103 model min at (4,-2)', f(fm)(4), -2);
-  check('tr-103 model kind at 4 is min', kind(fm, 4), 1);
-  const g = fm.replace(/x/g, '(-x)'); // f(-x)
-  check('tr-103 g(-4) = f(4) = -2', f(g)(-4), f(fm)(4));
-  check('tr-103 g has a MIN at x=-4', kind(g, -4), 1);
-  check('tr-103 g(4) is not an extremum', kind(g, 4), 0);
-  // distractor B: -f(x) → (4, 2) and a max
-  check('tr-103 distractor B height -f(4) = 2', f(`-(${fm})`)(4), 2);
-  check('tr-103 distractor B type max', kind(`-(${fm})`, 4), -1);
-  // distractor D: -f(-x) puts the point at (-4, 2)
-  check('tr-103 distractor D height -f(-4) = 2', f(`-(${g})`)(-4), 2);
+  const fx = '2*x/(x-3)', gx = '2*x/(x+3)';
+  for (const t of [-5, -1, 0.5, 2, 7]) check(`tr-103 g(t) = f(-t) at t=${t}`, f(gx)(t), f(fx)(-t));
+  check('tr-103 the vertical asymptote of g sits at -3', Math.abs(f(gx)(-3 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-103 the numerator there is -6, not zero, so it is an asymptote', f('2*x')(-3), -6);
+  check('tr-103 the horizontal asymptote of g is y = 2', f(gx)(1e7), 2, 1e-6);
+  check('tr-103 and f had the SAME horizontal asymptote', f(fx)(1e7), 2, 1e-6);
+  check('tr-103 distractor "x = 3": g is finite there', Number.isFinite(f(gx)(3)) ? 1 : 0, 1);
+  check('tr-103 distractor "y = -2": the far value is +2', Math.abs(f(gx)(1e7) + 2) > 3 ? 1 : 0, 1);
+  check('tr-103 distractor "y = 0": the far value is not near 0', Math.abs(f(gx)(1e7)) > 1 ? 1 : 0, 1);
 }
 
 // rq-sub-tr-104 — odd, f(2) = -7 → f(-2) = 7 (open)
@@ -117,21 +115,21 @@ const kind = (expr: string, x0: number, h = 0.05) => {
   checkSet('tr-105 wrong (5,-3): shifted from the origin', [0 + 5, 0 - 3], [5, -3]);
 }
 
-// rq-sub-tr-106 — VA x=1, HA y=4; g = f(x+2) - 3 → VA x=-1, HA y=1 (critique MCQ)
+// rq-sub-tr-106 — 2026-09-06 exam-style rewrite: f = 4x/(x-1), g = f(x+2) - 3.
+// Same two shifts, now on a named function, and the two values the old "student"
+// got wrong are two of the four options.
 {
-  const fm = '4 + 1/(x-1)'; // model: VA x=1, HA y=4
-  check('tr-106 model VA at 1', Math.abs(f(fm)(1 + 1e-7)) > 1e6 ? 1 : 0, 1);
-  check('tr-106 model HA 4', f(fm)(1e7), 4, 1e-6);
-  const g = f(`4 + 1/((x+2)-1) - 3`);
-  check('tr-106 g VA at x=-1', Math.abs(g(-1 + 1e-7)) > 1e6 ? 1 : 0, 1);
-  check('tr-106 VA = 1 - 2', 1 - 2, E('-1'));
-  check('tr-106 g HA = 1', g(1e7), 1, 1e-6);
-  check('tr-106 HA = 4 - 3', 4 - 3, E('1'));
-  // student's VA x=3 is wrong: g is finite there
-  check('tr-106 g(3) finite (no asymptote at 3)', Number.isFinite(g(3)) ? 1 : 0, 1);
-  check('tr-106 student VA came from 1 + 2', 1 + 2, 3);
-  // distractor C: 4 + 3 = 7 is the sign-flipped vertical shift
-  check('tr-106 distractor C 4 + 3 = 7', 4 + 3, 7);
+  const fx = '4*x/(x-1)';
+  const gx = '4*(x+2)/((x+2)-1) - 3'; // g(x) = f(x+2) - 3, written out
+  check('tr-106 f blows up at 1', Math.abs(f(fx)(1 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-106 the numerator of f at 1 is 4, not zero', f('4*x')(1), 4);
+  check('tr-106 f has horizontal asymptote y = 4', f(fx)(1e7), 4, 1e-6);
+  for (const t of [-4, -2, 0, 3, 6]) check(`tr-106 g(t) = f(t+2) - 3 at t=${t}`, f(gx)(t), f(fx)(t + 2) - 3);
+  check('tr-106 g blows up at -1, so the vertical asymptote moved LEFT by 2', Math.abs(f(gx)(-1 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-106 g has horizontal asymptote y = 1', f(gx)(1e7), 1, 1e-6);
+  check('tr-106 distractor "x = 3": g is finite there', Number.isFinite(f(gx)(3)) ? 1 : 0, 1);
+  check('tr-106 distractor "y = 7" is the vertical shift with its sign flipped', f(fx)(1e7) + 3, 7, 1e-6);
+  check('tr-106 distractor "x = 1, y = 4" is f itself, before the shifts', f(fx)(1e7), 4, 1e-6);
 }
 
 // rq-sub-tr-107 — max (2,-1), g = f(x+3) + 4 → max (-1, 3) (open, two boxes)
@@ -197,26 +195,22 @@ const kind = (expr: string, x0: number, h = 0.05) => {
   check('tr-110 f = 2 has one solution (contrast)', crossings(`${fx} - 2`, [2]), 1);
 }
 
-// rq-sub-tr-111 — odd with max (3,5) → min (-3,-5) (MCQ)
+// rq-sub-tr-111 — 2026-09-06 exam-style rewrite: f = 9x/(x^2+9). Prove odd, then
+// find BOTH extrema and their types — the archive's own pair of asks.
 {
-  // odd model a x^3 + b x with f(3) = 5, f'(3) = 0: 27a + 3b = 5, 27a + b = 0
-  const b = E('5/2'), a = E('-5/54');
-  const fm = `${a}*x^3 + ${b}*x`;
-  check('tr-111 model f(3) = 5', f(fm)(3), 5);
-  check('tr-111 model max at 3', kind(fm, 3), -1);
-  check('tr-111 model f\'(3) = 0', math.derivative(fm, 'x').evaluate({ x: 3 }) as number, 0);
-  check('tr-111 model is odd', f(fm)(-1.7) + f(fm)(1.7), 0);
-  check('tr-111 f(-3) = -f(3) = -5', f(fm)(-3), -f(fm)(3));
-  check('tr-111 f(-3) value', f(fm)(-3), E('-5'));
-  check('tr-111 (-3,-5) is a MIN', kind(fm, -3), 1);
-  // distractor D note: x^3 - 3x has its max left of the origin and its min right of it
-  checkSet('tr-111 note: x^3-3x extrema x', [-1, 1].map(x => math.derivative('x^3-3*x', 'x').evaluate({ x }) as number), [0, 0]);
-  check('tr-111 note: x^3-3x max at x=-1', kind('x^3-3*x', -1), -1);
-  check('tr-111 note: x^3-3x min at x=1', kind('x^3-3*x', 1), 1);
-  // distractor B: even symmetry would give (-3, 5)
-  check('tr-111 distractor B: even model f(-3) = 5', f('5 - (x^2-9)^2')(-3), 5);
-  // distractor C: -f(x) gives (3, -5)
-  check('tr-111 distractor C: -f(3) = -5', -f(fm)(3), -5);
+  const fx = '9*x/(x^2+9)', fp = '(81-9*x^2)/(x^2+9)^2';
+  check('tr-111 the denominator never vanishes, so f is defined everywhere', crossings('x^2+9'), 0);
+  for (const t of [0.4, 1.7, 5, 12]) check(`tr-111 odd: f(-t) + f(t) = 0 at t=${t}`, f(fx)(-t) + f(fx)(t), 0, 1e-12);
+  dcheck('tr-111 the quotient rule gives f\' = (81 - 9x^2)/(x^2+9)^2', fx, fp);
+  check('tr-111 the denominator of f\' is positive, so only the numerator decides', f('(x^2+9)^2')(0) > 0 ? 1 : 0, 1);
+  checkSet('tr-111 the numerator of f\' vanishes exactly at 3 and -3', [3, -3].filter((r) => Math.abs(f('81-9*x^2')(r)) < 1e-12), [3, -3]);
+  check('tr-111 the height at 3 is 27/18 = 1.5', f(fx)(3), E('27/18'));
+  check('tr-111 and at -3 it is the opposite, -1.5', f(fx)(-3), E('-27/18'));
+  check('tr-111 sign order at 3 is + then -, so it is a MAXIMUM', kind(fx, 3), -1);
+  check('tr-111 sign order at -3 is - then +, so it is a MINIMUM', kind(fx, -3), 1);
+  check('tr-111 wrong "27": that is the numerator alone, without the denominator', f('9*x')(3), 27);
+  check('tr-111 wrong swap: at 3 the function is ABOVE its neighbours', f(fx)(3) > f(fx)(2.5) && f(fx)(3) > f(fx)(3.5) ? 1 : 0, 1);
+  check('tr-111 wrong "(1.5, 3)": f(1.5) is not 3', Math.abs(f(fx)(1.5) - 3) > 1 ? 1 : 0, 1);
 }
 
 // rq-sub-tr-112 — x^2/(x-1): f(x) = k has exactly one solution ⇔ k ∈ {0, 4} (open)
@@ -326,6 +320,16 @@ const kind = (expr: string, x0: number, h = 0.05) => {
   check('tr-202 both keep the VA at 0', Math.abs(f(orderSwapped)(1e-9)) > 1e6 ? 1 : 0, 1);
   check('tr-202 wrong 6 is the given order', f(orderGiven)(1e8), 6, 1e-6);
   check('tr-202 wrong 0 is f itself', f(base)(1e8), 0, 1e-6);
+  // 2026-09-06 exam-style rewrite: g = 3f(x) + 2 is now the GIVEN function, and
+  // the ask is its two asymptotes plus the x-intercept the shift creates.
+  const gx = '15/x + 2';
+  check('tr-202 g equals 3f + 2 everywhere', f(gx)(4), 3 * f(base)(4) + 2);
+  check('tr-202 g blows up at 0, so the vertical asymptote is x = 0', Math.abs(f(gx)(1e-9)) > 1e6 ? 1 : 0, 1);
+  check('tr-202 g tends to 2, so the horizontal asymptote is y = 2', f(gx)(1e8), 2, 1e-6);
+  check('tr-202 the x-intercept: g(-7.5) = 0', f(gx)(-7.5), 0, 1e-12);
+  check('tr-202 f itself had no x-intercept: 5/x is never 0', crossings(base, [0]), 0);
+  check('tr-202 wrong -2.5 is the intercept of the OTHER order', f(orderGiven)(-2.5), 0, 1e-12);
+  check('tr-202 wrong +7.5: there g is positive, not zero', f(gx)(7.5) > 0 ? 1 : 0, 1);
 }
 
 // rq-sub-tr-203 — sqrt(x-1) reflected in the y-axis then moved 5 right → sqrt(4-x), endpoint (4,0)

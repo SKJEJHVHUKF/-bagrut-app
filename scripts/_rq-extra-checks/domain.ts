@@ -80,19 +80,24 @@ const EPS = 1e-3;
   check('103 wrong 1 = numerator zeroed; f(1) = 0, den(1) = 15', num(fx)(1) + num(den)(1), 15);
 }
 
-// rq-sub-dom-104 — which function has domain exactly x >= 3
+// rq-sub-dom-104 — 1/sqrt(x-3): the root IS the whole denominator → x > 3, endpoint OUT
 {
-  const opts = ['sqrt(x-3)', 'sqrt(3-x)', '1/sqrt(x-3)', 'sqrt(x+3)'];
+  const fx = '1/sqrt(x-3)';
   const xs = [-3, 0, 3 - EPS, 3, 3 + EPS, 10];
-  const want = '000111'; // exactly x >= 3
-  const fits: number[] = opts.map(o => (pattern(o, xs) === want ? 1 : 0));
-  check('104 exactly one option fits', fits.reduce((a, b) => a + b, 0), 1);
-  check('104 the fitting option is index 0', fits[0], 1);
-  check('104 B is x <= 3 (mirror)', pattern(opts[1], xs) === '111100' ? 1 : 0, 1);
-  check('104 note: B at x=4 is sqrt(-1), undefined', defined(opts[1], 4), 0);
-  check('104 C excludes the endpoint (x > 3)', pattern(opts[2], xs) === '000011' ? 1 : 0, 1);
-  check('104 D starts at -3', pattern(opts[3], xs) === '111111' ? 1 : 0, 1);
-  check('104 note: D at x=0 is sqrt(3)', num(opts[3])(0), Math.sqrt(3));
+  checkSet('104 the radicand vanishes at 3', roots('x-3'), [3]);
+  check('104 membership: open at 3, defined immediately to its right', pattern(fx, xs) === '000011' ? 1 : 0, 1);
+  // the endpoint is lost to a ZERO DENOMINATOR, not to a negative radicand
+  check('104 at the endpoint the radicand is 0, not negative', num('x-3')(3), 0);
+  check('104 and the denominator there is 0, so f is undefined', num('sqrt(x-3)')(3) + defined(fx, 3), 0);
+  // distractor A (x >= 3) differs from the answer at exactly one point, the endpoint
+  check('104 distractor A: the weak sign adds exactly one point to the answer',
+    xs.filter(v => (v >= 3 ? 1 : 0) !== defined(fx, v)).length, 1);
+  // distractor B (x <= 3) is the mirror: the radicand would have to be 3 - x
+  check('104 distractor B: mirror — undefined at 0, defined at 4', defined(fx, 0) + defined(fx, 4), 1);
+  check('104 note: f(4) = 1', num(fx)(4), 1);
+  // distractor C (x >= -3) belongs to the radicand x + 3
+  check('104 distractor C: -3 is not in the domain of this f', defined(fx, -3), 0);
+  check('104 note: the radicand at 0 is -3', num('x-3')(0), -3);
 }
 
 // rq-sub-dom-105 — (x-2)/(x^2-6x): x != 0 and x != 6
@@ -176,8 +181,8 @@ const EPS = 1e-3;
     Math.max(...[-4, -2, 0, 1, 2, 4, 6].map(v => num(g)(v))), 9);
 }
 
-// rq-sub-dom-111 — the domains of sqrt(x+4)/(sqrt(x)-2) and sqrt(x+4)/sqrt(x-2)
-// are INCOMPARABLE: each holds a value the other rejects.
+// rq-sub-dom-111 — domains of sqrt(x+4)/(sqrt(x)-2) and sqrt(x+4)/sqrt(x-2);
+// the integers that belong to f ALONE are 0, 1, 2 (the asked list).
 {
   const fDen = 'sqrt(x)-2', hDen = 'sqrt(x-2)';
   const fx = `sqrt(x+4)/(${fDen})`, hx = `sqrt(x+4)/(${hDen})`;
@@ -185,33 +190,50 @@ const EPS = 1e-3;
   checkSet('111 h denominator radicand root', roots('x-2', 0, 20), [2]);
   check('111 f domain: x >= 0 and x != 4', pattern(fx, [-1, -EPS, 0, 2, 4 - EPS, 4, 4 + EPS, 100]) === '00111011' ? 1 : 0, 1);
   check('111 h domain: x > 2 only', pattern(hx, [-1, 0, 2 - EPS, 2, 2 + EPS, 4, 100]) === '0000111' ? 1 : 0, 1);
-  // the two witnesses that make neither domain a subset of the other
-  check('111 x = 0 belongs to f only', defined(fx, 0) - defined(hx, 0), 1);
-  check('111 x = 4 belongs to h only', defined(hx, 4) - defined(fx, 4), 1);
-  check('111 note: f denominator at 0 is -2', num(fDen)(0), -2);
+  // THE ANSWER, enumerated rather than restated: integers in f's domain and not in h's
+  const only: number[] = [];
+  for (let n = -20; n <= 20; n++) if (defined(fx, n) === 1 && defined(hx, n) === 0) only.push(n);
+  checkSet('111 integers in f only = 0, 1, 2', only, [0, 1, 2]);
+  check('111 the list is finite and its largest member is 2', Math.max(...only), 2);
+  // wrongAnswer "0, 1" — drops 2, which h rejects because ITS inequality is strict
+  check('111 x = 2 is in f but not in h', defined(fx, 2) - defined(hx, 2), 1);
+  check('111 note: h denominator at 2 is sqrt(0) = 0', num(hDen)(2), 0);
+  // wrongAnswer "0, 1, 2, 4" — 4 is the OPPOSITE direction: in h, not in f
+  check('111 x = 4 is in h but not in f', defined(hx, 4) - defined(fx, 4), 1);
   check('111 note: f denominator at 4 is 0', num(fDen)(4), 0);
   check('111 note: h denominator at 4 is sqrt(2)', num(hDen)(4), Math.SQRT2);
+  // wrongAnswer "0, 1, 2, 3" — 3 belongs to BOTH domains, so it is not on the list
+  check('111 x = 3 belongs to both domains', defined(fx, 3) + defined(hx, 3), 2);
+  check('111 note: f denominator at 3 is sqrt(3) - 2, not zero', num(fDen)(3), Math.sqrt(3) - 2);
+  check('111 note: f denominator at 0 is -2 (the root may vanish there, it is only part of the denominator)', num(fDen)(0), -2);
   check('111 note: h radicand at 0 is -2', num('x-2')(0), -2);
-  check('111 the domains are not equal', pattern(fx, [0, 4]) === pattern(hx, [0, 4]) ? 1 : 0, 0);
 }
 
-// rq-sub-dom-112 — student's domain "x <= 6" for (x+1)/sqrt(36-x^2): two mistakes
+// rq-sub-dom-112 — (x+1)/sqrt(36-x^2): the student's "x <= 6" admits x = -10; the
+// true domain is -6 < x < 6, and g = 1/f loses exactly one more value, x = -1.
 {
-  const g = '36-x^2', fx = `(x+1)/sqrt(${g})`;
+  const g = '36-x^2', fx = `(x+1)/sqrt(${g})`, gx = `1/((x+1)/sqrt(${g}))`;
   check('112 true domain is -6 < x < 6', pattern(fx, [-6 - EPS, -6, -6 + EPS, 0, 6 - EPS, 6, 6 + EPS]) === '0011100' ? 1 : 0, 1);
-  // the student's line 2 (x^2 <= 36) is equivalent to line 1 (36 - x^2 >= 0): no mistake there
+  // MOVE 1 — the disproof the question asks for: the student's rule admits an undefined point
+  const studentSays = (x: number) => (x <= 6 ? 1 : 0);
+  check('112 x=-10 admitted by the student but undefined', studentSays(-10) - defined(fx, -10), 1);
+  check('112 note: g(-10) = -64, a negative radicand', num(g)(-10), -64);
+  check('112 the student rule and the true domain disagree on a whole ray, not one point',
+    [-20, -15, -10, -8, -7].filter(v => studentSays(v) !== defined(fx, v)).length, 5);
+  // the student's line "x^2 <= 36" itself follows from "36 - x^2 >= 0": the loss is the sqrt step
   let mismatches = 0;
   for (let x = -10; x <= 10; x += 0.25) mismatches += (num(g)(x) >= 0) === (x * x <= 36) ? 0 : 1;
-  check('112 line 2 follows from line 1', mismatches, 0);
-  // mistake 1: weak sign keeps x=6 (denominator zero); mistake 2: "x <= 6" keeps x=-10
-  const studentSays = (x: number) => (x <= 6 ? 1 : 0);
-  const m1 = studentSays(6) - defined(fx, 6); // 1 when the student admits an undefined point
-  const m2 = studentSays(-10) - defined(fx, -10);
-  check('112 x=6 admitted by the student but undefined', m1, 1);
-  check('112 x=-10 admitted by the student but undefined', m2, 1);
-  check('112 mistakes counted', m1 + m2, 2);
-  check('112 note: g(-10) = -64', num(g)(-10), -64);
-  check('112 note: den(6) = sqrt(0) = 0', num(`sqrt(${g})`)(6), 0);
+  check('112 x^2 <= 36 is equivalent to 36 - x^2 >= 0', mismatches, 0);
+  check('112 note: den(6) = sqrt(0) = 0, so the endpoints go too', num(`sqrt(${g})`)(6), 0);
+  // MOVE 3 — 1/f: the only value f loses is where f itself vanishes, inside the domain
+  checkSet('112 f vanishes exactly at x = -1 inside the domain', trueRoots(fx, -5.99, 5.99), [-1]);
+  check('112 f is defined at -1 and equals 0 there', num(fx)(-1) + (1 - defined(fx, -1)), 0);
+  check('112 g = 1/f is undefined exactly there', defined(gx, -1), 0);
+  check('112 -1 is an isolated NEW exclusion: g is defined on both sides of it',
+    defined(gx, -1.01) + defined(gx, -0.99), 2);
+  check('112 wrongAnswer 6 was already out of f domain', defined(fx, 6), 0);
+  check('112 wrongAnswer -6 was already out of f domain', defined(fx, -6), 0);
+  check('112 wrongAnswer 1: f(1) = 2/sqrt(35), not zero', num(fx)(1), 2 / Math.sqrt(35));
   // the sign table the corrected solution draws, row by row
   check('112 table: the factorisation agrees with 36 - x^2', num('(6-x)*(6+x)')(2.5) - num(g)(2.5), 0);
   check('112 table row x < -6: the product is negative', Math.sign(num('(6-x)*(6+x)')(-7)), -1);
@@ -250,6 +272,11 @@ const EPS = 1e-3;
   check('114 note: f(0) = -0.25', num(f)(0), -0.25);
   check('114 note: g(0) = -0.8 when k = 1', num(g(1))(0), -0.8);
   check('114 f tends to 1 far out, which is why f(x) = 1 has no solution', num(f)(1e7), 1, 1e-6);
+  // the two domains the reworded question asks for, side by side on one grid
+  check('114 k=2: g is undefined at 9 and defined on both sides of it',
+    defined(g(2), 9) + (1 - defined(g(2), 8.9)) + (1 - defined(g(2), 9.1)), 0);
+  check('114 k=1: the same three points are all in the domain',
+    defined(g(1), 9) + defined(g(1), 8.9) + defined(g(1), 9.1), 3);
 }
 
 // rq-sub-dom-115 — sqrt(x+c)/sqrt(d-x) with domain -4 <= x < 7 → c = 4, d = 7

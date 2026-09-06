@@ -386,4 +386,50 @@ function solveFor(g: (t: number) => number, lo: number, hi: number): number {
   check('112 figure point (9, 0)', E('3*sqrt(9) - 9'), 0);
 }
 
+// ---------------------------------------------------------------------------
+// 2026-09-06, exam-style round. in-106 and in-109 kept their mathematics and lost
+// their quiz framing; in-206 came back as a three-part question, so the third
+// part — the limit recovered from a required area — is re-derived here too.
+// ---------------------------------------------------------------------------
+
+// rq-sub-in-106 — the added line: x = 0 is an asymptote, and it is OUTSIDE [1,2]
+{
+  const fx = '-4/x^2';
+  check('106 the denominator vanishes only at 0', f('x^2')(0), 0);
+  check('106 and 0 is outside the interval [1,2]', 0 < 1 ? 1 : 0, 1);
+  check('106 so f is finite across the whole interval — at the left end', Number.isFinite(f(fx)(1)) ? 1 : 0, 1);
+  check('106 and at the right end', Number.isFinite(f(fx)(2)) ? 1 : 0, 1);
+  check('106 just beside 0 it does blow up, which is why the asymptote is worth naming', Math.abs(f(fx)(1e-4)) > 1e6 ? 1 : 0, 1);
+}
+
+// rq-sub-in-109 — the four options are now four AREA values; each must be reachable
+// only by the mistake its note names
+{
+  const fx = 'x^2 - 3*x';
+  const F = f('x^3/3 - 3*x^2/2');
+  check('109 correct option: |[0,3]| + |[3,4]| = 19/3', Math.abs(F(3) - F(0)) + Math.abs(F(4) - F(3)), E('19/3'), 1e-9);
+  check('109 option 8/3 = one unsplit integral, in absolute value', Math.abs(F(4) - F(0)), E('8/3'), 1e-9);
+  check('109 option 11/6 = the part above the axis only', F(4) - F(3), E('11/6'), 1e-9);
+  check('109 option 9/2 = the part between the roots only', Math.abs(F(3) - F(0)), E('9/2'), 1e-9);
+  check('109 the four options are four different numbers', new Set([E('19/3'), E('8/3'), E('11/6'), E('9/2')]).size, 4);
+  check('109 the cancellation is exactly 11/6 - 9/2', E('11/6 - 9/2'), F(4) - F(0), 1e-9);
+}
+
+// rq-sub-in-206 part ג — the upper limit recovered from a required area of 0.5
+{
+  const fx = '4/x^2';
+  const F = f('-4/x');
+  const t = 8;
+  icheck('206ג ∫_4^8 4/x^2 is exactly 0.5', fx, 4, t, 0.5);
+  check('206ג F(t) - F(4) at t = 8 gives 0.5', F(t) - F(4), 0.5, 1e-12);
+  check('206ג t = 8 satisfies the required t > 4', t > 4 ? 1 : 0, 1);
+  check('206ג the equation 1 - 4/t = 0.5 has 4/t = 0.5', 4 / t, 0.5, 1e-12);
+  // solving F(4) - F(t) = 0.5 instead (limits swapped) gives 8/3, which is below 4
+  const tSwapped = solveFor((v) => F(4) - F(v) - 0.5, 0.1, 3.9);
+  check('206ג swapped limits give 8/3', tSwapped, E('8/3'), 1e-6);
+  check('206ג and 8/3 is NOT above 4, so it is refused', E('8/3') > 4 ? 1 : 0, 0);
+  check('206ג the area grows with t, so the solution is unique', quad(fx, 4, 9) > quad(fx, 4, 8) ? 1 : 0, 1);
+  check('206ג the area beyond 4 never reaches 1, so 0.5 is attainable', F(1e6) - F(4) < 1 ? 1 : 0, 1);
+}
+
 summary('integral');

@@ -310,4 +310,77 @@ function vaCount(expr: string, lo = -20, hi = 20, n = 200000): number {
   checkSet('118 the cancelling value solves 1+6+m=0', roots('1+6+m', -50, 50, 'm'), [-7]);
 }
 
+// ---------------------------------------------------------------------------
+// The exam-style round (Itay, 2026-09-06: "שאלות שבבגרות לא שואלים"). The asks
+// of 102 / 110 / 112 / 114 / 116 / 117 were rewritten into the bagrut's own
+// phrasing, and 110 / 112 / 117 gained mathematics the old ask never reached.
+// Every claim the NEW wording makes is re-derived from the function itself.
+// ---------------------------------------------------------------------------
+
+// rq-sub-asy-102 — "מצאו את משוואות האסימפטוטות האנכיות (אם יש כאלה)": there are none
+{
+  check('102 the denominator keeps a positive minimum, so no candidate exists',
+    Math.min(...[-8, -2, 0, 2, 8].map((v) => f('x^2+4')(v))), 4);
+  check('102 the graph never blows up anywhere on a wide grid', vaCount('(x-1)/(x^2+4)', -50, 50), 0);
+}
+
+// rq-sub-asy-110 — the ask now adds the crossing with the x axis: (-3, 0) ONLY,
+// because the shared factor x-3 takes both the line and the crossing from 3.
+{
+  const num = 'x^2-9', den = 'x^2+2*x-15', fx = `(${num})/(${den})`;
+  checkSet('110 the numerator vanishes at 3 and -3', roots(num), [3, -3]);
+  check('110 only -3 is a real crossing: f(-3) = 0', f(fx)(-3), 0);
+  check('110 the denominator at -3 is -12, so the graph is defined there', f(den)(-3), -12);
+  check('110 x = 3 is not on the graph at all (0/0)', Number.isNaN(f(fx)(3)) ? 1 : 0, 1);
+  check('110 exactly one vertical line survives', vaCount(fx), 1);
+}
+
+// rq-sub-asy-112 — rebuilt as a second function: g = 1/(f+1), f = (x^2+5x+6)/(x^2-4)
+{
+  const fx = '(x^2+5*x+6)/(x^2-4)';
+  const g = `1/((${fx})+1)`;
+  const red = '(x-2)/(2*x+1)';
+  checkSet('112 f leaves the domain at 2 and -2', roots('x^2-4'), [2, -2]);
+  check('112 f reduces to (x+3)/(x-2) away from -2', f(fx)(5), f('(x+3)/(x-2)')(5));
+  check('112 f+1 equals (2x+1)/(x-2)', f(`(${fx})+1`)(5), f('(2*x+1)/(x-2)')(5));
+  checkSet('112 the new denominator 2x+1 vanishes at -1/2', roots('2*x+1'), [-1 / 2]);
+  check('112 the numerator of g at -1/2 is -5/2', f('x-2')(-1 / 2), -5 / 2);
+  check('112 g blows up at -1/2', blowsUp(g, -1 / 2), 1);
+  check('112 g agrees with (x-2)/(2x+1) inside the domain', f(g)(4), f(red)(4));
+  check('112 exactly one vertical line', vaCount(g), 1);
+  check('112 horizontal y = 1/2', HA(g), 1 / 2, 1e-4);
+  check('112 distractor: x = 2 stays finite on the reduced form (a hole)', f(red)(2), 0);
+  check('112 distractor: x = -2 stays finite on the reduced form (a hole)', f(red)(-2), 4 / 3);
+  check('112 distractor y = 1 is not the horizontal', Math.abs(HA(g) - 1) < 1e-4 ? 1 : 0, 0);
+}
+
+// rq-sub-asy-114 — the reworded ask wants the COUNT, so count it on both graphs
+{
+  const f114 = '(x-5)/(x+3)';
+  const g114 = `1/(${f114})`;
+  check('114 f has exactly one vertical line', vaCount(f114), 1);
+  check('114 g has exactly one vertical line too', vaCount(g114), 1);
+  check('114 but it moved to 5', blowsUp(g114, 5), 1);
+  check('114 and -3 is a hole on g, not a line', blowsUp(g114, -3), 0);
+}
+
+// rq-sub-asy-116 — the ask now names the three objects one by one
+{
+  const g116 = '1/(((2*x-6)/(x+1))-1)';
+  check('116 g agrees with (x+1)/(x-7) inside the domain', f(g116)(3), f('(x+1)/(x-7)')(3));
+  check('116 the vertical line sits at 7', blowsUp(g116, 7), 1);
+  check('116 the horizontal is y = 1', HA(g116), 1, 1e-4);
+  check('116 x = -1 is a hole, not a line', blowsUp(g116, -1), 0);
+}
+
+// rq-sub-asy-117 — the ask now also wants the crossings with the x axis
+{
+  const fx = '(2*x^2-x)/(x^2+1)';
+  checkSet('117 the numerator vanishes at 0 and 0.5', roots('2*x^2-x'), [0, 0.5]);
+  check('117 the denominator at 0.5 is 1.25, so that root is a real crossing', f('x^2+1')(0.5), 1.25);
+  check('117 f(0) = 0', f(fx)(0), 0);
+  check('117 f(0.5) = 0', f(fx)(0.5), 0);
+  check('117 the crossing with the asymptote is a different point: f(-2) = 2', f(fx)(-2), 2);
+}
+
 summary('asymptotes');

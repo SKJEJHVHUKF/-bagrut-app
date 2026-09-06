@@ -411,4 +411,63 @@ function rootsF(g: (v: number) => number, lo = -20, hi = 20): number[] {
     Math.max(...[0, 0.2, 0.5, 2, 5, 30].map(v => f(fx)(v))) <= f(fx)(1) ? 1 : 0, 1);
 }
 
+// ---------------------------------------------------------------------------
+// The exam-style round (Itay, 2026-09-06). 104 / 110 / 111 / 203 / 205 were
+// re-asked in the bagrut's own phrasing — monotonic intervals, the extremum and
+// its type, the domain, "נמקו" — so each object the NEW wording names is
+// re-derived from mathjs's own derivative of the question's function.
+// ---------------------------------------------------------------------------
+
+// rq-sub-der-104 — now asks for the rising/falling intervals and the extremum count
+{
+  const fp = '3*x^2+5';
+  const F = 'x^3+5*x';
+  check('104 f\' stays positive on every sample, so there is no falling interval',
+    Math.min(...[-40, -3, 0, 3, 40].map(v => f(fp)(v))) > 0 ? 1 : 0, 1);
+  check('104 the extremum count is the number of zeros of f\'', roots(fp, -100, 100).length, 0);
+  check('104 f rises across 0 as well, so 0 is not a turning point', f(F)(0.1) > f(F)(-0.1) ? 1 : 0, 1);
+}
+
+// rq-sub-der-110 — now asks for the intervals, the extremum values and their type
+{
+  const fp = 'x*(x-3)^2';
+  const F = 'x^4/4-2*x^3+9*x^2/2';
+  check('110 f falls on every sample below 0', Math.max(...[-6, -2, -0.5].map(v => f(fp)(v))) < 0 ? 1 : 0, 1);
+  check('110 f rises on every sample above 0, including on both sides of 3',
+    Math.min(...[0.2, 1, 2.9, 3.1, 6].map(v => f(fp)(v))) > 0 ? 1 : 0, 1);
+  check('110 exactly one of the two candidates changes the sign',
+    [0, 3].filter(c => sgn(f(fp)(c - 0.1)) !== sgn(f(fp)(c + 0.1))).length, 1);
+  check('110 and it is a minimum: f(0) sits below both neighbours',
+    f(F)(0) < Math.min(f(F)(-0.5), f(F)(0.5)) ? 1 : 0, 1);
+}
+
+// rq-sub-der-111 — now asks for the domain as well as the count
+{
+  const fx = '(x+3)*sqrt(x-1)';
+  check('111 f is not a real number below 1', Number.isFinite(f(fx)(0.5)) ? 1 : 0, 0);
+  check('111 f is defined at the edge x = 1', f(fx)(1), 0);
+  check('111 no sample inside the domain has slope 0',
+    [1.001, 1.5, 3, 8, 50].every(v => Math.abs(dAt(fx, v)) > 1e-6) ? 1 : 0, 1);
+}
+
+// rq-sub-der-203 — "נמקו את תשובתכם": the reason is a constant numerator
+{
+  const fx = '(x+4)/(x-1)';
+  dcheck('203 f\' = -5/(x-1)^2', fx, '-5/(x-1)^2', [-3, -1, 0, 2, 4, 9]);
+  checkSet('203 f\' has no zero to the left of the pole', roots('-5/(x-1)^2', -50, 0.9), []);
+  check('203 f\' is negative on every sample', Math.max(...[-3, 0, 2, 9].map(v => dAt(fx, v))) < 0 ? 1 : 0, 1);
+}
+
+// rq-sub-der-205 — the ask now recovers the extremum BEFORE comparing the slopes
+{
+  const fx = 'sqrt(x^2-6*x+13)';
+  check('205 completing the square: (x-3)^2+4 equals the radicand',
+    Math.max(...[-4, 0, 1, 3, 5, 9].map(v => Math.abs(f('x^2-6*x+13')(v) - f('(x-3)^2+4')(v)))), 0);
+  check('205 the extremum sits at (3, 2)', f(fx)(3), 2);
+  check('205 the sign-table row x-3 reads -, 0, +',
+    sgn(f('x-3')(1)) * 100 + f('x-3')(3) + sgn(f('x-3')(5)), -99);
+  check('205 the slope row copies it, because the denominator is positive',
+    [1, 5, -4, 9].every(v => sgn(dAt(fx, v)) === sgn(f('x-3')(v))) ? 1 : 0, 1);
+}
+
 summary('derivative');

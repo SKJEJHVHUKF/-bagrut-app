@@ -61,6 +61,10 @@ const GRID = [-7, -5, -2.5, -1, 0.5, 1.5, 2.5, 4, 6, 9];
   checkSet('102 distractor C = denominator zeroed', roots('x-1'), [1]);
   check('102 f undefined at 1', defined(fx, 1), 0);
   check('102 distractor D = f(0) = -4', num(fx)(0), -4);
+  // "(אם יש כאלה)" is the honest hedge: the x-axis really is missed everywhere
+  check('102 f is never 0 anywhere on its domain', xInts(fx, P, -200, 200).length, 0);
+  check('102 but the graph does exist: f is defined on both sides of the pole',
+    defined(fx, 0.999) + defined(fx, 1.001), 2);
 }
 
 // rq-sub-int-103 — (2x+5)/(x-3) meets the x-axis at (k,0): k = -5/2
@@ -97,15 +101,21 @@ const GRID = [-7, -5, -2.5, -1, 0.5, 1.5, 2.5, 4, 6, 9];
   check('105 wrong 2 = the height taken as the parameter: f(0) = -1/2', fx(2)(0), E('-1/2'));
 }
 
-// rq-sub-int-106 — (2x+8)/(x-4): the student found the x-intercept; y-intercept is (0,-2)
+// rq-sub-int-106 — (2x+8)/(x-4): BOTH intercepts asked — (-4,0) on the x-axis, (0,-2) on the y-axis
 {
   const fx = '(2*x+8)/(x-4)';
   check('106 f defined at 0', defined(fx, 0), 1);
   check('106 f(0) = 8/(-4) = -2', num(fx)(0), -2);
-  checkSet('106 student\'s x = -4 is the x-intercept', xInts(fx, '2*x+8'), [-4]);
+  checkSet('106 the x-intercept is x = -4', xInts(fx, '2*x+8'), [-4]);
   check('106 note: f(-4) = 0', num(fx)(-4), 0);
-  checkSet('106 distractor D = denominator zeroed', roots('x-4'), [4]);
+  checkSet('106 distractor B/C = denominator zeroed', roots('x-4'), [4]);
   check('106 f undefined at 4', defined(fx, 4), 0);
+  // the two intercepts are two DIFFERENT numbers: option B reuses -4 as a height
+  check('106 distractor B: the height at x = 0 is not -4', num(fx)(0) - (-4), 2);
+  // option D swaps the components: (0,-2) sits on the y-axis, so f(0) is not 0
+  check('106 distractor D: the x-intercept is not at x = 0', num(fx)(0) === 0 ? 1 : 0, 0);
+  check('106 and (-4,0) is not on the y-axis: the x-intercept is at -4, not 0',
+    xInts(fx, '2*x+8')[0] === 0 ? 1 : 0, 0);
 }
 
 // rq-sub-int-107 — sqrt(x^2-6x+5): x-intercepts at both endpoints of a split domain
@@ -127,6 +137,10 @@ const GRID = [-7, -5, -2.5, -1, 0.5, 1.5, 2.5, 4, 6, 9];
   check('108 f never zero: min over 3 < x ≤ 30 is positive', Math.min(...[3.01, 4, 5, 10, 30].map(v => num(fx)(v))) > 0 ? 1 : 0, 1);
   check('108 distractor C = root ignored: 5/(0-3)', E('5/(0-3)'), E('-5/3'));
   check('108 note: f(5) = 5/sqrt(2)', num(fx)(5), E('5/sqrt(2)'));
+  // "אין חיתוך עם אף אחד מהצירים", proved on both axes separately
+  check('108 no x-intercept: the constant numerator 5 has no root', roots('0*x+5', -100, 100).length, 0);
+  check('108 no y-intercept: 0 and the endpoint 3 are both outside the domain',
+    defined(fx, 0) + defined(fx, 3), 0);
 }
 
 // rq-sub-int-109 — sqrt(x+12)/(x+2): y-intercept (0, sqrt(3))
@@ -167,15 +181,28 @@ const GRID = [-7, -5, -2.5, -1, 0.5, 1.5, 2.5, 4, 6, 9];
   checkSet('111 wrong (3,-3): but the x-intercept moves to -3', xInts('(x+3)/(x-3)', 'x+3'), [-3]);
 }
 
-// rq-sub-int-112 — (x-2)/(x^2-4): x = 2 is a hole, y-intercept (0, 1/2)
+// rq-sub-int-112 — (x-2)/(x^2-4): the claim "(2,0) is on the graph" is false (a hole),
+// and the graded answer is the y-intercept's height, 0.5.
 {
   const fx = '(x-2)/(x^2-4)';
   checkSet('112 numerator zero is 2', roots('x-2'), [2]);
   checkSet('112 denominator zeros are 2 and -2', roots('x^2-4'), [2, -2]);
   check('112 f undefined at 2 (hole)', defined(fx, 2), 0);
+  // the disproof: the SAME value kills numerator and denominator together
+  check('112 numerator and denominator both vanish at 2',
+    Math.abs(num('x-2')(2)) + Math.abs(num('x^2-4')(2)), 0);
   check('112 surviving x-intercepts = 0', xInts(fx, 'x-2').length, 0);
+  check('112 the graph exists on both sides of 2, so it is a hole and not a point',
+    defined(fx, 1.999) + defined(fx, 2.001), 2);
+  // the graded value: 0.5 IS f(0), recomputed
   check('112 f(0) = 1/2', num(fx)(0), E('1/2'));
+  check('112 the graded 0.5 is f(0), not a restated literal', num(fx)(0) - 0.5, 0);
   check('112 -2/-4 is positive', E('(-2)/(-4)'), E('1/2'));
+  // wrongAnswers re-enacted
+  check('112 wrong -0.5: both parts are negative at 0, so the quotient is positive',
+    Math.sign(num('x-2')(0)) * Math.sign(num('x^2-4')(0)), 1);
+  check('112 wrong -2: the numerator alone at 0, before dividing by -4', num('x-2')(0), -2);
+  check('112 wrong 2: that is the rejected x-candidate, and f(0) is not 2', num(fx)(0) === 2 ? 1 : 0, 0);
   check('112 f never zero on the domain: min |f| over grid > 0', Math.min(...GRID.map(v => Math.abs(num(fx)(v)))) > 0 ? 1 : 0, 1);
 }
 
