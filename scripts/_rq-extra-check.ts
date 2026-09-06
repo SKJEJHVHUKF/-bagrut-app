@@ -136,8 +136,8 @@ function functionDefs(q: string): string[] {
 
 function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
   const w = q.id || '(no id)';
-  // 1NN was the first widening; 2NN is this round's, so both are valid.
-  if (!new RegExp(`^${prefix}[12]\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN or ${prefix}2NN`);
+  // 1NN was the first widening, 2NN the second, 3NN this round's — all valid.
+  if (!new RegExp(`^${prefix}[123]\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN, ${prefix}2NN or ${prefix}3NN`);
   if (!['easy', 'mid', 'hard'].includes(q.difficulty)) err(w, 'bad-difficulty', String(q.difficulty));
   if (!['mcq', 'open'].includes(q.kind)) err(w, 'bad-kind', String(q.kind));
 
@@ -284,7 +284,11 @@ const MECHANISMS: [string, RegExp][] = [
   ['extremum', /נקוד\S*\s+\S*קיצון|מקסימום|מינימום|מאפסים את הנגזרת/],
   ['monotonicity', /עולה|יורדת|תחומי\s+\S*עלייה|תחומי\s+\S*ירידה|טבלת\s+\S*סימנים/],
   ['sign-table', /טבלת\s+\S*סימנים|סימן\s+\S*נגזרת|טבלה של סימנים/],
-  ['sketch', /סקיצה|סרטט|שרטט|גרף הפונקציה/],
+  // NOT "גרף הפונקציה": naming the graph is not drawing it, and every question
+  // whose stem said "מצאו … של גרף הפונקציה" was collecting a sketch's 2.5
+  // points without a sketch. Found by an author whose five new questions all
+  // scored high for the wrong reason.
+  ['sketch', /סקיצה|סרטט|שרטט/],
   ['integral', /אינטגרל|פונקציה קדומה|הקדומה|שטח הכלוא|\\int/],
   ['intersections', /נקודות החיתוך|חיתוך עם הציר|מציבים \$?y ?= ?0|f\(x\) ?= ?0/],
   // The last alternative read `\\bg\(` — a literal backslash then "bg", which no

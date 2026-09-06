@@ -1,4 +1,4 @@
-// Numeric re-derivation of content/lessons/math5/rq-extra/domain.ts (rq-sub-dom-101…117).
+// Numeric re-derivation of content/lessons/math5/rq-extra/domain.ts (rq-sub-dom-101…117, 301…313).
 // A domain claim is encoded as membership: `defined(expr, x)` evaluates the question's own
 // function with mathjs and asks whether the result is a finite real number (sqrt of a negative
 // comes back Complex, division by zero comes back Infinity). Endpoints are found as roots of the
@@ -341,6 +341,169 @@ const EPS = 1e-3;
   check('117 k = 0 note: the radicand at x = 3 is -9', num(rad(0))(3), -9);
   check('117 no k of 9 or below survives the grid',
     [0, 5, 8, 9].reduce((s, k) => s + everywhere(k), 0), 0);
+}
+
+// ─── round 3 ───────────────────────────────────────────────────────────────
+
+// rq-sub-dom-301 — sqrt((x^2-9)/(x-2)): -3 <= x < 2 or x >= 3, smallest integer -3
+{
+  const q = '(x^2-9)/(x-2)', fx = `sqrt(${q})`;
+  checkSet('301 numerator roots', roots('x^2-9'), [3, -3]);
+  checkSet('301 denominator root', roots('x-2'), [2]);
+  check('301 the factorisation (x-3)(x+3) agrees with the numerator', num('x^2-9')(7) - E('(7-3)*(7+3)'), 0);
+  // the four sign-table columns, each read off the function itself
+  check('301 table row x < -3: the quotient is negative', Math.sign(num(q)(-5)), -1);
+  check('301 table row -3 < x < 2: the quotient is positive', Math.sign(num(q)(0)), 1);
+  check('301 table row 2 < x < 3: the quotient is negative', Math.sign(num(q)(2.5)), -1);
+  check('301 table row x > 3: the quotient is positive', Math.sign(num(q)(4)), 1);
+  check('301 membership: closed at -3, open at 2, closed at 3',
+    pattern(fx, [-4, -3 - EPS, -3, 0, 2 - EPS, 2, 2.5, 3 - EPS, 3, 4]) === '0011100011' ? 1 : 0, 1);
+  check('301 both closed endpoints give sqrt(0) = 0', num(fx)(-3) + num(fx)(3), 0);
+  check('301 the open endpoint is a zero denominator, not a negative quotient', num('x-2')(2), 0);
+  // THE ANSWER, enumerated: the smallest integer the function accepts
+  const ints: number[] = [];
+  for (let n = -40; n <= 40; n++) if (defined(fx, n) === 1) ints.push(n);
+  check('301 smallest integer in the domain', Math.min(...ints), -3);
+  checkSet('301 the integers below 3 that survive are exactly -3..1', ints.filter(n => n < 3), [-3, -2, -1, 0, 1]);
+  // wrongAnswer -2 = endpoint taken as open; wrongAnswer 3 = only the right branch kept
+  check('301 wrong -2: -3 really is in the domain', defined(fx, -3), 1);
+  check('301 wrong 3: the note value q(0) = 4.5', num(q)(0), 4.5);
+  check('301 wrong 2: the quotient is undefined there', defined(q, 2), 0);
+}
+
+// rq-sub-dom-302 — sqrt(x+3)/(x^2+2x+m): m=-8 → x >= -3, x != 2; m=-3 → x > -3, x != 1
+{
+  const den = (m: number) => `x^2+2*x+(${m})`;
+  const fx = (m: number) => `sqrt(x+3)/(${den(m)})`;
+  checkSet('302 radicand root fixes the left edge at -3', roots('x+3'), [-3]);
+  checkSet('302 m = -8: denominator roots', roots(den(-8)), [-4, 2]);
+  checkSet('302 m = -3: denominator roots', roots(den(-3)), [-3, 1]);
+  check('302 m = -8: the factorisation (x+4)(x-2) agrees', num(den(-8))(5) - E('(5+4)*(5-2)'), 0);
+  check('302 m = -3: the factorisation (x+3)(x-1) agrees', num(den(-3))(5) - E('(5+3)*(5-1)'), 0);
+  // -4 is NOT an exclusion: it fails the root's own condition first
+  check('302 m = -8: -4 is outside the radicand condition anyway', defined('sqrt(x+3)', -4), 0);
+  check('302 m = -8: membership around the edge and around 2',
+    pattern(fx(-8), [-4, -3 - EPS, -3, 0, 2 - EPS, 2, 2 + EPS, 10]) === '00111011' ? 1 : 0, 1);
+  // m = -3 is the case where the CLOSED edge itself turns open
+  check('302 m = -3: the denominator vanishes at the edge', num(den(-3))(-3), 0);
+  check('302 m = -3: membership — the edge is gone, 1 is gone',
+    pattern(fx(-3), [-4, -3, -3 + EPS, 0, 1 - EPS, 1, 1 + EPS, 10]) === '00111011' ? 1 : 0, 1);
+  check('302 the two cases differ exactly at the edge and at their excluded points',
+    [-3, 1, 2].filter(v => defined(fx(-8), v) !== defined(fx(-3), v)).length, 3);
+  // distractor B: x >= -4 would admit a negative radicand
+  check('302 distractor B: x = -3.5 has radicand -0.5', num('x+3')(-3.5), -0.5);
+  check('302 distractor B: f is undefined there for both m', defined(fx(-8), -3.5) + defined(fx(-3), -3.5), 0);
+  // distractor C: roots read off the factors without flipping the sign
+  check('302 distractor C: den(4) = 16 when m = -8', num(den(-8))(4), 16);
+  check('302 distractor C: den(3) = 12 when m = -3', num(den(-3))(3), 12);
+  check('302 note: den(-2) = -3 when m = -3, so -2 stays in', num(den(-3))(-2), -3);
+}
+
+// rq-sub-dom-311 — f = sqrt((x+5)/(3-x)), g = 1/(f-1): f loses only x = -1 on the way to g
+{
+  const q = '(x+5)/(3-x)', fx = `sqrt(${q})`, gx = `1/(sqrt(${q})-1)`;
+  checkSet('311 numerator root', roots('x+5'), [-5]);
+  checkSet('311 denominator root', roots('3-x'), [3]);
+  check('311 table row x < -5: the quotient is negative', Math.sign(num(q)(-6)), -1);
+  check('311 table row -5 < x < 3: the quotient is positive', Math.sign(num(q)(0)), 1);
+  check('311 table row x > 3: the quotient is negative', Math.sign(num(q)(4)), -1);
+  check('311 f domain: closed at -5, open at 3',
+    pattern(fx, [-6, -5 - EPS, -5, 0, 3 - EPS, 3, 4]) === '0011100' ? 1 : 0, 1);
+  // THE ANSWER: solved numerically as a root of f(x) - 1, not by re-applying the algebra
+  checkSet('311 f(x) = 1 holds exactly at x = -1', trueRoots(`sqrt(${q})-1`, -4.99, 2.99), [-1]);
+  check('311 f(-1) = 1', num(fx)(-1), 1);
+  check('311 g is undefined exactly there', defined(gx, -1), 0);
+  check('311 and defined on both sides of it', defined(gx, -1.01) + defined(gx, -0.99), 2);
+  // it is the ONLY point f keeps and g drops, over a fine sweep of the interval
+  // (k/500 keeps the grid exact, so it really lands on -1 rather than near it)
+  let dropped = 0;
+  for (let k = 0; k < 4000; k++) {
+    const x = -5 + k / 500;
+    if (defined(fx, x) === 1 && defined(gx, x) === 0) dropped++;
+  }
+  check('311 exactly one sampled point is in f and not in g', dropped, 1);
+  // wrongAnswers, each re-enacted
+  check('311 wrong 3: already out of f domain', defined(fx, 3), 0);
+  check('311 wrong -5: f(-5) = 0, so the new denominator is -1 there', num(`sqrt(${q})-1`)(-5), -1);
+  check('311 wrong 1: the radicand there is 3', num(q)(1), 3);
+  check('311 wrong 1: f(1) = sqrt(3), not 1', num(fx)(1), Math.sqrt(3));
+  check('311 note: f(0) = sqrt(5/3), so g is defined at 0', num(fx)(0), Math.sqrt(5 / 3));
+}
+
+// rq-sub-dom-312 — f = (x^2+3)/(x-1), g = 1/f': domain x != 1, -1, 3; max at -1, min at 3
+{
+  const f = '(x^2+3)/(x-1)';
+  const fp = '((x-3)*(x+1))/(x-1)^2';
+  // samples avoid x = 1, where both sides are infinite and the difference is NaN
+  dcheck("312 the authored f' is the symbolic derivative of f", f, fp, [-3, -2.3, -0.5, 0.7, 2.5, 4]);
+  check('312 the expanded numerator x^2-2x-3 matches the factored form',
+    num('x^2-2*x-3')(7) - E('(7-3)*(7+1)'), 0);
+  checkSet("312 f' vanishes at -1 and 3", roots(fp, -20, 20), [-1, 3]);
+  check("312 f' is undefined at x = 1, so g inherits that exclusion", defined(fp, 1), 0);
+  const g = `1/(${fp})`;
+  check('312 g is undefined at the two zeros of the derivative',
+    [-1, 3].reduce((s, v) => s + defined(g, v), 0), 0);
+  check('312 g is defined immediately beside all three excluded values',
+    [1, -1, 3].reduce((s, v) => s + defined(g, v - EPS) + defined(g, v + EPS), 0), 6);
+  // the sign table, column by column, and the extremum types it implies
+  check("312 f' > 0 left of -1", Math.sign(num(fp)(-2)), 1);
+  check("312 f' < 0 between -1 and 1", Math.sign(num(fp)(0)), -1);
+  check("312 f' < 0 between 1 and 3", Math.sign(num(fp)(2)), -1);
+  check("312 f' > 0 right of 3", Math.sign(num(fp)(4)), 1);
+  check('312 the denominator of the derivative is positive wherever it is defined',
+    Math.min(...[-5, -1, 0, 2, 3, 5].map(v => num('(x-1)^2')(v))), 1);
+  // maximum at -1 / minimum at 3, proved by comparing f itself with its neighbours
+  check('312 x = -1 is a local maximum of f',
+    (num(f)(-1) > num(f)(-1.1) && num(f)(-1) > num(f)(-0.9)) ? 1 : 0, 1);
+  check('312 x = 3 is a local minimum of f',
+    (num(f)(3) < num(f)(2.9) && num(f)(3) < num(f)(3.1)) ? 1 : 0, 1);
+  check('312 f(-1) = -2', num(f)(-1), -2);
+  check('312 f(3) = 6', num(f)(3), 6);
+  // wrongAnswer "3, -1" (types swapped) — the note's number
+  check("312 note: f'(-2) = 5/9", num(fp)(-2), 5 / 9);
+  // wrongAnswer "1, 3" / "-1, 1" — x = 1 is a pole, not an extremum
+  check('312 f itself is undefined at x = 1', defined(f, 1), 0);
+  check('312 f grows without bound beside x = 1, so it is no extremum',
+    (Math.abs(num(f)(1 + 1e-4)) > 1e3 && Math.abs(num(f)(1 - 1e-4)) > 1e3) ? 1 : 0, 1);
+}
+
+// rq-sub-dom-313 — f = (x+a)/(x-6), g = sqrt(f) meets the x-axis at (-2, 0) → a = 2;
+// domain of g is x <= -2 or x > 6, and h = 1/g opens the closed endpoint.
+{
+  // a is RECOVERED from the given point, not restated: solve (-2) + a = 0 for a
+  const as = roots('(-2)+a', -50, 50, 'a');
+  checkSet('313 a from the given intersection point', as, [2]);
+  const a = as[0];
+  const q = `(x+${a})/(x-6)`, gx = `sqrt(${q})`;
+  // h = 1/g is defined exactly where g is defined AND non-zero. Asked of mathjs
+  // directly, 1/sqrt(...) answers 0 at the pole (1/sqrt(Infinity)) and would
+  // silently claim x = 6 belongs to h, so membership is composed here instead.
+  const hIn = (x: number) => (defined(gx, x) === 1 && Math.abs(num(gx)(x)) > 1e-12 ? 1 : 0);
+  check('313 the recovered g really vanishes at the given point', num(gx)(-2), 0);
+  // a sqrt never changes sign, so the zero is found on the radicand, not on g
+  checkSet('313 g meets the x-axis nowhere else', trueRoots(q, -40, 5.99), [-2]);
+  check('313 table row x < -2: the quotient is positive', Math.sign(num(q)(-3)), 1);
+  check('313 table row -2 < x < 6: the quotient is negative', Math.sign(num(q)(0)), -1);
+  check('313 table row x > 6: the quotient is positive', Math.sign(num(q)(7)), 1);
+  check('313 g domain: closed at -2, open at 6',
+    pattern(gx, [-10, -2 - EPS, -2, -2 + EPS, 0, 6 - EPS, 6, 6 + EPS, 20]) === '111000011' ? 1 : 0, 1);
+  // h = 1/g loses exactly the closed endpoint, and nothing else
+  check('313 h is undefined at -2 but g is defined there', defined(gx, -2) - hIn(-2), 1);
+  check('313 h domain: the endpoint is the only difference',
+    [-10, -2 - EPS, -2, -2 + EPS, 0, 6 - EPS, 6, 6 + EPS, 20].map(hIn).join('') === '110000011' ? 1 : 0, 1);
+  let diff = 0;
+  for (let k = 0; k <= 6000; k++) {
+    const x = -30 + k / 100;
+    if (defined(gx, x) !== hIn(x)) diff++;
+  }
+  check('313 exactly one sampled point separates the two domains', diff, 1);
+  check('313 note: g(-3) = 1/3', num(gx)(-3), 1 / 3);
+  // wrongAnswers: each a would move the intersection somewhere else
+  checkSet('313 wrong a = -2 would put the intersection at x = 2', trueRoots('(x-2)/(x-6)', -40, 5.99), [2]);
+  checkSet('313 wrong a = 6 would put it at x = -6', trueRoots('(x+6)/(x-6)', -40, 5.99), [-6]);
+  checkSet('313 wrong a = 0 would put it at the origin', trueRoots('(x-0)/(x-6)', -40, 5.99), [0]);
+  check('313 none of those three passes through the given point',
+    [-2, 6, 0].reduce((s, w) => s + (Math.abs(num(`sqrt((x+(${w}))/(x-6))`)(-2)) < 1e-9 ? 1 : 0), 0), 0);
 }
 
 summary('domain');

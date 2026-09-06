@@ -383,4 +383,117 @@ function vaCount(expr: string, lo = -20, hi = 20, n = 200000): number {
   check('117 the crossing with the asymptote is a different point: f(-2) = 2', f(fx)(-2), 2);
 }
 
+// ---------------------------------------------------------------------------
+// Round 3 (301–305). Every parameter is SOLVED numerically from the condition
+// the question states, never substituted from the authored answer; every hole
+// is read as f(a ± 1e-6) and every line as a blow-up, so a hole can never pass
+// as an asymptote. Each distractor is re-enacted as the mistake its note names.
+// ---------------------------------------------------------------------------
+
+// rq-sub-asy-301 — (x^2+x-6)/(x^2-5x+6): line at 3, hole (2, -5), crossing (-3, 0)
+{
+  const num = 'x^2+x-6', den = 'x^2-5*x+6', fx = `(${num})/(${den})`;
+  checkSet('301 denominator roots', roots(den), [2, 3]);
+  checkSet('301 numerator roots', roots(num), [-3, 2]);
+  check('301 only one of the two denominator roots is a line', vaCount(fx), 1);
+  check('301 numerator at 3 = 6, so that root survives', f(num)(3), 6);
+  check('301 x = 3 blows up', blowsUp(fx, 3), 1);
+  check('301 numerator at 2 = 0 — both sides vanish', f(num)(2), 0);
+  check('301 x = 2 does not blow up', blowsUp(fx, 2), 0);
+  check('301 x = 2 is 0/0 on the original form', Number.isNaN(f(fx)(2)) ? 1 : 0, 1);
+  check('301 the hole height at 2 is -5', hole(fx, 2), -5, 1e-4);
+  check('301 the reduced form agrees away from 2', f(fx)(7), f('(x+3)/(x-3)')(7), 1e-9);
+  check('301 f(-3) = 0, a real crossing', f(fx)(-3), 0);
+  check('301 the denominator at -3 is 30, so the graph is defined there', f(den)(-3), 30);
+  check('301 distractor "hole height 5": the sign came from the denominator -1', Math.abs(hole(fx, 2)), 5, 1e-4);
+  check('301 distractor "(2, 0) is a crossing": the graph has no value at 2', Number.isNaN(f(fx)(2)) ? 1 : 0, 1);
+}
+
+// rq-sub-asy-302 — recover (ax+b)/(x+c) from VA x=4, HA y=-2 and the point (2, 1)
+{
+  const cs = roots('4+c', -20, 20, 'c');
+  checkSet('302 c solves 4 + c = 0', cs, [-4]);
+  const c = cs[0];
+  // a is fixed by the horizontal asymptote: the far value of (a x + 2)/(x + c) must be -2
+  const as = roots(`(a*1e6+2)/(1e6+(${c}))+2`, -20, 20, 'a');
+  check('302 a solves "far value = -2"', as[0], -2, 1e-4);
+  const bs = roots(`(-2*2+b)/(2+(${c}))-1`, -20, 20, 'b');
+  checkSet('302 b solves the point equation at x = 2', bs, [2]);
+  const fx = `(-2*x+${bs[0]})/(x+(${c}))`;
+  checkSet('302 the recovered function has its only vertical line at 4', roots(`x+(${c})`), [4]);
+  check('302 it blows up there', blowsUp(fx, 4), 1);
+  check('302 its numerator at 4 is -6, so it is a line and not a hole', f(`-2*x+${bs[0]}`)(4), -6);
+  check('302 its horizontal asymptote is -2', HA(fx), -2, 1e-4);
+  check('302 it really passes through (2, 1)', f(fx)(2), 1, 1e-12);
+  checkSet('302 wrong "a = 2": the point then forces b = -6', roots(`(2*2+b)/(2+(${c}))-1`, -20, 20, 'b'), [-6]);
+  checkSet('302 wrong "swapped point": x=1, y=2 forces b = -4', roots(`(-2*1+b)/(1+(${c}))-2`, -20, 20, 'b'), [-4]);
+}
+
+// rq-sub-asy-303 — (x^2+ax-21)/(x^2-x-6) with a hole at x = 3
+{
+  const den = 'x^2-x-6';
+  checkSet('303 denominator roots', roots(den), [3, -2]);
+  const as = roots('3^2+3*a-21', -20, 20, 'a');
+  checkSet('303 a solves "numerator vanishes at 3"', as, [4]);
+  const a = as[0];
+  const num = `x^2+(${a})*x-21`, fx = `(${num})/(${den})`;
+  checkSet('303 with that a the numerator vanishes at 3 and -7', roots(num), [3, -7]);
+  check('303 x = 3 does not blow up', blowsUp(fx, 3), 0);
+  check('303 the hole height at 3 is 2', hole(fx, 3), 2, 1e-4);
+  check('303 the reduced form agrees away from 3', f(fx)(10), f('(x+7)/(x+2)')(10), 1e-9);
+  check('303 numerator at -2 = -25, so that root survives', f(num)(-2), -25);
+  check('303 x = -2 blows up', blowsUp(fx, -2), 1);
+  check('303 exactly one vertical line', vaCount(fx), 1);
+  check('303 horizontal asymptote y = 1', HA(fx), 1, 1e-4);
+  check('303 wrong a = -4 leaves the numerator at 3 equal to -24', f('x^2-4*x-21')(3), -24);
+  check('303 wrong a = -4 keeps the line at 3', blowsUp('(x^2-4*x-21)/(x^2-x-6)', 3), 1);
+  check('303 wrong 3.5 = ratio of the free terms', E('-21/-6'), 3.5);
+}
+
+// rq-sub-asy-304 — g = 1/(f-2) with f = (3x^2-6x-3)/(x^2-4): two lines, two holes
+{
+  const fx = '(3*x^2-6*x-3)/(x^2-4)';
+  const gx = `1/((${fx})-2)`;
+  const red = '(x^2-4)/(x^2-6*x+5)';
+  for (const v of [-5, 0, 3, 7, 12]) check(`304 g equals (x^2-4)/(x^2-6x+5) at x=${v}`, f(gx)(v), f(red)(v), 1e-9);
+  checkSet('304 f leaves its domain at 2 and -2', roots('x^2-4'), [2, -2]);
+  const cross = roots(`(3*x^2-6*x-3)-2*(x^2-4)`);
+  checkSet('304 f(x) = 2 has exactly the two solutions 1 and 5', cross, [1, 5]);
+  check('304 f really equals 2 at the first of them', f(fx)(cross[0]), 2, 1e-9);
+  check('304 f really equals 2 at the second', f(fx)(cross[1]), 2, 1e-9);
+  check('304 numerator of g at 1 = -3', f('x^2-4')(1), -3);
+  check('304 numerator of g at 5 = 21', f('x^2-4')(5), 21);
+  check('304 g has exactly two vertical lines', vaCount(red), 2);
+  check('304 horizontal asymptote of g is y = 1', HA(red), 1, 1e-4);
+  check('304 x = 2 stays finite on g — a hole', f(red)(2), 0);
+  check('304 x = -2 stays finite on g — a hole', f(red)(-2), 0);
+  check('304 no blow-up at 2', blowsUp(red, 2), 0);
+  check('304 no blow-up at -2', blowsUp(red, -2), 0);
+  checkSet('304 the numerator of g vanishes exactly at the two missing values', roots('x^2-4'), [2, -2]);
+  check('304 distractor y = 3 is the horizontal of f, not of g', HA(fx), 3, 1e-4);
+  check('304 distractor "no holes": g is genuinely undefined at 2', Number.isNaN(f(gx)(2)) || !Number.isFinite(f(gx)(2)) ? 1 : 0, 1);
+}
+
+// rq-sub-asy-305 — (2x+k)/(x-4) through (6, 12): k = 12, then the whole sketch
+{
+  const ks = roots('(2*6+k)/(6-4)-12', -50, 50, 'k');
+  checkSet('305 k solves the point equation', ks, [12]);
+  const k = ks[0];
+  const num = `2*x+${k}`, fx = `(${num})/(x-4)`;
+  check('305 the recovered function passes through (6, 12)', f(fx)(6), 12, 1e-12);
+  checkSet('305 denominator root', roots('x-4'), [4]);
+  check('305 numerator at 4 = 20, so it is a line', f(num)(4), 20);
+  check('305 it blows up at 4', blowsUp(fx, 4), 1);
+  check('305 exactly one vertical line', vaCount(fx), 1);
+  check('305 horizontal asymptote y = 2', HA(fx), 2, 1e-4);
+  checkSet('305 x-intercept from the numerator', roots(num), [-6]);
+  check('305 f(-6) = 0', f(fx)(-6), 0);
+  check('305 y-intercept f(0) = -3', f(fx)(0), -3);
+  check('305 figure: the right branch sits above y = 2', f(fx)(5) > 2 && f(fx)(50) > 2 ? 1 : 0, 1);
+  check('305 figure: the left branch sits below y = 2', f(fx)(0) < 2 && f(fx)(-50) < 2 ? 1 : 0, 1);
+  checkSet('305 wrong k = -12 moves the x-intercept to 6', roots('2*x-12'), [6]);
+  check('305 wrong k = -12 makes f(0) = 3', f('(2*x-12)/(x-4)')(0), 3);
+  check('305 wrong "y-intercept 3": the sign was dropped', Math.abs(f(fx)(0)), 3);
+}
+
 summary('asymptotes');
