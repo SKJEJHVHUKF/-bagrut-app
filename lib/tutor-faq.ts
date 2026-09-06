@@ -421,8 +421,13 @@ const UNKNOWN_WEIGHT = 2.2;
  * same words and mean different questions; the shape is the only thing that
  * separates them, and the bank has always labelled its entries with it.
  */
+// The shape NUDGE path above is not wired yet; only the TIE-BREAK below
+// shipped. The 0.05 is a measured value, so it is kept rather than deleted.
+// Owner of fce2d86: wire it or remove both, and these comments with them.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SHAPE_WEIGHT = 0.05;
 /** Below this the model is guessing between seven shapes; ignore it entirely. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- same unwired path
 const SHAPE_MIN_CONFIDENCE = 0.4;
 /**
  * The bar for BREAKING A TIE, which is higher than the bar for nudging a rank.
