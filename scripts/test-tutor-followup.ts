@@ -67,7 +67,13 @@ const cases: Array<[string, string]> = [
 for (const [msg, want] of cases) ok(followUp(msg) === want, `"${msg}" → ${want}`);
 
 console.log('\n=== and what each one gets ===\n');
-ok(ladderMove('why', []) === 'explain', 'why → explain');
+// ⚠️ 'why' IS NOT A LADDER MOVE — it used to map to 'explain' and that was the
+// single biggest source of "the tutor didn't answer me" (80df482). 'explain' is
+// the template "…עכשיו קרא אותה שוב לאט", right for the one-tap chip and a stall
+// for a student who typed "למה מכפילים ולא מחברים". null lets `routeMessage`
+// carry on to the layers that might have a real reason, and to the model if none
+// do. Do not restore 'explain' here without re-reading Itay's 2026-09-06 screens.
+ok(ladderMove('why', []) === null, 'why → no ladder move at all');
 ok(ladderMove('restate', []) === 'explain', 'restate → explain');
 ok(ladderMove('stuck', []) === 'help', 'stuck with nothing spent → the help ladder');
 ok(ladderMove('more', ['hint']) === 'help', 'more with only a hint spent → still the help ladder');
@@ -171,9 +177,19 @@ for (const msg of ['לא זוכר', 'לא בטוח', 'אין לי מושג', 'ש
 //
 // And the fix is NOT to let `yesNo` ignore the mark: "בטוח" is the student
 // saying yes, "בטוח?" is the student saying they do not believe you.
+//
+// ⚠️ THE TWO COLUMNS DIFFER ON PURPOSE, AND 'open' IS NOT A LEAK. Without the
+// mark the yes/no layer answers locally. With it, `followUp` says 'why' and
+// `ladderMove` returns null (80df482), so the challenge carries on. The ask it
+// used to get was 'explain' — "קרא אותה שוב לאט" — which scores as a local win
+// in every report and answers nothing: a student who does not believe the answer
+// is owed a reason. In a live session the verdict layer catches most of these
+// earlier and for free; this state has `tutorSpoke` but no verdict, which is the
+// one case that pays. If that ever stops being rare, answer it locally with a
+// REASON — do not route it back to a template.
 for (const [msg, want] of [
-  ['בטוח', 'ask'], ['בטוח?', 'ask'], ['אתה בטוח?', 'ask'],
-  ['כן', 'ask'], ['כן?', 'ask'], ['נכון?', 'ask'], ['באמת?', 'ask'],
+  ['בטוח', 'ask'], ['בטוח?', 'open'], ['אתה בטוח?', 'open'],
+  ['כן', 'ask'], ['כן?', 'open'], ['נכון?', 'open'], ['באמת?', 'open'],
 ] as const) {
   const r = routeMessage(msg, focus, { lastAsk: 'help', served: ['hint'], tutorSpoke: true });
   ok(r.kind === want, `"${msg}" → ${want} (got ${r.kind})`);
