@@ -4,6 +4,7 @@
 // counted crossing (grid sign changes) or a discriminant computed from k; every distractor and
 // wrongAnswer note is re-enacted as the mistake it names and must land on THAT option.
 import { check, dcheck, checkSet, icheck, summary, math, E } from './_lib';
+import { fnFigure } from '../../lib/fn-figure';
 
 const f = (expr: string) => {
   const c = math.parse(expr).compile();
@@ -444,6 +445,216 @@ const kind = (expr: string, x0: number, h = 0.05) => {
   check('tr-213 wrong k=12 gives distance 8', 2 * root(12), 8);
   check('tr-213 wrong HA 6: g(1e8) is not 6', Math.abs(g(3)(1e8) - 6) > 1 ? 1 : 0, 1);
   check('tr-213 wrong HA 0: g(1e8) is not 0', Math.abs(g(3)(1e8)) > 1 ? 1 : 0, 1);
+}
+
+// ---------------------------------------------------------------------------
+// Round 3 (2026-09-06) — ids rq-sub-tr-3NN. Two mid questions and three hard
+// ones that climb: one shifted quotient read end to end, a chain that recovers
+// a transformation from two stated features and consumes it, and a full |f|
+// investigation. Every number below is COMPUTED from the question's own data —
+// pointwise identities for the transformations, mathjs derivatives for the
+// extrema, grid crossings for the counts — never re-applied from the algebra
+// the solution writes.
+// ---------------------------------------------------------------------------
+
+// rq-sub-tr-301 — f = (5x+2)/(x+3) moved 2 LEFT and 4 DOWN → g = (x-8)/(x+5)
+{
+  const fx = '(5*x+2)/(x+3)';
+  const gx = '(x-8)/(x+5)';
+  for (const t of [-8, -3.5, 0, 2, 7]) check(`tr-301 g(t) = f(t+2) - 4 at t=${t}`, f(gx)(t), f(fx)(t + 2) - 4);
+  check('tr-301 the combined fraction equals the un-combined one', f(gx)(6), f('(5*(x+2)+2)/((x+2)+3) - 4')(6));
+  check('tr-301 f blows up at -3', Math.abs(f(fx)(-3 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-301 g blows up at -5, two units to the LEFT', Math.abs(f(gx)(-5 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-301 -3 - 2 = -5', -3 - 2, E('-5'));
+  check('tr-301 the numerator at -5 is -13, not zero', f('x-8')(-5), -13);
+  check('tr-301 f tends to 5', f(fx)(1e7), 5, 1e-5);
+  check('tr-301 g tends to 5 - 4 = 1', f(gx)(1e7), E('5-4'), 1e-5);
+  check('tr-301 g(8) = 0', f(gx)(8), 0);
+  check('tr-301 g crosses the x-axis exactly once', crossings(gx, [-5]), 1);
+  check('tr-301 g(0) = -1.6', f(gx)(0), E('-8/5'));
+  // wrong 1: the shift taken to the RIGHT — f(x-2) - 4 = (x-12)/(x+1)
+  const right = '(x-12)/(x+1)';
+  for (const t of [-4, 0, 3, 9]) check(`tr-301 wrong branch = f(t-2)-4 at t=${t}`, f(right)(t), f(fx)(t - 2) - 4);
+  check('tr-301 wrong branch VA at -1', Math.abs(f(right)(-1 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-301 wrong branch root at 12', f(right)(12), 0);
+  check('tr-301 wrong branch y-intercept -12', f(right)(0), -12);
+  // wrong 2: the drop never reached the horizontal asymptote
+  check('tr-301 wrong HA 5 is f itself, before the drop', f(fx)(1e7), 5, 1e-5);
+  // wrong 3: sign slip on the root
+  check('tr-301 wrong root -8: the numerator there is -16, not 0', f('x-8')(-8), -16);
+  check('tr-301 g(-8) is not 0 either', Math.abs(f(gx)(-8)) > 1 ? 1 : 0, 1);
+}
+
+// rq-sub-tr-302 — f = (2x+8)/(x+1) reflected in the x-axis and THEN moved 5 up
+{
+  const fx = '(2*x+8)/(x+1)';
+  const A = '(3*x-3)/(x+1)'; // -f + 5 — the given order
+  const B = '(-7*x-13)/(x+1)'; // -(f + 5) — the reversed order
+  const C = '(-2*x-3)/(x+1)'; // the 5 added inside the numerator only
+  const D = '(7*x-13)/(x-1)'; // reflected in the y-axis by mistake
+  for (const t of [-4, -2, 0, 3, 8]) check(`tr-302 A(t) = -f(t) + 5 at t=${t}`, f(A)(t), -f(fx)(t) + 5);
+  check('tr-302 f blows up at -1', Math.abs(f(fx)(-1 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-302 A blows up at -1 too: the x-axis reflection does not move it', Math.abs(f(A)(-1 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-302 the numerator of A at -1 is -6, not zero', f('3*x-3')(-1), -6);
+  check('tr-302 f tends to 2', f(fx)(1e7), 2, 1e-5);
+  check('tr-302 A tends to -2 + 5 = 3', f(A)(1e7), E('-2+5'), 1e-5);
+  check('tr-302 A(1) = 0', f(A)(1), 0);
+  check('tr-302 A(0) = -3', f(A)(0), -3);
+  for (const t of [-4, 0, 3]) check(`tr-302 B(t) = -(f(t) + 5) at t=${t}`, f(B)(t), -(f(fx)(t) + 5));
+  check('tr-302 B tends to -7 — the reversed order multiplies the shift too', f(B)(1e7), -7, 1e-5);
+  for (const t of [-4, 0, 3]) check(`tr-302 C(t) adds the 5 inside the numerator at t=${t}`, f(C)(t), f('(-(2*x+8)+5)/(x+1)')(t));
+  check('tr-302 C tends to -2: the shift never reached the fraction', f(C)(1e7), -2, 1e-5);
+  for (const t of [-4, 0, 3]) check(`tr-302 D(t) = f(-t) + 5 at t=${t}`, f(D)(t), f(fx)(-t) + 5);
+  check('tr-302 D blows up at 1: the y-axis reflection DID move the asymptote', Math.abs(f(D)(1 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-302 D tends to 7', f(D)(1e7), 7, 1e-5);
+  check('tr-302 the four options really are four different functions', new Set([A, B, C, D].map((e) => f(e)(4).toFixed(6))).size, 4);
+}
+
+// rq-sub-tr-311 — f = 12/(x-1) moved 2 right and 3 down → g = (21-3x)/(x-3),
+// positive only between its vertical asymptote and its root
+{
+  const fx = '12/(x-1)';
+  const gx = '(21-3*x)/(x-3)';
+  for (const t of [-5, 0, 2, 5, 11]) check(`tr-311 g(t) = f(t-2) - 3 at t=${t}`, f(gx)(t), f(fx)(t - 2) - 3);
+  check('tr-311 the combined fraction equals the un-combined one', f(gx)(8), f('12/(x-3)-3')(8));
+  check('tr-311 g blows up at 3', Math.abs(f(gx)(3 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-311 1 + 2 = 3: the vertical asymptote moved right', 1 + 2, E('3'));
+  check('tr-311 the numerator at 3 is 12, not zero', f('21-3*x')(3), 12);
+  check('tr-311 f tends to 0', f(fx)(1e7), 0, 1e-5);
+  check('tr-311 g tends to 0 - 3 = -3', f(gx)(1e7), E('0-3'), 1e-5);
+  check('tr-311 g(7) = 0', f(gx)(7), 0);
+  check('tr-311 g crosses the x-axis exactly once', crossings(gx, [3]), 1);
+  check('tr-311 g(0) = -7', f(gx)(0), E('21/(-3)'));
+  // the sign table, one sample per column plus the two open ends
+  check('tr-311 negative left of 3', f(gx)(1) < 0 ? 1 : 0, 1);
+  check('tr-311 positive between 3 and 7', f(gx)(5) > 0 ? 1 : 0, 1);
+  check('tr-311 negative right of 7', f(gx)(9) < 0 ? 1 : 0, 1);
+  check('tr-311 positive at both open ends of that interval', f(gx)(3.01) > 0 && f(gx)(6.99) > 0 ? 1 : 0, 1);
+  check('tr-311 g is undefined at 3, so the interval is open there', Number.isFinite(f(gx)(3)) ? 1 : 0, 0);
+  // wrong 1: shifted LEFT — f(x+2) - 3 = (9-3x)/(x+1)
+  const left = '(9-3*x)/(x+1)';
+  for (const t of [-4, 0, 4]) check(`tr-311 wrong branch = f(t+2)-3 at t=${t}`, f(left)(t), f(fx)(t + 2) - 3);
+  check('tr-311 wrong branch VA at -1', Math.abs(f(left)(-1 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-311 wrong branch root at 3', f(left)(3), 0);
+  check('tr-311 wrong branch y-intercept 9', f(left)(0), 9);
+  // wrong 2 and 3
+  check('tr-311 wrong HA 0 is f itself, before the drop', f(fx)(1e7), 0, 1e-5);
+  check('tr-311 wrong y-intercept +7: the denominator at 0 is -3', f('x-3')(0), -3);
+}
+
+// rq-sub-tr-312 — f = (x^2+16)/x. The single shift is RECOVERED from the moved
+// asymptote and the moved minimum, then consumed to find the new maximum.
+{
+  const fx = '(x^2+16)/x';
+  const gx = '(x^2-16*x+71)/(x-5)';
+  dcheck("tr-312 the quotient rule gives f' = (x^2-16)/x^2", fx, '(x^2-16)/x^2');
+  dcheck('tr-312 and the un-collected form agrees', fx, '(2*x*x-(x^2+16))/x^2');
+  checkSet("tr-312 f' vanishes exactly at 4 and -4", [4, -4].filter((r) => Math.abs(f('x^2-16')(r)) < 1e-12), [4, -4]);
+  check('tr-312 f(4) = 8, the given minimum height', f(fx)(4), E('32/4'));
+  check('tr-312 and 4 really is a minimum', kind(fx, 4), 1);
+  check('tr-312 f(-4) = -8', f(fx)(-4), E('32/(-4)'));
+  check('tr-312 and -4 really is a maximum', kind(fx, -4), -1);
+  check('tr-312 f blows up at 0', Math.abs(f(fx)(1e-9)) > 1e6 ? 1 : 0, 1);
+  // the two stated features each give one component of the shift
+  check('tr-312 horizontal size from the asymptote: 5 - 0', 5 - 0, E('5'));
+  check('tr-312 the same size from the minimum: 9 - 4', 9 - 4, E('5'));
+  check('tr-312 vertical size from the height: 8 - 2', 8 - 2, E('6'));
+  // g IS f moved 5 right and 6 down
+  for (const t of [-3, 1, 3, 7, 12]) check(`tr-312 g(t) = f(t-5) - 6 at t=${t}`, f(gx)(t), f(fx)(t - 5) - 6);
+  check('tr-312 the combined fraction equals the un-combined one', f(gx)(2), f('((x-5)^2+16)/(x-5) - 6')(2));
+  check('tr-312 g(9) = 2, the stated new minimum', f(gx)(9), 2);
+  check('tr-312 and 9 is a minimum of g', kind(gx, 9), 1);
+  check('tr-312 g blows up at 5', Math.abs(f(gx)(5 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-312 the maximum of g sits at -4 + 5', -4 + 5, E('1'));
+  check('tr-312 its height is -8 - 6', -8 - 6, E('-14'));
+  check('tr-312 g(1) = -14', f(gx)(1), -14);
+  check('tr-312 and 1 is a maximum of g', kind(gx, 1), -1);
+  // wrongs
+  check('tr-312 wrong (-4,-8) is the maximum BEFORE the shift', f(fx)(-4), -8);
+  check('tr-312 wrong height -2 came from adding 6 instead of subtracting', -8 + 6, -2);
+  check('tr-312 g(1) is nowhere near -2', Math.abs(f(gx)(1) + 2) > 1 ? 1 : 0, 1);
+  const wrongShift = '((x-9)^2+16)/(x-9) - 2';
+  check('tr-312 wrong sizes 9 and 2 put the asymptote at 9', Math.abs(f(wrongShift)(9 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-312 and that minimum height is 6, not 2', f(wrongShift)(13), E('8-2'));
+}
+
+// rq-sub-tr-313 — f = (x^2-9)/(x^2+3) and g = |f|: the fold turns the minimum
+// (0,-3) into the maximum (0,3) and the two roots into minima
+const TR313_G = 'abs((x^2-9)/(x^2+3))';
+{
+  const fx = '(x^2-9)/(x^2+3)';
+  const gx = TR313_G;
+  check('tr-313 the denominator never vanishes', crossings('x^2+3'), 0);
+  checkSet('tr-313 f vanishes exactly at 3 and -3', [3, -3].filter((r) => Math.abs(f('x^2-9')(r)) < 1e-12), [3, -3]);
+  check('tr-313 f(0) = -3', f(fx)(0), E('-9/3'));
+  dcheck("tr-313 the quotient rule gives f' = 24x/(x^2+3)^2", fx, '24*x/(x^2+3)^2');
+  dcheck('tr-313 and the un-collected form agrees', fx, '(2*x*(x^2+3)-(x^2-9)*2*x)/(x^2+3)^2');
+  check("tr-313 f' changes sign exactly once", crossings('24*x'), 1);
+  check('tr-313 (0,-3) is a minimum of f', kind(fx, 0), 1);
+  check('tr-313 f is negative between its roots', f(fx)(1) < 0 ? 1 : 0, 1);
+  check('tr-313 and positive outside them', f(fx)(4) > 0 && f(fx)(-4) > 0 ? 1 : 0, 1);
+  // the fold
+  check('tr-313 g(0) = 3: the depth -3 became the height 3', f(gx)(0), 3);
+  check('tr-313 and (0,3) is a MAXIMUM of g', kind(gx, 0), -1);
+  check('tr-313 g(3) = 0', f(gx)(3), 0);
+  check('tr-313 (3,0) is a minimum of g', kind(gx, 3), 1);
+  check('tr-313 g(-3) = 0', f(gx)(-3), 0);
+  check('tr-313 (-3,0) is a minimum of g', kind(gx, -3), 1);
+  check('tr-313 g is even, so the two minima are symmetric', f(gx)(2.7) - f(gx)(-2.7), 0);
+  check('tr-313 g falls from the peak to the right root', f(gx)(1) > f(gx)(2) ? 1 : 0, 1);
+  check('tr-313 and rises again beyond it', f(gx)(4) < f(gx)(5) ? 1 : 0, 1);
+  check('tr-313 g never touches the x-axis anywhere else', crossings(gx), 0);
+  check('tr-313 both graphs tend to 1', f(gx)(1e7), 1, 1e-6);
+  check('tr-313 f tends to the same height', f(fx)(1e7), 1, 1e-6);
+  check('tr-313 the outer branches stay below 1', f(gx)(1e4) < 1 ? 1 : 0, 1);
+  // wrongs
+  check('tr-313 wrong height -3 is f(0), before the fold', f(fx)(0), -3);
+  check('tr-313 wrong height 9 is the numerator alone at 0', Math.abs(f('x^2-9')(0)), 9);
+  check('tr-313 the real height divides by the denominator too', E('9/3'), 3);
+  check('tr-313 wrong "both minima at 3": g(-3) is 0 as well', f(gx)(-3), 0);
+}
+
+// rq-sub-tr-313's figure — DRAWN by lib/fn-figure from |f| itself, which
+// re-derives the horizontal asymptote and each marked point before it will
+// render anything.  Emit the SVG with:
+//   npx tsx scripts/_rq-extra-checks/transformations.ts emit
+{
+  const spec = {
+    f: (x: number) => Math.abs(x * x - 9) / (x * x + 3),
+    xMin: -9,
+    xMax: 9,
+    // Only two labels: fn-figure alternates a label above / below the point, and
+    // the "above" one is printed straight through the rising branch. The left
+    // minimum keeps its dot and is named in the caption instead.
+    points: [
+      { x: 0, y: 3, label: '(0, 3)' },
+      { x: 3, y: 0, label: '(3, 0)' },
+      { x: -3, y: 0 },
+    ],
+    hAsymptotes: [1],
+  };
+  const { svg, errors } = fnFigure(spec);
+  if (errors.length) console.log(errors.map((e) => `  ${e}`).join('\n'));
+  check('tr-313 fig: lib/fn-figure accepts every feature the caption asserts', errors.length, 0);
+  check('tr-313 fig: a curve was actually drawn', /<polyline/.test(svg) ? 1 : 0, 1);
+  check('tr-313 fig: the drawn function is the same |f| checked above', spec.f(2.4), f(TR313_G)(2.4));
+  // …and one thing no numeric assertion sees: two labels printed on top of each
+  // other. Boxes are estimated from the font size (0.6em per character) and the
+  // text-anchor, and no two of them may intersect.
+  const boxes = [...svg.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)" font-size="([\d.]+)"([^>]*)>([^<]*)<\/text>/g)].map((m) => {
+    const [x, y, fs] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const anchor = /text-anchor="(\w+)"/.exec(m[4])?.[1] ?? 'start';
+    const w = m[5].length * fs * 0.6;
+    const left = anchor === 'end' ? x - w : anchor === 'middle' ? x - w / 2 : x;
+    return { left, right: left + w, top: y - fs, bottom: y + fs * 0.25, t: m[5] };
+  });
+  const clashes = boxes.flatMap((a, i) =>
+    boxes.slice(i + 1).filter((b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom).map((b) => `${a.t} / ${b.t}`),
+  );
+  if (clashes.length) console.log(`  overlapping labels: ${clashes.join(', ')}`);
+  check('tr-313 fig: no two labels are printed on top of each other', clashes.length, 0);
+  check('tr-313 fig: every label the caption names was drawn', boxes.filter((b) => /^\(|^y =/.test(b.t)).length, 3);
+  if (process.argv.includes('emit')) console.log(svg);
 }
 
 summary('transformations');

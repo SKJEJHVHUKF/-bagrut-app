@@ -434,4 +434,170 @@ function solveFor(g: (t: number) => number, lo: number, hi: number): number {
   check('206ג the area beyond 4 never reaches 1, so 0.5 is attainable', F(1e6) - F(4) < 1 ? 1 : 0, 1);
 }
 
+// ---------------------------------------------------------------------------
+// 2026-09-06, round 3 (ids 3NN). Five questions that climb the archive's own
+// area ladder. Nothing below re-applies the authored algebra: every area is
+// re-integrated by quadrature from the question's function and bounds, every
+// antiderivative is proved symbolically, every parameter is recovered by
+// bisection on the stated property, and every distractor is re-enacted as the
+// mistake its note names.
+// ---------------------------------------------------------------------------
+
+// rq-sub-in-301 — √(4x-8): the LEFT bound is the edge of the domain → area 32/3
+{
+  const fx = 'sqrt(4*x-8)';
+  const F = '(4*x-8)^(3/2)/6';
+  const S = [2.1, 2.5, 3, 4.5, 6]; // the root is real only from 2 up
+  // the domain edge and the x-intercept are the same value, and it is 2
+  checkSet('301 4x-8 vanishes at the domain edge', roots('4*x-8', -5, 10), [2]);
+  check('301 f(2) = 0, so the graph meets the axis there', f(fx)(2), 0);
+  check('301 f is not real left of 2', Number.isFinite(f(fx)(1.5) as number) ? 0 : 1, 1);
+  check('301 f is above the axis inside the interval', sgn(f(fx)(4)), 1);
+  // the antiderivative, proved by differentiating it symbolically
+  dcheck('301 F = (4x-8)^{3/2}/6 integrates √(4x-8)', F, fx, S);
+  check('301 the denominator is 4·(3/2)', E('4*(3/2)'), 6);
+  icheck('301 ∫_2^6 √(4x-8)', fx, 2, 6, E('32/3'), 200000);
+  check('301 F(6) - F(2)', f(F)(6) - f(F)(2), E('32/3'));
+  check('301 F(6) = 16^{3/2}/6', f(F)(6), E('64/6'));
+  // d1 128/3: the inner coefficient 4 never divided → F = (2/3)(4x-8)^{3/2}
+  const d1 = f('(2/3)*(4*x-8)^(3/2)');
+  check('301 d1 128/3 from the missing ÷4', d1(6) - d1(2), E('128/3'));
+  // d2 32: divided by the OLD power 1/2 instead of the new 3/2 → denominator 4·(1/2)
+  const d2 = f('(4*x-8)^(3/2)/(4*(1/2))');
+  check('301 d2 32 from dividing by the old power', d2(6) - d2(2), 32);
+  // d3 16: divided by the inner coefficient only → denominator 4
+  const d3 = f('(4*x-8)^(3/2)/4');
+  check('301 d3 16 from the missing ÷(3/2)', d3(6) - d3(2), 16);
+  check('301 the four options are four different numbers', new Set([E('32/3'), E('128/3'), 32, 16]).size, 4);
+}
+
+// rq-sub-in-302 — (x-4)/√x straddles the axis inside [1,9]: split at 4 → area 8
+{
+  const fx = '(x-4)/sqrt(x)';
+  const F = '(2/3)*x^(3/2) - 8*sqrt(x)';
+  const S = [0.4, 1, 2, 4, 6.5, 9];
+  checkSet('302 the crossing inside the interval', roots(fx, 0.05, 20), [4]);
+  check('302 f(1) = -3 (below the axis)', f(fx)(1), -3);
+  check('302 f(9) = 5/3 (above the axis)', f(fx)(9), E('5/3'));
+  check('302 the crossing lies strictly inside (1,9)', 1 < 4 && 4 < 9 ? 1 : 0, 1);
+  // the split into two powers is an identity, not a rewrite the author asserts
+  check('302 (x-4)/√x = x^{1/2} - 4x^{-1/2} at x = 6.25', f(fx)(6.25), f('x^(1/2) - 4*x^(-1/2)')(6.25));
+  dcheck('302 F = (2/3)x^{3/2} - 8√x integrates (x-4)/√x', F, fx, S);
+  // f is increasing on x > 0, which is why 4 is the ONLY crossing
+  check('302 f is increasing: f(1) < f(4)', f(fx)(1) < f(fx)(4) ? 1 : 0, 1);
+  check('302 f is increasing: f(4) < f(9)', f(fx)(4) < f(fx)(9) ? 1 : 0, 1);
+  icheck('302 ∫_1^4 is negative', fx, 1, 4, E('-10/3'));
+  icheck('302 ∫_4^9 is positive', fx, 4, 9, E('14/3'));
+  const Fv = f(F);
+  check('302 F(1)', Fv(1), E('-22/3'));
+  check('302 F(4)', Fv(4), E('-32/3'));
+  check('302 F(9)', Fv(9), -6);
+  check('302 area = |first| + |second|', Math.abs(Fv(4) - Fv(1)) + Math.abs(Fv(9) - Fv(4)), 8);
+  // wrong 4/3: one unsplit integral; wrong 14/3: only the part above the axis
+  icheck('302 wrong 4/3 = the unsplit integral', fx, 1, 9, E('4/3'));
+  check('302 wrong 14/3 = the upper part alone', Fv(9) - Fv(4), E('14/3'));
+  check('302 the cancellation is 14/3 - 10/3', E('14/3 - 10/3'), Fv(9) - Fv(1), 1e-9);
+}
+
+// rq-sub-in-303 — 9/x^2 against 10 - x^2: bounds come out of f = g → area 16/3
+{
+  const diff = '10 - x^2 - 9/x^2'; // g - f
+  const F = '10*x - x^3/3 + 9/x';
+  checkSet('303 the graphs meet at 1 and 3 (x > 0)', roots(diff, 0.05, 8), [1, 3]);
+  check('303 they really meet at x = 1', f('9/x^2')(1) - f('10 - x^2')(1), 0);
+  check('303 they really meet at x = 3', f('9/x^2')(3) - f('10 - x^2')(3), 0);
+  // the substitution t = x^2 turns the quartic into t^2 - 10t + 9
+  // the substitution's own quadratic, solved numerically (x plays the role of t)
+  checkSet('303 t^2 - 10t + 9 = 0 gives t = 1 and t = 9', roots('x^2 - 10*x + 9', -5, 20), [1, 9]);
+  check('303 and √9 is the right-hand bound', Math.sqrt(9), 3);
+  // who is on top: the parabola, by 3.75 at the midpoint
+  check('303 g(2) - f(2) is positive', sgn(f(diff)(2)), 1);
+  check('303 f(2) = 9/4 against g(2) = 6', f('9/x^2')(2), E('9/4'));
+  check('303 g(2) = 6', f('10 - x^2')(2), 6);
+  dcheck('303 F = 10x - x^3/3 + 9/x integrates the difference', F, diff, [0.5, 1, 1.7, 2.4, 3, 4]);
+  icheck('303 ∫_1^3 (g - f)', diff, 1, 3, E('16/3'));
+  check('303 F(3) - F(1)', f(F)(3) - f(F)(1), E('16/3'));
+  check('303 F(3) = 24', f(F)(3), 24);
+  check('303 F(1) = 56/3', f(F)(1), E('56/3'));
+  // d1 -16/3: subtracted in the wrong order; d2 34/3: the parabola alone;
+  // d3 52/3: the two integrals added instead of subtracted
+  icheck('303 d1 = ∫_1^3 (f - g)', '9/x^2 - (10 - x^2)', 1, 3, E('-16/3'));
+  icheck('303 d2 = ∫_1^3 (10 - x^2)', '10 - x^2', 1, 3, E('34/3'));
+  icheck('303 d3 = ∫_1^3 (10 - x^2 + 9/x^2)', '10 - x^2 + 9/x^2', 1, 3, E('52/3'));
+  check('303 the four options are four different numbers', new Set([E('16/3'), E('-16/3'), E('34/3'), E('52/3')]).size, 4);
+}
+
+// rq-sub-in-304 — a/√x: a recovered from a stated area, then used twice
+{
+  // א. the parameter is RECOVERED from the property, by bisection on the area
+  const areaOf = (A: number) => quad(`${A}/sqrt(x)`, 1, 9, 40000);
+  const a = solveFor((A) => areaOf(A) - 24, 0.2, 40);
+  check('304 a recovered from area over [1,9] = 24', a, 6, 1e-6);
+  dcheck('304 F = 2a√x integrates a/√x at a = 6', '12*sqrt(x)', '6/sqrt(x)', POS);
+  icheck('304 and ∫_1^9 6/√x really is 24', '6/sqrt(x)', 1, 9, 24);
+  check('304 F(9) - F(1) = 6a - 2a at a = 6', f('12*sqrt(x)')(9) - f('12*sqrt(x)')(1), 24);
+  // ב. the meeting point with y = 3
+  checkSet('304 6/√x = 3 at x = 4', roots('6/sqrt(x) - 3', 0.05, 30), [4]);
+  check('304 f(4) = 3', f('6/sqrt(x)')(4), 3);
+  // ג. on [4,9] the LINE is the upper edge, and the area between them is 3
+  check('304 f is below the line at x = 9', sgn(3 - f('6/sqrt(x)')(9)), 1);
+  check('304 f is decreasing: f(4) > f(9)', f('6/sqrt(x)')(4) > f('6/sqrt(x)')(9) ? 1 : 0, 1);
+  dcheck('304 G = 3x - 12√x integrates 3 - 6/√x', '3*x - 12*sqrt(x)', '3 - 6/sqrt(x)', POS);
+  icheck('304 ∫_4^9 (3 - 6/√x)', '3 - 6/sqrt(x)', 4, 9, 3);
+  check('304 G(9) - G(4)', f('3*x - 12*sqrt(x)')(9) - f('3*x - 12*sqrt(x)')(4), 3);
+  // wrong 12 in box א: the ÷(1/2) forgotten, so the area read as 2a
+  const aBad = solveFor((A) => quad(`${A}/sqrt(x)`, 1, 9, 4000) / 2 - 24, 0.2, 60);
+  check('304 wrong a = 12 when the area is halved by the missing ×2', aBad, 12, 1e-5);
+  check('304 and a = 12 does NOT give an area of 24', areaOf(12), 48, 1e-5);
+  // wrong 2 in box ב: √x = 2 not squared
+  check('304 x = 2 does not satisfy 6/√x = 3', f('6/sqrt(x)')(2) === 3 ? 1 : 0, 0);
+  // wrong 12 in box ג: measured to the x-axis instead of to the line
+  icheck('304 wrong 12 = ∫_4^9 f itself', '6/sqrt(x)', 4, 9, 12);
+}
+
+// rq-sub-in-305 — g = (x√(3-x))^2: the sketch decides the bounds → area 27/4
+{
+  const fx = 'x*sqrt(3-x)';
+  const G = '3*x^2 - x^3';
+  const A = 'x^3 - x^4/4';
+  // the domain is the ROOT's, and the square really is 3x^2 - x^3
+  check('305 f is not real right of 3', Number.isFinite(f(fx)(4) as number) ? 0 : 1, 1);
+  check('305 f is real at the domain edge', Number.isFinite(f(fx)(3)) ? 1 : 0, 1);
+  for (const v of [-1, 0.5, 2, 2.9]) {
+    check(`305 g = (f)^2 at x = ${v}`, f(G)(v), Math.pow(f(fx)(v) as number, 2));
+  }
+  // 0 is a TOUCH (double root), 3 is a crossing — this is what the sketch shows
+  check('305 g(0) = 0', f(G)(0), 0);
+  check('305 g(3) = 0', f(G)(3), 0);
+  check('305 g > 0 just left of the origin', sgn(f(G)(-0.1)), 1);
+  check('305 g > 0 just right of the origin', sgn(f(G)(0.1)), 1);
+  checkSet('305 the only crossing right of the origin', roots(G, 0.5, 5), [3]);
+  // left of the origin the graph climbs away and never comes back
+  check('305 g(-1) is well above the axis', f(G)(-1), 4);
+  check('305 g(-3) is higher still', f(G)(-3) > f(G)(-1) ? 1 : 0, 1);
+  // the sign table's three representative values, from the real derivative
+  dcheck('305 g\' = 6x - 3x^2', G, '6*x - 3*x^2');
+  check('305 g\' < 0 at x = -1', sgn(f('6*x - 3*x^2')(-1)), -1);
+  check('305 g\' > 0 at x = 1', sgn(f('6*x - 3*x^2')(1)), 1);
+  check('305 g\' < 0 at x = 2.5', sgn(f('6*x - 3*x^2')(2.5)), -1);
+  // the maximum, found numerically rather than from the author's algebra
+  let xMax = 0;
+  for (let i = 0; i <= 30000; i++) {
+    const x = (3 * i) / 30000;
+    if (f(G)(x) > f(G)(xMax)) xMax = x;
+  }
+  check('305 the maximum sits at x = 2', xMax, 2, 1e-3);
+  check('305 and its height is 4', f(G)(2), 4);
+  // the area itself
+  dcheck('305 A = x^3 - x^4/4 integrates 3x^2 - x^3', A, G);
+  icheck('305 ∫_0^3 (3x^2 - x^3)', G, 0, 3, E('27/4'));
+  check('305 A(3) - A(0)', f(A)(3) - f(A)(0), E('27/4'));
+  check('305 A(3) = 27 - 81/4', f(A)(3), E('27 - 81/4'));
+  // wrong 54: the region assumed symmetric about the y-axis
+  icheck('305 wrong 54 = ∫_{-3}^{3}', G, -3, 3, 54);
+  // wrong 81/2: the integral of a product taken as the product of the integrals
+  check('305 wrong 81/2 = (∫x^2)·(∫(3-x))', quad('x^2', 0, 3) * quad('3-x', 0, 3), E('81/2'), 1e-6);
+  check('305 the three values are three different numbers', new Set([E('27/4'), 54, E('81/2')]).size, 3);
+}
+
 summary('integral');

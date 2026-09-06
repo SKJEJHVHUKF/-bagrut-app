@@ -370,4 +370,138 @@ const sgn = (v: number) => (v > 0 ? 1 : v < 0 ? -1 : 0);
   check('112 wrong "no missing point": 4 does zero the original denominator', f(den)(4), 0);
 }
 
+// ---------------------------------------------------------------------------
+// 2026-09-06, round 3 — sk-301…305. Each of these questions works on a REAL
+// function, so nothing here is re-enacted on a model: every `got` is computed
+// from the question's own expression, every figure claim (asymptote, marked
+// point, hole, domain edge) is re-derived, and every distractor is replayed as
+// the mistake its note names.
+// ---------------------------------------------------------------------------
+
+// rq-sub-sk-301 — (x^2-9)/(x^2-4x+3): hole (3,3), VA x = 1, HA y = 1
+{
+  const num = 'x^2-9', den = 'x^2-4*x+3', fx = `(${num})/(${den})`;
+  checkSet('301 the denominator vanishes at 1 and at 3', roots(den), [1, 3]);
+  check('301 the numerator at 1 is -8, so nothing cancels there', f(num)(1), -8);
+  check('301 the numerator at 3 vanishes too, so the factor cancels', f(num)(3), 0);
+  checkSet('301 only x = 1 is a vertical asymptote', vAsyms(num, den), [1]);
+  checkSet('301 x = 3 is a hole', holes(num, den), [3]);
+  check('301 no blow-up at the hole', blowsUp(fx, 3), 0);
+  check('301 the hole height is 3', limitAt(fx, 3), 3, 1e-6);
+  check('301 the reduced form (x+3)/(x-1) agrees away from the hole', f(fx)(7) - f('(x+3)/(x-1)')(7), 0, 1e-9);
+  check('301 and at a second point', f(fx)(-4) - f('(x+3)/(x-1)')(-4), 0, 1e-9);
+  check('301 horizontal asymptote y = 1 (equal degrees)', HA(fx), 1, 1e-4);
+  check('301 x-intercept: f(-3) = 0', f(fx)(-3), 0, 1e-12);
+  check('301 and -3 is inside the domain: the denominator there is 24', f(den)(-3), 24);
+  check('301 y-intercept (0,-3)', f(fx)(0), -3);
+  check('301 two branches (one vertical asymptote)', branches(num, den), 2);
+  check('301 fig: the hole lies right of the asymptote', sgn(holes(num, den)[0] - vAsyms(num, den)[0]), 1);
+  check('301 fig: both intercepts lie left of it', sgn(-3 - vAsyms(num, den)[0]) + sgn(0 - vAsyms(num, den)[0]), -2);
+  check('301 fig: the left branch stays below y = 1', sgn(f(fx)(-8) - 1) + sgn(f(fx)(-1e6) - 1), -2);
+  check('301 fig: the right branch stays above y = 1', sgn(f(fx)(4) - 1) + sgn(f(fx)(1e6) - 1), 2);
+  check('301 wrong "3,1,1": the hole height is not 1', Math.abs(limitAt(fx, 3) - 1) > 1 ? 1 : 0, 1);
+  check('301 wrong "1,0,3": the horizontal asymptote is not 0', Math.abs(HA(fx)) > 0.9 ? 1 : 0, 1);
+  check('301 wrong "1,1,0": the hole height is not 0', Math.abs(limitAt(fx, 3)) > 1 ? 1 : 0, 1);
+}
+
+// rq-sub-sk-302 — sqrt(x+5)/(x-1): domain x >= -5 and x != 1, intercept (-5,0)
+{
+  const fx = 'sqrt(x+5)/(x-1)';
+  const g = f(fx);
+  check('302 the radicand vanishes at -5', f('x+5')(-5), 0);
+  check('302 just left of -5 the radicand is negative, so there is no graph', sgn(f('x+5')(-5.05)), -1);
+  check('302 the root sits in the NUMERATOR, so -5 itself is allowed: f(-5) = 0', g(-5), 0);
+  check('302 and the denominator there is -6, not zero', f('x-1')(-5), -6);
+  check('302 the denominator vanishes at 1', f('x-1')(1), 0);
+  check('302 the numerator at 1 is sqrt(6), not zero, so x = 1 is an asymptote', f('sqrt(x+5)')(1), Math.sqrt(6), 1e-12);
+  check('302 and the graph does blow up there', blowsUp(fx, 1), 1);
+  check('302 horizontal asymptote y = 0: far right the value is tiny', Math.abs(g(1e8)) < 1e-3 ? 1 : 0, 1);
+  check('302 and it keeps shrinking', (Math.abs(g(1e10)) < Math.abs(g(1e8))) ? 1 : 0, 1);
+  check('302 f(95) = 10/94, as the solution substitutes', g(95), 10 / 94, 1e-12);
+  check('302 fig: the marked point (4,1)', g(4), 1, 1e-12);
+  check('302 fig: between -5 and 1 the graph is below the axis', sgn(g(-1)), -1);
+  check('302 fig: right of 1 it is above the axis', sgn(g(2)), 1);
+  check('302 fig: the domain edge -5 is the leftmost drawn point', sgn(f('x+5')(-5 - 1e-6)), -1);
+  check('302 wrong "x > -5": f(-5) exists and is finite', Number.isFinite(g(-5)) ? 1 : 0, 1);
+  check('302 wrong "no denominator condition": f(1) is not finite', Number.isFinite(g(1)) ? 1 : 0, 0);
+  check('302 wrong "no x-intercept": f(-5) is exactly 0', Math.abs(g(-5)) < 1e-12 ? 1 : 0, 1);
+}
+
+// rq-sub-sk-303 — (x-3)/(x-2)^2: maximum (4,0.25), VA x = 2, HA y = 0
+{
+  const fx = '(x-3)/(x-2)^2', fp = '(4-x)/(x-2)^3';
+  dcheck("303 the quotient rule gives f' = (4-x)/(x-2)^3", fx, fp, [-3, -1, 0, 1, 3, 5, 8]);
+  checkSet('303 vertical asymptote at 2 only', vAsyms('x-3', '(x-2)^2'), [2]);
+  check('303 the numerator at 2 is -1, so it is an asymptote and not a hole', f('x-3')(2), -1);
+  check('303 horizontal asymptote y = 0', HA(fx), 0, 1e-4);
+  checkSet("303 f' vanishes only at 4", roots('4-x'), [4]);
+  check('303 the value 2 is no candidate: f is not finite there', Number.isFinite(f(fx)(2)) ? 1 : 0, 0);
+  check("303 sign table, x < 2: f' negative", sgn(f(fp)(0)), -1);
+  check("303 sign table, 2 < x < 4: f' positive", sgn(f(fp)(3)), 1);
+  check("303 sign table, x > 4: f' negative", sgn(f(fp)(5)), -1);
+  check('303 so the sign order at 4 is + -> -, a maximum', extremumType(fp, 4), -1);
+  check('303 the height of the maximum is 0.25', f(fx)(4), 0.25, 1e-12);
+  check('303 x-intercept at 3', f(fx)(3), 0, 1e-12);
+  check('303 y-intercept -0.75', f(fx)(0), -0.75, 1e-12);
+  let top = -Infinity;
+  for (let i = 0; i <= 20000; i++) { const x = 2.001 + (200 * i) / 20000; top = Math.max(top, f(fx)(x)); }
+  check('303 no point of the right branch rises above 0.25', top, 0.25, 1e-4);
+  check('303 fig: the left branch falls throughout', (f(fx)(-3) > f(fx)(0) && f(fx)(0) > f(fx)(1.9)) ? 1 : 0, 1);
+  check('303 fig: the left branch plunges near 2', f(fx)(1.999) < -1e5 ? 1 : 0, 1);
+  check('303 wrong "(4,0.5)": the denominator taken without the square', 1 / (4 - 2), 0.5);
+  check('303 wrong "minimum": f is LOWER on both sides of 4, not higher', (f(fx)(3.5) < f(fx)(4) && f(fx)(5) < f(fx)(4)) ? 1 : 0, 1);
+  check('303 wrong "two extrema": f is undefined at 2', Number.isFinite(f(fx)(2)) ? 1 : 0, 0);
+}
+
+// rq-sub-sk-304 — x/sqrt(x-4): domain x > 4, VA x = 4, one minimum (8,4)
+{
+  const fx = 'x/sqrt(x-4)', fp = '(x-8)/(2*(x-4)*sqrt(x-4))';
+  dcheck("304 the quotient + root rules give f' = (x-8)/(2(x-4)sqrt(x-4))", fx, fp, [4.5, 5, 6, 8, 9, 12, 20]);
+  check('304 at 4 the radicand is 0, so the denominator vanishes: the domain is open', f('x-4')(4), 0);
+  check('304 just left of 4 the radicand is negative, so there is no graph', sgn(f('x-4')(3.95)), -1);
+  check('304 x = 4 is a vertical asymptote', f(fx)(4 + 1e-12) > 1e5 ? 1 : 0, 1);
+  checkSet("304 the numerator of f' vanishes only at 8", roots('x-8'), [8]);
+  check('304 8 is inside the domain', sgn(f('x-4')(8)), 1);
+  check("304 the denominator of f' is positive throughout the domain", sgn(f('2*(x-4)*sqrt(x-4)')(8)) + sgn(f('2*(x-4)*sqrt(x-4)')(4.5)), 2);
+  check('304 sign order at 8 is - -> +, a minimum', extremumType(fp, 8), 1);
+  check('304 the height there is 4', f(fx)(8), 4, 1e-12);
+  let flips = 0, prev = sgn(f(fp)(4.001));
+  for (let i = 0; i <= 4000; i++) { const x = 4.001 + (400 * i) / 4000; const s = sgn(f(fp)(x)); if (s !== 0 && s !== prev) { flips++; prev = s; } }
+  check("304 f' changes sign exactly once in the whole domain", flips, 1);
+  check('304 fig: the marked point (20,5)', f(fx)(20), 5, 1e-12);
+  check('304 fig: f(5) = 5 as well, so the dip really is a dip', f(fx)(5), 5, 1e-12);
+  check('304 fig: one branch only — nothing is drawn left of 4', sgn(f('x-4')(0)), -1);
+  check('304 f(104) = 10.4, as the solution substitutes', f(fx)(104), 10.4, 1e-9);
+  check('304 no horizontal asymptote: f keeps growing', (f(fx)(104) < f(fx)(2504) && f(fx)(2504) > 50) ? 1 : 0, 1);
+  check("304 wrong \"4,0\": f' does not vanish at the domain edge — its numerator there is -4", f('x-8')(4), -4);
+  check('304 wrong "8,2": that is the denominator alone, sqrt(8-4)', f('sqrt(x-4)')(8), 2);
+  check('304 wrong "8,16": multiplying instead of dividing gives 8 times 2', 8 * f('sqrt(x-4)')(8), 16);
+}
+
+// rq-sub-sk-305 — f = a/(x^2+4), g = 1/(f-1): a = 8, VAs +-2, HA y = -1
+{
+  const fa = (a: number) => `${a}/(x^2+4)`;
+  let lo = 0, hi = 100;
+  for (let k = 0; k < 200; k++) { const m = (lo + hi) / 2; if (f(fa(m))(2) < 1) lo = m; else hi = m; }
+  check('305 the a that puts a vertical asymptote of g at x = 2 is 8', (lo + hi) / 2, 8, 1e-9);
+  check('305 with a = 8 the stated condition really holds: f(2) = 1', f(fa(8))(2), 1, 1e-12);
+  const gx = '1/(8/(x^2+4)-1)', gs = '(x^2+4)/(4-x^2)';
+  for (const t of [-6, -3, -1, 0, 1, 3, 6]) check(`305 the simplified g agrees with 1/(f-1) at x = ${t}`, f(gx)(t) - f(gs)(t), 0, 1e-9);
+  checkSet('305 g has vertical asymptotes at -2 and at 2', vAsyms('x^2+4', '4-x^2'), [-2, 2]);
+  checkSet('305 the numerator of g never vanishes: no x-intercept and no hole', roots('x^2+4'), []);
+  checkSet('305 and no hole where the denominator vanishes', holes('x^2+4', '4-x^2'), []);
+  check('305 horizontal asymptote of g is y = -1', HA(gs), -1, 1e-4);
+  check('305 while f itself tends to 0 — the mistake the third note names', HA(fa(8)), 0, 1e-4);
+  check('305 g(0) = 1', f(gs)(0), 1, 1e-12);
+  check('305 (0,1) is a minimum of the middle branch: higher on both sides', (f(gs)(-1) > 1 && f(gs)(1) > 1) ? 1 : 0, 1);
+  check('305 the middle branch escapes UP near 2', f(gs)(1.999) > 1e2 ? 1 : 0, 1);
+  check('305 the outer branch comes from -infinity just right of 2', f(gs)(2.001) < -1e2 ? 1 : 0, 1);
+  check('305 g(6) = -1.25, as the solution substitutes', f(gs)(6), -1.25, 1e-12);
+  check('305 fig: the outer branches rise toward -1 from below', (f(gs)(6) < f(gs)(20) && f(gs)(20) < -1) ? 1 : 0, 1);
+  check('305 fig: the picture is symmetric — g(-6) = g(6)', f(gs)(-6) - f(gs)(6), 0, 1e-12);
+  check('305 wrong "a = 4": then f(2) is 0.5 and x = 2 is no asymptote of g', f(fa(4))(2), 0.5, 1e-12);
+  checkSet('305 wrong "one asymptote": 4 - x^2 = 0 has two roots', roots('4-x^2'), [-2, 2]);
+  check('305 wrong "y = 0": g is nowhere near 0 far out', Math.abs(HA(gs)) > 0.9 ? 1 : 0, 1);
+}
+
 summary('sketch');

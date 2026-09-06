@@ -470,4 +470,111 @@ function rootsF(g: (v: number) => number, lo = -20, hi = 20): number[] {
     [1, 5, -4, 9].every(v => sgn(dAt(fx, v)) === sgn(f('x-3')(v))) ? 1 : 0, 1);
 }
 
+// ---------------------------------------------------------------------------
+// Round 3 (301–305) — "יותר ברמה וידרשו מהתלמיד יותר לחשוב ולחשב". Each new
+// question is re-derived from its own f: the derivative symbolically, the
+// candidates as sign-change roots of mathjs's derivative (not of the authored
+// numerator), the heights by evaluating f, the type by the sign on both sides,
+// and every distractor by re-enacting the mistake its note names.
+// ---------------------------------------------------------------------------
+
+// rq-sub-der-301 — (x^2+9)/(x-4): expand, collect, factor, then zero (MCQ)
+{
+  const fx = '(x^2+9)/(x-4)';
+  const S = [-6, -1, 0, 2, 6, 9, 15];
+  dcheck('301 f\' = (x-9)(x+1)/(x-4)^2', fx, '(x-9)*(x+1)/(x-4)^2', S);
+  checkSet('301 the zeros of f\' are -1 and 9', roots(d1(fx).toString(), -30, 30), [-1, 9]);
+  check('301 height at the left candidate', f(fx)(-1), -2);
+  check('301 height at the right candidate', f(fx)(9), 18);
+  check('301 sign pattern +,-,+ around the two candidates',
+    [-6, 0, 15].map(v => sgn(dAt(fx, v))).reduce((a, b) => a * 10 + b, 0), 1 * 100 + -1 * 10 + 1);
+  // distractor "אין נקודות קיצון": u'v + uv' instead of u'v - uv'
+  checkSet('301 the plus-mistake numerator 3x^2-8x+9 has no real zero',
+    roots('2*x*(x-4)+(x^2+9)', -60, 60), []);
+  // distractor (9,0) / (-1,0): the height read off f' instead of f
+  check('301 f\' is 0 at both candidates, which is why that option reads y=0',
+    Math.abs(dAt(fx, 9)) + Math.abs(dAt(fx, -1)), 0);
+  // distractor (4,0): the zero of the DENOMINATOR
+  check('301 the denominator vanishes at 4', f('x-4')(4), 0);
+  check('301 and f is not defined there', Number.isFinite(f(fx)(4)) ? 1 : 0, 0);
+}
+
+// rq-sub-der-302 — (x-12)*sqrt(x): product rule, then one common denominator
+{
+  const fx = '(x-12)*sqrt(x)';
+  const S = [0.25, 1, 4, 9, 25, 49];
+  dcheck('302 f\' = 3(x-4)/(2 sqrt x)', fx, '3*(x-4)/(2*sqrt(x))', S);
+  checkSet('302 the only zero of f\' in the domain is 4', roots(d1(fx).toString(), 0.001, 60), [4]);
+  check('302 the height there', f(fx)(4), -16);
+  check('302 f falls to the left of 4 and rises to the right',
+    sgn(dAt(fx, 1)) * 10 + sgn(dAt(fx, 9)), -10 + 1);
+  check('302 wrong 12 is the zero of f itself, not of f\'', f(fx)(12), 0);
+  check('302 wrong -8 is the factor x-12 alone at x=4', f('x-12')(4), -8);
+  check('302 the missing factor is sqrt(4) = 2', f(fx)(4) / f('x-12')(4), 2);
+}
+
+// rq-sub-der-303 — (x^2+48)/sqrt(x): a candidate rejected by the domain
+{
+  const fx = '(x^2+48)/sqrt(x)';
+  const S = [0.25, 1, 4, 9, 16, 36];
+  dcheck('303 f\' = (3x^2-48)/(2x sqrt x)', fx, '(3*x^2-48)/(2*x*sqrt(x))', S);
+  checkSet('303 f\' has exactly one zero in the domain', roots(d1(fx).toString(), 0.001, 60), [4]);
+  check('303 the height there', f(fx)(4), 32);
+  check('303 f falls before 4 and rises after it',
+    sgn(dAt(fx, 1)) * 10 + sgn(dAt(fx, 9)), -10 + 1);
+  // the rejection is a DOMAIN fact, not an algebra one: -4 solves the numerator
+  checkSet('303 the numerator equation 3x^2=48 has both -4 and 4', roots('3*x^2-48', -30, 30), [-4, 4]);
+  check('303 but f is not a real number at -4', Number.isFinite(f(fx)(-4)) ? 1 : 0, 0);
+  check('303 wrong 76 = f(16), from reading x^2=16 as x=16', f(fx)(16), 76);
+  check('303 wrong 16 = dividing by x instead of by sqrt(x)', f('(x^2+48)/x')(4), 16);
+}
+
+// rq-sub-der-304 — g = 1/f built on f = (x^2+8)/(x+1): the types must flip (MCQ)
+{
+  const fx = '(x^2+8)/(x+1)';
+  const gx = '(x+1)/(x^2+8)';
+  for (const v of [-6, -4, 0, 2, 5]) check(`304 g = 1/f at x=${v}`, f(gx)(v), 1 / f(fx)(v));
+  checkSet('304 f never vanishes, so g is defined wherever f is', roots('x^2+8', -60, 60), []);
+  dcheck('304 g\' = -(x+4)(x-2)/(x^2+8)^2', gx, '-(x+4)*(x-2)/(x^2+8)^2', [-9, -4, 0, 2, 7]);
+  checkSet('304 the zeros of g\' are -4 and 2', roots(d1(gx).toString(), -30, 30), [-4, 2]);
+  checkSet('304 f\' vanishes at exactly the same two values', roots(d1(fx).toString(), -30, 30), [-4, 2]);
+  check('304 g\' has the opposite sign to f\' at every sample',
+    [-9, -6, 0, 3, 7].every(v => sgn(dAt(gx, v)) === -sgn(dAt(fx, v))) ? 1 : 0, 1);
+  check('304 g rises between the candidates and falls outside them',
+    [sgn(dAt(gx, -6)), sgn(dAt(gx, 0)), sgn(dAt(gx, 5))].reduce((a, b) => a * 10 + b, 0),
+    -1 * 100 + 1 * 10 + -1);
+  check('304 the maximum height of g is the inverse of f(2)', f(gx)(2), 1 / f(fx)(2));
+  check('304 and it equals a quarter', f(gx)(2), 0.25);
+  check('304 the minimum height of g is the inverse of f(-4)', f(gx)(-4), 1 / f(fx)(-4));
+  check('304 and it equals minus an eighth', f(gx)(-4), -0.125);
+  check('304 distractor heights 4 and -8 are f\'s own', f(fx)(2) * 100 + f(fx)(-4), 400 - 8);
+  check('304 distractor +1/8 loses the sign that inversion keeps', Math.abs(f(gx)(-4)), 0.125);
+}
+
+// rq-sub-der-305 — a recovered from a stated extremum, then consumed
+{
+  // a is found WITHOUT the authored algebra: scan a and keep the values whose
+  // f' actually vanishes at the stated x = 1.
+  const fA = (a: number) => `(x^2+(${a}))/(x+3)`;
+  const slopeAt1 = (a: number) => math.derivative(fA(a), 'x').evaluate({ x: 1 }) as number;
+  const found: number[] = [];
+  for (let a = -30; a <= 30; a += 0.5) if (Math.abs(slopeAt1(a)) < 1e-12) found.push(a);
+  checkSet('305 only a = 7 puts an extremum at x = 1', found, [7]);
+  check('305 the sign-flipped a = -7 does not', Math.abs(slopeAt1(-7)) > 1e-6 ? 1 : 0, 1);
+
+  const fx = fA(7);
+  dcheck('305 f\' = (x-1)(x+7)/(x+3)^2', fx, '(x-1)*(x+7)/(x+3)^2', [-9, -7, -5, 0, 1, 4]);
+  checkSet('305 with that a the zeros of f\' are -7 and 1', roots(d1(fx).toString(), -30, 30), [-7, 1]);
+  check('305 f is not defined at the excluded value between them',
+    Number.isFinite(f(fx)(-3)) ? 1 : 0, 0);
+  check('305 f rises, falls, rises: the LEFT candidate is the maximum',
+    [sgn(dAt(fx, -9)), sgn(dAt(fx, -5)), sgn(dAt(fx, 4))].reduce((a, b) => a * 10 + b, 0),
+    1 * 100 + -1 * 10 + 1);
+  check('305 the maximum sits higher than its neighbours', f(fx)(-7) > Math.max(f(fx)(-8), f(fx)(-6)) ? 1 : 0, 1);
+  check('305 the minimum sits lower than its neighbours', f(fx)(1) < Math.min(f(fx)(0), f(fx)(2)) ? 1 : 0, 1);
+  check('305 the tangent slope at x = -5', dAt(fx, -5), -3);
+  check('305 wrong -12 is that slope before dividing by the denominator',
+    dAt(fx, -5) * (-5 + 3) ** 2, -12);
+}
+
 summary('derivative');
