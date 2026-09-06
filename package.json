@@ -58,6 +58,7 @@
     "gen:faq": "tsx scripts/generate-faq-from-logs.ts",
     "report:tutor": "tsx scripts/report-tutor-usage.ts",
     "report:stalls": "tsx scripts/report-tutor-stalls.ts",
+    "build:shape": "tsx scripts/build-shape-model.ts --vocab 15000 --mindf 15",
     "report:trace": "tsx scripts/report-tutor-trace.ts",
     "test:sympy": "python api/math/test_solve.py",
     "sim:tutor": "tsx scripts/sim-tutor-session.ts",

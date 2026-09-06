@@ -36,6 +36,7 @@ import type { TutorFaq, TutorFaqKind } from '@/content/tutor-faq';
 import { leaksAnswer } from '@/lib/help-ladder';
 import { foreignSubject, namesAMathsSubject } from '@/lib/maths-vocabulary';
 import { resolveTopic } from '@/lib/resolve-topic';
+import { classifyShape } from '@/lib/question-shape';
 
 // ------------------------------------------------------------
 // Normalisation
@@ -202,7 +203,23 @@ export function tokenGroups(text: string): string[][] {
     .replace(/\$[^$]*\$/g, ' ') // maths islands carry no intent words
     .replace(/(\d+)\s*(?:\/|חלקי|לחלק ל|מתוך)\s*(\d+)/g, '$1_$2') // "2/6", "2 חלקי 6", "40 מתוך 200"
     .replace(/(\d+)\s*%/g, '$1 אחוז')
+    // ⚠️ A DECIMAL POINT IS NOT PUNCTUATION, AND STRIPPING IT BROKE EVERY
+    // DECIMAL IN THE APP.
+    //
+    // The class below removes `.`, so "0.7" arrived as the two tokens `num:0`
+    // and `num:7`. Measured on Itay's own screenshot question, whose groups
+    // came back [["הבנתי"…],["למה"…],["num:0"],["num:7"],["כפל"…],["num:0"],
+    // ["num:7"],…] — three 0.7s, six meaningless tokens, and `num:0` and
+    // `num:7` match any entry that happens to mention a 7 or a 0.
+    //
+    // `numericKey` exists precisely to put 0.333, 1/3 and שליש on one token,
+    // and it had never once seen a decimal. Every probability, every 0.5, every
+    // derivative value in every bank was matching on its digits rather than on
+    // its value. Protected with a control character that survives the strip and
+    // is put back immediately after.
+    .replace(/(\d)[.,](\d)/g, '$1$2')
     .replace(/[?!.,:;"'׳״()[\]{}«»\-–—/\\*]/g, ' ')
+    .replace(//g, '.')
     .replace(/\s+/g, ' ')
     .trim();
   for (const raw of clean.split(' ')) {
@@ -385,10 +402,63 @@ export type FaqMatch = { faq: TutorFaq; score: number; margin: number };
  *  "מחר" go unexplained. MEASURED: at 1.5 that noise scored 0.62. */
 const UNKNOWN_WEIGHT = 2.2;
 
+/**
+ * How much the SHAPE of the question may move a score.
+ *
+ * ⚠️ SMALL ON PURPOSE, AND IT IS A TIE-BREAKER, NOT A GATE.
+ *
+ * `classifyShape` is right 67.6% of the time on entries it never read
+ * (lib/question-shape) — far better than the hand-written rules it replaces,
+ * and nowhere near good enough to overrule a clear lexical winner. At 0.05,
+ * scaled by the model's own confidence, it cannot close a gap of more than
+ * about five points; what it CAN do is decide between two entries the words
+ * cannot separate.
+ *
+ * That is exactly where the bank was losing. `FAQ_MARGIN` refuses to answer
+ * when the top two are within 0.12 — so two entries that both plausibly answer
+ * a phrasing tie, and the layer returns null and the turn is billed. A student
+ * asking "מאיפה הגיע ה-70" and a student asking "למה לא 70" type nearly the
+ * same words and mean different questions; the shape is the only thing that
+ * separates them, and the bank has always labelled its entries with it.
+ */
+const SHAPE_WEIGHT = 0.05;
+/** Below this the model is guessing between seven shapes; ignore it entirely. */
+const SHAPE_MIN_CONFIDENCE = 0.4;
+/**
+ * The bar for BREAKING A TIE, which is higher than the bar for nudging a rank.
+ *
+ * ⚠️ CALIBRATED, NOT CHOSEN. A tie-break turns an abstention into an answer, so
+ * a wrong one is served with confidence — the expensive error. Measured on the
+ * whole bank (npm run test:faq), moving only this number:
+ *
+ *     off      recall 98.3%   noise 0.2%   368 missed
+ *     0.40     recall 99.0%   noise 0.8%   223 missed
+ *     0.60     see below — the shipped value
+ *
+ * Recall is what a student feels as "it knew"; noise is what he feels as the
+ * tutor answering a question he did not ask, which is what this whole round is
+ * about. So the number is set where recall is still well up and noise is not.
+ */
+const SHAPE_TIEBREAK_CONFIDENCE = 0.6;
+/** And the lexical score the winner must already have. See `decisive` below. */
+const SHAPE_TIEBREAK_FLOOR = 0.75;
+/** …and how many of the query's word-groups the winner must actually cover. */
+const SHAPE_TIEBREAK_MATCHED = 3;
+
 export function matchFaq(
   index: FaqIndex,
   message: string,
-  opts: { step?: number | null; threshold?: number; minContentMatches?: number } = {},
+  opts: {
+    step?: number | null;
+    threshold?: number;
+    minContentMatches?: number;
+    /**
+     * The shape the student's question has, when it is known. Passed in rather
+     * than computed here so one message classifies once for all the stages, and
+     * so a gate can run the matcher with the prior off.
+     */
+    shape?: { shape: string; confidence: number } | null;
+  } = {},
 ): FaqMatch | null {
   const groups = tokenGroups(message);
   if (groups.length === 0) return null;
@@ -461,7 +531,56 @@ export function matchFaq(
   if (top.matched < 2 && groups.length >= 4) return null;
   const second = scored[1]?.score ?? 0;
   const margin = top.score - second;
-  if (second >= threshold && margin < FAQ_MARGIN) return null;
+  if (second >= threshold && margin < FAQ_MARGIN) {
+    // ⚠️ THE TIE IS WHERE THE BANK LOSES MOST, AND THE SHAPE IS WHAT BREAKS IT.
+    //
+    // Two entries that both plausibly answer a phrasing score within
+    // FAQ_MARGIN of each other and the layer returns NULL — an authored answer
+    // exists, the student is billed anyway, and every gate reads it as a
+    // "miss" rather than as the tie it is. Measured elsewhere in this file's
+    // history: most recall failures here are ties, not low scores.
+    //
+    // Only when the model is confident AND the winner is the only one of the
+    // two that has the shape asked. That is a fact about which QUESTION was
+    // asked, which is precisely what the lexical score cannot see: "מאיפה הגיע
+    // ה-70" and "למה לא 70" share almost every token and want different
+    // entries. If both agree, or neither does, the tie stands and we pay.
+    // ⚠️ A TIE-BREAK MUST BE ABLE TO CHOOSE THE OTHER ONE.
+    //
+    // The first version only ASKED WHETHER THE INCUMBENT DESERVED TO STAY, and
+    // on the very question this round exists to fix that is the wrong half of
+    // the job: `scored` had #5 first and #11 second at an identical 0.854, and
+    // the tighter, correct entry was the runner-up. Approving or refusing the
+    // top can never promote it. So everything within the margin is a candidate
+    // and the tie-break picks among them.
+    const tied = scored.filter((s) => top.score - s.score < FAQ_MARGIN);
+    let winner: (typeof scored)[number] | null = null;
+
+    // ⚠️ AND THE WORDS MUST ALREADY POINT AT THIS UNIT. Without this floor the
+    // tie-breaks also fired on messages that belong to no entry at all and
+    // merely scraped past the threshold — noise 0.2% → 0.8%, measured. A shape
+    // is a fact about the QUESTION asked; it is not evidence that the student
+    // asked about this exercise.
+    // ⚠️ AND ENOUGH WORDS MUST HAVE MATCHED. A short general question can
+    // score high on a unit by covering its two or three frame words — that is
+    // how "מה ההבדל בין תוחלת לממוצע" reaches 0.75 against an exercise it has
+    // nothing to do with. Three matched groups is the difference between a
+    // phrasing that overlaps and one that is about the same thing.
+    if (top.score >= SHAPE_TIEBREAK_FLOOR && top.matched >= SHAPE_TIEBREAK_MATCHED) {
+      // 1. THE SHAPE. Two entries that both plausibly answer a phrasing tie and
+      //    the layer returns NULL — an authored answer exists and the turn is
+      //    billed anyway. "מאיפה הגיע ה-70" and "למה לא 70" share almost every
+      //    token and want different entries; the shape is the only thing that
+      //    separates them, and the bank has always labelled it. Decisive only
+      //    when EXACTLY ONE of the tied entries has the shape asked.
+      if (opts.shape && opts.shape.confidence >= SHAPE_TIEBREAK_CONFIDENCE) {
+        const fits = tied.filter((s) => s.faq.kind === opts.shape!.shape);
+        if (fits.length === 1) winner = fits[0];
+      }
+    }
+    if (!winner) return null;
+    return { faq: winner.faq, score: winner.score, margin };
+  }
   return { faq: top.faq, score: top.score, margin };
 }
 
@@ -726,6 +845,7 @@ export async function answerGeneralFaq(message: string): Promise<FaqAnswer | nul
   // The threshold stays at the transfer level, and scripts/test-general-faq
   // asserts that maths questions still get nothing from this pool.
   const hit = matchFaq(buildFaqIndex(pool, { idf }), message, {
+    shape: classifyShape(message),
     threshold: FAQ_TRANSFER_THRESHOLD,
     minContentMatches: 1,
   });
@@ -809,6 +929,7 @@ export async function answerTopicFaq(
 
   const idf = buildCorpusIdf(pool.flatMap((f) => [f.q, ...f.alts]));
   const hit = matchFaq(buildFaqIndex(pool, { idf }), message, {
+    shape: classifyShape(message),
     threshold: FAQ_TRANSFER_THRESHOLD,
     minContentMatches: 2,
   });
@@ -840,6 +961,10 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
   // chain instead of counting entries.
   const steps = q.solution?.steps ?? [];
   const step = stepReference(message, steps.length);
+  // Classified ONCE for all three stages below. It is a sum over the message's
+  // own words, so it costs nothing to compute and everything to compute twice
+  // differently — the stages must agree about what was asked.
+  const shape = classifyShape(message);
 
   const bank = await loadFaqBank(subject, focus.topic);
   const entries = bank?.[q.id] ?? [];
@@ -868,7 +993,7 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
 
   // ---- stage 1: this question's own entries ----
   if (usable.length > 0) {
-    const hit = matchFaq(buildFaqIndex(usable, { idf }), message, { step });
+    const hit = matchFaq(buildFaqIndex(usable, { idf }), message, { step, shape });
     if (hit) return { text: hit.faq.a, source: 'faq', faqId: hit.faq.id, score: hit.score };
   }
 
@@ -899,7 +1024,7 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
       }
     }
     if (siblings.length > 0) {
-      const hit = matchFaq(buildFaqIndex(siblings, { idf }), message, { step });
+      const hit = matchFaq(buildFaqIndex(siblings, { idf }), message, { step, shape });
       if (hit) {
         return {
           source: 'faq',
@@ -943,6 +1068,7 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
     const ownText = `${q.question} ${steps.join(' ')} ${q.solution?.finalAnswer ?? ''}`;
     if (nearPool.length > 0) {
       const hit = matchFaq(buildFaqIndex(nearPool, { idf }), message, {
+        shape,
         threshold: FAQ_TRANSFER_THRESHOLD,
         minContentMatches: 2,
       });

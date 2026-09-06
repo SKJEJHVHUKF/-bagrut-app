@@ -33,6 +33,7 @@
  * no Hebrew inside $…$, no unfilled braces, no leading latin/maths char.
  */
 
+import { classifyShape } from '../lib/question-shape';
 import { readFileSync } from 'fs';
 import {
   buildCorpusIdf, buildFaqIndex, matchFaq, stepReference, tokenGroups, tokens,
@@ -158,7 +159,7 @@ async function trace(text: string) {
     const idf = buildCorpusIdf(units.flatMap(([, fs]) => fs.flatMap((f) => [f.q, ...f.alts])));
     for (const [unit, faqs] of units) {
       const index = buildFaqIndex(faqs, { idf });
-      const hit = matchFaq(index, text, { step: stepReference(text, 99) });
+      const hit = matchFaq(index, text, { step: stepReference(text, 99), shape: classifyShape(text) });
       const groups = tokenGroups(text);
       const rows = index.items.map((it) => {
         let best = 0, bestDoc = '', bestM = 0;
@@ -240,7 +241,7 @@ async function trace(text: string) {
       for (const f of faqs) {
         for (const alt of heldAlts(f)) {
           queries++;
-          const hit = matchFaq(index, alt, { step: stepReference(alt, 99) });
+          const hit = matchFaq(index, alt, { step: stepReference(alt, 99), shape: classifyShape(alt) });
           if (hit?.faq.id === f.id) recalled++;
           else
             missed.push(
@@ -259,7 +260,7 @@ async function trace(text: string) {
           if (!UNIT_SPECIFIC.has(f.kind)) continue;
           for (const alt of heldAlts(f)) {
             farQueries++;
-            const hit = matchFaq(farIndex, alt);
+            const hit = matchFaq(farIndex, alt, { shape: classifyShape(alt) });
             if (hit) { farHits++; if (farHits <= 6) console.log(`  ✗ far hit: "${alt}" (${f.id}) → ${hit.faq.id} (${hit.score.toFixed(2)})`); }
           }
         }
@@ -303,7 +304,7 @@ async function trace(text: string) {
             // assumed.
             if (SCREEN && pointsAtThisExercise(alt)) return null;
             for (const ix of indices) {
-              const hit = matchFaq(ix, alt, TRANSFER_OPTS);
+              const hit = matchFaq(ix, alt, { ...TRANSFER_OPTS, shape: classifyShape(alt) });
               if (hit) return hit;
             }
             return null;
@@ -363,7 +364,7 @@ async function trace(text: string) {
         if (classifyAsk(n)) continue;
         if (foreignSubject(n, unitSubject)) continue;
         noiseQueries++;
-        const hit = matchFaq(fullIndex, n);
+        const hit = matchFaq(fullIndex, n, { shape: classifyShape(n) });
         if (hit) { noiseHits++; if (noiseHits <= 6) console.log(`  ✗ noise matched: "${n}" → ${hit.faq.id} (${hit.score.toFixed(2)})`); }
       }
     }

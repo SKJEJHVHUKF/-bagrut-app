@@ -3,7 +3,7 @@
  *
  * Every Hebrew word of 3+ characters that appears anywhere in this
  * app's written content: 574 quiz questions with their hints, options,
- * distractor notes and four-field explanations, 10746 FAQ entries with their
+ * distractor notes and four-field explanations, 10747 FAQ entries with their
  * phrasings and answers, and the curriculum's topic names.
  *
  * ⚠️ IT IS EVIDENCE, NOT A DICTIONARY. A word being here does not make a
