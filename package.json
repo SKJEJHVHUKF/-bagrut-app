@@ -55,6 +55,7 @@
     "probe:core": "tsx scripts/probe-core-ab.ts",
     "gen:faq": "tsx scripts/generate-faq-from-logs.ts",
     "report:tutor": "tsx scripts/report-tutor-usage.ts",
+    "report:stalls": "tsx scripts/report-tutor-stalls.ts",
     "report:trace": "tsx scripts/report-tutor-trace.ts",
     "test:sympy": "python api/math/test_solve.py",
     "sim:tutor": "tsx scripts/sim-tutor-session.ts",
