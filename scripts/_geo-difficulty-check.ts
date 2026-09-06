@@ -53,6 +53,12 @@ const MECHANISMS: [string, RegExp][] = [
   ['power-of-point', /מכפלת|PT\^2|מיתרים נחתכים|משיק והחותך|המשיק והחותך/],
   ['quadrilateral', /מקבילית|מעוין|דלתון|טרפז|מלבן/],
   ['right-angle-facts', /תיכון ליתר|הגובה ליתר|ישר[- ]זווית/],
+  // Missing until 2026-09-06: the angle sum is the most-cited theorem in the
+  // whole topic and nothing here detected it, so every eg-angles question
+  // measured as using exactly ONE mechanism and the rung comparison was flat
+  // by construction.
+  ['triangle-angle-sum', /סכום הזוויות במשולש|סכום זוויות המשולש|זווית חיצונית/],
+  ['angle-sum-around', /סביב נקודה|זוויות סביב|$360°|360 מעלות/],
 ];
 
 const mechanisms = (q: PracticeQuestion): string[] => {
@@ -63,8 +69,21 @@ const mechanisms = (q: PracticeQuestion): string[] => {
 /** What the student is asked to PRODUCE — the variety axis. */
 function askShape(q: PracticeQuestion): string {
   const t = q.question;
-  if (/הוכח|הסק|נמק|מש״ל|בכתיבה מלאה/.test(t)) return 'prove';
-  if (/לפי איזה משפט|איזו טענה|מה \*\*חסר\*\*|מה חסר|מה \*\*נובע\*\*|מה נובע|איזו כתיבה|מה מותר להסיק|באיזו נקודה|באיזה מרובע/.test(t)) return 'identify';
+  // "הצדק" is the exam's other word for "justify" and was missing here, so
+  // eg-sub-thales-004 ("האם DE ∥ BC? הצדק.") scored as a plain length question
+  // and collided with eg-sub-thales-006. That is a detector bug, not content:
+  // a question demanding a justification is a proof-shaped question whichever
+  // verb it uses. Fixed rather than worked around.
+  // identify BEFORE prove, deliberately: eg-mth-001/002/003 quote the word
+  // "הוכח" inside the proof they hand the student and then ask "מהו הנימוק?" /
+  // "מה הבעיה?" — the ask is to NAME something, not to prove it. Testing prove
+  // first swallowed all three. "מהו הנימוק", "מה הבעיה", "איזה מהלך" were also
+  // simply missing from the list. Detector gaps, not content.
+  if (/לפי איזה משפט|איזו טענה|מה \*\*חסר\*\*|מה חסר|מה \*\*נובע\*\*|מה נובע|איזו כתיבה|מה מותר להסיק|באיזו נקודה|באיזה מרובע|מהו הנימוק|מה הבעיה|איזה מהלך|איזו שגיאה/.test(t)) return 'identify';
+  // `הוכח(?![הת])` and not a bare `הוכח`: the imperative "הוכח" is the ask, but
+  // the NOUNS "הוכחה" / "בהוכחה" / "הוכחת חפיפה" merely mention one, and a bare
+  // substring match counted those as proof questions too.
+  if (/הוכח(?![הת])|הסק|נמק|הצדק|מש״ל|בכתיבה מלאה/.test(t)) return 'prove';
   if (/מצא את שטח|חשב את שטח|מצא את השטח/.test(t)) return 'area';
   if (/מהי הזווית|מצא את הזווית|מצא את זווית|מהי כל אחת מזוויות/.test(t)) return 'angle';
   return 'length';

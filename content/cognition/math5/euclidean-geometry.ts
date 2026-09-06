@@ -90,7 +90,9 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
       triggers: [
         { questionId: "eg-sub-sim-002", optionIndex: 2 },
         { questionId: "eg-sub-thales-001", optionIndex: 1 },
-        { questionId: "eg-sub-thales-003", optionIndex: 2 },
+        // was eg-sub-thales-003[2] until 2026-09-06; that question became an
+        // open question, and a trigger has to sit on an MCQ distractor.
+        { questionId: "eg-sub-thales-008", optionIndex: 3 },
       ],
     },
     {
@@ -100,7 +102,7 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
       insight: "אתה מחשב את הגובה אל היתר כממוצע חשבוני $\\dfrac{a+b}{2}$, אבל משפט הגובה נותן ממוצע הנדסי: $CH = \\sqrt{AH \\cdot HB}$.",
       remedy: { subTopicId: "eg-similarity" },
       triggers: [
-        { questionId: "eg-sub-sim-003", optionIndex: 1 },
+        { questionId: "eg-sub-sim-009", optionIndex: 0 },
       ],
     },
     {
@@ -110,7 +112,7 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
       insight: "אתה עוצר אחרי $CH^2 = AH \\cdot HB$ ומחזיר את $CH^2$ כתשובה. צריך להוציא שורש: $CH = \\sqrt{AH \\cdot HB}$.",
       remedy: { subTopicId: "eg-similarity" },
       triggers: [
-        { questionId: "eg-sub-sim-003", optionIndex: 3 },
+        { questionId: "eg-sub-sim-009", optionIndex: 2 },
       ],
     },
     {
@@ -121,7 +123,7 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
       remedy: { subTopicId: "eg-thales" },
       triggers: [
         { questionId: "eg-sub-thales-001", optionIndex: 2 },
-        { questionId: "eg-sub-thales-003", optionIndex: 3 },
+        { questionId: "eg-sub-thales-008", optionIndex: 2 },
       ],
     },
     {
@@ -151,7 +153,7 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
       insight: "אתה מניח שחוצה הזווית חוצה גם את הצלע שממול לשניים שווים. חוצה זווית מחלק את הצלע שממול ביחס $\\dfrac{AB}{AC}$ ולא בהכרח לשניים שווים.",
       remedy: { subTopicId: "eg-thales" },
       triggers: [
-        { questionId: "eg-sub-thales-003", optionIndex: 1 },
+        { questionId: "eg-sub-thales-008", optionIndex: 0 },
       ],
     },
     {
@@ -213,9 +215,11 @@ export const euclideanGeometryCognition: TopicCognitionMap = {
     "eg-sub-sim-001": ["sim-ratio-area"],
     "eg-sub-sim-002": ["sim-side-ratio"],
     "eg-sub-sim-003": ["sim-altitude-theorem"],
+    "eg-sub-sim-009": ["sim-altitude-theorem"],
     "eg-sub-thales-001": ["thales-ratio"],
     "eg-sub-thales-002": ["thales-midline"],
     "eg-sub-thales-003": ["thales-angle-bisector"],
+    "eg-sub-thales-008": ["thales-angle-bisector"],
     "eg-sub-circ-001": ["circle-central-inscribed"],
     "eg-sub-circ-002": ["circle-thales","circle-central-inscribed"],
     "eg-sub-circ-003": ["circle-chords"],
