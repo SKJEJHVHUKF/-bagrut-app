@@ -48,6 +48,7 @@ const ROOTS = [
   'content/learning-paths',
   'content/advanced-courses',
   'content/past-bagruyot',
+  'content/mitkonot',
   'content/topics',
   'content/ghost-replay',
   'content/concept-quiz',
