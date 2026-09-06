@@ -297,6 +297,9 @@ const MECHANISMS: [string, RegExp][] = [
   ['parameter', /פרמטר|עבור אילו ערכים|מצאו את הערך של \$?[a-z]\$?|תלוי ב\$?[a-z]\$?/],
   ['derivative-graph', /גרף הנגזרת|f\s*['׳]|הנגזרת השנייה|f''/],
   ['second-derivative', /נגזרת שנייה|נקודת פיתול|קמור|קעור/],
+  // Telling a hole from an asymptote is its own move: both come from a zero of
+  // the denominator, and only the numerator decides which one it is.
+  ['hole', /חור בגרף|חור ב(?:ערך|נקודה)|נקודה חסרה|שני הצדדים מתאפסים/],
 ];
 
 const mechanismsOf = (q: PracticeQuestion): string[] => {

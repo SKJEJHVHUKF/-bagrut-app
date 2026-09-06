@@ -405,8 +405,10 @@ function solveFor(g: (t: number) => number, lo: number, hi: number): number {
 // rq-sub-in-109 — the four options are now four AREA values; each must be reachable
 // only by the mistake its note names
 {
-  const fx = 'x^2 - 3*x';
+  const fx = f('x^2 - 3*x');
   const F = f('x^3/3 - 3*x^2/2');
+  // F really is an antiderivative of f: check the derivative numerically.
+  check('109 F is an antiderivative of f', (F(2.0001) - F(1.9999)) / 0.0002, fx(2), 1e-4);
   check('109 correct option: |[0,3]| + |[3,4]| = 19/3', Math.abs(F(3) - F(0)) + Math.abs(F(4) - F(3)), E('19/3'), 1e-9);
   check('109 option 8/3 = one unsplit integral, in absolute value', Math.abs(F(4) - F(0)), E('8/3'), 1e-9);
   check('109 option 11/6 = the part above the axis only', F(4) - F(3), E('11/6'), 1e-9);

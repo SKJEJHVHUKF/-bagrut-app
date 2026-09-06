@@ -139,25 +139,38 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
   check('107 d3 3/1', E('3/1'), 3);
 }
 
-// rq-sub-bg-108 — f = sqrt(6-2x): student's 4 claims → exactly 2 mistakes (derivative, asymptote)
+// rq-sub-bg-108 — 2026-09-06 exam-style rebuild: f = sqrt(16-2x), three parts.
+// Part א domain + both intercepts, part ב the derivative (inner derivative kept)
+// and the sign it forces, part ג g = 1/f — where the domain EDGE of f becomes an
+// ASYMPTOTE of g. Every value the three answer boxes take is re-derived here.
 {
-  const F = 'sqrt(6 - 2x)';
-  const rad = f('6 - 2x');
-  const domainClaimOK = rad(3) >= 0 && rad(3.001) < 0 && rad(2.999) > 0; // x ≤ 3, inclusive
-  check('108 domain claim x ≤ 3 is right', domainClaimOK ? 1 : 0, 1);
-  check('108 boundary radicand at 3', rad(3), 0);
-  dcheck('108 true derivative -1/sqrt(6-2x)', F, '-1/sqrt(6 - 2x)', [-2, 0, 1, 2, 2.9]);
-  const student = f('1/(2*sqrt(6 - 2x))');
-  const truth = f('-1/sqrt(6 - 2x)');
-  check('108 student f\' = true f\' × (-1/2) → inner derivative missing', student(1) / truth(1), -0.5);
-  const derivWrong = Math.abs(student(1) - truth(1)) > 1e-9 ? 1 : 0;
-  check('108 y-intercept claim sqrt(6)', f(F)(0), E('sqrt(6)'));
-  const yintWrong = Math.abs(f(F)(0) - E('sqrt(6)')) > 1e-9 ? 1 : 0;
-  check('108 f(3) = 0 → defined at 3, endpoint not asymptote', f(F)(3), 0);
-  const asymWrong = Number.isFinite(f(F)(3)) ? 1 : 0;
-  const domainWrong = domainClaimOK ? 0 : 1;
-  check('108 mistake count', derivWrong + yintWrong + asymWrong + domainWrong, 2);
-  check('108 d2 note: (1/(2 sqrt(6-2x)))·(-2) at x = 1', E('1/(2*sqrt(6 - 2*1)) * (-2)'), truth(1));
+  const F = 'sqrt(16 - 2x)';
+  const rad = f('16 - 2x');
+  // part א — the domain is closed at 8, because the root is not in a denominator
+  check('108א the radicand vanishes at 8', rad(8), 0);
+  check('108א it is positive just left of 8', sgn(rad(7.999)), 1);
+  check('108א and negative just right of 8, so the domain ends there', sgn(rad(8.001)), -1);
+  check('108א f is defined AT 8 itself: f(8) = 0', f(F)(8), 0);
+  check('108א the y-intercept height is 4', f(F)(0), 4);
+  check('108א the x-intercept is where f vanishes, x = 8', f(F)(8), 0);
+  // part ב — the inner derivative survives, and it is what makes f decreasing
+  dcheck('108ב the derivative is -1/sqrt(16-2x)', F, '-1/sqrt(16 - 2x)', [-4, 0, 3, 7, 7.9]);
+  const truth = f('-1/sqrt(16 - 2x)');
+  const noInner = f('1/(2*sqrt(16 - 2x))');
+  check('108ב dropping the inner derivative scales f\' by -1/2', noInner(3) / truth(3), -0.5);
+  check('108ב the true derivative is negative inside the domain', sgn(truth(3)), -1);
+  check('108ב so f really is decreasing: f(0) > f(7)', f(F)(0) > f(F)(7) ? 1 : 0, 1);
+  // part ג — g = 1/f: the same value 8 changes role
+  const G = '1/sqrt(16 - 2x)';
+  check('108ג g is undefined at 8: f is 0 there', f(F)(8), 0);
+  check('108ג g blows up as x approaches 8 from the left', f(G)(8 - 1e-10) > 1e4 ? 1 : 0, 1);
+  check('108ג the numerator of g is 1, never zero, so it is an asymptote and not a hole', f('1')(8), 1);
+  check('108ג g is still defined at 7.9, so the domain is x < 8', Number.isFinite(f(G)(7.9)) ? 1 : 0, 1);
+  check('108ג f has a POINT at 8 while g has an asymptote there', Number.isFinite(f(F)(8)) && !Number.isFinite(f(G)(8)) ? 1 : 0, 1);
+  // the three wrongAnswers
+  check('108 wrong 16: solving 16 - 2x = 0 without dividing by 2', E('16/2'), 8);
+  check('108 wrong 16 as a height: that is the radicand, not its root', rad(0), 16);
+  check('108 wrong 0: that is where the y-intercept sits, and g is finite there', Number.isFinite(f(G)(0)) ? 1 : 0, 1);
 }
 
 // rq-sub-bg-109 — f = sqrt(x-1), area from 1 to a equals 16/3 → a = 5
@@ -330,6 +343,36 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
   // the right branch climbs toward the asymptote from below, never reaching it
   check('203 right branch rises: g(5) < g(20)', f(`sqrt(${Q})`)(5) < f(`sqrt(${Q})`)(20) ? 1 : 0, 1);
   check('203 right branch stays under 1', gridMax(`sqrt(${Q})`, 4, 500) < 1 ? 1 : 0, 1);
+}
+
+// ---------------------------------------------------------------------------
+// 2026-09-06, exam-style round. bg-101 and bg-107 kept their mathematics and lost
+// the "איזו טענה נכונה" framing, so each option is now a full set of findings —
+// and each of the four sets has to be reachable only by the mistake its note names.
+// ---------------------------------------------------------------------------
+
+// rq-sub-bg-101 — the four options are (domain, asymptote) pairs
+{
+  const fx = '4/sqrt(x - 3)';
+  check('101 opt A: the domain is open at 3 — f is not finite there', Number.isFinite(f(fx)(3)) ? 0 : 1, 1);
+  check('101 opt A: and f is finite just above 3', Number.isFinite(f(fx)(3.5)) ? 1 : 0, 1);
+  check('101 opt B "x >= 3": at 3 itself the denominator is 0', E('sqrt(3 - 3)'), 0);
+  check('101 opt C "x != 3": at x = 1 the radicand is negative, so those values are out too', sgn(f('x - 3')(1)), -1);
+  check('101 opt D "no asymptote": f(3.0001) is already enormous', f(fx)(3.0001) > 300 ? 1 : 0, 1);
+  check('101 the values keep growing toward 3, which is what an asymptote means', f(fx)(3.0001) > f(fx)(3.01) ? 1 : 0, 1);
+}
+
+// rq-sub-bg-107 — the four options are full finding sets for (x^2+3)/(x-1)
+{
+  const F = '(x^2 + 3)/(x - 1)';
+  check('107 opt A: no x-intercept — the numerator never vanishes', signChanges('x^2 + 3', -100, 100), 0);
+  check('107 opt A: the y-intercept height is -3', f(F)(0), -3);
+  check('107 opt A: the denominator vanishes at 1 while the numerator is 4', f('x^2 + 3')(1), 4);
+  check('107 opt B "y = 1": f keeps growing instead of flattening', f(F)(1e6) > 1e5 ? 1 : 0, 1);
+  check('107 opt B: and it grows like x, not toward a constant', f(F)(1e6) / 1e6, 1, 1e-4);
+  check('107 opt C "(0,3)": the denominator at 0 is -1, so the sign flips', f('x - 1')(0), -1);
+  check('107 opt D "(-3,0)": substituting -3 does not give 0', f(F)(-3), E('12/(-4)'));
+  check('107 opt D: x^2 = -3 has no real solution — the numerator stays positive', sgn(f('x^2 + 3')(-3)), 1);
 }
 
 summary('bagrut-mixed');
