@@ -4,6 +4,7 @@
 // mistakes" / נמק claim encoded as a computation, and every distractor / wrongAnswer note re-enacted
 // as the mistake it names and required to land on THAT option.
 import { check, dcheck, checkSet, icheck, summary, math, E } from './_lib';
+import { RQ_EXTRA } from '../../content/lessons/math5/rq-extra';
 
 const f = (expr: string) => {
   const c = math.parse(expr).compile();
@@ -373,6 +374,233 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
   check('107 opt C "(0,3)": the denominator at 0 is -1, so the sign flips', f('x - 1')(0), -1);
   check('107 opt D "(-3,0)": substituting -3 does not give 0', f(F)(-3), E('12/(-4)'));
   check('107 opt D: x^2 = -3 has no real solution — the numerator stays positive', sgn(f('x^2 + 3')(-3)), 1);
+}
+
+// ---------------------------------------------------------------------------
+// 2026-09-06, round 3 (rq-sub-bg-300…304). Nothing below re-applies the algebra
+// the solutions use: every derivative is proved SYMBOLICALLY against mathjs, the
+// parameter of 303 is recovered by solving f'(6) = 0 numerically (and snapped to
+// six decimals before it is fed back, so a 1e-15 residue cannot masquerade as a
+// second root), each extremum is confirmed against a grid extremum of the
+// function itself, and every distractor is re-enacted as the mistake its note
+// names and required to land on THAT option.
+// ---------------------------------------------------------------------------
+
+// rq-sub-bg-300 — f = (x^2+5)/(x-1): tangent at x = 3 is y = -x/2 + 17/2, meeting the x-axis at 17
+{
+  const F = '(x^2 + 5)/(x - 1)';
+  const FP = '(x^2 - 2x - 5)/(x - 1)^2';
+  dcheck('300 quotient-rule derivative', F, FP, [-2, 0, 2, 3, 5]);
+  check('300 the point of tangency is on the graph: f(3)', f(F)(3), 7);
+  check('300 3 is inside the domain: the denominator there is 2', f('x - 1')(3), 2);
+  const m = f(FP)(3);
+  const y0 = f(F)(3);
+  check('300 the slope is f\'(3)', m, E('-1/2'));
+  // the line built from the two computed numbers, and the x where it meets y = 0
+  const line = (x: number) => y0 + m * (x - 3);
+  check('300 the line passes through the point of tangency', line(3), y0);
+  check('300 its y-intercept is 17/2', line(0), E('17/2'));
+  check('300 it meets the x-axis at 3 - y0/m', 3 - y0 / m, 17);
+  check('300 and the line is 0 there', line(17), 0, 1e-9);
+  // TANGENT, not a secant: the gap is second order in h (a wrong slope leaves a first-order gap)
+  const h = 1e-3;
+  check('300 |f - line| at 3+h is second order', Math.abs(f(F)(3 + h) - line(3 + h)) < 1e-5 ? 1 : 0, 1);
+  check('300 a slope 1% off would leave a first-order gap', Math.abs(f(F)(3 + h) - (y0 + m * 1.01 * h)) > 1e-6 ? 1 : 0, 1);
+  // d1 y = 6x - 11: derivative of a quotient taken as the quotient of the derivatives
+  const mBad1 = f('(2x)/1')(3);
+  check('300 d1 the bogus slope u\'/v\' at 3 is 6', mBad1, 6);
+  check('300 d1 that line is y = 6x - 11', y0 + mBad1 * (0 - 3), -11);
+  check('300 d1 and it meets the x-axis at 11/6', 3 - y0 / mBad1, E('11/6'));
+  // d2 y = -x/2 + 1: the height read off the derivative instead of the function
+  check('300 d2 the height wrongly taken from f\'(3)', m, E('-1/2'));
+  check('300 d2 that line has y-intercept 1', m + m * (0 - 3), 1);
+  check('300 d2 and it meets the x-axis at 2', 3 - m / m, 2);
+  // d3 y = -x/2 + 11/2: (x + 3) substituted for (x - 3)
+  check('300 d3 the sign-flipped line has y-intercept 11/2', y0 + m * (0 + 3), E('11/2'));
+  check('300 d3 and it meets the x-axis at 11', -(y0 + m * 3) / m, 11);
+}
+
+// rq-sub-bg-301 — f = sqrt(x)/(x+4): maximum (4, 1/4), found after clearing the inner fraction
+{
+  const F = 'sqrt(x)/(x + 4)';
+  const FP = '(4 - x)/(2*sqrt(x)*(x + 4)^2)';
+  dcheck('301 derivative after the 2*sqrt(x) expansion', F, FP, [0.25, 1, 4, 9, 16]);
+  check('301 the domain needs x >= 0: the radicand at -1 is negative', sgn(f('x')(-1)), -1);
+  check('301 the denominator never vanishes on it: x + 4 at 0 is 4', f('x + 4')(0), 4);
+  checkSet('301 the numerator of f\' vanishes at 4', math.polynomialRoot(4, -1) as number[], [4]);
+  check('301 f\'(4) = 0', f(FP)(4), 0);
+  check('301 the height comes from the ORIGINAL function: f(4)', f(F)(4), E('1/4'));
+  check('301 f\' positive left of 4', sgn(f(FP)(1)), 1);
+  check('301 f\' negative right of 4', sgn(f(FP)(9)), -1);
+  check('301 so 1/4 really is the largest value on the domain', gridMax(F, 1e-6, 400), E('1/4'), 1e-5);
+  // d1 (4, 1/2): the +4 dropped when substituting in the denominator
+  check('301 d1 sqrt(4)/4', f('sqrt(x)/x')(4), E('1/2'));
+  check('301 d1 note: the denominator at 4 is 8, not 4', f('x + 4')(4), 8);
+  // d2 (4, 2): the height read off the numerator alone
+  check('301 d2 sqrt(4)', f('sqrt(x)')(4), 2);
+  // d3 "no extremum": u'v + uv' instead of u'v - uv' leaves the numerator 3x + 4
+  const wrongNum = (x: number) => ((1 / (2 * Math.sqrt(x))) * (x + 4) + Math.sqrt(x)) * 2 * Math.sqrt(x);
+  for (const at of [1, 4, 9]) check(`301 d3 the plus-sign numerator is 3x + 4 at ${at}`, wrongNum(at), f('3x + 4')(at));
+  checkSet('301 d3 3x + 4 vanishes at -4/3', math.polynomialRoot(4, 3) as number[], [E('-4/3')]);
+  check('301 d3 and -4/3 is outside x >= 0', sgn(E('-4/3')), -1);
+}
+
+// rq-sub-bg-302 — f = sqrt(x^2-6x+8): domain x <= 2 or x >= 4, intercepts (2,0), (4,0), (0, 2sqrt2),
+// and the only zero of f' sits in the gap 2 < x < 4 that the domain threw away
+{
+  const RAD = 'x^2 - 6x + 8';
+  const F = 'sqrt(x^2 - 6x + 8)';
+  const FP = '(x - 3)/sqrt(x^2 - 6x + 8)';
+  checkSet('302 the radicand vanishes at 2 and 4', math.polynomialRoot(8, -6, 1) as number[], [2, 4]);
+  // the three columns of the sign table, each read off the factors
+  check('302 table: (x-2) negative at 0', sgn(f('x - 2')(0)), -1);
+  check('302 table: (x-4) negative at 0', sgn(f('x - 4')(0)), -1);
+  check('302 table: the product is positive at 0', sgn(f(RAD)(0)), 1);
+  check('302 table: the product is negative at 3', sgn(f(RAD)(3)), -1);
+  check('302 table: the product is positive at 5', sgn(f(RAD)(5)), 1);
+  check('302 the radicand never flips inside the left piece', signChanges(RAD, -60, 1.999), 0);
+  check('302 nor inside the right piece', signChanges(RAD, 4.001, 60), 0);
+  // the closed ends: both belong to the domain, because the root is not in a denominator
+  check('302 f(2) = 0', f(F)(2), 0);
+  check('302 f(4) = 0', f(F)(4), 0);
+  check('302 f is undefined at 3', Number.isFinite(f(F)(3)) ? 1 : 0, 0);
+  check('302 the y-intercept is sqrt(8)', f(F)(0), E('2*sqrt(2)'));
+  check('302 and 0 lies in the left piece', f(RAD)(0) >= 0 ? 1 : 0, 1);
+  // the derivative, and the candidate it produces
+  dcheck('302 f\' = (x-3)/sqrt(x^2-6x+8)', F, FP, [-2, 0, 1, 5, 8]);
+  checkSet('302 the numerator of f\' vanishes at 3', math.polynomialRoot(-3, 1) as number[], [3]);
+  check('302 but the radicand at that candidate is -1', f(RAD)(3), -1);
+  check('302 so the candidate is outside the domain', f(RAD)(3) < 0 ? 1 : 0, 1);
+  // …and nowhere IN the domain does the derivative vanish: |x - 3| >= 1 on both pieces
+  check('302 |x - 3| stays at least 1 on the left piece', gridMin('abs(x - 3)', -60, 2), 1, 1e-4);
+  check('302 and at least 1 on the right piece', gridMin('abs(x - 3)', 4, 60), 1, 1e-4);
+  check('302 f\' is strictly negative throughout the left piece', signChanges(FP, -60, 1.999), 0);
+  check('302 and strictly positive throughout the right piece', signChanges(FP, 4.001, 60), 0);
+  // d2 (option C) "2 <= x <= 4": that is exactly where the product is negative
+  check('302 d2 the wrong interval is where the radicand is negative', gridMax(RAD, 2.001, 3.999) < 0 ? 1 : 0, 1);
+  check('302 d2 and 0 falls outside it, which is why that option loses the y-intercept', 0 >= 2 ? 1 : 0, 0);
+  // d3 (0, 8): the radicand reported instead of its root
+  check('302 d3 the radicand at 0 is 8', f(RAD)(0), 8);
+  check('302 d3 while its root is 2sqrt2, about 2.83', E('2*sqrt(2)'), 2.8284271247, 1e-9);
+}
+
+// rq-sub-bg-303 — f = (x^2+a)/(x-2) with an extremum at x = 6. a is RECOVERED here by solving
+// f'(6) = 0 numerically (the derivative is symbolic in BOTH x and a), snapped to six decimals,
+// and only then fed back — the whole rest of the question hangs off that one number.
+{
+  const dfdx = math.derivative('(x^2 + a)/(x - 2)', 'x');
+  const slopeAt6 = (aVal: number) => dfdx.evaluate({ x: 6, a: aVal }) as number;
+  const h0 = slopeAt6(0);
+  const h1 = slopeAt6(1);
+  const aStar = Number((-h0 / (h1 - h0)).toFixed(6)); // f'(6) is linear in a
+  check('303 a recovered from f\'(6) = 0', aStar, 12);
+  check('303 and that a really zeroes the derivative at 6', slopeAt6(aStar), 0, 1e-9);
+  check('303 a different a does not', Math.abs(slopeAt6(aStar + 1)) > 1e-6 ? 1 : 0, 1);
+
+  const F = `(x^2 + ${aStar})/(x - 2)`;
+  const FP = `(x^2 - 4x - ${aStar})/(x - 2)^2`;
+  dcheck('303 f\' = (x^2 - 4x - 12)/(x - 2)^2', F, FP, [-3, -1, 0, 1, 3, 7]);
+  checkSet('303 the numerator factors to (x-6)(x+2)', math.polynomialRoot(-aStar, -4, 1) as number[], [6, -2]);
+  check('303 f(6) = 12', f(F)(6), 12);
+  check('303 f(-2) = -4', f(F)(-2), -4);
+  check('303 the vertical asymptote: the denominator vanishes at 2', f('x - 2')(2), 0);
+  check('303 while the numerator there is 16, so it is not a hole', f(`x^2 + ${aStar}`)(2), 16);
+  // the four columns of the sign table
+  check('303 table: f\' positive at -3', sgn(f(FP)(-3)), 1);
+  check('303 table: f\' negative at 0', sgn(f(FP)(0)), -1);
+  check('303 table: f\' negative at 3', sgn(f(FP)(3)), -1);
+  check('303 table: f\' positive at 7', sgn(f(FP)(7)), 1);
+  check('303 table: (x-2)^2 never flips', sgn(f('(x - 2)^2')(1)) + sgn(f('(x - 2)^2')(3)), 2);
+  // the classification, taken from the function and not from the table
+  check('303 -4 is the LARGEST value the left branch reaches', gridMax(F, -400, 1.999), -4, 1e-3);
+  check('303 12 is the SMALLEST value the right branch reaches', gridMin(F, 2.001, 400), 12, 1e-3);
+  // …which is exactly the claim about y = m
+  for (const m of [-3.9, 0, 5, 11.9]) {
+    check(`303 y = ${m} misses the left branch`, gridMax(F, -400, 1.999) < m ? 1 : 0, 1);
+    check(`303 y = ${m} misses the right branch`, gridMin(F, 2.001, 400) > m ? 1 : 0, 1);
+    check(`303 f - ${m} never changes sign on the left branch`, signChanges(`(${F}) - (${m})`, -400, 1.999), 0);
+    check(`303 f - ${m} never changes sign on the right branch`, signChanges(`(${F}) - (${m})`, 2.001, 400), 0);
+  }
+  check('303 the endpoint m = -4 IS attained', f(F)(-2), -4);
+  check('303 the endpoint m = 12 IS attained', f(F)(6), 12);
+  check('303 and m = 13 is attained too', signChanges(`(${F}) - 13`, 2.001, 400), 2);
+  // w1 a = -12: the sign slip leaves x^2 - 4x + 12, whose discriminant is negative
+  check('303 w1 discriminant of x^2 - 4x + 12', E('(-4)^2 - 4*1*12'), -32);
+  check('303 w1 so that a gives no extremum at all', signChanges('(x^2 - 4x + 12)/(x - 2)^2', -400, 1.999), 0);
+  // w2 the two points swapped: the max height is BELOW the min height here
+  check('303 w2 the maximum sits lower than the minimum', f(F)(-2) < f(F)(6) ? 1 : 0, 1);
+  check('303 w2 yet f\' goes + then - around -2', sgn(f(FP)(-2.5)) - sgn(f(FP)(-1.5)), 2);
+  check('303 w2 and - then + around 6', sgn(f(FP)(6.5)) - sgn(f(FP)(5.5)), 2);
+  // w3 the min's x-coordinate typed as its height
+  check('303 w3 f(6) is 12, not 6', f(F)(6) === 6 ? 1 : 0, 0);
+}
+
+// rq-sub-bg-304 — f = (x^2+9)/(x^2-9): two vertical asymptotes, y = 1, no x-intercept, max (0, -1)
+{
+  const F = '(x^2 + 9)/(x^2 - 9)';
+  const FP = '(-36x)/(x^2 - 9)^2';
+  checkSet('304 the denominator vanishes at 3 and -3', math.polynomialRoot(-9, 0, 1) as number[], [3, -3]);
+  check('304 the numerator there is 18, so both are asymptotes', f('x^2 + 9')(3), 18);
+  check('304 f blows up just left of 3', Math.abs(f(F)(3 - 1e-8)) > 1e6 ? 1 : 0, 1);
+  check('304 f blows up just right of -3', Math.abs(f(F)(-3 + 1e-8)) > 1e6 ? 1 : 0, 1);
+  check('304 the horizontal asymptote: f far out tends to 1', f(F)(1e6), 1, 1e-6);
+  check('304 and to 1 in the other direction too', f(F)(-1e6), 1, 1e-6);
+  check('304 no x-intercept: the numerator never gets below 9', gridMin('x^2 + 9', -300, 300), 9, 1e-4);
+  check('304 no x-intercept: the numerator never changes sign', signChanges('x^2 + 9', -300, 300), 0);
+  check('304 the y-intercept is f(0) = -1', f(F)(0), -1);
+  check('304 and it really is numerator(0) over denominator(0)', f(F)(0), f('x^2 + 9')(0) / f('x^2 - 9')(0));
+  dcheck('304 f\' = -36x/(x^2-9)^2 after the 2x factor comes out', F, FP, [-5, -2, -1, 1, 2, 5]);
+  checkSet('304 the numerator of f\' vanishes only at 0', math.polynomialRoot(0, -36) as number[], [0]);
+  check('304 f\'(0) = 0', f(FP)(0), 0);
+  check('304 (x^2-9)^2 is positive on both sides of 0', sgn(f('(x^2 - 9)^2')(-1)) + sgn(f('(x^2 - 9)^2')(1)), 2);
+  // the four columns of the sign table
+  check('304 table: f\' positive at -5', sgn(f(FP)(-5)), 1);
+  check('304 table: f\' positive at -1', sgn(f(FP)(-1)), 1);
+  check('304 table: f\' negative at 1', sgn(f(FP)(1)), -1);
+  check('304 table: f\' negative at 5', sgn(f(FP)(5)), -1);
+  // the maximum, confirmed against the function itself on the middle branch
+  check('304 -1 is the largest value of the middle branch', gridMax(F, -2.999, 2.999), -1, 1e-4);
+  check('304 the middle branch stays below the axis', gridMax(F, -2.999, 2.999) < 0 ? 1 : 0, 1);
+  check('304 the outer branches stay above y = 1', gridMin(F, 3.001, 400) > 1 ? 1 : 0, 1);
+  check('304 and the left outer branch too', gridMin(F, -400, -3.001) > 1 ? 1 : 0, 1);
+  check('304 the right branch descends toward the asymptote: f(4) > f(10)', f(F)(4) > f(F)(10) ? 1 : 0, 1);
+  // w1 the vertical asymptote taken as 9 (the square, not its root)
+  check('304 w1 the denominator at 9 is 72, not 0', f('x^2 - 9')(9), 72);
+  check('304 w1 f(9) is perfectly finite', Number.isFinite(f(F)(9)) ? 1 : 0, 1);
+  // w2 y = 0 taken as the horizontal asymptote
+  check('304 w2 f far out is 1, not 0', Math.abs(f(F)(1e6) - 0) > 0.9 ? 1 : 0, 1);
+  check('304 w2 the ratio of the leading coefficients is 1/1', E('1/1'), 1);
+  // w3 the height read off the numerator alone
+  check('304 w3 the numerator at 0 is 9', f('x^2 + 9')(0), 9);
+  check('304 w3 while the denominator at 0 is -9', f('x^2 - 9')(0), -9);
+}
+
+// Everything above re-derives the mathematics without looking at the file. This last
+// block closes the loop the other way: it reads the AUTHORED answer boxes back out of
+// bagrut-mixed.ts and requires them to equal the re-derived numbers, so a typo in a
+// graded value cannot pass while the independent derivation quietly agrees with itself.
+{
+  const byId = new Map(RQ_EXTRA['rq-bagrut-mixed'].map((q) => [q.id, q]));
+  const boxes = (id: string) => ((byId.get(id)?.expected as { values?: string[] } | undefined)?.values ?? []).map((v) => E(v));
+
+  const F303 = '(x^2 + 12)/(x - 2)';
+  const b303 = boxes('rq-sub-bg-303');
+  check('303 authored: three graded boxes', b303.length, 3);
+  check('303 authored box a equals the recovered parameter', b303[0], 12);
+  check('303 authored box "max height" equals f(-2)', b303[1], f(F303)(-2));
+  check('303 authored box "min height" equals f(6)', b303[2], f(F303)(6));
+
+  const F304 = '(x^2 + 9)/(x^2 - 9)';
+  const b304 = boxes('rq-sub-bg-304');
+  check('304 authored: three graded boxes', b304.length, 3);
+  check('304 authored box "vertical asymptote" equals the positive root of the denominator', b304[0], Math.max(...(math.polynomialRoot(-9, 0, 1) as number[])));
+  check('304 authored box "horizontal asymptote" equals the limit far out', b304[1], f(F304)(1e6), 1e-5);
+  check('304 authored box "extremum height" equals f(0)', b304[2], f(F304)(0));
+
+  for (const id of ['rq-sub-bg-300', 'rq-sub-bg-301', 'rq-sub-bg-302']) {
+    check(`${id} authored: four options`, byId.get(id)?.answers?.length ?? 0, 4);
+    check(`${id} authored: the correct option is index 0`, byId.get(id)?.correct ?? -1, 0);
+  }
 }
 
 summary('bagrut-mixed');
