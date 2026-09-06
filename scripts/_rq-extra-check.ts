@@ -136,7 +136,8 @@ function functionDefs(q: string): string[] {
 
 function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
   const w = q.id || '(no id)';
-  if (!new RegExp(`^${prefix}1\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN`);
+  // 1NN was the first widening; 2NN is this round's, so both are valid.
+  if (!new RegExp(`^${prefix}[12]\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN or ${prefix}2NN`);
   if (!['easy', 'mid', 'hard'].includes(q.difficulty)) err(w, 'bad-difficulty', String(q.difficulty));
   if (!['mcq', 'open'].includes(q.kind)) err(w, 'bad-kind', String(q.kind));
 
@@ -259,8 +260,12 @@ function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
  *  its solution, because the move often shows only in the working. */
 const MECHANISMS: [string, RegExp][] = [
   ['domain', /תחום ההגדרה|תחום הגדרה|מוגדרת עבור|מכנה שונה מ|ביטוי שתחת השורש|אי[- ]שוויון/],
-  ['vertical-asymptote', /אסימפטוט[הות]? אנכית|אסימפטוטות אנכיות|מאפסי המכנה/],
-  ['horizontal-asymptote', /אסימפטוט[הות]? אופקית|כאשר \$?x\$? שואף|שואף לאינסוף/],
+  // 🔴 Write these to survive the definite article: "האסימפטוטה האופקית" must
+  // match as surely as "אסימפטוטה אופקית". A gate that misses the inflected form
+  // silently scores a question lower and then blames it for restating an easier
+  // one — the same trap as /משלים/ vs /המשלימה/ in the probability gate.
+  ['vertical-asymptote', /אסימפטוט\S*\s+\S*אנכי|מאפסי המכנה/],
+  ['horizontal-asymptote', /אסימפטוט\S*\s+\S*אופקי|כאשר \$?x\$? שואף|שואף לאינסוף/],
   ['quotient-rule', /כלל המנה|נגזרת של מנה|\\dfrac\{[^}]*'[^}]*\}|u'v ?- ?uv'/],
   ['chain-rule', /נגזרת של שורש|נגזרת פנימית|כלל השרשרת|\\dfrac\{1\}\{2\\sqrt/],
   ['extremum', /נקוד[ותת] קיצון|מקסימום|מינימום|מאפסים את הנגזרת/],
@@ -298,7 +303,8 @@ function askShape(q: PracticeQuestion): string {
 }
 
 const hasParameter = (q: PracticeQuestion) =>
-  /פרמטר|עבור אילו ערכים|מצאו את הערך של \$?[a-z]|נתון ש[^.]*\$?[abmk]\$?[^.]*מצאו|תלוי ב/.test(q.question);
+  // "מצא את $a$" (singular, no "הערך של") is how half the shipped questions ask.
+  /פרמטר|עבור אילו ערכים|מצא(?:ו)? את (?:הערך של )?\$?[a-z]\$?|נתון ש[^.]*\$?[abmk]\$?[^.]*מצא|תלוי ב/.test(q.question);
 
 /** The inference runs BACKWARDS: a property is given and the function (or a
  *  coefficient inside it) is what the student must recover. */
@@ -443,6 +449,15 @@ function checkStage(stageId: string): boolean {
   const top3 = mean(rung('hard').map(scoreOf).sort((a, b) => b - a).slice(0, 3));
   const reach = BAR.bar ? (top3 / BAR.bar) * 100 : 0;
   if (reach < 90) err(stageId, 'does-not-reach-the-exam', `hardest rung averages ${top3.toFixed(1)} vs the archive's ${BAR.bar.toFixed(1)} (${reach.toFixed(0)}%)`);
+
+  if (process.argv.includes('--scores')) {
+    console.log(`\n${stageId} — every question, scored:`);
+    for (const d of ['easy', 'mid', 'hard'] as const) {
+      for (const q of rung(d).sort((a, b) => scoreOf(a) - scoreOf(b))) {
+        console.log(`   ${d.padEnd(4)} ${q.id.padEnd(18)} ${scoreOf(q).toFixed(1).padStart(5)}  ${signatureOf(q)}`);
+      }
+    }
+  }
 
   const mine = findings.slice(before);
   const errors = mine.filter((f) => f.sev === 'error');

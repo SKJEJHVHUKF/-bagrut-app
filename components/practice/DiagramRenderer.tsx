@@ -74,11 +74,18 @@ function DiagramSVG({ spec }: { spec: DiagramSpec }) {
     case 'functionGraph':
       return <FunctionGraphSVG spec={spec} />;
     case 'custom':
+      // direction="ltr" because the page is RTL and an SVG label is maths, not
+      // Hebrew: without it "(1, 9)" is laid out as "(9 ,1)" and "(0, -6)" as
+      // "(6- ,0)" — the minus jumps to the wrong side of the number. Every
+      // figure in the app is affected, so it is fixed at the one render site
+      // rather than in each label. Found by putting all 46 quotient/root
+      // figures on one page and looking at them.
       return (
         <svg
           viewBox={spec.viewBox ?? DEFAULT_VIEWBOX}
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full"
+          direction="ltr"
           dangerouslySetInnerHTML={{ __html: spec.svg }}
         />
       );

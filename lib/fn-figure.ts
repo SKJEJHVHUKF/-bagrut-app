@@ -104,13 +104,52 @@ export function renderFnFigure(spec: FnFigureSpec): string {
     parts.push(`<text x="${n(x0 + 7)}" y="${PAD.t + 10}" font-size="11" fill="#0F172A">y</text>`);
   }
 
+  // Numbered ticks, so the reader can tell a bump from a spike: without a scale
+  // a graph is a shape, not a claim about sizes. At most ~9 per axis.
+  const tickStep = (lo: number, hi: number) => {
+    const raw = (hi - lo) / 9;
+    for (const s of [0.5, 1, 2, 5, 10, 20, 50, 100]) if (s >= raw) return s;
+    return Math.ceil(raw);
+  };
+  const fmt = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
+  // A point sitting ON an axis already prints its coordinates there, so its tick
+  // number would be drawn on top of them.
+  const onXAxis = (spec.points ?? []).filter((p) => Math.abs(p.y) < 1e-9 && p.label).map((p) => p.x);
+  const onYAxis = (spec.points ?? []).filter((p) => Math.abs(p.x) < 1e-9 && p.label).map((p) => p.y);
+  const stepX = tickStep(spec.xMin, spec.xMax);
+  for (let t = Math.ceil(spec.xMin / stepX) * stepX; t <= spec.xMax + 1e-9; t += stepX) {
+    if (Math.abs(t) < 1e-9) continue;
+    if (onXAxis.some((px) => Math.abs(sx(px) - sx(t)) < 20)) continue;
+    parts.push(`<line x1="${n(sx(t))}" y1="${n(y0 - 3)}" x2="${n(sx(t))}" y2="${n(y0 + 3)}" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>`);
+    parts.push(`<text x="${n(sx(t))}" y="${n(y0 + 15)}" font-size="10" fill="#0F172A" text-anchor="middle">${fmt(t)}</text>`);
+  }
+  if (x0 > PAD.l && x0 < W - PAD.r) {
+    const stepY = tickStep(yMin, yMax);
+    for (let t = Math.ceil(yMin / stepY) * stepY; t <= yMax + 1e-9; t += stepY) {
+      if (Math.abs(t) < 1e-9) continue;
+      if (onYAxis.some((py) => Math.abs(sy(py) - sy(t)) < 12)) continue;
+      parts.push(`<line x1="${n(x0 - 3)}" y1="${n(sy(t))}" x2="${n(x0 + 3)}" y2="${n(sy(t))}" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>`);
+      parts.push(`<text x="${n(x0 - 6)}" y="${n(sy(t) + 3.5)}" font-size="10" fill="#0F172A" text-anchor="end">${fmt(t)}</text>`);
+    }
+  }
+
   for (const a of spec.vAsymptotes ?? []) {
     parts.push(`<line x1="${n(sx(a))}" y1="${PAD.t}" x2="${n(sx(a))}" y2="${H - PAD.b}" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>`);
-    parts.push(`<text x="${n(sx(a) + 5)}" y="${PAD.t + 11}" font-size="10.5" fill="#B45309" font-weight="bold">x = ${a}</text>`);
+    // An asymptote close to the y-axis would print its label on top of the "y",
+    // so drop it a line. Seen on the contact sheet, not by any check.
+    const clash = Math.abs(sx(a) - x0) < 26;
+    parts.push(`<text x="${n(sx(a) + 5)}" y="${PAD.t + (clash ? 25 : 11)}" font-size="10.5" fill="#B45309" font-weight="bold">x = ${a}</text>`);
   }
   for (const a of spec.hAsymptotes ?? []) {
     parts.push(`<line x1="${PAD.l}" y1="${n(sy(a))}" x2="${W - PAD.r}" y2="${n(sy(a))}" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>`);
-    parts.push(`<text x="${PAD.l + 4}" y="${n(sy(a) - 5)}" font-size="10.5" fill="#B45309" font-weight="bold">y = ${a}</text>`);
+    // Right edge, where the curve has flattened onto it — unless the asymptote
+    // runs close to the x-axis, whose own "x" label lives in that corner.
+    const nearAxis = Math.abs(sy(a) - y0) < 18;
+    parts.push(
+      nearAxis
+        ? `<text x="${PAD.l + 2}" y="${n(sy(a) - 5)}" font-size="10.5" fill="#B45309" font-weight="bold">y = ${a}</text>`
+        : `<text x="${W - PAD.r - 2}" y="${n(sy(a) - 5)}" font-size="10.5" fill="#B45309" font-weight="bold" text-anchor="end">y = ${a}</text>`,
+    );
   }
 
   for (const r of runs(spec, yMin, yMax)) {
@@ -131,7 +170,15 @@ export function renderFnFigure(spec: FnFigureSpec): string {
     );
     if (p.label) {
       flip = !flip;
-      parts.push(`<text x="${cx}" y="${n(flip ? cy - 9 : cy + 17)}" font-size="10.5" fill="#0F172A" text-anchor="middle">${p.label}</text>`);
+      if (Math.abs(p.x) < 1e-9) {
+        // A y-intercept: put the label BESIDE the point, or the vertical axis
+        // and its tick numbers run straight through it.
+        parts.push(`<text x="${n(sx(p.x) + 7)}" y="${n(cy + 4)}" font-size="10.5" fill="#0F172A" text-anchor="start">${p.label}</text>`);
+      } else {
+        // Keep a label off the "y" that sits at the top of the vertical axis.
+        const topClash = Math.abs(cx - x0) < 24 && cy - 9 < PAD.t + 16;
+        parts.push(`<text x="${cx}" y="${n(topClash ? cy + 17 : flip ? cy - 9 : cy + 17)}" font-size="10.5" fill="#0F172A" text-anchor="middle">${p.label}</text>`);
+      }
     }
   }
   return `\n${parts.join('\n')}\n`;

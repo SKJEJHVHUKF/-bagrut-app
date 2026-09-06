@@ -1059,7 +1059,7 @@ $$g(x) > 0$$
       },
       {
         id: 'rq-sub-dom-007',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question: 'מצא את תחום ההגדרה של $f(x) = \\dfrac{x}{\\sqrt{x^2 - 25}}$.',
         hint: 'ביטוי ריבועי מתחת לשורש, והשורש במכנה. שני הקשיים יחד.',
@@ -1643,7 +1643,7 @@ $\\sqrt{g(x)} = 0$ אם ורק אם $g(x) = 0$, כי $\\sqrt{0} = 0$ וזה המ
       },
       {
         id: 'rq-sub-int-006',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question: 'מצא את כל נקודות החיתוך של $f(x) = x\\sqrt{9 - x^2}$ עם הצירים.',
         hint: 'מכפלה מתאפסת כשאחד הגורמים מתאפס. בדוק כל גורם בנפרד.',
@@ -1666,7 +1666,7 @@ $\\sqrt{g(x)} = 0$ אם ורק אם $g(x) = 0$, כי $\\sqrt{0} = 0$ וזה המ
       },
       {
         id: 'rq-sub-int-007',
-        difficulty: 'hard',
+        difficulty: 'easy',
         kind: 'mcq',
         question:
           'נתונה $f(x) = \\dfrac{\\sqrt{x + 4}}{x - 1}$. מהי נקודת החיתוך עם ציר $x$?',
@@ -1695,7 +1695,7 @@ $\\sqrt{g(x)} = 0$ אם ורק אם $g(x) = 0$, כי $\\sqrt{0} = 0$ וזה המ
       },
       {
         id: 'rq-sub-int-008',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question:
           'נתונה $f(x) = \\dfrac{x^2 - 2x - 8}{x + 2}$. מצא את נקודות החיתוך עם ציר $x$, ובדוק בקפידה כל פתרון.',
@@ -2236,7 +2236,7 @@ $\\sqrt{g(x)} = 0$ אם ורק אם $g(x) = 0$, כי $\\sqrt{0} = 0$ וזה המ
       },
       {
         id: 'rq-sub-asy-006',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question:
           'נתונה $f(x) = \\dfrac{ax + 6}{2x - 8}$, והאסימפטוטה האופקית שלה היא $y = 5$. מצא את $a$.',
@@ -2297,7 +2297,7 @@ $\\sqrt{g(x)} = 0$ אם ורק אם $g(x) = 0$, כי $\\sqrt{0} = 0$ וזה המ
       },
       {
         id: 'rq-sub-asy-008',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question:
           'נתונה $f(x) = \\dfrac{x^2 - 25}{x^2 - 5x}$. מצא את כל האסימפטוטות ואת החור, אם קיים.',
