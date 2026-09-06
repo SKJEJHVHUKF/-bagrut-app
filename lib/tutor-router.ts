@@ -547,7 +547,12 @@ export function routeMessage(message: string, focus: TutorFocus | null, state: T
         const own = specOf(focus);
         if (own && own.kind !== 'manual') return { kind: 'answer', spec: own, typed: reported };
       }
-      return { kind: 'ask', ask: ladderMove(fu, state.served ?? [], state.lastAsk) as Ask };
+      // ⚠️ null MEANS "NOT A LADDER MOVE" AND THE ROUTING MUST CONTINUE.
+      // `ladderMove` used to always return an ask, so a "why" follow-up became
+      // 'explain' and the student got "בוא נפרק את השאלה… קרא אותה שוב לאט" —
+      // a stall — for any sentence containing the word למה. See the note there.
+      const move = ladderMove(fu, state.served ?? [], state.lastAsk);
+      if (move) return { kind: 'ask', ask: move as Ask };
     }
   }
 

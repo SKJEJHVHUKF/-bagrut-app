@@ -46,7 +46,7 @@
 
 import { routeMessage, answerGradedLocally, canonicalFor, type Ask } from '@/lib/tutor-router';
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
-import { metaAnswer } from '@/lib/tutor-meta-asks';
+import { classifyMetaAsk, metaAnswer } from '@/lib/tutor-meta-asks';
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 import { offTopicRedirect } from '@/lib/off-topic';
 // lib/tutor-plan-answer is imported DYNAMICALLY at step 10, not here. It pulls
@@ -249,6 +249,14 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
     state,
   });
 
+  // The screen's topic when it has one; otherwise the topic named in THIS
+  // message, else the one this CONVERSATION already established. A function
+  // and not a const because the layers above the topic step must not resolve
+  // it early — see the note on `cardTopic` below — but the repeat-complaint
+  // exit does need it, and one expression in two places is one place.
+  const groundTopic = () =>
+    focus?.topic || screenTopic || resolveTopic(text) || state.convTopic || '';
+
   // `probe` is what the local tutor is asked. Normally the student's own words;
   // for a resolved continuation ("ואז?" → the previous ask) it is the canonical
   // phrasing of that ask, because answerLocally classifies the words it is
@@ -316,8 +324,29 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
     lastWasComplaint: state.lastComplaint,
     hasQuestion: Boolean(focus?.question),
   });
-  state.lastComplaint = metaAsk?.kind === 'complaint';
+  // ⚠️ STICKY, NOT PER-TURN. It was `= metaAsk?.kind === 'complaint'`, which
+  // reads "in a row" literally: one ordinary message between two complaints
+  // cleared the flag and the SECOND complaint got the same stock sentence
+  // again, word for word. Reproduced from Itay's screenshots (2026-09-06):
+  // "לא ענית לי על השאלה" → the template · a maths question → a template ·
+  // "עדיין לא ענית לי" → the identical template. A student who says twice in
+  // one conversation that we missed has told us the template is not working,
+  // whatever came between.
+  if (metaAsk?.kind === 'complaint') state.lastComplaint = true;
   if (metaAsk) return hit(metaAsk.text, 'meta');
+
+  // ⚠️ AND WHEN IT DECLINES, THE CHAIN STOPS — it does not carry on down.
+  // `metaAnswer` returning null on a repeated complaint means "the model takes
+  // this one", but null only removed step 2 from the running; every layer
+  // below still had its turn. Measured: "עדיין לא ענית לי" then reached the
+  // follow-up router as `stuck` and was answered with a HINT about the
+  // exercise — a third non-answer to a student saying, for the second time,
+  // that we are not answering him. `probe` stays his own words.
+  if (classifyMetaAsk(text) === 'complaint') {
+    grounded = groundTopic();
+    if (grounded) state.convTopic = grounded;
+    return { answered: false, probe: text, routeKind, topic: grounded, faqMissed: false, state };
+  }
 
   // ===== 3. "זה יבוא בבגרות?" / "כמה נקודות זה שווה?" =====
   //
@@ -348,8 +377,10 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   // No onSlow here: the lookup is local and usually instant, and on a miss
   // the chain reaches the existing onSlow below within microseconds. Labelled
   // 'faq:early' so the trace can tell this hit from a step-5 one.
+  const carriesContent = hasContentBeyondAsk(text, focus);
+
   let faqTriedEarly = false;
-  if (routeKind === 'ask' && focus?.question && focus.topic && hasContentBeyondAsk(text, focus)) {
+  if (routeKind === 'ask' && focus?.question && focus.topic && carriesContent) {
     try {
       const { answerFromFaq } = await import('@/lib/tutor-faq');
       const early = await answerFromFaq(text, focus);
@@ -370,10 +401,43 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   // question — and abstains entirely without a focus, which is why /chat gets
   // almost nothing from this one. It stays in the chain because it is the
   // consumer of the router's `probe` rewrite.
-  const local = answerLocally(probe, focus, state.servedKinds);
-  if (local) {
-    state.servedKinds.push(local.kind);
-    return hit(local.text, `local:${local.kind}`);
+  //
+  // ⚠️ AND THAT REWRITE IS WHY THIS LAYER IS FENCED. `probe` is
+  // `canonicalFor(ask)` on every ask, so by the time `answerLocally` runs, the
+  // student's own sentence is GONE and a template is answering a phrasing
+  // nobody typed. Harmless for a bare ask — "רמז" canonicalises to itself in
+  // meaning. Not harmless for a sentence that carried something specific:
+  //
+  //   `followUp`'s `why` rule is /(?:^|[^א-ת])(?:למה|מדוע)(?:[^א-ת]|$)/ — the
+  //   WORD למה anywhere in the message — and `ladderMove('why')` returns
+  //   'explain'. So EVERY "למה …?" a student asks mid-conversation was served
+  //   'A:explain': "בוא נפרק את השאלה שעל המסך… קרא אותה שוב לאט". Its own
+  //   docstring says it "Returns null for anything that reads as a NEW
+  //   question — a message … carrying its own maths"; there is no such test in
+  //   it. `classifyAsk` leaks the same way by substring ("לא הבנתי" inside a
+  //   sentence about 0.7 → 'help').
+  //
+  // MEASURED, replaying Itay's screenshots through this function
+  // (2026-09-06): "למה פשוט לא עושים חזקה שלישת ל0.7?" → `local:explain`, a
+  // paragraph telling a student who asked a precise question to read the
+  // question again. Four turns later he was still asking it.
+  //
+  // The fence is the predicate step 3½ already computes. If the message points
+  // at something specific on screen AND the bank written for that screen had
+  // nothing, then nobody authored an answer to what was actually asked — and a
+  // template about the exercise in general is not one. That turn is worth a
+  // model call: it has the question, the authored solution and the student's
+  // own words (TutorBubble sends `message: text`, never the probe).
+  //
+  // Bare asks are untouched — they carry no content, so `carriesContent` is
+  // false and every free rung serves exactly as before. That is the bulk of
+  // the traffic and the bulk of the saving.
+  if (!(routeKind === 'ask' && carriesContent)) {
+    const local = answerLocally(probe, focus, state.servedKinds);
+    if (local) {
+      state.servedKinds.push(local.kind);
+      return hit(local.text, `local:${local.kind}`);
+    }
   }
 
   // Everything below awaits a lazily-imported bank. The caller raises its
@@ -382,7 +446,7 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
 
   // The screen's topic when it has one; otherwise the topic named in THIS
   // message, else the one this CONVERSATION already established.
-  const cardTopic = focus?.topic || screenTopic || resolveTopic(text) || state.convTopic || '';
+  const cardTopic = groundTopic();
   if (cardTopic) state.convTopic = cardTopic;
   grounded = cardTopic;
 

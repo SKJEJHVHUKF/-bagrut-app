@@ -107,8 +107,29 @@ export function ladderMove(
   kind: FollowUp,
   spent: readonly string[],
   lastAsk?: string | null,
-): 'help' | 'full' | 'explain' | 'formulas' | 'key-points' | 'why-wrong' {
-  if (kind === 'why' || kind === 'restate') return 'explain';
+): 'help' | 'full' | 'explain' | 'formulas' | 'key-points' | 'why-wrong' | null {
+  // ⚠️ 'why' IS NOT A LADDER MOVE, AND MAPPING IT TO 'explain' WAS THE SINGLE
+  // BIGGEST SOURCE OF "the tutor didn't answer me".
+  //
+  // The rule above is the WORD למה anywhere in the message, so every
+  // "למה מכפילים ולא מחברים", "למה פשוט לא עושים חזקה שלישת ל0.7", "אני יגיד
+  // לך מה שלא הבנתי זה למה מכפילים ב3x+3" resolved to the ask 'explain' — and
+  // the 'explain' template is 'A:explain': "בוא נפרק את השאלה שעל המסך, בלי
+  // לפתור אותה… עכשיו קרא אותה שוב לאט". That template is written for ONE
+  // input, the one-tap chip "תסביר לי את השאלה הזאת מההתחלה", where it is
+  // exactly right. Served to a student who named the step he cannot follow it
+  // is a stall, and Itay's screenshots (2026-09-06) are four turns of one.
+  //
+  // A student asking WHY wants a reason. Nothing here has one for an arbitrary
+  // why-question, so the honest answer is the model's — it gets the question,
+  // the authored solution and his own words. Returning null lets `routeMessage`
+  // carry on to the layers that might, and to the model if none do.
+  //
+  // The bare "למה?" is NOT affected: `routeMessage` answers it from BARE_WHY
+  // several branches earlier, and a "למה?" challenging a verdict is answered
+  // by `lastVerdict` earlier still. Both run before this one.
+  if (kind === 'why') return null;
+  if (kind === 'restate') return 'explain'; // "תסביר אחרת" really does want it again
 
   const spentHelp =
     spent.includes('hint') && (spent.includes('first-step') || spent.includes('key-points'));

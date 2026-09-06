@@ -336,6 +336,92 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     ok(!hasContentBeyondAsk('איך פותרים את זה', pyth), '"איך פותרים את זה" stays bare');
   }
 
+  console.log('\n=== a template never answers a question that carried its own content ===\n');
+  {
+    // ⚠️ REPLAYED FROM ITAY'S SCREENSHOTS (2026-09-06), verbatim and in order.
+    // Six turns on one exercise, the student asking the same thing the whole
+    // way: "why isn't the answer 0.7³?". What he got:
+    //
+    //   1  faq:early      an authored entry about ADDING (2.1) — still open
+    //   2  → the model
+    //   3  meta           "צודק, פספסתי. תכתוב לי במשפט אחד…"
+    //   4  local:explain  "בוא נפרק את השאלה… קרא אותה שוב לאט"   ← the bug
+    //   5  meta           THE SAME SENTENCE AS TURN 3, word for word
+    //   6  → the model
+    //
+    // Turn 4: `followUp`'s `why` rule is the WORD למה anywhere in the message,
+    // `ladderMove('why')` is 'explain', and `probe` becomes the canonical
+    // phrasing — so the template answered a question nobody typed. Turn 5:
+    // `lastComplaint` was per-turn, and turn 4 cleared it.
+    const { getSubTopic } = await import('../content/lessons');
+    const sub = getSubTopic('math5', 'הסתברות', 'pr-basics');
+    const pq = sub?.questions?.find((x) => x.id === 'prob-pb-003');
+    ok(Boolean(pq), 'the fixture question exists (prob-pb-003)');
+    const shot = {
+      where: 'תרגול · הסתברות', topic: 'הסתברות', subTopicId: 'pr-basics',
+      questionText: pq?.question ?? '', question: pq, subTopic: sub, wrongAnswer: '0.8',
+    } as never;
+    let st2: ChainState = { ...emptyChainState(), tutorSpoke: true };
+    for (const [msg, want] of [
+      ['לא הבנתי למה זה לא 0.7 כפול 0.7 כפול 0.7', 'faq:early'],
+      ['לא ענית לי על השאלה', 'meta'],
+      // Content of its own, and no authored entry for it → the model, which
+      // has the question, the solution and his own words. NOT a template.
+      ['למה פשוט לא עושים חזקה שלישת ל0.7?', 'miss'],
+      // The second complaint of the conversation. `metaAnswer` declines it,
+      // and the chain must STOP there — falling through served him a hint.
+      ['עדיין לא ענית לי', 'miss'],
+    ] as Array<[string, string]>) {
+      const r = await runTutorChain({ message: msg, focus: shot, state: st2 });
+      st2 = r.state;
+      const got = r.answered ? r.layer : 'miss';
+      ok(got === want, `"${msg}" → ${got}${got === want ? '' : ` (expected ${want})`}`);
+    }
+    // ⚠️ A "למה …?" IS NEVER THE 'explain' TEMPLATE. `followUp`'s `why` rule
+    // is the WORD למה anywhere in the message and `ladderMove` mapped it to
+    // 'explain', whose template is written for the one-tap chip and says
+    // "קרא אותה שוב לאט". These four are from Itay's two screenshots and from
+    // the shapes around them; what answers them may be the bank, the compiler
+    // or the model — never a stall. The layer is not asserted, because which
+    // one wins is content that moves; that it is not a template is the rule.
+    for (const msg of [
+      'למה מכפילים ולא מחברים',
+      'למה פשוט לא עושים חזקה שלישת ל0.7?',
+      'אני יגיד לך מה שלא הבנתי זה למה מכפילים ב3x+3',
+      'למה זה לא 0.343',
+    ]) {
+      const r = await runTutorChain({
+        message: msg,
+        focus: shot,
+        state: { ...emptyChainState(), tutorSpoke: true },
+      });
+      const got = r.answered ? r.layer : 'miss';
+      ok(got !== 'local:explain', `"${msg}" is not stalled with the explain template (${got})`);
+    }
+    // A bare "למה?" still IS the explain rung — it has no question in it, and
+    // BARE_WHY answers it several branches before the follow-up router.
+    {
+      const r = await runTutorChain({
+        message: 'למה?',
+        focus: shot,
+        state: { ...emptyChainState(), tutorSpoke: true, lastAsk: 'help' },
+      });
+      ok(r.answered && r.layer.startsWith('local:'), `bare "למה?" is still free (${r.answered ? r.layer : 'miss'})`);
+    }
+
+    // The bare rungs are what pays for the model calls above, so they must not
+    // have moved: none of these carries content, so the fence never sees them.
+    for (const [msg, want] of [
+      ['רמז', 'local:hint'],
+      ['לא הבנתי', 'local:hint'],
+      ['מאיפה מתחילים', 'local:hint'],
+    ] as Array<[string, string]>) {
+      const r = await runTutorChain({ message: msg, focus: shot, state: emptyChainState() });
+      const got = r.answered ? r.layer : 'miss';
+      ok(got === want, `bare "${msg}" is still free → ${got}`);
+    }
+  }
+
   console.log('\n=== "כמה נקודות" is exam scoring only next to a scoring word ===\n');
   {
     // ⚠️ "כמה נקודות חיתוך יש עם ציר y" was answered with what the topic is
