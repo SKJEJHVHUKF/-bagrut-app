@@ -219,6 +219,14 @@ function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
     } else err(w, 'bad-expected-kind', spec.kind);
   }
 
+  // --- ask the way the exam asks
+  for (const [name, re] of OFF_STYLE) {
+    if (re.test(q.question ?? '')) {
+      err(w, 'off-style-ask', `${name} — the bagrut does not ask this; ask for the mathematical object instead (מצאו / חשבו / הוכיחו / סרטטו / נמקו)`);
+      break;
+    }
+  }
+
   // --- one line, one move (Itay, 2026-09-06: "שהתשובות יהיו מובנות ולא דחוסות")
   for (const line of crowdedLines((sol.steps ?? []).join('\n'))) {
     err(w, 'crowded-line', `two calculations on one line — give each its own line (\\n\\n): "${line}…"`);
@@ -302,15 +310,30 @@ const mechanismsOf = (q: PracticeQuestion): string[] => {
  *  find-the-error question in the probability gate). */
 function askShape(q: PracticeQuestion): string {
   const t = q.question;
-  if (/תלמיד (?:כתב|טען|חישב)|מה הטעות|היכן השגיאה|מצאו את השגיאה/.test(t)) return 'find-the-error';
-  if (/מה גדול יותר|איזו .* גדולה|כדאי|עדיף|השוו/.test(t)) return 'compare';
-  if (/ומה אם|אילו היה|לו היה|כיצד ישתנה|מה יקרה אם/.test(t)) return 'what-if';
   if (/סרטט|שרטט|סקיצה/.test(t)) return 'sketch';
-  if (/מצאו את הערך של \$?[a-z]|עבור אילו ערכים|מצאו את הפרמטר|כך ש.*יהיה/.test(t)) return 'find-parameter';
-  if (/כמה |מספר ה/.test(t)) return 'count';
-  if (/הוכיחו|הראו כי|נמקו|הסבירו מדוע|האם .*\?/.test(t)) return 'justify';
+  if (/הוכיחו|הוכח|הראו כי/.test(t)) return 'prove';
+  if (/מצאו את הערך של \$?[a-z]|עבור אילו ערכים|מצאו את הפרמטר|כך ש.*יהיה|מצאו את \$?[a-z]\$?(?: ואת)?/.test(t)) return 'find-parameter';
+  if (/נתונה?\s+(?:האסימפטוט|נקודת הקיצון|נקודת החיתוך|תחום ההגדרה)|ידוע (?:כי|ש)[^.]*מצא|מהי הפונקציה/.test(t)) return 'reverse';
+  if (/שטח|אינטגרל|הקדומה/.test(t)) return 'area';
+  if (/נמקו|הסבירו מדוע|קבעו (?:את סוגן|אם)|האם .*\?/.test(t)) return 'justify';
+  if (/כמה |מספר ה|בין אילו ערכים|באיז[הו] /.test(t)) return 'locate';
   return 'compute';
 }
+
+/** Asks the bagrut does not make. Itay, 2026-09-06, on a "כמה טעויות יש כאן?"
+ *  item: "יש שם שאלות שבדרך כלל בבגרות לא שואלים — הסגנון הזה של השאלות…
+ *  תחליף לסגנון שיותר התלמיד צריך לפתור כמו שבאמת נדרש ממנו בבגרות." The
+ *  variety rule below is what pushed authors here, so it now counts EXAM shapes
+ *  (sketch / prove / find-parameter / reverse / area / justify / locate /
+ *  compute) and these stems are refused outright. */
+const OFF_STYLE: [string, RegExp][] = [
+  ['count-the-errors', /כמה טעויות|מספר הטעויות|כמה שגיאות/],
+  ['which-claim-is-true', /איזו (?:מן ה)?טענה נכונה|איזו מהטענות|מה נכון(?: על| לגבי)?\s*\?|איזו קביעה/],
+  ['student-said-mcq', /(?:תלמיד|תלמידה) (?:כתב|כתבה|טען|טענה|חישב|חישבה)[^?]*\?/],
+  ['what-if', /ומה אם|מה יקרה אם|אילו היה/],
+  ['method-meta', /איזו שיטה|מה עדיף לעשות|כיצד כדאי/],
+  ['compare-two-claims', /מה גדול יותר|איזו .* גדולה|כדאי|עדיף/],
+];
 
 const hasParameter = (q: PracticeQuestion) =>
   // "מצא את $a$" (singular, no "הערך של") is how half the shipped questions ask.
