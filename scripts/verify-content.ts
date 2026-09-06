@@ -102,14 +102,11 @@ const proseOnly = (s: string) =>
 /** Figures that are wrong ON PURPOSE — a find-the-error question prints the
  *  student's table so the reader can spot the two bad cells. The corrected
  *  figure in the same solution IS validated, so the answer stays covered. */
-const FIGURE_AS_WRITTEN: { needle: string; why: string }[] = [
-  {
-    needle: 'בטבלה שכתב יש בדיוק שתי משבצות שגויות',
-    why: 'find-the-error question: the student\'s table is faulty by design; the corrected table in its solution is checked',
-  },
-];
+const FIGURE_AS_WRITTEN: Record<string, string> = {
+  'pr-x-tab-104': 'find-the-error question: the student\'s table is faulty by design; the corrected table in its solution is checked',
+};
 
-function checkString(file: string, path: string, key: string, value: string) {
+function checkString(file: string, path: string, key: string, value: string, ownerId?: string) {
   if (!value.trim()) return;
 
   // Raw-LaTeX fields: the whole value is math, so Hebrew anywhere is a bug.
@@ -130,12 +127,14 @@ function checkString(file: string, path: string, key: string, value: string) {
   // cell must equal the sum of its row/column.
   // …with ONE narrow exception, declared here rather than by field class: a
   // find-the-error question shows the student's faulty figure on purpose. Keyed
-  // by a phrase from the question itself, so rewording it (or authoring a new
-  // faulty figure nobody meant) fails the gate instead of inheriting the pass,
-  // and the skip is printed rather than silent.
-  const asWritten = FIGURE_AS_WRITTEN.find((x) => value.includes(x.needle));
+  // by QUESTION ID (a copy-edit to the wording must not silently move the key),
+  // so a new faulty figure nobody meant still fails, and the skip is printed
+  // rather than silent.
+  // Only the STATEMENT of that question is exempt. Its solution redraws the
+  // table correctly, and that one is checked like any other.
+  const asWritten = ownerId && (key === 'question' || key === 'prompt') ? FIGURE_AS_WRITTEN[ownerId] : undefined;
   if (asWritten) {
-    add('prob-figure-as-written', 'warn', file, path, `figure not validated — ${asWritten.why}`);
+    add('prob-figure-as-written', 'warn', file, path, `figure not validated — ${ownerId}: ${asWritten}`);
   } else {
     if (value.includes('```probtree')) for (const e of checkProbTreeFences(value)) add('prob-figure', 'error', file, path, e);
     if (/^\s*\|.*\|\s*$/m.test(value)) for (const e of checkProbTables(value)) add('prob-figure', 'error', file, path, e);
@@ -225,12 +224,17 @@ function checkString(file: string, path: string, key: string, value: string) {
   }
 }
 
-function walkValue(file: string, path: string, key: string, v: unknown) {
-  if (typeof v === 'string') return checkString(file, path, key, v);
-  if (Array.isArray(v)) return v.forEach((x, i) => walkValue(file, `${path}[${i}]`, key, x));
+/** `ownerId` is the id of the nearest enclosing object that has one — the
+ *  question or part a string belongs to. Rules that must name a specific piece
+ *  of content key on it instead of on the text, which authors edit freely. */
+function walkValue(file: string, path: string, key: string, v: unknown, ownerId?: string) {
+  if (typeof v === 'string') return checkString(file, path, key, v, ownerId);
+  if (Array.isArray(v)) return v.forEach((x, i) => walkValue(file, `${path}[${i}]`, key, x, ownerId));
   if (v && typeof v === 'object') {
-    for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
-      walkValue(file, `${path}.${k}`, k, val);
+    const rec = v as Record<string, unknown>;
+    const id = typeof rec.id === 'string' ? rec.id : ownerId;
+    for (const [k, val] of Object.entries(rec)) {
+      walkValue(file, `${path}.${k}`, k, val, id);
     }
   }
 }
