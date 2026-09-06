@@ -1,10 +1,10 @@
-// Numeric re-derivation of content/lessons/math5/rq-extra/domain.ts (rq-sub-dom-101…112).
+// Numeric re-derivation of content/lessons/math5/rq-extra/domain.ts (rq-sub-dom-101…117).
 // A domain claim is encoded as membership: `defined(expr, x)` evaluates the question's own
 // function with mathjs and asks whether the result is a finite real number (sqrt of a negative
 // comes back Complex, division by zero comes back Infinity). Endpoints are found as roots of the
 // radicand / denominator, and every distractor / wrongAnswer note is re-enacted as the mistake
 // it names.
-import { check, checkSet, summary, math, E } from './_lib';
+import { check, checkSet, dcheck, summary, math, E } from './_lib';
 
 const f = (expr: string) => {
   const c = math.parse(expr).compile();
@@ -38,6 +38,9 @@ function roots(expr: string, lo = -20, hi = 20, name = 'x'): number[] {
 }
 /** membership pattern of expr at the sample points, as a 0/1 string */
 const pattern = (expr: string, xs: number[]) => xs.map(x => defined(expr, x)).join('');
+/** roots() finds a sign change at a POLE too; keep only the ones where expr is really 0 */
+const trueRoots = (expr: string, lo = -50, hi = 50) =>
+  roots(expr, lo, hi).filter(r => Math.abs(num(expr)(r)) < 1e-6);
 const EPS = 1e-3;
 
 // rq-sub-dom-101 — (x-3)/(x^2+4): denominator never zero → defined for every x
@@ -165,18 +168,31 @@ const EPS = 1e-3;
   for (let k = -20; k <= 20; k++) inner += defined(fx, k) && num(g)(k) > 0 ? 1 : 0;
   check('110 wrong 5 = endpoints not counted', inner, 5);
   check('110 wrong 6 = length of the interval', 4 - -2, 6);
+  // the drawn figure: every marked point re-derived from the parabola itself
+  check('110 figure: the curve meets the axis at x = -2', num(g)(-2), 0);
+  check('110 figure: the curve meets the axis at x = 4', num(g)(4), 0);
+  check('110 figure: the marked vertex (1, 9) is on the curve', num(g)(1), 9);
+  check('110 figure: the vertex is the maximum of the sampled window',
+    Math.max(...[-4, -2, 0, 1, 2, 4, 6].map(v => num(g)(v))), 9);
 }
 
-// rq-sub-dom-111 — sqrt(x+4)/(sqrt(x)-2): x >= 0 and x != 4
+// rq-sub-dom-111 — the domains of sqrt(x+4)/(sqrt(x)-2) and sqrt(x+4)/sqrt(x-2)
+// are INCOMPARABLE: each holds a value the other rejects.
 {
-  const den = 'sqrt(x)-2', fx = `sqrt(x+4)/(${den})`;
-  checkSet('111 denominator root (after squaring)', roots(den, 0, 20), [4]);
-  check('111 membership: 0 in, 4 out, negatives out', pattern(fx, [-1, -EPS, 0, 2, 4 - EPS, 4, 4 + EPS, 100]) === '00111011' ? 1 : 0, 1);
-  check('111 distractor B: den(0) = -2, so x=0 is allowed', num(den)(0), -2);
-  check('111 distractor C: x=-1 passes the numerator test but not the denominator root', num('x+4')(-1) > 0 ? 1 : 0, 1);
-  check('111 distractor C: x=-1 undefined', defined(fx, -1), 0);
-  check('111 distractor D: den(2) = sqrt(2)-2 is not 0', num(den)(2), Math.SQRT2 - 2);
-  check('111 den(4) = 0', num(den)(4), 0);
+  const fDen = 'sqrt(x)-2', hDen = 'sqrt(x-2)';
+  const fx = `sqrt(x+4)/(${fDen})`, hx = `sqrt(x+4)/(${hDen})`;
+  checkSet('111 f denominator root (after squaring)', roots(fDen, 0, 20), [4]);
+  checkSet('111 h denominator radicand root', roots('x-2', 0, 20), [2]);
+  check('111 f domain: x >= 0 and x != 4', pattern(fx, [-1, -EPS, 0, 2, 4 - EPS, 4, 4 + EPS, 100]) === '00111011' ? 1 : 0, 1);
+  check('111 h domain: x > 2 only', pattern(hx, [-1, 0, 2 - EPS, 2, 2 + EPS, 4, 100]) === '0000111' ? 1 : 0, 1);
+  // the two witnesses that make neither domain a subset of the other
+  check('111 x = 0 belongs to f only', defined(fx, 0) - defined(hx, 0), 1);
+  check('111 x = 4 belongs to h only', defined(hx, 4) - defined(fx, 4), 1);
+  check('111 note: f denominator at 0 is -2', num(fDen)(0), -2);
+  check('111 note: f denominator at 4 is 0', num(fDen)(4), 0);
+  check('111 note: h denominator at 4 is sqrt(2)', num(hDen)(4), Math.SQRT2);
+  check('111 note: h radicand at 0 is -2', num('x-2')(0), -2);
+  check('111 the domains are not equal', pattern(fx, [0, 4]) === pattern(hx, [0, 4]) ? 1 : 0, 0);
 }
 
 // rq-sub-dom-112 — student's domain "x <= 6" for (x+1)/sqrt(36-x^2): two mistakes
@@ -196,6 +212,108 @@ const EPS = 1e-3;
   check('112 mistakes counted', m1 + m2, 2);
   check('112 note: g(-10) = -64', num(g)(-10), -64);
   check('112 note: den(6) = sqrt(0) = 0', num(`sqrt(${g})`)(6), 0);
+  // the sign table the corrected solution draws, row by row
+  check('112 table: the factorisation agrees with 36 - x^2', num('(6-x)*(6+x)')(2.5) - num(g)(2.5), 0);
+  check('112 table row x < -6: the product is negative', Math.sign(num('(6-x)*(6+x)')(-7)), -1);
+  check('112 table row -6 < x < 6: the product is positive', Math.sign(num('(6-x)*(6+x)')(0)), 1);
+  check('112 table row x > 6: the product is negative', Math.sign(num('(6-x)*(6+x)')(7)), -1);
+  checkSet('112 the two column edges are the roots', roots('(6-x)*(6+x)'), [6, -6]);
+}
+
+// rq-sub-dom-113 — sqrt((x-1)/(x+3)): x < -3 or x >= 1
+{
+  const q = '(x-1)/(x+3)', fx = `sqrt(${q})`;
+  checkSet('113 numerator root', roots('x-1'), [1]);
+  checkSet('113 denominator root', roots('x+3'), [-3]);
+  check('113 membership: left branch open at -3, right branch closed at 1',
+    pattern(fx, [-5, -3 - EPS, -3, -3 + EPS, 0, 1 - EPS, 1, 2]) === '11000011' ? 1 : 0, 1);
+  check('113 sign table row x < -3: the quotient is positive', Math.sign(num(q)(-5)), 1);
+  check('113 sign table row -3 < x < 1: the quotient is negative', Math.sign(num(q)(0)), -1);
+  check('113 sign table row x > 1: the quotient is positive', Math.sign(num(q)(2)), 1);
+  check('113 the endpoint 1 is included because the quotient is 0 there', num(q)(1), 0);
+  check('113 the endpoint -3 is excluded: the quotient is undefined there', defined(q, -3), 0);
+}
+
+// rq-sub-dom-114 — g = 1/(f - k) with f = (x+1)/(x-4): k=2 removes x=9, k=1 removes nothing
+{
+  const f = '(x+1)/(x-4)';
+  const g = (k: number) => `1/((${f})-(${k}))`;
+  checkSet('114 the inner function is undefined at the root of x - 4', roots('x-4'), [4]);
+  check('114 the inner function is undefined at x = 4', defined(f, 4), 0);
+  checkSet('114 k=2: f(x) = 2 holds only at x = 9', trueRoots(`(${f})-2`), [9]);
+  checkSet('114 k=1: f(x) = 1 holds nowhere', trueRoots(`(${f})-1`, -500, 500), []);
+  check('114 k=2: the new denominator vanishes at 9', defined(g(2), 9), 0);
+  check('114 k=1: f(x) - 1 stays away from zero across a wide grid',
+    Math.min(...[-300, -20, -1, 0, 3, 5, 20, 300].map(x => Math.abs(num(`(${f})-1`)(x)))) > 1e-3 ? 1 : 0, 1);
+  check('114 note: f(9) = 2', num(f)(9), 2);
+  check('114 note: f(1) = -2/3, so x = 1 is not excluded when k = 1', num(f)(1), -2 / 3);
+  check('114 note: f(0) = -0.25', num(f)(0), -0.25);
+  check('114 note: g(0) = -0.8 when k = 1', num(g(1))(0), -0.8);
+  check('114 f tends to 1 far out, which is why f(x) = 1 has no solution', num(f)(1e7), 1, 1e-6);
+}
+
+// rq-sub-dom-115 — sqrt(x+c)/sqrt(d-x) with domain -4 <= x < 7 → c = 4, d = 7
+{
+  // each parameter is recovered from ITS OWN endpoint: the closed one zeroes the
+  // numerator radicand, the open one zeroes the denominator radicand.
+  const cs = roots('(-4)+c', -50, 50, 'c');
+  const ds = roots('d-7', -50, 50, 'd');
+  checkSet('115 c from the closed left endpoint', cs, [4]);
+  checkSet('115 d from the open right endpoint', ds, [7]);
+  const fx = `sqrt(x+${cs[0]})/sqrt(${ds[0]}-x)`;
+  check('115 the recovered function has exactly the stated domain',
+    pattern(fx, [-5, -4 - EPS, -4, 0, 7 - EPS, 7, 8]) === '0011100' ? 1 : 0, 1);
+  check('115 the left endpoint is included: f(-4) = 0', num(fx)(-4), 0);
+  check('115 the right endpoint is excluded: the denominator is sqrt(0)', num('sqrt(7-x)')(7), 0);
+  check('115 wrong c = -4 would start the domain at 4',
+    pattern('sqrt(x-4)/sqrt(7-x)', [-4, 0, 3.9, 4, 5]) === '00011' ? 1 : 0, 1);
+  check('115 wrong d = -7 leaves the function defined nowhere',
+    [-10, -5, 0, 6].reduce((s, v) => s + defined('sqrt(x+4)/sqrt(-7-x)', v), 0), 0);
+}
+
+// rq-sub-dom-116 — g = sqrt(a * f'(x)) with f = x/(x^2+1) and a < 0 → x <= -1 or x >= 1
+{
+  const f = 'x/(x^2+1)';
+  const fp = '(1-x^2)/(x^2+1)^2';
+  dcheck("116 the authored f' is the symbolic derivative of f", f, fp);
+  checkSet('116 the derivative vanishes at -1 and 1', roots(fp, -20, 20), [-1, 1]);
+  check('116 the derivative is positive between them', Math.sign(num(fp)(0)), 1);
+  check('116 the derivative is negative outside them',
+    Math.sign(num(fp)(2)) + Math.sign(num(fp)(-2)), -2);
+  check('116 the derivative denominator is positive everywhere',
+    Math.min(...[-5, -1, 0, 1, 5].map(v => num('(x^2+1)^2')(v))), 1);
+  const g = (a: number) => `sqrt((${a})*(${fp}))`;
+  const probe = [-3, -1, -1 + EPS, 0, 1 - EPS, 1, 3];
+  check('116 a = -3: the domain is the two outer branches',
+    pattern(g(-3), probe) === '1100011' ? 1 : 0, 1);
+  check('116 a = -0.5: the same domain, so it does not depend on the size of a',
+    pattern(g(-0.5), probe) === '1100011' ? 1 : 0, 1);
+  check('116 both endpoints give sqrt(0) = 0', num(g(-3))(1) + num(g(-3))(-1), 0);
+  check('116 a POSITIVE parameter would give the opposite interval',
+    pattern(`sqrt(2*(${fp}))`, [-3, -1, 0, 1, 3]) === '01110' ? 1 : 0, 1);
+  check('116 figure: the marked point (-1, 0) is on the derivative curve', num(fp)(-1), 0);
+  check('116 figure: the marked point (1, 0) is on the derivative curve', num(fp)(1), 0);
+}
+
+// rq-sub-dom-117 — (x-1)/sqrt(x^2-6x+k) is defined for every x exactly when k > 9
+{
+  const rad = (k: number) => `x^2-6*x+(${k})`;
+  const fx = (k: number) => `(x-1)/sqrt(${rad(k)})`;
+  const grid: number[] = [];
+  for (let x = -10; x <= 16; x += 0.25) grid.push(x);
+  const everywhere = (k: number) => (grid.every(v => defined(fx(k), v)) ? 1 : 0);
+  check('117 k = 10 is defined everywhere', everywhere(10), 1);
+  check('117 k = 9.5 is defined everywhere', everywhere(9.5), 1);
+  check('117 the minimum of the radicand equals k - 9',
+    Math.min(...grid.map(v => num(rad(12))(v))) - (12 - 9), 0);
+  check('117 that minimum is attained at x = 3', num(rad(12))(3) - (12 - 9), 0);
+  check('117 k = 9 breaks exactly at x = 3', defined(fx(9), 3), 0);
+  check('117 k = 9 note: the radicand vanishes there', num(rad(9))(3), 0);
+  checkSet('117 k = 5 note: the radicand has roots 1 and 5', roots(rad(5)), [1, 5]);
+  check('117 k = 5 note: the radicand at x = 3 is -4', num(rad(5))(3), -4);
+  check('117 k = 0 note: the radicand at x = 3 is -9', num(rad(0))(3), -9);
+  check('117 no k of 9 or below survives the grid',
+    [0, 5, 8, 9].reduce((s, k) => s + everywhere(k), 0), 0);
 }
 
 summary('domain');

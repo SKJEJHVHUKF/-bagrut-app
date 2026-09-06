@@ -216,4 +216,98 @@ const sgn = (v: number) => (v > 0 ? 1 : v < 0 ? -1 : 0);
   check('112 f(4) is undefined (distractor: no marking)', Number.isNaN(f(fx)(4)) ? 1 : 0, 1);
 }
 
+// ---------------------------------------------------------------------------
+// 2026-09-06 round — the figures now drawn by lib/fn-figure, and the two new
+// hard questions. Every claim the SVG or the caption makes is re-derived here
+// from the same function the figure was generated from.
+// ---------------------------------------------------------------------------
+
+// rq-sub-sk-104 figure — the model 2 - 5/(x^2+1): HA y = 2, and it lives BELOW it
+{
+  const fx = '2-5/(x^2+1)';
+  check('104 fig: horizontal asymptote y = 2', HA(fx), 2, 1e-4);
+  check('104 fig: the marked point is (0,-3)', f(fx)(0), -3);
+  check('104 fig: the point sits below the dashed line', sgn(f(fx)(0) - 2), -1);
+  let above = 0;
+  for (let i = 0; i <= 400; i++) { const x = -6 + (12 * i) / 400; if (f(fx)(x) >= 2) above++; }
+  check('104 fig: no sample of the drawn window reaches the line y = 2', above, 0);
+  check('104 fig: at the window edge it is already close to 2', f(fx)(6), 2 - 5 / 37, 1e-9);
+}
+
+// rq-sub-sk-109 figure — the GIVEN derivative line f'(x) = 2 - x
+{
+  const fp = '2-x';
+  checkSet('109 fig: the line meets the axis at 2 only', roots(fp), [2]);
+  check('109 fig: at the left edge of the window it is above the axis', sgn(f(fp)(-2)), 1);
+  check('109 fig: at the right edge it is below the axis', sgn(f(fp)(6)), -1);
+  check('109 fig: the marked point is on the axis', f(fp)(2), 0);
+}
+
+// rq-sub-sk-111 figure — the CORRECT right branch: VA 3, min (5,2), a maximum, then y = -1
+{
+  const fx = '(-x^3+40*x^2-301*x+646)/(x-3)^3';
+  const g = f(fx);
+  const d = (x: number, h = 1e-6) => (g(x + h) - g(x - h)) / (2 * h);
+  check('111 fig: passes through the given minimum (5,2)', g(5), 2, 1e-9);
+  check('111 fig: horizontal tangent there', d(5), 0, 1e-5);
+  check('111 fig: it is a minimum — higher on both sides', g(4) > 2 && g(6) > 2 ? 1 : 0, 1);
+  check('111 fig: vertical asymptote at 3', blowsUp(fx, 3), 1);
+  check('111 fig: the branch arrives from +infinity there', sgn(g(3.001)), 1);
+  check('111 fig: horizontal asymptote y = -1', HA(fx), -1, 1e-2);
+  // the maximum step (3) denies: argmax to the RIGHT of the minimum
+  let xMax = 5, best = -Infinity;
+  for (let i = 0; i <= 6000; i++) { const x = 5 + (25 * i) / 6000; if (g(x) > best) { best = g(x); xMax = x; } }
+  check('111 fig: a maximum exists right of the minimum', xMax > 5 && xMax < 30 ? 1 : 0, 1);
+  check('111 fig: f\' goes + → - there', sgn(d(xMax - 0.2)) - sgn(d(xMax + 0.2)), 2);
+  check('111 fig: after it the graph falls toward the asymptote', g(20) > g(40) && g(40) > -1 ? 1 : 0, 1);
+  check('111 fig: rising straight from height 2 to height -1 is impossible (2 > -1)', sgn(2 - -1), 1);
+}
+
+// rq-sub-sk-201 — f(x) = ax/(x^2+4): the max height 3 forces a = 12
+{
+  const fa = (a: number) => `${a}*x/(x^2+4)`;
+  const fp12 = '12*(4-x^2)/(x^2+4)^2';
+  dcheck('201 the quotient rule gives f\' = a(4-x^2)/(x^2+4)^2 (a = 12)', fa(12), fp12);
+  checkSet('201 the denominator never vanishes, so there is no vertical asymptote', roots('x^2+4'), []);
+  check('201 horizontal asymptote y = 0', HA(fa(12)), 0, 1e-4);
+  checkSet('201 f\' vanishes at 2 and at -2', roots(fp12), [-2, 2]);
+  check('201 sign order at 2 is + → -, a maximum', extremumType(fp12, 2), -1);
+  check('201 sign order at -2 is - → +, a minimum', extremumType(fp12, -2), 1);
+  // the parameter recovered independently: solve height(a) = 3 for a by bisection on a
+  const height = (a: number) => f(fa(a))(2);
+  let lo = 0, hi = 100;
+  for (let k = 0; k < 200; k++) { const m = (lo + hi) / 2; if (height(m) < 3) lo = m; else hi = m; }
+  check('201 the value of a that makes the maximum height 3 is 12', (lo + hi) / 2, 12, 1e-9);
+  check('201 with a = 12 the maximum is (2,3)', f(fa(12))(2), 3, 1e-9);
+  check('201 and the minimum is (-2,-3)', f(fa(12))(-2), -3, 1e-9);
+  // the whole graph really tops out at 3 — no higher value anywhere
+  let top = -Infinity;
+  for (let i = 0; i <= 20000; i++) { const x = -200 + (400 * i) / 20000; top = Math.max(top, f(fa(12))(x)); }
+  check('201 no point of the graph rises above 3', top, 3, 1e-3);
+  check('201 wrong 3 = the height copied into the parameter: a = 3 gives height 0.75', f(fa(3))(2), 0.75, 1e-9);
+  check('201 wrong 6 = the denominator taken as 4 instead of 8: a = 6 gives height 1.5', f(fa(6))(2), 1.5, 1e-9);
+  check('201 wrong -2 = the other extremum, whose height is -3', f(fa(12))(-2), -3, 1e-9);
+}
+
+// rq-sub-sk-202 — f(x) = x*sqrt(12-x): one extremum, the maximum (8,16)
+{
+  const fx = 'x*sqrt(12-x)', fp = '(24-3*x)/(2*sqrt(12-x))';
+  dcheck('202 product + root rule give f\' = (24-3x)/(2 sqrt(12-x))', fx, fp, [-4, -1, 0, 3, 7, 8, 11]);
+  checkSet('202 the domain condition 12 - x >= 0 breaks at 12', roots('12-x'), [12]);
+  check('202 just past 12 the expression under the root is negative, so there is no graph', sgn(f('12-x')(12.05)), -1);
+  checkSet('202 the numerator of f\' vanishes only at 8', roots('24-3*x'), [8]);
+  check('202 the denominator of f\' is positive throughout the domain', sgn(f('2*sqrt(12-x)')(8)), 1);
+  check('202 8 is inside the domain', 8 < 12 ? 1 : 0, 1);
+  check('202 sign order at 8 is + → -, a maximum', extremumType(fp, 8), -1);
+  check('202 the height there is 16', f(fx)(8), 16, 1e-9);
+  // no second extremum anywhere in the domain: f' keeps its sign on each side
+  let flips = 0, prev = sgn(f(fp)(-40));
+  for (let i = 0; i <= 4000; i++) { const x = -40 + (51.9 * i) / 4000; const s = sgn(f(fp)(x)); if (s !== 0 && s !== prev) { flips++; prev = s; } }
+  check('202 f\' changes sign exactly once in the whole domain', flips, 1);
+  checkSet('202 the graph meets the x axis at 0 and at 12', roots('x*(12-x)'), [0, 12]);
+  check('202 wrong (12,0) = the domain edge: f\' does not vanish there', f('24-3*x')(12), -12);
+  check('202 wrong 24 = the inner derivative lost: (24-x) vanishes at 24, outside the domain', 24 > 12 ? 1 : 0, 1);
+  check('202 wrong (8,2) = only the root substituted, without the factor x', f('sqrt(12-x)')(8), 2);
+}
+
 summary('sketch');

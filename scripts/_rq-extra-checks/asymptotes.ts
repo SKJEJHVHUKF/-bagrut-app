@@ -31,6 +31,24 @@ function roots(expr: string, lo = -20, hi = 20, name = 'x'): number[] {
 const HA = (expr: string) => (f(expr)(1e6) + f(expr)(-1e6)) / 2;
 const hole = (expr: string, a: number) => (f(expr)(a + 1e-6) + f(expr)(a - 1e-6)) / 2;
 const blowsUp = (expr: string, a: number) => Math.abs(f(expr)(a + 1e-7)) > 1e5 ? 1 : 0;
+/** one-sided limit — for a function defined only to the right (a root in the numerator) */
+const HAright = (expr: string) => f(expr)(1e6);
+/** Count vertical asymptotes by scanning for spikes, NOT by counting roots of the
+ *  denominator: a double root still spikes once, and a root that the numerator also
+ *  kills reads as 0/0 = NaN and is skipped, so a hole is never counted as a line. */
+function vaCount(expr: string, lo = -20, hi = 20, n = 200000): number {
+  const g = f(expr);
+  let count = 0;
+  let inSpike = false;
+  for (let i = 0; i <= n; i++) {
+    const abs = Math.abs(g(lo + ((hi - lo) * i) / n));
+    if (Number.isNaN(abs)) continue; // 0/0 — a hole, not a blow-up
+    const big = !Number.isFinite(abs) || abs > 1e3;
+    if (big && !inSpike) count++;
+    inSpike = big;
+  }
+  return count;
+}
 
 // rq-sub-asy-101 — vertical asymptote of (x+4)/(2x-5), denominator coefficient 2
 {
@@ -112,6 +130,15 @@ const blowsUp = (expr: string, a: number) => Math.abs(f(expr)(a + 1e-7)) > 1e5 ?
   check('107 C horizontal is y=2', HA(opts[2]), 2, 1e-4);
   checkSet('107 D vertical is x=1/3', roots(dens[3]), [1 / 3]);
   check('107 D horizontal is y=-1/3', HA(opts[3]), -1 / 3, 1e-4);
+  // reworded as a backwards inference (the asymptotes are given, the function is not):
+  // every other option must miss at least one of the two stated asymptotes.
+  const misses = opts.map((o, i) => {
+    const va = roots(dens[i]);
+    const okVA = va.length === 1 && Math.abs(va[0] - 2) < 1e-9;
+    return okVA && Math.abs(HA(o) + 3) < 1e-4 ? 0 : 1;
+  });
+  check('107 the recovered function misses nothing', misses[0], 0);
+  check('107 each of the three others misses a stated asymptote', misses.slice(1).reduce((a, b) => a + b, 0), 3);
 }
 
 // rq-sub-asy-108 — horizontal asymptote of (2x-1)(x+3)/(x^2-4): b = 2
@@ -173,6 +200,114 @@ const blowsUp = (expr: string, a: number) => Math.abs(f(expr)(a + 1e-7)) > 1e5 ?
   check('112 hole height at -2 = -1/4', hole(fx, -2), -1 / 4, 1e-4);
   check('112 reduced (x+3)/(x-2) at -2', f('(x+3)/(x-2)')(-2), -1 / 4);
   check('112 distractor D: original numerator at -2 is 0', f(num)(-2), 0);
+  // the reworded claim: two roots of the denominator, only one of them a line
+  check('112 only one of the two roots is a real asymptote', vaCount(fx), 1);
+  check('112 the other root stays finite (a hole)', Math.abs(hole(fx, -2)) < 1e3 ? 1 : 0, 1);
+}
+
+// ---------------------------------------------------------------------------
+// The widening round (113–118): a root function, the reciprocal 1/f, a sketch,
+// a second function built from the first, a graph that crosses its own
+// horizontal asymptote, and a parameter that decides how many lines there are.
+// ---------------------------------------------------------------------------
+
+// rq-sub-asy-113 — sqrt(x+9)/(x-4): vertical x=4, horizontal y=0, domain edge -9
+{
+  const fx = 'sqrt(x+9)/(x-4)';
+  checkSet('113 denominator root', roots('x-4', -8.9, 20), [4]);
+  check('113 numerator at 4 is sqrt(13), not 0', f('sqrt(x+9)')(4), Math.sqrt(13), 1e-12);
+  check('113 blows up at 4', blowsUp(fx, 4), 1);
+  check('113 horizontal from the right end', HAright(fx), 0, 1e-2);
+  check('113 the far value keeps shrinking', Math.abs(f(fx)(1e8)) < Math.abs(f(fx)(1e4)) ? 1 : 0, 1);
+  check('113 the domain edge -9 is a value, not an asymptote', f(fx)(-9), 0);
+  check('113 no blow-up at the domain edge', blowsUp(fx, -9), 0);
+  check('113 wrong 1: the far value is nowhere near 1', Math.abs(HAright(fx) - 1) > 0.9 ? 1 : 0, 1);
+  check('113 root beats nothing: numerator grows slower than the denominator',
+    Math.abs(f('sqrt(x+9)')(1e6) / f('x-4')(1e6)) < 1e-2 ? 1 : 0, 1);
+}
+
+// rq-sub-asy-114 — f=(x-5)/(x+3) and g=1/f: still one vertical asymptote, moved
+{
+  const fx = '(x-5)/(x+3)', gx = '1/((x-5)/(x+3))', red = '(x+3)/(x-5)';
+  checkSet('114 f: denominator root', roots('x+3'), [-3]);
+  check('114 f: numerator at -3 = -8', f('x-5')(-3), -8);
+  check('114 f has one vertical asymptote', vaCount(fx), 1);
+  checkSet('114 the numerator of f vanishes at 5', roots('x-5'), [5]);
+  for (const v of [-7, -1, 2, 8]) check(`114 g equals (x+3)/(x-5) at x=${v}`, f(gx)(v), f(red)(v), 1e-9);
+  check('114 g blows up at 5', blowsUp(red, 5), 1);
+  check('114 g still has exactly one vertical asymptote', vaCount(red), 1);
+  check('114 g at -3 (reduced) is 0 — a hole, not a line', f(red)(-3), 0);
+  check('114 g does not blow up at -3', blowsUp(red, -3), 0);
+  check('114 wrong 2: two values leave the domain, only one is a line',
+    roots('x+3').length + roots('x-5').length, 2);
+  check('114 wrong 0: the line did not vanish, it moved', vaCount(red), 1);
+}
+
+// rq-sub-asy-115 — (3x+3)/(x-2): vertical x=2, horizontal y=3, both intercepts
+{
+  const fx = '(3*x+3)/(x-2)';
+  checkSet('115 denominator root', roots('x-2'), [2]);
+  check('115 numerator at 2 = 9', f('3*x+3')(2), 9);
+  check('115 blows up at 2', blowsUp(fx, 2), 1);
+  check('115 horizontal y = 3', HA(fx), 3, 1e-4);
+  checkSet('115 x-intercept from the numerator', roots('3*x+3'), [-1]);
+  check('115 f(-1) = 0', f(fx)(-1), 0);
+  check('115 y-intercept f(0) = -1.5', f(fx)(0), -1.5);
+  check('115 figure: right branch sits above y=3', f(fx)(3) > 3 && f(fx)(50) > 3 ? 1 : 0, 1);
+  check('115 figure: left branch sits below y=3', f(fx)(0) < 3 && f(fx)(-50) < 3 ? 1 : 0, 1);
+  check('115 wrong -1.5 is the y-intercept', f(fx)(0), -1.5);
+  check('115 wrong 2 is the vertical asymptote', roots('x-2')[0], 2);
+}
+
+// rq-sub-asy-116 — g = 1/(f-1) with f=(2x-6)/(x+1): VA x=7, HA y=1, hole (-1,0)
+{
+  const fx = '(2*x-6)/(x+1)', gx = '1/((2*x-6)/(x+1)-1)', red = '(x+1)/(x-7)';
+  for (const v of [-5, 0, 3, 9, 20]) check(`116 g equals (x+1)/(x-7) at x=${v}`, f(gx)(v), f(red)(v), 1e-9);
+  checkSet('116 the new denominator vanishes at 7', roots('x-7'), [7]);
+  check('116 f equals 1 exactly at x = 7', f(fx)(7), 1);
+  check('116 numerator of g at 7 = 8', f('x+1')(7), 8);
+  check('116 g blows up at 7', blowsUp(red, 7), 1);
+  check('116 g has exactly one vertical asymptote', vaCount(red), 1);
+  checkSet('116 f leaves its domain at -1', roots('x+1'), [-1]);
+  check('116 reduced value at -1 is 0 — the hole', f(red)(-1), 0);
+  check('116 no blow-up at -1', blowsUp(red, -1), 0);
+  check('116 horizontal of g is y = 1', HA(red), 1, 1e-4);
+  check('116 wrong 2: that is the horizontal of f, not of g', HA(fx), 2, 1e-4);
+}
+
+// rq-sub-asy-117 — (2x^2-x)/(x^2+1) does cross its own horizontal asymptote
+{
+  const fx = '(2*x^2-x)/(x^2+1)';
+  check('117 horizontal y = 2', HA(fx), 2, 1e-4);
+  checkSet('117 denominator has no real root', roots('x^2+1', -100, 100), []);
+  check('117 therefore no vertical asymptote', vaCount(fx), 0);
+  const cross = roots('(2*x^2-x)-2*(x^2+1)');
+  checkSet('117 f(x)=2 has exactly one solution', cross, [-2]);
+  check('117 the crossing point lies on y = 2', f(fx)(cross[0]), 2, 1e-9);
+  check('117 left of the crossing the graph is above the line', f(fx)(-4) > 2 ? 1 : 0, 1);
+  check('117 right of it the graph is below the line', f(fx)(0) < 2 && f(fx)(100) < 2 ? 1 : 0, 1);
+  check('117 wrong "two points": the equation collapses to a linear one', cross.length, 1);
+  check('117 wrong y=0 would need a bigger denominator degree', HA('(2*x^2-x)/(x^3+1)'), 0, 1e-4);
+}
+
+// rq-sub-asy-118 — (x+1)/(x^2-6x+m): exactly two lines when m<9 and m != -7
+{
+  const den = (m: number) => `x^2-6*x+(${m})`;
+  const fm = (m: number) => `(x+1)/(${den(m)})`;
+  checkSet('118 the discriminant vanishes at m = 9', roots('36-4*m', -50, 50, 'm'), [9]);
+  check('118 m=8 gives two vertical asymptotes', vaCount(fm(8)), 2);
+  check('118 m=0 gives two vertical asymptotes', vaCount(fm(0)), 2);
+  check('118 m=9 gives one only (double root)', vaCount(fm(9)), 1);
+  check('118 m=9 denominator vanishes at 3', f(den(9))(3), 0);
+  check('118 m=9 numerator at 3 = 4, so that line survives', f('x+1')(3), 4);
+  check('118 m=10 gives none', vaCount(fm(10)), 0);
+  check('118 m=10 denominator never reaches 0',
+    Math.min(...[-5, 0, 3, 6, 12].map((v) => f(den(10))(v))) > 0 ? 1 : 0, 1);
+  checkSet('118 m=-7 denominator roots', roots(den(-7)), [7, -1]);
+  check('118 m=-7: the numerator vanishes at -1 too', f('x+1')(-1), 0);
+  check('118 m=-7 leaves one vertical asymptote only', vaCount(fm(-7)), 1);
+  check('118 m=-7 hole height at -1 is -1/8', hole(fm(-7), -1), -1 / 8, 1e-4);
+  checkSet('118 the cancelling value solves 1+6+m=0', roots('1+6+m', -50, 50, 'm'), [-7]);
 }
 
 summary('asymptotes');

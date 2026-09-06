@@ -231,7 +231,8 @@ function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
 
   // --- draw what the solution says it draws
   const saysSketch = /סקיצה|סרטט|שרטט|גרף הפונקציה|הגרף של/.test(stepsText);
-  const saysTable = /טבלת סימנים|טבלה/.test(stepsText);
+  // טבלה / טבלת / הטבלה / בטבלת — one more inflection the gate was blind to.
+  const saysTable = /טבל[הת]|בטבלה/.test(stepsText);
   const hasTable = /^\s*\|.*\|\s*$/m.test(stepsText);
   if (saysSketch && !(sol.diagrams ?? []).length) err(w, 'sketch-without-figure', 'the solution sketches the graph — attach the drawn figure (lib/fn-figure)');
   if (saysTable && !hasTable) err(w, 'table-without-table', 'the solution builds a sign table — draw it as a markdown table');
@@ -266,11 +267,15 @@ const MECHANISMS: [string, RegExp][] = [
   // one — the same trap as /משלים/ vs /המשלימה/ in the probability gate.
   ['vertical-asymptote', /אסימפטוט\S*\s+\S*אנכי|מאפסי המכנה/],
   ['horizontal-asymptote', /אסימפטוט\S*\s+\S*אופקי|כאשר \$?x\$? שואף|שואף לאינסוף/],
-  ['quotient-rule', /כלל המנה|נגזרת של מנה|\\dfrac\{[^}]*'[^}]*\}|u'v ?- ?uv'/],
-  ['chain-rule', /נגזרת של שורש|נגזרת פנימית|כלל השרשרת|\\dfrac\{1\}\{2\\sqrt/],
-  ['extremum', /נקוד[ותת] קיצון|מקסימום|מינימום|מאפסים את הנגזרת/],
-  ['monotonicity', /עולה|יורדת|תחומי עלייה|תחומי ירידה|טבלת סימנים/],
-  ['sign-table', /טבלת סימנים|סימן הנגזרת|טבלה של סימנים/],
+  // Every one of these must survive the definite article: "הנגזרת הפנימית",
+  // "נקודת הקיצון", "טבלת הסימנים". Three separate mechanism regexes have now
+  // been caught missing an inflected form and scoring a question low for it,
+  // so the words are joined with \s+\S* rather than a literal space.
+  ['quotient-rule', /כלל\s+\S*מנה|נגזרת\s+(?:של\s+)?\S*מנה|u'v ?- ?uv'/],
+  ['chain-rule', /נגזרת\s+(?:של\s+)?\S*שורש|נגזרת\s+\S*פנימית|\\dfrac\{1\}\{2\\sqrt/],
+  ['extremum', /נקוד\S*\s+\S*קיצון|מקסימום|מינימום|מאפסים את הנגזרת/],
+  ['monotonicity', /עולה|יורדת|תחומי\s+\S*עלייה|תחומי\s+\S*ירידה|טבלת\s+\S*סימנים/],
+  ['sign-table', /טבלת\s+\S*סימנים|סימן\s+\S*נגזרת|טבלה של סימנים/],
   ['sketch', /סקיצה|סרטט|שרטט|גרף הפונקציה/],
   ['integral', /אינטגרל|פונקציה קדומה|הקדומה|שטח הכלוא|\\int/],
   ['intersections', /נקודות החיתוך|חיתוך עם הציר|מציבים \$?y ?= ?0|f\(x\) ?= ?0/],

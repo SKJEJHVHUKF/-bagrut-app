@@ -33,6 +33,30 @@ function roots(expr: string, lo = -20, hi = 20): number[] {
 const sgn = (v: number) => (v > 0 ? 1 : v < 0 ? -1 : 0);
 const POS = [0.3, 0.7, 1, 2.5, 4]; // samples for root-of-x integrands (x > 0)
 
+/** Simpson's rule that RETURNS the value — icheck only asserts one, and the
+ *  parameter questions need the integral as an input to a further solve. */
+function quad(expr: string, a: number, b: number, n = 40000): number {
+  const c = math.parse(expr).compile();
+  const h = (b - a) / n;
+  let s = (c.evaluate({ x: a }) as number) + (c.evaluate({ x: b }) as number);
+  for (let i = 1; i < n; i++) s += (i % 2 ? 4 : 2) * (c.evaluate({ x: a + i * h }) as number);
+  return (s * h) / 3;
+}
+/** Bisection on a scalar equation, so a parameter is RECOVERED from the stated
+ *  property instead of being re-derived with the author's own algebra. */
+function solveFor(g: (t: number) => number, lo: number, hi: number): number {
+  let a = lo;
+  let b = hi;
+  let fa = g(a);
+  for (let k = 0; k < 200; k++) {
+    const m = (a + b) / 2;
+    const fm = g(m);
+    if (fa * fm <= 0) b = m;
+    else { a = m; fa = fm; }
+  }
+  return (a + b) / 2;
+}
+
 // rq-sub-in-101 — ∫ 6/x^4 dx (MCQ): power rule with a negative exponent → -2/x^3 + C
 {
   dcheck('101 F = -2/x^3 integrates 6/x^4', '-2/x^3', '6/x^4');
@@ -216,6 +240,150 @@ const POS = [0.3, 0.7, 1, 2.5, 4]; // samples for root-of-x integrands (x > 0)
   icheck('112 d1 = ∫_0^9 (x - 3√x)', 'x - 3*sqrt(x)', 0, 9, -13.5, N);
   icheck('112 d2 = ∫_0^9 3√x', '3*sqrt(x)', 0, 9, 54, N);
   icheck('112 d3 = ∫_0^9 (3√x + x)', '3*sqrt(x) + x', 0, 9, E('189/2'), N);
+}
+
+// rq-sub-in-201 — area closed by f = 4 - √x and the two axes → 64/3
+{
+  const fx = '4 - sqrt(x)';
+  check('201 the y-intercept f(0)', f(fx)(0), 4);
+  checkSet('201 the x-intercept of 4 - √x', roots(fx, 0, 40), [16]);
+  check('201 f is positive inside the interval (x=9)', sgn(f(fx)(9)), 1);
+  dcheck('201 F = 4x - (2/3)x^{3/2} integrates 4 - √x', '4*x - (2/3)*x^(3/2)', fx, POS);
+  icheck('201 ∫_0^16 (4 - √x)', fx, 0, 16, E('64/3'), 400000);
+  const F = f('4*x - (2/3)*x^(3/2)');
+  check('201 F(16) - F(0)', F(16) - F(0), E('64/3'));
+  check('201 F(16) = 64 - 128/3', F(16), E('64 - 128/3'));
+  // wrong 32/3: upper bound taken as 4 (the root was not squared)
+  check('201 wrong 32/3 from the un-squared bound', quad(fx, 0, 4), E('32/3'), 1e-5);
+  // wrong 128/3: only the root integrated, the constant term dropped
+  check('201 wrong 128/3 = ∫_0^16 √x', quad('sqrt(x)', 0, 16), E('128/3'), 1e-5);
+  // the figure marks (0, 4) and (16, 0)
+  check('201 figure point (0, 4)', f(fx)(0), 4);
+  check('201 figure point (16, 0)', f(fx)(16), 0);
+}
+
+// rq-sub-in-202 — the bounds arrive as HEIGHTS (y = 8, y = 2) → x = 1, x = 2, area 4
+{
+  const fx = '8/x^2';
+  checkSet('202 f(x) = 8 gives x = 1', roots('8/x^2 - 8', 0.05, 20), [1]);
+  checkSet('202 f(x) = 2 gives x = 2', roots('8/x^2 - 2', 0.05, 20), [2]);
+  check('202 f positive on the interval (x=1.5)', sgn(f(fx)(1.5)), 1);
+  dcheck('202 F = -8/x integrates 8/x^2', '-8/x', fx);
+  icheck('202 ∫_1^2 8/x^2', fx, 1, 2, 4);
+  const F = f('-8/x');
+  check('202 F(2) - F(1)', F(2) - F(1), 4);
+  // d1: subtracted in the wrong order → -4
+  check('202 d1 = F(1) - F(2)', F(1) - F(2), -4);
+  // d2: the y-values used as the bounds → ∫_2^8
+  check('202 d2 = ∫_2^8 8/x^2', quad(fx, 2, 8), 3, 1e-6);
+  // d3: power lowered (-2 → -3): F_bad = -8/(3x^3)
+  const Fbad = f('-8/(3*x^3)');
+  check('202 d3 7/3 from the lowered power', Fbad(2) - Fbad(1), E('7/3'));
+}
+
+// rq-sub-in-203 — f' = 3/√x - 2x through (4, 1): find f(9) → -58
+{
+  const G = '6*sqrt(x) - x^2';
+  dcheck('203 (6√x - x^2)\' = 3/√x - 2x', G, '3/sqrt(x) - 2*x', POS);
+  const C = 1 - f(G)(4);
+  check('203 C from the point (4, 1)', C, 5);
+  check('203 f(4) = 1 with that C', f(G)(4) + C, 1);
+  check('203 f(9)', f(G)(9) + C, -58);
+  check('203 wrong -63 = f(9) without C', f(G)(9), -63);
+  check('203 wrong -17 = f\'(9)', f('3/sqrt(x) - 2*x')(9), -17);
+}
+
+// rq-sub-in-204 — BOTH bounds carry the parameter: area(a) = 5, a > 0 → a = 4/5
+{
+  const fx = '6/x^2';
+  dcheck('204 F = -6/x integrates 6/x^2', '-6/x', fx);
+  const area = (t: number) => quad(fx, t, 3 * t, 4000);
+  const a = solveFor((t) => area(t) - 5, 0.05, 6);
+  check('204 a recovered from area(a) = 5', a, 0.8, 1e-7);
+  check('204 a = 4/5', a, E('4/5'), 1e-7);
+  check('204 a > 0', a > 0 ? 1 : 0, 1);
+  icheck('204 ∫_{4/5}^{12/5} 6/x^2 = 5', fx, 0.8, 2.4, 5);
+  const F = f('-6/x');
+  check('204 F(3a) - F(a) at a = 4/5', F(2.4) - F(0.8), 5);
+  // wrong 5/4: the equation 4/a = 5 inverted
+  check('204 wrong 5/4 is not a solution', area(1.25), 3.2, 1e-6);
+  // wrong 6/7: the upper bound read as 3 instead of 3a
+  const aBad = solveFor((t) => quad(fx, t, 3, 4000) - 5, 0.2, 2.9);
+  check('204 wrong 6/7 from the upper bound read as 3', aBad, E('6/7'), 1e-6);
+}
+
+// rq-sub-in-205 — area between (x^2+2)/x^2 and its horizontal asymptote y = 1 → 1
+{
+  const fx = '(x^2+2)/x^2';
+  check('205 f tends to 1 far out', f(fx)(1e6), 1, 1e-10);
+  check('205 f(1) = 3 (figure point)', f(fx)(1), 3);
+  check('205 f(2) = 1.5 (figure point)', f(fx)(2), 1.5);
+  check('205 f stays above the asymptote (x=1.5)', sgn(f(fx)(1.5) - 1), 1);
+  check('205 the split 1 + 2/x^2 agrees at x=3', f(fx)(3), f('1 + 2/x^2')(3));
+  dcheck('205 F = -2/x integrates the difference 2/x^2', '-2/x', '2/x^2');
+  icheck('205 ∫_1^2 (f - 1)', '(x^2+2)/x^2 - 1', 1, 2, 1);
+  const F = f('-2/x');
+  check('205 F(2) - F(1)', F(2) - F(1), 1);
+  // wrong 2: f itself integrated, the asymptote ignored as the lower edge
+  check('205 wrong 2 = ∫_1^2 f', quad(fx, 1, 2), 2, 1e-6);
+  // wrong -1: sign lost in the antiderivative → +2/x
+  const Fbad = f('2/x');
+  check('205 wrong -1 from F = +2/x', Fbad(2) - Fbad(1), -1);
+}
+
+// rq-sub-in-206 — the LONGER strip is the smaller one: S1 = 2, S2 = 1
+{
+  const fx = '4/x^2';
+  icheck('206 S1 = ∫_1^2 4/x^2', fx, 1, 2, 2);
+  icheck('206 S2 = ∫_2^4 4/x^2', fx, 2, 4, 1);
+  check('206 S1 is twice S2', quad(fx, 1, 2) / quad(fx, 2, 4), 2, 1e-6);
+  check('206 the second interval is the longer one', (4 - 2) / (2 - 1), 2);
+  dcheck('206 F = -4/x integrates 4/x^2', '-4/x', fx);
+  const F = f('-4/x');
+  check('206 F(2) - F(1)', F(2) - F(1), 2);
+  check('206 F(4) - F(2)', F(4) - F(2), 1);
+  // decreasing, which is why the longer strip is the thinner one
+  check('206 f(1) = 4 (figure point)', f(fx)(1), 4);
+  check('206 f(2) = 1 (figure point)', f(fx)(2), 1);
+  check('206 f(4) = 0.25 (figure point)', f(fx)(4), 0.25);
+  check('206 f decreasing on x > 0', sgn(f(fx)(1) - f(fx)(2)) + sgn(f(fx)(2) - f(fx)(4)), 2);
+  // d3: power lowered (-2 → -3): F_bad = -4/(3x^3) → 7/6 and 7/48
+  const Fbad = f('-4/(3*x^3)');
+  check('206 d3 first strip 7/6', Fbad(2) - Fbad(1), E('7/6'));
+  check('206 d3 second strip 7/48', Fbad(4) - Fbad(2), E('7/48'));
+}
+
+// rq-sub-in-207 — f' = 6/√x and the area over [1,4] is 50: recover C → -2
+{
+  dcheck('207 (12√x - 2)\' = 6/√x', '12*sqrt(x) - 2', '6/sqrt(x)', POS);
+  const areaOf = (c: number) => quad(`12*sqrt(x) + (${c})`, 1, 4, 4000);
+  const C = solveFor((c) => areaOf(c) - 50, -30, 30);
+  check('207 C recovered from area = 50', C, -2, 1e-7);
+  icheck('207 ∫_1^4 (12√x - 2) = 50', '12*sqrt(x) - 2', 1, 4, 50);
+  check('207 f(1) = 10 > 0 (figure point)', f('12*sqrt(x) - 2')(1), 10);
+  check('207 f(4) = 22 > 0 (figure point)', f('12*sqrt(x) - 2')(4), 22);
+  check('207 f positive across the interval', sgn(f('12*sqrt(x) - 2')(1)), 1);
+  const G = f('8*x^(3/2)');
+  check('207 the constant-free part contributes 56', G(4) - G(1), 56);
+  check('207 the constant contributes 3C', areaOf(0) - areaOf(-1), 3, 1e-6);
+  // wrong -6: the constant counted once instead of over the whole interval
+  check('207 wrong -6 solves 56 + C = 50', 50 - (G(4) - G(1)), -6);
+  // wrong -3.5: only the upper bound substituted, 64 + 4C = 50
+  check('207 wrong -3.5 solves 64 + 4C = 50', (50 - G(4)) / 4, -3.5);
+  check('207 G(4) = 64', G(4), 64);
+}
+
+// rq-sub-in-111 / 112 — the rows the rewritten solutions now show
+{
+  // 111's sign table: the two representative values it prints
+  check('111 table row: x^3 - x at x = -0.5 is positive', sgn(E('(-0.5)^3 - (-0.5)')), 1);
+  check('111 table row: x^3 - x at x = 0.5 is negative', sgn(E('0.5^3 - 0.5')), -1);
+  // 112's domain remark and the figure's three marked points
+  check('112 3√x has no real value left of 0', Number.isFinite(f('3*sqrt(x)')(-1) as number) ? 0 : 1, 1);
+  check('112 3√x is real at the domain edge', Number.isFinite(f('3*sqrt(x)')(0)) ? 1 : 0, 1);
+  check('112 difference at x = 4 is positive', sgn(E('3*sqrt(4) - 4')), 1);
+  check('112 figure point (2.25, 2.25)', E('3*sqrt(2.25) - 2.25'), 2.25);
+  check('112 figure point (9, 0)', E('3*sqrt(9) - 9'), 0);
 }
 
 summary('integral');

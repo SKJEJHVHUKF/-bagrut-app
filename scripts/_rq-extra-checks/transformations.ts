@@ -3,7 +3,7 @@
 // concrete model function that has the stated feature; every "how many solutions" claim is a
 // counted crossing (grid sign changes) or a discriminant computed from k; every distractor and
 // wrongAnswer note is re-enacted as the mistake it names and must land on THAT option.
-import { check, dcheck, checkSet, summary, math, E } from './_lib';
+import { check, dcheck, checkSet, icheck, summary, math, E } from './_lib';
 
 const f = (expr: string) => {
   const c = math.parse(expr).compile();
@@ -282,6 +282,164 @@ const kind = (expr: string, x0: number, h = 0.05) => {
   check('tr-113 |f| - 4 crossings', crossings(`abs(${fx}) - 4`), 2);
   check('tr-113 distractor "one": counts only the touch', 1, quadCount(1, -2, 1));
   check('tr-113 distractor "four": treats f=-4 as two', 2 + 2, 4);
+}
+
+// rq-sub-tr-201 — f = 6/(x-2)+1 moved 3 left and 4 down → g = 6/(x+1)-3, crosses the x-axis at (1,0)
+{
+  const fx = '6/(x-2)+1';
+  const gx = '6/(x+1)-3';
+  // g IS f shifted: g(t) = f(t + 3) - 4 for every t off the poles
+  for (const t of [-4, -2.5, 0, 2, 5]) check(`tr-201 g(t) = f(t+3)-4 at t=${t}`, f(gx)(t), f(fx)(t + 3) - 4);
+  check('tr-201 f VA at 2', Math.abs(f(fx)(2 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-201 f HA 1', f(fx)(1e7), 1, 1e-5);
+  check('tr-201 g VA at -1', Math.abs(f(gx)(-1 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-201 VA moved 2 - 3', 2 - 3, E('-1'));
+  check('tr-201 g HA -3', f(gx)(1e7), E('1-4'), 1e-5);
+  // the x-intercept: exactly one, at x = 1
+  check('tr-201 g crosses the x-axis once', crossings(gx, [-1]), 1);
+  check('tr-201 g(1) = 0', f(gx)(1), 0);
+  check('tr-201 root from 6/(x+1) = 3', E('6/3 - 1'), 1);
+  // f's own x-intercept (-4, 0) lands on g at (-7, -4) — the same shift, checked on a point
+  check('tr-201 f(-4) = 0', f(fx)(-4), 0);
+  check('tr-201 g(-7) = -4', f(gx)(-4 - 3), E('0-4'));
+  // distractor B: shifting RIGHT 3 gives 6/(x-5)-3, whose root is 7
+  check('tr-201 distractor B root at 7', f('6/(x-5)-3')(7), 0);
+  check('tr-201 distractor B has one crossing', crossings('6/(x-5)-3', [5]), 1);
+  // distractor C: x = -1 is the pole, not a point of the graph
+  check('tr-201 g undefined at -1', Number.isFinite(f(gx)(-1)) ? 1 : 0, 0);
+  // distractor D: the graph does cross y = 0 even though the HA is y = -3
+  check('tr-201 g(0) is above the x-axis', f(gx)(0) > 0 ? 1 : 0, 1);
+  check('tr-201 g(3) is below the x-axis', f(gx)(3) < 0 ? 1 : 0, 1);
+}
+
+// rq-sub-tr-202 — 5/x: (up 2, then ×3) vs (×3, then up 2). The reversed order has HA y = 2
+{
+  const base = '5/x';
+  const orderGiven = '3*(5/x + 2)'; // up 2 first → the shift is multiplied
+  const orderSwapped = '3*(5/x) + 2'; // ×3 first → the shift is not multiplied
+  check('tr-202 f HA 0', f(base)(1e7), 0, 1e-6);
+  check('tr-202 given order HA', f(orderGiven)(1e8), E('3*2'), 1e-6);
+  check('tr-202 swapped order HA', f(orderSwapped)(1e8), E('2'), 1e-6);
+  check('tr-202 the two orders differ by 4 (x=1)', f(orderGiven)(1) - f(orderSwapped)(1), E('6-2'));
+  check('tr-202 the two orders differ by 4 (x=-2.5)', f(orderGiven)(-2.5) - f(orderSwapped)(-2.5), 4);
+  check('tr-202 swapped order equals 15/x + 2', f(orderSwapped)(3), f('15/x + 2')(3));
+  check('tr-202 both keep the VA at 0', Math.abs(f(orderSwapped)(1e-9)) > 1e6 ? 1 : 0, 1);
+  check('tr-202 wrong 6 is the given order', f(orderGiven)(1e8), 6, 1e-6);
+  check('tr-202 wrong 0 is f itself', f(base)(1e8), 0, 1e-6);
+}
+
+// rq-sub-tr-203 — sqrt(x-1) reflected in the y-axis then moved 5 right → sqrt(4-x), endpoint (4,0)
+{
+  const base = 'sqrt(x-1)';
+  const gx = 'sqrt(4-x)';
+  check('tr-203 f endpoint at x=1', f(base)(1), 0);
+  check('tr-203 f undefined left of 1', notReal(f(base)(1 - 1e-6)) ? 1 : 0, 1);
+  // g(x) = f(-(x-5)) pointwise
+  for (const t of [-6, -2, 0, 3, 3.9]) check(`tr-203 g(t) = f(-(t-5)) at t=${t}`, f(gx)(t), f(base)(-(t - 5)));
+  // the reflected graph f(-x) = sqrt(-x-1) ends at x = -1 and lives to its left
+  check('tr-203 reflected endpoint height', f('sqrt(-x-1)')(-1), 0);
+  check('tr-203 reflected graph undefined right of -1', notReal(f('sqrt(-x-1)')(-1 + 1e-6)) ? 1 : 0, 1);
+  check('tr-203 reflected graph defined left of -1', f('sqrt(-x-1)')(-2), E('sqrt(1)'));
+  check('tr-203 endpoint x = -1 + 5', -1 + 5, E('4'));
+  checkSet('tr-203 endpoint (4, 0)', [4, f(gx)(4)], [E('4'), E('0')]);
+  check('tr-203 g undefined right of 4', notReal(f(gx)(4 + 1e-6)) ? 1 : 0, 1);
+  check('tr-203 g(0) = 2', f(gx)(0), E('sqrt(4)'));
+  check('tr-203 g is decreasing', f(gx)(0) > f(gx)(3) ? 1 : 0, 1);
+  // wrongs
+  check('tr-203 wrong (6,0): no reflection, endpoint of sqrt(x-6)', f('sqrt(x-6)')(6), 0);
+  check('tr-203 wrong (6,0) came from 1 + 5', 1 + 5, 6);
+  check('tr-203 wrong (-6,0): shifted left instead', -1 - 5, E('-6'));
+  check('tr-203 wrong (4,2): height 2 belongs to x = 0', f(gx)(0), 2);
+}
+
+// rq-sub-tr-204 — 4/x^2 on [1,4]: area 3; +1 gives 6 and ×2 gives 6 — equal
+{
+  const fx = '4/x^2';
+  icheck('tr-204 area of f on [1,4]', fx, 1, 4, E('4*(1/1 - 1/4)'));
+  icheck('tr-204 area of g = f + 1', `${fx} + 1`, 1, 4, E('3 + 1*3'));
+  icheck('tr-204 area of h = 2f', `2*(${fx})`, 1, 4, E('2*3'));
+  check('tr-204 the interval is 3 wide', 4 - 1, E('3'));
+  check('tr-204 the added rectangle is 1*3', 1 * (4 - 1), E('3'));
+  check('tr-204 both areas are equal', E('3 + 1*3') - E('2*3'), 0);
+  check('tr-204 distractor B: 3 + 2 = 5 for h', 3 + 2, 5);
+  check('tr-204 distractor B difference 6 - 5', 6 - 5, 1);
+  check('tr-204 distractor C: 3 + 1 = 4 for g', 3 + 1, 4);
+  check('tr-204 distractor C difference 6 - 4', 6 - 4, 2);
+  check('tr-204 f is undefined at 0', Number.isFinite(f(fx)(0)) ? 1 : 0, 0);
+}
+
+// rq-sub-tr-211 — h = (2x-7)/(x-3) came from f moved 5 right then reflected in the x-axis
+{
+  const h = '(2*x-7)/(x-3)';
+  const A = '(-2*x-3)/(x+2)'; // the answer
+  const B = '(2*x+3)/(x+2)'; // forgot the reflection
+  const C = '(-2*x+17)/(x-8)'; // undid the shift in the wrong direction
+  const D = '(-2*x-3)/(x-3)'; // substituted in the numerator only
+  const S = [-5, -1, 0, 1, 4, 6, 10];
+  for (const t of S) check(`tr-211 -A(t-5) = h(t) at t=${t}`, -f(A)(t - 5), f(h)(t));
+  check('tr-211 A VA at -2', Math.abs(f(A)(-2 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-211 A VA + 5 = h VA', -2 + 5, E('3'));
+  check('tr-211 h VA at 3', Math.abs(f(h)(3 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-211 A HA -2', f(A)(1e7), E('-2/1'), 1e-5);
+  check('tr-211 reflection turns -2 into 2', -1 * f(A)(1e7), E('2'), 1e-5);
+  check('tr-211 h HA 2', f(h)(1e7), 2, 1e-5);
+  check('tr-211 A root at -1.5', f(A)(E('-3/2')), 0);
+  check('tr-211 h root at 3.5', f(h)(E('7/2')), 0);
+  check('tr-211 the roots differ by the shift', E('7/2') - E('-3/2'), 5);
+  // each distractor is the mistake its note names
+  for (const t of [-1, 0, 4, 6]) check(`tr-211 distractor B = h WITHOUT the reflection (t=${t})`, f(B)(t - 5), f(h)(t));
+  for (const t of [-1, 0, 4, 6]) check(`tr-211 distractor C = -h(t-5) (t=${t})`, f(C)(t), -f(h)(t - 5));
+  for (const t of [-1, 0, 4, 6]) check(`tr-211 distractor D substitutes in the numerator only (t=${t})`, f(D)(t), f('-(2*(x+5)-7)/(x-3)')(t));
+  check('tr-211 distractor C VA at 8', Math.abs(f(C)(8 + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('tr-211 distractor D VA still at 3', Math.abs(f(D)(3 + 1e-7)) > 1e6 ? 1 : 0, 1);
+}
+
+// rq-sub-tr-212 — g = 1/(sqrt(x+3) - 2): VA x = 1, HA y = 0, endpoint (-3, -0.5)
+{
+  const gx = '1/(sqrt(x+3)-2)';
+  const den = 'sqrt(x+3)-2';
+  check('tr-212 domain edge: undefined left of -3', notReal(f(gx)(-3 - 1e-6)) ? 1 : 0, 1);
+  check('tr-212 defined at -3', Number.isFinite(f(gx)(-3)) ? 1 : 0, 1);
+  check('tr-212 endpoint height -0.5', f(gx)(-3), E('1/(0-2)'));
+  // the denominator vanishes at x = 1 and nowhere else in the domain
+  check('tr-212 denominator zero at 1', f(den)(1), 0);
+  check('tr-212 x = 1 from squaring both sides', E('2^2 - 3'), 1);
+  check('tr-212 denominator crossings on the domain', crossings(den, [], -3, 40, 20000), 1);
+  check('tr-212 VA: g blows up from the left', f(gx)(1 - 1e-6) < -1e5 ? 1 : 0, 1);
+  check('tr-212 VA: g blows up from the right', f(gx)(1 + 1e-6) > 1e5 ? 1 : 0, 1);
+  check('tr-212 HA 0 far out', f(gx)(1e8), 0, 1e-3);
+  check('tr-212 g never reaches 0', crossings(gx, [1], -3, 60, 20000), 0);
+  // the sign table: negative on [-3, 1), positive after
+  check('tr-212 sign left of the VA', f(gx)(0) < 0 ? 1 : 0, 1);
+  check('tr-212 sign right of the VA', f(gx)(3) > 0 ? 1 : 0, 1);
+  check('tr-212 helper point (6, 1)', f(gx)(6), E('1/(3-2)'));
+  // wrongs
+  check('tr-212 wrong VA -3: denominator there is -2, not 0', f(den)(-3), -2);
+  check('tr-212 wrong VA 4: denominator there is not 0', Math.abs(f(den)(4)) > 0.1 ? 1 : 0, 1);
+  check('tr-212 wrong HA 2: g(1e8) is not 2', Math.abs(f(gx)(1e8) - 2) > 1 ? 1 : 0, 1);
+}
+
+// rq-sub-tr-213 — 8/x^2 stretched by k then moved 6 down; the two roots are 4 apart → k = 3
+{
+  const g = (k: number) => f(`${8 * k}/x^2 - 6`);
+  const root = (k: number) => Math.sqrt((8 * k) / 6); // 8k/x^2 = 6
+  check('tr-213 root formula solves g = 0 (k=3)', g(3)(root(3)), 0, 1e-9);
+  check('tr-213 root formula solves g = 0 (k=7)', g(7)(root(7)), 0, 1e-9);
+  check('tr-213 distance is twice the root', 2 * root(3), E('4'));
+  check('tr-213 k from 2*sqrt(8k/6) = 4', E('(2^2)*6/8'), 3);
+  check('tr-213 k=3 roots at ±2', root(3), E('2'));
+  check('tr-213 g(2) = 0 with k=3', g(3)(2), 0);
+  check('tr-213 g(-2) = 0 with k=3', g(3)(-2), 0);
+  check('tr-213 exactly two crossings', crossings('24/x^2 - 6', [0]), 2);
+  check('tr-213 HA -6', g(3)(1e8), E('0-6'), 1e-9);
+  check('tr-213 f HA 0 before the shift', f('24/x^2')(1e8), 0, 1e-9);
+  check('tr-213 VA stays at 0', Math.abs(g(3)(1e-9)) > 1e6 ? 1 : 0, 1);
+  check('tr-213 g is even (roots symmetric)', g(3)(2.7) - g(3)(-2.7), 0);
+  // wrongs
+  check('tr-213 wrong k=12 puts the roots at ±4', root(12), E('4'));
+  check('tr-213 wrong k=12 gives distance 8', 2 * root(12), 8);
+  check('tr-213 wrong HA 6: g(1e8) is not 6', Math.abs(g(3)(1e8) - 6) > 1 ? 1 : 0, 1);
+  check('tr-213 wrong HA 0: g(1e8) is not 0', Math.abs(g(3)(1e8)) > 1 ? 1 : 0, 1);
 }
 
 summary('transformations');

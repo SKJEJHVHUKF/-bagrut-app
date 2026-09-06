@@ -3,7 +3,7 @@
 // (or radicand) that the question's own function is DEFINED at (mathjs gives Complex for a
 // negative radicand, Infinity for a zero denominator); a y-intercept is f(0) when f is defined
 // there. Every distractor / wrongAnswer note is re-enacted as the mistake it names.
-import { check, checkSet, summary, math, E } from './_lib';
+import { check, checkSet, dcheck, summary, math, E } from './_lib';
 
 const f = (expr: string) => {
   const c = math.parse(expr).compile();
@@ -177,6 +177,83 @@ const GRID = [-7, -5, -2.5, -1, 0.5, 1.5, 2.5, 4, 6, 9];
   check('112 f(0) = 1/2', num(fx)(0), E('1/2'));
   check('112 -2/-4 is positive', E('(-2)/(-4)'), E('1/2'));
   check('112 f never zero on the domain: min |f| over grid > 0', Math.min(...GRID.map(v => Math.abs(num(fx)(v)))) > 0 ? 1 : 0, 1);
+}
+
+// rq-sub-int-113 — (x^2+ax-15)/(x+5) whose only x-intercept is (3,0): a = 2, f(0) = -3
+{
+  // a is recovered from the numerator vanishing at x = 3, not from the author's algebra
+  const a = roots('3^2 + a*3 - 15', -20, 20, 'a');
+  checkSet('113 a = 2', a, [2]);
+  const P = `x^2+${a[0]}*x-15`, fx = `(${P})/(x+5)`;
+  check('113 the numerator really vanishes at x = 3', num(P)(3), 0);
+  checkSet('113 the numerator has two zeros, 3 and -5', roots(P), [3, -5]);
+  check('113 f is undefined at -5, so that zero is not a point', defined(fx, -5), 0);
+  checkSet('113 exactly one surviving x-intercept, at 3', xInts(fx, P), [3]);
+  check('113 f(0) = -3', num(fx)(0), -3);
+  check('113 the factorisation (x+5)(x-3) agrees with the numerator', Math.max(...GRID.map(v => Math.abs(num(P)(v) - num('(x+5)*(x-3)')(v)))), 0);
+  check('113 wrong -15 = the numerator at 0, before dividing', num(P)(0), -15);
+  check('113 wrong a = -2 leaves the numerator at 3 equal to -12', num('x^2-2*x-15')(3), -12);
+}
+
+// rq-sub-int-114 — (x^2-6x+k)/(x-1) with exactly one x-intercept: k = 9 or k = 5
+{
+  const fk = (k: number) => `(x^2-6*x+${k})/(x-1)`;
+  /** the surviving x-intercepts for a given k, from the quadratic formula + the domain */
+  const survivors = (k: number): number[] => {
+    const D = 36 - 4 * k;
+    if (D < 0) return [];
+    const rs = [...new Set([(6 - Math.sqrt(D)) / 2, (6 + Math.sqrt(D)) / 2])];
+    return rs.filter(r => defined(fk(k), r));
+  };
+  check('114 k = 9 leaves exactly one intercept', survivors(9).length, 1);
+  checkSet('114 and it is x = 3', survivors(9), [3]);
+  check('114 f(3) = 0 when k = 9', num(fk(9))(3), 0);
+  check('114 k = 5 leaves exactly one intercept', survivors(5).length, 1);
+  checkSet('114 and it is x = 5, because 1 is not in the domain', survivors(5), [5]);
+  check('114 f is undefined at 1 when k = 5 (the cancelled zero)', defined(fk(5), 1), 0);
+  check('114 the numerator of k = 5 does vanish at 1', num('x^2-6*x+5')(1), 0);
+  check('114 a nearby k gives two intercepts', survivors(4).length, 2);
+  check('114 k above 9 gives none', survivors(10).length, 0);
+  check('114 the discriminant vanishes only at k = 9', roots('36-4*k', -50, 50, 'k')[0], 9);
+  // the exhaustive claim: scan k and collect every value with exactly one intercept
+  const ones: number[] = [];
+  for (let i = -800; i <= 800; i++) {
+    const k = i / 20;
+    if (survivors(k).length === 1) ones.push(k);
+  }
+  checkSet('114 over -40 <= k <= 40 only 9 and 5 give one intercept', ones, [9, 5]);
+}
+
+// rq-sub-int-115 — x^2/(x-2) meets its own derivative exactly once, at (0,0)
+{
+  const fx = 'x^2/(x-2)', fp = '(x^2-4*x)/(x-2)^2';
+  dcheck('115 the authored derivative is the derivative of f', fx, fp, [-3, -1, 0, 1, 3, 5]);
+  const diff = `${fx} - (${fp})`;
+  checkSet('115 f = f\' has one solution left of the pole', roots(diff, -10, 1.9), [0]);
+  checkSet('115 and none to its right', roots(diff, 2.1, 12), []);
+  check('115 f(0) = 0', num(fx)(0), 0);
+  check('115 f\'(0) = 0', num(fp)(0), 0);
+  check('115 the difference changes sign only at 0: negative at -1', num(diff)(-1) < 0 ? 1 : 0, 1);
+  check('115 and positive at 1', num(diff)(1) > 0 ? 1 : 0, 1);
+  checkSet('115 the quadratic factor x^2-3x+4 has no real root', roots('x^2-3*x+4', -100, 100), []);
+  check('115 its discriminant is -7', E('(-3)^2 - 4*1*4'), -7);
+  check('115 f is undefined at 2', defined(fx, 2), 0);
+}
+
+// rq-sub-int-116 — (x+1)(x-4)/(x-2): zeros at -1 and 4, pole at 2, sign pattern - + - +
+{
+  const P = '(x+1)*(x-4)', fx = `(${P})/(x-2)`;
+  checkSet('116 the x-intercepts are -1 and 4', xInts(fx, P), [-1, 4]);
+  check('116 f(0) = 2', num(fx)(0), 2);
+  check('116 f is undefined at 2', defined(fx, 2), 0);
+  check('116 x = 2 is an asymptote, not a hole: |f| blows up on both sides', Math.min(Math.abs(num(fx)(1.999)), Math.abs(num(fx)(2.001))) > 1000 ? 1 : 0, 1);
+  // the sign row of the table, read as one binary word: - + - + over the four ranges
+  const word = [-5, 0, 3, 6].map(v => (num(fx)(v) > 0 ? '1' : '0')).join('');
+  check('116 the sign table row is - + - +', parseInt(word, 2), 0b0101);
+  check('116 positive across the whole range -1 < x < 2', Math.min(...[-0.9, -0.5, 0.5, 1.2, 1.9].map(v => num(fx)(v))) > 0 ? 1 : 0, 1);
+  check('116 positive across the whole range x > 4', Math.min(...[4.1, 5, 8, 20].map(v => num(fx)(v))) > 0 ? 1 : 0, 1);
+  check('116 negative across the whole range x < -1', Math.max(...[-1.1, -2, -5, -20].map(v => num(fx)(v))) < 0 ? 1 : 0, 1);
+  check('116 negative across the whole range 2 < x < 4', Math.max(...[2.1, 2.5, 3, 3.9].map(v => num(fx)(v))) < 0 ? 1 : 0, 1);
 }
 
 summary('intersections');

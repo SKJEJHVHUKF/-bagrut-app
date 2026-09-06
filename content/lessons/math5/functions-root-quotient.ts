@@ -3311,7 +3311,7 @@ $$f'(x) = \\frac{x(x - 2)}{(x - 1)^2}$$
       },
       {
         id: 'rq-sub-der-008',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question: 'גזור את $f(x) = x^2\\sqrt{x - 1}$.',
         hint: 'זו מכפלה, ואחד הגורמים הוא שורש. סמן את $u$ ואת $v$ לפני הכול.',
@@ -5698,7 +5698,7 @@ $$\\int_{-1}^{2}\\big((x+2) - x^2\\big)dx = \\left[\\frac{x^2}{2} + 2x - \\frac{
       },
       {
         id: 'rq-sub-in-006',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question:
           'חשב את השטח הכלוא בין הגרף של $f(x) = x^2$ לבין הגרף של $g(x) = 2x + 3$.',
@@ -5734,7 +5734,7 @@ $$\\int_{-1}^{2}\\big((x+2) - x^2\\big)dx = \\left[\\frac{x^2}{2} + 2x - \\frac{
       },
       {
         id: 'rq-sub-in-007',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question: 'חשב את $\\int x\\sqrt{x^2 + 5}\\, dx$.',
         hint: 'הנגזרת הפנימית מופיעה עד כדי מקדם. השלם אותו ופצה בחוץ.',
