@@ -114,12 +114,18 @@ const mechanisms = (q: PracticeQuestion): string[] => {
 /** What the question ASKS the student to produce — the variety axis. */
 function askShape(q: PracticeQuestion): string {
   const t = q.question;
+  // SPECIFIC SHAPES FIRST. "justify" is the widest net here — a find-the-error or
+  // compare question almost always also says נמקו or asks האם…? — so testing it
+  // early swallows the shape the question really has, and askShape feeds both the
+  // variety count and the restatement signature. Measured: one question
+  // (pr-x-tab-207) was reading as justify while auditing a student's claim.
+  // /הוכח/ also matches the noun הוכחה, hence the lookahead.
+  if (/תלמיד (?:כתב|טען|חישב)|מה הטעות|היכן השגיאה|כמה טעויות/.test(t)) return 'find-the-error';
+  if (/מה גדול יותר|איזו .* גדולה|כדאי|עדיף|השווה/.test(t)) return 'compare';
+  if (/ומה אם|אילו היה|לו היה/.test(t)) return 'what-if';
   if (/כמה .*(?:כדורים|תלמידים|פריטים|ניסויים|פעמים|צריך)|מצא את מספר|מהו מספר/.test(t)) return 'count';
   if (/מצא את [^.]*\b[a-zA-Z]\b|מהו הערך של|נתון ש.*מצא את|כמה .* יש בכד/.test(t)) return 'find-parameter';
-  if (/הוכח|נמק|הסבר מדוע|האם .*\?|נכון או לא נכון/.test(t)) return 'justify';
-  if (/מה גדול יותר|איזו .* גדולה|כדאי|עדיף|השווה/.test(t)) return 'compare';
-  if (/תלמיד (?:כתב|טען|חישב)|מה הטעות|היכן השגיאה|כמה טעויות/.test(t)) return 'find-the-error';
-  if (/ומה אם|אילו היה|לו היה/.test(t)) return 'what-if';
+  if (/הוכח(?!ה)|נמק|הסבר מדוע|האם .*\?|נכון או לא נכון/.test(t)) return 'justify';
   return 'compute';
 }
 
