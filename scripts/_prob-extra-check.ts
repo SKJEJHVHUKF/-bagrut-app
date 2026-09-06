@@ -322,10 +322,39 @@ function saysTree(text: string): boolean {
   return /עץ/.test(t);
 }
 
+/** One line, one move. Itay on a phone, 2026-09-06: "שום דבר לא יהיה דחוס והכל
+ *  יהיה מובן." A line carrying two or more TALL calculations — fractions,
+ *  binomials, products — wraps into a wall on a 375px screen. A label plus one
+ *  calculation is fine, and a display block alone on its line IS the fix. */
+function crowdedLines(text: string): string[] {
+  const out: string[] = [];
+  for (const line of text.split('\n')) {
+    const t = line.trim();
+    // Skip a markdown TABLE row (starts with a pipe), not any line containing a
+    // pipe: `P(אישה \mid מהבית)` and `P(A | B)` carry one mid-line, and skipping
+    // those hid the longest chains in the topic — conditional probability is
+    // where the crowding lives.
+    if (!t || t.startsWith('```') || t.startsWith('$$') || t.startsWith('|')) continue;
+    // A calculation, not a value: naming two fractions in one sentence
+    // ("$\dfrac{3}{10}$ ולא $\dfrac12$") reads fine; multiplying them does not.
+    const tall = (t.match(/\$[^$\n]+\$/g) ?? []).filter(
+      (s) => (/\\dfrac|\\binom|\\frac/.test(s) && /=|\\cdot|\+|-/.test(s)) || /\\cdot/.test(s) || s.length > 22,
+    );
+    if (tall.length >= 2) out.push(t.slice(0, 60));
+  }
+  return out;
+}
+
 function checkFigures(q: PracticeQuestion, stageId: string, shipped: boolean) {
   const text = (q.solution?.steps ?? []).join('\n');
   const sev: Sev = shipped && !STRICT_FIGURES ? 'warn' : 'error';
   const push = (rule: string, detail: string) => findings.push({ sev, where: q.id, rule, detail });
+  // An ERROR on shipped questions too, unlike the figure rules: the whole topic
+  // was swept clean on 2026-09-06, so there is no backlog to grandfather, and a
+  // warning would let the crowding creep back one line at a time.
+  for (const line of crowdedLines(text)) {
+    findings.push({ sev: 'error', where: q.id, rule: 'crowded-line', detail: `two calculations on one line — give each its own line (\\n\\n): "${line}…"` });
+  }
   if (stageId !== 'pr-basics' && saysTree(text) && !hasProbTree(text)) {
     push('tree-without-figure', 'the solution builds a tree — draw it with a ```probtree fence in the step that builds it');
   }
