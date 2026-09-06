@@ -279,7 +279,12 @@ const MECHANISMS: [string, RegExp][] = [
   ['sketch', /סקיצה|סרטט|שרטט|גרף הפונקציה/],
   ['integral', /אינטגרל|פונקציה קדומה|הקדומה|שטח הכלוא|\\int/],
   ['intersections', /נקודות החיתוך|חיתוך עם הציר|מציבים \$?y ?= ?0|f\(x\) ?= ?0/],
-  ['transformation', /הזזה|שיקוף|מתיחה|הזזת גרף|\\bg\(x\) ?= ?f\(/],
+  // The last alternative read `\\bg\(` — a literal backslash then "bg", which no
+  // content contains, so it never fired. `\b` would have been no better: it is a
+  // boundary between \w and non-\w, and a Hebrew letter is not \w, so beside
+  // Hebrew there is no boundary at all and /\bWORD\b/ matches NOTHING. The
+  // Unicode lookaround is the form that works on both sides.
+  ['transformation', /הזזה|שיקוף|מתיחה|הזזת גרף|(?<!\p{L})g\(x\) ?= ?f\(/u],
   ['tangent', /משיק|שיפוע המשיק|משוואת המשיק/],
   ['parameter', /פרמטר|עבור אילו ערכים|מצאו את הערך של \$?[a-z]\$?|תלוי ב\$?[a-z]\$?/],
   ['derivative-graph', /גרף הנגזרת|f\s*['׳]|הנגזרת השנייה|f''/],
