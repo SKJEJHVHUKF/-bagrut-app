@@ -408,6 +408,24 @@ function examBar(): { bar: number; n: number } {
 
 const BAR = examBar();
 
+/** Round 3 — Itay, 2026-09-06: "עוד שאלות… שיהיו יותר ברמה וידרשו מהתלמיד יותר
+ *  לחשוב ולחשב… שהמסלול יביא את התלמיד מוכן לפתור תרגילי בגרות ברמה, ולכן חשוב
+ *  שתכין אותו שם בהדרגה." A question with an id `<prefix>3NN` must therefore
+ *  score at least what its rung already averaged when round 3 opened; anything
+ *  below that adds bulk, not level. Numbers measured, not chosen. */
+const ROUND3_FLOOR: Record<string, { mid: number; hard: number }> = {
+  'rq-domain': { mid: 10.9, hard: 19.1 },
+  'rq-intersections': { mid: 11.5, hard: 19.7 },
+  'rq-asymptotes': { mid: 13.1, hard: 21.0 },
+  'rq-derivative': { mid: 15.8, hard: 26.5 },
+  'rq-sketch': { mid: 16.6, hard: 27.5 },
+  'rq-transformations': { mid: 16.8, hard: 21.9 },
+  'rq-integral': { mid: 15.6, hard: 23.0 },
+  'rq-bagrut-mixed': { mid: 18.7, hard: 26.8 },
+};
+/** …and enough of them that the rung actually thickens at the top. */
+const ROUND3_MIN = { mid: 2, hard: 3 };
+
 function checkStage(stageId: string): boolean {
   const cfg = STAGES[stageId];
   const extra = RQ_EXTRA[stageId] ?? [];
@@ -477,6 +495,22 @@ function checkStage(stageId: string): boolean {
   for (const q of rung('hard')) {
     const twin = lowerSigs.get(signatureOf(q));
     if (twin) err(q.id, 'hard-is-a-restatement', `same ask + same mechanisms as ${twin} (${signatureOf(q)})`);
+  }
+
+  // --- round 3: the new questions must raise the level, not pad it
+  const floor = ROUND3_FLOOR[stageId];
+  const round3 = extra.filter((q) => new RegExp(`^${cfg.prefix}3\\d\\d$`).test(q.id));
+  if (floor) {
+    for (const q of round3) {
+      const d = q.difficulty as 'easy' | 'mid' | 'hard';
+      if (d === 'easy') { err(q.id, 'round3-easy', 'round 3 adds mid and hard questions only'); continue; }
+      const s = scoreOf(q);
+      if (s < floor[d]) err(q.id, 'round3-below-the-rung', `scores ${s.toFixed(1)} against a ${d} rung already averaging ${floor[d]}`);
+    }
+    const n = (d: string) => round3.filter((q) => q.difficulty === d).length;
+    if (round3.length && (n('mid') < ROUND3_MIN.mid || n('hard') < ROUND3_MIN.hard)) {
+      err(stageId, 'round3-below-minimum', `${n('mid')} mid + ${n('hard')} hard — need ${ROUND3_MIN.mid} + ${ROUND3_MIN.hard}`);
+    }
   }
 
   // --- variety and exam reach
