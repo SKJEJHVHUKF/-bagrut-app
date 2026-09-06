@@ -18,6 +18,7 @@
  * scripts/_rq-extra-checks/<stage>.ts (independent re-derivation) is for.
  */
 import { getLesson, getSubTopic } from '../content/lessons';
+import { ALL_PAST_BAGRUYOT } from '../content/past-bagruyot';
 import { RQ_EXTRA } from '../content/lessons/math5/rq-extra';
 import type { PracticeQuestion, SubTopic } from '../content/lessons/types';
 import { checkAnswer, checkAnswerParts, matchKnownMistake } from '../lib/answer-check';
@@ -26,15 +27,15 @@ import { leaksAnswer } from '../lib/help-ladder';
 const TOPIC = 'פונקציות';
 
 /** Stage → id prefix + the MINIMUM extra questions per rung (owner's widening). */
-const STAGES: Record<string, { prefix: string; min: { easy: number; mid: number; hard: number } }> = {
-  'rq-domain': { prefix: 'rq-sub-dom-', min: { easy: 3, mid: 3, hard: 3 } },
-  'rq-intersections': { prefix: 'rq-sub-int-', min: { easy: 3, mid: 4, hard: 2 } },
-  'rq-asymptotes': { prefix: 'rq-sub-asy-', min: { easy: 4, mid: 3, hard: 2 } },
-  'rq-derivative': { prefix: 'rq-sub-der-', min: { easy: 4, mid: 3, hard: 3 } },
-  'rq-sketch': { prefix: 'rq-sub-sk-', min: { easy: 4, mid: 4, hard: 3 } },
-  'rq-transformations': { prefix: 'rq-sub-tr-', min: { easy: 4, mid: 4, hard: 2 } },
-  'rq-integral': { prefix: 'rq-sub-in-', min: { easy: 4, mid: 3, hard: 2 } },
-  'rq-bagrut-mixed': { prefix: 'rq-sub-bg-', min: { easy: 2, mid: 4, hard: 2 } },
+const STAGES: Record<string, { prefix: string; min: { easy: number; mid: number; hard: number }; shapes: number }> = {
+  'rq-domain': { prefix: 'rq-sub-dom-', min: { easy: 3, mid: 3, hard: 3 }, shapes: 4 },
+  'rq-intersections': { prefix: 'rq-sub-int-', min: { easy: 3, mid: 4, hard: 2 }, shapes: 4 },
+  'rq-asymptotes': { prefix: 'rq-sub-asy-', min: { easy: 4, mid: 3, hard: 2 }, shapes: 4 },
+  'rq-derivative': { prefix: 'rq-sub-der-', min: { easy: 4, mid: 3, hard: 3 }, shapes: 4 },
+  'rq-sketch': { prefix: 'rq-sub-sk-', min: { easy: 4, mid: 4, hard: 3 }, shapes: 4 },
+  'rq-transformations': { prefix: 'rq-sub-tr-', min: { easy: 4, mid: 4, hard: 2 }, shapes: 4 },
+  'rq-integral': { prefix: 'rq-sub-in-', min: { easy: 4, mid: 3, hard: 2 }, shapes: 4 },
+  'rq-bagrut-mixed': { prefix: 'rq-sub-bg-', min: { easy: 2, mid: 4, hard: 2 }, shapes: 4 },
 };
 
 const HEB = /[֐-׿]/;
@@ -217,6 +218,23 @@ function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
     } else err(w, 'bad-expected-kind', spec.kind);
   }
 
+  // --- one line, one move (Itay, 2026-09-06: "שהתשובות יהיו מובנות ולא דחוסות")
+  for (const line of crowdedLines((sol.steps ?? []).join('\n'))) {
+    err(w, 'crowded-line', `two calculations on one line — give each its own line (\\n\\n): "${line}…"`);
+  }
+
+  // --- name the formula (Itay: "שבכל תשובה יהיה מוסבר באיזו נוסחה בדיוק השתמשו")
+  const stepsText = (sol.steps ?? []).join('\n');
+  if (!/\*\*הנוסחה:\*\*/.test(stepsText)) err(w, 'no-formula-line', 'no **הנוסחה:** step — name the rule the solution applies, before substituting');
+  else if (!/\*\*ההצבה:\*\*/.test(stepsText)) warn(w, 'formula-without-substitution', '**הנוסחה:** with no **ההצבה:** step after it');
+
+  // --- draw what the solution says it draws
+  const saysSketch = /סקיצה|סרטט|שרטט|גרף הפונקציה|הגרף של/.test(stepsText);
+  const saysTable = /טבלת סימנים|טבלה/.test(stepsText);
+  const hasTable = /^\s*\|.*\|\s*$/m.test(stepsText);
+  if (saysSketch && !(sol.diagrams ?? []).length) err(w, 'sketch-without-figure', 'the solution sketches the graph — attach the drawn figure (lib/fn-figure)');
+  if (saysTable && !hasTable) err(w, 'table-without-table', 'the solution builds a sign table — draw it as a markdown table');
+
   // --- figures
   for (const [i, d] of (sol.diagrams ?? []).entries()) {
     const dd = d as { type: string; svg?: string; viewBox?: string; caption?: string };
@@ -228,6 +246,125 @@ function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
     if (!dd.caption) warn(w, 'diagram-no-caption', `diagrams[${i}]`); else checkText(`${w}.diagrams[${i}].caption`, dd.caption);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Difficulty model — the same shape as scripts/_prob-extra-check.ts, with this
+// topic's mechanisms. Itay, 2026-09-06: "בקצב הדרגתי שעולה ברמה שלו, ושזה מגיע
+// לשאלות שתלמיד באמת צריך לחשוב ולהתאמץ." A rung is not harder because it is
+// labelled harder, so the gradient is measured from the authored content and
+// compared with the archived papers.
+// ---------------------------------------------------------------------------
+
+/** Named moves a quotient/root question can require. Read from the question AND
+ *  its solution, because the move often shows only in the working. */
+const MECHANISMS: [string, RegExp][] = [
+  ['domain', /תחום ההגדרה|תחום הגדרה|מוגדרת עבור|מכנה שונה מ|ביטוי שתחת השורש|אי[- ]שוויון/],
+  ['vertical-asymptote', /אסימפטוט[הות]? אנכית|אסימפטוטות אנכיות|מאפסי המכנה/],
+  ['horizontal-asymptote', /אסימפטוט[הות]? אופקית|כאשר \$?x\$? שואף|שואף לאינסוף/],
+  ['quotient-rule', /כלל המנה|נגזרת של מנה|\\dfrac\{[^}]*'[^}]*\}|u'v ?- ?uv'/],
+  ['chain-rule', /נגזרת של שורש|נגזרת פנימית|כלל השרשרת|\\dfrac\{1\}\{2\\sqrt/],
+  ['extremum', /נקוד[ותת] קיצון|מקסימום|מינימום|מאפסים את הנגזרת/],
+  ['monotonicity', /עולה|יורדת|תחומי עלייה|תחומי ירידה|טבלת סימנים/],
+  ['sign-table', /טבלת סימנים|סימן הנגזרת|טבלה של סימנים/],
+  ['sketch', /סקיצה|סרטט|שרטט|גרף הפונקציה/],
+  ['integral', /אינטגרל|פונקציה קדומה|הקדומה|שטח הכלוא|\\int/],
+  ['intersections', /נקודות החיתוך|חיתוך עם הציר|מציבים \$?y ?= ?0|f\(x\) ?= ?0/],
+  ['transformation', /הזזה|שיקוף|מתיחה|הזזת גרף|\\bg\(x\) ?= ?f\(/],
+  ['tangent', /משיק|שיפוע המשיק|משוואת המשיק/],
+  ['parameter', /פרמטר|עבור אילו ערכים|מצאו את הערך של \$?[a-z]\$?|תלוי ב\$?[a-z]\$?/],
+  ['derivative-graph', /גרף הנגזרת|f\s*['׳]|הנגזרת השנייה|f''/],
+  ['second-derivative', /נגזרת שנייה|נקודת פיתול|קמור|קעור/],
+];
+
+const mechanismsOf = (q: PracticeQuestion): string[] => {
+  const text = `${q.question} ${(q.solution?.steps ?? []).join(' ')}`;
+  return MECHANISMS.filter(([, re]) => re.test(text)).map(([n]) => n);
+};
+
+/** What the question asks the student to PRODUCE — the variety axis. Specific
+ *  shapes are tested before the generic ones: a "justify" net tested early
+ *  swallows every question that also says נמקו (the bug that hid a
+ *  find-the-error question in the probability gate). */
+function askShape(q: PracticeQuestion): string {
+  const t = q.question;
+  if (/תלמיד (?:כתב|טען|חישב)|מה הטעות|היכן השגיאה|מצאו את השגיאה/.test(t)) return 'find-the-error';
+  if (/מה גדול יותר|איזו .* גדולה|כדאי|עדיף|השוו/.test(t)) return 'compare';
+  if (/ומה אם|אילו היה|לו היה|כיצד ישתנה|מה יקרה אם/.test(t)) return 'what-if';
+  if (/סרטט|שרטט|סקיצה/.test(t)) return 'sketch';
+  if (/מצאו את הערך של \$?[a-z]|עבור אילו ערכים|מצאו את הפרמטר|כך ש.*יהיה/.test(t)) return 'find-parameter';
+  if (/כמה |מספר ה/.test(t)) return 'count';
+  if (/הוכיחו|הראו כי|נמקו|הסבירו מדוע|האם .*\?/.test(t)) return 'justify';
+  return 'compute';
+}
+
+const hasParameter = (q: PracticeQuestion) =>
+  /פרמטר|עבור אילו ערכים|מצאו את הערך של \$?[a-z]|נתון ש[^.]*\$?[abmk]\$?[^.]*מצאו|תלוי ב/.test(q.question);
+
+/** The inference runs BACKWARDS: a property is given and the function (or a
+ *  coefficient inside it) is what the student must recover. */
+const isReverse = (q: PracticeQuestion) =>
+  /נתונה?\s+(?:האסימפטוט|נקודת הקיצון|נקודת החיתוך|תחום ההגדרה)|ידוע (?:כי|ש)[^.]*(?:אסימפטוט|קיצון|חיתוך)[^.]*מצאו|גרף הנגזרת[^.]*מה נכון|מהי הפונקציה/.test(
+    q.question,
+  );
+
+function scoreOf(q: PracticeQuestion): number {
+  const steps = (q.solution?.steps ?? []).length;
+  const mech = mechanismsOf(q).length;
+  const shape = askShape(q);
+  return (
+    steps +
+    2.5 * mech +
+    (hasParameter(q) ? 3 : 0) +
+    (isReverse(q) ? 4 : 0) +
+    (['justify', 'compare', 'find-the-error'].includes(shape) ? 2 : 0)
+  );
+}
+
+/** The signature that makes "the challenge rung is the practice rung with
+ *  different numbers" visible to a machine. */
+const signatureOf = (q: PracticeQuestion) =>
+  `${askShape(q)}|${mechanismsOf(q).sort().join(',')}${hasParameter(q) ? '|param' : ''}${isReverse(q) ? '|rev' : ''}`;
+
+/** One line, one move — ported from the probability round after Itay said the
+ *  solutions read as cramped on a phone. A line carrying two or more tall
+ *  calculations wraps into a wall; a display block alone on its line is the fix. */
+function crowdedLines(text: string): string[] {
+  const out: string[] = [];
+  for (const line of text.split('\n')) {
+    const t = line.trim();
+    if (!t || t.startsWith('```') || t.startsWith('$$') || t.startsWith('|')) continue;
+    const tall = (t.match(/\$[^$\n]+\$/g) ?? []).filter(
+      (s) => (/\\dfrac|\\binom|\\frac|\\sqrt|\\int/.test(s) && /=|\\cdot|\+|-/.test(s)) || /\\cdot/.test(s) || s.length > 22,
+    );
+    if (tall.length >= 2) out.push(t.slice(0, 60));
+  }
+  return out;
+}
+
+/** The archived papers, scored with the SAME model: the hardest part of each
+ *  question, because part ג is easy once א and ב are done. */
+function examBar(): { bar: number; n: number } {
+  const isRQ = (s: string) =>
+    /\\d?frac\s*\{[^}]*\}\s*\{[^}]*x[^}]*\}/.test(s) || /\\sqrt\s*(\[[^\]]*\])?\s*\{[^}]*x/.test(s) || /\\sqrt\s*x/.test(s);
+  const tops: number[] = [];
+  for (const q of ALL_PAST_BAGRUYOT) {
+    const whole = [q.context ?? '', ...(q.parts ?? []).map((p) => p.prompt ?? '')].join(' ');
+    if (!isRQ(whole)) continue;
+    const parts = (q.parts ?? []).map((p) =>
+      scoreOf({
+        id: `${q.id}/${p.label}`,
+        difficulty: 'hard',
+        kind: 'open',
+        question: `${q.context ?? ''} ${p.prompt ?? ''}`,
+        solution: { steps: p.solution?.steps ?? [], finalAnswer: p.solution?.final_answer ?? '' },
+      } as unknown as PracticeQuestion),
+    );
+    if (parts.length) tops.push(Math.max(...parts));
+  }
+  return { bar: tops.reduce((a, b) => a + b, 0) / Math.max(1, tops.length), n: tops.length };
+}
+
+const BAR = examBar();
 
 function checkStage(stageId: string): boolean {
   const cfg = STAGES[stageId];
@@ -275,11 +412,43 @@ function checkStage(stageId: string): boolean {
   const mcq = extra.filter((q) => q.kind === 'mcq').length;
   if (extra.length >= 6 && (mcq < extra.length * 0.35 || mcq > extra.length * 0.65)) warn(stageId, 'mcq-open-mix', `${mcq} mcq / ${extra.length - mcq} open — aim for roughly half and half`);
 
+  // --- the gradient, over the rung the STUDENT sees (existing + extra)
+  const all = (st.questions ?? []) as PracticeQuestion[];
+  const rung = (d: string) => all.filter((q) => q.difficulty === d);
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  const sc = { easy: mean(rung('easy').map(scoreOf)), mid: mean(rung('mid').map(scoreOf)), hard: mean(rung('hard').map(scoreOf)) };
+  const mc = {
+    easy: mean(rung('easy').map((q) => mechanismsOf(q).length)),
+    mid: mean(rung('mid').map((q) => mechanismsOf(q).length)),
+    hard: mean(rung('hard').map((q) => mechanismsOf(q).length)),
+  };
+  const STEP = 2.0;
+  const MECH_STEP = 0.3;
+  for (const [lo, hi] of [['easy', 'mid'], ['mid', 'hard']] as const) {
+    if (sc[hi] < sc[lo] + STEP) err(stageId, 'rung-not-harder', `${hi} scores ${sc[hi].toFixed(1)} vs ${lo} ${sc[lo].toFixed(1)} — needs +${STEP}`);
+    if (mc[hi] < mc[lo] + MECH_STEP) err(stageId, 'rung-no-new-mechanism', `${hi} invokes ${mc[hi].toFixed(1)} mechanisms vs ${lo} ${mc[lo].toFixed(1)}`);
+  }
+
+  // --- no hard question may restate an easier one
+  const lowerSigs = new Map<string, string>();
+  for (const q of [...rung('easy'), ...rung('mid')]) if (!lowerSigs.has(signatureOf(q))) lowerSigs.set(signatureOf(q), q.id);
+  for (const q of rung('hard')) {
+    const twin = lowerSigs.get(signatureOf(q));
+    if (twin) err(q.id, 'hard-is-a-restatement', `same ask + same mechanisms as ${twin} (${signatureOf(q)})`);
+  }
+
+  // --- variety and exam reach
+  const shapes = new Set(all.map(askShape));
+  if (shapes.size < cfg.shapes) err(stageId, 'too-few-ask-shapes', `${shapes.size} of ${cfg.shapes} — ${[...shapes].join(', ')}`);
+  const top3 = mean(rung('hard').map(scoreOf).sort((a, b) => b - a).slice(0, 3));
+  const reach = BAR.bar ? (top3 / BAR.bar) * 100 : 0;
+  if (reach < 90) err(stageId, 'does-not-reach-the-exam', `hardest rung averages ${top3.toFixed(1)} vs the archive's ${BAR.bar.toFixed(1)} (${reach.toFixed(0)}%)`);
+
   const mine = findings.slice(before);
   const errors = mine.filter((f) => f.sev === 'error');
   console.log(
     `\n${stageId.padEnd(20)} extra ${String(extra.length).padStart(2)} (easy ${c('easy')} mid ${c('mid')} hard ${c('hard')} · mcq ${mcq} open ${extra.length - mcq}) ` +
-      `→ stage total ${(st.questions ?? []).length} · ${errors.length} error(s), ${mine.length - errors.length} warning(s)`,
+      `→ ${(st.questions ?? []).length}q  ${sc.easy.toFixed(1)} → ${sc.mid.toFixed(1)} → ${sc.hard.toFixed(1)} · mech ${mc.easy.toFixed(1)}→${mc.mid.toFixed(1)}→${mc.hard.toFixed(1)} · shapes ${shapes.size} · exam-reach ${reach.toFixed(0)}% · ${errors.length} error(s), ${mine.length - errors.length} warning(s)`,
   );
   for (const f of mine) console.log(`   ${f.sev === 'error' ? '✗' : '⚠'} ${f.where}  ${f.rule}${f.detail ? '  — ' + f.detail : ''}`);
   return errors.length === 0;
