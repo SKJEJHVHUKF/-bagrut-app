@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node -e \"require('fs').rmSync('.next/BUILD_ID',{force:true})\"",
     "build": "next build",
+    "postbuild": "node -e \"if(require('fs').existsSync('.next/BUILD_ID'))process.exit(0);console.error('BUILD FAILED: next build exited 0 but wrote no .next/BUILD_ID - the compiler died mid-build (usually OOM). Free some RAM and re-run.');process.exit(1)\"",
     "start": "next start",
     "lint": "eslint --max-warnings 0",
     "typecheck": "tsc --noEmit",
