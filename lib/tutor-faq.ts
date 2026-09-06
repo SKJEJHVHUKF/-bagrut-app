@@ -34,7 +34,7 @@ import type { TutorFocus } from '@/lib/tutor-presence';
 import { loadFaqBank } from '@/content/tutor-faq';
 import type { TutorFaq, TutorFaqKind } from '@/content/tutor-faq';
 import { leaksAnswer } from '@/lib/help-ladder';
-import { foreignSubject, namesAMathsSubject } from '@/lib/maths-vocabulary';
+import { exerciseText, foreignOperation, foreignSubject, namesAMathsSubject } from '@/lib/maths-vocabulary';
 import { resolveTopic } from '@/lib/resolve-topic';
 import { classifyShape } from '@/lib/question-shape';
 
@@ -995,6 +995,22 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
   const questionSubject = `${q.question} ${steps.join(' ')} ${q.solution?.finalAnswer ?? ''} ${focus.topic ?? ''}`;
   const foreign = foreignSubject(message, questionSubject);
   if (foreign) return null;
+
+  // ⚠️ AND THE SAME SCREEN FOR THE OPERATION, which `NOUNS` never covered.
+  //
+  // The subject screen above catches "תסביר לי על וקטורים" and lets through
+  // "למה מחברים כאן" on an exercise that does not add — because כפל / חיבור /
+  // חילוק are not nouns in that list. MEASURED (2026-09-07): after the same
+  // guard went into lib/tutor-compiler, the bank was still serving them, e.g.
+  // "למה מחברים כאן" on rq-sub-dom-102 answered with a note about dividing by
+  // a positive coefficient. An entry written for THIS exercise is still an
+  // answer to a question this exercise cannot be asked.
+  //
+  // The topic is deliberately NOT in `own` here: it names the branch, not the
+  // arithmetic, and "חשבון דיפרנציאלי" contains no operation either way.
+  // `q.hint` is, because a hint often names the move the steps only write in
+  // symbols.
+  if (foreignOperation(message, exerciseText(q as unknown as Record<string, unknown>))) return null;
 
   // ---- stage 1: this question's own entries ----
   if (usable.length > 0) {

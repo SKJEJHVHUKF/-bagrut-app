@@ -61,6 +61,7 @@ import { getLesson, allLessonKeys } from '../content/lessons';
 import { loadFaqBank } from '../content/tutor-faq';
 import { partAsQuestion, type TutorFocus } from '../lib/tutor-presence';
 import { runTutorChain, emptyChainState } from '../lib/tutor-chain';
+import { exerciseText, foreignOperation } from '../lib/maths-vocabulary';
 import type { PracticeQuestion, SubTopic } from '../content/lessons/types';
 
 const args = process.argv.slice(2);
@@ -188,8 +189,71 @@ const probeOf = (f: { q: string; alts: string[] }) => f.alts[4] ?? f.alts[1] ?? 
     console.log('\nתשובות שגויות (דוגמאות):');
     for (const s of wrongSamples) console.log(s);
   }
+  // ============================================================
+  // 3. THE OPERATION THE STUDENT NAMED IS NOT IN THE EXERCISE
+  // ============================================================
+  //
+  // Itay, 2026-09-07: "שתלמיד מתקשה במשהו בשאלה ואז שואל את המורה והוא מחזיר
+  // לו תשובות מהבנק או מהמודל שלא קשורות — דבר כזה אני לא רוצה שיחזור."
+  //
+  // `lib/tutor-intent` reads "למה מכפילים כאן ולא מחברים" as `why_this_step`
+  // from the word למה and throws the verb away; every layer below then answers
+  // about THIS exercise whether or not it multiplies. Measured before the
+  // guard: **45.9% of 438 such questions were answered locally, confidently,
+  // about something else.**
+  //
+  // ⚠️ THE PROBE ASKS THE GUARD'S OWN QUESTION. The first version of this
+  // measurement built its own idea of "does the exercise multiply" and reported
+  // leaks that were not leaks — the guard reads the hint and the explanation
+  // too, so half the offenders were exercises that DO multiply, in text the
+  // probe never looked at. `foreignOperation` is imported here for that reason:
+  // one definition, so a hit below is a path that does not consult it.
+  {
+    const ASKS: Array<[string, string]> = [
+      ['כפל', 'למה מכפילים כאן'],
+      ['חיבור', 'למה מחברים כאן'],
+      ['חילוק', 'למה מחלקים כאן'],
+      ['שורש', 'למה מוציאים שורש כאן'],
+    ];
+    let asked = 0;
+    let leaked = 0;
+    const leaks: string[] = [];
+    for (const { subject, topic } of allLessonKeys()) {
+      if (subject !== 'math5') continue;
+      if (ONLY && topic !== ONLY) continue;
+      const L = getLesson(subject, topic);
+      if (!L) continue;
+      for (const st of (L.subTopics ?? []).slice(0, 6)) {
+        for (const question of (st.questions ?? []).slice(0, 5)) {
+          const own = exerciseText(question as unknown as Record<string, unknown>);
+          for (const [, ask] of ASKS) {
+            if (!foreignOperation(ask, own)) continue; // the exercise does use it
+            asked++;
+            const focus = {
+              where: topic, topic, subTopicId: st.id,
+              questionText: question.question, question, subTopic: st,
+            } as unknown as TutorFocus;
+            const r = await runTutorChain({
+              message: ask,
+              focus,
+              state: { ...emptyChainState(), tutorSpoke: true },
+            });
+            if (r.answered) {
+              leaked++;
+              if (leaks.length < 6) leaks.push(`  [${r.layer}] ${topic} · ${question.id}\n    👦 ${ask}\n    🤖 ${r.text.replace(/\n+/g, ' ').slice(0, 110)}`);
+            }
+          }
+        }
+      }
+    }
+    console.log('\n--- שאלות על פעולה שאין בתרגיל ---');
+    console.log(`נשאלו ${asked} · נענו מקומית ${leaked} (${pct(leaked, asked)})  ← חייב להיות 0`);
+    for (const l of leaks) console.log(l);
+    if (leaked > 0) process.exitCode = 1;
+  }
+
   // A stall is a defect with a known cause; a wrong answer is the trust-killer.
   // Both are reported, only the stall is a hard failure — the wrong-answer rate
   // is a bank-precision number that content moves, not a gate a commit can pass.
-  process.exit(total.stall === 0 ? 0 : 1);
+  if (total.stall > 0) process.exitCode = 1;
 })();

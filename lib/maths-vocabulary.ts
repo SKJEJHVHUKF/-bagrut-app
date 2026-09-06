@@ -77,3 +77,99 @@ export function foreignSubject(message: string, ownText: string): string | null 
 }
 
 export const MATHS_NOUNS = NOUNS;
+
+// ------------------------------------------------------------
+// Operations — the half of the foreign-subject screen that was missing
+// ------------------------------------------------------------
+
+/**
+ * ⚠️ A STUDENT NAMES AN OPERATION FAR MORE OFTEN THAN HE NAMES A NOUN, AND
+ * NOTHING WAS CHECKING IT.
+ *
+ * `NOUNS` above holds structures and branches — סדרה, נגזרת, משולש. It has no
+ * כפל, no חיבור, no חילוק. But "למה מכפילים כאן ולא מחברים" is how a stuck
+ * student actually writes, and `lib/tutor-intent` reads that sentence as
+ * `why_this_step` from the word למה, THROWS THE VERB AWAY, and the compiler
+ * then serves the exercise's own rule line — whatever operation the exercise
+ * happens to use.
+ *
+ * MEASURED (2026-09-07, 438 probes: every operation the exercise demonstrably
+ * does NOT use, asked at 25 questions per topic across all 15 topics):
+ * **45.9% were answered locally, with confidence, about something else.** A
+ * question about multiplication on a factorisation exercise came back
+ * "פירוק לגורמים הוא המהיר ביותר כש-a=1"; asking about addition and asking
+ * about multiplication returned the identical sentence.
+ *
+ * Each family lists the words that NAME it and the symbols that PERFORM it,
+ * because a solution multiplies with `\cdot` far more often than it writes
+ * "מכפילים". The words are stems, not surface forms — every one below was
+ * tried against the ה ב ל מ ו ש prefixes, which is where a Hebrew list of
+ * this kind normally leaks.
+ */
+const OPERATIONS: Array<{ name: string; words: RegExp; signs: RegExp }> = [
+  // ⚠️ JUXTAPOSITION IS MULTIPLICATION AND HAS NO SYMBOL. `(x-2)(x-3)`, `2x`,
+  // `3\sin(x)`, `\pi r^2` all multiply without writing an operator, so a signs
+  // list of `·` and `\cdot` alone reports "this exercise never multiplies" on
+  // most of algebra. MEASURED: without the three patterns below the guard
+  // pushed 0.8% of authored, correct answers to the model — 63 entries whose
+  // own exercise multiplies in a form nothing was looking for.
+  {
+    name: 'כפל',
+    words: /כפל|כפול|כפיל|מכפל|הכפל|פעמים/,
+    signs: /[·×∙]|\\cdot|\\times|\)\s*\(|\d\s*[a-zA-Z\\]|[a-zA-Z]\s*\(/,
+  },
+  { name: 'חיבור', words: /חיבור|חובר|חיבר|לחבר|מחבר|פלוס|סכומ|סכום|מסכמ/, signs: /\+/ },
+  { name: 'חיסור', words: /חיסור|חיסר|לחסר|מחסר|מינוס|הפרש|מוריד/, signs: /-|−|\\-/ },
+  { name: 'חילוק', words: /חילוק|חילק|לחלק|מחלק|חלקי|מכנה|שבר/, signs: /[/:]|\\frac|\\dfrac|\\over/ },
+  { name: 'שורש', words: /שורש/, signs: /\\sqrt|√/ },
+  { name: 'חזקה', words: /חזקה|בחזקת|בריבוע|ריבוע|מעריכ/, signs: /\^|²|³/ },
+];
+
+/**
+ * An operation the MESSAGE names that the exercise neither writes nor performs.
+ *
+ * Returns the offending name, or null when everything the student named is
+ * something this exercise actually does.
+ *
+ * ⚠️ CONSERVATIVE BY CONSTRUCTION, AND THAT IS THE SAFETY MODEL. It only fires
+ * on the ABSENCE of every trace of an operation — no word, no symbol. So the
+ * cost of the list missing a form is that the guard stays silent and behaviour
+ * is exactly what it was; it can never invent a conflict that is not there.
+ * That matters because Hebrew maths writes multiplication by juxtaposition
+ * (`2x`), which no symbol can catch — the guard must not be used to ASSERT
+ * "there is no multiplication here", only to decline to answer as if there
+ * were. See the caller in lib/tutor-compiler.
+ */
+/**
+ * Everything the exercise itself says — the text `foreignOperation` is asked
+ * about.
+ *
+ * ⚠️ EXPORTED SO THERE IS EXACTLY ONE OF IT. The guard in lib/tutor-compiler and
+ * the gate in scripts/report-tutor-accuracy each built their own version first,
+ * and they disagreed: the report counted nine leaks that were not leaks, on
+ * exercises that DO multiply in a field it had not thought to read. A screen
+ * and its gate assembling the same string separately is a measurement that
+ * drifts from the thing it measures.
+ *
+ * Everything is included, `explanation` object form and all, because the
+ * guard's only job is to notice a TOTAL absence — a mention anywhere is enough
+ * to prove the operation is part of this exercise.
+ */
+export function exerciseText(q: Record<string, unknown> | null | undefined): string {
+  if (!q) return '';
+  const sol = (q.solution ?? {}) as Record<string, unknown>;
+  const steps = Array.isArray(sol.steps) ? sol.steps.join(' ') : '';
+  const ex = q.explanation;
+  const explanation = typeof ex === 'string' ? ex : ex ? JSON.stringify(ex) : '';
+  const notes = Array.isArray(q.distractorNotes) ? q.distractorNotes.join(' ') : '';
+  return `${String(q.question ?? '')} ${steps} ${String(sol.finalAnswer ?? '')} ${String(q.hint ?? '')} ${explanation} ${notes}`;
+}
+
+export function foreignOperation(message: string, ownText: string): string | null {
+  for (const op of OPERATIONS) {
+    if (!op.words.test(message)) continue;
+    if (op.words.test(ownText) || op.signs.test(ownText)) continue;
+    return op.name;
+  }
+  return null;
+}

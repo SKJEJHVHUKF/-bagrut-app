@@ -31,7 +31,7 @@ import { matchTopicCard, renderTopicCard, cardCanAnswer } from '@/lib/topic-card
 import { coachMistake, type MistakeKind } from '@/lib/error-coach';
 import { leaksAnswer } from '@/lib/help-ladder';
 import { pickExample, renderExample } from '@/lib/example-question';
-import { foreignSubject } from '@/lib/maths-vocabulary';
+import { exerciseText, foreignOperation, foreignSubject } from '@/lib/maths-vocabulary';
 import { studyTips } from '@/lib/study-tips';
 import type { AnswerDiagnosis } from '@/lib/answer-check';
 import type { FallbackReason } from '@/lib/tutor-telemetry';
@@ -289,6 +289,37 @@ export async function compileTutorResponse(input: CompilerInput): Promise<Compil
   }
 
   if (!q) return unhandled('missing_question_context');
+
+  // ---- 1c. THE OPERATION THE STUDENT NAMED MUST BE IN THE EXERCISE ---
+  //
+  // ⚠️ THE WORST FAILURE THIS FILE HAD, AND EVERY GATE SCORED IT AS A WIN.
+  //
+  // `lib/tutor-intent` reads "למה מכפילים כאן ולא מחברים" as `why_this_step`
+  // from the word למה and THROWS THE VERB AWAY. Every branch below then serves
+  // what it has about THIS exercise — its rule line, its explanation, its
+  // formulas — regardless of whether the exercise multiplies at all. Asked
+  // about multiplication and asked about addition, a factorisation question
+  // returned the identical sentence, and it mentioned neither.
+  //
+  // MEASURED before this guard: of 438 questions naming an operation the
+  // exercise demonstrably does not use, **45.9% were answered locally, with
+  // confidence, about something else.** That is the exact shape Itay reported
+  // twice, and it is worse than a stall: a stall says nothing, this says
+  // something true about the wrong thing, in the tutor's own confident voice.
+  //
+  // ⚠️ IT ABSTAINS, IT DOES NOT CORRECT. Writing "אין כאן כפל בכלל" would be
+  // the better answer and is not safe to assert: Hebrew maths multiplies by
+  // juxtaposition (`2x`), which no symbol test can see, so the claim would
+  // sometimes be false — and a confident false statement is the thing being
+  // fixed, not a new place to put it. The model gets the question, the
+  // authored solution and his own words, and can say it truthfully. One call
+  // is the right price for not talking past a stuck student.
+  //
+  // Above this line on purpose: `concept` and the card layer have their own
+  // `foreignSubject` screen, and study tips are about no exercise at all.
+  {
+    if (foreignOperation(input.message ?? '', exerciseText(q))) return unhandled('no_local_content');
+  }
 
   // ---- 2. the exercise intents — grounded or nothing ----------------
   //
