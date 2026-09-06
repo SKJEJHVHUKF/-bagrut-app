@@ -137,7 +137,11 @@ export function renderFnFigure(spec: FnFigureSpec): string {
     parts.push(`<line x1="${n(sx(a))}" y1="${PAD.t}" x2="${n(sx(a))}" y2="${H - PAD.b}" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>`);
     // An asymptote close to the y-axis would print its label on top of the "y",
     // so drop it a line. Seen on the contact sheet, not by any check.
-    const clash = Math.abs(sx(a) - x0) < 26;
+    // Compare the label's own RIGHT EDGE with the axis letter, not the
+    // asymptote's distance: "x = -2" is six characters wide and reached the "y"
+    // from 29px away, which the distance test let through.
+    const labelW = `x = ${a}`.length * 5.5;
+    const clash = sx(a) + 5 < x0 + 12 && sx(a) + 5 + labelW > x0 - 4;
     parts.push(`<text x="${n(sx(a) + 5)}" y="${PAD.t + (clash ? 25 : 11)}" font-size="10.5" fill="#B45309" font-weight="bold">x = ${a}</text>`);
   }
   for (const a of spec.hAsymptotes ?? []) {

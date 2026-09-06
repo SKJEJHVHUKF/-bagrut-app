@@ -373,7 +373,7 @@ const SOL_SK305_FIGURE = `
 <line x1="152" y1="42.1" x2="158" y2="42.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
 <text x="149" y="45.6" font-size="10" fill="#0F172A" text-anchor="end">3</text>
 <line x1="126.3" y1="16" x2="126.3" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
-<text x="131.3" y="27" font-size="10.5" fill="#B45309" font-weight="bold">x = -2</text>
+<text x="122.3" text-anchor="end" y="27" font-size="10.5" fill="#B45309" font-weight="bold">x = -2</text>
 <line x1="183.7" y1="16" x2="183.7" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
 <text x="188.7" y="27" font-size="10.5" fill="#B45309" font-weight="bold">x = 2</text>
 <line x1="26" y1="172.7" x2="284" y2="172.7" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>

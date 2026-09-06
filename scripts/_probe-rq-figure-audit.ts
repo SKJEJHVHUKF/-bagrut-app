@@ -46,11 +46,15 @@ for (const f of figs) {
   });
   const outside = texts.filter((t) => t.x0 < -6 || t.x1 > f.box[0] + 6 || t.y < 0 || t.y > f.box[1] + 2).map((t) => [t.x0, t.y, t.t] as const);
   let overlaps = 0;
+  const clashes: string[] = [];
   for (let i = 0; i < texts.length; i++) {
     for (let j = i + 1; j < texts.length; j++) {
       const a = texts[i];
       const b = texts[j];
-      if (Math.abs(a.y - b.y) < 7 && a.x0 < b.x1 - 1 && b.x0 < a.x1 - 1) overlaps++;
+      if (Math.abs(a.y - b.y) < 7 && a.x0 < b.x1 - 1 && b.x0 < a.x1 - 1) {
+        overlaps++;
+        clashes.push(`"${a.t}" at (${a.x0.toFixed(0)}, ${a.y}) ✕ "${b.t}" at (${b.x0.toFixed(0)}, ${b.y})`);
+      }
     }
   }
   const unbalanced = (f.svg.match(/</g) ?? []).length !== (f.svg.match(/>/g) ?? []).length;
@@ -58,6 +62,7 @@ for (const f of figs) {
     bad++;
     console.log(`✗ ${f.id.padEnd(24)} curves ${curves} · outside ${outside.length} · overlapping ${overlaps}${unbalanced ? ' · UNBALANCED TAGS' : ''}`);
     for (const o of outside.slice(0, 3)) console.log(`      out of frame: "${o[2]}" at (${o[0]}, ${o[1]})`);
+    for (const c of clashes.slice(0, 3)) console.log(`      ${c}`);
   }
 }
 console.log(`\n${figs.length} figure(s) · ${bad} with a problem`);
