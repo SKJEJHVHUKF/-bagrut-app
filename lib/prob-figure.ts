@@ -38,6 +38,14 @@ export function numeric(s: string | undefined): number | null {
 
 const close = (a: number, b: number, tol = 1e-4) => Math.abs(a - b) <= tol;
 
+/** Half a unit in the last written place: a board tree may show 0.133 for 2/15,
+ *  and that is a rounded number, not a wrong one. Fractions are exact. */
+function halfUlp(s: string): number {
+  const m = /^-?\d*\.(\d+)$/.exec(String(s).trim());
+  return m ? 0.5 * 10 ** -m[1].length : 0;
+}
+const sumTol = (ss: string[]) => 1e-4 + ss.reduce((t, s) => t + halfUlp(s), 0);
+
 export function checkProbTree(spec: ProbTreeSpec): string[] {
   const out: string[] = [];
   if (!spec || !Array.isArray(spec.children) || spec.children.length === 0) return ['probtree: no children'];
@@ -46,7 +54,7 @@ export function checkProbTree(spec: ProbTreeSpec): string[] {
     const ps = children.map((c) => numeric(c.p));
     if (ps.every((p) => p !== null)) {
       const sum = ps.reduce((a, b) => a + (b as number), 0);
-      if (!close(sum, 1)) out.push(`probtree: branches under "${path || 'root'}" sum to ${sum.toFixed(4)}, not 1 (${children.map((c) => c.p).join(' + ')})`);
+      if (!close(sum, 1, sumTol(children.map((c) => c.p)))) out.push(`probtree: branches under "${path || 'root'}" sum to ${sum.toFixed(4)}, not 1 (${children.map((c) => c.p).join(' + ')})`);
     }
     for (const c of children) {
       if (!c.p || !String(c.p).trim()) out.push(`probtree: a branch under "${path || 'root'}" has no probability`);
@@ -59,7 +67,7 @@ export function checkProbTree(spec: ProbTreeSpec): string[] {
         walk(c.children, name, here);
       } else if (c.result != null) {
         const r = numeric(c.result);
-        if (r !== null && here !== null && !close(r, here)) {
+        if (r !== null && here !== null && !close(r, here, 1e-4 + 2 * halfUlp(c.result))) {
           out.push(`probtree: leaf "${name}" shows ${c.result} but the path multiplies to ${here.toFixed(5)}`);
         }
       }

@@ -118,8 +118,12 @@ function checkString(file: string, path: string, key: string, value: string) {
   // leaf's number must be the product along its path, else the drawing
   // contradicts the steps beside it. Markdown probability tables: a total
   // cell must equal the sum of its row/column.
-  if (value.includes('```probtree')) for (const e of checkProbTreeFences(value)) add('prob-figure', 'error', file, path, e);
-  if (/^\s*\|.*\|\s*$/m.test(value)) for (const e of checkProbTables(value)) add('prob-figure', 'error', file, path, e);
+  // …but only where the figure is PRESENTED AS CORRECT. A question statement may
+  // show a faulty table on purpose ("בטבלה שכתב יש שתי משבצות שגויות") or leave a
+  // cell for the student to fill, so statements and hints are not checked.
+  const asserted = !/\.(question|prompt|hint|hints\[\d+\])$/.test(path);
+  if (asserted && value.includes('```probtree')) for (const e of checkProbTreeFences(value)) add('prob-figure', 'error', file, path, e);
+  if (asserted && /^\s*\|.*\|\s*$/m.test(value)) for (const e of checkProbTables(value)) add('prob-figure', 'error', file, path, e);
 
   // A figure in an INLINE-rendered field never becomes a figure.
   // MathText splits ```geo fences only when `inline` is false (MathText.tsx:145);

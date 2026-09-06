@@ -180,4 +180,141 @@ check(
 );
 check('113 wrongAnswer: forgot the complement in part two', 0.5 * 0.5, 0.25);
 
+// ===========================================================================
+// Round 2 — pr-x-bas-201…208 and the bagrut question prob-bag-x-bas-01
+// ===========================================================================
+
+// 201 — two bolts both fine with probability 0.81 → p(defective)
+const p201 = 1 - Math.sqrt(0.81);
+check('201 p', p201, 0.1);
+check('201 round trip', (1 - p201) ** 2, 0.81);
+check('201 wrongAnswer: stopped at 1-p', 1 - p201, 0.9);
+check('201 wrongAnswer: complemented the given', 1 - 0.81, 0.19);
+// the complement of "both fine" is "at least one defective", NOT p
+check('201 note: 1-0.81 is P(at least one defective)', atLeastOne(p201, 2), 0.19);
+
+// 202 — 30 pupils: 18 French, 10 Arabic, 6 both → at least one language
+const cls202 = urn([['both', 6], ['fr', 12], ['ar', 4], ['none', 8]]);
+check('202 class size', cls202.length, 30);
+check('202 French count', cls202.filter((s) => s === 'fr' || s === 'both').length, 18);
+check('202 Arabic count', cls202.filter((s) => s === 'ar' || s === 'both').length, 10);
+const atLeast202 = enumerate([cls202], ([s]) => s !== 'none');
+check('202 P(at least one language)', atLeast202, 11 / 15);
+check('202 beats 0.7', atLeast202 > 0.7 ? 1 : 0, 1);
+check('202 wrongAnswer: added without removing overlap', (18 + 10) / 30, 14 / 15);
+check('202 wrongAnswer: the complement', enumerate([cls202], ([s]) => s === 'none'), 4 / 15);
+check('202 wrongAnswer: both languages only', enumerate([cls202], ([s]) => s === 'both'), 1 / 5);
+check('202 solution: 1 - 8/30', 1 - 8 / 30, 22 / 30);
+
+// 203 — 24 balls, P(white) = 3/8, P(green) = 1/6 → black count, P(white or black)
+const white203 = (3 / 8) * 24;
+const green203 = (1 / 6) * 24;
+check('203 white balls', white203, 9);
+check('203 green balls', green203, 4);
+check('203 black balls', 24 - white203 - green203, 11);
+const bag203 = urn([['לבן', 9], ['שחור', 11], ['ירוק', 4]]);
+check('203 P(white or black)', enumerate([bag203], ([b]) => b !== 'ירוק'), 5 / 6);
+check('203 solution: complement of green', 1 - 1 / 6, 5 / 6);
+check('203 wrongAnswer: all non-white', 24 - white203, 15);
+check('203 wrongAnswer: black only', enumerate([bag203], ([b]) => b === 'שחור'), 11 / 24);
+
+// 204 — Dana 0.6, Yossi 0.5 → exactly one = 0.5 (given); Yossi improves to 0.8
+const exactlyOne = (a: number, b: number) => a * (1 - b) + (1 - a) * b;
+check('204 the given before-training value', exactlyOne(0.6, 0.5), 0.5);
+const after204 = exactlyOne(0.6, 0.8);
+check('204 P(exactly one) after training', after204, 0.44);
+check('204 distractor: old value', exactlyOne(0.6, 0.5), 0.5);
+check('204 distractor: both hit', 0.6 * 0.8, 0.48);
+check('204 distractor: at least one', atLeastOne(1, 1) - 0.4 * 0.2, 0.92);
+check('204 all options distinct', new Set([after204, 0.5, 0.48, 0.92]).size, 4);
+// the closing step's claim: after training "both hit" is the most common outcome
+check('204 both-hit now beats exactly-one', 0.6 * 0.8 > after204 ? 1 : 0, 1);
+// anti-clone guard against the bagrut part ב (0.7 / 0.6, exactly one = 0.46)
+check('204 is not the bagrut tree in disguise', after204 === exactlyOne(0.7, 0.6) ? 1 : 0, 0);
+
+// 205 — p and 2p, both correct = 0.18 → p; exactly one
+const p205 = Math.sqrt(0.18 / 2);
+check('205 p', p205, 0.3);
+check('205 second question', 2 * p205, 0.6);
+check('205 round trip', p205 * 2 * p205, 0.18);
+check('205 P(exactly one)', exactlyOne(p205, 2 * p205), 0.54);
+check('205 partition sums to 1', 0.18 + 0.54 + 0.7 * 0.4, 1);
+check('205 wrongAnswer: gave 2p', 2 * p205, 0.6);
+check('205 wrongAnswer: at least one', atLeastOne(1, 1) - 0.7 * 0.4, 0.72);
+check('205 note: 0.72 - 0.18 = 0.54', 0.72 - 0.18, 0.54);
+
+// 206 — three brothers each arrives 0.8 → at least one absent
+const arr = [0.2, 0.8] as const; // [absent, present] weights; enumerate over labels
+const bro = ['absent', 'absent', 'present', 'present', 'present', 'present', 'present', 'present', 'present', 'present'];
+const atLeastAbsent206 = enumerate([bro, bro, bro], (s) => s.some((b) => b === 'absent'));
+check('206 P(at least one absent)', atLeastAbsent206, 0.488);
+check('206 formula agrees', 1 - arr[1] ** 3, 0.488);
+check('206 exactly one absent', enumerate([bro, bro, bro], (s) => s.filter((b) => b === 'absent').length === 1), 0.384);
+check('206 exactly two absent', enumerate([bro, bro, bro], (s) => s.filter((b) => b === 'absent').length === 2), 0.096);
+check('206 all absent', enumerate([bro, bro, bro], (s) => s.every((b) => b === 'absent')), 0.008);
+check('206 long route sums', 0.384 + 0.096 + 0.008, 0.488);
+check('206 distractor: the student\'s sum', 3 * 0.2, 0.6);
+check('206 distractor: multiplied', 0.2 ** 3, 0.008);
+check('206 distractor: 1 - 0.6', 1 - 0.6, 0.4);
+check('206 note: four brothers', 4 * 0.2, 0.8);
+check('206 note: five brothers', 5 * 0.2, 1);
+check('206 note: all arrive', 0.8 ** 3, 0.512);
+
+// 207 — two dice: sum even vs product even
+const sumEven = enumerate([die, die], ([a, b]) => (a + b) % 2 === 0);
+const prodEven = enumerate([die, die], ([a, b]) => (a * b) % 2 === 0);
+check('207 P(sum even)', sumEven, 1 / 2);
+check('207 P(product even)', prodEven, 3 / 4);
+check('207 product wins', prodEven > sumEven ? 1 : 0, 1);
+check('207 count sum even', sumEven * 36, 18);
+check('207 count product even', prodEven * 36, 27);
+check('207 wrongAnswer: both odd', enumerate([die, die], ([a, b]) => a % 2 === 1 && b % 2 === 1), 1 / 4);
+
+// 208 — 0.8, 0.6, x; all three = 0.24 → x; at least 4 points with weights 1,2,3
+const x208 = 0.24 / (0.8 * 0.6);
+check('208 x', x208, 0.5);
+const q208 = [0.8, 0.6, x208];
+const pts = [1, 2, 3];
+const tf = [true, false];
+let atLeast4 = 0;
+let exactlyTwoTo4 = 0;
+for (const a of tf) for (const b of tf) for (const c of tf) {
+  const ok = [a, b, c];
+  const pr = ok.reduce((acc, v, i) => acc * (v ? q208[i] : 1 - q208[i]), 1);
+  const score = ok.reduce((acc, v, i) => acc + (v ? pts[i] : 0), 0);
+  if (score >= 4) atLeast4 += pr;
+  if (score >= 4 && ok.filter(Boolean).length === 2) exactlyTwoTo4 += pr;
+}
+check('208 P(at least 4 points)', atLeast4, 0.46);
+check('208 only {1,3}', 0.8 * 0.4 * x208, 0.16);
+check('208 only {2,3}', 0.2 * 0.6 * x208, 0.06);
+check('208 {1,2} scores 3, excluded', pts[0] + pts[1] < 4 ? 1 : 0, 1);
+check('208 wrongAnswer: forgot all three', exactlyTwoTo4, 0.22);
+check('208 wrongAnswer: complement', 1 - atLeast4, 0.54);
+
+// bagrut prob-bag-x-bas-01 — x·0.6 = 0.42; exactly one; at least one; same count; smallest n
+const xB = 0.42 / 0.6;
+check('bag א x', xB, 0.7);
+check('bag א round trip', xB * 0.6, 0.42);
+// tree leaves, re-derived from the question
+const leaves = { cc: xB * 0.6, cw: xB * 0.4, wc: 0.3 * 0.6, ww: 0.3 * 0.4 };
+check('bag ב leaf נכון/נכון', leaves.cc, 0.42);
+check('bag ב leaf נכון/טעות (pick)', leaves.cw, 0.28);
+check('bag ב leaf טעות/נכון (pick)', leaves.wc, 0.18);
+check('bag ב leaf טעות/טעות', leaves.ww, 0.12);
+check('bag ב leaves sum to 1', leaves.cc + leaves.cw + leaves.wc + leaves.ww, 1);
+check('bag ב P(exactly one)', leaves.cw + leaves.wc, 0.46);
+check('bag ג P(at least one)', 1 - leaves.ww, 0.88);
+check('bag ג agrees with ב', leaves.cc + leaves.cw + leaves.wc, 0.88);
+check('bag ד P(same count)', leaves.ww ** 2 + 0.46 ** 2 + leaves.cc ** 2, 0.4024);
+check('bag ד partition', leaves.ww + 0.46 + leaves.cc, 1);
+const noPrize = 1 - leaves.cc;
+check('bag ה P(no prize)', noPrize, 0.58);
+const nB = range(1, 20).find((n) => atLeastOne(leaves.cc, n) > 0.9) ?? 0;
+check('bag ה smallest n', nB, 5);
+check('bag ה n=4 falls short', noPrize ** 4 < 0.1 ? 1 : 0, 0);
+check('bag ה 0.58^4 ≈ 0.113', Math.round(noPrize ** 4 * 1000) / 1000, 0.113);
+check('bag ה 0.58^5 ≈ 0.066', Math.round(noPrize ** 5 * 1000) / 1000, 0.066);
+check('bag ה 1 - 0.066 ≈ 0.934', Math.round((1 - noPrize ** 5) * 1000) / 1000, 0.934);
+
 summary('pr-basics numbers');

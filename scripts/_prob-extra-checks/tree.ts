@@ -12,7 +12,9 @@
  *
  *   npx tsx scripts/_prob-extra-checks/tree.ts   → must print 0 failed
  */
-import { check, checkSet, frac, atLeastOne, enumerate, drawNoReplacement, summary } from './_lib';
+import { check, checkSet, frac, atLeastOne, enumerate, drawNoReplacement, nCr, summary } from './_lib';
+import { EXTRA, EXTRA_BAGRUT } from '../../content/lessons/math5/prob-extra/tree';
+import { checkProbTreeFences, pickedTotal, PROBTREE_FENCE } from '../../lib/prob-figure';
 
 /** 1..n as an equally-likely stage of an experiment. */
 const R = (n: number) => Array.from({ length: n }, (_, i) => i + 1);
@@ -268,6 +270,214 @@ const distinctOptions = (label: string, vals: number[]) => check(label, new Set(
   check('113 the quadratic 7x^2 - 27x - 40 vanishes at x = 5', 7 * 5 ** 2 - 27 * 5 - 40, 0);
   check('113 wrongAnswer -8/7 is the rejected second root', 7 * (-8 / 7) ** 2 - 27 * (-8 / 7) - 40, 0);
   check('113 wrongAnswer 10 = the TOTAL in sack B, not x', 5 + 5, 10);
+}
+
+// =========================================================================
+// ROUND 2 — pr-x-tre-201…208 and the bagrut question prob-bag-x-tre-01.
+// =========================================================================
+
+// pr-x-tre-201 (mid, open, find-parameter) — machine A 60% with 2% faulty,
+// machine B the rest with rate x; 3.2% faulty overall. Find x.
+{
+  const total = (x: number) => 0.6 * 0.02 + 0.4 * x;
+  const roots = Array.from({ length: 101 }, (_, i) => i / 100).filter((x) => Math.abs(total(x) - 0.032) < 1e-12);
+  checkSet('201 the only x on the 0.00..1.00 grid giving 3.2%', roots, [0.05]);
+  check('201 x = 0.05 reproduces the stated 3.2%', total(0.05), 0.032);
+  check('201 machine A path = 0.012', 0.6 * 0.02, 0.012);
+  check('201 wrongAnswer 0.08 = 0.032 / 0.4, machine A path not removed', 0.032 / 0.4, 0.08);
+  check('201 wrongAnswer 0.032 is the given total, not x', 0.032, total(0.05));
+}
+
+// pr-x-tre-202 (mid, open, find-parameter) — 4 red + x blue WITH replacement,
+// P(at least one red) = 16/25. How many blue? Scanned over integer x.
+{
+  const pAtLeastOneRed = (x: number) => enumerate([R(x + 4), R(x + 4)], (o) => o.some((v) => v <= 4));
+  const roots = Array.from({ length: 30 }, (_, i) => i + 1).filter((x) => Math.abs(pAtLeastOneRed(x) - frac(16, 25)) < 1e-12);
+  checkSet('202 the only x in 1..30 giving 16/25, enumerated', roots, [6]);
+  check('202 x = 6: complement (6/10)^2 = 9/25', (6 / 10) ** 2, frac(9, 25));
+  check('202 wrongAnswer 10 = total balls', 6 + 4, 10);
+  check('202 wrongAnswer 2.25 = solving x/(x+4) = 9/25 without the square', 36 / 16, 2.25);
+  check('202 2.25 really solves the unsquared equation', 2.25 / (2.25 + 4), frac(9, 25));
+}
+
+// pr-x-tre-203 (mid, mcq) — Q1 right 0.6 (10 pts), Q2 right 0.5 (20 pts),
+// independent. P(at least 20 points)? Enumerated over a 10×10 grid.
+{
+  const pts = ([a, b]: number[]) => (a <= 6 ? 10 : 0) + (b <= 5 ? 20 : 0);
+  const p = enumerate([R(10), R(10)], (o) => pts(o) >= 20);
+  check('203 P(at least 20 points) by 100-outcome grid', p, 0.5);
+  check('203 same as the two paths right-right + wrong-right', 0.6 * 0.5 + 0.4 * 0.5, p);
+  check('203 distractor 0.3 = right-right only', 0.6 * 0.5, 0.3);
+  check('203 distractor 0.8 = at least one right', 1 - 0.4 * 0.5, 0.8);
+  check('203 distractor 0.2 = wrong-right only', 0.4 * 0.5, 0.2);
+  check('203 the path right-wrong gives only 10 points', pts([1, 10]), 10);
+  distinctOptions('203 four distinct option values', [0.5, 0.3, 0.8, 0.2]);
+}
+
+// pr-x-tre-204 (mid, mcq) — 3 girls + 5 boys, three chosen WITHOUT
+// replacement. P(at least one girl)?
+{
+  const grp = urn(['G', 3], ['B', 5]);
+  const p = drawNoReplacement(grp, 3, (s) => s.includes('G'));
+  check('204 P(at least one girl), enumerated over 8·7·6 draws', p, frac(23, 28));
+  const allBoys = drawNoReplacement(grp, 3, (s) => s.every((c) => c === 'B'));
+  check('204 complement, three boys = 5/28', allBoys, frac(5, 28));
+  check('204 same by the changing tree', frac(5, 8) * frac(4, 7) * frac(3, 6), allBoys);
+  check('204 distractor 387/512 = with replacement', 1 - (5 / 8) ** 3, frac(387, 512));
+  check('204 distractor 3/8 = first pick is a girl', frac(3, 8), 0.375);
+  distinctOptions('204 four distinct option values', [frac(23, 28), frac(5, 28), frac(387, 512), frac(3, 8)]);
+}
+
+// pr-x-tre-205 (hard, open, Bayes) — boys 40% list A, girls 1.5× that; a
+// ballot box at random (1/2 each), one slip; known list A. P(boys' box)?
+{
+  const girls = 1.5 * 0.4;
+  check('205 the recovered girls branch', girls, 0.6);
+  const joint = 0.5 * 0.4;
+  const total = 0.5 * 0.4 + 0.5 * girls;
+  check('205 P(list A) — the CONDITION', total, 0.5);
+  check('205 P(boys box | list A)', joint / total, 0.4);
+  check('205 by a 2×10 grid of slips (box, then slip)', enumerate([R(2), R(10)], ([b, s]) => (b === 1 ? s <= 4 : s <= 6) && b === 1) / enumerate([R(2), R(10)], ([b, s]) => (b === 1 ? s <= 4 : s <= 6)), 0.4);
+  check('205 wrongAnswer 0.2 = the intersection', joint, 0.2);
+  check('205 the information pushes it BELOW the prior 1/2', Math.sign(joint / total - 0.5), -1);
+}
+
+// pr-x-tre-206 (hard, mcq, compare) — two shots at 0.5 vs three at 0.4;
+// which gives the bigger P(at least one hit)?
+{
+  const two = enumerate([R(2), R(2)], (o) => o.some((v) => v === 1));
+  const three = enumerate([R(5), R(5), R(5)], (o) => o.some((v) => v <= 2));
+  check('206 two shots at 0.5, enumerated', two, 0.75);
+  check('206 three shots at 0.4, enumerated', three, 0.784);
+  check('206 direction: three shots win', Math.sign(three - two), 1);
+  check('206 complements 0.25 vs 0.216 (distractor 4 quotes them)', 0.5 ** 2 - 0.6 ** 3, 0.25 - 0.216);
+  check('206 distractor 2: all hits, 0.25 vs 0.064', 0.4 ** 3, 0.064);
+  check('206 distractor 3: the sums 1.2 vs 1 — the two-shot sum is exactly 1, not above it', 2 * 0.5, 1);
+}
+
+// pr-x-tre-207 (hard, open, count) — answered 0.3 per call, independent.
+// Least n with P(at least one answered) > 0.9 ?
+{
+  const p = (n: number) => 1 - 0.7 ** n;
+  const n = Array.from({ length: 30 }, (_, i) => i + 1).find((k) => p(k) > 0.9)!;
+  check('207 least n with 1 - 0.7^n > 0.9', n, 7);
+  check('207 n = 6 falls short', Math.sign(0.9 - p(6)), 1);
+  check('207 0.7^6 ≈ 0.118 as the note says', Math.round(0.7 ** 6 * 1000) / 1000, 0.118);
+  check('207 0.7^7 ≈ 0.082', Math.round(0.7 ** 7 * 1000) / 1000, 0.082);
+  check('207 wrongAnswer 3 = 3 · 0.3 = 0.9 (adding), and really gives only 0.657', p(3), 0.657);
+  check('207 the fence leaves 0.21 / 0.147 / 0.343', 0.7 * 0.3 + 0.7 * 0.7 * 0.3 + 0.7 ** 3, 0.21 + 0.147 + 0.343);
+}
+
+// pr-x-tre-208 (hard, mcq, justify) — 3 red + 2 blue, draw without
+// replacement until blue. P(at least three draws)? Ron's "2/4" is wrong.
+{
+  const sack = urn(['R', 3], ['B', 2]);
+  // enumerate ALL 5! orderings; draws = index of the first blue + 1
+  const draws = (s: string[]) => s.indexOf('B') + 1;
+  const dist = [1, 2, 3, 4].map((k) => drawNoReplacement(sack, 5, (s) => draws(s) === k));
+  checkSet('208 the distribution of the draw count', dist, [frac(2, 5), frac(3, 10), frac(1, 5), frac(1, 10)]);
+  check('208 it sums to 1', dist.reduce((a, b) => a + b, 0), 1);
+  const p = drawNoReplacement(sack, 5, (s) => draws(s) >= 3);
+  check('208 P(at least three draws), enumerated', p, frac(3, 10));
+  check('208 same as first two red', frac(3, 5) * frac(2, 4), p);
+  check('208 the four counts are NOT equally likely (max − min > 0)', Math.sign(Math.max(...dist) - Math.min(...dist)), 1);
+  check('208 distractor 1/5 = exactly three draws', dist[2], frac(1, 5));
+  check('208 distractor 9/25 = with replacement', (3 / 5) ** 2, frac(9, 25));
+  distinctOptions('208 the four numeric claims are distinct', [frac(3, 10), frac(1, 2), frac(1, 5), frac(9, 25)]);
+}
+
+// prob-bag-x-tre-01 — sack A: 3W + 2B; sack B: xW + 6B; die 1–2 → A (1/3),
+// else B (2/3); P(white) = 7/15.
+{
+  const A = urn(['W', 3], ['B', 2]);
+  const pA = frac(2, 6), pB = 1 - pA;
+  const whiteFor = (x: number) => pA * frac(3, 5) + pB * frac(x, x + 6);
+  const roots = Array.from({ length: 40 }, (_, i) => i + 1).filter((x) => Math.abs(whiteFor(x) - frac(7, 15)) < 1e-12);
+  checkSet('bag/א the only x in 1..40 giving 7/15', roots, [4]);
+  check('bag/א sack A white path = 1/5', pA * frac(3, 5), frac(1, 5));
+  check('bag/א 18x = 72 at x = 4', 18 * 4, 72);
+  const B = urn(['W', 4], ['B', 6]);
+
+  // ב — P(A | white)
+  const jointA = pA * frac(3, 5);
+  check('bag/ב P(A | white)', jointA / whiteFor(4), frac(3, 7));
+  check('bag/ב above the prior 1/3', Math.sign(jointA / whiteFor(4) - frac(1, 3)), 1);
+
+  // ג — two without replacement from the chosen sack, same colour
+  const sameA = drawNoReplacement(A, 2, (s) => s[0] === s[1]);
+  const sameB = drawNoReplacement(B, 2, (s) => s[0] === s[1]);
+  check('bag/ג P(same | A), enumerated', sameA, frac(2, 5));
+  check('bag/ג P(same | B), enumerated', sameB, frac(7, 15));
+  const same = pA * sameA + pB * sameB;
+  check('bag/ג P(same colour)', same, frac(4, 9));
+  check('bag/ג the four leaves 1/10 + 1/30 + 4/45 + 2/9', frac(1, 10) + frac(1, 30) + frac(4, 45) + frac(2, 9), same);
+  check('bag/ג complement 5/9', 1 - same, frac(5, 9));
+
+  // ד — P(A | same colour)
+  check('bag/ד A and same = 2/15', pA * sameA, frac(2, 15));
+  check('bag/ד P(A | same)', (pA * sameA) / same, frac(3, 10));
+  check('bag/ד below the prior 1/3 because same is likelier in B', Math.sign(sameB - sameA), 1);
+  check('bag/ד the two posteriors close to 1', (pA * sameA) / same + (pB * sameB) / same, 1);
+
+  // ה — three from sack B without replacement, at most one white
+  const whites = (s: string[]) => s.filter((c) => c === 'W').length;
+  const p = drawNoReplacement(B, 3, (s) => whites(s) <= 1);
+  check('bag/ה P(at most one white), enumerated over 10·9·8 draws', p, frac(2, 3));
+  check('bag/ה no white = 1/6', drawNoReplacement(B, 3, (s) => whites(s) === 0), frac(1, 6));
+  check('bag/ה exactly one white = 3/6', drawNoReplacement(B, 3, (s) => whites(s) === 1), frac(1, 2));
+  check('bag/ה by combinations: (C(6,3) + 4·C(6,2)) / C(10,3)', (nCr(6, 3) + 4 * nCr(6, 2)) / nCr(10, 3), p);
+  check('bag/ה majority black, so above 1/2', Math.sign(p - 0.5), 1);
+}
+
+// =========================================================================
+// THE FIGURES — every ```probtree fence in the stage, read from the content
+// file itself: (a) the validator finds nothing, (b) the ✓ leaves sum to what
+// the QUESTION's marked event is — the answer, the complement, or a
+// conditional's denominator — as re-derived above, never read off the fence.
+// =========================================================================
+{
+  const stepsOf = (id: string) => EXTRA.find((q) => q.id === id)?.solution?.steps?.join('\n') ?? '';
+  const bagSteps = (label: string) => EXTRA_BAGRUT[0].parts.find((p) => p.label === label)?.solution?.steps?.join('\n') ?? '';
+  const expectPick: [string, string, number | null][] = [
+    ['pr-x-tre-101', 'not-learned and passed', 0.3 * 0.4],
+    ['pr-x-tre-102', 'shot goes in', 0.7 * 0.8 + 0.3 * 0.3],
+    ['pr-x-tre-103', 'three greens', 0.7 ** 3],
+    ['pr-x-tre-104', 'win both at 0.8', 0.8 ** 2],
+    ['pr-x-tre-105', 'milk-milk', frac(3, 8) * frac(2, 7)],
+    ['pr-x-tre-106', 'red-red corrected', frac(7, 12) * frac(6, 11)],
+    ['pr-x-tre-107', 'the COMPLEMENT, no hit', 0.6 ** 3],
+    ['pr-x-tre-108', 'same colour without replacement', frac(4, 15)],
+    ['pr-x-tre-109', 'two fences, both complements: 1/9 + 1/15', frac(1, 9) + frac(1, 15)],
+    ['pr-x-tre-110', "the conditional's DENOMINATOR P(same type)", frac(13, 30)],
+    ['pr-x-tre-111', 'late, on the repaired tree', 0.245],
+    ['pr-x-tre-112', 'at most one empty', frac(5, 7)],
+    ['pr-x-tre-113', 'symbolic (x on a branch)', null],
+    ['pr-x-tre-201', 'symbolic (x on a branch)', null],
+    ['pr-x-tre-202', 'symbolic (x on a branch)', null],
+    ['pr-x-tre-203', 'at least 20 points', 0.5],
+    ['pr-x-tre-204', 'the COMPLEMENT, three boys', frac(5, 28)],
+    ['pr-x-tre-205', "the conditional's DENOMINATOR P(list A)", 0.5],
+    ['pr-x-tre-206', 'two fences, both complements: 0.25 + 0.216', 0.25 + 0.216],
+    ['pr-x-tre-207', 'no ✓ (n is the unknown)', null],
+    ['pr-x-tre-208', 'at least three draws', frac(3, 10)],
+  ];
+  let fences = 0;
+  for (const [id, what, want] of expectPick) {
+    const text = stepsOf(id);
+    fences += (text.match(PROBTREE_FENCE) ?? []).length;
+    check(`${id} fence: validator finds nothing`, checkProbTreeFences(text).length, 0);
+    const got = pickedTotal(text);
+    check(`${id} fence: ✓ leaves = ${what}`, got === null ? -1 : got, want === null ? -1 : want);
+  }
+  const bagPick: [string, number | null][] = [['א', null], ['ב', null], ['ג', frac(4, 9)], ['ד', null], ['ה', frac(2, 3)]];
+  for (const [label, want] of bagPick) {
+    const text = bagSteps(label);
+    fences += (text.match(PROBTREE_FENCE) ?? []).length;
+    check(`bag/${label} fence: validator finds nothing`, checkProbTreeFences(text).length, 0);
+    const got = pickedTotal(text);
+    check(`bag/${label} fence: ✓ leaves`, got === null ? -1 : got, want === null ? -1 : want);
+  }
+  check('the stage carries 26 probtree fences (14 round-1, 9 round-2, 3 bagrut)', fences, 26);
 }
 
 summary('pr-tree');

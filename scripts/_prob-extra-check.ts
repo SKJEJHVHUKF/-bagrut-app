@@ -86,7 +86,8 @@ const STAGES: Record<string, { prefix: string; min: { easy: number; mid: number;
  *  question AND its solution, because the mechanism often only shows in the
  *  working ("נשתמש במשלים"). */
 const MECHANISMS: [string, RegExp][] = [
-  ['complement', /משלים|לא קורה|אף פעם לא|1 ?- ?P|אחד פחות/],
+  // משלימ covers the inflected forms (המשלימה, המשלימות) — non-final mem.
+  ['complement', /משלימ|משלים|לא קורה|אף פעם לא|1 ?- ?P|אחד פחות/],
   ['conditional', /מותנ|בהינתן|בידיעה ש|ידוע ש.*מה ההסתברות/],
   ['independence', /בלתי[- ]תלוי|תלויים זה בזה|אינם תלויים/],
   ['binomial', /ברנולי|בינומ|ניסויים חוזרים|\\binom|nCr|בדיוק \$?\d+ (?:פעמים|הצלחות)/],
@@ -309,11 +310,17 @@ function checkQuestion(q: PracticeQuestion, prefix: string) {
  * Applies to every question on the rung, shipped ones included; a shipped
  * question without its figure is a warning until --strict-figures.
  */
+/** "עץ" as a coin face (יצא עץ, לפחות עץ אחד, עץ או פלי) is not a tree. */
+function saysTree(text: string): boolean {
+  const t = text.replace(/(?:יצא|יצאו|יוצא|לפחות|בדיוק|פעמיים|פעם|פעמים)\s*עץ(?:\s*אחד)?|עץ\s*(?:אחד|או\s*פלי)|פלי\s*או\s*עץ/g, '');
+  return /עץ/.test(t);
+}
+
 function checkFigures(q: PracticeQuestion, stageId: string, shipped: boolean) {
   const text = (q.solution?.steps ?? []).join('\n');
   const sev: Sev = shipped && !STRICT_FIGURES ? 'warn' : 'error';
   const push = (rule: string, detail: string) => findings.push({ sev, where: q.id, rule, detail });
-  if (stageId !== 'pr-basics' && /עץ/.test(text) && !hasProbTree(text)) {
+  if (stageId !== 'pr-basics' && saysTree(text) && !hasProbTree(text)) {
     push('tree-without-figure', 'the solution builds a tree — draw it with a ```probtree fence in the step that builds it');
   }
   if (/טבלה/.test(text) && !hasTable(text)) {
@@ -380,7 +387,7 @@ function checkBagrut(stageId: string, prefix: string) {
         if (p.answerLabels && spec.kind === 'set' && p.answerLabels.length !== (spec.values ?? []).length) err(pw, 'answerLabels-length');
       }
       const text = steps.join('\n');
-      if (/עץ/.test(text) && !hasProbTree(text)) err(pw, 'tree-without-figure', 'draw the tree with a ```probtree fence');
+      if (saysTree(text) && !hasProbTree(text)) err(pw, 'tree-without-figure', 'draw the tree with a ```probtree fence');
       if (/טבלה/.test(text) && !hasTable(text)) err(pw, 'table-without-figure', 'draw the table as a markdown table');
       for (const e of checkProbTreeFences(text)) err(pw, 'probtree-inconsistent', e);
       for (const e of checkProbTables(text)) err(pw, 'table-inconsistent', e);
