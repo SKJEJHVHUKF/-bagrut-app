@@ -138,7 +138,7 @@ function vaCount(expr: string, lo = -20, hi = 20, n = 200000): number {
     return okVA && Math.abs(HA(o) + 3) < 1e-4 ? 0 : 1;
   });
   check('107 the recovered function misses nothing', misses[0], 0);
-  check('107 each of the three others misses a stated asymptote', misses.slice(1).reduce((a, b) => a + b, 0), 3);
+  check('107 each of the three others misses a stated asymptote', (misses.slice(1) as number[]).reduce((a, b) => a + b, 0), 3);
 }
 
 // rq-sub-asy-108 — horizontal asymptote of (2x-1)(x+3)/(x^2-4): b = 2

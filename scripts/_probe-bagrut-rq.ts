@@ -28,14 +28,14 @@ const ASK_PATTERNS: [string, RegExp][] = [
 ];
 
 for (const q of ALL_PAST_BAGRUYOT) {
-  const text = [q.body ?? '', ...(q.parts ?? []).map((p) => p.prompt ?? '')].join(' ');
+  const text = [q.context ?? '', ...(q.parts ?? []).map((p) => p.prompt ?? '')].join(' ');
   if (!isRQ(text)) continue;
   n++;
   partCounts.push((q.parts ?? []).length);
   for (const [name, re] of ASK_PATTERNS) if (re.test(text)) asks.set(name, (asks.get(name) ?? 0) + 1);
   console.log('='.repeat(76));
   console.log(`${q.id}  ·  ${q.topic}  ·  ${(q.parts ?? []).length} parts`);
-  console.log((q.body ?? '').replace(/\s+/g, ' ').slice(0, FULL ? 2000 : 300));
+  console.log((q.context ?? '').replace(/\s+/g, ' ').slice(0, FULL ? 2000 : 300));
   for (const p of q.parts ?? []) {
     console.log(`   ${p.label ?? '?'}. ${(p.prompt ?? '').replace(/\s+/g, ' ').slice(0, FULL ? 800 : 190)}`);
   }

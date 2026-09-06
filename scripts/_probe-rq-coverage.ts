@@ -34,7 +34,7 @@ for (const id of STAGES) {
     items.push({ id: q.id, steps: q.solution?.steps ?? [], diagrams: q.solution?.diagrams ?? [] });
   }
   for (const b of (L.bagrutQuestions ?? []).filter((x) => x.subTopicId === id)) {
-    for (const p of b.parts ?? []) items.push({ id: `${b.id}/${p.label}`, steps: p.solution?.steps ?? [], diagrams: p.diagrams ?? [] });
+    for (const p of b.parts ?? []) items.push({ id: `${b.id}/${p.label}`, steps: p.solution?.steps ?? [], diagrams: (p.solution as { diagrams?: unknown[] }).diagrams ?? [] });
   }
   for (const it of items) {
     row.total++;

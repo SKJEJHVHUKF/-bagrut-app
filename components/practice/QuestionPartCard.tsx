@@ -16,6 +16,8 @@ import {
   Camera,
 } from 'lucide-react';
 import { MathText } from './MathText';
+import { DiagramRenderer } from './DiagramRenderer';
+import type { DiagramSpec } from '@/content/lessons/types';
 import { AnswerInput, AnswerParts, describeParts } from './AnswerInput';
 import { AITutorActions } from './AITutorActions';
 import { SolutionAudit } from './SolutionAudit';
@@ -42,6 +44,10 @@ export type QuestionPart = {
   solution: {
     steps: string[];
     final_answer: string;
+    /** Figures for this part's solution — mirrors BagrutQuestionPart in
+     *  content/lessons/types.ts, so a part that ends in "סרטטו סקיצה" can
+     *  show the sketch instead of describing it. */
+    diagrams?: DiagramSpec[];
   };
   /** Machine-checkable answer spec → deterministic ($0) grading. When
    *  present (value/set), the verdict comes from numeric equivalence, NOT
@@ -643,6 +649,13 @@ export function QuestionPartCard({
                     </motion.li>
                   ))}
                 </ol>
+
+                {/* The picture the steps were building, once they are all out —
+                    on this topic the exam's last part is almost always "סרטטו
+                    סקיצה", and until now a bagrut part had nowhere to put it. */}
+                {onLastStep && part.solution.diagrams && part.solution.diagrams.length > 0 && (
+                  <DiagramRenderer diagrams={part.solution.diagrams} />
+                )}
 
                 {!onLastStep ? (
                   <motion.button

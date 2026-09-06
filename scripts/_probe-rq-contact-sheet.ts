@@ -27,8 +27,8 @@ for (const id of STAGES) {
   for (const step of st.lesson ?? []) take(`${id}/lesson`, (step as { diagrams?: unknown[] }).diagrams);
   for (const q of (st.questions ?? []) as PracticeQuestion[]) take(q.id, q.solution?.diagrams as unknown[] | undefined);
   for (const b of (L.bagrutQuestions ?? []).filter((x) => x.subTopicId === id)) {
-    take(b.id, b.diagrams as unknown[] | undefined);
-    for (const p of b.parts ?? []) take(`${b.id}/${p.label}`, p.diagrams as unknown[] | undefined);
+    
+    for (const p of b.parts ?? []) take(`${b.id}/${p.label}`, (p.solution as { diagrams?: unknown[] }).diagrams);
   }
 }
 

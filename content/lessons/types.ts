@@ -250,6 +250,12 @@ export type BagrutQuestionPart = {
   solution: {
     steps: string[];
     final_answer: string;
+    /** Figures for THIS part's solution — a sketched graph, a drawn tree.
+     *  A practice question has had this since the start; a bagrut part had
+     *  not, which is why the 🎓 rung of a topic whose exam questions almost
+     *  always end in a sketch could not show one. Rendered by
+     *  QuestionPartCard beneath the steps. */
+    diagrams?: DiagramSpec[];
   };
   /** Machine-checkable answer spec for free deterministic grading. */
   expected?: AnswerSpec;
