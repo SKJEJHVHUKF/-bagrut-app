@@ -225,6 +225,22 @@ function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
     } else err(w, 'bad-expected-kind', spec.kind);
   }
 
+  // --- a multi-part question is READ before it is solved
+  // Itay, 2026-09-06: "תראה איך השאלה עצמה דחוסה ומסורבלת במקום להיות מסודרת
+  // ויפה לעיין." Parts run together in one paragraph on a phone; each gets its
+  // own line (the stem renders through <MathText> in block mode, so \n\n is a
+  // paragraph break). A label echoed into the answer box has to be short too.
+  const stem = q.question ?? '';
+  const partMarks = [...stem.matchAll(/(?:^|\s)([אבגדה])\.\s/g)].map((m) => m[1]);
+  if (partMarks.length >= 2 && stem.split('\n').length < partMarks.length) {
+    err(w, 'parts-on-one-line', `${partMarks.join(', ')} run together — give each part its own line (\\n\\n)`);
+  }
+  for (const [i, lab] of (q.answerLabels ?? []).entries()) {
+    if (lab.replace(/\$[^$]*\$/g, '').length > 28) {
+      err(w, 'long-answer-label', `answerLabels[${i}] is a sentence — name the quantity: "${lab.slice(0, 40)}…"`);
+    }
+  }
+
   // --- ask the way the exam asks
   for (const [name, re] of OFF_STYLE) {
     if (re.test(q.question ?? '')) {
