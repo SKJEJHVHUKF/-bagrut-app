@@ -20,6 +20,7 @@ import {
   MessageCircle,
   ScanLine,
   ScrollText,
+  Layers,
   School,
   Sigma,
   Library,
@@ -117,6 +118,15 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'בגרויות קודמות',
         icon: ScrollText,
         blurb: 'שאלות אמיתיות ממועדים קודמים, לפי שאלון',
+      },
+      {
+        // Graded by DIFFICULTY, not by exam session — the axis /bagruyot cannot
+        // offer, because a real paper is whatever level it happened to be.
+        href: '/mitkonot',
+        label: 'מתכונות לפי רמה',
+        icon: Layers,
+        blurb: 'שאלות מתכונת בשלוש רמות: מתחת לבגרות, בגרות, ומעליה',
+        match: ['/mitkonot'],
       },
       {
         href: '/formulas',

@@ -32,6 +32,9 @@ const MAQAF = /[\u05d0-\u05ea]-\$/g;
 const ENFORCED = [
   'content/lessons/math5/trig-functions/',
   'content/ghost-replay/math5/trig-functions.ts',
+  // Authored to the rule from the first line — enforced from day one, so the
+  // bank never joins the 9903-hit backlog it would otherwise grow into.
+  'content/mitkonot/',
 ];
 
 const walk = (dir: string): string[] =>

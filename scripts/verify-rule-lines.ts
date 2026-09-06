@@ -28,6 +28,7 @@
  */
 import { leaksAnswer } from '../lib/help-ladder';
 import { allLessonKeys, getLesson } from '../content/lessons';
+import { ALL_MITKONOT } from '../content/mitkonot';
 
 const RULE = '**הכלל:**';
 
@@ -72,6 +73,21 @@ for (const { subject, topic } of allLessonKeys()) {
   (L.examples ?? []).forEach((e, i) => add(`example[${i}]`, e.steps, e.answer));
   for (const b of L.bagrutQuestions ?? []) {
     for (const p of b.parts ?? []) add(`${b.id}/${p.label}`, p.solution?.steps, p.solution?.final_answer);
+  }
+}
+
+// מתכונות live outside content/lessons, so the loop above cannot see them. They
+// carry the same solution shape and the same standard — without this the bank
+// would report a clean gate while never being looked at.
+for (const q of ALL_MITKONOT) {
+  for (const p of q.parts) {
+    if (!Array.isArray(p.solution?.steps) || p.solution.steps.length === 0) continue;
+    rows.push({
+      topic: q.topic,
+      where: `${q.id}/${p.label}`,
+      steps: p.solution.steps,
+      finalAnswer: p.solution.final_answer ?? '',
+    });
   }
 }
 
