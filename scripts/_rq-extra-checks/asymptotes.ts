@@ -388,7 +388,14 @@ function vaCount(expr: string, lo = -20, hi = 20, n = 200000): number {
 // the question states, never substituted from the authored answer; every hole
 // is read as f(a ± 1e-6) and every line as a blow-up, so a hole can never pass
 // as an asymptote. Each distractor is re-enacted as the mistake its note names.
-// ---------------------------------------------------------------------------
+//
+// One subtlety, learned the hard way: bisection returns 3.999999999999999 for a
+// parameter whose true value is 4, and rebuilding the function with THAT leaves
+// a numerator of -3.6e-15 over an exact 0 at the cancelling point — so vaCount
+// reads the hole as a second vertical line. Snap a solved parameter to 6 decimal
+// places before feeding it back into an expression; the value still comes from
+// the solve, and the checkSet above it is what proves the snap was legitimate.
+const exact = (v: number) => Math.round(v * 1e6) / 1e6;
 
 // rq-sub-asy-301 — (x^2+x-6)/(x^2-5x+6): line at 3, hole (2, -5), crossing (-3, 0)
 {
@@ -413,16 +420,16 @@ function vaCount(expr: string, lo = -20, hi = 20, n = 200000): number {
 {
   const cs = roots('4+c', -20, 20, 'c');
   checkSet('302 c solves 4 + c = 0', cs, [-4]);
-  const c = cs[0];
+  const c = exact(cs[0]);
   // a is fixed by the horizontal asymptote: the far value of (a x + 2)/(x + c) must be -2
   const as = roots(`(a*1e6+2)/(1e6+(${c}))+2`, -20, 20, 'a');
   check('302 a solves "far value = -2"', as[0], -2, 1e-4);
   const bs = roots(`(-2*2+b)/(2+(${c}))-1`, -20, 20, 'b');
   checkSet('302 b solves the point equation at x = 2', bs, [2]);
-  const fx = `(-2*x+${bs[0]})/(x+(${c}))`;
+  const fx = `(-2*x+${exact(bs[0])})/(x+(${c}))`;
   checkSet('302 the recovered function has its only vertical line at 4', roots(`x+(${c})`), [4]);
   check('302 it blows up there', blowsUp(fx, 4), 1);
-  check('302 its numerator at 4 is -6, so it is a line and not a hole', f(`-2*x+${bs[0]}`)(4), -6);
+  check('302 its numerator at 4 is -6, so it is a line and not a hole', f(`-2*x+${exact(bs[0])}`)(4), -6);
   check('302 its horizontal asymptote is -2', HA(fx), -2, 1e-4);
   check('302 it really passes through (2, 1)', f(fx)(2), 1, 1e-12);
   checkSet('302 wrong "a = 2": the point then forces b = -6', roots(`(2*2+b)/(2+(${c}))-1`, -20, 20, 'b'), [-6]);
@@ -435,7 +442,7 @@ function vaCount(expr: string, lo = -20, hi = 20, n = 200000): number {
   checkSet('303 denominator roots', roots(den), [3, -2]);
   const as = roots('3^2+3*a-21', -20, 20, 'a');
   checkSet('303 a solves "numerator vanishes at 3"', as, [4]);
-  const a = as[0];
+  const a = exact(as[0]);
   const num = `x^2+(${a})*x-21`, fx = `(${num})/(${den})`;
   checkSet('303 with that a the numerator vanishes at 3 and -7', roots(num), [3, -7]);
   check('303 x = 3 does not blow up', blowsUp(fx, 3), 0);
@@ -471,14 +478,15 @@ function vaCount(expr: string, lo = -20, hi = 20, n = 200000): number {
   check('304 no blow-up at -2', blowsUp(red, -2), 0);
   checkSet('304 the numerator of g vanishes exactly at the two missing values', roots('x^2-4'), [2, -2]);
   check('304 distractor y = 3 is the horizontal of f, not of g', HA(fx), 3, 1e-4);
-  check('304 distractor "no holes": g is genuinely undefined at 2', Number.isNaN(f(gx)(2)) || !Number.isFinite(f(gx)(2)) ? 1 : 0, 1);
+  check('304 distractor "no holes": f itself has no value at 2, so g inherits the gap', Number.isFinite(f(fx)(2)) ? 0 : 1, 1);
+  check('304 distractor "no holes": f has no value at -2 either', Number.isFinite(f(fx)(-2)) ? 0 : 1, 1);
 }
 
 // rq-sub-asy-305 — (2x+k)/(x-4) through (6, 12): k = 12, then the whole sketch
 {
   const ks = roots('(2*6+k)/(6-4)-12', -50, 50, 'k');
   checkSet('305 k solves the point equation', ks, [12]);
-  const k = ks[0];
+  const k = exact(ks[0]);
   const num = `2*x+${k}`, fx = `(${num})/(x-4)`;
   check('305 the recovered function passes through (6, 12)', f(fx)(6), 12, 1e-12);
   checkSet('305 denominator root', roots('x-4'), [4]);
