@@ -487,7 +487,7 @@ function rootsF(g: (v: number) => number, lo = -20, hi = 20): number[] {
   check('301 height at the left candidate', f(fx)(-1), -2);
   check('301 height at the right candidate', f(fx)(9), 18);
   check('301 sign pattern +,-,+ around the two candidates',
-    [-6, 0, 15].map(v => sgn(dAt(fx, v))).reduce((a, b) => a * 10 + b, 0), 1 * 100 + -1 * 10 + 1);
+    ([-6, 0, 15].map(v => sgn(dAt(fx, v))) as number[]).reduce((a, b) => a * 10 + b, 0), 1 * 100 + -1 * 10 + 1);
   // distractor "אין נקודות קיצון": u'v + uv' instead of u'v - uv'
   checkSet('301 the plus-mistake numerator 3x^2-8x+9 has no real zero',
     roots('2*x*(x-4)+(x^2+9)', -60, 60), []);
