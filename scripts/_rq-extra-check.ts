@@ -161,7 +161,13 @@ function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
   if (steps[0] && leaksAnswer(steps[0], sol.finalAnswer ?? '')) err(w, 'rule-line-leaks-answer');
   if (q.hint && leaksAnswer(q.hint, sol.finalAnswer ?? '')) err(w, 'hint-leaks-answer');
   if (q.hint && steps[0] && norm(steps[0]).includes(norm(q.hint))) err(w, 'rule-line-restates-hint');
-  steps.forEach((s, i) => { if (s.length > 230) warn(`${w}.steps[${i}]`, 'packed-step', `${s.length} chars`); });
+  // A drawn sign table is long because it is a TABLE, not because the step is
+  // packed — measure the prose around it, or the rule punishes the very figure
+  // the owner asked for.
+  steps.forEach((s, i) => {
+    const prose = s.replace(/^\s*\|.*\|\s*$/gm, '').replace(/```[\s\S]*?```/g, '');
+    if (prose.length > 230) warn(`${w}.steps[${i}]`, 'packed-step', `${prose.length} chars of prose`);
+  });
   const dup = steps.findIndex((s, i) => i > 0 && norm(s) === norm(steps[i - 1]));
   if (dup > 0) err(w, 'duplicate-consecutive-steps', `steps[${dup - 1}] = steps[${dup}]`);
   const formulaIdx = steps.findIndex((s) => s.startsWith('**הנוסחה:**'));
