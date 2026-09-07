@@ -75,6 +75,18 @@ const AUTHOR_MONOLOGUE: { re: RegExp; why: string }[] = [
   { re: /בעצם:|בעצם תשובה|למעשה תשובה/, why: 'self-correction mid-solution' },
   { re: /לא .{0,12} ממש, אלא|בעצם נוגעים/, why: 'solution contradicts its own prompt' },
   { re: /החסר .{0,20}ברשימה|חסרה אופציה|אין אופציה/, why: 'notes a missing option' },
+  // The owner read "איתי ביקש שהשמות יופיעו כאן" inside a לומדים lesson on the
+  // LIVE site (2026-09-07). An authoring note addressed to the person who
+  // commissioned the content is invisible to every other rule here: it is
+  // grammatical Hebrew, carries no math, and reads as prose.
+  //
+  // Scoped tightly on purpose. A bare /ביקש/ is one of the most common words in
+  // the bank ("השאלה ביקשה הצגה אלגברית") — 40+ legitimate uses — so the rule
+  // fires only when a PERSON is named as the one asking.
+  { re: /איתי (ביקש|רצה|אמר|העיר|סימן|כתב)/, why: 'names the owner inside student-facing text' },
+  { re: /כפי שביקשת|כמו שביקשת|לפי בקשתך|בהתאם לבקשתך/, why: 'addresses the requester, not the student' },
+  { re: /הבעלים (ביקש|רצה)|המשתמש ביקש/, why: 'addresses the requester, not the student' },
+  { re: /\bTODO\b|\bFIXME\b/, why: 'authoring marker left in content' },
 ];
 
 type Sev = 'error' | 'warn';
