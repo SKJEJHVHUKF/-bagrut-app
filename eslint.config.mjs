@@ -15,6 +15,10 @@ const eslintConfig = defineConfig([
     // Vendored third-party bundles served verbatim (tesseract.js wasm glue +
     // worker). Not our source, never hand-edited — linting them is noise.
     "public/**",
+    // Throwaway output from the _probe-*/_raster-* scripts (already in
+    // .gitignore). A one-off render script left here turned `npm run check`
+    // red on an unused loop index, which is a gate failure about nothing.
+    "scratch/**",
   ]),
 ]);
 
