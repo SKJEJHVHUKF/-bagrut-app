@@ -2560,7 +2560,7 @@ $$\\dfrac{AB}{DE} = \\dfrac{BC}{EF} = \\dfrac{CA}{FD} = k.$$
               'נתון $\\triangle ABC \\sim \\triangle DEF$ עם $AB = 6$, $DE = 9$, $BC = 8$. מצא את $EF$.',
             steps: [
               '**הכלל:** במשולשים דומים הצלעות המתאימות נמצאות ביחס קבוע, יחס הדמיון $k$. נתון $\\triangle ABC \\sim \\triangle DEF$ וזוג צלעות מתאימות ידוע, לכן מוצאים את $k$ ומפעילים אותו על הצלע המבוקשת.',
-              'נסרטט לפי הנתונים, לפי סדר הקודקודים בסימון הדמיון:\n\n```geo\n{"points":{"A":[3,5.196],"B":[0,0],"C":[8,0],"D":[14.5,7.794],"E":[10,0],"F":[22,0]},"polygons":["ABC","DEF"],"angles":[{"at":"B","from":"A","to":"C","n":1},{"at":"E","from":"D","to":"F","n":1}],"labels":[{"on":"AB","text":"6"},{"on":"BC","text":"8"},{"on":"DE","text":"9"},{"on":"EF","text":"x"}]}\n```',
+              'נסרטט לפי הנתונים, לפי סדר הקודקודים בסימון הדמיון:\n\n```geo\n{"points":{"A":[3,5.196],"B":[0,0],"C":[8,0],"D":[18.5,7.794],"E":[14,0],"F":[26,0]},"polygons":["ABC","DEF"],"angles":[{"at":"B","from":"A","to":"C","n":1},{"at":"E","from":"D","to":"F","n":1}],"labels":[{"on":"AB","text":"6"},{"on":"BC","text":"8"},{"on":"DE","text":"9"},{"on":"EF","text":"x"}]}\n```',
               'לפי סדר הקודקודים, הצלע $AB$ מתאימה לצלע $DE$, והצלע $BC$ מתאימה לצלע $EF$.',
               'יחס הדמיון מהזוג הידוע: $k = \\dfrac{AB}{DE} = \\dfrac{6}{9} = \\dfrac{2}{3}$.',
               'אותו יחס לזוג המבוקש: $\\dfrac{BC}{EF} = \\dfrac{2}{3}$, כלומר $\\dfrac{8}{EF} = \\dfrac{2}{3}$.',
@@ -2985,7 +2985,7 @@ $$CH^2 = AH \\cdot HB, \\qquad CA^2 = AH \\cdot AB, \\qquad CB^2 = HB \\cdot AB.
           // entirely: two ALTITUDES, where the equal angles are the right angles
           // plus the shared vertex angle, and nothing is parallel.
           question:
-            'במשולש חד-זווית $\\triangle ABC$ מעבירים את הגובה $AD$ (הנקודה $D$ על $BC$) ואת הגובה $BE$ (הנקודה $E$ על $AC$). הוכח כי $\\triangle ADC \\sim \\triangle BEC$, ובהינתן $AC = 12$ ס"מ, $CB = 8$ ס"מ וגם $CD = 6$ ס"מ — מצא את $CE$.\n\n```geo\n{"points":{"C":[0,0],"B":[8,0],"A":[6,10.3923],"D":[6,0],"E":[2,3.4641],"H":[6,1.1547]},"polygons":["ABC"],"segments":[{"s":"AD","accent":true},{"s":"BE","accent":true}],"right":[{"at":"D","from":"A","to":"B"},{"at":"E","from":"B","to":"C"}],"labels":[{"on":"AC","text":"12"},{"on":"CB","text":"8"},{"on":"CD","text":"6"}],"width":320}\n```',
+            'במשולש חד-זווית $\\triangle ABC$ מעבירים את הגובה $AD$ (הנקודה $D$ על $BC$) ואת הגובה $BE$ (הנקודה $E$ על $AC$). הוכח כי $\\triangle ADC \\sim \\triangle BEC$, ובהינתן $AC = 12$ ס"מ, $CB = 8$ ס"מ וגם $CD = 6$ ס"מ — מצא את $CE$.\n\n```geo\n{"points":{"C":[0,0],"B":[8,0],"A":[6,10.3923],"D":[6,0],"E":[2,3.4641],"H":[6,1.1547]},"polygons":["ABC"],"segments":[{"s":"AD","accent":true},{"s":"BE","accent":true}],"right":[{"at":"D","from":"A","to":"B"},{"at":"E","from":"B","to":"C"}],"labels":[{"on":"AC","text":"12"},{"on":"CD","text":"6"},{"on":"DB","text":"2"}],"width":320}\n```',
           hint: 'שני הגבהים נותנים לך שתי זוויות ישרות. ואיזו זווית משותפת לשני המשולשים $\\triangle ADC$ ו-$\\triangle BEC$?',
           solution: {
             steps: [
@@ -3290,7 +3290,7 @@ $$\\dfrac{AD}{DB} = \\dfrac{AE}{EC}.$$
               'במשולש $\\triangle ABC$, $DE \\parallel BC$. נתון $AD = 4$, $AB = 10$, $AC = 15$. מצא $AE$ (השתמש בצורת השלמים).',
             steps: [
               '**הכלל:** משפט תאלס בצורת השלמים: $\\dfrac{AD}{AB} = \\dfrac{AE}{AC}$. בשאלה נתון $DE \\parallel BC$, ונתונים החלק $AD$ והצלעות השלמות $AB$, $AC$, לכן משווים חלק לשלם בשתי הצלעות, ולא מערבבים חלק עם שלם.',
-              'נסרטט לפי הנתונים:\n\n```geo\n{"points":{"A":[3,9.539],"B":[0,0],"C":[14.576,0],"D":[1.8,5.723],"E":[7.63,5.723]},"polygons":["ABC"],"segments":["DE"],"parallel":[{"on":"DE"},{"on":"BC"}],"labels":[{"on":"AD","text":"4"},{"on":"AB","text":"10"},{"on":"AC","text":"15"},{"on":"AE","text":"x"}]}\n```',
+              'נסרטט לפי הנתונים:\n\n```geo\n{"points":{"A":[3,9.539],"B":[0,0],"C":[14.576,0],"D":[1.8,5.723],"E":[7.63,5.723]},"polygons":["ABC"],"segments":["DE"],"parallel":[{"on":"DE"},{"on":"BC"}],"labels":[{"on":"AD","text":"4"},{"on":"AB","text":"10"},{"on":"AE","text":"x"}]}\n```',
               'מציבים את הנתונים: $\\dfrac{4}{10} = \\dfrac{AE}{15}$.',
               'מכפלה צולבת: $10 \\cdot AE = 4 \\cdot 15 = 60$.',
               '$AE = \\dfrac{60}{10} = 6$.',
@@ -4367,7 +4367,7 @@ $$PA \\cdot PB = PC \\cdot PD.$$
 ### 3 · משיק וחותך מנקודה חיצונית
 
 \`\`\`geo
-{"points":{"O":[6.5,3],"P":[0,0],"A":[4,0],"B":[9,0],"T":[3.194,5.079]},"circles":[{"center":"O","r":3.905,"on":["A","B","T"]}],"segments":[{"s":"PT","accent":true},{"s":"PB","accent":true},{"s":"OT","dashed":true}],"right":[{"at":"T","from":"O","to":"P"}],"hidden":["O"],"width":360}
+{"points":{"O":[6.5,3],"P":[0,0],"A":[4,0],"B":[9,0],"T":[3.194,5.079]},"circles":[{"center":"O","r":3.905,"on":["A","B","T"]}],"segments":[{"s":"PT","accent":true},{"s":"PB","accent":true}],"hidden":["O"],"width":360}
 \`\`\`
 
 מהנקודה $P$ יוצא משיק הנוגע בנקודה $T$, ובנוסף חותך הפוגש את המעגל בנקודות $A$, $B$. כאן המשיק "ממלא את שני התפקידים" בבת אחת, ולכן הוא מופיע בריבוע:
