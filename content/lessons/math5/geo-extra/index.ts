@@ -26,6 +26,7 @@ import { EXTRA as METHOD } from './method';
 import { EXTRA as ANGLES } from './angles';
 import { EXTRA as CIRCLE } from './circle';
 import { EXTRA as CONGRUENCE } from './congruence';
+import { EXTRA as SHAPES } from './shapes';
 import { EXTRA as SIMILARITY } from './similarity';
 import { EXTRA as THALES } from './thales';
 
@@ -36,6 +37,7 @@ export const GEO_EXTRA: Record<string, PracticeQuestion[]> = {
   'eg-similarity': SIMILARITY,
   'eg-thales': THALES,
   'eg-circle': CIRCLE,
+  'eg-shapes': SHAPES,
   'eg-method': METHOD,
   'eg-mixed': MIXED,
 };
