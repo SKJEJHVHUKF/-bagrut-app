@@ -104,36 +104,54 @@ if (!basics) {
   // ∠AOB, ∠ACB, ∠ADB and asked for cos(∠ADB) = −cos(∠ACB). So compare the
   // math tokens, with the numbers stripped — that is exactly the "same
   // question, different data" Itay pointed at.
+  // Only DISTINCTIVE tokens count. Bare vertex and side labels ($ABC$, $AB = 8$,
+  // $BC$) appear in practically every triangle question in the file, so counting
+  // them flags four honest questions as duplicates — a gate that cries wolf gets
+  // switched off within a day. A token is distinctive when it names an OBJECT or
+  // an OPERATION: \angle, \sin, \cos, \tan, \sqrt. That is precisely what made
+  // the pair Itay flagged the same question.
   const mathTokens = (text: string): Set<string> => {
     const out = new Set<string>();
     for (const m of text.matchAll(/\$([^$]+)\$/g)) {
       const body = m[1].replace(/[\d.]+/g, '').replace(/\s+/g, '');
-      if (body.length >= 2) out.add(body);
+      if (body.length >= 2 && /\\(angle|sin|cos|tan|sqrt)/.test(body)) out.add(body);
     }
     return out;
   };
-  const bagrutTokens = mathTokens(
-    getBagrutQuestionsForSubTopic(SUBJECT, TOPIC, 'trig-plane-basics')
-      .map((b) => b.context + b.parts.map((p) => p.prompt).join(' '))
-      .join(' '),
-  );
-  const overlapWith = (text: string) => {
+  const bagrutTokensFor = (subId: string) =>
+    mathTokens(
+      getBagrutQuestionsForSubTopic(SUBJECT, TOPIC, subId)
+        .map((b) => b.context + b.parts.map((p) => p.prompt).join(' '))
+        .join(' '),
+    );
+  const overlap = (text: string, against: Set<string>) => {
     const t = mathTokens(text);
-    const shared = [...t].filter((x) => bagrutTokens.has(x));
+    const shared = [...t].filter((x) => against.has(x));
     return { shared, ratio: t.size ? shared.length / t.size : 0 };
   };
+  const bagrutTokens = bagrutTokensFor('trig-plane-basics');
+  const overlapWith = (text: string) => overlap(text, bagrutTokens);
+
+  // Itay: "אני רוצה שלא יהיו כמעט בכלל שאלות זהות בצורה הזו" — so sweep EVERY
+  // stage of the track, not only the one he happened to have open.
   const DUP = 0.5;
-  for (const q of (basics.questions ?? []).filter((x) => x.difficulty === 'hard')) {
-    const { shared, ratio } = overlapWith(q.question);
-    if (shared.length >= 3 && ratio > DUP) {
-      fail(
-        `hard question ${q.id} restates the bagrut question — ` +
-          `${shared.length} shared math objects (${shared.join(', ')})`,
-      );
+  let compared = 0;
+  for (const id of EXPECTED_ORDER) {
+    const st = getSubTopic(SUBJECT, TOPIC, id);
+    const against = bagrutTokensFor(id);
+    if (!st || against.size === 0) continue;
+    for (const q of st.questions ?? []) {
+      compared++;
+      const { shared, ratio } = overlap(q.question, against);
+      if (shared.length >= 3 && ratio > DUP) {
+        fail(
+          `${id}: bank question ${q.id} restates its own bagrut question — ` +
+            `${shared.length} shared math objects (${shared.join(', ')})`,
+        );
+      }
     }
   }
-  const hardCount = (basics.questions ?? []).filter((x) => x.difficulty === 'hard').length;
-  console.log(`✅ ${hardCount} hard questions, none restating the bagrut question`);
+  console.log(`✅ ${compared} bank questions compared against their stage's bagrut question, no restatement`);
 
   // planted defect: the question this rung USED to hold must still be caught,
   // otherwise the check above proves nothing.
