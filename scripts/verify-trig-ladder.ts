@@ -64,7 +64,15 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   ['cosine-law', /(?:משפט|חוק)\s+ה?קוסינוסים/],
   // NOT a bare /שטח/: "שטח המשולש הוא 48 סמ״ר" names a quantity. This wants the
   // formula — a half times two lengths times a sine.
-  ['area-sine', /\\tfrac12\s*\\cdot[^$]*\\sin|\\tfrac12\s*[a-z]{2}\\sin|\\dfrac\{1\}\{2\}[^$]*\\sin/],
+  //
+  // 🔴 All four spellings of the half. The first version listed `\tfrac12` and
+  // `\dfrac{1}{2}` only, and this topic writes `\dfrac12` **115 times** — so the
+  // area formula went undetected in most of the content that uses it, and
+  // `trig-mix-002`, a pure area-formula question, scored 0 mechanisms. An
+  // author noticed it only because it had to write the half in a foreign style
+  // to be credited: the third time this gate shaped the prose instead of
+  // measuring it.
+  ['area-sine', /\\[dt]frac(?:12|\{1\}\{2\})[^$]{0,60}\\sin/],
   ['circumradius', /\\dfrac\{abc\}\{4R\}|2R\b|מעגל\s+\S*חוסם|רדיוס\s+\S*מעגל\s+\S*חוסם/],
   // ── the right triangle ───────────────────────────────────────────────────
   ['right-ratios', /הניצב שמול|הניצב שליד|מול חלקי יתר|ליד חלקי יתר|מול חלקי ליד/],

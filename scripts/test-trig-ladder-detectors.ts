@@ -57,6 +57,13 @@ hasMech('cosine-law', 'לפי משפט הסינוסים', false, 'and not the re
 hasMech('area-sine', 'השטח הוא $S = \\tfrac12 \\cdot 12 \\cdot 9 \\cdot \\sin B$', true, 'the formula');
 hasMech('area-sine', 'שטח המשולש הקטן הוא $27$ סמ״ר', false, 'naming a quantity is not applying the formula');
 hasMech('area-sine', 'חשב את שטח המשולש', false, 'asking for area is not a mechanism');
+// 🔴 All four spellings of the half render identically and all four appear in
+// this topic. `\dfrac12` alone appears 115 times and was matched by NONE of the
+// original alternatives, so most area questions scored no area mechanism.
+hasMech('area-sine', '$S = \\dfrac12 \\cdot 12 \\cdot 9 \\cdot \\sin B$', true, 'dfrac12, the house style');
+hasMech('area-sine', '$S = \\dfrac{1}{2} ab \\sin\\gamma$', true, 'dfrac{1}{2}');
+hasMech('area-sine', '$S = \\tfrac{1}{2} ab \\sin\\gamma$', true, 'tfrac{1}{2}');
+hasMech('area-sine', '$\\dfrac12 \\cdot 8 \\cdot 5 = 20$', false, 'half a product with no sine is not this formula');
 
 // ── the two Pythagorases are different moves and must not collide ──────────
 hasMech('pythagorean-identity', 'לפי זהות פיתגורס הטריגונומטרית', true, 'the identity');
