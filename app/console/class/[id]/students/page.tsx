@@ -23,7 +23,7 @@ export default function StudentsPage() {
       <PageHeader title="תלמידים" description={`כל ${board.studentCount} התלמידים, לפי מצב.`} />
       <label className="relative mb-6 block max-w-sm">
         <Search
-          className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute top-1/2 right-3 h-5 w-5 -translate-y-1/2 text-slate-700"
           aria-hidden
         />
         <input

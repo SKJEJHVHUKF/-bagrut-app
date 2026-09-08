@@ -53,7 +53,7 @@ export default function SettingsPage() {
     return (
       <>
         <PageHeader title="הגדרות" />
-        <p className="text-sm text-slate-500">בתצוגת דוגמה אין מה להגדיר.</p>
+        <p className="text-sm text-slate-700">בתצוגת דוגמה אין מה להגדיר.</p>
       </>
     );
   }
@@ -119,7 +119,7 @@ export default function SettingsPage() {
               )}
             </Btn>
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-slate-500">
+          <p className="mt-3 text-base leading-relaxed text-slate-700">
             הדרך הזולה ביותר למנוע שהקוד יעבור בין שכבות: לסגור אחרי שכולם בפנים.
           </p>
         </section>
@@ -127,14 +127,14 @@ export default function SettingsPage() {
         <section className="surface-premium rounded-2xl p-5 lg:col-span-2">
           <SectionHead icon={Users} title="תלמידים בכיתה" count={board.students.length} />
           {board.students.length === 0 ? (
-            <p className="py-4 text-center text-sm text-slate-500">עוד אף אחד לא הצטרף.</p>
+            <p className="py-4 text-center text-sm text-slate-700">עוד אף אחד לא הצטרף.</p>
           ) : (
             <ul className="divide-y divide-slate-900/[0.06]">
               {board.students.map((s) => (
                 <li key={s.id} className="flex items-center gap-3 py-2">
                   <Avatar name={s.name} />
                   <span className="flex-1 font-bold text-ink">{s.name}</span>
-                  <span className="text-sm text-slate-500">{s.attempts === 0 ? 'טרם התחיל' : `${s.attempts} תרגילים`}</span>
+                  <span className="text-sm text-slate-700">{s.attempts === 0 ? 'טרם התחיל' : `${s.attempts} תרגילים`}</span>
                   <Btn kind="ghost" onClick={() => void removeStudent(s.id, s.name)}>
                     <Trash2 className="h-4 w-4" aria-hidden />
                     הסר

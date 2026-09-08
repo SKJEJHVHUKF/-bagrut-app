@@ -88,8 +88,8 @@ export default function NextStep() {
         <Sparkles className="h-5 w-5" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-display text-lg font-black text-ink">{headline}</p>
-        <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{detail}</p>
+        <p className="font-display text-xl font-black text-ink">{headline}</p>
+        <p className="mt-1 text-base leading-relaxed text-slate-800">{detail}</p>
       </div>
       {action && <div className="shrink-0">{action}</div>}
       {/* BTN is imported so the file fails to compile if the vocabulary moves. */}

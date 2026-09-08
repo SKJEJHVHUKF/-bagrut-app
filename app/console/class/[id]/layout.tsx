@@ -73,7 +73,7 @@ export default function ClassLayout({
       </main>
     );
   }
-  if (!data) return <main className="px-6 py-8 text-sm text-slate-500">טוען…</main>;
+  if (!data) return <main className="px-6 py-8 text-base text-slate-700">טוען…</main>;
 
   return (
     <ClassProvider data={data} reload={load}>
@@ -98,7 +98,7 @@ function EmptyClassNotice() {
   if (!isDemo) return null;
   return (
     <div className="mx-6 mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-violet-200 bg-violet-50/80 px-4 py-3 text-sm lg:mx-8 print:hidden">
-      <span className="chip-primary rounded-full px-2.5 py-0.5 text-xs font-bold">תצוגת דוגמה</span>
+      <span className="chip-primary rounded-full px-3 py-1 text-sm font-bold">תצוגת דוגמה</span>
       <p className="min-w-0 flex-1 leading-relaxed text-violet-950">
         <strong className="font-bold">הכיתה ריקה עדיין.</strong> התלמידים שמוצגים כאן מומצאים — כך ייראה
         הלוח כשהתלמידים שלך יתחילו לתרגל.
@@ -111,7 +111,7 @@ function EmptyClassNotice() {
           </>
         )}
       </p>
-      <Link href="/console" className="text-xs font-bold text-violet-700 underline-offset-4 hover:underline">
+      <Link href="/console" className="text-base font-bold text-violet-800 underline underline-offset-4">
         להודעה המוכנה לכיתה ←
       </Link>
     </div>

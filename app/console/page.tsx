@@ -82,13 +82,13 @@ export default function ConsoleHome() {
       )}
 
       {classes === null ? (
-        <p className="text-sm text-slate-500">טוען…</p>
+        <p className="text-base text-slate-700">טוען…</p>
       ) : classes.length === 0 && !error ? (
         <FirstClass onCreated={load} />
       ) : (
         <motion.div variants={fadeUp} initial="hidden" animate="visible" className="surface-premium overflow-x-auto rounded-2xl">
           <table className="w-full min-w-[52rem] text-sm">
-            <thead className="text-[11px] font-black text-slate-500">
+            <thead className="text-sm font-black text-slate-700">
               <tr className="border-b border-slate-900/[0.06]">
                 <th className="px-4 py-3 text-start">כיתה</th>
                 <th className="px-4 py-3 text-start">רמה</th>
@@ -161,11 +161,11 @@ function FirstClass({ onCreated }: { onCreated: () => void }) {
         {steps.map((s) => (
           <li
             key={s.n}
-            className={`flex gap-4 rounded-2xl p-4 ${s.n === 1 ? 'surface-premium' : 'bg-white/40 text-slate-500'}`}
+            className={`flex gap-4 rounded-2xl p-4 ${s.n === 1 ? 'surface-premium' : 'bg-white/40 text-slate-600'}`}
           >
             <span
               className={`grid h-8 w-8 shrink-0 place-items-center rounded-full font-display text-sm font-black ${
-                s.n === 1 ? 'bg-primary-deep text-white' : 'bg-slate-900/[0.06] text-slate-500'
+                s.n === 1 ? 'bg-primary-deep text-white' : 'bg-slate-900/[0.06] text-slate-600'
               }`}
             >
               {s.n}
@@ -212,7 +212,7 @@ function FirstClass({ onCreated }: { onCreated: () => void }) {
             {message}
           </p>
         )}
-        <p className="mt-3 text-xs leading-relaxed text-slate-500">אפשר לשנות הכל אחר כך ב״הגדרות״. שום דבר כאן לא סופי.</p>
+        <p className="mt-3 text-base leading-relaxed text-slate-700">אפשר לשנות הכל אחר כך ב״הגדרות״. שום דבר כאן לא סופי.</p>
       </form>
     </motion.div>
   );
@@ -243,7 +243,7 @@ function ClassLine({ klass }: { klass: ClassRow }) {
         <Link href={`/console/class/${klass.id}`} className="font-display text-base font-black text-ink hover:text-violet-700">
           {klass.name}
         </Link>
-        {klass.school && <span className="block text-xs text-slate-500">{klass.school}</span>}
+        {klass.school && <span className="block text-base text-slate-700">{klass.school}</span>}
       </td>
       <td className="px-4 py-3 text-slate-600">{klass.units ? `${klass.units} יח״ל` : '—'}</td>
       <td className="px-4 py-3 text-slate-600">{klass.schoolYear}</td>
@@ -269,28 +269,28 @@ function ClassLine({ klass }: { klass: ClassRow }) {
             <button
               type="button"
               onClick={() => copy('message')}
-              className="inline-flex items-center gap-1.5 rounded-xl px-2 py-1 text-xs font-bold text-violet-700 transition hover:bg-violet-50"
+              className="inline-flex items-center gap-1.5 rounded-xl min-h-[44px] px-3 py-2 text-base font-bold text-violet-800 transition hover:bg-violet-50"
             >
               <MessageSquare className="h-3.5 w-3.5" aria-hidden />
               {copied === 'message' ? 'הועתק — הדבק בקבוצה' : 'הודעה לכיתה'}
             </button>
           </span>
         ) : (
-          <span className="text-slate-400">סגור להצטרפות</span>
+          <span className="text-slate-700">סגור להצטרפות</span>
         )}
       </td>
       <td className="px-4 py-3">
         <span className="flex items-center justify-end gap-1.5">
-          <Link href={`/console/class/${klass.id}`} className={`${btnPrimary} px-3 py-1.5 text-xs`}>
+          <Link href={`/console/class/${klass.id}`} className={`${btnPrimary}`}>
             <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
             לוח
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
           </Link>
-          <Link href={`/console/class/${klass.id}/report`} className={`${btnSecondary} px-3 py-1.5 text-xs`}>
+          <Link href={`/console/class/${klass.id}/report`} className={`${btnSecondary}`}>
             <Printer className="h-3.5 w-3.5" aria-hidden />
             דוח
           </Link>
-          <a href={`/api/school/classes/${klass.id}/export`} className={`${btnSecondary} px-3 py-1.5 text-xs`}>
+          <a href={`/api/school/classes/${klass.id}/export`} className={`${btnSecondary}`}>
             <Download className="h-3.5 w-3.5" aria-hidden />
             אקסל
           </a>

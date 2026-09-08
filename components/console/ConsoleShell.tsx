@@ -104,7 +104,7 @@ export default function ConsoleShell({
               <MathUpLogo size="sm" />
               <span>
                 <span className="font-display block text-sm leading-tight font-black text-ink">MathUp</span>
-                <span className="block text-[10px] leading-tight text-slate-600">קונסולת מורה</span>
+                <span className="block text-sm leading-tight text-slate-700">קונסולת מורה</span>
               </span>
             </Link>
 
@@ -126,7 +126,7 @@ export default function ConsoleShell({
             {base && (
               <div className="mt-5 border-t border-slate-900/[0.06] pt-4">
                 <div className="px-5">
-                  <p className="text-[10px] font-black tracking-wider text-slate-500 uppercase">כיתה</p>
+                  <p className="text-sm font-black tracking-wider text-slate-700 uppercase">כיתה</p>
                   {demo || classes.length <= 1 ? (
                     <p className="font-display mt-1 truncate text-sm font-black text-ink">{current?.name ?? '…'}</p>
                   ) : (
@@ -152,7 +152,7 @@ export default function ConsoleShell({
               {name ? (
                 <>
                   <p className="truncate text-sm font-bold text-ink">{name}</p>
-                  <div className="mt-2 flex items-center gap-3 text-xs text-slate-600">
+                  <div className="mt-2 flex items-center gap-3 text-base text-slate-700">
                     <Link href="/" className="inline-flex items-center gap-1 hover:text-violet-700">
                       <BookOpen className="h-3.5 w-3.5" aria-hidden />
                       לאפליקציה
@@ -183,7 +183,7 @@ export default function ConsoleShell({
                 <span className="font-display text-sm font-black text-ink">קונסולת מורה</span>
               </Link>
               <nav className="flex items-center gap-1 overflow-x-auto" aria-label="ניווט">
-                <Link href="/console" className="rounded-lg px-2 py-1 text-xs font-bold whitespace-nowrap text-slate-600">
+                <Link href="/console" className="rounded-lg px-3 py-2 text-base font-bold whitespace-nowrap text-slate-600">
                   הכיתות
                 </Link>
                 {base &&
@@ -191,14 +191,14 @@ export default function ConsoleShell({
                     <Link
                       key={s.seg}
                       href={s.seg ? `${base}/${s.seg}` : base}
-                      className={`rounded-lg px-2 py-1 text-xs font-bold whitespace-nowrap ${
+                      className={`rounded-lg px-3 py-2 text-base font-bold whitespace-nowrap ${
                         !onHelp && section === s.seg ? 'bg-primary-container text-violet-900' : 'text-slate-600'
                       }`}
                     >
                       {s.label}
                     </Link>
                   ))}
-                <Link href={helpHref} className="rounded-lg px-2 py-1 text-xs font-bold whitespace-nowrap text-slate-600">
+                <Link href={helpHref} className="rounded-lg px-3 py-2 text-base font-bold whitespace-nowrap text-slate-600">
                   עזרה
                 </Link>
               </nav>
@@ -231,7 +231,7 @@ function ClassSwitcher({ classes, currentId }: { classes: ClassLite[]; currentId
           </option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden />
+      <ChevronDown className="pointer-events-none absolute top-1/2 left-2.5 h-5 w-5 -translate-y-1/2 text-slate-700" aria-hidden />
     </label>
   );
 }

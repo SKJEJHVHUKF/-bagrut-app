@@ -49,7 +49,7 @@ export default function StudentGroups({
   const fresh = all.filter((s) => s.state === 'no-data');
 
   if (q && all.length === 0) {
-    return <p className="surface-premium rounded-2xl px-5 py-8 text-center text-sm text-slate-600">{EMPTY.search}</p>;
+    return <p className="surface-premium rounded-2xl px-5 py-8 text-center text-base text-slate-700">{EMPTY.search}</p>;
   }
 
   return (
@@ -59,7 +59,7 @@ export default function StudentGroups({
       <section>
         <SectionHead icon={LifeBuoy} title={GROUP.needs} count={needs.length} />
         {needs.length === 0 ? (
-          <p className="surface-premium rounded-2xl px-5 py-6 text-sm font-bold text-emerald-800">
+          <p className="surface-premium rounded-2xl px-5 py-6 text-base font-bold text-emerald-800">
             {EMPTY.needs}
           </p>
         ) : (
@@ -113,7 +113,7 @@ function CalmGroup({
         count={students.length}
         actions={
           hidden > 0 && (
-            <Link href={moreHref} className="text-xs font-bold text-violet-700 underline-offset-4 hover:underline">
+            <Link href={moreHref} className="text-base font-bold text-violet-800 underline underline-offset-4">
               {BTN.more}
             </Link>
           )

@@ -38,7 +38,7 @@ export default function StudentCard({
         <div className="min-w-0 flex-1">
           <Link
             href={href}
-            className="block truncate font-display text-base font-black text-ink transition hover:text-violet-700"
+            className="block truncate font-display text-lg font-black text-ink transition hover:text-violet-800"
           >
             {student.name}
           </Link>
@@ -48,7 +48,7 @@ export default function StudentCard({
         </div>
       </div>
 
-      <p className="text-sm leading-snug text-slate-600">{cardLine(student)}</p>
+      <p className="text-base leading-relaxed text-slate-800">{cardLine(student)}</p>
 
       <div className="mt-auto pt-1">
         {canSend ? (

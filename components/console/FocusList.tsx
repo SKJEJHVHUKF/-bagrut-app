@@ -28,7 +28,7 @@ export default function FocusList({ limit, actions }: { limit?: number; actions?
     <section>
       <SectionHead icon={ClipboardCheck} title="תרגולים ששלחתי" count={focuses.length} actions={actions} />
       {rows.length === 0 ? (
-        <p className="surface-premium rounded-2xl px-5 py-6 text-sm text-slate-600">
+        <p className="surface-premium rounded-2xl px-5 py-6 text-base text-slate-700">
           עוד לא שלחת תרגול. אפשר להתחיל מ״צריכים אותך״.
         </p>
       ) : (
@@ -44,14 +44,14 @@ export default function FocusList({ limit, actions }: { limit?: number; actions?
                 <span className="w-28 shrink-0 font-display font-black text-ink">
                   {f.targetedCount === null ? 'כל הכיתה' : `${f.targetedCount} תלמידים`}
                 </span>
-                <span className="min-w-0 flex-1 text-sm text-slate-700">
+                <span className="min-w-0 flex-1 text-base text-slate-800">
                   {f.label}
-                  {f.targetCount ? <span className="text-slate-500"> · {f.targetCount} תרגילים</span> : null}
-                  {f.note && <span className="block text-xs text-slate-500">{f.note}</span>}
+                  {f.targetCount ? <span className="text-slate-700"> · {f.targetCount} תרגילים</span> : null}
+                  {f.note && <span className="block text-base text-slate-700">{f.note}</span>}
                 </span>
-                <span className="shrink-0 text-sm text-slate-500">{hebDate(f.dueOn) ?? ''}</span>
+                <span className="shrink-0 text-base text-slate-700">{hebDate(f.dueOn) ?? ''}</span>
                 <span
-                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-black tabular-nums ${
+                  className={`shrink-0 rounded-full border px-3 py-1 text-sm font-black tabular-nums ${
                     done
                       ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-800'
                       : 'border-violet-500/25 bg-violet-500/10 text-violet-800'
@@ -62,13 +62,12 @@ export default function FocusList({ limit, actions }: { limit?: number; actions?
 
                 {notDone.length > 0 && (
                   <div className="flex basis-full flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="min-w-0 flex-1 text-xs text-slate-500">
+                    <span className="min-w-0 flex-1 text-base text-slate-700">
                       {notDoneUnder(notDone.map((s) => s.name))}
                     </span>
                     {!isDemo && (
                       <Btn
                         kind="secondary"
-                        className="px-2.5 py-1 text-xs"
                         onClick={() =>
                           openFocus(
                             {

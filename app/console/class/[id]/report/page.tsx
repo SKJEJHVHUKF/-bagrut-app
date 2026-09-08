@@ -53,7 +53,7 @@ export default function ClassReportPage() {
           }
         />
         {isDemo && (
-          <p className="mb-4 text-xs text-slate-500">נתונים לדוגמה — הדוח האמיתי נראה בדיוק כך.</p>
+          <p className="mb-4 text-sm text-slate-700">נתונים לדוגמה — הדוח האמיתי נראה בדיוק כך.</p>
         )}
       </div>
 
@@ -61,7 +61,7 @@ export default function ClassReportPage() {
         {students.map((s) => (
           <StudentReport key={s.id} student={s} klass={data.class} windowDays={data.windowDays} />
         ))}
-        {students.length === 0 && <p className="text-sm text-slate-500">אין תלמידים בכיתה הזו עדיין.</p>}
+        {students.length === 0 && <p className="text-sm text-slate-700">אין תלמידים בכיתה הזו עדיין.</p>}
       </div>
     </div>
   );
@@ -168,11 +168,11 @@ function StudentReport({
               <ul className="list-inside list-disc space-y-1 text-slate-700">
                 {named.map((w, i) => (
                   <li key={i}>
-                    {w.note} <span className="text-slate-500">({w.topic})</span>
+                    {w.note} <span className="text-slate-700">({w.topic})</span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-sm text-slate-700">
                 טעויות אלו זוהו אוטומטית מתוך התשובות עצמן, ומתארות את סוג השגיאה ולא רק את העובדה
                 שהתשובה שגויה.
               </p>
@@ -181,7 +181,7 @@ function StudentReport({
         </>
       )}
 
-      <footer className="mt-6 border-t border-slate-300 pt-2 text-xs text-slate-500">
+      <footer className="mt-6 border-t border-slate-300 pt-2 text-sm text-slate-700">
         הופק ממערכת MathUp. הנתונים מבוססים על תרגול שהתלמיד ביצע באפליקציה בלבד, ואינם מהווים ציון
         או הערכה חלופית למבחני הכיתה.
       </footer>

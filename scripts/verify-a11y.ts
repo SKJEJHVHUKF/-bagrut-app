@@ -20,6 +20,12 @@ import { join, relative } from 'node:path';
 const ROOT = process.cwd();
 const SCAN_DIRS = ['app', 'components'];
 
+/** Where the type floor and contrast rules below apply — the teacher console
+ *  and the private-teacher board, the two screens whose users are adults with
+ *  no patience for squinting. Add a path here when a new staff screen lands;
+ *  a rule that silently covers nothing is worse than no rule. */
+const CONSOLE_PATHS = ['app/console/', 'components/console/', 'app/teacher/'];
+
 type Finding = { file: string; line: number; rule: string; message: string };
 
 const errors: Finding[] = [];
@@ -113,7 +119,31 @@ for (const dir of SCAN_DIRS) {
       }
     }
 
-    // 5. Heading count per page — a WARNING, never an error.
+    // 5. The teacher console's type floor.
+    //
+    // Scoped to a path list rather than applied everywhere on purpose. The
+    // student app is used by fifteen-year-olds on phones and 12px there is a
+    // deliberate density choice; /console is used by veteran maths teachers,
+    // many of them in reading glasses, and for them the same 12px is the
+    // difference between a board they use and one they abandon.
+    //
+    // The floor is 14px (`text-sm`), so `text-xs` and any hand-written size
+    // below 14 are errors. Body copy should be 16px — that part is judgement
+    // and is not gated; this only stops the regression back to unreadable.
+    //
+    // slate-400/500 on the ivory canvas measure ~3.3:1 and ~4.0:1. Both fail
+    // WCAG AA for body text (4.5:1). slate-700 is 10.3:1 and looks the same
+    // to anyone who was not comparing them side by side.
+    if (CONSOLE_PATHS.some((p) => rel.startsWith(p))) {
+      for (const m of src.matchAll(/\btext-xs\b|\btext-\[1[0-3]px\]/g)) {
+        push(errors, m.index!, 'console-type-floor', `\`${m[0]}\` is below the 14px floor on the teacher console — use text-sm or larger.`);
+      }
+      for (const m of src.matchAll(/\btext-slate-[45]00\b/g)) {
+        push(errors, m.index!, 'console-contrast', `\`${m[0]}\` on the ivory canvas is below WCAG AA for text — use text-slate-700.`);
+      }
+    }
+
+    // 6. Heading count per page — a WARNING, never an error.
     //
     // Several pages legitimately declare more than one <h1> because they are
     // branch-per-state: /bagruyot/archive has one for the logged-out gate, one

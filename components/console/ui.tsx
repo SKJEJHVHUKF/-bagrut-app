@@ -20,13 +20,19 @@ import { STATE_WORD } from '@/components/console/copy';
 
 // ---- buttons ----------------------------------------------------------------
 
+// 48px is the floor, not the look. These are pressed by teachers in their
+// fifties and sixties, often on a laptop trackpad, and the previous 36px
+// button with 14px text was the single most-repeated control on the screen.
+// The border is 2px for the same reason: a 1px slate-200 outline on an ivory
+// canvas is invisible to anyone who is not looking for it, so a secondary
+// button did not read as a button at all.
 const BTN_BASE =
-  'inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-bold transition disabled:opacity-40 disabled:pointer-events-none';
+  'inline-flex items-center justify-center gap-2 rounded-xl min-h-[48px] px-5 py-2.5 text-base font-bold transition disabled:opacity-40 disabled:pointer-events-none';
 
 /** For <Link>s that should look like the secondary button. */
-export const btnSecondary = `${BTN_BASE} border border-slate-200 bg-white/70 text-slate-700 hover:border-violet-300 hover:text-violet-700`;
+export const btnSecondary = `${BTN_BASE} border-2 border-slate-300 bg-white text-slate-800 hover:border-violet-400 hover:text-violet-800`;
 export const btnPrimary = `${BTN_BASE} btn-primary text-white`;
-const btnGhost = `${BTN_BASE} text-slate-600 hover:bg-slate-900/[0.04] hover:text-ink`;
+const btnGhost = `${BTN_BASE} text-slate-800 hover:bg-slate-900/[0.06] hover:text-ink`;
 
 export function Btn({
   kind = 'secondary',
@@ -38,7 +44,7 @@ export function Btn({
 }
 
 export const inputCls =
-  'w-full rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-sm text-ink outline-none transition focus-visible:border-violet-400 focus-visible:ring-2 focus-visible:ring-violet-200';
+  'w-full rounded-xl border-2 border-slate-300 bg-white min-h-[48px] px-4 py-3 text-base text-ink outline-none transition focus-visible:border-violet-500 focus-visible:ring-2 focus-visible:ring-violet-300';
 
 // ---- avatar -----------------------------------------------------------------
 
@@ -54,8 +60,8 @@ function initialsOf(name: string): string {
 export function Avatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'lg' }) {
   const box =
     size === 'lg'
-      ? 'h-14 w-14 rounded-2xl text-lg'
-      : 'h-10 w-10 rounded-full text-sm';
+      ? 'h-14 w-14 rounded-2xl text-xl'
+      : 'h-11 w-11 rounded-full text-base';
   return (
     <span
       aria-hidden
@@ -71,7 +77,7 @@ export function Avatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'lg'
 const STATE_LOOK: Record<StudentState, { cls: string; Icon: LucideIcon }> = {
   stuck: { cls: 'bg-orange-500/10 border-orange-500/25 text-orange-800', Icon: AlertTriangle },
   away: { cls: 'bg-amber-500/10 border-amber-500/25 text-amber-800', Icon: Clock },
-  'no-data': { cls: 'bg-slate-500/10 border-slate-500/20 text-slate-600', Icon: UserPlus },
+  'no-data': { cls: 'bg-slate-500/10 border-slate-500/30 text-slate-700', Icon: UserPlus },
   active: { cls: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-800', Icon: CheckCircle2 },
 };
 
@@ -80,9 +86,9 @@ export function StateChip({ state }: { state: StudentState }) {
   const s = STATE_LOOK[state];
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-black ${s.cls}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-black ${s.cls}`}
     >
-      <s.Icon className="h-3 w-3" aria-hidden />
+      <s.Icon className="h-4 w-4" aria-hidden />
       {STATE_WORD[state]}
     </span>
   );
@@ -107,14 +113,14 @@ export function SectionHead({
   return (
     <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
       <div className="flex items-center gap-2">
-        {Icon && <Icon className="h-4 w-4 text-violet-600" aria-hidden />}
-        <h2 className="font-display text-base font-black text-ink">
+        {Icon && <Icon className="h-5 w-5 text-violet-700" aria-hidden />}
+        <h2 className="font-display text-lg font-black text-ink">
           {title}
           {typeof count === 'number' && (
-            <span className="ms-2 text-sm font-bold text-slate-500 tabular-nums">{count}</span>
+            <span className="ms-2 text-base font-bold text-slate-700 tabular-nums">{count}</span>
           )}
         </h2>
-        {hint && <span className="text-xs text-slate-500">{hint}</span>}
+        {hint && <span className="text-base text-slate-700">{hint}</span>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
