@@ -798,7 +798,9 @@ const specialValue: GenTemplate = {
     const q = quad(t);
     const a = ref(t);
     const v = fn === 'sin' ? sinDeg(t) : fn === 'cos' ? cosDeg(t) : tanDeg(t);
-    const coName = fn === 'sin' ? 'הקוסינוס' : fn === 'cos' ? 'הסינוס' : 'הקוטנגנס';
+    // Owner, 2026-09-08: no cotangent anywhere a student can see it. For tan the
+    // distractor IS the reciprocal, so it is described rather than named.
+    const coName = fn === 'sin' ? 'הקוסינוס' : fn === 'cos' ? 'הסינוס' : 'המנה ההפוכה';
     // The co-function's magnitude, carrying the correct sign.
     const coMag = fn === 'tan' ? rtDiv(rt(1), v) : rtMul(fn === 'sin' ? cosDeg(a) : sinDeg(a), v.n < 0 ? -1 : 1);
     const positive = (fn === 'sin' && q <= 2) || (fn === 'cos' && (q === 1 || q === 4)) || (fn === 'tan' && (q === 1 || q === 3));
