@@ -24,12 +24,14 @@ import type { PracticeQuestion } from '../../types';
 import { EXTRA as MIXED } from './mixed';
 import { EXTRA as METHOD } from './method';
 import { EXTRA as ANGLES } from './angles';
+import { EXTRA as CIRCLE } from './circle';
 import { EXTRA as THALES } from './thales';
 
 /** Stage sub-topic id → the questions appended to that stage. */
 export const GEO_EXTRA: Record<string, PracticeQuestion[]> = {
   'eg-angles': ANGLES,
   'eg-thales': THALES,
+  'eg-circle': CIRCLE,
   'eg-method': METHOD,
   'eg-mixed': MIXED,
 };
