@@ -772,7 +772,7 @@ $$\\sin^2 x = 1 - \\cos^2 x = 1 - \\left(-\\frac{3}{5}\\right)^2 = 1 - \\frac{9}
               optionId: 'd',
               whyItFails: `כאן החילוק התהפך: חושב $\\;\\dfrac{\\cos x}{\\sin x}$ במקום $\\;\\dfrac{\\sin x}{\\cos x}$.
 
-התוצאה $-\\tfrac{3}{4}$ היא בעצם $\\cot x$, לא $\\tan x$.`,
+התוצאה $-\\tfrac{3}{4}$ היא המנה ההפוכה, $\\dfrac{\\cos x}{\\sin x}$, ולא הטנגנס.`,
               backOnTrack:
                 'הגדרה: $\\tan = \\dfrac{\\sin}{\\cos}$. הסינוס במונה.',
             },

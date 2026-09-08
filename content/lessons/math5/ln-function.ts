@@ -172,7 +172,7 @@ $$f(x) = \\ln(\\sin x)$$
 
 הפנימי הוא $g(x) = \\sin x$ ונגזרתו $g'(x) = \\cos x$. לפי כלל השרשרת:
 
-$$f'(x) = \\dfrac{\\cos x}{\\sin x} = \\cot x$$
+$$f'(x) = \\dfrac{\\cos x}{\\sin x}$$
 
 ---
 
@@ -2386,9 +2386,9 @@ $$\\bigl(\\ln g(x)\\bigr)' = \\dfrac{g'(x)}{g(x)}.$$
             problem: 'גזור את $f(x) = \\ln(x^2 - 1)$ ואת $h(x) = \\ln(\\sin x)$.',
             steps: [
               'עבור $f$: הפנימי $x^2 - 1$, נגזרתו $2x$. אז $f\'(x) = \\dfrac{2x}{x^2 - 1}$.',
-              'עבור $h$: הפנימי $\\sin x$, נגזרתו $\\cos x$. אז $h\'(x) = \\dfrac{\\cos x}{\\sin x} = \\cot x$.',
+              'עבור $h$: הפנימי $\\sin x$, נגזרתו $\\cos x$. אז $h\'(x) = \\dfrac{\\cos x}{\\sin x}$.',
             ],
-            answer: "$f'(x) = \\dfrac{2x}{x^2 - 1}$, $\\;h'(x) = \\cot x$.",
+            answer: "$f'(x) = \\dfrac{2x}{x^2 - 1}$, $\\;h'(x) = \\dfrac{\\cos x}{\\sin x}$.",
           },
           drill: {
             id: 'ln-derivatives-drill-003',
