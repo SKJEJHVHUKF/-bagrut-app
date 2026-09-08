@@ -197,8 +197,15 @@ const hasParameter = (q: PracticeQuestion) =>
 
 /** The inference runs BACKWARDS: the rule's CONCLUSION is given and one of its
  *  inputs is what the student must recover. */
-const isReverse = (q: PracticeQuestion) =>
-  /נתון(?:ה)? (?:ה)?שטח[^.]*(?:מצא|חשב)\s+\S*(?:זווית|צלע)|ידוע (?:כי|ש)[^.]*(?:מצא|חשב) את\s+\S*(?:הזווית|הצלע|הרדיוס)|כדי ש[^.]*יתקיים|איזה ערך[^.]*יגרום/.test(
+// 🔴 `[^.]{0,14}`, NOT `\S*`. A `\S*` cannot cross a space, so "חשב את הצלע"
+// scored the +4 while "חשב את אורך הצלע" and "מצא את גודל הזווית" — the natural
+// Hebrew for the identical backwards inference — scored 0. That is not merely a
+// missed point: an author reported writing a question in stilted Hebrew to be
+// scored honestly, which is the gate corrupting the content it exists to
+// protect. Same root cause as the sine/cosine collision above, opposite
+// symptom: there `\S*` matched too much, here it matches too little.
+export const isReverse = (q: PracticeQuestion) =>
+  /נתון(?:ה)? (?:ה)?שטח[^.]{0,40}(?:מצא|חשב)[^.]{0,14}(?:זווית|צלע)|ידוע (?:כי|ש)[^.]{0,60}(?:מצא|חשב) את[^.]{0,14}(?:הזווית|הצלע|הרדיוס)|כדי ש[^.]*יתקיים|איזה ערך[^.]*יגרום/.test(
     q.question,
   );
 

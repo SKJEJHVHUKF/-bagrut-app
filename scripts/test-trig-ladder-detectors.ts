@@ -19,7 +19,7 @@
  * So each detector below is pinned with text it MUST match and text it MUST
  * NOT — the must-nots are the real content of this file.
  */
-import { askShape, mechanismsOfText } from './verify-trig-ladder';
+import { askShape, isReverse, mechanismsOfText } from './verify-trig-ladder';
 import type { PracticeQuestion } from '../content/lessons/types';
 
 let pass = 0;
@@ -111,6 +111,28 @@ shapeIs('חשב את אורך הצלע $BC$', 'compute-length', 'length');
 shapeIs('בטא באמצעות $a$ את שטח המשולש', 'find-parameter',
   'find-parameter must beat area — expressing in terms of a parameter is the harder ask');
 shapeIs('לאיזה ביטוי שווה $\\cos(90° - \\alpha) + \\sin(-\\alpha)$?', 'simplify', 'simplify');
+
+// ── isReverse: the SAME inference must score the same in natural Hebrew ────
+// `\S*` cannot cross a space, so the terse phrasing scored +4 and the natural
+// one scored 0 — and an author reported bending a question's wording to suit
+// it. A metric that changes the writing is worse than a metric that misses.
+{
+  const rev = (t: string) => isReverse({ question: t } as PracticeQuestion);
+  const revPairs: [string, string][] = [
+    ['נתון ששטח המשולש הוא $48$ סמ״ר. חשב את הזווית שבין הצלעות',
+     'נתון ששטח המשולש הוא $48$ סמ״ר. חשב את גודל הזווית שבין הצלעות'],
+    ['ידוע כי שטח המשולש $30$ סמ״ר. מצא את הצלע השלישית',
+     'ידוע כי שטח המשולש $30$ סמ״ר. מצא את אורך הצלע השלישית'],
+  ];
+  for (const [terse, natural] of revPairs) {
+    if (rev(terse) === rev(natural)) pass++;
+    else
+      fails.push(
+        `isReverse: the same backwards inference scores differently in natural Hebrew\n` +
+          `      terse:   ${terse}\n      natural: ${natural}`,
+      );
+  }
+}
 
 console.log(`${pass} passed, ${fails.length} failed`);
 for (const f of fails) console.log(`  ✗ ${f}`);
