@@ -99,6 +99,14 @@ export function circleRadius(spec: GeoSpec, c: GeoCircle): number {
 }
 
 /** Every problem with the spec, as human-readable strings. Empty ⇒ valid. */
+/**
+ * Prefix for complaints about how a figure LOOKS rather than whether it is a
+ * consistent model. The renderer must skip these: a tick sitting under a letter
+ * is worth blocking at author time, but the figure still draws, and falling
+ * back to "(הסרטוט אינו זמין)" over it would hide a working picture.
+ */
+export const LAYOUT_ISSUE = 'layout: ';
+
 export function validateGeo(spec: GeoSpec): string[] {
   const errs: string[] = [];
   const P = spec.points ?? {};
@@ -173,6 +181,39 @@ export function validateGeo(spec: GeoSpec): string[] {
     for (const g of group.slice(1))
       if (Math.abs(g.len - ref0.len) > ref0.len * 0.01)
         errs.push(`ticks n=${n}: ${ref0.run} (${ref0.len.toFixed(3)}) and ${g.run} (${g.len.toFixed(3)}) are not equal`);
+  }
+
+  // A tick is drawn hard at the MIDPOINT of its segment — unlike a length
+  // label, which slides to 0.3/0.7 when the midpoint is crowded. So if a named
+  // point sits mid-segment on a ticked side, its dot and letter print on top of
+  // the tick ("האותיות הם על הפסים"). The model is valid, so nothing above
+  // catches it; and a tick cannot be slid aside, because a tick at 0.3 of AB
+  // reads as marking a sub-segment. It has to be an authoring error.
+  for (const m of (spec.ticks ?? []).map((t) => ({ on: t.on, what: 'tick' }))) {
+    const pq = pair(m.on, 'marks');
+    if (!pq) continue;
+    const [a, b] = pq;
+    const len = dist(a, b);
+    const ends = new Set(names(m.on));
+    const mid: Pt = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    for (const [name, px] of Object.entries(P)) {
+      if (ends.has(name)) continue;
+      // Straight distance to where the mark prints — NOT "is the point on the
+      // line". The figure the owner reported had D drawn 6% off AB, so an
+      // on-the-segment precondition skipped the very case it was written for.
+      const gap = dist(px, mid);
+      if (gap < len * 0.2)
+        errs.push(
+          `${LAYOUT_ISSUE}${m.what} on ${m.on} prints at its midpoint, and point ${name} is only ${((gap / len) * 100).toFixed(0)}% of ${m.on} away from there — the mark and the letter land on top of each other. Mark the sub-segments instead, or move the marking off this side.`,
+        );
+    }
+    // NOT checked: a tick colliding with its OWN endpoint's letter (the "|B"
+    // that read as one glyph on an all-collinear figure). Tried it as a
+    // segment-length ratio; it flagged 38 figures that rasterise perfectly,
+    // because whether the letter lands on the tick depends on which direction
+    // labelDir pushes it, not on how long the segment is. Catching it honestly
+    // means replicating the renderer's label placement, so for now it stays a
+    // rasterise-and-look check (scripts/_probe-geo3-sheets.tsx), not a gate.
   }
 
   const byPar = new Map<number, { run: string; d: Pt }[]>();

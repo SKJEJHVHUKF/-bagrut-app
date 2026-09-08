@@ -11,7 +11,7 @@
 // Labels are plain text on purpose (12, x, 50°, α) — no KaTeX inside the SVG,
 // exactly like the exam sheet.
 
-import { angleAt, circleRadius, names, parseGeo, validateGeo, type GeoSpec, type Pt } from '@/lib/geo-figure';
+import { angleAt, circleRadius, names, parseGeo, validateGeo, LAYOUT_ISSUE, type GeoSpec, type Pt } from '@/lib/geo-figure';
 
 const INK = '#1E1B4B';
 const LINE = '#334155';
@@ -211,7 +211,12 @@ export function GeoFigureFromJson({ json }: { json: string }) {
   let spec: ReturnType<typeof parseGeo> | null = null;
   try {
     const parsed = parseGeo(json);
-    if (!validateGeo(parsed).some((e) => /unknown point|must be|needs|nothing to draw/.test(e))) {
+    // LAYOUT_ISSUE marks a complaint about how the figure LOOKS (a tick under a
+    // letter). Those draw fine, so they must never reach this test — matching
+    // the message prose alone once blanked 38 working figures, because a new
+    // cosmetic rule happened to use the word "needs".
+    const fatal = validateGeo(parsed).filter((e) => !e.startsWith(LAYOUT_ISSUE));
+    if (!fatal.some((e) => /unknown point|must be|needs|nothing to draw/.test(e))) {
       spec = parsed;
     }
   } catch {

@@ -27,17 +27,26 @@ import { EXTRA as ANGLES } from './angles';
 import { EXTRA as CIRCLE } from './circle';
 import { EXTRA as CONGRUENCE } from './congruence';
 import { EXTRA as SHAPES } from './shapes';
+import {
+  ANGLES_EXAM,
+  CONGRUENCE_EXAM,
+  SIMILARITY_EXAM,
+  THALES_EXAM,
+  CIRCLE_EXAM,
+  METHOD_EXAM,
+  MIXED_EXAM,
+} from './exam-style';
 import { EXTRA as SIMILARITY } from './similarity';
 import { EXTRA as THALES } from './thales';
 
 /** Stage sub-topic id → the questions appended to that stage. */
 export const GEO_EXTRA: Record<string, PracticeQuestion[]> = {
-  'eg-angles': ANGLES,
-  'eg-congruence': CONGRUENCE,
-  'eg-similarity': SIMILARITY,
-  'eg-thales': THALES,
-  'eg-circle': CIRCLE,
+  'eg-angles': [...ANGLES, ...ANGLES_EXAM],
+  'eg-congruence': [...CONGRUENCE, ...CONGRUENCE_EXAM],
+  'eg-similarity': [...SIMILARITY, ...SIMILARITY_EXAM],
+  'eg-thales': [...THALES, ...THALES_EXAM],
+  'eg-circle': [...CIRCLE, ...CIRCLE_EXAM],
   'eg-shapes': SHAPES,
-  'eg-method': METHOD,
-  'eg-mixed': MIXED,
+  'eg-method': [...METHOD, ...METHOD_EXAM],
+  'eg-mixed': [...MIXED, ...MIXED_EXAM],
 };

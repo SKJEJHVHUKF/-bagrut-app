@@ -29,11 +29,21 @@ function collect(where: string, node: unknown) {
     for (const [k, v] of Object.entries(node)) collect(`${where}.${k}`, v);
 }
 
-for (const id of ['eg-similarity', 'eg-thales', 'eg-circle', 'eg-method', 'eg-mixed'])
-  collect(id, getSubTopic('math5', 'גיאומטריה אוקלידית', id));
-collect('bagrut', (getLesson('math5', 'גיאומטריה אוקלידית') as { bagrutQuestions?: unknown })?.bagrutQuestions);
+// Walk EVERY stage. A hard-coded list of five silently skipped eg-congruence,
+// which is where the owner found a label sitting on a tick mark.
+const lesson = getLesson('math5', 'גיאומטריה אוקלידית') as {
+  subTopics?: { id: string; questions?: { id: string }[] }[];
+  bagrutQuestions?: unknown;
+};
+for (const st of lesson?.subTopics ?? []) {
+  // name each question's figures by its own id so `[filter]` can be a question id
+  for (const q of st.questions ?? []) collect(`${st.id}/${q.id}`, q);
+  collect(`${st.id}/teach`, { ...st, questions: undefined });
+}
+collect('bagrut', lesson?.bagrutQuestions);
 
-const picked = figs.filter((f) => f.where.includes(FILTER));
+const wanted = FILTER.split(',').filter(Boolean);
+const picked = figs.filter((f) => !wanted.length || wanted.some((w) => f.where.includes(w)));
 console.log(`${picked.length} figures match "${FILTER}"`);
 
 const COLS = 3;
@@ -49,6 +59,7 @@ async function main() {
     const tiles = await Promise.all(
       slice.map(async ({ where, json }, i) => {
         const svg = renderToStaticMarkup(React.createElement(GeoFigureFromJson, { json }));
+        if (!svg.includes('<svg')) throw new Error(`${where} renders NO <svg> — the figure is invisible in the app:\n${json}`);
         const only = svg.slice(svg.indexOf('<svg'), svg.lastIndexOf('</svg>') + 6);
         const png = await sharp(Buffer.from(only))
           .resize(CELL_W - 20, CELL_H - 40, { fit: 'inside', background: '#fff' })
@@ -84,7 +95,7 @@ async function main() {
         },
       ]),
     );
-    const out = `scratch/geo-sheet-${FILTER || 'all'}-${s}.png`;
+    const out = `scratch/geo-sheet-${(FILTER || 'all').replace(/[^\w.-]/g, '_')}-${s}.png`;
     await sheet.png().toFile(out);
     console.log(out);
   }

@@ -357,7 +357,7 @@ export const EXTRA: PracticeQuestion[] = [
       'ב. הסק כי שני המיתרים נמצאים במרחק שווה מהמרכז.\n\n' +
       'ג. נתון שרדיוס המעגל הוא $13$ ס"מ וגם $AB = 24$ ס"מ. מצא את מרחקו של $AB$ מהמרכז.\n\n' +
       'ד. מצא את שטח $\\triangle OAB$.\n\n' +
-      '```geo\n{"points":{"O":[0,0],"A":[-12,5],"B":[12,5],"C":[-12,-5],"D":[12,-5],"M":[0,5],"N":[0,-5]},"circles":[{"center":"O","r":13,"on":["A","B","C","D"]}],"segments":[{"s":"AB","accent":true},{"s":"CD","accent":true},"OA","OB","OC","OD",{"s":"OM","dashed":true},{"s":"ON","dashed":true}],"right":[{"at":"M","from":"O","to":"B"},{"at":"N","from":"O","to":"D"}],"ticks":[{"on":"AB","n":1},{"on":"CD","n":1}],"labels":[{"on":"AB","text":"24"},{"on":"OA","text":"13"}],"width":360}\n```',
+      '```geo\n{"points":{"O":[0,0],"A":[-12,5],"B":[12,5],"C":[-12,-5],"D":[12,-5],"M":[0,5],"N":[0,-5]},"circles":[{"center":"O","r":13,"on":["A","B","C","D"]}],"segments":[{"s":"AB","accent":true},{"s":"CD","accent":true},"OA","OB","OC","OD",{"s":"OM","dashed":true},{"s":"ON","dashed":true}],"right":[{"at":"M","from":"O","to":"B"},{"at":"N","from":"O","to":"D"}],"ticks":[{"on":"AM","n":1},{"on":"MB","n":1},{"on":"CN","n":1},{"on":"ND","n":1}],"labels":[{"on":"AB","text":"24"},{"on":"OA","text":"13"}],"width":360}\n```',
     hint: 'לסעיף א: מה נותן המעגל על $OA$, $OB$, $OC$ ו-$OD$ בלי שום הוכחה? לסעיף ב: המרחק ממש הוא אורך האנך, והוא גובה במשולש. לסעיף ג זכור שהאנך מהמרכז **חוצה** את המיתר.',
     expected: { kind: 'set', values: ['5', '60'] },
     answerLabels: ['המרחק מהמרכז (ס"מ)', 'שטח OAB (סמ"ר)'],

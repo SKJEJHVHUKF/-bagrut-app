@@ -2332,7 +2332,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
           difficulty: 'hard',
           kind: 'open',
           question:
-            'נתון: $\\triangle ABC$ שווה-שוקיים עם $AB = AC$. על הצלע $AB$ סומנה נקודה $D$ ועל הצלע $AC$ סומנה נקודה $E$, כך שמתקיים $BD = CE$. הוכח כי $BE = CD$. נתון בנוסף $AB = 10$ ס"מ וגם $BD = 4$ ס"מ — מצא את $AD$ ואת $AE$.\n\n```geo\n{"points":{"A":[4,7],"B":[0,0],"C":[8,0],"D":[2.286,3],"E":[5.714,3]},"polygons":["ABC"],"segments":[{"s":"BE","accent":true},{"s":"CD","accent":true}],"ticks":[{"on":"DB","n":1},{"on":"EC","n":1},{"on":"AB","n":2},{"on":"AC","n":2}]}\n```',
+            'נתון: $\\triangle ABC$ שווה-שוקיים עם $AB = AC$. על הצלע $AB$ סומנה נקודה $D$ ועל הצלע $AC$ סומנה נקודה $E$, כך שמתקיים $BD = CE$. הוכח כי $BE = CD$. נתון בנוסף $AB = 10$ ס"מ וגם $BD = 4$ ס"מ — מצא את $AD$ ואת $AE$.\n\n```geo\n{"points":{"A":[6,8],"B":[0,0],"C":[12,0],"D":[2.4,3.2],"E":[9.6,3.2]},"polygons":["ABC"],"segments":[{"s":"BE","accent":true},{"s":"CD","accent":true}],"ticks":[{"on":"DB","n":1},{"on":"EC","n":1}],"angles":[{"at":"B","from":"A","to":"C","n":2},{"at":"C","from":"B","to":"A","n":2}],"width":340}\n```',
           expected: { kind: 'manual', reason: 'הוכחה מלאה בכתיבת טענה ונימוק' },
           hint: 'הקטע $BE$ יושב במשולש $\\triangle BCE$ והקטע $CD$ במשולש $\\triangle CBD$. מה משותף לשני המשולשים האלה, ומה נותנות זוויות הבסיס?',
           solution: {

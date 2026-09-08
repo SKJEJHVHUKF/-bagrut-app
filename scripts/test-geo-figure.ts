@@ -14,7 +14,9 @@ const good: GeoSpec = {
   right: [{ at: 'H', from: 'C', to: 'B' }, { at: 'C', from: 'A', to: 'B' }],
   angles: [{ at: 'B', from: 'A', to: 'C', label: '30°' }],
   labels: [{ on: 'AH', text: '2' }, { on: 'HB', text: '6' }],
-  ticks: [{ on: 'OA', n: 1 }, { on: 'OB', n: 1 }],
+  // OC/OB, not OA/OB: H is the foot of the altitude at (2,0), which is exactly
+  // the midpoint of OA — where that tick prints. Two equal radii either way.
+  ticks: [{ on: 'OC', n: 1 }, { on: 'OB', n: 1 }],
   parallel: [{ on: 'AB' }, { on: 'AB' }],
 };
 ok('valid figure passes', validateGeo(good).length === 0);
@@ -59,6 +61,29 @@ async function renderCheck() {
   ok('the figure actually rendered', /<svg/.test(html) && /<polyline/.test(html) && /<polygon/.test(html));
   // Same input twice must give byte-identical markup (no Date/random/iteration order).
   ok('render is deterministic', renderToStaticMarkup(createElement(GeoFigure, { spec: rich })) === html);
+
+  // The figure the owner reported: ticks on the whole sides AB and AC, with D
+  // and E marked mid-side, so each letter printed on top of a tick.
+  const { parseGeo, LAYOUT_ISSUE } = await import('../lib/geo-figure');
+  const onTicks = validateGeo(
+    parseGeo(
+      '{"points":{"A":[4,7],"B":[0,0],"C":[8,0],"D":[2.286,3],"E":[5.714,3]},"polygons":["ABC"],"ticks":[{"on":"AB","n":2},{"on":"AC","n":2}]}',
+    ),
+  );
+  ok(`a tick under a point letter is caught (got ${onTicks.length})`, onTicks.length === 2);
+
+  // …and it must stay COSMETIC. The renderer decides "is this drawable?" by
+  // matching validator prose, so a layout complaint that trips that test blanks
+  // a perfectly good figure — which is exactly what happened once.
+  const { GeoFigureFromJson } = await import('../components/practice/GeoFigure');
+  const stillDraws = renderToStaticMarkup(
+    createElement(GeoFigureFromJson, {
+      json:
+        '{"points":{"A":[4,7],"B":[0,0],"C":[8,0],"D":[2.286,3],"E":[5.714,3]},"polygons":["ABC"],"ticks":[{"on":"AB","n":2},{"on":"AC","n":2}]}',
+    }),
+  );
+  ok('a layout complaint does not blank the figure', /<svg/.test(stillDraws));
+  ok('layout complaints are prefixed so the renderer can skip them', onTicks.every((e) => e.startsWith(LAYOUT_ISSUE)));
 
   if (fails) process.exit(1);
   console.log('test-geo-figure: all checks passed');

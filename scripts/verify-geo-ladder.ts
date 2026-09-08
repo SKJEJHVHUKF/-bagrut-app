@@ -123,7 +123,11 @@ export function askShape(q: PracticeQuestion): string {
   if (/מהו הנימוק|איזה נימוק|איזה משפט|מה הבעיה|איזה מהלך|נמק |הסבר מדוע|מה עליו לכתוב|נימוק \S*כשר/.test(t))
     return 'justify';
   if (/(?:^|[\s"״'(])הוכח(?=[\s.,:!?]|$)|הוכיחו|הראה כי|הראו כי|הסק כי|הסק ש/.test(t)) return 'prove';
-  if (/יחס\s+\S*שטחים|מצא את היחס|מהו היחס/.test(t)) return 'find-ratio';
+  // `מצאו` (plural imperative) as well as `מצא` — the exam papers use the
+  // plural throughout, and without it a ratio question written in the exam's
+  // own voice fell through to `area` and then collided with a numeric
+  // area question's signature.
+  if (/יחס\s+\S*שטחים|מצא(?:ו)? את היחס|מהו היחס|היחס בין שטח/.test(t)) return 'find-ratio';
   if (/שטח/.test(t)) return 'area';
   if (/מצא את הזווית|מהי הזווית|\\angle[^$]*\$\?*\s*$|כמה מעלות|מצא את \$\\angle/.test(t)) return 'compute-angle';
   if (/מצא(?:ו)? את \$?[a-z]\$?|סמן ב-?\$?[a-z]|בטא באמצעות|עבור אילו ערכים/.test(t)) return 'find-parameter';
@@ -160,6 +164,27 @@ const isReverse = (q: PracticeQuestion) =>
     q.question,
   );
 
+/**
+ * The two demands the 571 papers make that a step-and-theorem count cannot see.
+ *
+ * Measured 2026-09-08 over the ten archived Euclidean questions (38 parts)
+ * against our 52 hard questions:
+ *
+ *     הביעו באמצעות <symbol>   archive 29%   ours 2%
+ *     יחס בין שטחים            archive  5%   ours 2%
+ *     answer stays symbolic     archive  8%   ours 0%
+ *
+ * That is the whole of the owner's "רמת אתגר לא נראית מאתגרת". Our hard rung
+ * proves things and then lands on a round number; the exam makes you carry a
+ * symbol an earlier part introduced and express a later quantity through it.
+ * Scoring it is what stops the next batch from drifting back.
+ */
+const EXPRESS_VIA_SYMBOL = /הביע|בטא(?:ו)? באמצעות|שווה ל-?\$m ?\\cdot|מצא(?:ו)? את \$m\$/;
+const RATIO_OF_AREAS = /היחס בין שטח|יחס השטחים|יחס בין השטחים/;
+
+export const isExamStyle = (q: PracticeQuestion) =>
+  EXPRESS_VIA_SYMBOL.test(q.question) || RATIO_OF_AREAS.test(q.question);
+
 function scoreOf(q: PracticeQuestion): number {
   const steps = (q.solution?.steps ?? []).length;
   const mech = mechanismsOf(q).length;
@@ -172,6 +197,8 @@ function scoreOf(q: PracticeQuestion): number {
     (isReverse(q) ? 4 : 0) +
     (shape === 'prove' ? 3 : 0) +
     (['justify', 'find-ratio'].includes(shape) ? 2 : 0) +
+    (EXPRESS_VIA_SYMBOL.test(q.question) ? 4 : 0) +
+    (RATIO_OF_AREAS.test(q.question) ? 3 : 0) +
     2 * parts
   );
 }
@@ -186,8 +213,19 @@ const signatureOf = (q: PracticeQuestion) =>
  *  question, because part ג is easy once א and ב are done and averaging every
  *  part flatters the ladder. */
 function examBar(): { bar: number; n: number } {
+  // 🔴 The first version of this filter matched 33 questions and 28 of them were
+  // 582 ANALYTIC geometry and vectors — "מצאו את שיעורי הנקודה", "משוואת
+  // המעגל", planes and position vectors. They mention משולש and מעגל, so they
+  // passed, and they are much shorter to state than a Euclidean proof chain, so
+  // they dragged the bar DOWN. Every stage then read as clearing 130–220% of an
+  // exam it was never being compared to, while the owner looked at the actual
+  // questions and said the אתגר rung was not hard. He was right and the number
+  // was wrong. Only שאלון 571's Euclidean questions belong in this denominator.
+  const ANALYTIC = /שיעורי|משוואת|ציר ה|\\vec|מישור|פרבול|ראשית הצירים|אליפס|היפרבול/;
   const isGeo = (s: string) =>
-    /\\triangle|משולש|מרובע|מעגל|טרפז|מקבילית|מעוין/.test(s) && !/גרף|נגזרת|אינטגרל|וקטור|מרוכב/.test(s);
+    /\\triangle|משולש|מרובע|מעגל|טרפז|מקבילית|מעוין/.test(s) &&
+    !/גרף|נגזרת|אינטגרל|מרוכב|הסתברות/.test(s) &&
+    !ANALYTIC.test(s);
   const tops: number[] = [];
   for (const q of ALL_PAST_BAGRUYOT) {
     const whole = [q.context ?? '', ...(q.parts ?? []).map((p) => p.prompt ?? '')].join(' ');
@@ -271,6 +309,13 @@ function main() {
 
     // ── an empty rung is a rung the student never climbs ────────────────────
     for (const r of RUNGS) if (!by[r].length) err(st.id, `empty rung ${HEB[r]}`);
+
+    // ── every אתגר rung must reach the shape the exam ENDS on ───────────────
+    // Not a score, a presence check: at least one hard question per stage has
+    // to make the student carry a symbol or compare two areas, because that is
+    // what 29% of the archive's parts do and what 2% of ours did.
+    if (by.hard.length && !by.hard.some(isExamStyle))
+      err(st.id, 'אתגר has no exam-style ending', 'no "הביעו באמצעות" / "יחס בין שטחים" question');
 
     // ── "the challenge rung is the practice rung with different numbers" ────
     const lower = new Map<string, string>();
