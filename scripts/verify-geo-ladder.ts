@@ -254,10 +254,15 @@ function main() {
     // ── the gradient, over the rung the STUDENT sees ────────────────────────
     for (const [lo, hi] of [['easy', 'mid'] as const, ['mid', 'hard'] as const]) {
       if (!by[lo].length || !by[hi].length) continue;
-      if (score[hi] < score[lo] + 2.0)
+      // EPS, because these are IEEE-754 doubles: 1.5 + 0.3 is 1.8000000000000003,
+      // so a rung that measured exactly 1.8 against a 1.5 rung failed a "+0.3"
+      // test it satisfies. The message printed 1.5 → 1.8, which reads like a
+      // gate bug and is one.
+      const EPS = 1e-9;
+      if (score[hi] < score[lo] + 2.0 - EPS)
         err(st.id, `gradient ${HEB[lo]}→${HEB[hi]}`, `score ${score[lo].toFixed(1)} → ${score[hi].toFixed(1)} (needs +2.0)`);
-      if (mech[hi] < mech[lo] + 0.3)
-        err(st.id, `mechanisms ${HEB[lo]}→${HEB[hi]}`, `${mech[lo].toFixed(1)} → ${mech[hi].toFixed(1)} (needs +0.3)`);
+      if (mech[hi] < mech[lo] + 0.3 - EPS)
+        err(st.id, `mechanisms ${HEB[lo]}→${HEB[hi]}`, `${mech[lo].toFixed(2)} → ${mech[hi].toFixed(2)} (needs +0.3)`);
     }
 
     // ── an empty rung is a rung the student never climbs ────────────────────
