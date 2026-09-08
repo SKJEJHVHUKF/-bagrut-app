@@ -47,6 +47,7 @@
 import { routeMessage, answerGradedLocally, canonicalFor, type Ask } from '@/lib/tutor-router';
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
 import { classifyMetaAsk, metaAnswer } from '@/lib/tutor-meta-asks';
+import { stripFigureFences } from '@/lib/geo-figure';
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
 import { offTopicRedirect } from '@/lib/off-topic';
 // lib/tutor-plan-answer is imported DYNAMICALLY at step 10, not here. It pulls
@@ -240,9 +241,30 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   // `cardTopic` is resolved further down, once the instant layers have had
   // their turn; before that the only topic known is the screen's.
   let grounded = screenTopic;
+  /**
+   * ⚠️ EVERY ANSWER LEAVES THROUGH HERE, AND THAT IS WHY THE FENCE STRIP LIVES
+   * HERE AND NOT IN THE LAYERS.
+   *
+   * A solution step may BE a figure: a ```probtree / ```geo fence holding the
+   * JSON the exercise card renders as a tree or a sketch. Every layer that
+   * quotes a step — the compiler's next-step and where-from, the bank's
+   * step answer, the ladder's {firstStep} — served that JSON verbatim into the
+   * chat bubble, which has no renderer for it. Reported by Itay with a
+   * screenshot (2026-09-08): asked for the next step on a probability tree, he
+   * got `:{"p":"6","label"}]:"children","אדום"`.
+   *
+   * `stripFigureFences` was written for exactly this — its own doc says "text
+   * for a model or a chat bubble" — and `renderFocusContext` uses it for the
+   * model's prompt. It had **no other caller**: the chat-bubble half was never
+   * wired up. One place at the exit covers all six layers, and cannot be
+   * forgotten by the seventh.
+   *
+   * The marker points at where the drawing really is, because the student is
+   * looking at the exercise, where it renders properly.
+   */
   const hit = (answer: string, layer: string, reaction?: 'happy' | 'oops'): ChainHit => ({
     answered: true,
-    text: answer,
+    text: stripFigureFences(answer, '(הסרטוט עצמו מופיע בפתרון שעל המסך)'),
     topic: grounded,
     layer,
     ...(reaction ? { reaction } : {}),

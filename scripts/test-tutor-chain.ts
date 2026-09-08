@@ -422,6 +422,38 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     }
   }
 
+  console.log('\n=== a figure is never served as raw JSON ===\n');
+  {
+    // ⚠️ REPORTED BY ITAY WITH A SCREENSHOT (2026-09-08). A solution step can BE
+    // a figure — a ```probtree / ```geo fence holding the JSON the exercise card
+    // renders as a tree. Every layer that quotes a step served that JSON into
+    // the chat bubble, which has no renderer for it, and he got
+    // `:{"p":"6","label"}]:"children","אדום"` when he asked for the next step.
+    //
+    // `stripFigureFences` existed for exactly this and had NO caller — the
+    // model's prompt used it, the chat bubble never did. It now runs once at
+    // the chain's exit, so a seventh layer cannot forget it.
+    const { getLesson } = await import('../content/lessons');
+    const L = getLesson('math5', 'הסתברות');
+    let fq: unknown = null;
+    let fst: unknown = null;
+    for (const s of L?.subTopics ?? [])
+      for (const x of s.questions ?? [])
+        if (!fq && (x.solution?.steps ?? []).some((t) => /```(?:probtree|geo)/.test(t))) { fq = x; fst = s; }
+    ok(Boolean(fq), 'a fixture question whose solution contains a figure exists');
+    const ffocus = {
+      where: 'תרגול', topic: 'הסתברות', subTopicId: (fst as { id?: string })?.id ?? '',
+      questionText: (fq as { question?: string })?.question ?? '', question: fq, subTopic: fst,
+    } as never;
+    for (const msg of ['מה הצעד הבא', 'תראה לי את הפתרון', 'מאיפה זה הגיע', 'רמז']) {
+      const r = await runTutorChain({
+        message: msg, focus: ffocus, state: { ...emptyChainState(), tutorSpoke: true },
+      });
+      const leaked = r.answered && /```|"children"|"label"/.test(r.text);
+      ok(!leaked, `"${msg}" serves no raw figure JSON`);
+    }
+  }
+
   console.log('\n=== "כמה נקודות" is exam scoring only next to a scoring word ===\n');
   {
     // ⚠️ "כמה נקודות חיתוך יש עם ציר y" was answered with what the topic is
