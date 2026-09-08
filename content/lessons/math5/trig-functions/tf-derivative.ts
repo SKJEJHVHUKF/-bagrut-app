@@ -571,7 +571,7 @@ $$y - f(x_0) = f'(x_0)(x - x_0)$$
     // ------------------------------------------------------------- hard
     {
       id: 'tf-der-007',
-      difficulty: 'hard',
+      difficulty: 'mid',
       kind: 'mcq',
       question: 'מהי הנגזרת של $f(x) = \\sqrt{1 + \\sin x}$?',
       answers: [
@@ -625,7 +625,7 @@ $$y - f(x_0) = f'(x_0)(x - x_0)$$
     },
     {
       id: 'tf-der-009',
-      difficulty: 'hard',
+      difficulty: 'mid',
       kind: 'mcq',
       question: 'מהי הנגזרת של $f(x) = \\tan 2x$?',
       answers: [

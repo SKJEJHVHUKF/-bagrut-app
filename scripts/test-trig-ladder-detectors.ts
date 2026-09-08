@@ -62,7 +62,13 @@ hasMech('pythagorean-identity', 'לפי משפט פיתגורס: $OM^2 = OA^2 - 
 hasMech('supplementary', '$\\sin(180° - \\alpha) = \\sin\\alpha$', true, '180 family');
 hasMech('complementary', '$\\sin(90° - \\alpha) = \\cos\\alpha$', true, '90 family');
 hasMech('double-angle', '$\\sin(2\\alpha) = 2\\sin\\alpha\\cos\\alpha$', true, 'double angle');
+// The parentheses are optional in real content, and the first version of the
+// pattern required them — so tf-eq-009, whose entire subject is sin 2x = sin x,
+// scored as involving no double angle at all.
+hasMech('double-angle', 'כמה פתרונות יש למשוואה $\\sin 2x = \\sin x$?', true, 'no parentheses');
+hasMech('double-angle', '$2\\sin x\\cos x - \\sin x = 0$', true, 'already opened');
 hasMech('double-angle', 'הזווית $2\\alpha$ כלואה בין הצלעות', false, 'naming 2α is not opening it');
+hasMech('asymptote', 'לפונקציה יש אסימפטוטה אנכית ב-', true, 'asymptote');
 
 // ── solving ────────────────────────────────────────────────────────────────
 hasMech('t-substitution', 'מציבים משתנה עזר $t = \\cos x$', true, 'substitution');

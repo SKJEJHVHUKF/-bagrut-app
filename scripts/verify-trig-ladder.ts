@@ -67,7 +67,12 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   ['pythagorean-identity', /זהות\s+\S*פיתגורס|\\sin\^2[^+]{0,12}\+\s*\\cos\^2|\\cos\^2[^=]{0,12}=\s*1\s*-\s*\\sin\^2|\\sin\^2[^=]{0,12}=\s*1\s*-\s*\\cos\^2/],
   ['supplementary', /\\sin\(180|\\cos\(180|\\tan\(180|180°\s*-\s*\\alpha|משלימה לזווית שטוחה|180°\s*-\s*x_1/],
   ['complementary', /\\sin\(90|\\cos\(90|90°\s*-\s*\\alpha|משלימה לזווית ישרה/],
-  ['double-angle', /\\sin\(2\\alpha\)|2\\sin\\alpha\\cos\\alpha|\\sin\(2x\)|זווית\s+\S*כפולה/],
+  // 🔴 The parentheses are optional in real content. The first version listed
+  // only `\sin(2x)` and `\sin(2\alpha)`, so `tf-eq-009` — "כמה פתרונות יש
+  // למשוואה $\sin 2x = \sin x$" — was scored as if it involved no double angle
+  // at all, which is the whole question. A detector that silently matches
+  // nothing reports the content as flat.
+  ['double-angle', /\\sin\s*\(?\s*2\s*[\\a-z]|2\\sin\\alpha\\cos\\alpha|2\\sin x\\cos x|זווית\s+\S*כפולה/],
   ['tan-definition', /\\tan\\alpha\s*=\s*\\dfrac\{\\sin|\\dfrac\{\\sin\\alpha\}\{\\cos\\alpha\}|הגדרת\s+\S*טנגנס/],
   // ── solving ──────────────────────────────────────────────────────────────
   ['two-solutions', /שני פתרונות|שתי זוויות אפשריות|הפתרון הקהה|דו-משמע|שתי תשובות/],
@@ -110,6 +115,9 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   ['increase-decrease', /תחומי\s+\S*עלייה|תחומי\s+\S*ירידה|עולה בתחום|יורדת בתחום/],
   ['inflection', /נקודת\s+\S*פיתול|נגזרת שנייה/],
   ['domain', /תחום\s+\S*הגדרה|מוגדרת עבור|\\ne 0/],
+  // Missing entirely at first, so every asymptote question in tf-domain scored
+  // 0 mechanisms and the stage read as flat content rather than a blind gate.
+  ['asymptote', /אסימפטוט/],
   ['antiderivative', /פונקציה\s+\S*קדומה|אינטגרל לא מסוים|\+\s*C\b/],
   ['definite-integral', /אינטגרל מסוים|\\int_|גבולות\s+\S*אינטגרציה/],
   ['area-under-curve', /השטח\s+\S*הכלוא|שטח\s+\S*מתחת\s+\S*גרף|השטח בין\s+\S*גרפים/],
@@ -275,7 +283,7 @@ function main() {
     // `--stage <id>` prints every question's score. A rung average says a rung
     // is wrong, never WHICH question made it wrong, and on the geometry port
     // four scoring bugs were found only by reading this dump.
-    if (FOCUS === st.id) {
+    if (FOCUS === st.id || FOCUS === 'all') {
       for (const r of RUNGS)
         for (const q of by[r]) {
           console.log(

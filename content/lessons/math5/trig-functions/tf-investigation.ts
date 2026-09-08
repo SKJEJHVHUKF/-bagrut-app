@@ -672,7 +672,7 @@ $$g(x) = \\lvert f(x)\\rvert$$
     },
     {
       id: 'tf-inv-008',
-      difficulty: 'hard',
+      difficulty: 'mid',
       kind: 'mcq',
       question: 'הפונקציה $f(x) = \\sin^2 x$ היא זוגית או אי-זוגית, ולמה?',
       answers: [
