@@ -52,8 +52,16 @@ const warn = (where: string, rule: string, detail = '') =>
  */
 export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   // ── the plane-trigonometry theorems ──────────────────────────────────────
-  ['sine-law', /משפט\s+\S*סינוסים|חוק\s+\S*סינוסים/],
-  ['cosine-law', /משפט\s+\S*קוסינוסים|חוק\s+\S*קוסינוסים/],
+  // 🔴 NOT `\S*` here. "משפט הקוסינוסים" is literally "משפט " + "הקו" +
+  // "סינוסים", so a `\S*` wildcard let the COSINE law match the SINE law's
+  // pattern: every cosine-law question was paid 5 points instead of 2.5 and
+  // displayed a mechanism it never used. Found by an author reading the
+  // mechanism list printed beside its own question, not by the gate. The
+  // `\s+\S*` idiom is right for "זווית היקפית"/"הזווית ההיקפית", where the
+  // wildcard spans a whole word — it is wrong when the two names differ by one
+  // letter at the front. Allow the definite article and nothing else.
+  ['sine-law', /(?:משפט|חוק)\s+ה?סינוסים/],
+  ['cosine-law', /(?:משפט|חוק)\s+ה?קוסינוסים/],
   // NOT a bare /שטח/: "שטח המשולש הוא 48 סמ״ר" names a quantity. This wants the
   // formula — a half times two lengths times a sine.
   ['area-sine', /\\tfrac12\s*\\cdot[^$]*\\sin|\\tfrac12\s*[a-z]{2}\\sin|\\dfrac\{1\}\{2\}[^$]*\\sin/],

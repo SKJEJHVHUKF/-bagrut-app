@@ -45,6 +45,13 @@ hasMech('sine-law', 'לפי משפט הסינוסים במשולש', true, 'defi
 hasMech('sine-law', 'נשתמש במשפט סינוסים', true, 'no article');
 hasMech('cosine-law', 'לפי משפט הקוסינוסים נקבל', true, 'definite article');
 hasMech('cosine-law', 'הקוסינוס של הזווית שלילי', false, 'naming the function is not the theorem');
+// 🔴 The two laws differ by ONE letter at the front, and "משפט הקוסינוסים" is
+// literally "משפט " + "הקו" + "סינוסים". With a `\S*` wildcard the cosine law
+// matched the SINE law's pattern too, paying every cosine-law question twice.
+hasMech('sine-law', 'לפי משפט הקוסינוסים נקבל', false,
+  'the COSINE law must not match the sine law — "הקו"+"סינוסים" is the trap');
+hasMech('sine-law', 'משפט הסינוסים המורחב נותן $2R$', true, 'the extended law is still the sine law');
+hasMech('cosine-law', 'לפי משפט הסינוסים', false, 'and not the reverse');
 
 // ── the area formula must be the FORMULA, not the word "area" ─────────────
 hasMech('area-sine', 'השטח הוא $S = \\tfrac12 \\cdot 12 \\cdot 9 \\cdot \\sin B$', true, 'the formula');
