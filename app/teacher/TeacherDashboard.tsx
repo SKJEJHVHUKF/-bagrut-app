@@ -1,39 +1,54 @@
 'use client';
 
-// TeacherDashboard — what a paid private teacher sees about HIS OWN students,
+// TeacherDashboard — "מצב הכיתה": what a teacher sees about his own students,
 // plus his hours and pay. Server side: /api/teacher/overview.
 //
-// Everything on this screen is derived from answers the student already gave
+// WHO THIS SCREEN IS FOR, AND WHAT THAT CHANGED (2026-09-08 rewrite).
+// Veteran maths teachers. They have taught for decades with a textbook, a
+// blackboard and a pile of notebooks, and they have no patience budget for
+// learning a product. The previous version of this board was built for someone
+// who enjoys data: three stat tiles, per-topic accuracy tables, fortnightly
+// deltas, twenty recent mistakes, ten distinct font sizes down to 10px. All of
+// it true, none of it a decision.
+//
+// So the board now answers exactly two questions per student, in this order:
+//   1. Does he need me?      → one coloured light with the reason IN WORDS
+//   2. What do I do about it? → one button that does it
+// Everything else is still here, one `<details>` deeper, for the teacher who
+// wants it. Nothing was deleted from the payload — it was demoted.
+//
+// Everything is derived from answers the student already gave
 // (learning_state.results) and from the weekly figure the owner set. No model
 // is called, here or in the route — the teacher system costs nothing to look at.
 //
 // ⚠️ THE ONE LIE THIS SCREEN COULD TELL. A student who never signed in has no
 // synced answer log, and "0 questions" would read as "he did nothing all week"
 // — straight into a lesson with a student who may have worked hard on another
-// device. So a student with `syncedAt: null` is rendered as "לא סונכרן מעולם"
-// and never as a zero, and every row carries when it last synced.
+// device. He gets a GREY light and a sentence, never a red one and never a
+// zero. The rule lives in lib/teacher-status and is covered by
+// `npm run verify:teacher-status`.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import MathUpLogo from '@/components/MathUpLogo';
 import { MathText } from '@/components/practice/MathText';
 import { PageHeader } from '@/components/PageHeader';
 import {
   ArrowLeft,
-  CalendarClock,
-  ChevronDown,
-  ClipboardList,
+  Check,
   Eye,
   LogOut,
-  Plus,
   RefreshCw,
-  Repeat,
-  Target,
-  TriangleAlert,
-  Trash2,
-  Users,
   Wallet,
 } from 'lucide-react';
+import {
+  studentStatus,
+  LIGHT_ORDER,
+  RUNG,
+  type Light,
+  type Target,
+  type StudentStatus,
+} from '@/lib/teacher-status';
 
 type Assignment = {
   id: string;
@@ -73,7 +88,6 @@ type WrongRow = {
 type TopicOption = {
   key: string;
   label: string;
-  /** The rungs inside it — a task can name one instead of the whole topic. */
   subs: { id: string; title: string }[];
 };
 
@@ -97,11 +111,8 @@ type Student = {
   accuracy: number;
   selfReported: number;
   difficulty: { easy: number; mid: number; hard: number };
-  /** Real past-paper questions, kept apart from drills on purpose. */
-  /** From lib/report — the named recurring mistake and the fortnight trend. */
   report: {
     earlyDays: boolean;
-    /** Named, authored diagnoses — the only thing here that says WHAT broke. */
     weaknesses: {
       kind: string;
       topic: string;
@@ -135,16 +146,6 @@ type Student = {
   stuckRungs: StuckRung[];
   recentWrong: WrongRow[];
   assignments: Assignment[];
-};
-
-/** The ladder rungs, in the student's words. */
-const RUNG: Record<string, string> = {
-  learn: 'לימוד',
-  easy: 'תרגול קל',
-  mid: 'תרגול',
-  hard: 'אתגר',
-  ghost: 'חשיבה',
-  bagrut: 'בגרות',
 };
 
 type WeekRow = {
@@ -206,6 +207,23 @@ function timeAgo(when: string | number | null): string {
   return 'ממש עכשיו';
 }
 
+/** Colour is never the only carrier — every one of these is rendered next to
+ *  the word for it (lib/teacher-status `label`). These are the AA-contrast
+ *  pairs on the ivory canvas; the dot is the strong tone, the text the darkest. */
+const LIGHT_STYLE: Record<Light, { card: string; dot: string; word: string }> = {
+  red: { card: 'border-red-300 bg-red-50', dot: 'bg-red-600', word: 'text-red-900' },
+  yellow: { card: 'border-amber-300 bg-amber-50', dot: 'bg-amber-500', word: 'text-amber-900' },
+  green: { card: 'border-emerald-300 bg-emerald-50', dot: 'bg-emerald-600', word: 'text-emerald-900' },
+  none: { card: 'border-slate-300 bg-slate-50', dot: 'bg-slate-400', word: 'text-slate-800' },
+};
+
+/** Big, obvious, and labelled with a word. 48px min height — these are pressed
+ *  by people who are not looking for a 32px icon. */
+const BTN =
+  'inline-flex items-center justify-center gap-2 min-h-[48px] px-5 rounded-xl text-base font-bold transition-colors disabled:opacity-50';
+const BTN_PRIMARY = `${BTN} bg-violet-700 hover:bg-violet-800 text-white`;
+const BTN_PLAIN = `${BTN} bg-white hover:bg-slate-100 border-2 border-slate-300 text-slate-800`;
+
 export default function TeacherDashboard({
   name,
   rate,
@@ -227,7 +245,6 @@ export default function TeacherDashboard({
   const [pay, setPay] = useState<Pay | null>(null);
   const [error, setError] = useState('');
   const [openId, setOpenId] = useState('');
-  const [showWeeks, setShowWeeks] = useState(false);
 
   const load = useCallback(async () => {
     setError('');
@@ -244,88 +261,89 @@ export default function TeacherDashboard({
   }, [query]);
 
   useEffect(() => {
-  // The rule does not analyse `await` boundaries: an async function called from
-  // an effect is flagged even when every setState in it happens after the first
-  // await. Nothing here setStates synchronously, so there is no cascading
-  // render to fix. Same reasoning and same suppression as AdminDashboard.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
+
+  const topicLabel = useCallback(
+    (key: string) => topics.find((t) => t.key === key)?.label ?? key,
+    [topics]
+  );
+
+  // The roster IS the worklist, so it is ordered by who needs the teacher —
+  // not by who happened to answer a question most recently.
+  const rows = useMemo(() => {
+    if (!students) return null;
+    return students
+      .map((s) => ({ student: s, status: studentStatus(s, topicLabel) }))
+      .sort((a, b) => LIGHT_ORDER[a.status.light] - LIGHT_ORDER[b.status.light]);
+  }, [students, topicLabel]);
+
+  const counts = useMemo(() => {
+    const c: Record<Light, number> = { red: 0, yellow: 0, green: 0, none: 0 };
+    for (const r of rows ?? []) c[r.status.light]++;
+    return c;
+  }, [rows]);
 
   const termsMissing = rate <= 0 || weeklyHours <= 0;
 
   return (
     <div
-      className="min-h-screen text-slate-900 relative overflow-x-hidden"
+      className="min-h-screen bg-[#FDFDFB] text-slate-900"
       style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
     >
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div
-          className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/30 blur-[120px] animate-pulse"
-          style={{ animationDuration: '8s' }}
-        />
-      </div>
-
-      {/* Always visible, not `md:hidden` as it was: the app's own desktop header
-          used to cover this screen, and it is now correctly hidden on staff
-          pages — which left a teacher on a laptop with no logo, no way back to
-          the app, and no sign-out at all. */}
-      <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 bg-white border-b-2 border-slate-200">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-3">
             <MathUpLogo size="md" />
             <div>
-              <div className="text-base font-black font-display text-slate-800">MathUp</div>
-              <div className="text-[10px] text-slate-600 -mt-0.5">לוח המורה</div>
+              <div className="text-lg font-black font-display text-slate-900">MathUp</div>
+              <div className="text-sm text-slate-700 -mt-0.5">מצב הכיתה</div>
             </div>
           </Link>
-        <div className="flex items-center gap-2">
-          {/* The learner's chrome is hidden on staff screens, and the sign-out
-              button lived inside it — without this, the only way off this
-              screen is to leave the staff area first. */}
-          <form action="/auth/signout" method="post">
-            <button
-              type="submit"
-              className="flex items-center gap-2 bg-slate-900/[0.03] hover:bg-red-500/10 border border-slate-900/10 hover:border-red-500/30 text-slate-600 hover:text-red-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
+          <div className="flex items-center gap-2">
+            {/* The learner's chrome is hidden on staff screens, and the sign-out
+                button lived inside it — without this, the only way off this
+                screen is to leave the staff area first. */}
+            <form action="/auth/signout" method="post">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-xl border-2 border-slate-300 bg-white hover:bg-red-50 hover:border-red-400 text-slate-800 hover:text-red-800 text-base font-bold transition-colors"
+              >
+                <LogOut aria-hidden="true" className="w-4 h-4" />
+                <span>התנתקות</span>
+              </button>
+            </form>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-base font-bold transition-colors"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>התנתקות</span>
-            </button>
-          </form>
-          <Link
-            href="/"
-            className="group flex items-center gap-2 bg-slate-900/[0.03] hover:bg-slate-900/5 border border-slate-900/10 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-          >
-            <span>לאפליקציה</span>
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-          </Link>
-        </div>
+              <span>לאפליקציה</span>
+              <ArrowLeft aria-hidden="true" className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </nav>
 
-      <main className="relative z-10 max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 text-base">
         <PageHeader
-          title="לוח המורה"
-          description={`${name} — התלמידים שלך, איפה כל אחד נתקע, והשעות והשכר שלך.`}
+          title="מצב הכיתה"
+          description={`${name} — מי צריך אותך עכשיו, ומה לתת לו.`}
           actions={
             <button
               onClick={() => void load()}
-              className="flex items-center gap-2 bg-white/70 hover:bg-white border border-slate-200 hover:border-violet-400 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 transition-all"
+              className={BTN_PLAIN}
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${students === null ? 'animate-spin' : ''}`} />
+              <RefreshCw aria-hidden="true" className={`w-4 h-4 ${students === null ? 'animate-spin' : ''}`} />
               <span>רענון</span>
             </button>
           }
         />
 
         {viewingAs && (
-          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-violet-300 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">
-            <Eye aria-hidden="true" className="w-4 h-4" />
+          <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-violet-300 bg-violet-50 px-4 py-3 text-base font-bold text-violet-900">
+            <Eye aria-hidden="true" className="w-5 h-5" />
             <span className="flex-1">אתה צופה בלוח של {name} כמנהל המערכת.</span>
-            <Link
-              href="/admin/teachers"
-              className="bg-white border border-violet-300 px-3 py-1.5 rounded-xl text-xs"
-            >
+            <Link href="/admin/teachers" className={BTN_PLAIN}>
               חזרה לניהול
             </Link>
           </div>
@@ -334,191 +352,171 @@ export default function TeacherDashboard({
         {error && (
           <div
             role="alert"
-            className="mb-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-bold text-red-700"
+            className="mb-5 rounded-2xl border-2 border-red-300 bg-red-50 px-4 py-3 text-base font-bold text-red-800"
           >
             {error}
           </div>
         )}
 
         {termsMissing && (
-          <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+          <div className="mb-5 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-base font-bold text-amber-900">
             תנאי השכר שלך עדיין לא הוגדרו במערכת. עד שיוגדרו, השעות והשכר יוצגו כאפס.
           </div>
         )}
 
-        {/* ---- the three numbers ---- */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {[
-            { icon: Users, label: 'התלמידים שלי', value: students === null ? '…' : students.length },
-            {
-              icon: CalendarClock,
-              label: 'השבוע',
-              value: pay ? `${pay.week.hours} ש׳` : '…',
-              sub: pay ? shekel(pay.week.pay) : '',
-            },
-            {
-              icon: Wallet,
-              label: `החודש עד כה (${pay?.month.month ?? ''})`,
-              value: pay ? `${pay.month.hours} ש׳` : '…',
-              sub: pay ? shekel(pay.month.pay) : '',
-            },
-          ].map(({ icon: Icon, label, value, sub }) => (
-            <div key={label} className="glass-card rounded-2xl p-4">
-              <Icon aria-hidden="true" className="w-4 h-4 text-violet-600 mb-2" />
-              <div className="font-display text-2xl font-black text-ink leading-none">{value}</div>
-              {sub ? <div className="text-xs font-bold text-violet-700 mt-1">{sub}</div> : null}
-              <div className="text-[11px] text-slate-600 mt-1 leading-tight">{label}</div>
-            </div>
+        {/* One sentence instead of three stat tiles. A teacher opening this on
+            Sunday morning wants to know how many students need him today. */}
+        {rows && rows.length > 0 && (
+          <p className="mb-5 text-lg text-slate-800">
+            <b className="font-black">{rows.length} תלמידים.</b>{' '}
+            {counts.red > 0 ? (
+              <>
+                <b className="font-black text-red-800">{counts.red} דורשים טיפול</b>
+                {counts.yellow > 0 && `, ${counts.yellow} צריכים חיזוק`}.
+              </>
+            ) : counts.yellow > 0 ? (
+              <>{counts.yellow} צריכים חיזוק, אף אחד לא במצב דחוף.</>
+            ) : (
+              <>כולם בשליטה.</>
+            )}
+          </p>
+        )}
+
+        {students === null && (
+          <div className="text-lg text-slate-700 py-10 text-center">טוען…</div>
+        )}
+
+        {rows?.length === 0 && (
+          <div className="rounded-2xl border-2 border-slate-300 bg-white px-4 py-10 text-center text-lg text-slate-700">
+            עדיין לא שויכו אליך תלמידים. איתי משייך אותם בלוח הבקרה.
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {rows?.map(({ student, status }) => (
+            <StudentRow
+              key={student.id}
+              student={student}
+              status={status}
+              topics={topics}
+              query={query}
+              open={openId === student.id}
+              onToggle={() => setOpenId(openId === student.id ? '' : student.id)}
+              onChanged={load}
+            />
           ))}
         </div>
 
-        {/* ---- students ---- */}
-        <section className="glass-card rounded-2xl p-4 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Users aria-hidden="true" className="w-4 h-4 text-violet-600" />
-            <h2 className="text-sm font-black text-ink">התלמידים שלי</h2>
-          </div>
-
-          {students === null && <div className="text-sm text-slate-500 py-6 text-center">טוען…</div>}
-
-          {students?.length === 0 && (
-            <div className="text-sm text-slate-600 py-6 text-center">
-              עדיין לא שויכו אליך תלמידים. איתי משייך אותם בלוח הבקרה.
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {students?.map((s) => {
-              const open = openId === s.id;
-              const neverSynced = s.syncedAt === null;
-              return (
-                <div key={s.id} className="rounded-2xl border border-slate-200 bg-white/60">
-                  <button
-                    onClick={() => setOpenId(open ? '' : s.id)}
-                    aria-expanded={open}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-right"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="font-black text-sm text-ink truncate">
-                        {s.name}
-                      </div>
-                      <div className="text-[11px] text-slate-500 truncate">
-                        {neverSynced ? (
-                          <span className="text-amber-700 font-bold">
-                            לא סונכרן מעולם — לא נכנס לאפליקציה עם החשבון
-                          </span>
-                        ) : (
-                          <>סונכרן {timeAgo(s.syncedAt)} · תרגל {timeAgo(s.lastAnswerAt)}</>
-                        )}
-                      </div>
-                    </div>
-
-                    {!neverSynced && (
-                      <div className="text-center shrink-0 w-16">
-                        <div
-                          className={`font-display text-lg font-black leading-none ${
-                            s.activeDays === 0 ? 'text-red-600' : 'text-ink'
-                          }`}
-                        >
-                          {s.activeDays}
-                        </div>
-                        <div className="text-[10px] text-slate-500">ימים ב-30</div>
-                      </div>
-                    )}
-                    {!neverSynced && (
-                      <div className="text-center shrink-0 w-14">
-                        <div className="font-display text-lg font-black text-ink leading-none">
-                          {s.answered}
-                        </div>
-                        <div className="text-[10px] text-slate-500">שאלות</div>
-                      </div>
-                    )}
-                    {!neverSynced && s.answered > 0 && (
-                      <div className="text-center shrink-0 w-12">
-                        <div
-                          className={`font-display text-lg font-black leading-none ${
-                            s.accuracy < 0.6 ? 'text-red-600' : 'text-emerald-600'
-                          }`}
-                        >
-                          {pct(s.accuracy)}
-                        </div>
-                        <div className="text-[10px] text-slate-500">נכון</div>
-                      </div>
-                    )}
-                    {s.assignments.some((a) => !a.complete) && (
-                      <span className="shrink-0 text-[10px] font-black bg-violet-100 text-violet-700 rounded-full px-2 py-1">
-                        {s.assignments.filter((a) => !a.complete).length} מטלות
-                      </span>
-                    )}
-                    <ChevronDown
-                      aria-hidden="true"
-                      className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-
-                  {open && (
-                    <div className="border-t border-slate-200 px-4 py-4 space-y-4">
-                      <StudentDetail student={s} topics={topics} query={query} onChanged={load} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ---- the pay, week by week ---- */}
-        {pay && (
-          <section className="glass-card rounded-2xl p-4">
-            <button
-              onClick={() => setShowWeeks(!showWeeks)}
-              aria-expanded={showWeeks}
-              className="w-full flex items-center gap-2 text-right"
-            >
-              <Wallet aria-hidden="true" className="w-4 h-4 text-violet-600" />
-              <h2 className="text-sm font-black text-ink flex-1">
-                שעות ושכר — {pay.weeklyHours} שעות שבועיות, {shekel(pay.rate)} לשעה
-              </h2>
-              <ChevronDown
-                aria-hidden="true"
-                className={`w-4 h-4 text-slate-400 transition-transform ${showWeeks ? 'rotate-180' : ''}`}
-              />
-            </button>
-
-            {showWeeks && (
-              <div className="mt-3 space-y-1">
-                {pay.month.weeks.map((w) => (
-                  <div
-                    key={w.weekStart}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm ${
-                      w.counted ? 'bg-white/70' : 'bg-slate-50 text-slate-400'
-                    }`}
-                  >
-                    <span className="font-bold">שבוע {dayLabel(w.weekStart)}</span>
-                    <span className="flex-1 text-[11px]">
-                      {!w.counted && 'עוד לא התחיל'}
-                      {w.counted && w.edited && (
-                        <span className="text-amber-700 font-bold">
-                          עודכן ידנית{w.note ? ` — ${w.note}` : ''}
-                        </span>
-                      )}
-                    </span>
-                    <span className="font-bold">{w.hours} ש׳</span>
-                    <span className="font-black text-violet-700 w-20 text-left">
-                      {w.counted ? shekel(w.hours * pay.rate) : '—'}
-                    </span>
-                  </div>
-                ))}
-                <p className="text-[11px] text-slate-500 pt-2 leading-relaxed">
-                  שבוע נספר לחודש שבו נופלים רוב ימיו, כך שאף שבוע לא נחתך ולא נספר פעמיים. שבוע שעוד
-                  לא התחיל לא נכלל בסכום. תיקון של שעות בשבוע מסוים נעשה על ידי איתי.
-                </p>
-              </div>
-            )}
-          </section>
-        )}
+        {pay && <PaySection pay={pay} />}
       </main>
     </div>
+  );
+}
+
+// ============================================================
+// One student, as a row: the light, the sentence, the button.
+// ============================================================
+
+function StudentRow({
+  student,
+  status,
+  topics,
+  query,
+  open,
+  onToggle,
+  onChanged,
+}: {
+  student: Student;
+  status: StudentStatus;
+  topics: TopicOption[];
+  query: string;
+  open: boolean;
+  onToggle: () => void;
+  onChanged: () => Promise<void>;
+}) {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState('');
+  const [sendError, setSendError] = useState('');
+  const style = LIGHT_STYLE[status.light];
+  const openTasks = student.assignments.filter((a) => !a.complete).length;
+
+  // THE one click. Everything it needs was already computed: the target comes
+  // from the same rule that produced the sentence above the button, so the
+  // teacher gives practice in exactly the thing the board just told him about.
+  // No dialog, no form, no second screen — and it is undone by the delete
+  // button on the task itself.
+  async function sendPractice(target: Target) {
+    setSending(true);
+    setSendError('');
+    try {
+      const res = await fetch(`/api/teacher/assignments${query}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: student.id,
+          title: `תרגול ממוקד: ${target.title}`,
+          topic: target.topic,
+          subTopicId: target.subTopicId || undefined,
+          targetCount: 5,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error ?? 'לא הצלחנו לשלוח');
+      setSent(`נשלחו 5 שאלות בנושא ${target.title}. הן מחכות לו במסך התוכנית שלו.`);
+      await onChanged();
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : 'לא הצלחנו לשלוח');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <section className={`rounded-2xl border-2 ${style.card}`}>
+      <div className="px-5 py-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span aria-hidden="true" className={`w-4 h-4 rounded-full shrink-0 ${style.dot}`} />
+          <h2 className="text-xl font-black text-slate-900">{student.name}</h2>
+          {/* The word, not just the colour. */}
+          <span className={`text-base font-black ${style.word}`}>{status.label}</span>
+          {openTasks > 0 && (
+            <span className="text-base text-slate-700">· {openTasks} שיעורי בית פתוחים</span>
+          )}
+        </div>
+
+        {/* The whole point of the screen. */}
+        <p className="mt-2 text-lg leading-relaxed text-slate-900">{status.headline}</p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {status.target && (
+            <button onClick={() => void sendPractice(status.target as Target)} disabled={sending} className={BTN_PRIMARY}>
+              {sending ? 'שולח…' : 'שלח תרגול ממוקד'}
+            </button>
+          )}
+          <button onClick={onToggle} aria-expanded={open} className={BTN_PLAIN}>
+            {open ? 'סגירה' : 'פרטים ושיעורי בית'}
+          </button>
+        </div>
+
+        {sent && (
+          <p role="status" className="mt-3 flex items-start gap-2 text-base font-bold text-emerald-800">
+            <Check aria-hidden="true" className="w-5 h-5 shrink-0 mt-0.5" />
+            <span>{sent}</span>
+          </p>
+        )}
+        {sendError && (
+          <p role="alert" className="mt-3 text-base font-bold text-red-800">
+            {sendError}
+          </p>
+        )}
+      </div>
+
+      {open && (
+        <div className="border-t-2 border-white/70 bg-white/70 px-5 py-5 space-y-6">
+          <StudentDetail student={student} topics={topics} query={query} onChanged={onChanged} />
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -538,6 +536,241 @@ function StudentDetail({
   query: string;
   onChanged: () => Promise<void>;
 }) {
+  const label = (key: string) => topics.find((t) => t.key === key)?.label ?? key;
+
+  if (student.syncedAt === null) {
+    return (
+      <>
+        <p className="text-lg leading-relaxed text-amber-900 bg-amber-50 border-2 border-amber-200 rounded-xl px-4 py-3">
+          אין נתוני תרגול לתלמיד הזה: הוא עדיין לא נכנס לאפליקציה עם החשבון ששויך אליו. זה לא אומר
+          שהוא לא תרגל — זה אומר שאין מה למדוד.
+        </p>
+        <Homework student={student} topics={topics} query={query} onChanged={onChanged} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {(student.daysToBagrut !== null || student.bagrut.answered > 0) && (
+        <p className="text-lg text-violet-900 bg-violet-50 border-2 border-violet-200 rounded-xl px-4 py-3">
+          {student.daysToBagrut !== null && (
+            <b className="font-black">
+              {student.daysToBagrut > 0
+                ? `הבגרות בעוד ${student.daysToBagrut} ימים`
+                : student.daysToBagrut === 0
+                  ? 'הבגרות היום'
+                  : 'הבגרות כבר עברה'}
+            </b>
+          )}
+          {student.targetGrade !== null && <> · יעד: {student.targetGrade}</>}
+          {' · '}
+          {student.bagrut.answered === 0
+            ? 'עוד לא פתר שאלות בגרות'
+            : `שאלות בגרות: ${student.bagrut.correct} נכונות מתוך ${student.bagrut.answered}`}
+        </p>
+      )}
+
+      {/* WHAT IS BROKEN, IN WORDS SOMEBODY WROTE — the only thing on the board
+          that answers "what", rather than "where". */}
+      {(student.report.weaknesses.length > 0 || student.report.patterns.length > 0) && (
+        <div>
+          <h3 className="text-lg font-black text-slate-900 mb-1">
+            מה {student.name} לא מבין
+          </h3>
+          {/* The authored explanations are written TO the student, in the second
+              person. Rather than conjugate them into third person — which
+              Hebrew does not survive as a string transform — they are labelled
+              as what they are. The teacher then also knows what the app has
+              already told him. */}
+          <p className="text-base text-slate-700 mb-3">
+            הניסוחים כאן הם הטקסט ש{student.name} עצמו רואה באפליקציה.
+          </p>
+
+          <div className="space-y-3">
+            {student.report.weaknesses.map((w) => (
+              <div
+                key={`${w.topic}-${w.subTopicId}-${w.title}`}
+                className="rounded-xl border-2 border-slate-200 bg-white px-4 py-3"
+              >
+                <div className="flex flex-wrap items-baseline gap-2">
+                  {w.kind === 'misconception' && (
+                    <span className="text-sm font-black bg-violet-700 text-white rounded-full px-3 py-0.5">
+                      טעות מזוהה
+                    </span>
+                  )}
+                  {w.chronic && (
+                    <span className="text-sm font-black bg-red-700 text-white rounded-full px-3 py-0.5">
+                      חזרה אחרי תיקון
+                    </span>
+                  )}
+                  <span className="text-lg font-black text-slate-900">{w.title}</span>
+                  <span className="text-base text-slate-700">{label(w.topic)}</span>
+                </div>
+                <div className="text-base text-slate-800 mt-1.5 leading-relaxed">
+                  <MathText inline>{w.detail}</MathText>
+                </div>
+              </div>
+            ))}
+
+            {student.report.patterns.map((p) => (
+              <div key={p.label} className="rounded-xl border-2 border-violet-200 bg-violet-50 px-4 py-3">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="text-sm font-black bg-violet-700 text-white rounded-full px-3 py-0.5">
+                    חוזר על עצמו
+                  </span>
+                  <span className="text-lg font-black text-violet-950">{p.label}</span>
+                  <span className="text-base text-violet-900">
+                    {p.hits} פעמים
+                    {p.spread > 1 ? ` · ב-${p.spread} תתי-נושאים` : ''}
+                  </span>
+                </div>
+                <div className="text-base text-slate-800 mt-1.5 leading-relaxed">
+                  <MathText inline>{p.detail}</MathText>
+                </div>
+                <div className="text-base text-emerald-900 mt-2 leading-relaxed">
+                  <b>מה עוצר את זה: </b>
+                  <MathText inline>{p.fix}</MathText>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* A rung he keeps coming back to and keeps not passing. */}
+      {student.stuckRungs.length > 0 && (
+        <div>
+          <h3 className="text-lg font-black text-slate-900 mb-2">שלבים שניסה ולא עבר</h3>
+          <ul className="space-y-2">
+            {student.stuckRungs.map((r) => (
+              <li
+                key={`${r.topic}-${r.subId}-${r.kind}`}
+                className="rounded-xl border-2 border-amber-200 bg-amber-50 px-4 py-2.5 text-base text-slate-900"
+              >
+                <b className="font-black">{r.title}</b> ברמת {RUNG[r.kind] ?? r.kind} — {r.attempts}{' '}
+                ניסיונות
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <Homework student={student} topics={topics} query={query} onChanged={onChanged} />
+
+      {/* Everything the old board showed by default. Native <details>: no
+          state, no library, and it stays closed until a teacher asks for it. */}
+      <details className="rounded-xl border-2 border-slate-200 bg-white">
+        <summary className="cursor-pointer px-4 py-3 text-base font-bold text-slate-800 min-h-[48px] flex items-center">
+          עוד נתונים על {student.name}
+        </summary>
+        <div className="px-4 pb-4 space-y-5 border-t border-slate-200 pt-4">
+          <p className="text-base text-slate-800 leading-relaxed">
+            תרגל ב-<b>{student.activeDays}</b> ימים מתוך 30 האחרונים
+            {student.totalDays > student.activeDays && ` (${student.totalDays} ימים בסך הכל)`}
+            {' · '}
+            {student.answered} שאלות ראשונות
+            {student.difficulty.hard > 0 && `, מתוכן ${student.difficulty.hard} ברמת אתגר`}
+            {student.selfReported > 0 && (
+              <> · <b className="text-amber-800">{student.selfReported} מהן הוא בדק בעצמו</b></>
+            )}
+            . חזרות על שאלה שכבר נענתה אינן נספרות באחוזים — כמו במסך של התלמיד.
+          </p>
+
+          {student.stuck.length > 0 && (
+            <div>
+              <h4 className="text-base font-black text-slate-900 mb-2">נושאים חלשים</h4>
+              <ul className="space-y-1.5">
+                {student.stuck.map((t) => (
+                  <li key={t.topic} className="text-base text-slate-800">
+                    <b>{label(t.topic)}</b> — {t.answered - t.correct} טעויות מתוך {t.answered} (
+                    {pct(t.accuracy)})
+                    {t.worstSubTopic && (
+                      <> · הכי חלש בתוכו: {t.worstSubTopic.title} ({pct(t.worstSubTopic.accuracy)})</>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {student.topics.length > 0 && (
+            <div>
+              <h4 className="text-base font-black text-slate-900 mb-2">לפי נושא</h4>
+              <ul className="space-y-1">
+                {student.topics.map((t) => (
+                  <li key={t.topic} className="flex items-center gap-3 text-base text-slate-800">
+                    <span className="flex-1 truncate">{label(t.topic)}</span>
+                    <span className="text-slate-700">
+                      {t.correct}/{t.answered}
+                    </span>
+                    <span
+                      className={`font-bold w-12 text-left ${
+                        t.accuracy < 0.6 ? 'text-red-700' : 'text-emerald-800'
+                      }`}
+                    >
+                      {pct(t.accuracy)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {student.report.movement.length > 0 && (
+            <div>
+              <h4 className="text-base font-black text-slate-900 mb-2">מה זז בשבועיים האחרונים</h4>
+              <ul className="space-y-1">
+                {student.report.movement.map((m) => (
+                  <li key={m.topic} className="text-base text-slate-800">
+                    {label(m.topic)} — {m.delta > 0 ? 'השתפר ב-' : 'ירד ב-'}
+                    {Math.abs(Math.round(m.delta * 100))}% ({m.priorAttempts}→{m.recentAttempts}{' '}
+                    שאלות)
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {student.recentWrong.length > 0 && (
+            <div>
+              <h4 className="text-base font-black text-slate-900 mb-2">הטעויות האחרונות</h4>
+              <ul className="space-y-1">
+                {student.recentWrong.slice(0, 5).map((w, i) => (
+                  <li key={`${w.ts}-${i}`} className="text-base text-slate-800">
+                    <b>{label(w.topic)}</b>
+                    {w.diagnosis === 'known-mistake' && w.note
+                      ? ` — ${w.note}`
+                      : w.diagnosis
+                        ? ` — ${DIAGNOSIS[w.diagnosis] ?? w.diagnosis}`
+                        : ''}
+                    {w.hintUsed ? ' · טעה גם אחרי רמז' : ''} · {timeAgo(w.ts)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </details>
+    </>
+  );
+}
+
+// ============================================================
+// שיעורי בית — the list, and the manual form under it.
+// ============================================================
+
+function Homework({
+  student,
+  topics,
+  query,
+  onChanged,
+}: {
+  student: Student;
+  topics: TopicOption[];
+  query: string;
+  onChanged: () => Promise<void>;
+}) {
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState(topics[0]?.key ?? '');
   const [subTopicId, setSubTopicId] = useState('');
@@ -545,6 +778,10 @@ function StudentDetail({
   const [dueDate, setDueDate] = useState('');
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState('');
+  const [showForm, setShowForm] = useState(false);
+
+  const label = (key: string) => topics.find((t) => t.key === key)?.label ?? key;
+  const subs = topics.find((t) => t.key === topic)?.subs ?? [];
 
   async function addAssignment(e: React.FormEvent) {
     e.preventDefault();
@@ -568,6 +805,7 @@ function StudentDetail({
       setTitle('');
       setDueDate('');
       setSubTopicId('');
+      setShowForm(false);
       await onChanged();
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'שגיאה');
@@ -590,442 +828,219 @@ function StudentDetail({
     }
   }
 
-  const label = (key: string) => topics.find((t) => t.key === key)?.label ?? key;
+  const field = 'w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-base min-h-[48px]';
 
   return (
-    <>
-      {student.syncedAt === null ? (
-        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-          אין נתוני תרגול לתלמיד הזה: הוא עדיין לא נכנס לאפליקציה עם החשבון ששויך אליו. זה לא אומר
-          שהוא לא תרגל — זה אומר שאין מה למדוד.
-        </p>
+    <div>
+      <h3 className="text-lg font-black text-slate-900 mb-2">שיעורי בית</h3>
+
+      <ul className="space-y-2 mb-3">
+        {student.assignments.length === 0 && (
+          <li className="text-base text-slate-700">עוד לא נתת לו שיעורי בית.</li>
+        )}
+        {student.assignments.map((a) => (
+          <li
+            key={a.id}
+            className={`flex flex-wrap items-center gap-3 rounded-xl px-4 py-3 border-2 ${
+              a.complete ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-slate-300'
+            }`}
+          >
+            <div className="flex-1 min-w-[180px]">
+              <div className="text-base font-black text-slate-900">{a.title}</div>
+              <div className="text-base text-slate-700">
+                {label(a.topic)}
+                {a.subTopicId
+                  ? ` · ${
+                      topics.find((t) => t.key === a.topic)?.subs.find((st) => st.id === a.subTopicId)
+                        ?.title ?? a.subTopicId
+                    }`
+                  : ''}
+                {a.dueDate ? ` · עד ${dayLabel(a.dueDate)}` : ''}
+              </div>
+            </div>
+            <div className="text-base font-black text-slate-900">
+              {a.complete ? 'סיים' : `פתר ${a.answered} מתוך ${a.targetCount}`}
+              <span className="font-normal text-slate-700"> · {a.correct} נכון</span>
+            </div>
+            <button
+              onClick={() => void removeAssignment(a.id)}
+              disabled={busy}
+              className="min-h-[44px] px-4 rounded-xl border-2 border-slate-300 bg-white text-base font-bold text-slate-800 hover:bg-red-50 hover:border-red-400 hover:text-red-800 transition-colors disabled:opacity-50"
+            >
+              מחיקה
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {!showForm ? (
+        <button onClick={() => setShowForm(true)} className={BTN_PLAIN}>
+          הוספת שיעורי בית
+        </button>
       ) : (
-        <>
-          {(student.daysToBagrut !== null || student.bagrut.answered > 0) && (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-violet-50 border border-violet-100 px-3 py-2 text-sm">
-              {student.daysToBagrut !== null && (
-                <span className="font-bold text-violet-900">
-                  {student.daysToBagrut > 0
-                    ? `בגרות בעוד ${student.daysToBagrut} ימים`
-                    : student.daysToBagrut === 0
-                      ? 'הבגרות היום'
-                      : 'תאריך הבגרות עבר'}
-                </span>
-              )}
-              {student.targetGrade !== null && (
-                <span className="text-[11px] text-violet-800">יעד: {student.targetGrade}</span>
-              )}
-              <span
-                className={`text-[11px] font-bold ${
-                  student.bagrut.answered === 0 ? 'text-red-700' : 'text-violet-800'
-                }`}
-              >
-                {student.bagrut.answered === 0
-                  ? 'עוד לא פתר שאלת בגרות אחת'
-                  : `שאלות בגרות: ${student.bagrut.correct}/${student.bagrut.answered} (${pct(
-                      student.bagrut.correct / student.bagrut.answered
-                    )})`}
-              </span>
-            </div>
-          )}
-
-          {/* One line of context before any percentage: how the work was
-              spread, and how much of the score he graded himself. An accuracy
-              with no volume behind it is not a measurement. */}
-          <p className="text-[11px] text-slate-500 bg-white/70 rounded-xl px-3 py-2">
-            תרגל ב-<b className="text-slate-700">{student.activeDays}</b> ימים מתוך 30 האחרונים
-            {student.totalDays > student.activeDays && ` (${student.totalDays} ימים בסך הכל)`}
-            {' · '}
-            {student.answered} שאלות ראשונות
-            {student.difficulty.hard > 0 && `, מתוכן ${student.difficulty.hard} ברמת אתגר`}
-            {student.selfReported > 0 && (
-              <>
-                {' · '}
-                <span className="text-amber-700 font-bold">
-                  {student.selfReported} מהן הוא בדק בעצמו
-                </span>
-              </>
-            )}
-            . חזרות על שאלה שכבר נענתה אינן נספרות באחוזים — כמו במסך של התלמיד.
-          </p>
-
-          {/* ============================================================
-              WHAT IS BROKEN, IN WORDS SOMEBODY WROTE.
-              The rows below say where he is weak; this says what the mistake
-              IS — "מחשב שליפה עם החזרה כשנדרשת שליפה בלי החזרה" — with the
-              authored explanation under it. A misconception outranks an
-              accuracy row, so those sort first and carry a badge. */}
-          {student.report.weaknesses.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Target aria-hidden="true" className="w-4 h-4 text-violet-600" />
-                <h3 className="text-xs font-black text-ink">מה בדיוק שבור</h3>
-              </div>
-              <div className="space-y-2">
-                {student.report.weaknesses.map((w) => (
-                  <div
-                    key={`${w.topic}-${w.subTopicId}-${w.title}`}
-                    className={`rounded-xl border px-3 py-2.5 ${
-                      w.kind === 'misconception'
-                        ? 'border-violet-200 bg-violet-50/60'
-                        : 'border-slate-200 bg-white/70'
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-baseline gap-2">
-                      {w.kind === 'misconception' && (
-                        <span className="text-[10px] font-black bg-violet-600 text-white rounded-full px-2 py-0.5">
-                          טעות מזוהה
-                        </span>
-                      )}
-                      {w.chronic && (
-                        <span className="text-[10px] font-black bg-red-100 text-red-700 rounded-full px-2 py-0.5">
-                          חזרה אחרי תיקון
-                        </span>
-                      )}
-                      <span className="text-sm font-black text-ink">{w.title}</span>
-                      <span className="text-[10px] text-slate-500">{label(w.topic)}</span>
-                    </div>
-                    <div className="text-[12px] text-slate-700 mt-1 leading-relaxed">
-                      <MathText inline>{w.detail}</MathText>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ============================================================
-              THE RECURRING MISTAKE, NAMED.
-              Not "43% באלגברה" but "the same misconception, four sub-topics,
-              and here is the one habit that prevents it" — all of it authored
-              Hebrew from content/cognition, computed by lib/report, and shown
-              to the teacher for the first time. */}
-          {student.report.patterns.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Repeat aria-hidden="true" className="w-4 h-4 text-violet-600" />
-                <h3 className="text-xs font-black text-ink">הטעות שחוזרת אצלו</h3>
-              </div>
-              <div className="space-y-2">
-                {student.report.patterns.map((p) => (
-                  <div
-                    key={p.label}
-                    className="rounded-xl border border-violet-200 bg-violet-50/60 px-3 py-2.5"
-                  >
-                    <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-sm font-black text-violet-900">{p.label}</span>
-                      <span className="text-[11px] text-violet-700">
-                        {p.hits} פעמים · {Math.round(p.share * 100)}% מהטעויות המסומנות שלו
-                        {p.spread > 1 ? ` · ב-${p.spread} תתי-נושאים` : ''}
-                      </span>
-                    </div>
-                    <div className="text-[12px] text-slate-700 mt-1 leading-relaxed">
-                      <MathText inline>{p.detail}</MathText>
-                    </div>
-                    <div className="text-[12px] text-emerald-900 mt-1.5 leading-relaxed">
-                      <b>מה עוצר את זה: </b>
-                      <MathText inline>{p.fix}</MathText>
-                    </div>
-                    {p.topics.length > 0 && (
-                      <div className="text-[10px] text-slate-500 mt-1">
-                        הופיע ב: {p.topics.map((t) => label(t)).join(' · ')}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Two weeks against the two before them. The module returns null
-              rather than inventing a delta from a thin fortnight, so a topic
-              only appears here when both halves are real. */}
-          {student.report.movement.length > 0 && (
-            <div>
-              <h3 className="text-xs font-black text-ink mb-2">מה זז בשבועיים האחרונים</h3>
-              <div className="space-y-1">
-                {student.report.movement.map((m) => (
-                  <div
-                    key={m.topic}
-                    className="flex items-center gap-3 bg-white/70 rounded-xl px-3 py-1.5 text-sm"
-                  >
-                    <span className="flex-1 truncate">{label(m.topic)}</span>
-                    <span className="text-[10px] text-slate-400">
-                      {m.priorAttempts}→{m.recentAttempts} שאלות
-                    </span>
-                    <span
-                      className={`font-black w-14 text-left ${
-                        m.delta >= 0 ? 'text-emerald-600' : 'text-red-600'
-                      }`}
-                    >
-                      {m.delta > 0 ? '+' : ''}
-                      {Math.round(m.delta * 100)}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {student.report.earlyDays && student.report.patterns.length === 0 && (
-            <p className="text-[11px] text-slate-500">
-              עוד אין מספיק תשובות מסומנות כדי לזהות דפוס טעות חוזר. זה לא אומר שאין —
-              זה אומר שאין עדיין מה למדוד.
-            </p>
-          )}
-
-          {/* The ladder — the sentence that decides what to open with. */}
-          {student.stuckRungs.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <TriangleAlert aria-hidden="true" className="w-4 h-4 text-amber-500" />
-                <h3 className="text-xs font-black text-ink">שלבים שהוא ניסה ולא עבר</h3>
-              </div>
-              <div className="space-y-1">
-                {student.stuckRungs.map((r) => (
-                  <div
-                    key={`${r.topic}-${r.subId}-${r.kind}`}
-                    className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 text-sm"
-                  >
-                    <span className="font-bold flex-1 truncate">
-                      {r.title}
-                      <span className="text-slate-500 font-normal"> · {RUNG[r.kind] ?? r.kind}</span>
-                    </span>
-                    <span className="text-[11px] font-black text-amber-800 shrink-0">
-                      {r.attempts} ניסיונות
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* where he is stuck */}
+        <form onSubmit={addAssignment} className="space-y-3 rounded-xl border-2 border-slate-300 bg-white p-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <TriangleAlert aria-hidden="true" className="w-4 h-4 text-red-500" />
-              <h3 className="text-xs font-black text-ink">נושאים חלשים</h3>
-            </div>
-            {student.stuck.length === 0 ? (
-              <p className="text-xs text-slate-500">
-                אין נושא שבו הוא מתחת ל-60% על פני 3 שאלות או יותר.
-              </p>
-            ) : (
-              <div className="space-y-1">
-                {student.stuck.map((t) => (
-                  <div
-                    key={t.topic}
-                    className="bg-red-50 border border-red-100 rounded-xl px-3 py-2"
-                  >
-                    <div className="flex items-center gap-3 text-sm">
-                      <span className="font-bold flex-1">{label(t.topic)}</span>
-                      <span className="text-[11px] text-slate-600">
-                        {t.answered - t.correct} טעויות מתוך {t.answered}
-                        {t.hints > 0 ? ` · ${t.hints} רמזים` : ''}
-                      </span>
-                      <span className="font-black text-red-600">{pct(t.accuracy)}</span>
-                    </div>
-                    {/* The topic percentage is the alarm; this is the address.
-                        A tutor cannot teach "טריגונומטריה 62%" on Tuesday. */}
-                    {t.worstSubTopic && (
-                      <div className="text-[11px] text-red-800 mt-1">
-                        הכי חלש בתוכו: <b>{t.worstSubTopic.title}</b> — {t.worstSubTopic.correct}/
-                        {t.worstSubTopic.answered} ({pct(t.worstSubTopic.accuracy)})
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <label htmlFor={`t-${student.id}`} className="block text-base font-bold text-slate-900 mb-1">
+              מה לתרגל
+            </label>
+            <input
+              id={`t-${student.id}`}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="למשל: חקירת פונקציה, שאלות 1-5"
+              required
+              maxLength={120}
+              className={field}
+            />
           </div>
 
-          {/* every topic */}
-          {student.topics.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <h3 className="text-xs font-black text-ink mb-2">לפי נושא</h3>
-              <div className="space-y-1">
-                {student.topics.map((t) => (
-                  <div
-                    key={t.topic}
-                    className="flex items-center gap-3 bg-white/70 rounded-xl px-3 py-1.5 text-sm"
-                  >
-                    <span className="flex-1 truncate">{label(t.topic)}</span>
-                    <span className="text-[11px] text-slate-500">
-                      {t.correct}/{t.answered}
-                    </span>
-                    <span
-                      className={`font-bold w-10 text-left ${
-                        t.accuracy < 0.6 ? 'text-red-600' : 'text-emerald-600'
-                      }`}
-                    >
-                      {pct(t.accuracy)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* the last mistakes, with their shape */}
-          {student.recentWrong.length > 0 && (
-            <div>
-              <h3 className="text-xs font-black text-ink mb-2">הטעויות האחרונות</h3>
-              <div className="space-y-1">
-                {student.recentWrong.map((w, i) => (
-                  <div
-                    key={`${w.ts}-${i}`}
-                    className="flex items-start gap-2 bg-white/70 rounded-xl px-3 py-1.5 text-[12px]"
-                  >
-                    <span className="font-bold shrink-0">{label(w.topic)}</span>
-                    <span className="flex-1 text-slate-600">
-                      {w.diagnosis === 'known-mistake' && w.note
-                        ? w.note
-                        : w.diagnosis
-                          ? DIAGNOSIS[w.diagnosis] ?? w.diagnosis
-                          : ''}
-                      {w.hintUsed ? ' · טעה גם אחרי רמז' : ''}
-                    </span>
-                    <span className="text-slate-400 shrink-0">{timeAgo(w.ts)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* assignments */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <ClipboardList aria-hidden="true" className="w-4 h-4 text-violet-600" />
-          <h3 className="text-xs font-black text-ink">מטלות שנתת</h3>
-        </div>
-
-        <div className="space-y-1 mb-3">
-          {student.assignments.length === 0 && (
-            <p className="text-xs text-slate-500">עוד לא נתת לו מטלה.</p>
-          )}
-          {student.assignments.map((a) => (
-            <div
-              key={a.id}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm border ${
-                a.complete
-                  ? 'bg-emerald-50 border-emerald-200'
-                  : 'bg-white/70 border-slate-200'
-              }`}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="font-bold truncate">{a.title}</div>
-                <div className="text-[11px] text-slate-500">
-                  {label(a.topic)}
-                  {a.subTopicId
-                    ? ` · ${
-                        topics
-                          .find((t) => t.key === a.topic)
-                          ?.subs.find((st) => st.id === a.subTopicId)?.title ?? a.subTopicId
-                      }`
-                    : ''}
-                  {a.dueDate ? ` · עד ${dayLabel(a.dueDate)}` : ''}
-                </div>
-              </div>
-              <div className="text-center shrink-0">
-                <div
-                  className={`font-black text-sm ${a.complete ? 'text-emerald-600' : 'text-slate-700'}`}
-                >
-                  {a.answered}/{a.targetCount}
-                </div>
-                <div className="text-[10px] text-slate-500">{a.correct} נכון</div>
-              </div>
-              <button
-                onClick={() => void removeAssignment(a.id)}
-                disabled={busy}
-                aria-label={`מחיקת המטלה ${a.title}`}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40"
+              <label htmlFor={`tp-${student.id}`} className="block text-base font-bold text-slate-900 mb-1">
+                נושא
+              </label>
+              <select
+                id={`tp-${student.id}`}
+                value={topic}
+                onChange={(e) => {
+                  setTopic(e.target.value);
+                  setSubTopicId('');
+                }}
+                className={field}
               >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <form onSubmit={addAssignment} className="flex flex-wrap gap-2 items-center">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="מה לתרגל — למשל: חקירת פונקציה, שאלות 1-5"
-            required
-            maxLength={120}
-            className="flex-1 min-w-[200px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          />
-          <select
-            value={topic}
-            onChange={(e) => {
-              setTopic(e.target.value);
-              // A sub-topic from the previous topic would silently freeze the
-              // counter at 0, since progress is matched on both.
-              setSubTopicId('');
-            }}
-            aria-label="נושא"
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          >
-            {topics.map((t) => (
-              <option key={t.key} value={t.key}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-          {(topics.find((t) => t.key === topic)?.subs.length ?? 0) > 0 && (
-            <select
-              value={subTopicId}
-              onChange={(e) => setSubTopicId(e.target.value)}
-              aria-label="תת-נושא"
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-            >
-              <option value="">כל הנושא</option>
-              {topics
-                .find((t) => t.key === topic)
-                ?.subs.map((st) => (
-                  <option key={st.id} value={st.id}>
-                    {st.title}
+                {topics.map((t) => (
+                  <option key={t.key} value={t.key}>
+                    {t.label}
                   </option>
                 ))}
-            </select>
+              </select>
+            </div>
+
+            {subs.length > 0 && (
+              <div>
+                <label htmlFor={`st-${student.id}`} className="block text-base font-bold text-slate-900 mb-1">
+                  תת-נושא (לא חובה)
+                </label>
+                <select
+                  id={`st-${student.id}`}
+                  value={subTopicId}
+                  onChange={(e) => setSubTopicId(e.target.value)}
+                  className={field}
+                >
+                  <option value="">כל הנושא</option>
+                  {subs.map((st) => (
+                    <option key={st.id} value={st.id}>
+                      {st.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div>
+              <label htmlFor={`c-${student.id}`} className="block text-base font-bold text-slate-900 mb-1">
+                כמה שאלות
+              </label>
+              <input
+                id={`c-${student.id}`}
+                type="number"
+                min={1}
+                max={100}
+                value={targetCount}
+                onChange={(e) => setTargetCount(Number(e.target.value))}
+                className={field}
+              />
+            </div>
+
+            <div>
+              <label htmlFor={`d-${student.id}`} className="block text-base font-bold text-slate-900 mb-1">
+                עד מתי (לא חובה)
+              </label>
+              <input
+                id={`d-${student.id}`}
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className={field}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button type="submit" disabled={busy || !topic} className={BTN_PRIMARY}>
+              {busy ? 'שולח…' : 'שליחה לתלמיד'}
+            </button>
+            <button type="button" onClick={() => setShowForm(false)} className={BTN_PLAIN}>
+              ביטול
+            </button>
+          </div>
+
+          {formError && (
+            <p role="alert" className="text-base font-bold text-red-800">
+              {formError}
+            </p>
           )}
-          <input
-            type="number"
-            min={1}
-            max={100}
-            value={targetCount}
-            onChange={(e) => setTargetCount(Number(e.target.value))}
-            aria-label="כמה שאלות"
-            className="w-20 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          />
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            aria-label="תאריך יעד"
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            disabled={busy || !topic}
-            className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-40"
-          >
-            <Plus className="w-4 h-4" />
-            <span>מטלה</span>
-          </button>
-        </form>
-        {formError && (
-          <p role="alert" className="text-xs font-bold text-red-600 mt-2">
-            {formError}
+          <p className="text-base text-slate-700 leading-relaxed">
+            שיעורי הבית יופיעו רק אצל התלמיד הזה, במסך התוכנית שלו. ההתקדמות נספרת מהשאלות שהוא באמת
+            פותר בנושא מרגע ששלחת.
           </p>
-        )}
-        <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
-          המטלה תופיע רק אצל התלמיד הזה, במסך התוכנית שלו. ההתקדמות נספרת מהשאלות שהוא באמת פותר
-          בנושא מרגע שנתת אותה.
+        </form>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// שעות ושכר — the teacher's own money. Collapsed, never deleted.
+// ============================================================
+
+function PaySection({ pay }: { pay: Pay }) {
+  return (
+    <details className="mt-6 rounded-2xl border-2 border-slate-300 bg-white">
+      <summary className="cursor-pointer px-5 py-4 min-h-[56px] flex items-center gap-3 text-lg font-black text-slate-900">
+        <Wallet aria-hidden="true" className="w-5 h-5 text-violet-700" />
+        <span>
+          השעות והשכר שלי — השבוע {pay.week.hours} שעות, {shekel(pay.week.pay)}
+        </span>
+      </summary>
+
+      <div className="px-5 pb-5 border-t border-slate-200 pt-4">
+        <p className="text-lg text-slate-900 mb-3">
+          החודש ({pay.month.month}): <b className="font-black">{pay.month.hours} שעות</b>,{' '}
+          <b className="font-black">{shekel(pay.month.pay)}</b> — לפי {pay.weeklyHours} שעות שבועיות
+          ו-{shekel(pay.rate)} לשעה.
+        </p>
+
+        <ul className="space-y-1.5">
+          {pay.month.weeks.map((w) => (
+            <li
+              key={w.weekStart}
+              className={`flex flex-wrap items-center gap-3 rounded-xl px-4 py-2.5 text-base ${
+                w.counted ? 'bg-slate-50 text-slate-900' : 'bg-white text-slate-600'
+              }`}
+            >
+              <span className="font-bold">שבוע {dayLabel(w.weekStart)}</span>
+              <span className="flex-1">
+                {!w.counted && 'עוד לא התחיל'}
+                {w.counted && w.edited && (
+                  <span className="text-amber-800 font-bold">
+                    עודכן ידנית{w.note ? ` — ${w.note}` : ''}
+                  </span>
+                )}
+              </span>
+              <span className="font-bold">{w.hours} שעות</span>
+              <span className="font-black text-violet-800 w-24 text-left">
+                {w.counted ? shekel(w.hours * pay.rate) : '—'}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="text-base text-slate-700 pt-3 leading-relaxed">
+          שבוע נספר לחודש שבו נופלים רוב ימיו, כך שאף שבוע לא נחתך ולא נספר פעמיים. שבוע שעוד לא
+          התחיל לא נכלל בסכום. תיקון של שעות בשבוע מסוים נעשה על ידי איתי.
         </p>
       </div>
-    </>
+    </details>
   );
 }
