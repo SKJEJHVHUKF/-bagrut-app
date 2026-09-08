@@ -28,6 +28,15 @@ import { join } from 'path';
 
 const MAQAF = /[\u05d0-\u05ea]-\$/g;
 
+/**
+ * THE SECOND DEFECT: a DOUBLED escape. `\\u2066` in source is a
+ * backslash followed by the four characters u2066, so TS never turns it into
+ * the bidi isolate U+2066 and the student reads the escape itself, printed in
+ * front of the final answer. Write it once (`\u2066`) and TS resolves it.
+ * Always enforced, everywhere: no content string prints an escape sequence.
+ */
+const DEAD_ESCAPE = /\\\\u[0-9a-fA-F]{4}/g;
+
 /** Swept and required to stay clean. Prefix match on the posix-style path. */
 const ENFORCED = [
   'content/lessons/math5/trig-functions/',
@@ -48,8 +57,12 @@ const files = walk('content')
   .map((f) => f.split('\\').join('/'));
 
 const rows: Array<{ file: string; n: number; enforced: boolean }> = [];
+const dead: Array<{ file: string; n: number }> = [];
 for (const file of files) {
-  const n = (readFileSync(file, 'utf8').match(MAQAF) ?? []).length;
+  const src = readFileSync(file, 'utf8');
+  const d = (src.match(DEAD_ESCAPE) ?? []).length;
+  if (d) dead.push({ file, n: d });
+  const n = (src.match(MAQAF) ?? []).length;
   if (!n) continue;
   rows.push({ file, n, enforced: ENFORCED.some((p) => file.startsWith(p)) });
 }
@@ -68,6 +81,13 @@ console.log(
     `${broken.length} enforced file(s) broken · ` +
     `backlog ${backlogTotal} hit(s) in ${backlog.length} unswept file(s)`,
 );
+
+if (dead.length) {
+  console.log('\nA doubled escape reaches the student as literal text:');
+  for (const r of dead) console.log(`  FAIL  ${r.n}  ${r.file}`);
+  console.log('\nWrite the escape once, so TypeScript resolves it.');
+  process.exitCode = 1;
+}
 
 if (broken.length) {
   console.log('\nA maqaf glued to a maths island renders as a minus sign in RTL:');
