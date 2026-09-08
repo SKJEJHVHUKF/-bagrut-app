@@ -78,7 +78,11 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   ['tangent-chord', /משיק[- ]מיתר|בין\s+\S*משיק\s+\S*מיתר/],
   ['two-tangents', /שני\s+\S*משיקים/],
   ['chord-perp', /אנך\s+\S*מהמרכז|האנך מהמרכז|חוצה את\s+\S*מיתר/],
-  ['power-of-point', /מיתרים\s+\S*(?:נחתכים|מצטלבים)|משיק\s+\S*וחותך|PT\^2|שני\s+\S*חותכים/],
+  // "שני חותכים" alone is not this theorem: in Thales questions the same two
+  // words mean two TRANSVERSALS crossing a set of parallels, which has nothing
+  // to do with the power of a point. The external-point context is what makes
+  // it the theorem, so the pattern demands it.
+  ['power-of-point', /מיתרים\s+\S*(?:נחתכים|מצטלבים)|משיק\s+\S*וחותך|PT\^2|שני חותכים מנקודה/],
   // Naming a quantity ("שטח המשולש הקטן הוא 27") is not applying the area
   // formula. This wants the formula itself: base·height/2, the trapezoid's
   // (a+b)h/2, or a diagonal product.

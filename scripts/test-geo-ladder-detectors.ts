@@ -132,6 +132,17 @@ const CASES: Case[] = [
     text: 'במיתרים מצטלבים מתקיים $AE \\cdot EB = CE \\cdot ED$.',
     want: ['power-of-point'],
   },
+  {
+    why: 'two TRANSVERSALS crossing parallels are not the power of a point',
+    text: 'משפט תאלס הכללי: שלוש מקבילות עם שני חותכים, בלי שום צורך במשולש.',
+    want: ['thales'],
+    not: ['power-of-point'],
+  },
+  {
+    why: 'the secant form still counts when the external point is named',
+    text: 'מנקודה $P$ יוצאים שני חותכים מנקודה חיצונית, ולכן $PA \\cdot PB = PC \\cdot PD$.',
+    want: ['power-of-point'],
+  },
 ];
 
 let bad = 0;
