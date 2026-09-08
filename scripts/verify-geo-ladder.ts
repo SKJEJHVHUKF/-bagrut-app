@@ -109,14 +109,20 @@ const mechanismsOf = (q: PracticeQuestion): string[] => mechanismsOfText(textOf(
  * Ordered most-specific first: a "justify" net tested early swallows every
  * question that also says נמק.
  */
-function askShape(q: PracticeQuestion): string {
+export function askShape(q: PracticeQuestion): string {
   const t = q.question;
-  if (/הוכח|הוכיחו|הראה כי|הראו כי|הסק/.test(t)) return 'prove';
+  // 🔴 `justify` is tested BEFORE `prove`, and `prove` wants the IMPERATIVE.
+  // /הוכח/ also matches the nouns "בהוכחה", "הוכחת חפיפה", "ההוכחה" — so every
+  // question in eg-method that QUOTES a proof task and then asks for the
+  // REASON ("מהו הנימוק הנכון?") was classified `prove`. The stage came out
+  // with exactly one ask shape, which is the opposite of what it does.
+  if (/מהו הנימוק|איזה נימוק|איזה משפט|מה הבעיה|איזה מהלך|נמק |הסבר מדוע|מה עליו לכתוב|נימוק \S*כשר/.test(t))
+    return 'justify';
+  if (/(?:^|[\s"״'(])הוכח(?=[\s.,:!?]|$)|הוכיחו|הראה כי|הראו כי|הסק כי|הסק ש/.test(t)) return 'prove';
   if (/יחס\s+\S*שטחים|מצא את היחס|מהו היחס/.test(t)) return 'find-ratio';
   if (/שטח/.test(t)) return 'area';
   if (/מצא את הזווית|מהי הזווית|\\angle[^$]*\$\?*\s*$|כמה מעלות|מצא את \$\\angle/.test(t)) return 'compute-angle';
   if (/מצא(?:ו)? את \$?[a-z]\$?|סמן ב-?\$?[a-z]|בטא באמצעות|עבור אילו ערכים/.test(t)) return 'find-parameter';
-  if (/נמק|הסבר מדוע|מהו הנימוק|איזה נימוק|איזה משפט/.test(t)) return 'justify';
   if (/מצא את אורך|מהו אורך|מצא את \$[A-Z]{2}\$/.test(t)) return 'compute-length';
   return 'compute';
 }

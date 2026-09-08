@@ -21,9 +21,44 @@
  * literal space between two words misses the definite article, and `\b` never
  * matches beside a Hebrew letter at all.
  */
-import { MECHANISMS_FOR_TEST, mechanismsOfText } from './verify-geo-ladder';
+import { MECHANISMS_FOR_TEST, mechanismsOfText, askShape } from './verify-geo-ladder';
+import type { PracticeQuestion } from '../content/lessons/types';
 
 type Case = { text: string; want: string[]; not?: string[]; why: string };
+
+/** The ask-shape classifier, on the stems that used to fool it. */
+const SHAPE_CASES: { text: string; want: string; why: string }[] = [
+  {
+    why: 'the NOUN "בהוכחה" is not the imperative "הוכח" — this asks for a reason',
+    text: 'בהוכחה מופיעה הטענה "$AO = OC$". מהו הנימוק הנכון?',
+    want: 'justify',
+  },
+  {
+    why: '"הוכחת חפיפה" is a noun phrase; the ask is what went wrong',
+    text: 'תלמיד כתב הוכחת חפיפה עם שתי טענות מנומקות. מה הבעיה?',
+    want: 'justify',
+  },
+  {
+    why: 'a QUOTED proof task with a "which plan" ask is still justify',
+    text: 'המבוקש: "הוכח שמתקיים $DE \\parallel BC$". איזה מהלך מתכננים?',
+    want: 'justify',
+  },
+  {
+    why: 'a real imperative proof is still prove',
+    text: 'הוכח כי $\\triangle ABD \\cong \\triangle ACD$.',
+    want: 'prove',
+  },
+  {
+    why: 'הוכיחו, the plural imperative, is prove',
+    text: 'הוכיחו כי המרובע $ABCD$ הוא מקבילית.',
+    want: 'prove',
+  },
+  {
+    why: 'an area ratio is its own shape, not a generic area question',
+    text: 'מצא את יחס השטחים של $\\triangle ABM$ אל $\\triangle CDM$.',
+    want: 'find-ratio',
+  },
+];
 
 const CASES: Case[] = [
   {
@@ -114,13 +149,21 @@ for (const c of CASES) {
     }
 }
 
+for (const c of SHAPE_CASES) {
+  const got = askShape({ question: c.text } as PracticeQuestion);
+  if (got !== c.want) {
+    bad++;
+    console.log(`✗ SHAPE got "${got}", wanted "${c.want}" — ${c.why}\n    in: ${c.text}`);
+  }
+}
+
 // Every mechanism must be reachable: a pattern that can never fire is a
 // mechanism the gate silently does not count.
 const named = new Set(CASES.flatMap((c) => mechanismsOfText(c.text)));
 const unexercised = MECHANISMS_FOR_TEST.map(([n]) => n).filter((n) => !named.has(n));
 
 console.log(
-  `\n${CASES.length} cases · ${bad} detector problem(s) · ` +
+  `\n${CASES.length} mechanism + ${SHAPE_CASES.length} ask-shape cases · ${bad} detector problem(s) · ` +
     `${MECHANISMS_FOR_TEST.length - unexercised.length}/${MECHANISMS_FOR_TEST.length} mechanisms exercised`,
 );
 if (unexercised.length) console.log(`  (not yet covered by a case: ${unexercised.join(', ')})`);
