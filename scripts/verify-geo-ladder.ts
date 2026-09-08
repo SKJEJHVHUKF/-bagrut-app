@@ -30,6 +30,7 @@ import type { PracticeQuestion, SubTopic } from '../content/lessons/types';
 
 const TOPIC = 'גיאומטריה אוקלידית';
 const STRICT = process.argv.includes('--strict');
+const FOCUS = process.argv[process.argv.indexOf('--stage') + 1] ?? '';
 
 type Sev = 'error' | 'warn';
 const findings: { sev: Sev; where: string; rule: string; detail: string }[] = [];
@@ -48,7 +49,7 @@ const warn = (where: string, rule: string, detail = '') =>
  * matches nothing. Use `\s+\S*` between words instead of a literal space, so
  * "זווית היקפית" also matches "הזווית ההיקפית".
  */
-const MECHANISMS: [string, RegExp][] = [
+export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   ['congruence', /חופפ|חפיפה|צ\.ז\.צ|ז\.צ\.ז|צ\.צ\.צ|צ\.צ\.ז/],
   ['similarity', /דומים|דמיון|\\sim|ז\.ז(?![.א-ת])/],
   ['area-ratio', /יחס\s+\S*שטחים|k\^2|יחס הדמיון בריבוע/],
@@ -63,7 +64,13 @@ const MECHANISMS: [string, RegExp][] = [
   ['triangle-sum', /סכום\s+\S*זוויות\s+\S*משולש|180°\s*(?:במשולש)?/],
   ['median-hypotenuse', /תיכון ליתר/],
   ['medians-meet', /מפגש\s+\S*תיכונים|2\s*:\s*1/],
-  ['quadrilateral', /מקבילית|מלבן|מעוין|דלתון|טרפז|ריבוע/],
+  // 🔴 NOT a bare /ריבוע/. In this topic "ריבוע" is far more often the SQUARE
+  // OF A NUMBER than the shape — "ריבוע יחס הדמיון", "הגובה בריבוע", "סכום
+  // הריבועים" — and a bare pattern paid 2.5 difficulty points to every question
+  // that squared anything. It scored a two-similar-triangles warm-up as though
+  // it also involved a quadrilateral. Same class of bug as the /גרף הפונקציה/
+  // one in the functions gate: a word that names a thing is not the move.
+  ['quadrilateral', /מקבילית|מלבן|מעוין|דלתון|טרפז|הריבוע\s+\$?[A-Z]|ריבוע\s+\$?[A-Z]{4}/],
   ['inscribed-angle', /זווית\s+\S*היקפית|זווית\s+\S*מרכזית|זוויות\s+\S*היקפיות/],
   ['diameter-right', /נשענת על\s+\S*קוטר|היקפית על קוטר/],
   ['cyclic-quad', /מרובע\s+\S*חסום|זוויות נגדיות/],
@@ -72,15 +79,30 @@ const MECHANISMS: [string, RegExp][] = [
   ['two-tangents', /שני\s+\S*משיקים/],
   ['chord-perp', /אנך\s+\S*מהמרכז|האנך מהמרכז|חוצה את\s+\S*מיתר/],
   ['power-of-point', /מיתרים\s+\S*(?:נחתכים|מצטלבים)|משיק\s+\S*וחותך|PT\^2|שני\s+\S*חותכים/],
-  ['area-formula', /שטח\s+\S*משולש|שטח\s+\S*טרפז|שטח\s+\S*מקבילית|\\dfrac\{[^}]*\\cdot[^}]*\}\{2\}/],
+  // Naming a quantity ("שטח המשולש הקטן הוא 27") is not applying the area
+  // formula. This wants the formula itself: base·height/2, the trapezoid's
+  // (a+b)h/2, or a diagonal product.
+  // `S = \dfrac…` was in this list and matched "חילוץ הנעלם: $S = \dfrac{675}{9}$",
+  // a plain division. The two structural alternatives already catch the real
+  // formula, so the loose one only inflated.
+  ['area-formula', /\\dfrac\{[^}]*\\cdot[^}]*\}\{2\}|\\dfrac\{\([^)]*\+[^)]*\)[^}]*\}\{2\}|בסיס כפול גובה/],
   ['segment-arithmetic', /חיבור קטעים|חיסור קטעים|סכום שני הקטעים/],
 ];
 
 const textOf = (q: PracticeQuestion) =>
   `${q.question} ${(q.solution?.steps ?? []).join(' ')} ${q.solution?.finalAnswer ?? ''}`;
 
-const mechanismsOf = (q: PracticeQuestion): string[] =>
-  MECHANISMS.filter(([, re]) => re.test(textOf(q))).map(([n]) => n);
+/**
+ * `diameter-right` SUBSUMES `inscribed-angle`: "זווית היקפית הנשענת על הקוטר"
+ * is one theorem, and counting both paid it twice — enough on its own to lift a
+ * warm-up above the rung above it.
+ */
+export const mechanismsOfText = (text: string): string[] => {
+  const hit = MECHANISMS_FOR_TEST.filter(([, re]) => re.test(text)).map(([n]) => n);
+  return hit.includes('diameter-right') ? hit.filter((m) => m !== 'inscribed-angle') : hit;
+};
+
+const mechanismsOf = (q: PracticeQuestion): string[] => mechanismsOfText(textOf(q));
 
 /**
  * What the question asks the student to PRODUCE — the variety axis.
@@ -209,6 +231,20 @@ function main() {
         `${((score.hard / bar.bar) * 100).toFixed(0)}%`,
     );
 
+    // `--stage <id>` prints every question's score, which is what authoring
+    // against the gradient actually needs: the rung average says a rung is
+    // wrong, not which question made it wrong.
+    if (FOCUS === st.id) {
+      for (const r of RUNGS)
+        for (const q of by[r]) {
+          console.log(
+            `    ${HEB[r].padEnd(6)} ${q.id.padEnd(20)} score ${scoreOf(q).toFixed(1).padStart(5)}` +
+              `  steps ${String((q.solution?.steps ?? []).length).padStart(2)}` +
+              `  ${askShape(q).padEnd(15)} ${mechanismsOf(q).join(',')}`,
+          );
+        }
+    }
+
     // ── the gradient, over the rung the STUDENT sees ────────────────────────
     for (const [lo, hi] of [['easy', 'mid'] as const, ['mid', 'hard'] as const]) {
       if (!by[lo].length || !by[hi].length) continue;
@@ -258,4 +294,4 @@ function main() {
   process.exit(errs.length || (STRICT && warns.length) ? 1 : 0);
 }
 
-main();
+if (process.argv[1]?.includes('verify-geo-ladder')) main();
