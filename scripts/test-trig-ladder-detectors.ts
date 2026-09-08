@@ -64,6 +64,12 @@ hasMech('area-sine', '$S = \\dfrac12 \\cdot 12 \\cdot 9 \\cdot \\sin B$', true, 
 hasMech('area-sine', '$S = \\dfrac{1}{2} ab \\sin\\gamma$', true, 'dfrac{1}{2}');
 hasMech('area-sine', '$S = \\tfrac{1}{2} ab \\sin\\gamma$', true, 'tfrac{1}{2}');
 hasMech('area-sine', '$\\dfrac12 \\cdot 8 \\cdot 5 = 20$', false, 'half a product with no sine is not this formula');
+// 🔴 The opposite over-match, created by widening the fraction spellings: in the
+// calculus stages `\dfrac{1}{2}\sin 2x` is the ANTIDERIVATIVE of cos 2x, not a
+// triangle's area. The area formula always has the two sides between the half
+// and the sine; a primitive has nothing.
+hasMech('area-sine', 'הפונקציה הקדומה היא $\\dfrac{1}{2}\\sin 2x + C$', false, 'an antiderivative is not an area');
+hasMech('area-sine', '$F(x) = \\dfrac12 \\sin 2x$', false, 'same, with the other spelling and a space');
 
 // ── the two Pythagorases are different moves and must not collide ──────────
 hasMech('pythagorean-identity', 'לפי זהות פיתגורס הטריגונומטרית', true, 'the identity');
@@ -79,9 +85,19 @@ hasMech('double-angle', '$\\sin(2\\alpha) = 2\\sin\\alpha\\cos\\alpha$', true, '
 // The parentheses are optional in real content, and the first version of the
 // pattern required them — so tf-eq-009, whose entire subject is sin 2x = sin x,
 // scored as involving no double angle at all.
-hasMech('double-angle', 'כמה פתרונות יש למשוואה $\\sin 2x = \\sin x$?', true, 'no parentheses');
-hasMech('double-angle', '$2\\sin x\\cos x - \\sin x = 0$', true, 'already opened');
+hasMech('double-angle', '$2\\sin x\\cos x - \\sin x = 0$', true, 'the identity actually applied');
+hasMech('double-angle', 'לפי זהות הזווית הכפולה', true, 'named in Hebrew');
 hasMech('double-angle', 'הזווית $2\\alpha$ כלואה בין הצלעות', false, 'naming 2α is not opening it');
+// 🔴 The pattern must pay for the MOVE, not the notation. An equation that
+// substitutes $u = 2x$ and treats it as one new variable never uses the
+// identity — three questions were credited for a formula they deliberately
+// avoid. But a question whose SOLUTION opens the angle still scores, which is
+// why the tf-eq-009 case that forced the earlier widening survives.
+hasMech('double-angle', 'כמה פתרונות יש למשוואה $\\sin 2x = \\sin x$ בתחום?', false,
+  'the bare notation alone, with no solution showing the identity, is not the move');
+hasMech('double-angle',
+  'כמה פתרונות יש למשוואה $\\sin 2x = \\sin x$? נפתח: $2\\sin x\\cos x - \\sin x = 0$', true,
+  'the same question WITH its solution opening the angle — this is tf-eq-009');
 hasMech('asymptote', 'לפונקציה יש אסימפטוטה אנכית ב-', true, 'asymptote');
 
 // ── solving ────────────────────────────────────────────────────────────────

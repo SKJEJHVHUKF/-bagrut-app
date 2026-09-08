@@ -72,7 +72,15 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   // author noticed it only because it had to write the half in a foreign style
   // to be credited: the third time this gate shaped the prose instead of
   // measuring it.
-  ['area-sine', /\\[dt]frac(?:12|\{1\}\{2\})[^$]{0,60}\\sin/],
+  // The negative lookahead is the second half of the fix: widening the fraction
+  // spellings made this over-match in the CALCULUS stages, where
+  // `\dfrac{1}{2}\sin 2x` is the ANTIDERIVATIVE of cos 2x and has nothing to do
+  // with a triangle's area. The area formula always has factors between the
+  // half and the sine (the two sides); a primitive has none.
+  // The `\s*` lives INSIDE the lookahead on purpose: written as `\s*(?!\\sin)`
+  // the engine simply backtracks the whitespace to zero and the lookahead
+  // passes, so `\dfrac12 \sin 2x` still matched. Pinned by a test.
+  ['area-sine', /\\[dt]frac(?:12|\{1\}\{2\})(?!\s*\\sin)[^$]{1,60}\\sin/],
   ['circumradius', /\\dfrac\{abc\}\{4R\}|2R\b|מעגל\s+\S*חוסם|רדיוס\s+\S*מעגל\s+\S*חוסם/],
   // ── the right triangle ───────────────────────────────────────────────────
   ['right-ratios', /הניצב שמול|הניצב שליד|מול חלקי יתר|ליד חלקי יתר|מול חלקי ליד/],
@@ -83,12 +91,21 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   ['pythagorean-identity', /זהות\s+\S*פיתגורס|\\sin\^2[^+]{0,12}\+\s*\\cos\^2|\\cos\^2[^=]{0,12}=\s*1\s*-\s*\\sin\^2|\\sin\^2[^=]{0,12}=\s*1\s*-\s*\\cos\^2/],
   ['supplementary', /\\sin\(180|\\cos\(180|\\tan\(180|180°\s*-\s*\\alpha|משלימה לזווית שטוחה|180°\s*-\s*x_1/],
   ['complementary', /\\sin\(90|\\cos\(90|90°\s*-\s*\\alpha|משלימה לזווית ישרה/],
-  // 🔴 The parentheses are optional in real content. The first version listed
-  // only `\sin(2x)` and `\sin(2\alpha)`, so `tf-eq-009` — "כמה פתרונות יש
-  // למשוואה $\sin 2x = \sin x$" — was scored as if it involved no double angle
-  // at all, which is the whole question. A detector that silently matches
-  // nothing reports the content as flat.
-  ['double-angle', /\\sin\s*\(?\s*2\s*[\\a-z]|2\\sin\\alpha\\cos\\alpha|2\\sin x\\cos x|זווית\s+\S*כפולה/],
+  // Two corrections, in opposite directions, both from authors reading the
+  // mechanism list beside their own questions:
+  //
+  //  1. The first version required PARENTHESES (`\sin(2x)`), so tf-eq-009 —
+  //     whose whole subject is $\sin 2x = \sin x$ — scored no double angle.
+  //  2. Widening it to any `\sin 2…` then paid for NOTATION rather than the
+  //     move: an equation that treats $2x$ as a single new variable never uses
+  //     the identity, and three questions were credited for a formula they
+  //     deliberately avoid.
+  //
+  // So: match the identity being APPLIED — the opened product, the cos²−sin²
+  // form, or the Hebrew name. tf-eq-009 still scores, because its solution
+  // writes `2\sin x\cos x - \sin x = 0`; a question that merely mentions 2x
+  // does not.
+  ['double-angle', /2\\sin[^$]{0,14}\\cos|\\cos\^2[^$]{0,14}-\s*\\sin\^2|זווית\s+\S*כפולה/],
   ['tan-definition', /\\tan\\alpha\s*=\s*\\dfrac\{\\sin|\\dfrac\{\\sin\\alpha\}\{\\cos\\alpha\}|הגדרת\s+\S*טנגנס/],
   // ── solving ──────────────────────────────────────────────────────────────
   ['two-solutions', /שני פתרונות|שתי זוויות אפשריות|הפתרון הקהה|דו-משמע|שתי תשובות/],
