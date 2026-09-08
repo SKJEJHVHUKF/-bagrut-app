@@ -781,8 +781,13 @@ const anglesMidpointSegment: GenTemplate = {
   difficulties: ['easy', 'mid'],
   build(rng, difficulty) {
     const [a, b, c, mid] = rng.pick(SEGMENT_NAMES);
-    const p = 2 * rng.int(1, difficulty === 'easy' ? 7 : 10); // AB
-    const d = rng.int(1, difficulty === 'easy' ? 6 : 12); // the answer, MB
+    const p = 2 * rng.int(2, difficulty === 'easy' ? 7 : 10); // AB
+    // B always falls inside the ticked half AM, and that tick prints at AM's
+    // midpoint. Rasterising this template showed the letter B fused with the
+    // tick at 0–17% of AM and clear at 25%, so d is drawn from the range that
+    // keeps it at 25% or better: p ≥ 3d gives exactly that, with equality at
+    // d = p/3. Derived rather than rejected, to keep the seeded stream stable.
+    const d = rng.int(1, Math.floor(p / 3)); // the answer, MB
     const q = p + 2 * d; // BC
     const half = p + d; // AM = MC
 

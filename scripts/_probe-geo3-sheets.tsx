@@ -13,7 +13,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { mkdirSync } from 'fs';
 import sharp from 'sharp';
 import { GeoFigureFromJson } from '../components/practice/GeoFigure';
-import { getSubTopic, getLesson } from '../content/lessons';
+import { getLesson } from '../content/lessons';
 
 const FILTER = process.argv[2] ?? '';
 const figs: { where: string; json: string }[] = [];
