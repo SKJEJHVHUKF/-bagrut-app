@@ -862,7 +862,7 @@ $$r^2 = a^2 + m^2$$
       },
       {
         id: 'eg-shp-006',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         // Re-aimed 2026-09-05 — this is the one Itay named: "השאלה ברמת בגרות
         // וברמת אתגר ... היא אותה שאלה ככה שאין גיוון". It was the SAME rhombus
@@ -957,7 +957,7 @@ $$r^2 = a^2 + m^2$$
       },
       {
         id: 'eg-shp-009',
-        difficulty: 'mid',
+        difficulty: 'hard',
         kind: 'open',
         // Rewritten 2026-09-06. This asked for `12·8/2` and nothing else, on the
         // rung that is meant to be where the work starts — eg-shapes measured
@@ -1015,7 +1015,7 @@ $$r^2 = a^2 + m^2$$
         // 6 + 8 + 6 — which is the standard opening move for every trapezoid
         // question in the bagrut.
         id: 'eg-shp-015',
-        difficulty: 'mid',
+        difficulty: 'hard',
         kind: 'open',
         question:
           'בטרפז שווה-שוקיים $ABCD$ הבסיסים הם $AB = 20$ ס"מ וגם $DC = 8$ ס"מ, והשוק $AD = 10$ ס"מ.\n\n' +
@@ -1120,7 +1120,7 @@ $$r^2 = a^2 + m^2$$
       // carries a wrong answer that a student who stops one step early lands on.
       {
         id: 'eg-shp-012',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question:
           'בדלתון $ABCD$ נתון $AB = AD = 10$ ס"מ, $CB = CD = 17$ ס"מ, והאלכסון $BD$ באורך $16$ ס"מ. מצא את אורך האלכסון $AC$ ואת שטח הדלתון.\n\n```geo\n{"points":{"A":[0,6],"B":[-8,0],"C":[0,-15],"D":[8,0],"E":[0,0]},"polygons":["ABCD"],"segments":[{"s":"AC","accent":true},"BD"],"right":[{"at":"E","from":"A","to":"B"}],"ticks":[{"on":"AB","n":1},{"on":"AD","n":1},{"on":"CB","n":2},{"on":"CD","n":2}],"labels":[{"on":"AB","text":"10"},{"on":"CB","text":"17"},{"on":"BD","text":"16"}],"width":300}\n```',
@@ -1203,7 +1203,7 @@ $$r^2 = a^2 + m^2$$
       },
       {
         id: 'eg-shp-013',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question:
           'בטרפז $ABCD$ הבסיסים הם $AB = 20$ ס"מ ו-$DC = 12$ ס"מ, והגובה בין הבסיסים הוא $8$ ס"מ. קטע האמצעים $EF$ מחלק את הטרפז לשני טרפזים. מצא את שטחו של הטרפז העליון ואת שטחו של התחתון (בסמ"ר).\n\n```geo\n{"points":{"A":[0,0],"B":[20,0],"C":[15,8],"D":[3,8],"E":[1.5,4],"F":[17.5,4]},"polygons":["ABCD"],"segments":[{"s":"EF","accent":true}],"parallel":[{"on":"AB","n":1},{"on":"DC","n":1}],"labels":[{"on":"AB","text":"20"},{"on":"DC","text":"12"}],"width":340}\n```',
@@ -1230,7 +1230,7 @@ $$r^2 = a^2 + m^2$$
       },
       {
         id: 'eg-shp-014',
-        difficulty: 'hard',
+        difficulty: 'mid',
         kind: 'open',
         question:
           'במעגל שמרכזו $O$ ורדיוסו $25$ ס"מ מועברים שני מיתרים מקבילים: $AB$ שאורכו $48$ ס"מ ו-$CD$ שאורכו $14$ ס"מ, והם נמצאים משני **צדדיו** של המרכז. מצא את המרחק בין שני המיתרים (בסנטימטרים).\n\n```geo\n{"points":{"O":[0,0],"A":[-24,7],"B":[24,7],"C":[-7,-24],"D":[7,-24],"M":[0,7],"N":[0,-24]},"circles":[{"center":"O","r":25,"on":["A","B","C","D"]}],"segments":["AB","CD",{"s":"MN","dashed":true,"accent":true},"OA","OC"],"right":[{"at":"M","from":"O","to":"A"},{"at":"N","from":"O","to":"C"}],"parallel":[{"on":"AB","n":1},{"on":"CD","n":1}],"labels":[{"on":"AB","text":"48"},{"on":"CD","text":"14"}],"width":320}\n```',

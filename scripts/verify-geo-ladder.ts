@@ -278,6 +278,12 @@ function main() {
     for (const q of qs) {
       for (const [name, re, exempt] of OFF_STYLE) {
         if (exempt?.includes(st.id)) continue;
+        // `which-claim-is-true` fires on OPEN questions only. An MCQ whose four
+        // options are four real properties of a shape ("איזו תכונה מתקיימת בכל
+        // דלתון") is exactly what an MCQ is FOR, and the first version of this
+        // rule flagged one. The gimmick Itay rejected on another topic was an
+        // open-question stem, not a property-recall item.
+        if (name === 'which-claim-is-true' && q.kind === 'mcq') continue;
         if (re.test(q.question)) err(q.id, `off-style ask: ${name}`);
       }
     }
