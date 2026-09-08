@@ -37,15 +37,15 @@ export default function TopicLights() {
     <motion.section variants={fadeUp} {...inViewProps}>
       <SectionHead icon={BookOpen} title="הנושאים" hint="מילה אחת לכל נושא" />
       {rows.length === 0 ? (
-        <p className="surface-premium rounded-2xl px-5 py-6 text-sm text-slate-600">{EMPTY.topics}</p>
+        <p className="surface-premium rounded-2xl px-5 py-6 text-base text-slate-700">{EMPTY.topics}</p>
       ) : (
         <ul className="surface-premium divide-y divide-slate-900/[0.06] rounded-2xl">
           {rows.map((r) => (
             <li key={r.topic} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-3">
-              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${LOOK[r.state].dot}`} aria-hidden />
-              <TopicIcon id={r.topic} className="h-4 w-4 shrink-0 text-violet-600" />
-              <span className="font-display text-base font-black text-ink">{r.topic}</span>
-              <span className={`text-sm font-bold ${LOOK[r.state].text}`}>{TOPIC_WORD[r.state]}</span>
+              <span className={`h-4 w-4 shrink-0 rounded-full ${LOOK[r.state].dot}`} aria-hidden />
+              <TopicIcon id={r.topic} className="h-5 w-5 shrink-0 text-violet-700" />
+              <span className="font-display text-lg font-black text-ink">{r.topic}</span>
+              <span className={`text-base font-black ${LOOK[r.state].text}`}>{TOPIC_WORD[r.state]}</span>
               {r.state === 'reteach' && !isDemo && (
                 <span className="ms-auto flex items-center gap-2">
                   {/* The whole class is the reteach signal's own answer, so it
@@ -77,7 +77,7 @@ export default function TopicLights() {
                 </span>
               )}
               {r.stuckStudents.length > 0 && (
-                <span className="basis-full text-xs text-slate-500">
+                <span className="basis-full text-base text-slate-700">
                   {stuckUnder(r.stuckStudents.map((s) => s.name))}
                 </span>
               )}
@@ -85,7 +85,7 @@ export default function TopicLights() {
           ))}
         </ul>
       )}
-      {thin.length > 0 && <p className="mt-2 text-xs text-slate-500">{thinTopics(thin)}</p>}
+      {thin.length > 0 && <p className="mt-2 text-base text-slate-700">{thinTopics(thin)}</p>}
     </motion.section>
   );
 }

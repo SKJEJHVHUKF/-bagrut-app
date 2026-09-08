@@ -108,7 +108,7 @@ export default function StudentPage() {
                   <span
                     key={t.topic}
                     className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
-                      band ? `${band.cell} border-transparent` : 'border-dashed border-slate-300 text-slate-500'
+                      band ? `${band.cell} border-transparent` : 'border-dashed border-slate-300 text-slate-700'
                     }`}
                     title={`${t.correct} מתוך ${t.measured} תרגילים שנמדדו`}
                   >
@@ -116,7 +116,7 @@ export default function StudentPage() {
                     <span className="font-bold">{t.topic}</span>
                     <span>{band ? band.label : NO_DATA}</span>
                     {band && (
-                      <span className="text-[11px] tabular-nums opacity-70">{Math.round(t.mastery! * 100)}%</span>
+                      <span className="text-sm tabular-nums opacity-70">{Math.round(t.mastery! * 100)}%</span>
                     )}
                   </span>
                 );
@@ -133,7 +133,7 @@ export default function StudentPage() {
                     {/* The whole reason this page exists: not "he was wrong",
                         but the sentence a teacher can say to him. */}
                     <p className="text-sm font-bold text-ink">{w.note}</p>
-                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-base text-slate-700">
                       <span>{w.topic}</span>
                       <span>·</span>
                       <span>{agoLabel(w.daysAgo)}</span>
@@ -147,7 +147,7 @@ export default function StudentPage() {
                   </li>
                 ))}
                 {unnamed > 0 && (
-                  <li className="px-4 py-3 text-xs text-slate-500">
+                  <li className="px-4 py-3 text-base text-slate-700">
                     ועוד {unnamed} תשובות שגויות שהמערכת לא ידעה לתת להן שם.
                   </li>
                 )}
@@ -171,9 +171,9 @@ export default function StudentPage() {
             {sent.map((f) => (
               <li key={f.id} className="px-4 py-3 text-sm">
                 <span className="font-bold text-ink">{f.label}</span>
-                {f.targetCount ? <span className="text-slate-500"> · {f.targetCount} תרגילים</span> : null}
-                {f.dueOn && <span className="text-slate-500"> · עד {hebDate(f.dueOn)}</span>}
-                {f.note && <p className="mt-0.5 text-xs text-slate-500">{f.note}</p>}
+                {f.targetCount ? <span className="text-slate-700"> · {f.targetCount} תרגילים</span> : null}
+                {f.dueOn && <span className="text-slate-700"> · עד {hebDate(f.dueOn)}</span>}
+                {f.note && <p className="mt-0.5 text-base text-slate-700">{f.note}</p>}
               </li>
             ))}
           </ul>
@@ -207,7 +207,7 @@ function ActivityStrip({ daily }: { daily: StudentRow['daily'] }) {
           );
         })}
       </div>
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-base text-slate-700">
         {days === 0 ? 'לא תרגל בשבועיים האחרונים.' : `תרגל ב-${days} מתוך ${ACTIVITY_DAYS} הימים האחרונים.`}
       </p>
     </div>
