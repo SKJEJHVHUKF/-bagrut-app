@@ -116,7 +116,26 @@ hasMech('diameter-right', 'זווית היקפית הנשענת על הקוטר 
 hasMech('trig-derivative', "$(\\sin x)' = \\cos x$", true, 'the derivative itself');
 hasMech('trig-derivative', 'הפונקציה $f(x) = \\sin x$ מוגדרת לכל $x$', false, 'naming sin is not differentiating it');
 hasMech('chain-rule', 'לפי כלל השרשרת, הנגזרת הפנימית היא', true, 'chain rule');
+// UNDER-match: the house phrasing has no definite article and is the COMMONER
+// of the two (32 uses vs 18), so two pure chain-rule questions scored nothing.
+hasMech('chain-rule', 'מכפילים בנגזרת הפנימית', true, 'the house phrasing, no definite article');
 hasMech('extremum', 'מאפסים את הנגזרת ומקבלים נקודת קיצון', true, 'extremum');
+// OVER-match: naming the maximum of a bounded function is not a calculus move.
+hasMech('extremum', 'המקסימום של הקוסינוס הוא $1$', false,
+  'stating that cosine tops out at 1 involves no derivative');
+hasMech('extremum', 'מאפסים את הנגזרת: $f\'(x) = 0$', true, 'the move itself');
+// OVER-match reported by three authors: this means the ambiguous SSA case, not
+// a count of roots.
+hasMech('two-solutions', 'למשוואה יש שני פתרונות בתחום', false,
+  'counting roots is not the ambiguous-triangle decision');
+hasMech('two-solutions', 'נבדוק את הפתרון הקהה מול סכום הזוויות', true, 'the ambiguous case');
+// OVER-match: any non-vanishing claim is not a domain argument.
+hasMech('domain', 'מכיוון ש$\\sin 60° \\ne 0$, הגורם השני מתאפס', false,
+  'a factor-must-vanish argument is not a domain of definition');
+hasMech('domain', 'תחום ההגדרה של הפונקציה הוא', true, 'the real thing');
+// UNDER-match: only the bare pi was recognised.
+hasMech('radians', 'הזווית $\\dfrac{2\\pi}{3}$', true, 'a multiple of pi is still radians');
+hasMech('radians', 'הזווית $\\dfrac{\\pi}{4}$', true, 'and the bare one still works');
 hasMech('antiderivative', 'הפונקציה הקדומה היא $F(x) = -\\cos x + C$', true, 'antiderivative');
 hasMech('radians', 'הזווית נתונה ברדיאנים', true, 'radians');
 hasMech('periodicity', 'המחזור של הפונקציה הוא $2\\pi$', true, 'periodicity');

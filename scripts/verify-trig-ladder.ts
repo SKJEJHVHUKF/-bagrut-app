@@ -108,7 +108,12 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   ['double-angle', /2\\sin[^$]{0,14}\\cos|\\cos\^2[^$]{0,14}-\s*\\sin\^2|זווית\s+\S*כפולה/],
   ['tan-definition', /\\tan\\alpha\s*=\s*\\dfrac\{\\sin|\\dfrac\{\\sin\\alpha\}\{\\cos\\alpha\}|הגדרת\s+\S*טנגנס/],
   // ── solving ──────────────────────────────────────────────────────────────
-  ['two-solutions', /שני פתרונות|שתי זוויות אפשריות|הפתרון הקהה|דו-משמע|שתי תשובות/],
+  // OVER-match, reported independently by THREE authors. This mechanism means
+  // the ambiguous SSA case — a sine value admitting an acute AND an obtuse
+  // angle, one of which must then be rejected. "שני פתרונות" is merely a count
+  // of roots, and it fired on every equation question that says how many
+  // answers it has, paying 2.5 points for stating an outcome.
+  ['two-solutions', /שתי זוויות אפשריות|שתי הזוויות האפשריות|הפתרון הקהה|המועמד הקהה|דו-משמע/],
   ['t-substitution', /משתנה עזר|t = \\sin|t = \\cos|הצבת\s+\S*משתנה/],
   ['quadratic', /נוסחת השורשים|משוואה ריבועית|at\^2/],
   ['factoring', /גורם משותף|פירוק לגורמים|מאופס בנפרד/],
@@ -136,18 +141,32 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   // derivative question to make a rung "climb". Same class as
   // lessons_scope_bugs_report_success: correct about what it looked at, wrong
   // about WHAT it looked at.
-  ['radians', /רדיאנ|\\pi\s*\/\s*\d|\\dfrac\{\\pi\}/],
+  // UNDER-match: `\dfrac{\pi}` matched, `\dfrac{2\pi}` and `\dfrac{3\pi}` did
+  // not, so two questions written entirely in radians scored zero for it.
+  ['radians', /רדיאנ|\\pi\s*\/\s*\d|\\[dt]frac\{\d*\\pi\}/],
   ['periodicity', /מחזור|מחזורי|תקופה|\+\s*2\\pi k|360°k|180°k/],
   ['general-solution', /פתרון\s+\S*כללי|משפחת\s+\S*פתרונות|\+\s*2\\pi k|\+\s*360°k/],
-  ['chain-rule', /כלל\s+\S*שרשרת|הפונקציה\s+\S*פנימית|הנגזרת הפנימית/],
+  // UNDER-match: "מכפילים בנגזרת הפנימית" is this stage's own house phrasing
+  // (32 uses) and the pattern demanded the definite article on BOTH words (18
+  // uses). Two pure chain-rule questions scored 0 mechanisms, and an author had
+  // to write a synonym the sub-topic's own teach text does not use.
+  ['chain-rule', /כלל\s+\S*שרשרת|ה?פונקציה\s+ה?פנימית|ה?נגזרת\s+ה?פנימית/],
   ['product-rule', /כלל\s+\S*מכפלה|נגזרת\s+\S*מכפלה/],
   ['quotient-rule', /כלל\s+\S*מנה|נגזרת\s+\S*מנה/],
   // The DERIVATIVE of a trig function, not the words "sin" and "cos" adjacent.
   ['trig-derivative', /\(\\sin[^)]*\)'|\(\\cos[^)]*\)'|נגזרת\s+\S*סינוס|נגזרת\s+\S*קוסינוס|f'\(x\)\s*=\s*[^=]*\\(?:sin|cos)/],
-  ['extremum', /נקודת\s+\S*קיצון|מקסימום|מינימום|מאפסים את הנגזרת|נגזרת\s+\S*מתאפסת/],
+  // OVER-match: the bare words "מקסימום"/"מינימום" name an OUTCOME, and this
+  // mechanism means the calculus move that finds it. It credited an equation
+  // question whose solution merely mentions the maximum of the cosine, and an
+  // author renamed a concept mid-question ("הקצה התחתון של תחום הערכים") purely
+  // to avoid collecting the false credit — the gate shaping prose again.
+  ['extremum', /נקודת\s+\S*קיצון|נקודות\s+\S*קיצון|נקודת\s+\S*מקסימום|נקודת\s+\S*מינימום|מאפסים את הנגזרת|נגזרת\s+\S*מתאפסת|הנגזרת מתאפסת/],
   ['increase-decrease', /תחומי\s+\S*עלייה|תחומי\s+\S*ירידה|עולה בתחום|יורדת בתחום/],
   ['inflection', /נקודת\s+\S*פיתול|נגזרת שנייה/],
-  ['domain', /תחום\s+\S*הגדרה|מוגדרת עבור|\\ne 0/],
+  // OVER-match: a bare `\ne 0` is ANY non-vanishing claim. It paid the domain
+  // mechanism to a step arguing that since one factor is non-zero the OTHER must
+  // vanish — nothing to do with a domain of definition.
+  ['domain', /תחום\s+\S*הגדרה|תחומי\s+\S*הגדרה|מוגדרת עבור|אינה מוגדרת/],
   // Missing entirely at first, so every asymptote question in tf-domain scored
   // 0 mechanisms and the stage read as flat content rather than a blind gate.
   ['asymptote', /אסימפטוט/],
