@@ -467,6 +467,125 @@ areaOk('tf-bag-009  the small region is 1/4', riemann(gap, 0, PI / 3), 0.25);
 areaOk('tf-bag-009  the large region is 9/4', riemann((x) => -gap(x), PI / 3, PI), 2.25);
 areaOk('tf-bag-009  so the total area is 5/2', riemann((x) => Math.abs(gap(x)), 0, PI), 2.5);
 
+// ------------------------------------------------- רמה 5, wave 2 (2026-09-08)
+// The eight questions added to bring every rung to six. Same rule as above:
+// every number below is re-derived from the function, and the two recovered
+// parameters are SOLVED for here rather than copied out of the content — a
+// parameter transcribed from the solution proves nothing about the solution.
+
+// tf-bag-011 — e^x sin x on [0,pi]: the exponential factor never vanishes, so
+// the only zeros of the product are the sine's.
+const fExpSin = (x: number) => Math.exp(x) * Math.sin(x);
+ok('tf-bag-011  e^x has no zero on the interval', rootsR(Math.exp, 0, PI).length === 0);
+ok('tf-bag-011  so e^x sin x vanishes exactly at 0 and pi',
+  closeTo(rootsR(fExpSin, 0, PI), [0, PI]));
+ok('tf-bag-011  and it is strictly positive in between, so there is no third crossing',
+  fExpSin(PI / 2) > 0);
+
+// tf-bag-012 — the tangent slope of x^2 + sin x at pi/2 is exactly pi.
+const fSqSin = (x: number) => x * x + Math.sin(x);
+derivOk("tf-bag-012  (x^2 + sin x)' = 2x + cos x", fSqSin, (x) => 2 * x + Math.cos(x), SAMPLE);
+ok('tf-bag-012  the slope at pi/2 is pi', Math.abs(ddx(fSqSin, PI / 2) - PI) < 1e-5);
+ok('tf-bag-012  and it is NOT pi + 1, the authored distractor',
+  Math.abs(ddx(fSqSin, PI / 2) - (PI + 1)) > 0.5);
+
+// tf-bag-013 — F(x) = 2x - sin 2x differentiates back to 2 - 2cos 2x.
+const bigF13 = (x: number) => 2 * x - Math.sin(2 * x);
+const f13 = (x: number) => 2 - 2 * Math.cos(2 * x);
+derivOk('tf-bag-013  F(x) = 2x - sin 2x is an antiderivative of 2 - 2cos 2x', bigF13, f13, SAMPLE);
+ok('tf-bag-013  f(pi/3) = 3', near(f13(PI / 3), 3));
+ok('tf-bag-013  the "forgot to double the angle" slip gives 1, a different number',
+  near(2 - 2 * Math.cos(PI / 3), 1));
+ok('tf-bag-013  the "forgot the inner derivative" slip gives 5/2, a different number',
+  near(2 - Math.cos((2 * PI) / 3), 2.5));
+
+// tf-bag-014 — e^x(sin x + a). The slope at 0 is 1 + a, so the authored a is
+// solved for from the given slope 3 rather than transcribed.
+const A14 = 3 - ddx((x) => Math.exp(x) * Math.sin(x), 0);
+const f14 = (x: number) => Math.exp(x) * (Math.sin(x) + A14);
+derivOk('tf-bag-014  the factored derivative e^x(sin x + cos x + a) is correct',
+  f14, (x) => Math.exp(x) * (Math.sin(x) + Math.cos(x) + A14), SAMPLE);
+ok('tf-bag-014  the recovered parameter is 2', Math.abs(A14 - 2) < 1e-6, `got ${A14}`);
+ok('tf-bag-014  and with it the slope at x = 0 really is 3', Math.abs(ddx(f14, 0) - 3) < 1e-5);
+
+// tf-bag-015 — sin 2x - x on [0,pi]: two turning points, three monotone stretches.
+const f15 = (x: number) => Math.sin(2 * x) - x;
+const f15p = (x: number) => 2 * Math.cos(2 * x) - 1;
+derivOk("tf-bag-015  (sin 2x - x)' = 2cos 2x - 1", f15, f15p, SAMPLE);
+ok('tf-bag-015  the derivative vanishes at pi/6 and 5pi/6',
+  closeTo(rootsR(f15p, 0, PI), [PI / 6, (5 * PI) / 6]));
+ok('tf-bag-015  the sign pattern really is rising, falling, rising',
+  sgn(f15p(0.05)) === 1 && sgn(f15p(PI / 2)) === -1 && sgn(f15p(PI - 0.05)) === 1);
+
+// tf-bag-016 — e^x(sin x + cos x): the derivative collapses to 2e^x cos x.
+const f16 = (x: number) => Math.exp(x) * (Math.sin(x) + Math.cos(x));
+const f16p = (x: number) => 2 * Math.exp(x) * Math.cos(x);
+derivOk("tf-bag-016  (e^x(sin x + cos x))' = 2e^x cos x", f16, f16p, SAMPLE);
+ok('tf-bag-016  the derivative vanishes at pi/2 and 3pi/2',
+  closeTo(rootsR(f16p, 0, 2 * PI), [PI / 2, (3 * PI) / 2]));
+ok('tf-bag-016  pi/2 is a MAXIMUM',
+  sgn(f16p(PI / 2 - 0.1)) === 1 && sgn(f16p(PI / 2 + 0.1)) === -1);
+ok('tf-bag-016  3pi/2 is a MINIMUM',
+  sgn(f16p((3 * PI) / 2 - 0.1)) === -1 && sgn(f16p((3 * PI) / 2 + 0.1)) === 1);
+ok('tf-bag-016  f(pi/2) = e^(pi/2)', near(f16(PI / 2), Math.exp(PI / 2)));
+ok('tf-bag-016  f(3pi/2) = -e^(3pi/2)', near(f16((3 * PI) / 2), -Math.exp((3 * PI) / 2)));
+
+// tf-bag-017 — sqrt3 sin x + cos x, and the area between its two extrema.
+const f17 = (x: number) => Math.sqrt(3) * Math.sin(x) + Math.cos(x);
+const f17p = (x: number) => Math.sqrt(3) * Math.cos(x) - Math.sin(x);
+derivOk("tf-bag-017  (sqrt3 sin x + cos x)' = sqrt3 cos x - sin x", f17, f17p, SAMPLE);
+ok('tf-bag-017  the derivative vanishes at pi/3 and 4pi/3',
+  closeTo(rootsR(f17p, 0, 2 * PI), [PI / 3, (4 * PI) / 3]));
+ok('tf-bag-017  pi/3 is a MAXIMUM whose value is 2',
+  sgn(f17p(PI / 3 - 0.1)) === 1 && sgn(f17p(PI / 3 + 0.1)) === -1 && near(f17(PI / 3), 2));
+ok('tf-bag-017  4pi/3 is a MINIMUM whose value is -2',
+  sgn(f17p((4 * PI) / 3 - 0.1)) === -1 && sgn(f17p((4 * PI) / 3 + 0.1)) === 1 &&
+    near(f17((4 * PI) / 3), -2));
+ok('tf-bag-017  between them the graph crosses the axis exactly once, at 5pi/6',
+  closeTo(rootsR(f17, PI / 3, (4 * PI) / 3), [(5 * PI) / 6]));
+areaOk('tf-bag-017  the split area between the two extrema is 4',
+  riemann((x) => Math.abs(f17(x)), PI / 3, (4 * PI) / 3), 4);
+areaOk('tf-bag-017  while the unsplit integral is 0 — the trap the question sets',
+  riemann(f17, PI / 3, (4 * PI) / 3), 0);
+
+// tf-bag-018 — a sin x + sin 2x, the four-part exam question. The parameter is
+// the solution of f'(pi/3) = 0, i.e. a·cos(pi/3) + 2cos(2pi/3) = 0.
+const A18 = (-2 * Math.cos((2 * PI) / 3)) / Math.cos(PI / 3);
+const f18 = (x: number) => A18 * Math.sin(x) + Math.sin(2 * x);
+const f18p = (x: number) => A18 * Math.cos(x) + 2 * Math.cos(2 * x);
+ok('tf-bag-018  the recovered parameter is 2', Math.abs(A18 - 2) < 1e-6, `got ${A18}`);
+derivOk("tf-bag-018  (a sin x + sin 2x)' = a cos x + 2cos 2x", f18, f18p, SAMPLE);
+ok('tf-bag-018  and pi/3 really is a zero of that derivative', near(f18p(PI / 3), 0));
+ok('tf-bag-018  the derivative factors as 2(2cos x - 1)(cos x + 1)',
+  SAMPLE.every((x) => Math.abs(f18p(x) - 2 * (2 * Math.cos(x) - 1) * (Math.cos(x) + 1)) < 1e-9));
+ok('tf-bag-018  the first factor vanishes only at pi/3 and 5pi/3',
+  closeTo(rootsR((x) => 2 * Math.cos(x) - 1, 0, 2 * PI), [PI / 3, (5 * PI) / 3]));
+ok('tf-bag-018  the second factor vanishes only at pi',
+  closeTo(rootsR((x) => Math.cos(x) + 1, 0, 2 * PI), [PI]));
+ok('tf-bag-018  pi/3 is a MAXIMUM',
+  sgn(f18p(PI / 3 - 0.1)) === 1 && sgn(f18p(PI / 3 + 0.1)) === -1);
+ok('tf-bag-018  pi is NOT an extremum — the derivative keeps its sign on both sides',
+  sgn(f18p(PI - 0.1)) === -1 && sgn(f18p(PI + 0.1)) === -1);
+ok('tf-bag-018  5pi/3 is a MINIMUM',
+  sgn(f18p((5 * PI) / 3 - 0.1)) === -1 && sgn(f18p((5 * PI) / 3 + 0.1)) === 1);
+ok('tf-bag-018  the tangent at pi is the x-axis: the graph is there and the slope is 0',
+  near(f18(PI), 0) && Math.abs(ddx(f18, PI)) < 1e-5);
+// NOT rootsR here: f behaves like -(x-pi)^3 around pi, so a whole neighbourhood
+// of grid points sits inside the |f| < 1e-9 window and the scan returns the
+// EDGE of that window instead of pi. Assert the property the split needs
+// instead — one sign flip, at pi, and no other zero in between.
+const grid18 = (a: number, b: number) =>
+  Array.from({ length: 199 }, (_, i) => a + ((b - a) * (i + 1)) / 200);
+ok('tf-bag-018  the only zero of f strictly inside [pi/3, 5pi/3] is pi, where the sign flips',
+  near(f18(PI), 0) &&
+    grid18(PI / 3, PI).every((x) => f18(x) > 0) &&
+    grid18(PI, (5 * PI) / 3).every((x) => f18(x) < 0));
+areaOk('tf-bag-018  the first half of the area is 9/4', riemann(f18, PI / 3, PI), 2.25);
+areaOk('tf-bag-018  so the total split area is 9/2',
+  riemann((x) => Math.abs(f18(x)), PI / 3, (5 * PI) / 3), 4.5);
+areaOk('tf-bag-018  while the unsplit integral is 0 — the trap',
+  riemann(f18, PI / 3, (5 * PI) / 3), 0);
+
 // ---------------------------------------------- the answers the STUDENT is graded on
 // Everything above re-derives the mathematics; none of it opens the content
 // file. So a stage could be mathematically right here and still ship an
@@ -487,6 +606,19 @@ const AUTHORED: Record<string, { values: number[]; ofPi?: boolean }> = {
   'tf-bag-008': { values: [1 / 3, 5 / 3], ofPi: true },
   'tf-bag-009': { values: [riemann((x) => Math.abs(gap(x)), 0, PI)] },
   'tf-bag-010': { values: [3, -1] },
+  // Wave 2. An empty `values` means the question has no single machine-graded
+  // number — a justification, a set of monotone intervals, or a multi-part exam
+  // question — so its arithmetic is pinned by the ok() block above instead of
+  // by the AnswerSpec. The four that DO carry a spec are compared against the
+  // computed number, not against the authored one.
+  'tf-bag-011': { values: [] },
+  'tf-bag-012': { values: [PI] },
+  'tf-bag-013': { values: [f13(PI / 3)] },
+  'tf-bag-014': { values: [A14] },
+  'tf-bag-015': { values: [] },
+  'tf-bag-016': { values: [] },
+  'tf-bag-017': { values: [] },
+  'tf-bag-018': { values: [] },
 };
 
 // A distractor that is ALGEBRAICALLY EQUAL to the correct option grades a

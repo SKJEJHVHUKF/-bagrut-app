@@ -705,7 +705,7 @@ $$g(x) = \\lvert f(x)\\rvert$$
     },
     {
       id: 'tf-inv-009',
-      difficulty: 'hard',
+      difficulty: 'mid',
       kind: 'mcq',
       question:
         'בפונקציה $f(x) = 2\\sin x + x$ בתחום $0 \\le x \\le 2\\pi$ נמצא מקסימום מקומי בזווית $\\dfrac{2\\pi}{3}$. האם זהו הערך הגדול ביותר של הפונקציה בתחום?',

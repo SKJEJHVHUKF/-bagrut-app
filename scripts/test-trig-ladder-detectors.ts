@@ -19,7 +19,7 @@
  * So each detector below is pinned with text it MUST match and text it MUST
  * NOT — the must-nots are the real content of this file.
  */
-import { askShape, isReverse, mechanismsOfText } from './verify-trig-ladder';
+import { askShape, hasParameterForTest, isReverse, mechanismsOfText } from './verify-trig-ladder';
 import type { PracticeQuestion } from '../content/lessons/types';
 
 let pass = 0;
@@ -98,7 +98,16 @@ hasMech('double-angle', 'כמה פתרונות יש למשוואה $\\sin 2x = \
 hasMech('double-angle',
   'כמה פתרונות יש למשוואה $\\sin 2x = \\sin x$? נפתח: $2\\sin x\\cos x - \\sin x = 0$', true,
   'the same question WITH its solution opening the angle — this is tf-eq-009');
+// 🔴 A SUM is not a double angle. `2\sin x + \cos x` matched, and an author
+// changed an integrand's coefficient from 2 to 3 to shed the unearned credit —
+// the ruler shaping the maths itself, not merely the wording.
+hasMech('double-angle', 'האינטגרל של $2\\sin x + \\cos x$', false, 'a sum is not the double angle');
+hasMech('double-angle', '$2\\sin x - \\cos x$', false, 'nor is a difference');
 hasMech('asymptote', 'לפונקציה יש אסימפטוטה אנכית ב-', true, 'asymptote');
+// The area window must not run through an equality chain to find a distant sine.
+hasMech('area-sine',
+  '$\\dfrac12 - \\dfrac{2\\cos 2x}{4} = \\dfrac{1 - \\cos 2x}{2} = \\sin^2 x$', false,
+  'a power-reduction check in an integral is not the triangle-area formula');
 
 // ── solving ────────────────────────────────────────────────────────────────
 hasMech('t-substitution', 'מציבים משתנה עזר $t = \\cos x$', true, 'substitution');
@@ -174,6 +183,37 @@ shapeIs('לאיזה ביטוי שווה $\\cos(90° - \\alpha) + \\sin(-\\alpha)
           `      terse:   ${terse}\n      natural: ${natural}`,
       );
   }
+}
+
+// ── 🔴 no gate may reward a string another gate fails the build on ─────────
+// `hasParameter` used to pay +3 for `סמן ב-$a$`, and check-rtl-maqaf REJECTS a
+// maqaf glued to a maths island in this very directory. An author following the
+// score got a red build. This runs every phrasing the parameter detector
+// rewards through the maqaf rule, so the two gates can never disagree again.
+{
+  // The maqaf rule, as check-rtl-maqaf states it: a Hebrew letter, a maqaf, then
+  // a maths island or a digit.
+  const MAQAF_BEFORE_MATH = /[֐-ת]-(?=[$\d])/;
+  const rewarded = [
+    'סמן את הצלע באות $a$',
+    'בטא באמצעות $a$ את שטח המשולש',
+    'עבור אילו ערכים של $k$ יש למשוואה פתרון',
+    'הבע את התוצאה באמצעות $m$',
+  ];
+  for (const phrase of rewarded) {
+    const paid = hasParameterForTest(phrase);
+    const banned = MAQAF_BEFORE_MATH.test(phrase);
+    if (paid && !banned) pass++;
+    else if (!paid)
+      fails.push(`hasParameter no longer rewards a legitimate phrasing\n      ${phrase}`);
+    else
+      fails.push(
+        `hasParameter rewards a string check-rtl-maqaf fails the build on\n      ${phrase}`,
+      );
+  }
+  // and the banned form must NOT be rewarded any more
+  if (!hasParameterForTest('סמן ב-$a$ את הזווית')) pass++;
+  else fails.push('hasParameter still rewards the maqaf form `סמן ב-$a$`');
 }
 
 console.log(`${pass} passed, ${fails.length} failed`);

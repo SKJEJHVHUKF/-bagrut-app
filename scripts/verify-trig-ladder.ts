@@ -80,7 +80,12 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   // The `\s*` lives INSIDE the lookahead on purpose: written as `\s*(?!\\sin)`
   // the engine simply backtracks the whitespace to zero and the lookahead
   // passes, so `\dfrac12 \sin 2x` still matched. Pinned by a test.
-  ['area-sine', /\\[dt]frac(?:12|\{1\}\{2\})(?!\s*\\sin)[^$]{1,60}\\sin/],
+  // `[^$=]`, not `[^$]`: the window used to run 60 characters through an entire
+  // chain of equalities and find a `\sin^2` at the far end, crediting an
+  // integral's power-reduction check with the triangle-area formula. The area
+  // formula is ONE product — a half, two lengths, a sine — so an `=` in
+  // between means we have left it.
+  ['area-sine', /\\[dt]frac(?:12|\{1\}\{2\})(?!\s*\\sin)[^$=]{1,40}\\sin/],
   ['circumradius', /\\dfrac\{abc\}\{4R\}|2R\b|מעגל\s+\S*חוסם|רדיוס\s+\S*מעגל\s+\S*חוסם/],
   // ── the right triangle ───────────────────────────────────────────────────
   ['right-ratios', /הניצב שמול|הניצב שליד|מול חלקי יתר|ליד חלקי יתר|מול חלקי ליד/],
@@ -105,7 +110,13 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   // form, or the Hebrew name. tf-eq-009 still scores, because its solution
   // writes `2\sin x\cos x - \sin x = 0`; a question that merely mentions 2x
   // does not.
-  ['double-angle', /2\\sin[^$]{0,14}\\cos|\\cos\^2[^$]{0,14}-\s*\\sin\^2|זווית\s+\S*כפולה/],
+  // …and a third correction: `2\sin[^$]{0,14}\cos` also matched the SUM
+  // `2\sin x + \cos x`, which contains no double angle at all. An author
+  // changed an integrand's coefficient from 2 to 3 purely to shed the unearned
+  // credit — the ruler shaping the maths itself this time, not just the prose.
+  // Forbidding an operator between the two factors keeps the PRODUCT and drops
+  // the sum.
+  ['double-angle', /2\\sin[^$+\-=]{0,14}\\cos|\\cos\^2[^$]{0,14}-\s*\\sin\^2|זווית\s+\S*כפולה/],
   ['tan-definition', /\\tan\\alpha\s*=\s*\\dfrac\{\\sin|\\dfrac\{\\sin\\alpha\}\{\\cos\\alpha\}|הגדרת\s+\S*טנגנס/],
   // ── solving ──────────────────────────────────────────────────────────────
   // OVER-match, reported independently by THREE authors. This mechanism means
@@ -143,7 +154,11 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   // about WHAT it looked at.
   // UNDER-match: `\dfrac{\pi}` matched, `\dfrac{2\pi}` and `\dfrac{3\pi}` did
   // not, so two questions written entirely in radians scored zero for it.
-  ['radians', /רדיאנ|\\pi\s*\/\s*\d|\\[dt]frac\{\d*\\pi\}/],
+  // Widened twice. `\dfrac{\pi}` matched but `\dfrac{2\pi}` did not; then
+  // `\dfrac{\pi k}` — the standard way to write a solution FAMILY — still did
+  // not, because the brace had to close right after `\pi`. A stage answering
+  // only in general families would have scored zero for radians.
+  ['radians', /רדיאנ|\\pi\s*\/\s*\d|\\[dt]frac\{[^{}]*\\pi[^{}]*\}|\\pi\b/],
   ['periodicity', /מחזור|מחזורי|תקופה|\+\s*2\\pi k|360°k|180°k/],
   ['general-solution', /פתרון\s+\S*כללי|משפחת\s+\S*פתרונות|\+\s*2\\pi k|\+\s*360°k/],
   // UNDER-match: "מכפילים בנגזרת הפנימית" is this stage's own house phrasing
@@ -234,8 +249,18 @@ const OFF_STYLE: [string, RegExp, string[]?][] = [
 ];
 
 /** A quantity is named by a letter and recovered, rather than read off. */
+// 🔴 This detector used to match `סמן ב-$a$` — a maqaf glued to a maths island,
+// which `check-rtl-maqaf.ts` FAILS THE BUILD on for this very directory. One
+// gate paid three points for the exact string another gate rejects, so an author
+// reaching for the natural phrasing got a red build for doing what the score
+// rewarded. Found by an author who sidestepped it and said so.
+//
+// The alternatives below are all forms `check-rtl-maqaf` accepts — it recommends
+// the `באות $a$` rephrasing itself. Pinned by a test that runs every phrase this
+// detector rewards through the maqaf rule.
+export const hasParameterForTest = (text: string) => hasParameter({ question: text } as PracticeQuestion);
 const hasParameter = (q: PracticeQuestion) =>
-  /סמן(?:ו)? (?:את [^ ]+ )?ב-?\$?[a-zx]\$?|בטא(?:ו)? באמצעות|עבור אילו ערכים|באמצעות \$?[a-z]\$?/.test(
+  /סמן(?:ו)? (?:את [^.]{0,24})?באות \$?[a-z]\$?|בטא(?:ו)? באמצעות|עבור אילו ערכים|באמצעות \$?[a-z]\$?/.test(
     q.question,
   );
 
@@ -249,7 +274,11 @@ const hasParameter = (q: PracticeQuestion) =>
 // protect. Same root cause as the sine/cosine collision above, opposite
 // symptom: there `\S*` matched too much, here it matches too little.
 export const isReverse = (q: PracticeQuestion) =>
-  /נתון(?:ה)? (?:ה)?שטח[^.]{0,40}(?:מצא|חשב)[^.]{0,14}(?:זווית|צלע)|ידוע (?:כי|ש)[^.]{0,60}(?:מצא|חשב) את[^.]{0,14}(?:הזווית|הצלע|הרדיוס)|כדי ש[^.]*יתקיים|איזה ערך[^.]*יגרום/.test(
+  // The noun list also carries the CALCULUS unknowns. Without them a question
+  // giving an area and asking for the limit of integration — a textbook
+  // backwards inference — earned nothing, so every "recover the bound" question
+  // in tf-integral was under-scored.
+  /נתון(?:ה)? (?:ה)?שטח[^.]{0,40}(?:מצא|חשב)[^.]{0,20}(?:זווית|צלע|גבול|חסם|פרמטר|ערך)|ידוע (?:כי|ש)[^.]{0,60}(?:מצא|חשב) את[^.]{0,20}(?:הזווית|הצלע|הרדיוס|הגבול|החסם|הפרמטר)|כדי ש[^.]*יתקיים|איזה ערך[^.]*יגרום/.test(
     q.question,
   );
 
