@@ -22,8 +22,10 @@
 
 import type { PracticeQuestion } from '../../types';
 import { EXTRA as MIXED } from './mixed';
+import { EXTRA as METHOD } from './method';
 
 /** Stage sub-topic id → the questions appended to that stage. */
 export const GEO_EXTRA: Record<string, PracticeQuestion[]> = {
+  'eg-method': METHOD,
   'eg-mixed': MIXED,
 };
