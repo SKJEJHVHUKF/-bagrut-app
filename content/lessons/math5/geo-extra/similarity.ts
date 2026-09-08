@@ -137,7 +137,7 @@ export const EXTRA: PracticeQuestion[] = [
       'א. הוכח כי $\\triangle BDE \\sim \\triangle BCA$.\n\n' +
       'ב. מצא את $DE$ ואת $BE$.\n\n' +
       'ג. מצא את שטח $\\triangle BDE$.\n\n' +
-      '```geo\n{"points":{"A":[0,12],"B":[16,0],"C":[0,0],"D":[9.6,4.8],"E":[6,0]},"polygons":["ABC"],"segments":[{"s":"DE","accent":true},{"s":"BD","accent":true}],"right":[{"at":"C","from":"A","to":"B"},{"at":"D","from":"B","to":"E"}],"labels":[{"on":"AC","text":"12"},{"on":"BC","text":"16"},{"on":"BD","text":"8"}],"width":340}\n```',
+      '```geo\n{"points":{"A":[0,12],"B":[16,0],"C":[0,0],"D":[9.6,4.8],"E":[6,0]},"polygons":["ABC"],"segments":[{"s":"DE","accent":true},{"s":"BD","accent":true}],"right":[{"at":"C","from":"A","to":"B"},{"at":"D","from":"B","to":"E"}],"labels":[{"on":"AC","text":"12"},{"on":"BD","text":"8"}],"width":340}\n```',
     hint: 'לסעיף א: איזו זווית משותפת לשני המשולשים, ואיזו זווית ישרה יש בכל אחד מהם? לסעיף ב מצא קודם את $AB$ בפיתגורס, ואז את יחס הדמיון מהזוג $BD$ מול $BC$. שים לב מי מתאים למי לפי סדר הקודקודים.',
     expected: { kind: 'set', values: ['6', '10', '24'] },
     answerLabels: ['DE (ס"מ)', 'BE (ס"מ)', 'שטח BDE (סמ"ר)'],
