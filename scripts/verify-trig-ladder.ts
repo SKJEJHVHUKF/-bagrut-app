@@ -298,6 +298,29 @@ function scoreOf(q: PracticeQuestion): number {
   );
 }
 
+/**
+ * 🔴 REACH must compare like with like, and it did not.
+ *
+ * `examBar()` deliberately takes the HARDEST PART of an archived question,
+ * because part ג is easy once א and ב are done and averaging every part
+ * flatters the ladder. But `scoreOf` measures an authored question WHOLE — it
+ * sums the steps and mechanisms of every part and adds 2 per part. So a
+ * genuine four-part exam question scored ~3× a bar built from single parts,
+ * and `tf-bagrut` reported 152% reach for a structural reason rather than a
+ * mathematical one. Nothing was padded; the two sides were simply different
+ * units. Reported by the author who wrote that four-part question.
+ *
+ * The gradient comparisons are unaffected — those are authored-against-authored
+ * under one rule — so this normalisation is applied to REACH only. Dividing by
+ * the part count yields the AVERAGE part against a bar built from the HARDEST
+ * part, which understates rather than flatters. That is the right direction to
+ * err in a number quoted to the owner.
+ */
+const reachScore = (q: PracticeQuestion): number => {
+  const parts = (q.question.match(/\n[אבגד]\.\s/g) ?? []).length;
+  return parts >= 2 ? scoreOf(q) / parts : scoreOf(q);
+};
+
 /** Makes "the challenge rung is the practice rung with different numbers"
  *  visible to a machine. */
 const signatureOf = (q: PracticeQuestion) =>
@@ -365,7 +388,7 @@ function main() {
     console.log(
       st.id.padEnd(26) +
         RUNGS.map((r) => `${by[r].length}  ${score[r].toFixed(1)}  ${mech[r].toFixed(1)}`.padEnd(20)).join('') +
-        `${((score.hard / bar.bar) * 100).toFixed(0)}%`,
+        `${((mean(by.hard.map(reachScore)) / bar.bar) * 100).toFixed(0)}%`,
     );
 
     // `--stage <id>` prints every question's score. A rung average says a rung
