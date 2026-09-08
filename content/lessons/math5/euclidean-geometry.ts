@@ -1,6 +1,17 @@
-import type { Lesson } from '../types';
+import type { Lesson, SubTopic } from '../types';
 import { EUCLIDEAN_EXTRA_STAGES, EUCLIDEAN_BAGRUT_EXTRA } from './euclidean-stages';
 import { EUCLIDEAN_ANGLE_STAGE, EUCLIDEAN_ANGLE_BAGRUT } from './euclidean-angles';
+import { GEO_EXTRA } from './geo-extra';
+
+/** Append each stage's widening questions (./geo-extra) after its originals.
+ *  The ladder groups by `difficulty`, so order within a rung is authoring
+ *  order: reviewed baseline first, widening second. Same shape as
+ *  ROOT_QUOTIENT_STAGES in functions-root-quotient.ts. */
+const withExtraQuestions = (stages: SubTopic[]): SubTopic[] =>
+  stages.map((s) => {
+    const extra = GEO_EXTRA[s.id] ?? [];
+    return extra.length ? { ...s, questions: [...(s.questions ?? []), ...extra] } : s;
+  });
 
 export const math5EuclideanGeometry: Lesson = {
   subject: 'math5',
@@ -1607,7 +1618,7 @@ $OP \\perp t$ כאשר $P$ נקודת השקה.
 
   // (the concepts array above predates the track; the track stages are the
   //  subTopics below)
-  subTopics: [
+  subTopics: withExtraQuestions([
     // רמה 0 (איתי, 2026-08-30): יחסים בין זוויות וחשבון קטעים — הרצפה שכל
     // הוכחה נשענת עליה. ראשון גם כאן, כדי ש-prev/next ילכו בסדר הנלמד.
     ...EUCLIDEAN_ANGLE_STAGE,
@@ -4826,5 +4837,5 @@ $$PT^2 = PA \\cdot PB.$$
       ],
     },
     ...EUCLIDEAN_EXTRA_STAGES,
-  ],
+  ]),
 };
