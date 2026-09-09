@@ -75,8 +75,25 @@ export const SECTION = {
 } as const;
 
 /** "עוד אין מספיק תרגול כדי לומר משהו על סדרות, הסתברות." */
-export function thinTopics(topics: string[]): string {
-  return `עוד אין מספיק תרגול כדי לומר משהו על ${topics.join(', ')}.`;
+/**
+ * Why a topic has no word yet.
+ *
+ * ⚠️ THE OLD WORDING BLAMED THE STUDENTS FOR A THRESHOLD. "עוד אין מספיק
+ * תרגול" reads as "nobody practised", and a teacher whose class HAS practised
+ * concludes the system is not tracking — which is exactly what one told us
+ * while looking at a screen that had 102 of his answers from that same day.
+ *
+ * The real reason is `RETEACH_MIN_STUDENTS`: a class VERDICT needs several
+ * students before it means anything, so one student's bad week cannot condemn
+ * a topic for thirty. In a class that small the sentence has to say so, and
+ * point at where the per-student truth actually lives.
+ */
+export function thinTopics(topics: string[], studentCount?: number, minStudents = 5): string {
+  const list = topics.join(', ');
+  if (typeof studentCount === 'number' && studentCount < minStudents) {
+    return `כדי לקבוע מצב של נושא לכיתה צריך ${minStudents} תלמידים עם נתונים, ובכיתה הזאת יש ${studentCount}. הנתונים של כל תלמיד קיימים ומתעדכנים — הם בכרטיס שלו.`;
+  }
+  return `עוד אין מספיק תרגול כדי לומר משהו על ${list}.`;
 }
 
 /** "תקועים: שיר מ. · רן כ." */

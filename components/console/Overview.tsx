@@ -13,6 +13,7 @@
 
 import NextStep from '@/components/console/NextStep';
 import StudentGroups from '@/components/console/StudentGroups';
+import ClassMistakes from '@/components/console/ClassMistakes';
 import TopicLights from '@/components/console/TopicLights';
 
 export default function Overview() {
@@ -20,6 +21,11 @@ export default function Overview() {
     <div className="flex flex-col gap-8">
       <NextStep />
       <StudentGroups cap={6} />
+      {/* Above the topic lights on purpose: "what is broken" is a lesson plan,
+          "הסתברות: ללמד שוב" is a heading. The named cause should be the thing
+          a teacher reads first once he knows who needs him. It self-hides when
+          there is nothing to name. */}
+      <ClassMistakes />
       <TopicLights />
     </div>
   );

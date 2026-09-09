@@ -19,6 +19,9 @@ import { buildClassBoard, type BoardAttempt } from '@/lib/class-board';
 import { assignmentProgress } from '@/lib/assignment-progress';
 import { describeFocus, type Rung } from '@/lib/focus-target';
 import { formatJoinCode } from '@/lib/join-code';
+import { buildReport } from '@/lib/report';
+import type { ResultEvent } from '@/lib/results';
+import { classMistakes, type StudentMistakes } from '@/lib/class-mistakes';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,8 +65,16 @@ export async function GET(
     studentIds.length
       ? ctx.db
           .from('attempts')
+          // ⚠️ The last six columns are what turns "43% בוקטורים" into "מחשב
+          // שליפה עם החזרה כשנדרשת שליפה בלי החזרה". `chosen_index` +
+          // `question_id` are the pair lib/remediation reads against the
+          // cognition maps' trigger index — the WRONG OPTION he picked is what
+          // names the misconception. Without them the board can only say a
+          // percentage, which is what it did: of 325 wrong answers in
+          // production, 6 had a name.
           .select(
-            'user_id, topic, sub_topic_id, correct, is_repeat, hint_used, diagnosis, created_at'
+            'user_id, topic, sub_topic_id, correct, is_repeat, hint_used, diagnosis, created_at, ' +
+              'ts, question_id, source, difficulty, kind, chosen_index, option_count, self_reported'
           )
           .in('user_id', studentIds)
           .gte('created_at', since)
@@ -92,6 +103,67 @@ export async function GET(
   );
 
   const board = buildClassBoard(roster, attempts, Date.now());
+
+  // ---- what is actually broken, per student and for the class --------------
+  //
+  // The board above says WHERE (topic, percentage). This says WHAT, in the
+  // Hebrew somebody authored: a named misconception where the student picked a
+  // wrong OPTION the cognition map recognises, and the exact sub-topic
+  // otherwise. Same engine the private-teacher board uses — imported, not
+  // re-implemented, so the two boards cannot describe one student differently.
+  //
+  // `mistakes`/`history`/`healed` are empty on purpose: the error notebook is
+  // localStorage-only and never synced, so a server-side value would be a
+  // false zero rather than a fact. buildReport degrades to the parts it can
+  // compute from the answers themselves.
+  const now = Date.now();
+  const eventsOf = new Map<string, ResultEvent[]>();
+  for (const raw of (attemptsRes.data ?? []) as Record<string, unknown>[]) {
+    const sid = String(raw.user_id);
+    const list = eventsOf.get(sid) ?? [];
+    list.push({
+      ts: Number(raw.ts ?? Date.parse(String(raw.created_at))),
+      subject: 'math5',
+      topic: String(raw.topic ?? ''),
+      subTopicId: (raw.sub_topic_id as string) ?? undefined,
+      questionId: (raw.question_id as string) ?? undefined,
+      source: (raw.source as ResultEvent['source']) ?? 'drill',
+      difficulty: (raw.difficulty as ResultEvent['difficulty']) ?? undefined,
+      correct: !!raw.correct,
+      repeat: !!raw.is_repeat,
+      hintUsed: !!raw.hint_used,
+      selfReported: !!raw.self_reported,
+      kind: (raw.kind as 'mcq' | 'open') ?? undefined,
+      chosenIndex: raw.chosen_index === null ? undefined : Number(raw.chosen_index),
+      optionCount: raw.option_count === null ? undefined : Number(raw.option_count),
+    } as ResultEvent);
+    eventsOf.set(sid, list);
+  }
+
+  const byStudent: Record<string, StudentMistakes> = {};
+  for (const s of roster) {
+    const events = (eventsOf.get(s.id) ?? []).sort((a, b) => a.ts - b.ts);
+    if (events.length === 0) continue;
+    const report = buildReport({
+      subject: 'math5',
+      events,
+      mistakes: [],
+      history: [],
+      healed: {},
+      healCount: {},
+      now,
+    });
+    byStudent[s.id] = {
+      weaknesses: report.weaknesses.map((w) => ({
+        kind: w.kind,
+        topic: w.topic,
+        subTopicId: w.subTopicId,
+        title: w.title,
+        detail: w.detail,
+        chronic: !!w.chronic,
+      })),
+    };
+  }
 
   // ---- how each focus is going ---------------------------------------------
   //
@@ -194,6 +266,14 @@ export async function GET(
     },
     board,
     focuses,
+    mistakes: {
+      byStudent,
+      // The same mistake, counted across the class. This is the one that turns
+      // thirty private diagnoses into a lesson: "7 תלמידים עושים את אותה
+      // טעות" is a thing to teach on Sunday, and it carries the exact ids so
+      // the practice goes to those seven and nobody else.
+      shared: classMistakes(byStudent, new Map(roster.map((r) => [r.id, r.name]))),
+    },
     // Told, never inferred: an empty board because nobody has joined is a
     // different screen from an empty board because nobody has worked.
     windowDays: WINDOW_DAYS,

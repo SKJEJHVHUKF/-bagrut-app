@@ -21,6 +21,7 @@
 
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { ClassBoard } from '@/lib/class-board';
+import type { StudentMistakes, SharedMistake } from '@/lib/class-mistakes';
 import { demoBoard, demoFocuses } from '@/lib/demo-board';
 import type { Rung } from '@/lib/rungs';
 
@@ -58,6 +59,13 @@ export type ClassPayload = {
   board: ClassBoard;
   focuses: FocusRow[];
   windowDays: number;
+  /** What is actually broken, in words — see lib/class-mistakes. Optional so a
+   *  page served from a cached response that predates it renders one section
+   *  short instead of throwing. */
+  mistakes?: {
+    byStudent: Record<string, StudentMistakes>;
+    shared: SharedMistake[];
+  };
 };
 
 /**
@@ -96,6 +104,10 @@ type Ctx = {
    *  back instead of making a teacher count ticked names. */
   focusPreselectLabel: string | null;
   closeFocus: () => void;
+  /** Named mistakes for one student, or [] when there are none to name. */
+  mistakesOf: (studentId: string) => StudentMistakes['weaknesses'];
+  /** The ones more than one student shares, commonest first. */
+  sharedMistakes: SharedMistake[];
 };
 
 const ClassCtx = createContext<Ctx | null>(null);
@@ -145,6 +157,11 @@ export function ClassProvider({
       setFocusFor(null);
       setFocusTopic(null);
     },
+    // Sample mode invents students, so it has no real diagnoses to show. An
+    // empty list makes those sections self-hide rather than inventing a
+    // misconception for a student who does not exist.
+    mistakesOf: (studentId) => (isDemo ? [] : (data.mistakes?.byStudent[studentId]?.weaknesses ?? [])),
+    sharedMistakes: isDemo ? [] : (data.mistakes?.shared ?? []),
   };
 
   return <ClassCtx.Provider value={value}>{children}</ClassCtx.Provider>;

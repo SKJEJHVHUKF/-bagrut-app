@@ -15,7 +15,7 @@
 
 import { motion } from 'framer-motion';
 import { BookOpen, Target } from 'lucide-react';
-import { topicSummary, type TopicState } from '@/lib/class-board';
+import { topicSummary, RETEACH_MIN_STUDENTS, type TopicState } from '@/lib/class-board';
 import { fadeUp, inViewProps } from '@/lib/animations';
 import { TopicIcon } from '@/components/roadmap/TopicIcon';
 import { useClass } from '@/components/console/ClassContext';
@@ -32,12 +32,17 @@ export default function TopicLights() {
   const { board, isDemo, openFocus } = useClass();
   const rows = topicSummary(board);
   const thin = board.topics.filter((t) => !rows.some((r) => r.topic === t));
+  // Below the sample-size gate no topic can ever get a word, so the footnote
+  // has to explain the THRESHOLD rather than imply nobody practised.
+  const small = board.studentCount < RETEACH_MIN_STUDENTS;
 
   return (
     <motion.section variants={fadeUp} {...inViewProps}>
       <SectionHead icon={BookOpen} title="הנושאים" hint="מילה אחת לכל נושא" />
       {rows.length === 0 ? (
-        <p className="surface-premium rounded-2xl px-5 py-6 text-base text-slate-700">{EMPTY.topics}</p>
+        <p className="surface-premium rounded-2xl px-5 py-6 text-base leading-relaxed text-slate-700">
+          {small ? thinTopics([], board.studentCount, RETEACH_MIN_STUDENTS) : EMPTY.topics}
+        </p>
       ) : (
         <ul className="surface-premium divide-y divide-slate-900/[0.06] rounded-2xl">
           {rows.map((r) => (
@@ -85,7 +90,11 @@ export default function TopicLights() {
           ))}
         </ul>
       )}
-      {thin.length > 0 && <p className="mt-2 text-base text-slate-700">{thinTopics(thin)}</p>}
+      {thin.length > 0 && (
+        <p className="mt-2 text-base leading-relaxed text-slate-700">
+          {thinTopics(thin, board.studentCount, RETEACH_MIN_STUDENTS)}
+        </p>
+      )}
     </motion.section>
   );
 }

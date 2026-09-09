@@ -15,8 +15,9 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowRight, Target, Printer, Lightbulb, BookOpen, AlertCircle, Activity, Send } from 'lucide-react';
+import { ArrowRight, Target, Printer, Lightbulb, BookOpen, AlertCircle, Activity, Send, Brain } from 'lucide-react';
 import { fadeUp, inViewProps } from '@/lib/animations';
+import { MathText } from '@/components/practice/MathText';
 import { masteryCell } from '@/lib/mastery-scale';
 import { ACTIVITY_DAYS, type StudentRow } from '@/lib/class-board';
 import { TopicIcon } from '@/components/roadmap/TopicIcon';
@@ -36,7 +37,7 @@ import { Avatar, StateChip, Btn, btnSecondary, SectionHead } from '@/components/
 
 export default function StudentPage() {
   const { sid } = useParams<{ sid: string }>();
-  const { board, focuses, base, isDemo, openFocus } = useClass();
+  const { board, focuses, base, isDemo, openFocus, mistakesOf } = useClass();
   const s = board.students.find((x) => x.id === sid);
 
   if (!s) {
@@ -54,6 +55,15 @@ export default function StudentPage() {
   const sent = focuses.filter((f) => f.studentIds === null || f.studentIds.includes(s.id));
   const named = s.recentWrong.filter((w) => w.note);
   const unnamed = s.recentWrong.length - named.length;
+
+  // What is broken, as opposed to where. `misconception` = the engine
+  // recognised the WRONG OPTION he picked and can name the thinking behind it;
+  // `subtopic` = it cannot name the thought, but it knows exactly which
+  // sub-topic he keeps failing. Both beat a percentage, which is all this page
+  // could say before.
+  const diagnoses = mistakesOf(s.id);
+  const causes = diagnoses.filter((d) => d.kind === 'misconception');
+  const places = diagnoses.filter((d) => d.kind !== 'misconception');
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -124,6 +134,85 @@ export default function StudentPage() {
             </div>
           </motion.section>
 
+          {/* ============================================================
+              WHAT HE DOES NOT UNDERSTAND — the section this page was missing.
+              A percentage says he failed; this says what he was thinking when
+              he did. The wording is authored Hebrew from content/cognition,
+              addressed to the STUDENT (second person), which is why it is
+              labelled as the text he himself sees rather than reworded — Hebrew
+              does not survive a person-swap as a string transform. */}
+          {diagnoses.length > 0 && (
+            <motion.section variants={fadeUp} {...inViewProps}>
+              <SectionHead
+                icon={Brain}
+                title={`מה ${s.name} לא מבין`}
+                hint="הניסוח הוא הטקסט שהוא עצמו רואה באפליקציה"
+              />
+              <ul className="flex flex-col gap-2">
+                {causes.map((d) => (
+                  <li
+                    key={`${d.topic}-${d.subTopicId}-${d.title}`}
+                    className="surface-premium rounded-2xl border-r-4 border-violet-500 px-4 py-3"
+                  >
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="rounded-full bg-violet-700 px-3 py-0.5 text-sm font-black text-white">
+                        טעות מזוהה
+                      </span>
+                      {d.chronic && (
+                        <span className="rounded-full bg-red-700 px-3 py-0.5 text-sm font-black text-white">
+                          חזרה אחרי תיקון
+                        </span>
+                      )}
+                      {/* Through MathText, never raw: a weakness title can carry
+                          $…$, and in an RTL line a bare formula renders its
+                          dollars and reverses q^{'{n-1}'} into q^{'{1-n}'}. */}
+                      <span className="font-display text-lg font-black text-ink">
+                        <MathText inline>{d.title}</MathText>
+                      </span>
+                      <span className="text-base text-slate-700">{d.topic}</span>
+                    </div>
+                    <div className="mt-1.5 text-base leading-relaxed text-slate-800">
+                      <MathText inline>{d.detail}</MathText>
+                    </div>
+                    {!isDemo && (
+                      <Btn
+                        kind="secondary"
+                        className="mt-3"
+                        onClick={() => openFocus({ studentId: s.id, name: s.name }, d.topic)}
+                      >
+                        <Target className="h-4 w-4" aria-hidden />
+                        תרגול על הטעות הזאת
+                      </Btn>
+                    )}
+                  </li>
+                ))}
+
+                {/* Cannot name the thought, but knows exactly where he falls —
+                    which is still a sub-topic a teacher can open a book on,
+                    not a topic-wide percentage. */}
+                {places.map((d) => (
+                  <li
+                    key={`${d.topic}-${d.subTopicId}-${d.title}`}
+                    className="surface-premium rounded-2xl border-r-4 border-amber-400 px-4 py-3"
+                  >
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      {/* Through MathText, never raw: a weakness title can carry
+                          $…$, and in an RTL line a bare formula renders its
+                          dollars and reverses q^{'{n-1}'} into q^{'{1-n}'}. */}
+                      <span className="font-display text-lg font-black text-ink">
+                        <MathText inline>{d.title}</MathText>
+                      </span>
+                      <span className="text-base text-slate-700">{d.topic}</span>
+                    </div>
+                    <div className="mt-1.5 text-base leading-relaxed text-slate-800">
+                      <MathText inline>{d.detail}</MathText>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </motion.section>
+          )}
+
           {s.recentWrong.length > 0 && (
             <motion.section variants={fadeUp} {...inViewProps}>
               <SectionHead icon={AlertCircle} title={SECTION.mistakes} hint="הטעויות עצמן, החדשות קודם" />
@@ -148,7 +237,15 @@ export default function StudentPage() {
                 ))}
                 {unnamed > 0 && (
                   <li className="px-4 py-3 text-base text-slate-700">
-                    ועוד {unnamed} תשובות שגויות שהמערכת לא ידעה לתת להן שם.
+                    {/* The old wording — "המערכת לא ידעה לתת להן שם" — read as
+                        a system that is not tracking. It is not: these are
+                        OPEN questions, where the student wrote an answer
+                        instead of picking one, so there is no chosen option to
+                        recognise a misconception from. Where he keeps falling
+                        is still known, and is in the section above. */}
+                    ועוד {unnamed} תשובות שגויות בשאלות פתוחות. בשאלה פתוחה הוא כותב את התשובה
+                    במקום לבחור, ולכן אין אפשרות לזהות מה חשב — אבל תת-הנושא שבו הוא נופל מופיע
+                    למעלה.
                   </li>
                 )}
               </ul>
