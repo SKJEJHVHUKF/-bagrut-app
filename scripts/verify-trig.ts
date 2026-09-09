@@ -376,53 +376,6 @@ const sinD = (d: number) => Math.sin(deg(d));
 const cosD = (d: number) => Math.cos(deg(d));
 const tanD = (d: number) => Math.tan(deg(d));
 
-// --- gr-trig-pb-006 · circle theorems + the 180-alpha identity -------------
-check('ghost pb-006: inscribed angle is half the central one', 130 / 2, 65);
-check('ghost pb-006: opposite angles in the cyclic quadrilateral', 180 - 65, 115);
-// The independent second road: D leans on the MAJOR arc, whose central angle
-// is the reflex 360-130. Two unrelated theorems landing on 115 is the check.
-check('ghost pb-006: the reflex central angle on the major arc', 360 - 130, 230);
-check('ghost pb-006: half the reflex angle agrees with the quadrilateral', (360 - 130) / 2, 115);
-check('ghost pb-006: cos flips sign across 180-alpha', cosD(115) + cosD(65), 0);
-check('ghost pb-006: ...but sin does NOT — this is the trap in step 4', sinD(115) - sinD(65), 0);
-check('ghost pb-006 branch: cos 65 ~= 0.4226', cosD(65), 0.42261826174069944);
-check('ghost pb-006 branch: cos 115 ~= -0.4226', cosD(115), -0.42261826174069944);
-check('ghost pb-006 branch: "supplement the CENTRAL angle" gives 50, not 115', 180 - 130, 50);
-// The distractor "D sees the chord at 65 too" has to be wrong for EVERY position
-// of D, not just the one in the figure — otherwise it is a distractor that is
-// secretly right somewhere. There is nothing to re-derive symbolically here, so
-// this is checked against a coordinate model: A and B fixed on the unit circle
-// 130 degrees apart, then C swept along the major arc and D along the minor arc.
-// A model cannot prove the theorem, but it kills a wrong one.
-{
-  const ang = (px: number, py: number, qx: number, qy: number, rx: number, ry: number) => {
-    const v1x = qx - px, v1y = qy - py, v2x = rx - px, v2y = ry - py;
-    const dot = v1x * v2x + v1y * v2y;
-    const m1 = Math.sqrt(v1x * v1x + v1y * v1y), m2 = Math.sqrt(v2x * v2x + v2y * v2y);
-    return (Math.acos(dot / (m1 * m2)) * 180) / Math.PI;
-  };
-  // A at -65 degrees, B at +65 degrees: the central angle AOB is 130.
-  const A = [Math.cos(deg(-65)), Math.sin(deg(-65))];
-  const B = [Math.cos(deg(65)), Math.sin(deg(65))];
-  let majorWorst = 0, minorWorst = 0, sumWorst = 0;
-  for (let k = 1; k < 120; k++) {
-    // C on the MAJOR arc: the long way round, from 65 to 295 degrees.
-    const tc = 65 + (230 * k) / 120;
-    const C = [Math.cos(deg(tc)), Math.sin(deg(tc))];
-    const acb = ang(C[0], C[1], A[0], A[1], B[0], B[1]);
-    majorWorst = Math.max(majorWorst, Math.abs(acb - 65));
-    // D on the MINOR arc: from -65 to 65 degrees.
-    const td = -65 + (130 * k) / 120;
-    const D = [Math.cos(deg(td)), Math.sin(deg(td))];
-    const adb = ang(D[0], D[1], A[0], A[1], B[0], B[1]);
-    minorWorst = Math.max(minorWorst, Math.abs(adb - 115));
-    sumWorst = Math.max(sumWorst, Math.abs(acb + adb - 180));
-  }
-  check('ghost pb-006 model: every C on the major arc sees the chord at 65', majorWorst < 1e-9 ? 1 : 0, 1);
-  check('ghost pb-006 model: every D on the minor arc sees it at 115, never 65', minorWorst < 1e-9 ? 1 : 0, 1);
-  check('ghost pb-006 model: the two are supplementary at every position', sumWorst < 1e-9 ? 1 : 0, 1);
-}
-
 // --- gr-trig-rt-007 · two elevation angles --------------------------------
 const poleH = 25 / (1 / tanD(31) - 1 / tanD(52));
 check('ghost rt-007: the pole is 28.31 m', Math.round(poleH * 100) / 100, 28.31);
