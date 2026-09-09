@@ -47,6 +47,11 @@ export type DiagramSpec =
        *  Order matches sides opposite to vertices: [opp A, opp B, opp C]
        *  = [BC, CA, AB]. Used for sine/cosine theorems. */
       sideLabels?: [string, string, string];
+      /** Optional angle labels (α, β, γ) drawn INSIDE the triangle at each
+       *  vertex, in vertex order [A, B, C]. Itay, 2026-09-09: the naming figure
+       *  showed a, b, c with no Greek letters, so the convention it exists to
+       *  teach ("the side a is opposite the angle α") was only half drawn. */
+      angleLabels?: [string, string, string];
       caption?: string;
     }
   /** Two triangles drawn side-by-side, showing congruence or similarity. */

@@ -228,6 +228,28 @@ function TriangleSVG({
           </>
         );
       })()}
+      {/* Angle labels (α, β, γ) — INSIDE the triangle, nudged from each vertex
+          toward the centroid so they never collide with the vertex letter that
+          sits just outside it. */}
+      {spec.angleLabels && (() => {
+        const inward = (v: { x: number; y: number }) => {
+          const dx = triCenter.x - v.x;
+          const dy = triCenter.y - v.y;
+          const len = Math.hypot(dx, dy) || 1;
+          const offset = 26;
+          return { x: v.x + (dx / len) * offset, y: v.y + (dy / len) * offset };
+        };
+        const pa = inward(a);
+        const pb = inward(b);
+        const pc = inward(c);
+        return (
+          <>
+            <Label x={pa.x} y={pa.y} text={spec.angleLabels[0]} />
+            <Label x={pb.x} y={pb.y} text={spec.angleLabels[1]} />
+            <Label x={pc.x} y={pc.y} text={spec.angleLabels[2]} />
+          </>
+        );
+      })()}
       {/* Vertex labels */}
       <Label x={a.x} y={a.y} text={A} dx={-10} dy={6} />
       <Label x={b.x} y={b.y} text={B} dx={12} dy={6} />
