@@ -63,23 +63,60 @@ const SYMBOLIC_GIVEN =
 /** The parameter surviving INTO the answer. */
 const SYMBOLIC_ANSWER = /[abkmnpqrt](?![a-z])/;
 
-export function isParametric(q: { question: string; solution?: { finalAnswer?: string } }): boolean {
-  const t = q.question;
-  // An explicit "express in terms of …" ask can only be answered symbolically.
-  if (EXPRESSION_ASK.test(t)) return true;
-  // 🔴 A symbolic GIVEN is not enough on its own. Reported by an author: a
-  // question can state `$PQ = 3a$` and still have the parameter cancel, leaving
-  // a bare number — which is a calculation, exactly what Itay is contrasting
-  // parameters with ("כל הבגרות זה בכלל הבעות ולא חישובים"). Counting those
-  // would let a weak rewrite reach the target without teaching one הבעה.
-  // So a symbolic given only counts when the parameter SURVIVES into the final
-  // answer, or the answer is declared unmarkable because it is symbolic.
-  if (SYMBOLIC_GIVEN.test(t)) {
-    const fa = q.solution?.finalAnswer ?? '';
-    const math = fa.match(/\$[^$]+\$/g)?.join(' ') ?? fa;
-    return SYMBOLIC_ANSWER.test(math.replace(/\\[a-zA-Z]+/g, ''));
+/**
+ * The symbol the question ITSELF names after "באמצעות".
+ *
+ * 🔴 `x` is excluded from SYMBOLIC_ANSWER on purpose — it is normally the
+ * unknown of an equation. But `בטא באמצעות $x$ את אורך הצלע $BC$` names `x` as
+ * the thing to express IN, which makes it the parameter of that question and
+ * nothing else. Judging it by the default letter class marked two real הבעה
+ * questions as numeric. When the ask names its symbol, believe the ask.
+ */
+function askedSymbols(t: string): string[] {
+  const out = new Set<string>();
+  for (const m of t.matchAll(/באמצעות\s+\$([^$]+)\$/g)) {
+    for (const ch of m[1].replace(/\\[a-zA-Z]+/g, '').match(/[a-z]/g) ?? []) out.add(ch);
   }
-  return false;
+  return [...out];
+}
+
+/**
+ * Did the parameter actually DO anything?
+ *
+ * 🔴 The anti-gaming guard used to sit inside the `SYMBOLIC_GIVEN` branch only,
+ * so a question phrased `הבע באמצעות $a$ …` whose parameter cancels on the
+ * first line counted as parametric. An author hit exactly that twice while
+ * writing and rewrote both on judgement, because nothing flagged them — which
+ * means the metric could have been satisfied without teaching one הבעה.
+ *
+ * Requiring the parameter in the FINAL ANSWER would be wrong in the other
+ * direction: the classic exam shape expresses in `a` and then RECOVERS `a`, so
+ * its final answer is legitimately a number. The honest test is whether
+ * symbolic work happened at all — the parameter has to survive through more
+ * than one step of the solution.
+ */
+function parameterDoesWork(q: {
+  question: string;
+  solution?: { finalAnswer?: string; steps?: string[] };
+}): boolean {
+  const steps = q.solution?.steps ?? [];
+  if (!steps.length) return true; // nothing to judge on; do not penalise
+  const named = askedSymbols(q.question);
+  const symbol = named.length ? new RegExp(`[${named.join('')}](?![a-z])`) : SYMBOLIC_ANSWER;
+  const carries = steps.filter((s) => {
+    const math = (s.match(/\$[^$]+\$/g) ?? []).join(' ').replace(/\\[a-zA-Z]+/g, '');
+    return symbol.test(math);
+  }).length;
+  return carries >= 2;
+}
+
+export function isParametric(q: {
+  question: string;
+  solution?: { finalAnswer?: string; steps?: string[] };
+}): boolean {
+  const t = q.question;
+  if (!EXPRESSION_ASK.test(t) && !SYMBOLIC_GIVEN.test(t)) return false;
+  return parameterDoesWork(q);
 }
 
 const RUNGS = ['easy', 'mid', 'hard'] as const;
