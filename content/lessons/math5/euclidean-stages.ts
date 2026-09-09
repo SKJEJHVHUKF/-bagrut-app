@@ -2626,7 +2626,7 @@ export const EUCLIDEAN_BAGRUT_EXTRA: StaticBagrutQuestion[] = [
     difficulty: 'hard',
     topic_tag: 'מרובע חסום במעגל + דמיון + שטחים',
     subTopicId: 'eg-mixed',
-    context: 'המרובע $ABCD$ חסום במעגל. האלכסון $AC$ והאלכסון $BD$ נחתכים בנקודה $E$.\n\n```geo\n{"points":{"A":[-6,0],"B":[1.556,2.565],"C":[4,0],"D":[-4.151,-6.839],"E":[0,0],"O":[-1,-2.317]},"circles":[{"center":"O","r":5.511,"on":["A","B","C","D"]}],"polygons":["ABCD"],"segments":["AC","BD"],"angles":[{"at":"B","from":"A","to":"D","label":"40°"}],"hidden":["O"]}\n```',
+    context: 'המרובע $ABCD$ חסום במעגל. האלכסון $AC$ והאלכסון $BD$ נחתכים בנקודה $E$.\n\n```geo\n{"points":{"A":[-6,0],"B":[1.556,2.565],"C":[4,0],"D":[-4.151,-6.839],"E":[0,0],"O":[-1,-2.317]},"circles":[{"center":"O","r":5.511,"on":["A","B","C","D"]}],"polygons":["ABCD"],"segments":["AC","BD"],"angles":[{"at":"B","from":"A","to":"D","label":"40°"}],"hidden":["O"],"width":380}\n```',
     parts: [
       {
         label: 'א',
@@ -2642,7 +2642,7 @@ export const EUCLIDEAN_BAGRUT_EXTRA: StaticBagrutQuestion[] = [
             '**הכלל:** זוויות היקפיות הנשענות על אותה קשת שוות. המרובע חסום במעגל, לכן כל ארבעת הקודקודים על המעגל, והזוויות $\\angle ABD$, $\\angle ACD$ הן זוויות היקפיות, ובודקים על איזו קשת נשענת כל אחת מהן.',
             '$\\angle ABD$ היא זווית היקפית שקודקודה $B$ על המעגל, והיא נשענת על הקשת $AD$.',
             '$\\angle ACD$ היא זווית היקפית שקודקודה $C$ על המעגל, והיא נשענת על אותה קשת $AD$.',
-            'בסרטוט מסמנים את שתי הזוויות שנשענות על הקשת $AD$:\n\n```geo\n{"points":{"A":[-6,0],"B":[1.556,2.565],"C":[4,0],"D":[-4.151,-6.839],"E":[0,0],"O":[-1,-2.317]},"circles":[{"center":"O","r":5.511,"on":["A","B","C","D"]}],"polygons":["ABCD"],"segments":["AC","BD"],"angles":[{"at":"B","from":"A","to":"D","label":"40°","n":1,"accent":true},{"at":"C","from":"A","to":"D","n":1,"accent":true}],"hidden":["O"]}\n```',
+            'בסרטוט מסמנים את שתי הזוויות שנשענות על הקשת $AD$:\n\n```geo\n{"points":{"A":[-6,0],"B":[1.556,2.565],"C":[4,0],"D":[-4.151,-6.839],"E":[0,0],"O":[-1,-2.317]},"circles":[{"center":"O","r":5.511,"on":["A","B","C","D"]}],"polygons":["ABCD"],"segments":["AC","BD"],"angles":[{"at":"B","from":"A","to":"D","label":"40°","n":1,"accent":true},{"at":"C","from":"A","to":"D","n":1,"accent":true}],"hidden":["O"],"width":380}\n```',
             '$\\angle ACD = \\angle ABD$, זוויות היקפיות הנשענות על אותה קשת שוות.',
             'לכן $\\angle ACD = 40°$, מש״ל.',
           ],

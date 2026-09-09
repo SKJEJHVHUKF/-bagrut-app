@@ -81,8 +81,212 @@ export function GeoFigure({ spec }: { spec: GeoSpec }) {
   };
   const unit = (a: XY, b: XY): XY => { const d = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2) || 1; return { x: (b.x - a.x) / d, y: (b.y - a.y) / d }; };
 
+  /**
+   * Where each angle LABEL will be drawn, in the same geometry the angles block
+   * below uses. A point's letter radiates from the same vertex, and at a
+   * crossing (four neighbours summing to ~0) labelDir falls back to "away from
+   * the figure centre" — which can aim the letter straight through the angle
+   * label, so O and "126°" printed as one smudge.
+   */
+  const angleLabelDirs = new Map<string, Pt[]>();
+  const byVertex = new Map<string, { i: number; mid: number }[]>();
+  (spec.angles ?? []).forEach((an, i) => {
+    if (!an.label || !P[an.at] || !P[an.from] || !P[an.to]) return;
+    const v = P[an.at], a = P[an.from], b = P[an.to];
+    const ta = Math.atan2(a[1] - v[1], a[0] - v[0]), tb = Math.atan2(b[1] - v[1], b[0] - v[0]);
+    let d = tb - ta;
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d <= -Math.PI) d += 2 * Math.PI;
+    const mid = ta + d / 2;
+    angleLabelDirs.set(an.at, [...(angleLabelDirs.get(an.at) ?? []), [Math.cos(mid), Math.sin(mid)]]);
+    byVertex.set(an.at, [...(byVertex.get(an.at) ?? []), { i, mid }]);
+  });
+  /**
+   * Extra radius per angle label, so two labels sharing a vertex do not print
+   * on one another. Both sit on their own bisector at the same distance, so
+   * "45°" and "45°" at a right angle landed 20px apart and merged; pushing the
+   * second one further out separates them without moving either off its arc.
+   */
+  const labelBump = new Map<number, number>();
+  for (const group of byVertex.values()) {
+    const sorted = [...group].sort((x, y) => x.mid - y.mid);
+    const placed: { mid: number; bump: number }[] = [];
+    for (const g of sorted) {
+      const gap = (u: number, w: number) => {
+        const e = Math.abs(u - w) % (2 * Math.PI);
+        return (e > Math.PI ? 2 * Math.PI - e : e) * (180 / Math.PI);
+      };
+      let bump = 0;
+      while (placed.some((p) => p.bump === bump && gap(p.mid, g.mid) < 55)) bump += 15;
+      placed.push({ mid: g.mid, bump });
+      if (bump) labelBump.set(g.i, bump);
+    }
+  }
+  const COS55 = Math.cos((55 * Math.PI) / 180);
+  /**
+   * labelDir, nudged off any angle label sharing this vertex — and off any
+   * length label that would land on the letter. `segLabelApprox` is the
+   * midpoint anchor plus the sideways step: it does NOT depend on pointDir, so
+   * consulting it here introduces no circularity, while the exact position
+   * (which does depend on pointDir) is settled later.
+   */
+  const pointDir = (n: string): Pt => {
+    const base = labelDir(n);
+    const away = angleLabelDirs.get(n);
+    const near = segLabelApprox.filter((q) => Math.hypot(q.x - pt(n).x, q.y - pt(n).y) < 34);
+    if (!away?.length && !near.length) return base;
+    const at13 = (d: Pt) => { const o = pt(n); return { x: o.x + d[0] * 13, y: o.y - d[1] * 13 }; };
+    const clear = (d: Pt) =>
+      (away ?? []).every((w) => d[0] * w[0] + d[1] * w[1] < COS55) &&
+      near.every((q) => { const p2 = at13(d); return Math.hypot(p2.x - q.x, p2.y - q.y) > 16; });
+    if (clear(base)) return base;
+    const p = P[n];
+    const edges = (nb.get(n) ?? []).map((m) => {
+      const q = P[m], L = Math.sqrt((q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2) || 1;
+      return [(q[0] - p[0]) / L, (q[1] - p[1]) / L] as Pt;
+    });
+    // Score, never filter: a crossing ringed by four angle labels has no
+    // direction 55° clear of all of them, and a hard filter there selects
+    // nothing and leaves the letter exactly where it collided. Farthest-
+    // available always beats giving up.
+    let best = base, bestScore = -Infinity;
+    for (let k = 0; k < 24; k++) {
+      const th = (k / 24) * 2 * Math.PI;
+      const cand: Pt = [Math.cos(th), Math.sin(th)];
+      const off = (away ?? []).length
+        ? Math.min(...(away ?? []).map((w) => 1 - (cand[0] * w[0] + cand[1] * w[1])))
+        : 2;
+      const lab = near.length
+        ? Math.min(...near.map((q) => { const p2 = at13(cand); return Math.hypot(p2.x - q.x, p2.y - q.y); })) / 16
+        : 2;
+      const gap = edges.length ? Math.min(...edges.map((e) => 1 - (cand[0] * e[0] + cand[1] * e[1]))) : 1;
+      const score = Math.min(off, lab) + 0.25 * gap; // clearing labels dominates; edges break ties
+      if (score > bestScore) { bestScore = score; best = cand; }
+    }
+    return best;
+  };
+
   const segs = (spec.segments ?? []).map((sg) => (typeof sg === 'string' ? { s: sg } : sg));
   const polys = (spec.polygons ?? []).map((pg) => (typeof pg === 'string' ? { s: pg } : pg));
+  /** Approximate landing spot of each length label — no pointDir involved. */
+  const segLabelApprox = (spec.labels ?? []).flatMap((l) => {
+    if (!l.on) return [];
+    const ns = names(l.on);
+    if (ns.length !== 2 || !P[ns[0]] || !P[ns[1]]) return [];
+    const A = P[ns[0]], B = P[ns[1]];
+    const mid: Pt = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+    let nx = -(B[1] - A[1]), ny = B[0] - A[0];
+    const nl = Math.sqrt(nx * nx + ny * ny) || 1; nx /= nl; ny /= nl;
+    const owner = polys
+      .map((pg) => names(pg.s).filter((n) => P[n]))
+      .find((vs) => {
+        const i = vs.indexOf(ns[0]), j = vs.indexOf(ns[1]);
+        return i >= 0 && j >= 0 && (Math.abs(i - j) === 1 || Math.abs(i - j) === vs.length - 1);
+      });
+    let flip: boolean;
+    if (owner?.length) {
+      const gx = owner.reduce((t, n) => t + P[n][0], 0) / owner.length;
+      const gy = owner.reduce((t, n) => t + P[n][1], 0) / owner.length;
+      flip = nx * (gx - mid[0]) + ny * (gy - mid[1]) > 0;
+    } else {
+      let pos = 0, neg = 0;
+      for (const [n, q] of Object.entries(P)) {
+        if (n === ns[0] || n === ns[1]) continue;
+        const side = nx * (q[0] - mid[0]) + ny * (q[1] - mid[1]);
+        if (side > 1e-9) pos++; else if (side < -1e-9) neg++;
+      }
+      flip = pos !== neg ? pos > neg : nx * (mid[0] - cx) + ny * (mid[1] - cy) < 0;
+    }
+    if (flip) { nx = -nx; ny = -ny; }
+    const c = toXY(mid);
+    return [{ x: c.x + nx * 12, y: c.y - ny * 12 }];
+  });
+
+  /**
+   * Final position of every length label, placed SEQUENTIALLY so each one also
+   * avoids the labels already placed. Placing them independently is what put
+   * "5" on "24" and "12" on "16": each was individually clear of every point
+   * letter, and neither could see the other.
+   */
+  const labelPlan = new Map<number, XY>();
+  {
+    const placed: { x: number; y: number; w: number; h: number }[] = [];
+    (spec.labels ?? []).forEach((l, i) => {
+      if (!l.on) return;
+      const ns = names(l.on);
+      if (ns.length !== 2 || !P[ns[0]] || !P[ns[1]]) return;
+      const A = P[ns[0]], B = P[ns[1]];
+      const at = (t: number): Pt => [A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t];
+      // A tick is pinned to the segment's midpoint and cannot move, so a label
+      // on a ticked segment steps off by the tick's half-width plus its own.
+      const tickN = (spec.ticks ?? [])
+        .filter((t) => { const tn = names(t.on); return tn.length === 2 && tn.includes(ns[0]) && tn.includes(ns[1]); })
+        .reduce((n, t) => Math.max(n, Math.max(1, Math.min(3, Math.round(t.n)))), 0);
+      const segPx = Math.sqrt((B[0] - A[0]) ** 2 + (B[1] - A[1]) ** 2) * s;
+      const step = tickN
+        ? Math.min(0.34, ((tickN - 1) * 2.5 + 4.5 + 0.31 * 12.5 * l.text.length + 3) / Math.max(segPx, 1))
+        : 0;
+      const cands = step ? [0.5 - step, 0.5 + step] : [0.5, 0.35, 0.65, 0.28, 0.72];
+      const mid0 = at(0.5);
+      let nx = -(B[1] - A[1]), ny = B[0] - A[0];
+      const nl = Math.sqrt(nx * nx + ny * ny) || 1; nx /= nl; ny /= nl;
+      // Put the length OUTSIDE the shape the segment belongs to. When the
+      // segment is a polygon edge, that polygon's centroid settles it exactly.
+      // A head-count over every point in the figure gets this backwards as soon
+      // as a second shape stands nearby: in a two-triangle congruence figure
+      // ABC's three vertices outvoted F and pushed DE's "5" inside DEF.
+      const owner = polys
+        .map((pg) => names(pg.s).filter((n) => P[n]))
+        .find((vs) => {
+          const a = vs.indexOf(ns[0]), b = vs.indexOf(ns[1]);
+          return a >= 0 && b >= 0 && (Math.abs(a - b) === 1 || Math.abs(a - b) === vs.length - 1);
+        });
+      let flip: boolean;
+      if (owner?.length) {
+        const gx = owner.reduce((t, n) => t + P[n][0], 0) / owner.length;
+        const gy = owner.reduce((t, n) => t + P[n][1], 0) / owner.length;
+        flip = nx * (gx - mid0[0]) + ny * (gy - mid0[1]) > 0; // centroid on +n → label to −n
+      } else {
+        let pos = 0, neg = 0;
+        for (const [n, q] of Object.entries(P)) {
+          if (n === ns[0] || n === ns[1]) continue;
+          const side = nx * (q[0] - mid0[0]) + ny * (q[1] - mid0[1]);
+          if (side > 1e-9) pos++; else if (side < -1e-9) neg++;
+        }
+        flip = pos !== neg ? pos > neg : nx * (mid0[0] - cx) + ny * (mid0[1] - cy) < 0;
+      }
+      if (flip) { nx = -nx; ny = -ny; }
+      // Glyph BOX, not a circle: two labels 20px apart but stacked vertically
+      // still overlap, and a radius model scored that as clear.
+      const wSelf = 0.62 * 12.5 * l.text.length + 5, hSelf = 17.5;
+      // Clearance is measured where the label ACTUALLY lands — after the 12px
+      // sideways step — against every point's LETTER (this segment's own
+      // endpoints included: a letter sits 13px out from its dot, so on a short
+      // segment it is nearer the label than the dot ever was) and against the
+      // labels already placed.
+      const clear = (p: Pt) => {
+        const c = toXY(p), lx = c.x + nx * 12, ly = c.y - ny * 12;
+        const toLetters = Object.keys(P).filter((n) => !hidden.has(n)).reduce((d, n) => {
+          const lp = pt(n), ld = pointDir(n);
+          return Math.min(d, Math.hypot(lx - (lp.x + ld[0] * 13), ly - (lp.y - ld[1] * 13)));
+        }, Infinity);
+        const toLabels = placed.length
+          ? Math.min(...placed.map((q) => Math.max(
+              Math.abs(lx - q.x) - (wSelf + q.w) / 2,
+              Math.abs(ly - q.y) - (hSelf + q.h) / 2,
+            ))) + 16
+          : Infinity;
+        return Math.min(toLetters, toLabels);
+      };
+      const pts = cands.map(at);
+      const m = pts.find((q) => clear(q) > 18)
+        ?? pts.reduce((best, q) => (clear(q) > clear(best) ? q : best), pts[0]);
+      const c = toXY(m);
+      const final = { x: c.x + nx * 12, y: c.y - ny * 12 };
+      labelPlan.set(i, final);
+      placed.push({ ...final, w: wSelf, h: hSelf });
+    });
+  }
 
   return (
     <div className="my-2 flex justify-center">
@@ -145,7 +349,7 @@ export function GeoFigure({ spec }: { spec: GeoSpec }) {
             return `${R(vs.x + Math.cos(t) * rad)},${R(vs.y - Math.sin(t) * rad)}`;
           }).join(' ');
           const base = angleAt(v, a, b) < 20 ? 22 : 15;
-          const mid = ta + d / 2, lr = base + 4 * (n - 1) + 12;
+          const mid = ta + d / 2, lr = base + 4 * (n - 1) + 12 + (labelBump.get(i) ?? 0);
           return (
             <g key={`a${i}`}>
               {Array.from({ length: n }, (_, k) => <polyline key={k} points={arc(base + k * 4)} fill="none" stroke={col} strokeWidth={1.5} />)}
@@ -159,28 +363,9 @@ export function GeoFigure({ spec }: { spec: GeoSpec }) {
         {(spec.labels ?? []).map((l, i) => {
           const col = l.accent ? ACCENT : INK;
           if (l.on) {
-            const ns = names(l.on);
-            if (ns.length !== 2 || !P[ns[0]] || !P[ns[1]]) return null;
-            const A = P[ns[0]], B = P[ns[1]];
-            // Anchor at the midpoint — unless a named point sits there (the
-            // crossing of two diagonals): then slide to the emptier third.
-            const at = (t: number): Pt => [A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t];
-            const crowd = (p: Pt) => Object.entries(P).filter(([n]) => n !== ns[0] && n !== ns[1]).reduce((d, [, q]) => Math.min(d, Math.sqrt((q[0]-p[0])**2 + (q[1]-p[1])**2) * s), Infinity);
-            const m = [0.5, 0.3, 0.7].map(at).find((p) => crowd(p) > 14) ?? at(0.5);
-            let nx = -(B[1] - A[1]), ny = B[0] - A[0];
-            const nl = Math.sqrt(nx * nx + ny * ny) || 1; nx /= nl; ny /= nl;
-            // Put the length on the emptier side of the segment (outside a
-            // triangle, not across its interior); tie → away from the figure.
-            let pos = 0, neg = 0;
-            for (const [n, q] of Object.entries(P)) {
-              if (n === ns[0] || n === ns[1]) continue;
-              const side = nx * (q[0] - m[0]) + ny * (q[1] - m[1]);
-              if (side > 1e-9) pos++; else if (side < -1e-9) neg++;
-            }
-            const flip = pos !== neg ? pos > neg : nx * (m[0] - cx) + ny * (m[1] - cy) < 0;
-            if (flip) { nx = -nx; ny = -ny; }
-            const q = toXY(m);
-            return <text key={`l${i}`} x={R(q.x + nx * 12)} y={R(q.y - ny * 12)} fill={col} fontSize={12.5} fontFamily={FONT} fontWeight={600} textAnchor="middle" dominantBaseline="middle">{l.text}</text>;
+            const q = labelPlan.get(i);
+            if (!q) return null;
+            return <text key={`l${i}`} x={R(q.x)} y={R(q.y)} fill={col} fontSize={12.5} fontFamily={FONT} fontWeight={600} textAnchor="middle" dominantBaseline="middle">{l.text}</text>;
           }
           if (l.at && P[l.at]) {
             const q = pt(l.at), dir = labelDir(l.at);
@@ -190,7 +375,7 @@ export function GeoFigure({ spec }: { spec: GeoSpec }) {
         })}
 
         {Object.keys(P).filter((n) => !hidden.has(n)).map((n) => {
-          const q = pt(n), dir = labelDir(n);
+          const q = pt(n), dir = pointDir(n);
           return (
             <g key={`pt${n}`}>
               <circle cx={R(q.x)} cy={R(q.y)} r={2.6} fill={INK} />

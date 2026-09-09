@@ -49,7 +49,7 @@ console.log(`${picked.length} figures match "${FILTER}"`);
 const COLS = 3;
 const CELL_W = 420;
 const CELL_H = 320;
-const PER_SHEET = COLS * 3;
+const PER_SHEET = COLS * 4;
 
 async function main() {
   mkdirSync('scratch', { recursive: true });
@@ -95,7 +95,9 @@ async function main() {
         },
       ]),
     );
-    const out = `scratch/geo-sheet-${(FILTER || 'all').replace(/[^\w.-]/g, '_')}-${s}.png`;
+    // sanitise AND cap: a long comma-separated filter produced a >255-char name
+    // and sharp failed with a bare "unable to open for write".
+    const out = `scratch/geo-sheet-${(FILTER || 'all').replace(/[^\w.-]/g, '_').slice(0, 60)}-${s}.png`;
     await sheet.png().toFile(out);
     console.log(out);
   }
