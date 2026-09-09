@@ -7,7 +7,7 @@
 // escape so the hardest rung can't dead-end the climb.
 
 import { useCallback, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { orderQuestions, studentTier } from '@/lib/adaptive';
 import { retrySet } from '@/lib/roadmap-mastery';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
@@ -180,13 +180,32 @@ export function RoadmapLevelRunner({
           </button>
           {/* Owner, 2026-09-05: "תעשה שיהיה אפשר לחזור אחורה בשאלות". The rung
               used to move forward only, so a student who wanted to re-read a
-              question they had just answered had no way back to it. */}
+              question they had just answered had no way back to it.
+
+              🔴 Owner again, 2026-09-09, in red and marked דחוף: "סיימתי את
+              שאלה 2 ועכשיו אני רוצה לחזור ל-1 כדי לראות משהו, אז אי אפשר."
+              The back button DID exist — but going back was a one-way trip.
+              There was no way forward again except re-answering a question you
+              had already answered, so stepping back felt like losing your
+              place and nobody used it. That is why it read as "impossible".
+              Both directions now exist, as real buttons rather than grey
+              micro-text sitting beside "לסולם". */}
           {pos > 0 && (
             <button
               onClick={() => setPos(pos - 1)}
-              className="text-slate-500 hover:text-slate-800 inline-flex items-center gap-1 font-bold"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-2.5 py-1 font-bold text-slate-600 hover:border-slate-400 hover:text-slate-900"
             >
-              <ArrowRight className="w-3.5 h-3.5" /> לשאלה הקודמת
+              <ArrowRight className="w-3.5 h-3.5" /> הקודמת
+            </button>
+          )}
+          {/* Forward again — only where the student has ALREADY answered this
+              question, so it can never skip an unanswered one. */}
+          {pos + 1 < pool.length && answers[current.id] && (
+            <button
+              onClick={() => setPos(pos + 1)}
+              className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-2.5 py-1 font-bold text-slate-600 hover:border-slate-400 hover:text-slate-900"
+            >
+              הבאה <ArrowLeft className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
