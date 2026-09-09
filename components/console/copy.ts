@@ -42,7 +42,7 @@ export const TOPIC_WORD: Record<TopicState, string> = {
 export const BTN = {
   send: 'שלח תרגול',
   sendClass: 'שלח לכיתה תרגול',
-  card: 'כרטיס',
+  card: 'ההתקדמות שלו',
   report: 'דוח להורים',
   excel: 'אקסל',
   print: 'הדפסה',
@@ -88,6 +88,13 @@ export const SECTION = {
  * a topic for thirty. In a class that small the sentence has to say so, and
  * point at where the per-student truth actually lives.
  */
+/** The card's button. Named, because "כרטיס" told a teacher what the thing IS
+ *  and not what pressing it does — and on a board of thirty cards, the name is
+ *  what tells him which student he is about to open. */
+export function progressLabel(name: string): string {
+  return `ההתקדמות של ${name}`;
+}
+
 export function thinTopics(topics: string[], studentCount?: number, minStudents = 5): string {
   const list = topics.join(', ');
   if (typeof studentCount === 'number' && studentCount < minStudents) {

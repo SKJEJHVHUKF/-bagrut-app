@@ -7,29 +7,30 @@
  * "who is this and does he need me", and a percentage answers neither. The
  * numbers live one click deeper, on his page, where they come second and
  * small.
+ *
+ * ⚠️ THE CARD OPENS HIS PROGRESS — it does not send practice.
+ * It used to do the opposite: the students who needed the teacher most got a
+ * "שלח תרגול" button, and everyone else got a quiet link to their page. The
+ * owner read that and said the board "only points at giving practice, without
+ * real tracking of the student" — and he was right about the ORDER. Sending
+ * practice before opening the student is prescribing before examining, and it
+ * was the loudest button on the screen precisely where the teacher knew least.
+ *
+ * The send did not disappear; it moved to where the teacher can already see
+ * what he is aiming at — the student's own page, and the class-mistakes rows,
+ * which name the mistake first and send to exactly the students who make it.
  */
 
 import Link from 'next/link';
-import { ArrowLeft, Target } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { StudentRow } from '@/lib/class-board';
 import { useClass } from '@/components/console/ClassContext';
-import { cardLine, BTN } from '@/components/console/copy';
-import { Avatar, StateChip, Btn, btnSecondary } from '@/components/console/ui';
+import { cardLine, progressLabel } from '@/components/console/copy';
+import { Avatar, StateChip, btnPrimary } from '@/components/console/ui';
 
-export type StudentGroupKey = 'needs' | 'fine' | 'fresh';
-
-export default function StudentCard({
-  student,
-  group,
-}: {
-  student: StudentRow;
-  group: StudentGroupKey;
-}) {
-  const { base, isDemo, openFocus } = useClass();
+export default function StudentCard({ student }: { student: StudentRow }) {
+  const { base } = useClass();
   const href = `${base}/student/${student.id}`;
-  // "שלח תרגול" only where it is the obvious next thing — and never in the
-  // sample view, whose ids are invented.
-  const canSend = group === 'needs' && !isDemo;
 
   return (
     <article className="surface-premium card-3d flex h-full flex-col gap-3 rounded-2xl p-4">
@@ -51,23 +52,10 @@ export default function StudentCard({
       <p className="text-base leading-relaxed text-slate-800">{cardLine(student)}</p>
 
       <div className="mt-auto pt-1">
-        {canSend ? (
-          <Btn
-            kind="primary"
-            className="w-full"
-            onClick={() =>
-              openFocus({ studentId: student.id, name: student.name }, student.stuck[0]?.topic ?? null)
-            }
-          >
-            <Target className="h-4 w-4" aria-hidden />
-            {BTN.send}
-          </Btn>
-        ) : (
-          <Link href={href} className={`${btnSecondary} w-full`}>
-            {BTN.card}
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-          </Link>
-        )}
+        <Link href={href} className={`${btnPrimary} w-full`}>
+          {progressLabel(student.name)}
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+        </Link>
       </div>
     </article>
   );

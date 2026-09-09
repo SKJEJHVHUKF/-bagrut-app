@@ -19,7 +19,7 @@ import { fadeUp, staggerContainer, inViewProps } from '@/lib/animations';
 import { useClass } from '@/components/console/ClassContext';
 import { GROUP, EMPTY, BTN } from '@/components/console/copy';
 import { SectionHead } from '@/components/console/ui';
-import StudentCard, { type StudentGroupKey } from '@/components/console/StudentCard';
+import StudentCard from '@/components/console/StudentCard';
 
 /** How much of a topic a student got wrong, summed over the topics he is
  *  stuck in — the ordering key for "who needs me most". Evidence, not a
@@ -71,15 +71,15 @@ export default function StudentGroups({
           >
             {needs.map((s) => (
               <motion.div key={s.id} variants={fadeUp}>
-                <StudentCard student={s} group="needs" />
+                <StudentCard student={s} />
               </motion.div>
             ))}
           </motion.div>
         )}
       </section>
 
-      <CalmGroup title={GROUP.fine} icon={CheckCircle2} students={fine} group="fine" cap={cap} moreHref={`${base}/students`} />
-      <CalmGroup title={GROUP.fresh} icon={UserPlus} students={fresh} group="fresh" cap={cap} moreHref={`${base}/students`} />
+      <CalmGroup title={GROUP.fine} icon={CheckCircle2} students={fine} cap={cap} moreHref={`${base}/students`} />
+      <CalmGroup title={GROUP.fresh} icon={UserPlus} students={fresh} cap={cap} moreHref={`${base}/students`} />
     </div>
   );
 }
@@ -91,14 +91,12 @@ function CalmGroup({
   title,
   icon,
   students,
-  group,
   cap,
   moreHref,
 }: {
   title: string;
   icon: LucideIcon;
   students: StudentRow[];
-  group: StudentGroupKey;
   cap?: number;
   moreHref: string;
 }) {
@@ -121,7 +119,7 @@ function CalmGroup({
       />
       <div className="perspective-1500 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {shown.map((s) => (
-          <StudentCard key={s.id} student={s} group={group} />
+          <StudentCard key={s.id} student={s} />
         ))}
       </div>
     </motion.section>
