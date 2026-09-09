@@ -214,6 +214,19 @@ entry is ever FOUND):
    frame you reach for most often is already half of the banned pair. The rule
    in full: never put `למה`/`מה`/`כמה`/`איך`/`כיצד`/`באיזה`/`באיזו` in the same
    phrasing as `חיבור`/`סכום`/`מחברים`/`לחבר`/any `חבר`-stem.
+   🔑 **Silent merges measured on פונקציות, all unavoidable vocabulary there:**
+   `שבר` → **`חילוק`** (identical to `מחלקים`/`חלקי`), so "מחלקים את השבר" is
+   one token twice · `מנה` ≡ `יחס`, so "פונקציית מנה" and "יחס המקדמים
+   המובילים" collide · `מחובר`/`מחוברים` is a `חבר`-stem and therefore counts
+   as `חיבור` — it is the ordinary word for the two terms of the quotient rule
+   (write `איברים`/`חלקים`) · `במקום` → `איבר`, and the hazard is the ordinary
+   connective "instead of", not the noun · `שלישית` → `num:0.3333` via the
+   `ית` suffix, so "ממעלה שלישית" carries a number (write `ממעלה 3`).
+   🔴 **`מאפס` → `num:0`, but `שמאפס` does NOT.** Prefixes are stripped from
+   the ORIGINAL word only and `stems()` needs ≥5 letters, so the 4-letter
+   `מאפס` yields `אפס` while `שמאפס` yields only `{שמאפס, מאפס}`. A held alt
+   reading "…מאפס את המכנה" paired with a visible alt reading "…שמאפס את
+   המכנה" silently loses a whole group. This is trap #3 wearing a prefix.
    🔑 **Two more silent synonym traps of the same family:** `לקוח`/`לקוחות`
    canonicalises to **`חילוק`** (so a customer-calls word problem cannot be
    anchored on `לקוחות` — use `שיחות` / `עסקאות`), and `מקום`/`במקום`
@@ -276,6 +289,13 @@ entry is ever FOUND):
     differed by the single frame word `אסור`, and by `כאשר` vs `כש־`, scored
     4/5 and 5/6 coverage, and would have fired **0%** with every gate green.
     Assert the coverage; do not eyeball it.
+    🔑 **And identity is not merely convenient, it is mechanical:**
+    `test-tutor-faq` builds the transfer pool with
+    `buildFaqIndex(poolOf(near), { idf })` — **no `exclude`** — so the twin's
+    held positions 1 and 4 are indexed VERBATIM and the query scores exactly
+    1.00 with a wide margin. That is how three slices reached 100%, 100% and
+    97.8%. Reword the twin and you are betting the reworded form still clears
+    the 0.66 transfer threshold; identity does not bet.
     🔴 **AND A SHARED ENTRY NEEDS TWO CONTENT GROUPS, AS A HARD GATE.** Stage 2
     runs with `minContentMatches: 2` and `matchFaq` returns null on
     `contentIdx.length < 2` BEFORE it scores anything. A `concept` held alt like
