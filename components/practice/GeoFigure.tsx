@@ -89,7 +89,7 @@ export function GeoFigure({ spec }: { spec: GeoSpec }) {
    * label, so O and "126°" printed as one smudge.
    */
   const angleLabelDirs = new Map<string, Pt[]>();
-  const byVertex = new Map<string, { i: number; mid: number }[]>();
+  const byVertex = new Map<string, { i: number; mid: number; at: string; text: string; n: number; base: number }[]>();
   (spec.angles ?? []).forEach((an, i) => {
     if (!an.label || !P[an.at] || !P[an.from] || !P[an.to]) return;
     const v = P[an.at], a = P[an.from], b = P[an.to];
@@ -99,7 +99,11 @@ export function GeoFigure({ spec }: { spec: GeoSpec }) {
     while (d <= -Math.PI) d += 2 * Math.PI;
     const mid = ta + d / 2;
     angleLabelDirs.set(an.at, [...(angleLabelDirs.get(an.at) ?? []), [Math.cos(mid), Math.sin(mid)]]);
-    byVertex.set(an.at, [...(byVertex.get(an.at) ?? []), { i, mid }]);
+    byVertex.set(an.at, [...(byVertex.get(an.at) ?? []), {
+      i, mid, at: an.at, text: an.label,
+      n: Math.max(1, Math.min(3, Math.round(an.n ?? 1))),
+      base: angleAt(v, a, b) < 20 ? 22 : 15,
+    }]);
   });
   /**
    * Extra radius per angle label, so two labels sharing a vertex do not print
@@ -109,17 +113,26 @@ export function GeoFigure({ spec }: { spec: GeoSpec }) {
    */
   const labelBump = new Map<number, number>();
   for (const group of byVertex.values()) {
-    const sorted = [...group].sort((x, y) => x.mid - y.mid);
-    const placed: { mid: number; bump: number }[] = [];
-    for (const g of sorted) {
-      const gap = (u: number, w: number) => {
-        const e = Math.abs(u - w) % (2 * Math.PI);
-        return (e > Math.PI ? 2 * Math.PI - e : e) * (180 / Math.PI);
-      };
+    // Compare the label BOXES, not the angle between them: "4x+10" and
+    // "2x+20" sat 90° apart — far past any angular threshold — and still
+    // overlapped, because each is ~39px wide at a 27px radius.
+    const placed: { x: number; y: number; w: number; h: number }[] = [];
+    for (const g of [...group].sort((x, y) => x.mid - y.mid)) {
+      const v = pt(g.at);
+      const w = 0.62 * 12 * g.text.length + 5, h = 17;
       let bump = 0;
-      while (placed.some((p) => p.bump === bump && gap(p.mid, g.mid) < 55)) bump += 15;
-      placed.push({ mid: g.mid, bump });
-      if (bump) labelBump.set(g.i, bump);
+      for (;;) {
+        const lr = g.base + 4 * (g.n - 1) + 12 + bump;
+        const x = v.x + Math.cos(g.mid) * lr, y = v.y - Math.sin(g.mid) * lr;
+        const hits = placed.some((q) =>
+          Math.abs(x - q.x) < (w + q.w) / 2 && Math.abs(y - q.y) < (h + q.h) / 2);
+        if (!hits || bump > 60) {
+          placed.push({ x, y, w, h });
+          if (bump) labelBump.set(g.i, bump);
+          break;
+        }
+        bump += 12;
+      }
     }
   }
   const COS55 = Math.cos((55 * Math.PI) / 180);

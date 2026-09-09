@@ -38,15 +38,18 @@ import {
 } from './exam-style';
 import { EXTRA as SIMILARITY } from './similarity';
 import { EXTRA as THALES } from './thales';
+import { ANGLES_R4, CONGRUENCE_R4 } from './round4';
+import { SIMILARITY_R4, THALES_R4, CIRCLE_R4 } from './round4b';
+import { SHAPES_R4, METHOD_R4, MIXED_R4 } from './round4c';
 
 /** Stage sub-topic id → the questions appended to that stage. */
 export const GEO_EXTRA: Record<string, PracticeQuestion[]> = {
-  'eg-angles': [...ANGLES, ...ANGLES_EXAM],
-  'eg-congruence': [...CONGRUENCE, ...CONGRUENCE_EXAM],
-  'eg-similarity': [...SIMILARITY, ...SIMILARITY_EXAM],
-  'eg-thales': [...THALES, ...THALES_EXAM],
-  'eg-circle': [...CIRCLE, ...CIRCLE_EXAM],
-  'eg-shapes': SHAPES,
-  'eg-method': [...METHOD, ...METHOD_EXAM],
-  'eg-mixed': [...MIXED, ...MIXED_EXAM],
+  'eg-angles': [...ANGLES, ...ANGLES_EXAM, ...ANGLES_R4],
+  'eg-congruence': [...CONGRUENCE, ...CONGRUENCE_EXAM, ...CONGRUENCE_R4],
+  'eg-similarity': [...SIMILARITY, ...SIMILARITY_EXAM, ...SIMILARITY_R4],
+  'eg-thales': [...THALES, ...THALES_EXAM, ...THALES_R4],
+  'eg-circle': [...CIRCLE, ...CIRCLE_EXAM, ...CIRCLE_R4],
+  'eg-shapes': [...SHAPES, ...SHAPES_R4],
+  'eg-method': [...METHOD, ...METHOD_EXAM, ...METHOD_R4],
+  'eg-mixed': [...MIXED, ...MIXED_EXAM, ...MIXED_R4],
 };

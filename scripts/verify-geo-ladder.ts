@@ -51,7 +51,10 @@ const warn = (where: string, rule: string, detail = '') =>
  */
 export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   ['congruence', /חופפ|חפיפה|צ\.ז\.צ|ז\.צ\.ז|צ\.צ\.צ|צ\.צ\.ז/],
-  ['similarity', /דומים|דמיון|\\sim|ז\.ז(?![.א-ת])/],
+  // NOT a bare /דומים/. "כינוס איברים דומים" is collecting LIKE TERMS in
+  // algebra, and it paid a warm-up angle question 2.5 difficulty points for
+  // similar triangles it never mentions. Same bug as the /ריבוע/ one below.
+  ['similarity', /(?<!איברים\s)דומים|דמיון|\\sim|ז\.ז(?![.א-ת])/],
   ['area-ratio', /יחס\s+\S*שטחים|k\^2|יחס הדמיון בריבוע/],
   ['same-height', /אותו גובה|יחס\s+\S*בסיסים|גובה משותף/],
   ['thales', /תאלס/],

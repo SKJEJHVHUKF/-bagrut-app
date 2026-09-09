@@ -62,6 +62,17 @@ const SHAPE_CASES: { text: string; want: string; why: string }[] = [
 
 const CASES: Case[] = [
   {
+    why: 'collecting LIKE TERMS in algebra is not similar triangles',
+    text: 'כינוס איברים דומים: $6x + 30 = 180$, ומכאן $x = 25$.',
+    want: [],
+    not: ['similarity'],
+  },
+  {
+    why: '…but similar triangles still have to be detected',
+    text: 'המשולשים דומים לפי ז.ז, ולכן היחס בין הצלעות המתאימות קבוע.',
+    want: ['similarity'],
+  },
+  {
     why: 'the square of a ratio is not a quadrilateral',
     text: 'יחס השטחים שווה לריבוע יחס הדמיון, ולכן מרבעים את היחס.',
     want: ['area-ratio'],
