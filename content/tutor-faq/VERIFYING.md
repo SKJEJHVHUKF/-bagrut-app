@@ -19,7 +19,13 @@ with entry id and the exact fix.
 1. **A number that is wrong.** Re-derive every value an answer states from the
    unit's own `steps`. Do not trust the step's prose over its arithmetic, and
    do not trust the author's answer over either.
-2. **A shared entry that is false next door.** `concept`, `mistake` and `check`
+2. **A shared entry that is false next door.** — **the highest-yield item on
+   this list, because it is the ONLY defect class no script in the pipeline
+   can reach: nothing ever reads a transferable answer for truth.** A single
+   subordinate clause is enough. Measured on פונקציות: a `check` theme
+   asserting the derivative's denominator is the square of the original was
+   true under the quotient rule and false for the chain-rule root function
+   in the same pool, with every gate green. `concept`, `mistake` and `check`
    entries are served to SIBLING units in the same sub-topic. Read each one and
    ask: is this true of every question in this sub-topic, or only of this one?
    The last round found a `mistake` entry warning "there is no hole here" on

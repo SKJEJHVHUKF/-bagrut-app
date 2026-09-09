@@ -151,7 +151,9 @@ entry is ever FOUND):
    0.8 and `משנה` is not, so they behave differently as well as not matching).
 3b. **FRAME words look like anchors and are capped at 0.8:** the question
    words, plus `עושים`/`מחשבים`/`יודעים`/`משמעות` — and
-   `יוצא`/`יצא`/`יוצאים`, which are synonyms of `מאיפה`. "הענפים
+   `יוצא`/`יצא`/`יוצאים` — and, in the same synonym row and just as
+   invisible, **`מגיע`/`הגיע`/`בא`** — all of which are synonyms of `מאיפה`
+   and cap at 0.8 while reading to an author like strong content words. "הענפים
    היוצאים מנקודה אחת" reads as a strong anchor and contributes almost
    nothing; write `שמתפצלים`.
 
@@ -393,6 +395,15 @@ they find:
   or any other deixis. ⚠️ Ordinary Hebrew instruction-giving produces it without
   you noticing — "בשורה נפרדת", "בסעיף הזה", "את הקטע הזה" all trip the screen
 - no shared theme is used more than TWICE across the slice
+- 🔴 **READ EVERY SHARED ANSWER AGAINST ALL THE UNITS IT CAN REACH.**
+  This is the one item on this list that NO SCRIPT CAN DO, and the only
+  place a false statement can survive the whole pipeline: nothing in it ever
+  reads a transferable answer for truth. Measured on פונקציות: a `check`
+  theme asserted that the derivative's denominator is the square of the
+  original denominator — true under the quotient rule, FALSE for the
+  chain-rule root function sitting in the same transfer pool. Every gate was
+  green before and after. A subordinate clause is enough to do this; make
+  every shared claim CONDITIONAL where the siblings differ.
 - **at least TWO entries in every unit carry a `למה`/`מה`/`כמה` word.**
   ⚠️ The reason once given for this rule is WRONG and was corrected by
   measurement: `למה` is a FRAME word, so a message made only of frame words
