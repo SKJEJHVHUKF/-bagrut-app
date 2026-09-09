@@ -157,7 +157,12 @@ entry is ever FOUND):
 
 4. **`$…$` is stripped and tokens under 2 chars are dropped.** A formula, a
    single letter, a vertex name contribute NOTHING to matching. Never write `°`.
-5. **Numbers:** a digit survives as a value token. Ten and under, either
+5. **Numbers:** a digit survives as a value token.
+   🔴 **A MINUS SIGN IS STRIPPED AS PUNCTUATION, so `-3` and `3` are the SAME
+   token.** On a topic that talks about roots and domains this bites constantly:
+   one unit owning `3`, `−3` and `2` cannot separate "the negative root" from
+   "the positive root" by the number alone, and trap #10's anchor rule is
+   sign-blind. Distinguish them with a word, not a sign. Ten and under, either
    spelling works (`בשלוש` and `3` are the same token). **Above ten use the
    DIGIT** — a compound Hebrew number ("חמישה עשר") becomes `num:5`+`num:10`,
    which is NOT `num:15`, and actively breaks the match.
@@ -180,6 +185,11 @@ entry is ever FOUND):
    upstream intercepts those, so such an alt is dead weight.
 9. **Banned in alts (measured noise):** `מחשבון`, `בגרות`, `להשתמש` (and
    `חשבון` as a substring), `נגזרת`, `כותבים`, `הבדל`, `ציון`, `זמן`,
+   ⚠️ **`נגזרת` is banned and some topics are ABOUT it.** On פונקציות three
+   units per slice are derivative-based. Verified substitutes that share no
+   token with `נגזרת` (whose variants are `נגזרת · גזרת · נגזר · גזר`):
+   **`גזירה`** · **`לגזור`** · **`גוזרים`** · **`כלל המנה`**. They do not match
+   each other either, so a held alt must reuse its partner's exact form.
    **`נוסחה`**, **`מבחן`**, **`ממוצע`**, **`תוחלת`**.
    ⚠️ **Every ban here is a STEM ban.** `בזמן` strips its `ב` to `זמן`, and a
    punctuality word problem naturally says "מגיעים בזמן" — a doc carrying `מה`
@@ -257,7 +267,15 @@ entry is ever FOUND):
     still reads ✅ because recall is about something else. Measured on this
     topic: pairing each transferable theme across **exactly two** units (about
     24 themes over 15 units, a few singletons) produced **91.1% fires**. Write
-    each shared theme twice, in different words, and no more.
+    each shared theme twice — and no more.
+    🔑 **The mechanical rule, which is what actually decides firing: every token
+    group of a held alt must appear in ONE document of its partner.** Byte
+    identity is the easy way to satisfy that and is what two measured rounds
+    used, but it is sufficient, not required — and "in different words" is safe
+    ONLY for frame words and reordering. Measured on פונקציות: two pairs
+    differed by the single frame word `אסור`, and by `כאשר` vs `כש־`, scored
+    4/5 and 5/6 coverage, and would have fired **0%** with every gate green.
+    Assert the coverage; do not eyeball it.
     🔴 **AND A SHARED ENTRY NEEDS TWO CONTENT GROUPS, AS A HARD GATE.** Stage 2
     runs with `minContentMatches: 2` and `matchFaq` returns null on
     `contentIdx.length < 2` BEFORE it scores anything. A `concept` held alt like
@@ -341,9 +359,17 @@ they find:
 - every id present, unique, and equal to `${unit}#${n}`
 - every held alt (positions 1 and 4) of a `why-step`/`where-from`/`why-not`/
   `what-if` entry carries a digit or ` כאן`
-- NO `concept`/`mistake`/`check` phrasing or answer carries a digit or `כאן`
+- NO `concept`/`mistake`/`check` phrasing **or answer** carries a digit, `כאן`,
+  or any other deixis. ⚠️ Ordinary Hebrew instruction-giving produces it without
+  you noticing — "בשורה נפרדת", "בסעיף הזה", "את הקטע הזה" all trip the screen
 - no shared theme is used more than TWICE across the slice
-- **at least TWO entries in every unit carry a `למה`/`מה`/`כמה` word.** The
+- **at least TWO entries in every unit carry a `למה`/`מה`/`כמה` word.**
+  ⚠️ The reason once given for this rule is WRONG and was corrected by
+  measurement: `למה` is a FRAME word, so a message made only of frame words
+  leaves `contentIdx` empty and `matchFaq` returns null at the
+  `contentIdx.length < minContent` guard BEFORE scoring anything. The probe
+  cannot hit at all. Keep the rule — it costs nothing — but never trade away a
+  real anchor to satisfy it. The stale reasoning follows, for the record: The
   noise probe "למה אני לא מבין כלום" reduces to the SINGLE group `[למה]`
   (`מבין` strips to `בין`, a stop word, and contributes nothing). A unit where
   exactly one entry carries a `למה`-family word gives that probe a clean 1.00
