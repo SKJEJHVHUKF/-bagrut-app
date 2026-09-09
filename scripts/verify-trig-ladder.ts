@@ -233,11 +233,7 @@ export function askShape(q: PracticeQuestion): string {
   // depending on which verb the author happened to reach for. Found by an
   // author who then had to pick verbs to keep its signatures spread — the gate
   // steering the wording again, the ninth bug of this family in this file.
-  if (
-    /מצא(?:ו)? את \$?[a-z]\$?|סמן ב-?\$?[a-z]|(?:בטא|בטאו|הבע|הביעו|הבעו)\s+(?:את\s+)?[^.]{0,40}באמצעות|עבור אילו ערכים/.test(
-      t,
-    )
-  )
+  if (EXPRESS_IN_TERMS_OF.test(t) || /מצא(?:ו)? את \$?[a-z]\$?|סמן ב-?\$?[a-z]/.test(t))
     return 'find-parameter';
   if (/שטח/.test(t)) return 'area';
   if (/מצא את הזווית|מהי הזווית|כמה מעלות|מצא את \$\\angle|מהי \$\\angle/.test(t)) return 'compute-angle';
@@ -258,6 +254,26 @@ const OFF_STYLE: [string, RegExp, string[]?][] = [
 ];
 
 /** A quantity is named by a letter and recovered, rather than read off. */
+/**
+ * 🔴 THE CANONICAL "express it in terms of …" PATTERN, and the single source of
+ * truth for it. Three detectors used to carry their own narrow copy —
+ * `askShape`, `hasParameter` here, and `isParametric` in
+ * `_probe-trig-params.ts` — and they disagreed with each other about the same
+ * sentence.
+ *
+ * What made it costly: the real archived exam papers write **הביעו**, 66 times,
+ * against 11 for `בטא` and 5 for `הבע`. It is by far the dominant verb, and NOT
+ * ONE of the three detectors matched it. An author writing genuinely parametric
+ * bagrut questions measured 0/2 and had to reorder the symbols in all fourteen
+ * of its questions to make the fallback alternative fire.
+ *
+ * The fallback also demanded a LATIN letter right after `באמצעות`, so
+ * `הביעו באמצעות $\alpha$` — the angle first, which is the more natural Hebrew —
+ * scored nothing. It now accepts any maths island.
+ */
+export const EXPRESS_IN_TERMS_OF =
+  /(?:הבע|הבעו|הביע|הביעו|בטא|בטאו)\s+(?:את\s+)?[^.]{0,60}באמצעות|באמצעות\s+\$[^$]+\$|עבור אילו ערכים/;
+
 // 🔴 This detector used to match `סמן ב-$a$` — a maqaf glued to a maths island,
 // which `check-rtl-maqaf.ts` FAILS THE BUILD on for this very directory. One
 // gate paid three points for the exact string another gate rejects, so an author
@@ -269,9 +285,8 @@ const OFF_STYLE: [string, RegExp, string[]?][] = [
 // detector rewards through the maqaf rule.
 export const hasParameterForTest = (text: string) => hasParameter({ question: text } as PracticeQuestion);
 const hasParameter = (q: PracticeQuestion) =>
-  /סמן(?:ו)? (?:את [^.]{0,24})?באות \$?[a-z]\$?|בטא(?:ו)? באמצעות|עבור אילו ערכים|באמצעות \$?[a-z]\$?/.test(
-    q.question,
-  );
+  EXPRESS_IN_TERMS_OF.test(q.question) ||
+  /סמן(?:ו)? (?:את [^.]{0,24})?באות \$?[a-z]\$?/.test(q.question);
 
 /** The inference runs BACKWARDS: the rule's CONCLUSION is given and one of its
  *  inputs is what the student must recover. */
@@ -307,29 +322,6 @@ function scoreOf(q: PracticeQuestion): number {
   );
 }
 
-/**
- * 🔴 REACH must compare like with like, and it did not.
- *
- * `examBar()` deliberately takes the HARDEST PART of an archived question,
- * because part ג is easy once א and ב are done and averaging every part
- * flatters the ladder. But `scoreOf` measures an authored question WHOLE — it
- * sums the steps and mechanisms of every part and adds 2 per part. So a
- * genuine four-part exam question scored ~3× a bar built from single parts,
- * and `tf-bagrut` reported 152% reach for a structural reason rather than a
- * mathematical one. Nothing was padded; the two sides were simply different
- * units. Reported by the author who wrote that four-part question.
- *
- * The gradient comparisons are unaffected — those are authored-against-authored
- * under one rule — so this normalisation is applied to REACH only. Dividing by
- * the part count yields the AVERAGE part against a bar built from the HARDEST
- * part, which understates rather than flatters. That is the right direction to
- * err in a number quoted to the owner.
- */
-const reachScore = (q: PracticeQuestion): number => {
-  const parts = (q.question.match(/\n[אבגד]\.\s/g) ?? []).length;
-  return parts >= 2 ? scoreOf(q) / parts : scoreOf(q);
-};
-
 /** Makes "the challenge rung is the practice rung with different numbers"
  *  visible to a machine. */
 const signatureOf = (q: PracticeQuestion) =>
@@ -339,30 +331,53 @@ const signatureOf = (q: PracticeQuestion) =>
 /** The archived papers, scored with the SAME model: the HARDEST part of each
  *  question, because part ג is easy once א and ב are done and averaging every
  *  part flatters the ladder. */
+/**
+ * The archived papers, scored the SAME WAY an authored question is scored: as
+ * ONE whole question, context plus every part, with the part markers intact.
+ *
+ * 🔴 This took two wrong turns before landing here, and both distorted a number
+ * quoted to Itay.
+ *   1. Originally the bar was the HARDEST PART of an archived question, while
+ *      an authored question was scored whole. A four-part authored question
+ *      therefore scored ~3× a bar built from single parts, and tf-bagrut
+ *      reported 152% reach for a structural reason.
+ *   2. The fix for that divided the authored score by its part count — the
+ *      AVERAGE part — against a bar that was still the hardest part. Now the
+ *      metric punished the improvement: when an author restructured
+ *      trig-plane-mixed into the real exam's four-part chain, exactly what Itay
+ *      asked for, reach fell 121% → 71%.
+ * Whole against whole needs no fudge factor and no part-count normalisation,
+ * and it is what "does our hardest rung demand as much as a real exam question"
+ * actually means.
+ */
 function examBar(): { bar: number; n: number } {
   const isTrig = (s: string) =>
     /\\sin|\\cos|\\tan|סינוס|קוסינוס|טנגנס|משפט הסינוסים|משפט הקוסינוסים/.test(s) &&
     !/נגזרת|אינטגרל|וקטור|מרוכב|התפלגות/.test(s);
-  const tops: number[] = [];
+  const totals: number[] = [];
   for (const q of ALL_PAST_BAGRUYOT) {
     const whole = [q.context ?? '', ...(q.parts ?? []).map((p) => p.prompt ?? '')].join(' ');
     if (!isTrig(whole)) continue;
-    const scores = (q.parts ?? []).map((p) =>
-      scoreOf({
-        id: `${q.id}/${p.label}`,
-        difficulty: 'hard',
-        kind: 'open',
-        question: `${q.context ?? ''} ${p.prompt ?? ''}`,
-        solution: {
-          steps: p.solution?.steps ?? [],
-          finalAnswer: p.solution?.final_answer ?? '',
-          explanation: '',
-        },
-      } as unknown as PracticeQuestion),
-    );
-    if (scores.length) tops.push(Math.max(...scores));
+    if (!q.parts?.length) continue;
+    // Rebuild it as one authored-shaped question: the context, then each part
+    // on its own "א. " line, so `scoreOf`'s part counter sees the same shape it
+    // sees in our own multi-part questions.
+    const asOne = {
+      id: q.id,
+      difficulty: 'hard',
+      kind: 'open',
+      question:
+        (q.context ?? '') + q.parts.map((p) => `
+${p.label}. ${p.prompt ?? ''}`).join(''),
+      solution: {
+        steps: q.parts.flatMap((p) => p.solution?.steps ?? []),
+        finalAnswer: q.parts.map((p) => p.solution?.final_answer ?? '').join(' '),
+        explanation: '',
+      },
+    } as unknown as PracticeQuestion;
+    totals.push(scoreOf(asOne));
   }
-  return { bar: tops.reduce((a, b) => a + b, 0) / Math.max(1, tops.length), n: tops.length };
+  return { bar: totals.reduce((a, b) => a + b, 0) / Math.max(1, totals.length), n: totals.length };
 }
 
 const RUNGS = ['easy', 'mid', 'hard'] as const;
@@ -377,7 +392,7 @@ function main() {
   const bar = examBar();
 
   console.log(`טריגונומטריה — סולם הקושי\n${'='.repeat(84)}`);
-  console.log(`exam bar (hardest part of ${bar.n} archived trig questions): ${bar.bar.toFixed(1)}\n`);
+  console.log(`exam bar (whole question, ${bar.n} archived trig questions): ${bar.bar.toFixed(1)}\n`);
   console.log(
     'stage'.padEnd(26) + RUNGS.map((r) => `${HEB[r]} n/score/mech`.padEnd(20)).join('') + 'reach',
   );
@@ -397,7 +412,7 @@ function main() {
     console.log(
       st.id.padEnd(26) +
         RUNGS.map((r) => `${by[r].length}  ${score[r].toFixed(1)}  ${mech[r].toFixed(1)}`.padEnd(20)).join('') +
-        `${((mean(by.hard.map(reachScore)) / bar.bar) * 100).toFixed(0)}%`,
+        `${((score.hard / bar.bar) * 100).toFixed(0)}%`,
     );
 
     // `--stage <id>` prints every question's score. A rung average says a rung

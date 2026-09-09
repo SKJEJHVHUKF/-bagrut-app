@@ -28,6 +28,7 @@
  * and `expected: {kind:'manual'}` with a symbolic final answer corroborates it.
  */
 import { getBagrutQuestionsForSubTopic, getSubTopic } from '../content/lessons';
+import { EXPRESS_IN_TERMS_OF } from './verify-trig-ladder';
 import type { PracticeQuestion } from '../content/lessons/types';
 
 const SUBJECT = 'math5';
@@ -47,9 +48,11 @@ const STAGES = [
   'trig-plane-mixed',
 ];
 
-/** An ask that can only be answered with an expression. */
-const EXPRESSION_ASK =
-  /הבע(?:ו)?\s+(?:את\s+)?[^.]{0,40}באמצעות|בטא(?:ו)?\s+(?:את\s+)?[^.]{0,40}באמצעות|באמצעות \$?[a-z]\$?|עבור אילו ערכים/;
+/** An ask that can only be answered with an expression — the SAME pattern the
+ *  ladder gate uses, imported rather than copied. Three private copies of this
+ *  had drifted apart and none of them matched `הביעו`, the verb the real exam
+ *  papers use 66 times. */
+const EXPRESSION_ASK = EXPRESS_IN_TERMS_OF;
 
 /** A given handed over as a symbol rather than a number. `x` is excluded on
  *  purpose: it is the unknown of an equation, and solving for it is the
