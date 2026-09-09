@@ -57,10 +57,25 @@ const EXPRESSION_ASK =
 const SYMBOLIC_GIVEN =
   /=\s*\\?d?frac?\{?\s*\d*\s*[abkmnpqrt]\b|=\s*\d*[abkmnpqrt]\b|\$[abkmnpqrt]\s*>\s*0\$|אורך[^.]{0,24}\$[abkmnpqrt]\$|הוא \$\d*[abkmnpqrt]\$/;
 
+/** The parameter surviving INTO the answer. */
+const SYMBOLIC_ANSWER = /[abkmnpqrt](?![a-z])/;
+
 export function isParametric(q: { question: string; solution?: { finalAnswer?: string } }): boolean {
   const t = q.question;
+  // An explicit "express in terms of …" ask can only be answered symbolically.
   if (EXPRESSION_ASK.test(t)) return true;
-  if (SYMBOLIC_GIVEN.test(t)) return true;
+  // 🔴 A symbolic GIVEN is not enough on its own. Reported by an author: a
+  // question can state `$PQ = 3a$` and still have the parameter cancel, leaving
+  // a bare number — which is a calculation, exactly what Itay is contrasting
+  // parameters with ("כל הבגרות זה בכלל הבעות ולא חישובים"). Counting those
+  // would let a weak rewrite reach the target without teaching one הבעה.
+  // So a symbolic given only counts when the parameter SURVIVES into the final
+  // answer, or the answer is declared unmarkable because it is symbolic.
+  if (SYMBOLIC_GIVEN.test(t)) {
+    const fa = q.solution?.finalAnswer ?? '';
+    const math = fa.match(/\$[^$]+\$/g)?.join(' ') ?? fa;
+    return SYMBOLIC_ANSWER.test(math.replace(/\\[a-zA-Z]+/g, ''));
+  }
   return false;
 }
 
@@ -70,6 +85,7 @@ const HEB: Record<string, string> = { easy: 'חימום', mid: 'ביסוס', har
 let needParam = 0;
 let haveParam = 0;
 const gaps: string[] = [];
+const shortfalls: string[] = [];
 
 console.log('טריגונומטריה — כמה מהתרגול הוא בפרמטרים\n' + '='.repeat(76));
 console.log(
@@ -88,11 +104,25 @@ for (const id of STAGES) {
     const qs = (st.questions ?? []).filter((q) => q.difficulty === r);
     const p = qs.filter(isParametric);
     cells.push(`${p.length}/${qs.length}`.padEnd(16));
+    // 🔴 The targets, settled by Itay on 2026-09-09 after I read his first
+    // wording two different wrong ways:
+    //   "אין בעיה שרמות חימום יהיו עם מספרים בלי פרמטרים בכלל, אבל שרמת ביסוס
+    //    תתחיל לשלב ברוב השאלות שלה פרמטרים, ורמת אתגר עוד יותר — אני רוצה
+    //    שמעל 80 אחוז שם יכיל שאלות עם פרמטרים."
+    // So חימום is EXEMPT, and the two rungs above it carry DIFFERENT bars.
     if (r !== 'easy') {
+      const target = r === 'hard' ? 0.8 : 0.6;
+      const share = qs.length ? p.length / qs.length : 1;
       needParam += qs.length;
       haveParam += p.length;
-      for (const q of qs) {
-        if (!isParametric(q)) gaps.push(`${id.padEnd(24)} ${HEB[r]}  ${q.id}`);
+      if (share < target) {
+        shortfalls.push(
+          `${id.padEnd(24)} ${HEB[r]}  ${p.length}/${qs.length} = ${Math.round(share * 100)}%` +
+            `  (יעד ${Math.round(target * 100)}%)`,
+        );
+      }
+      for (const q of qs.filter((x) => !isParametric(x))) {
+        gaps.push(`${id.padEnd(24)} ${HEB[r]}  ${q.id}`);
       }
     }
   }
@@ -105,10 +135,15 @@ for (const id of STAGES) {
 
 console.log('-'.repeat(76));
 const pct = needParam ? Math.round((haveParam / needParam) * 100) : 0;
-console.log(
-  `\nביסוס + אתגר: ${haveParam} מתוך ${needParam} שאלות הן בפרמטרים  (${pct}%)`,
-);
-console.log(`היעד של איתי: 100% — "רק הרמת חימום תהיה עם מספרים"\n`);
+console.log(`\nביסוס + אתגר: ${haveParam} מתוך ${needParam} בפרמטרים  (${pct}%)`);
+console.log('היעד: חימום פטור · ביסוס לפחות 60% · אתגר מעל 80% · בגרות 100%\n');
+if (shortfalls.length) {
+  console.log('רונגים מתחת ליעד:');
+  for (const sf of shortfalls) console.log('  ✗ ' + sf);
+  console.log('');
+} else {
+  console.log('✅ כל רונג עומד ביעד שלו.\n');
+}
 
 if (FOCUS) {
   console.log(`שאלות שעדיין במספרים ב-${FOCUS}:`);

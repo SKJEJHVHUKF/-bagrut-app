@@ -228,7 +228,16 @@ export function askShape(q: PracticeQuestion): string {
   // classified as a plain area computation, losing its +2 and blurring its
   // signature against every ordinary area question in the stage. Same family as
   // the `prove`-before-`justify` bug in the geometry port.
-  if (/מצא(?:ו)? את \$?[a-z]\$?|סמן ב-?\$?[a-z]|בטא באמצעות|בטאו באמצעות|עבור אילו ערכים/.test(t))
+  // 🔴 `הבע באמצעות` and `בטא באמצעות` are the SAME instruction in the same
+  // Hebrew. Only the second was listed, so the identical ask scored +2 or +0
+  // depending on which verb the author happened to reach for. Found by an
+  // author who then had to pick verbs to keep its signatures spread — the gate
+  // steering the wording again, the ninth bug of this family in this file.
+  if (
+    /מצא(?:ו)? את \$?[a-z]\$?|סמן ב-?\$?[a-z]|(?:בטא|בטאו|הבע|הביעו|הבעו)\s+(?:את\s+)?[^.]{0,40}באמצעות|עבור אילו ערכים/.test(
+      t,
+    )
+  )
     return 'find-parameter';
   if (/שטח/.test(t)) return 'area';
   if (/מצא את הזווית|מהי הזווית|כמה מעלות|מצא את \$\\angle|מהי \$\\angle/.test(t)) return 'compute-angle';
