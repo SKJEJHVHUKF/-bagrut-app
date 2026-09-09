@@ -18,12 +18,14 @@ import { TRACK_571 } from '../content/tracks/paper-571';
 const SUBJECT = 'math5';
 const TOPIC = 'טריגונומטריה';
 
+// Itay's numbered list, 2026-09-09. This replaces the 2026-09-08 order.
 const EXPECTED_ORDER = [
-  'trig-right-triangle',
-  'trig-sine-cosine-laws',
-  'trig-triangle-area',
-  'trig-plane-basics',
-  'trig-plane-mixed',
+  'trig-right-triangle',   // שלב 1
+  'trig-identities',       // שלב 2 — מעגל היחידה וזהויות (absorbed special-angles)
+  'trig-equations',        // שלב 3 — משוואות מורכבות, הצבת t
+  'trig-sine-cosine-laws', // שלב 4 — כולל המשפט המורחב
+  'trig-triangle-area',    // שלב 5
+  'trig-plane-mixed',      // שלב 6 — רמת בגרות
 ];
 
 let errors = 0;
@@ -38,7 +40,7 @@ if (!trig) {
   fail('no trigonometry topic in TRACK_571');
 } else {
   const ladders = trig.tiles.filter((t) => t.kind === 'ladder').map((t) => (t as { subId: string }).subId);
-  const first5 = ladders.slice(0, 5);
+  const first5 = ladders.slice(0, EXPECTED_ORDER.length);
   if (first5.join(',') !== EXPECTED_ORDER.join(',')) {
     fail(`track order is [${first5.join(', ')}]\n   expected [${EXPECTED_ORDER.join(', ')}]`);
   } else {
@@ -68,9 +70,9 @@ for (const id of EXPECTED_ORDER) {
 }
 
 // ── 3. Itay's content asks, checked against the real strings ───────────────
-const basics = getSubTopic(SUBJECT, TOPIC, 'trig-plane-basics');
+const basics = getSubTopic(SUBJECT, TOPIC, 'trig-identities');
 if (!basics) {
-  fail('trig-plane-basics missing');
+  fail('trig-identities missing');
 } else {
   const blob = JSON.stringify(basics);
 
@@ -90,11 +92,15 @@ if (!basics) {
 
   // 3c. the motivation step comes before any identity step
   const titles = (basics.lesson ?? []).map((s) => s.title);
-  if (titles[0] !== 'למה בכלל צריך זהויות') {
-    fail(`first lesson step is "${titles[0]}", expected the "why identities" motivation step`);
-  } else {
-    console.log('✅ motivation step is first');
-  }
+  // The unit-circle steps now come FIRST in stage 2 (identities are built on
+  // the unit circle), so the motivation step is no longer index 0 — but it must
+  // still come before any identity is stated.
+  const motiv = titles.indexOf('למה בכלל צריך זהויות');
+  const firstIdentity = titles.findIndex((t) => t.includes('180°') || t.includes('פיתגורס'));
+  if (motiv < 0) fail('the "why identities" motivation step is gone');
+  else if (firstIdentity >= 0 && motiv > firstIdentity)
+    fail('the motivation step comes AFTER an identity is already taught');
+  else console.log('✅ motivation step precedes the identities');
 
   // 3d. the אתגר rung must not restate the בגרות rung.
   //
@@ -129,7 +135,7 @@ if (!basics) {
     const shared = [...t].filter((x) => against.has(x));
     return { shared, ratio: t.size ? shared.length / t.size : 0 };
   };
-  const bagrutTokens = bagrutTokensFor('trig-plane-basics');
+  const bagrutTokens = bagrutTokensFor('trig-identities');
   const overlapWith = (text: string) => overlap(text, bagrutTokens);
 
   // Itay: "אני רוצה שלא יהיו כמעט בכלל שאלות זהות בצורה הזו" — so sweep EVERY
@@ -153,23 +159,29 @@ if (!basics) {
   }
   console.log(`✅ ${compared} bank questions compared against their stage's bagrut question, no restatement`);
 
-  // planted defect: the question this rung USED to hold must still be caught,
-  // otherwise the check above proves nothing.
-  const RETIRED_DUPLICATE =
-    'במעגל שמרכזו $O$ נתונה הזווית המרכזית $\\angle AOB = 130°$. הנקודה $C$ נמצאת על ' +
-    'הקשת הגדולה $AB$, והנקודה $D$ נמצאת על הקשת הקטנה $AB$. חשב את $\\angle ACB$ ואת ' +
-    '$\\angle ADB$, והסבר מדוע מתקיים $\\cos(\\angle ADB) = -\\cos(\\angle ACB)$.';
-  const planted = overlapWith(RETIRED_DUPLICATE);
-  if (!(planted.shared.length >= 3 && planted.ratio > DUP)) {
-    fail(
-      'the duplication check does NOT catch the question it was written for ' +
-        `(${planted.shared.length} shared, ratio ${planted.ratio.toFixed(2)}) — it is asserting nothing`,
-    );
+  // Planted defect, DERIVED from the stage's own bagrut question instead of
+  // hard-coded. The previous version pasted the circle question this rung used
+  // to hold; when the restructure moved that stage's bagrut bank the string no
+  // longer overlapped anything and the check silently asserted nothing — which
+  // the probe caught and reported, exactly as intended. Deriving it means it
+  // can never go stale again.
+  const bagrutForStage2 = getBagrutQuestionsForSubTopic(SUBJECT, TOPIC, 'trig-identities');
+  if (!bagrutForStage2.length) {
+    fail('stage 2 has no bagrut question to build the duplication self-test from');
   } else {
-    console.log(
-      `✅ duplication check verified against the retired question ` +
-        `(${planted.shared.length} shared objects, ratio ${planted.ratio.toFixed(2)})`,
-    );
+    const b = bagrutForStage2[0];
+    const planted = overlapWith(b.context + ' ' + b.parts.map((p) => p.prompt).join(' '));
+    if (!(planted.shared.length >= 3 && planted.ratio > DUP)) {
+      fail(
+        'the duplication check cannot even detect a VERBATIM copy of the stage bagrut question ' +
+          `(${planted.shared.length} shared, ratio ${planted.ratio.toFixed(2)}) — it is asserting nothing`,
+      );
+    } else {
+      console.log(
+        `✅ duplication check verified against a verbatim copy of ${b.id} ` +
+          `(${planted.shared.length} shared objects, ratio ${planted.ratio.toFixed(2)})`,
+      );
+    }
   }
 
   // 3e. negative-angle family: taught, but NOT drilled

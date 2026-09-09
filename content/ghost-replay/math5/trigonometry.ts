@@ -582,7 +582,7 @@ $$\\sqrt{3}\\sin x = 0 \\;\\Longrightarrow\\; \\sin x = 0$$
       id: 'gr-trig-sp-005',
       subject: SUBJECT,
       topic: TOPIC,
-      subTopicId: 'special-angles-reduction',
+      subTopicId: 'trig-identities',
       questionId: 'trig-sub-sp-005',
       title: 'הזהות נותנת גודל, הרבע נותן סימן — איך חושבים על זה',
       prompt:
@@ -1127,7 +1127,7 @@ $$\\int_0^{\\pi/2}(\\sin^2x + \\cos^2x)\\,dx = \\int_0^{\\pi/2}1\\,dx = \\frac{\
       id: 'gr-trig-pb-006',
       subject: SUBJECT,
       topic: TOPIC,
-      subTopicId: 'trig-plane-basics',
+      subTopicId: 'trig-identities',
       questionId: 'tpb-006',
       title: 'שתי זוויות היקפיות על אותו מיתר — ולמה הקוסינוס מתהפך',
       prompt:

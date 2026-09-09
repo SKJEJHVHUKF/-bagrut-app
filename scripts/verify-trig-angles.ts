@@ -10,7 +10,9 @@
  * angle, and checks the authored answers actually solve the authored equations.
  *
  * CONVENTION (owner's decision, 2026-07-28):
- *   trig-equations, special-angles-reduction → DEGREES
+ *   trig-equations, trig-identities          → DEGREES
+ *     (trig-identities absorbed special-angles-reduction on 2026-09-09 when
+ *      Itay merged the unit circle and the identities into one stage 2)
  *   trig-calculus                            → RADIANS (mandatory: the
  *     derivative (sin x)' = cos x only holds in radians)
  */
@@ -26,7 +28,7 @@ const near = (a: number, b: number, eps = 1e-9) => Math.abs(a - b) < eps;
 const S = (d: number) => Math.sin((d * Math.PI) / 180);
 const C = (d: number) => Math.cos((d * Math.PI) / 180);
 
-const DEG_SUBTOPICS = ['trig-equations', 'special-angles-reduction'];
+const DEG_SUBTOPICS = ['trig-equations', 'trig-identities'];
 const RAD_SUBTOPICS = ['trig-calculus'];
 
 // The פונקציות טריגונומטריות track (רמת בסיס + רמות 1-5). It is split by

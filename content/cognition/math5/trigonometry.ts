@@ -100,7 +100,7 @@ export const trigonometryCognition: TopicCognitionMap = {
       title: "סימן שגוי של פונקציה ברבע",
       skill: "quadrant-sign-reduction",
       insight: "אתה קובע נכון את זווית הבסיס אך מצמיד לה סימן שגוי — אינך בודק לאיזה רבע שייכת הזווית המקורית ואיזה סימן נכון בו.",
-      remedy: { subTopicId: "special-angles-reduction" },
+      remedy: { subTopicId: "trig-identities" },
       triggers: [
         { questionId: "trig-sub-sp-001", optionIndex: 1 },
         { questionId: "trig-sub-sp-004", optionIndex: 3 },
@@ -111,7 +111,7 @@ export const trigonometryCognition: TopicCognitionMap = {
       title: "זווית בסיס שגויה בצמצום",
       skill: "quadrant-sign-reduction",
       insight: "אתה מצמצם לזווית בסיס שגויה (למשל $60°$ במקום $30°$) כשאתה מחשב פונקציה טריגונומטרית של זווית מורחבת.",
-      remedy: { subTopicId: "special-angles-reduction" },
+      remedy: { subTopicId: "trig-identities" },
       triggers: [
         { questionId: "trig-sub-sp-001", optionIndex: 2 },
         { questionId: "trig-sub-sp-001", optionIndex: 3 },
@@ -122,7 +122,7 @@ export const trigonometryCognition: TopicCognitionMap = {
       title: "זיהוי שגוי של הרבע לפי גודל הזווית",
       skill: "quadrant-sign-reduction",
       insight: "אתה מייחס זווית לרבע הלא נכון — אינך בודק בין אילו מכפלות של $90°$ היא נמצאת.",
-      remedy: { subTopicId: "special-angles-reduction" },
+      remedy: { subTopicId: "trig-identities" },
       triggers: [
         { questionId: "trig-sub-sp-004", optionIndex: 1 },
         { questionId: "trig-sub-sp-004", optionIndex: 2 },
