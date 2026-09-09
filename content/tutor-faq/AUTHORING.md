@@ -147,7 +147,7 @@ entry is ever FOUND):
    EXACT inflected form; vary the frame words and the order only.
    Measured on this topic, each of these cost a round: `לפסול`↔`פוסלים` ·
    `לספור`↔`סופרים` · `להסתכם`↔`מסתכמות` · `אינו`↔`אינה` · `ריקה`↔`ריקות` ·
-   `משנה`↔`משתנה` (the last is the worst — `משתנה` is a FRAME word capped at
+   `קובע`↔`לקבוע` (the `ל` strips to `קבוע`, but `קובע` is four letters so `stems()` never runs on it — no shared variant at all, and that pair was one slice's ENTIRE recall gap) · `משנה`↔`משתנה` (the last is the worst — `משתנה` is a FRAME word capped at
    0.8 and `משנה` is not, so they behave differently as well as not matching).
 3b. **FRAME words look like anchors and are capped at 0.8:** the question
    words, plus `עושים`/`מחשבים`/`יודעים`/`משמעות` — and
@@ -190,6 +190,9 @@ entry is ever FOUND):
    token with `נגזרת` (whose variants are `נגזרת · גזרת · נגזר · גזר`):
    **`גזירה`** · **`לגזור`** · **`גוזרים`** · **`כלל המנה`**. They do not match
    each other either, so a held alt must reuse its partner's exact form.
+   ⚠️ **`נוסחה` is banned too, and every solution on this topic opens with
+   `**הנוסחה:**`.** Keeping it out of a thousand phrasings needs a deliberate
+   substitute vocabulary: **`הכלל`** · **`הביטוי`** · **`הרישום`**.
    **`נוסחה`**, **`מבחן`**, **`ממוצע`**, **`תוחלת`**.
    ⚠️ **Every ban here is a STEM ban.** `בזמן` strips its `ב` to `זמן`, and a
    punctuality word problem naturally says "מגיעים בזמן" — a doc carrying `מה`
@@ -378,7 +381,14 @@ they find:
   in one entry are equal under the same rule
 - every id present, unique, and equal to `${unit}#${n}`
 - every held alt (positions 1 and 4) of a `why-step`/`where-from`/`why-not`/
-  `what-if` entry carries a digit or ` כאן`
+  `what-if` entry carries a **DIGIT CHARACTER** or ` כאן`.
+  🔴 **"a number" is not the same thing, and the difference is invisible.**
+  `pointsAtThisExercise` tests /\d/ over the RAW string, so a SPELLED-OUT number
+  satisfies the rule as written and does NOT trip the screen: the alt reads
+  fully compliant and stays silently transfer-eligible. Two held alts sat in
+  exactly that state on a file reading 99.6% recall, 0% noise, 0 collisions
+  and 0% unsafe. Trap #5 is still right that `בארבע` and `4` are the same
+  TOKEN; this rule is about the CHARACTER, not the token.
 - NO `concept`/`mistake`/`check` phrasing **or answer** carries a digit, `כאן`,
   or any other deixis. ⚠️ Ordinary Hebrew instruction-giving produces it without
   you noticing — "בשורה נפרדת", "בסעיף הזה", "את הקטע הזה" all trip the screen
