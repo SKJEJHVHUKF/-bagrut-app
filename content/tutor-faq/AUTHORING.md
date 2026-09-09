@@ -227,6 +227,9 @@ entry is ever FOUND):
    (write `איברים`/`חלקים`) · `במקום` → `איבר`, and the hazard is the ordinary
    connective "instead of", not the noun · `שלישית` → `num:0.3333` via the
    `ית` suffix, so "ממעלה שלישית" carries a number (write `ממעלה 3`).
+   ⚠️ **`שם` survives as the mangled token `שמ`.** Two-letter Hebrew words are
+   supposed to be dropped; this one is not, and a held alt leaning on it fails
+   the subset assertion against a token that appears in no document.
    🔴 **`מאפס` → `num:0`, but `שמאפס` does NOT.** Prefixes are stripped from
    the ORIGINAL word only and `stems()` needs ≥5 letters, so the 4-letter
    `מאפס` yields `אפס` while `שמאפס` yields only `{שמאפס, מאפס}`. A held alt
@@ -416,8 +419,15 @@ they find:
   exactly one entry carries a `למה`-family word gives that probe a clean 1.00
   hit with no runner-up; the only thing that stops it is a tie. This is the one
   rule where you want words to be COMMON rather than rare.
-- every entry's `kind` agrees with what its own held alts actually read as —
-  a mislabelled entry cannot be rescued by the shape tie-break
+- every **unit-specific** entry's `kind` agrees with what its own held alts
+  read as — a mislabelled one cannot be rescued by the shape tie-break.
+  🔴 **NEVER apply this to `concept`/`mistake`/`check`, and this rule LOSES
+  wherever the two collide.** `TRANSFERABLE` is keyed on `kind`, so
+  relabelling a shared entry to whatever the classifier reads (usually
+  `why-step`) drops it out of the transfer pool: fires 100% → 0%. Measured
+  on פונקציות, the check flags **119 of 240** held alts on a file with
+  recall 100.0% and 0 collisions, where the tie-break it protects never
+  fired at all. It is a tie-breaker's optimisation; transfer is a feature.
 - every `step` in range; answers 40–700 chars, opening on Hebrew, balanced `$`,
   no Hebrew inside `$…$`, no maqaf before a maths island, no em-dash separator,
   no bare `dfrac`, no `{slot}`, and `leaksAnswer` clean
