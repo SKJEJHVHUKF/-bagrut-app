@@ -106,6 +106,13 @@ const hitsOf = (json: string) => {
     for (let j = i + 1; j < texts.length; j++)
       if (overlap(texts[i], texts[j])) bad.push(`${texts[i].what}+${texts[j].what}`);
     for (const t of ticks) if (overlap(texts[i], t)) bad.push(`${texts[i].what}+tick`);
+    // …and a label pushed off the canvas is as lost as one printed over.
+    // Folded in from scripts/_check-fig-labels.tsx, which this gate replaces.
+    const vb = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+    if (vb) {
+      const W = Number(vb[1]), H = Number(vb[2]), b = texts[i];
+      if (b.x < 0 || b.y < 0 || b.x + b.w > W || b.y + b.h > H) bad.push(`${b.what} outside the canvas`);
+    }
     // Arcs are NOT checked. The rule flagged 83 of 299 figures; four were
     // rasterised and all four read fine, because the text is painted after the
     // arc and a 1.5px stroke behind a bold glyph is legible. Kept as a helper
@@ -130,7 +137,6 @@ console.log(`controls ok — reported ${cBad.join(', ')} on the known-bad figure
 const ACCEPTED = new Set([
   'eg-angles/teach.lesson[0].example.steps[1]',
   'eg-thales/teach.lesson[1].example.steps[1]',
-  'eg-circle/eg-sub-circ-121.question',
   'eg-shapes/eg-shp-014.question',
   'eg-mixed/eg-mix-004.question',
   'eg-mixed/teach.lesson[2].example.steps[1]',
