@@ -43,6 +43,12 @@ import {
   availableYears as bagruyotYears,
   availableTopics as bagruyotTopics,
 } from '@/content/past-bagruyot';
+// The topic count is DERIVED, never typed in. The page used to assert it in
+// three places (hero strip "15", subject tile "12", step 01 "עשרות") and all
+// three disagreed with each other and with the curriculum. One source now.
+// Safe to import here: this is the curriculum TABLE, not the lesson corpus —
+// the same swap that cut /onboarding from 6.77 MB to 2.22 MB.
+import { MATH5_CURRICULUM } from '@/content/bagrut-curriculum';
 import { useClientValue } from '@/lib/use-client-value';
 
 /** Small section eyebrow label — muted indigo, calm. */
@@ -72,7 +78,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 // seven links to one destination, and a student who tapped פיזיקה landed on
 // a maths quiz. The tiles now deliver what their label promises.
 const SUBJECTS = [
-  { key: 'math5', name: 'מתמטיקה 5 יח׳', icon: Sigma, topics: 12 },
+  { key: 'math5', name: 'מתמטיקה 5 יח׳', icon: Sigma, topics: MATH5_CURRICULUM.length },
   { key: 'math4', name: 'מתמטיקה 4 יח׳', icon: Calculator, topics: 11 },
 ];
 
@@ -80,19 +86,27 @@ const PAIN_POINTS = [
   { icon: Clock, title: 'אין זמן לבזבז', desc: 'חיפוש שאלות בגרות באינטרנט לוקח שעות. אצלנו - לחיצה אחת.' },
   { icon: BookX, title: 'ספרי לימוד יקרים ומעייפים', desc: 'במקום מאות שקלים על ספרים, קבל שאלות מותאמות בחינם.' },
   { icon: HelpCircle, title: 'אין למי לשאול', desc: 'כל שאלה מגיעה עם הסבר מלא ומפורט בעברית.' },
-  { icon: Zap, title: 'שעמום הורג את הריכוז', desc: 'אינטראקטיבי, מהיר וממכר - כמו משחק בטלפון.' },
+  // "ממכר" was the old copy here. A parent deciding whether to pay reads that
+  // word as a warning about their kid, not as a feature.
+  { icon: Zap, title: 'שעמום הורג את הריכוז', desc: 'שאלה, תשובה מיידית, והתקדמות שרואים — במקום דף תרגילים.' },
 ];
 
 const STEPS = [
-  { num: '01', icon: BookOpen, title: 'בחר נושא', desc: 'מתמטיקה 4 ו-5 יחידות, עשרות נושאים. בחר את מה שצריך לתרגל עכשיו.' },
+  { num: '01', icon: BookOpen, title: 'בחר נושא', desc: 'מתמטיקה 4 ו-5 יחידות, לפי השאלון שלך. בחר את מה שצריך לתרגל עכשיו.' },
   { num: '02', icon: Brain, title: 'תרגל עם רמזים, לא עם פתרון מוגש', desc: 'רמזים מדורגים בכל סעיף — אתה בוחר כמה עזרה לקבל לפני שרואים את הפתרון.' },
   { num: '03', icon: Trophy, title: 'תרגל, קבל הסברים ושפר את הציון', desc: 'תשובה מיידית, הסבר מפורט, וסטטיסטיקות התקדמות.' },
 ];
 
 const FAQ_ITEMS = [
-  { q: 'האם זה באמת חינם?', a: 'כן, לחלוטין! כל התכונות הנוכחיות חינמיות. בעתיד נשיק חבילת Pro עם תכונות מתקדמות, אבל הליבה תישאר חינם תמיד.' },
-  { q: 'מאיפה השאלות?', a: 'מנוע הבינה המלאכותית של Anthropic (Claude) מייצר את השאלות ברמת בגרות ישראלית אמיתית. הוא מאומן על תכנים אקדמיים ויודע איך נראית שאלת בגרות.' },
-  { q: 'האם זה יעזור לי להשתפר בבגרות?', a: 'תרגול קבוע = שיפור מובטח. ככל שתתרגל יותר שאלות, תכיר יותר דפוסים, ותרגיש בטוח יותר ביום הבגרות עצמו.' },
+  // These three answers were rewritten because each one cost a sale:
+  //  • the first told the visitor that Pro does not exist yet;
+  //  • the second said the questions are AI-generated — that stopped being true
+  //    when the product moved to hand-authored, verified content, and it threw
+  //    away the strongest thing there is to say (real MOE papers);
+  //  • the third promised "שיפור מובטח", which is a claim nobody can make.
+  { q: 'האם זה באמת חינם?', a: 'מסלול הלמידה, התרגול ומאגר הבגרויות פתוחים לכולם בחינם, וכך יישארו. Pro הוא שכבת העומק מעליהם — הקורס המתקדם ברמת בגרות, סימולציה ועזרת-AI ללא הגבלה.' },
+  { q: 'מאיפה השאלות?', a: 'שאלות הבגרות מתועתקות מהשאלונים הרשמיים של משרד החינוך. הפתרונות, הרמזים והשיעורים נכתבים ונבדקים מתמטית אצלנו, שלב אחר שלב — לא נוצרים אוטומטית.' },
+  { q: 'האם זה יעזור לי להשתפר בבגרות?', a: 'ככל שתתרגל יותר, תכיר יותר דפוסים ותרגיש בטוח יותר ביום הבגרות. האפליקציה מראה לך בדיוק איפה אתה חזק, איפה חלש, ומה לתרגל היום.' },
   { q: 'אני צריך להירשם?', a: 'לא! פשוט לחץ על "התחל במסלול הלמידה", בחר את השאלון שלך, ותתחיל לתרגל מיידית. אין רישום, אין סיסמה, אין חיכוך.' },
   { q: 'מה קורה אם אני טועה בשאלה?', a: 'תקבל הסבר מלא בעברית - למה התשובה הנכונה היא הנכונה, ולמה התשובה שבחרת לא נכונה. כך באמת לומדים.' },
 ];
@@ -208,10 +222,10 @@ export default function Landing() {
           variants={fadeUp}
           className="text-lg sm:text-xl text-slate-600 max-w-xl mx-auto mb-9 sm:mb-12 leading-relaxed"
         >
-          מסלול למידה מלא במתמטיקה 4 ו-5 יחידות — 15 נושאים, שאלות בגרות אמיתיות
-          עם רמזים מדורגים ופתרון מלא לכל צעד.{' '}
+          מסלול למידה מלא במתמטיקה 4 ו-5 יחידות — {MATH5_CURRICULUM.length} נושאים,
+          שאלות בגרות אמיתיות של משרד החינוך עם רמזים מדורגים ופתרון מלא לכל צעד.{' '}
           <br className="hidden sm:block" />
-          ומורה פרטי שזמין כשנתקעים. בעברית. בחינם.
+          ומורה פרטי שזמין כשנתקעים.
         </motion.p>
 
         <motion.div
@@ -236,9 +250,12 @@ export default function Landing() {
         >
           <span><strong className="text-slate-700 font-bold">4-5</strong> יחידות</span>
           <span className="w-1 h-1 rounded-full bg-slate-600" />
-          <span><strong className="text-slate-700 font-bold">15</strong> נושאים</span>
+          <span><strong className="text-slate-700 font-bold">{MATH5_CURRICULUM.length}</strong> נושאים</span>
           <span className="w-1 h-1 rounded-full bg-slate-600" />
-          <span><strong className="text-slate-700 font-bold">100%</strong> חינם</span>
+          {/* This slot used to read "100% חינם". A price is not a trust signal —
+              it was the loudest thing above the fold on a page that also sells a
+              subscription. Same derived count the bagrut section already shows. */}
+          <span><strong className="text-slate-700 font-bold">{bagruyotTotal()}</strong> שאלות בגרות רשמיות</span>
         </motion.div>
       </motion.section>
 
@@ -564,10 +581,18 @@ export default function Landing() {
               <span className="text-sm text-slate-700">חצי שנה · כמו שיעור אחד</span>
             </div>
             <ul className="space-y-3 mb-8">
+              {/* Every line here must be something Pro actually BUYS, and must
+                  be true today. Two were neither: "כל הלימוד… חינם, תמיד" is the
+                  FREE tier advertised inside the paid card, and "סימולציית בגרות
+                  מלאה בזמן אמת" described a full-paper exam that does not exist —
+                  what ships is a timed question closing each advanced course.
+                  Both now match the row wording on /pricing, which was already
+                  honest. The 572 caveat comes along for the same reason: a 571
+                  student who pays and finds no course is the first refund. */}
               {[
-                'כל הלימוד, התרגול ומאגר הבגרויות — חינם, תמיד',
-                'הקורס המתקדם ברמת בגרות',
-                'סימולציית בגרות מלאה בזמן אמת',
+                'הקורס המתקדם ברמת בגרות (כרגע בנושאי שאלון 572)',
+                'סימולציית בגרות בסוף כל קורס מתקדם',
+                'פתרון-AI לשאלה חדשה בצילום',
                 'צ\'אט ועזרת-AI ללא הגבלה',
                 'מחברת טעויות ואנליטיקה מתקדמת',
               ].map((f, i) => (
@@ -658,7 +683,7 @@ export default function Landing() {
               מוכן להפוך את הבגרות לקלה?
             </motion.h2>
             <motion.p variants={fadeUp} className="text-slate-600 text-base sm:text-xl max-w-2xl mx-auto mb-8">
-              לחיצה אחת. בלי רישום. בלי כסף. בלי תירוצים.
+              לחיצה אחת. בלי רישום. בלי תירוצים.
             </motion.p>
             <motion.div variants={fadeUp}>
               <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} className="inline-block">
@@ -693,7 +718,11 @@ export default function Landing() {
             </Link>
           </nav>
           <div className="text-xs text-slate-500 text-center sm:text-left">
-            © 2026 MathUp · נוצר עם Claude AI של Anthropic
+            {/* The build credit ("נוצר עם Claude AI של Anthropic") lived here.
+                No product that charges money tells the buyer in the footer that
+                software wrote it — and on a page whose FAQ now says the content
+                is hand-authored, it read as a contradiction. */}
+            © 2026 MathUp · תרגול לבגרות במתמטיקה
           </div>
         </div>
       </footer>

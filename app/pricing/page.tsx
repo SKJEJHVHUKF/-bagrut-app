@@ -2,15 +2,25 @@
 
 // /pricing — the conversion page. Free base vs Pro depth, three plans with
 // the semi-annual "like one private lesson" anchor, and an honest feature
-// comparison. Checkout wiring is deferred until a payment provider is
-// chosen — CTAs currently open a waitlist (toast) so the page is live and
-// sells from day one.
+// comparison. Checkout wiring is deferred until a payment provider is chosen.
+//
+// UNTIL THEN THE CTA CAPTURES THE LEAD, AND THAT IS THE WHOLE POINT.
+// It used to be `toast.success('נרשמת לרשימת ההמתנה…')` and nothing else —
+// no email, no row, no list. The copy under the button promised a waitlist
+// that did not exist, so the one visitor who says "I want to pay you" was
+// thrown away on every single click. That is the most expensive event on the
+// site and it was the only one not recorded.
+//
+// Signed in → their address, one tap. Signed out → an inline email field
+// (native `type="email" required`, so the browser validates it, not us).
+// A failed insert says so instead of celebrating: a lie is what we removed.
 
 import Link from 'next/link';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Check, X, Crown, Sparkles, ArrowLeft } from 'lucide-react';
+import { Check, X, Crown, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 type Plan = {
   id: string;
@@ -66,9 +76,56 @@ function Cell({ v }: { v: boolean | string }) {
 
 export default function PricingPage() {
   const [selected, setSelected] = useState('semi');
+  /** Set once we know there is no session and have to ask for an address. */
+  const [asking, setAsking] = useState(false);
+  const [email, setEmail] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const waitlist = () =>
-    toast.success('נרשמת לרשימת ההמתנה של Pro! נעדכן אותך ברגע שייפתח 🎉', { duration: 3500 });
+  /** Insert the lead. Resolves on success; throws on anything worth showing. */
+  async function saveLead(address: string, plan: string) {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { error } = await supabase.from('waitlist').insert({
+      email: address.trim().toLowerCase(),
+      plan,
+      user_id: user?.id ?? null,
+    });
+    // 23505 is the (email, plan) unique constraint — they are already on the
+    // list. From the visitor's side that is a success, not an error.
+    if (error && error.code !== '23505') throw error;
+  }
+
+  async function joinWaitlist(address?: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      let addr = address?.trim() ?? '';
+      if (!addr) {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        addr = user?.email ?? '';
+      }
+      // Signed out and nothing typed yet: reveal the field instead of guessing.
+      if (!addr) {
+        setAsking(true);
+        return;
+      }
+      await saveLead(addr, selected);
+      setAsking(false);
+      setEmail('');
+      toast.success('רשמנו אותך! נעדכן במייל ברגע ש-Pro נפתח 🎉', { duration: 3500 });
+    } catch (err) {
+      // Loud on purpose: a silent failure here is the bug this replaced.
+      console.error('[waitlist] insert failed', err);
+      toast.error('לא הצלחנו לשמור את ההרשמה. נסה שוב בעוד רגע.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-slate-800 px-4 py-8">
@@ -124,16 +181,50 @@ export default function PricingPage() {
           ))}
         </div>
 
-        <motion.button
-          whileTap={{ scale: 0.98 }}
-          onClick={waitlist}
-          className="btn-primary w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-bold text-white text-base"
-        >
-          <Sparkles className="w-5 h-5" />
-          <span>שדרג ל-Pro — {PLANS.find((p) => p.id === selected)?.price}</span>
-        </motion.button>
+        {asking ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void joinWaitlist(email);
+            }}
+            className="space-y-3"
+          >
+            {/* dir="ltr" + text-left: an address typed into an RTL field shows
+                its punctuation on the wrong side and looks broken. */}
+            <input
+              type="email"
+              required
+              autoFocus
+              dir="ltr"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              aria-label="כתובת אימייל לרשימת ההמתנה"
+              className="w-full text-left rounded-2xl border border-slate-900/15 bg-white px-4 py-3.5 text-base outline-none focus:border-violet-500 transition-colors"
+            />
+            <motion.button
+              type="submit"
+              whileTap={{ scale: 0.98 }}
+              disabled={busy}
+              className="btn-primary w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-bold text-white text-base disabled:opacity-60"
+            >
+              {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+              <span>שמור לי מקום</span>
+            </motion.button>
+          </form>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => void joinWaitlist()}
+            disabled={busy}
+            className="btn-primary w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-bold text-white text-base disabled:opacity-60"
+          >
+            {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+            <span>שדרג ל-Pro — {PLANS.find((p) => p.id === selected)?.price}</span>
+          </motion.button>
+        )}
         <p className="text-center text-[11px] text-slate-500 -mt-4">
-          התשלום ייפתח בקרוב — לחיצה תרשום אותך לרשימת ההמתנה
+          התשלום ייפתח בקרוב — לחיצה שומרת לך מקום ברשימת ההמתנה
         </p>
 
         {/* Comparison */}
