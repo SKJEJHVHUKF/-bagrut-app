@@ -44,6 +44,19 @@ const ENFORCED = [
   // Authored to the rule from the first line — enforced from day one, so the
   // bank never joins the 9903-hit backlog it would otherwise grow into.
   'content/mitkonot/',
+  // The 2026-09 סדרות widening wave. Added on the same reasoning as
+  // content/mitkonot/ above: authored to the rule from the first line, so it is
+  // enforced from day one rather than joining the 10k-hit backlog.
+  //
+  // 🔴 It is here because of how it nearly went the other way. Two authoring
+  // agents quoted this gate's "0 enforced file(s) broken" as evidence their new
+  // files were clean. That line was a true statement about three OTHER
+  // directories — seq-extra/ was outside ENFORCED, so every violation it could
+  // have introduced would have been added silently to the reported backlog that
+  // never fails a build. The files turned out clean, but only because I measured
+  // MAQAF and DEAD_ESCAPE directly against them; the green line was no evidence
+  // either way. A gate's verdict is scoped, and its output rarely says to what.
+  'content/lessons/math5/seq-extra/',
 ];
 
 const walk = (dir: string): string[] =>
