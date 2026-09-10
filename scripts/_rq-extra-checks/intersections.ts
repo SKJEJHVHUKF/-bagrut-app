@@ -3,7 +3,7 @@
 // (or radicand) that the question's own function is DEFINED at (mathjs gives Complex for a
 // negative radicand, Infinity for a zero denominator); a y-intercept is f(0) when f is defined
 // there. Every distractor / wrongAnswer note is re-enacted as the mistake it names.
-import { check, checkSet, dcheck, summary, math, E } from './_lib';
+import { check, checkSet, summary, math, E } from './_lib';
 
 const f = (expr: string) => {
   const c = math.parse(expr).compile();

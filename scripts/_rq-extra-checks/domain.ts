@@ -4,7 +4,7 @@
 // comes back Complex, division by zero comes back Infinity). Endpoints are found as roots of the
 // radicand / denominator, and every distractor / wrongAnswer note is re-enacted as the mistake
 // it names.
-import { check, checkSet, dcheck, summary, math, E } from './_lib';
+import { check, checkSet, summary, math, E } from './_lib';
 
 const f = (expr: string) => {
   const c = math.parse(expr).compile();
