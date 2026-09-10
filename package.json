@@ -140,7 +140,9 @@
     "test:reach": "tsx scripts/test-generator-reach.ts",
     "verify:trig-ladder": "tsx scripts/verify-trig-ladder.ts",
     "test:trig-detectors": "tsx scripts/test-trig-ladder-detectors.ts",
-    "test:calculator": "tsx scripts/test-calculator.ts"
+    "test:calculator": "tsx scripts/test-calculator.ts",
+    "verify:seq-ladder": "tsx scripts/verify-seq-ladder.ts",
+    "test:seq-detectors": "tsx scripts/test-seq-ladder-detectors.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
