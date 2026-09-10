@@ -414,8 +414,45 @@ function checkQuestion(q: PracticeQuestion) {
 // The exam bar: the archived questions on sequences, same model
 // ---------------------------------------------------------------------------
 
-function examBar(): number {
+/**
+ * 🔴 exam-reach compared apples to oranges, and I quoted the inflated numbers.
+ *
+ * `examBar` below takes the HARDEST SINGLE PART of each archived question — the
+ * archived סדרות questions run 4 to 6 parts each. An authored question was
+ * scored WHOLE, and 19 of our 76 אתגר questions (25%) carry two or more parts.
+ * Since `top3` takes the three HIGHEST hard scores, it selects preferentially
+ * for exactly those multi-part questions, so the headline percentage was
+ * systematically overstated — the same defect the trigonometry port hit, where
+ * a stage reported 152% for a purely structural reason.
+ *
+ * The fix that needs no fudge factor: score an authored question per PART, so a
+ * single part is compared against a single part.
+ *
+ * That alone was still not coherent, and it failed a stage at 86% for a
+ * structural reason of its own: our per-part score is the AVERAGE part, and the
+ * bar was the archive's HARDEST part. Measured, the archive's hardest part is
+ * 1.40x its mean part, so an average-part score gated against a hardest-part bar
+ * is asked for 40% more than like-for-like — the first error's mirror image.
+ *
+ * So the gate now reports TWO numbers against two bars, each comparing a part to
+ * a part, and neither carrying a fudge factor:
+ *   reach   — vs the archive's MEAN part. Like-for-like, and what the floor
+ *             gates on: "can a student who has done our אתגר rung do a typical
+ *             bagrut part?"
+ *   stretch — vs the archive's HARDEST part. The demanding number, printed but
+ *             not gated, because the hardest part of a 6-part question is not
+ *             what a single practice question is built to match.
+ * Averaging is applied only where BOTH sides are averaged; the flattering move
+ * this guards against is averaging one side alone.
+ */
+const partCount = (q: PracticeQuestion) =>
+  Math.max(1, ((q.question ?? '').match(/(?:^|\s)(?:[אבגדה]|\([אבגדה]\))[.)]\s/g) ?? []).length);
+
+const reachScore = (q: PracticeQuestion) => scoreOf(q) / partCount(q);
+
+function examBar(): { mean: number; hardest: number; nParts: number } {
   const tops: number[] = [];
+  const every: number[] = [];
   for (const q of ALL_PAST_BAGRUYOT) {
     if (!/סדרות/.test(q.topic ?? '')) continue;
     const parts = (q.parts ?? []).map((p) =>
@@ -427,11 +464,16 @@ function examBar(): number {
         solution: { steps: p.solution?.steps ?? [], finalAnswer: p.solution?.final_answer ?? '' },
       } as unknown as PracticeQuestion),
     );
-    if (parts.length) tops.push(Math.max(...parts));
+    if (parts.length) {
+      tops.push(Math.max(...parts));
+      every.push(...parts);
+    }
   }
-  return tops.length ? tops.reduce((a, b) => a + b, 0) / tops.length : 0;
+  const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  return { mean: avg(every), hardest: avg(tops), nParts: every.length };
 }
-const BAR = examBar();
+const BARS = examBar();
+const BAR = BARS.mean;
 
 // ---------------------------------------------------------------------------
 
@@ -479,8 +521,9 @@ function checkStage(stageId: string): boolean {
   const examShapes = EXAM_SHAPES.filter((s) => shapes.has(s));
   if (examShapes.length < 2)
     err(stageId, 'no bagrut-shaped ask', `has ${[...shapes].join(', ')} — needs 2 of ${EXAM_SHAPES.join('/')}`);
-  const top3 = mean(rung('hard').map(scoreOf).sort((a, b) => b - a).slice(0, 3));
+  const top3 = mean(rung('hard').map(reachScore).sort((a, b) => b - a).slice(0, 3));
   const reach = BAR ? (top3 / BAR) * 100 : 0;
+  const stretch = BARS.hardest ? (top3 / BARS.hardest) * 100 : 0;
   if (reach < 90) err(stageId, 'does-not-reach-the-exam', `${top3.toFixed(1)} vs the archive's ${BAR.toFixed(1)} (${reach.toFixed(0)}%)`);
 
   if (process.argv.includes('--scores')) {
@@ -493,7 +536,7 @@ function checkStage(stageId: string): boolean {
   const mine = findings.slice(before);
   const errors = mine.filter((f) => f.sev === 'error');
   console.log(
-    `\n${stageId.padEnd(24)} ${String(all.length).padStart(2)}q  ${sc.easy.toFixed(1)} → ${sc.mid.toFixed(1)} → ${sc.hard.toFixed(1)} · mech ${mc.easy.toFixed(1)}→${mc.mid.toFixed(1)}→${mc.hard.toFixed(1)} · shapes ${shapes.size} · exam-reach ${reach.toFixed(0)}% · ${errors.length} error(s), ${mine.length - errors.length} warning(s)`,
+    `\n${stageId.padEnd(24)} ${String(all.length).padStart(2)}q  ${sc.easy.toFixed(1)} → ${sc.mid.toFixed(1)} → ${sc.hard.toFixed(1)} · mech ${mc.easy.toFixed(1)}→${mc.mid.toFixed(1)}→${mc.hard.toFixed(1)} · shapes ${shapes.size} · exam-reach ${reach.toFixed(0)}% (stretch ${stretch.toFixed(0)}%) · ${errors.length} error(s), ${mine.length - errors.length} warning(s)`,
   );
   if (!process.argv.includes('--quiet')) for (const f of mine) console.log(`   ${f.sev === 'error' ? '✗' : '⚠'} ${f.where}  ${f.rule}${f.detail ? '  — ' + f.detail : ''}`);
   return errors.length === 0;
@@ -578,7 +621,8 @@ function main() {
     console.error(`usage: npx tsx scripts/verify-seq-ladder.ts [<${STAGES.join('|')}>|all] [--scores]`);
     process.exit(2);
   }
-  console.log(`exam bar: the archived סדרות questions, hardest part of each, average ${BAR.toFixed(1)}`);
+  console.log(`exam bar (${BARS.nParts} archived סדרות parts): mean part ${BARS.mean.toFixed(1)} — what reach gates on; `
+      + `hardest part ${BARS.hardest.toFixed(1)} — the stretch number. Authored questions are scored PER PART, so both sides are a part.`);
   const ids = arg === 'all' ? [...STAGES] : [arg];
   const stagesOk = ids.map(checkStage).every(Boolean);
   if (arg === 'all') {
