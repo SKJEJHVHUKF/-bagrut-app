@@ -438,4 +438,30 @@ const GRID = [-7, -5, -2.5, -1, 0.5, 1.5, 2.5, 4, 6, 9];
   check('305 wrong y-intercept -8: -8 over -1 is +8', E('(-8)/(0-1)'), 8);
 }
 
+// ---------------------------------------------------------------------------
+// fn-bag-rq-002 / ה — the part added 2026-09-10: the line y = x + m must pass
+// through the graph's y-intercept, and then it turns out to COINCIDE with the
+// graph everywhere except the hole. Lives in the stage file, so nothing else
+// re-derives it.
+// ---------------------------------------------------------------------------
+{
+  const fx = '(x^2-5*x+6)/(x-3)';
+  check('bag-002-ה the y-intercept is -2', num(fx)(0), -2);
+  // the line through (0, -2) with slope 1
+  const m = roots('(-2) - (0 + m)', -20, 20, 'm');
+  checkSet('bag-002-ה m = -2', m, [-2]);
+  // …and that line is exactly the reduced form of f
+  check('bag-002-ה f equals x - 2 everywhere it is defined',
+    Math.max(...[-5, -1, 0, 1, 2.9, 3.1, 7, 40].map(v => Math.abs(num(fx)(v) - num('x-2')(v)))), 0, 1e-9);
+  check('bag-002-ה so the difference has no isolated zero: it is zero on a whole grid',
+    [-5, -1, 0, 1, 2.9, 3.1, 7, 40].filter(v => Math.abs(num(fx)(v) - num('x-2')(v)) > 1e-9).length, 0);
+  check('bag-002-ה f is undefined at 3, so that one point is not shared', defined(fx, 3), 0);
+  check('bag-002-ה the hole sits at height 1', num('x-2')(3), 1);
+  check('bag-002-ה the check in the solution: f(5) = 3', num(fx)(5), 3);
+  check('bag-002-ה and the line gives the same there', num('x-2')(5), 3);
+  // a DIFFERENT m would meet the graph nowhere at all — the parallel case
+  check('bag-002-ה with m = 0 the difference is a non-zero constant',
+    Math.min(...[-5, 0, 1, 7].map(v => Math.abs(num(fx)(v) - num('x')(v)))), 2);
+}
+
 summary('intersections');

@@ -504,4 +504,63 @@ const exact = (v: number) => Math.round(v * 1e6) / 1e6;
   check('305 wrong "y-intercept 3": the sign was dropped', Math.abs(f(fx)(0)), 3);
 }
 
+// ---------------------------------------------------------------------------
+// fn-bag-rq-003 / ה — the part added 2026-09-10: for which k does
+// (x^2-4)/(x^2-x+k) have EXACTLY ONE vertical asymptote? The answer has three
+// values, and the interesting claim is not that each works but that no fourth
+// exists — so this is checked by exhaustion, not by re-walking the solution.
+// ---------------------------------------------------------------------------
+{
+  const TOL = 1e-9;
+  /** vertical asymptotes of (x^2-4)/(x^2-x+k): zeros of the denominator that do
+   *  NOT also zero the numerator (those become holes). */
+  const asymptotesOf = (k: number): number[] => {
+    const disc = 1 - 4 * k;
+    let rs: number[];
+    if (disc < -TOL) rs = [];
+    else if (Math.abs(disc) <= TOL) rs = [0.5];
+    else rs = [(1 + Math.sqrt(disc)) / 2, (1 - Math.sqrt(disc)) / 2];
+    return rs.filter((r) => Math.abs(r * r - 4) > TOL);
+  };
+
+  check('bag-003-ה k = 1/4 leaves one asymptote', asymptotesOf(0.25).length, 1);
+  check('bag-003-ה …and it is x = 1/2', asymptotesOf(0.25)[0], 0.5);
+  check('bag-003-ה at k = 1/4 the denominator is the perfect square (x-1/2)^2',
+    Math.max(...[-3, 0, 1, 4].map(v => Math.abs(f('x^2-x+0.25')(v) - f('(x-0.5)^2')(v)))), 0, 1e-9);
+  check('bag-003-ה the numerator does not vanish at 1/2, so it is a real asymptote',
+    f('x^2-4')(0.5), -3.75);
+
+  check('bag-003-ה k = -2 leaves one asymptote', asymptotesOf(-2).length, 1);
+  check('bag-003-ה …and it is x = -1', asymptotesOf(-2)[0], -1);
+  check('bag-003-ה at k = -2 the denominator factors as (x-2)(x+1)',
+    Math.max(...[-4, 0, 3, 8].map(v => Math.abs(f('x^2-x-2')(v) - f('(x-2)*(x+1)')(v)))), 0, 1e-9);
+  check('bag-003-ה the factor x-2 cancels, because the numerator vanishes at 2', f('x^2-4')(2), 0);
+
+  check('bag-003-ה k = -6 leaves one asymptote', asymptotesOf(-6).length, 1);
+  check('bag-003-ה …and it is x = 3', asymptotesOf(-6)[0], 3);
+  check('bag-003-ה at k = -6 the denominator factors as (x-3)(x+2)',
+    Math.max(...[-5, 0, 4, 9].map(v => Math.abs(f('x^2-x-6')(v) - f('(x-3)*(x+2)')(v)))), 0, 1e-9);
+  check('bag-003-ה the factor x+2 cancels, because the numerator vanishes at -2', f('x^2-4')(-2), 0);
+
+  // completeness: no fourth value of k does it, over a fine grid
+  const hits: number[] = [];
+  for (let n = -2000; n <= 2000; n++) {
+    const k = n / 100;
+    if (asymptotesOf(k).length === 1) hits.push(k);
+  }
+  checkSet('bag-003-ה over -20 <= k <= 20 exactly these three values leave one asymptote',
+    hits, [-6, -2, 0.25]);
+  // …and the REASON no fourth value exists: by Vieta the denominator's two zeros
+  // always sum to 1, while the numerator's zeros sum to 0, so both can never
+  // cancel at once and "two zeros, neither cancels" always leaves two asymptotes.
+  for (const k of [-6, -2, -0.5, 0, 0.2]) {
+    const disc = 1 - 4 * k;
+    const rs = [(1 + Math.sqrt(disc)) / 2, (1 - Math.sqrt(disc)) / 2];
+    check(`bag-003-ה k = ${k}: the denominator's two zeros sum to 1`, rs[0] + rs[1], 1);
+  }
+  check("bag-003-ה while the numerator's two zeros sum to 0", E('2 + (-2)'), 0);
+  check('bag-003-ה so a k that cancels BOTH would need 1 = 0, which is why there is no fourth',
+    hits.filter((k) => asymptotesOf(k).length === 0 && 1 - 4 * k > TOL).length, 0);
+}
+
 summary('asymptotes');

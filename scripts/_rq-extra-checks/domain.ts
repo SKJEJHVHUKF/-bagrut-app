@@ -512,4 +512,51 @@ const EPS = 1e-3;
     [-2, 6, 0].reduce((s, w) => s + (Math.abs(num(`sqrt((x+(${w}))/(x-6))`)(-2)) < 1e-9 ? 1 : 0), 0), 0);
 }
 
+// ---------------------------------------------------------------------------
+// fn-bag-rq-001 — the stage's BAGRUT question, rewritten 2026-09-10 so that every
+// part is a different function with a hard domain. It lives in the stage file,
+// not in rq-extra, and nothing else re-derives it; the checks ride here because
+// this is the file verify-rq-extra already runs for this stage.
+// ---------------------------------------------------------------------------
+{
+  // א — sqrt in the numerator over a quadratic denominator → x >= -3, x != -2, 6
+  const fa = 'sqrt(x+3)/(x^2-4*x-12)';
+  checkSet('bag-001-א the denominator vanishes at -2 and 6', roots('x^2-4*x-12', -20, 20), [-2, 6]);
+  check('bag-001-א the factored (x-6)(x+2) matches the denominator',
+    Math.max(...[-7, -3, 0, 4, 9].map(v => Math.abs(num('x^2-4*x-12')(v) - num('(x-6)*(x+2)')(v)))), 0, 1e-9);
+  checkSet('bag-001-א the radicand vanishes at -3', roots('x+3'), [-3]);
+  // both excluded values really are inside what the root allows — so both are
+  // genuine exclusions, unlike the -3 of rq-sub-dom-008 which was already out
+  check('bag-001-א both zeros of the denominator survive the root condition',
+    roots('x^2-4*x-12', -20, 20).filter((r) => num('x+3')(r) >= 0).length, 2);
+  check('bag-001-א membership: -3 in, -2 and 6 out, and the endpoint is closed',
+    pattern(fa, [-4, -3, -2, 0, 5, 6, 7]) === '0101101' ? 1 : 0, 1);
+
+  // ב — the root IS the whole denominator → -5 < x < 4, both ends open
+  const fb = '(x+1)/sqrt(20-x-x^2)';
+  checkSet('bag-001-ב the radicand vanishes at -5 and 4', roots('20-x-x^2', -20, 20), [-5, 4]);
+  check('bag-001-ב multiplying by -1 gives x^2+x-20, which factors as (x+5)(x-4)',
+    Math.max(...[-8, -1, 0, 6].map(v => Math.abs(num('x^2+x-20')(v) - num('(x+5)*(x-4)')(v)))), 0, 1e-9);
+  check('bag-001-ב the parabola x^2+x-20 opens upward', Math.sign(num('x^2+x-20')(1000)), 1);
+  check('bag-001-ב membership: the open interval between the two, ends excluded',
+    pattern(fb, [-6, -5, -4.99, 0, 3.99, 4, 5]) === '0011100' ? 1 : 0, 1);
+
+  // ג — a whole quotient under the root → x <= -2 or x > 5
+  const fc = 'sqrt((x+2)/(x-5))';
+  check('bag-001-ג membership: closed at -2, open at 5',
+    pattern(fc, [-9, -2, -1.99, 0, 4.99, 5, 5.01, 12]) === '11000011' ? 1 : 0, 1);
+  check('bag-001-ג at -2 the quotient is 0, so the root is defined there', num('(x+2)/(x-5)')(-2), 0);
+  check('bag-001-ג at 5 the denominator is 0, so it is not', defined('(x+2)/(x-5)', 5), 0);
+
+  // ד — m = f + g is defined exactly where BOTH are: -3 <= x < 4, x != -2
+  const both = (v: number) => (defined(fa, v) && defined(fb, v) ? 1 : 0);
+  check('bag-001-ד the sum is defined exactly on [-3, 4) minus -2',
+    [-6, -4, -3, -2, -1, 0, 3.99, 4, 6, 9].map(both).join('') === '0010111000' ? 1 : 0, 1);
+  check('bag-001-ד 6 needs no separate exclusion: it is already outside the second domain',
+    defined(fb, 6), 0);
+  check('bag-001-ד the check in the solution: both parts are defined at 0', both(0), 1);
+  check('bag-001-ד f(0) = sqrt(3)/(-12)', num(fa)(0), E('sqrt(3)/(-12)'));
+  check('bag-001-ד g(0) = 1/sqrt(20)', num(fb)(0), E('1/sqrt(20)'));
+}
+
 summary('domain');
