@@ -301,6 +301,12 @@ check(
 // `inequality` needs a stated bound, not narration about which term is smaller.
 check('inequality does NOT fire on narration', hasMech('כל איבר קטן מקודמו, ולכן הסדרה יורדת', 'inequality'), false);
 check('inequality DOES fire on a bound', hasMech('מהו האיבר הראשון שגדול מ-$150$?', 'inequality'), true);
+// 🔴 The definite article lands at the SEAM of a Hebrew compound. `אי-השוויון`
+// is the form the solutions actually use — 17 times in this topic — and it
+// matched zero times against a pattern written from the indefinite form.
+check('inequality fires on the INDEFINITE compound', hasMech('פותרים את אי-שוויון הבא', 'inequality'), true);
+check('inequality fires on the DEFINITE compound', hasMech('פותרים את אי-השוויון ומקבלים', 'inequality'), true);
+check('inequality fires with a space instead of a hyphen', hasMech('פותרים את אי השוויון', 'inequality'), true);
 check('inequality DOES fire on "גדול מהמספר"', hasMech('האיבר הראשון שגדול מהמספר $100$', 'inequality'), true);
 
 // `sum-ratio` is a ratio between SUMS — the archive's way of hiding q.
@@ -378,10 +384,15 @@ check('proof DOES fire on the imperative', hasMech('הוכיחו כי הסדרה
 // collision rule reported a nine-step question as a restatement of a one-liner.
 // ===========================================================================
 const sigOf = (q: Partial<PracticeQuestion>) => signatureOf(q as PracticeQuestion);
-const ONE_Q = { question: 'מצא את המנה $q$ של הסדרה ההנדסית.', expected: { kind: 'value', value: '3' } };
-const TWO_Q = {
+// `as const` on `kind`: without it TS widens it to `string` and the fixture no
+// longer satisfies the AnswerSpec union.
+const ONE_Q: Partial<PracticeQuestion> = {
   question: 'מצא את המנה $q$ של הסדרה ההנדסית.',
-  expected: { kind: 'set', values: ['3', '5'] },
+  expected: { kind: 'value' as const, value: '3' },
+};
+const TWO_Q: Partial<PracticeQuestion> = {
+  question: 'מצא את המנה $q$ של הסדרה ההנדסית.',
+  expected: { kind: 'set' as const, values: ['3', '5'] },
   answerLabels: ['q', 'a₁'],
 };
 check('a one-quantity ask is tagged nQ=1', sigOf(ONE_Q).endsWith('|nQ=1'), true);
@@ -393,7 +404,7 @@ check(
 );
 check(
   'two genuinely identical questions still DO collide',
-  sigOf(ONE_Q) === sigOf({ ...ONE_Q, question: ONE_Q.question.replace('$q$', '$q$ ') }),
+  sigOf(ONE_Q) === sigOf({ ...ONE_Q, question: `${ONE_Q.question ?? ''} ` }),
   true,
 );
 check(

@@ -156,7 +156,17 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   // 2-mechanism warm-up budget one such firing breaks a stage's gradient, and
   // an author reported rewriting natural Hebrew ("קטן יותר מן") to avoid it.
   // An inequality question compares against a stated BOUND, so require one.
-  ['inequality', /אי[- ]שוויון|גדול מ-?\$?\d|קטן מ-?\$?\d|גדול מהמספר|קטן מהמספר|לראשונה|מתי יעבור|עובר את/],
+  // 🔴 `ה?` at the SEAM. Hebrew attaches the definite article to the second
+  // element of a compound, so the definite form is **אי-השוויון** — the article
+  // lands in the middle, where a pattern written from the indefinite form has no
+  // slot for it. That definite form appears 17 times across this topic's content
+  // and matched ZERO times; two questions that solve a genuine inequality scored
+  // nothing for it. Reported by an author, who left the natural Hebrew standing
+  // rather than phrasing around the gate — which is the whole point.
+  // Sibling of the `הביעו`/`בטאו` case: a pattern encodes the author's
+  // inflection habits, not the language's, and it fails in the flattering
+  // direction — the content looks uncovered rather than the gate looking broken.
+  ['inequality', /אי[- ]ה?שוויון|גדול מ-?\$?\d|קטן מ-?\$?\d|גדול מהמספר|קטן מהמספר|לראשונה|מתי יעבור|עובר את/],
   // 🔴 `/שלושה איברים/` matched a counting sanity-check ("מהמקום $3$ עד המקום
   // $5$ יש שלושה איברים") and an illustration ("נחשב את שלושת האיברים
   // הראשונים"). This mechanism means the THEOREM — three consecutive terms of
