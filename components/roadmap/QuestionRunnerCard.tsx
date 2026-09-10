@@ -572,33 +572,42 @@ export function QuestionRunnerCard({
           on a revisit there was nothing at all to look at. Owner, 2026-09-05:
           "אחרי שעונים את התשובה התשובה תישאר ולא תיעלם ושפשוט יסומן וי ירוק או
           איקס אדום". Read-only: this is a record, not a second attempt. */}
-      {q.kind === 'open' && revealed && typed.trim() && (
-        <div
-          className={`rounded-2xl border px-4 py-3 ${
-            solved
-              ? 'border-emerald-500/40 bg-emerald-500/[0.08]'
-              : 'border-rose-500/30 bg-rose-500/[0.06]'
-          }`}
-        >
-          <div className="text-[10px] font-black tracking-widest text-slate-500 uppercase mb-1">
-            התשובה שלך
-          </div>
-          <div className="flex items-center gap-2">
-            {solved ? (
-              <CheckCircle className="w-4 h-4 flex-shrink-0 text-emerald-700" />
-            ) : (
-              <XCircle className="w-4 h-4 flex-shrink-0 text-rose-700" />
-            )}
-            <div
-              className={`chat-md math-content min-w-0 flex-1 text-sm font-bold ${
-                solved ? 'text-emerald-900' : 'text-rose-900'
-              }`}
-            >
-              <MathText inline>{typed}</MathText>
+      {/* ⚠️ A self-reported question is UNJUDGED between the reveal and the
+          "צדקתי / טעיתי" press, and `solved` is false in both states. Marking it
+          red there would tell a student his answer is wrong before he has said
+          anything — so the mark waits for `firstTryCorrect`. This only became
+          reachable when the manual path gained an answer box (2026-09-10);
+          before that `typed` was always empty here and the block never showed. */}
+      {q.kind === 'open' && revealed && typed.trim() && (() => {
+        const judged = firstTryCorrect !== null;
+        const tone = !judged
+          ? 'border-slate-900/10 bg-slate-900/[0.03]'
+          : solved
+            ? 'border-emerald-500/40 bg-emerald-500/[0.08]'
+            : 'border-rose-500/30 bg-rose-500/[0.06]';
+        return (
+          <div className={`rounded-2xl border px-4 py-3 ${tone}`}>
+            <div className="text-[10px] font-black tracking-widest text-slate-500 uppercase mb-1">
+              התשובה שלך
+            </div>
+            <div className="flex items-center gap-2">
+              {judged &&
+                (solved ? (
+                  <CheckCircle className="w-4 h-4 flex-shrink-0 text-emerald-700" />
+                ) : (
+                  <XCircle className="w-4 h-4 flex-shrink-0 text-rose-700" />
+                ))}
+              <div
+                className={`chat-md math-content min-w-0 flex-1 text-sm font-bold ${
+                  !judged ? 'text-slate-800' : solved ? 'text-emerald-900' : 'text-rose-900'
+                }`}
+              >
+                <MathText inline>{typed}</MathText>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* "למד אותי" — the graded help ladder, available BEFORE committing on
           every question kind. This is the step between "no idea" and "show me
