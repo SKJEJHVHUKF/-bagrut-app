@@ -30,6 +30,7 @@ import {
   hasParameterForTest,
   mechanismsOfText,
   offStyleOf,
+  signatureOf,
 } from './verify-seq-ladder';
 import type { PracticeQuestion } from '../content/lessons/types';
 
@@ -352,9 +353,54 @@ check('an uncounted finite sum is still a sum ask', shapeOf('מצאו את סכ�
 check('position-subseries sees תת־סדרה (U+05BE)', hasMech('נתבונן בתת־סדרה חדשה', 'position-subseries'), true);
 check('position-subseries sees תת-סדרה (ASCII)', hasMech('נתבונן בתת-סדרה חדשה', 'position-subseries'), true);
 
+// 🔴 Hebrew glues its conjunction to the word, and the tightening that rejected
+// the NOUNS also rejected "…והוכח", the commonest way a multi-part question
+// tacks a proof onto a computation. A nine-step question recovering three
+// quantities and proving the sequence arithmetic was reading as a plain sum.
+check('prove fires through the conjunction ו', shapeOf('מצא את $a_2$ ואת ההפרש, והוכח שהסדרה חשבונית.'), 'prove');
+check('prove fires on ...והוכיחו', shapeOf('מצאו את המנה, והוכיחו כי הסדרה הנדסית.'), 'prove');
+check('the NOUN with a conjunction is still not prove', shapeOf('נתונה לפניכם והוכחה של הטענה'), 'compute');
+check('the definite noun is still not prove', shapeOf('לפניכם ההוכחה של הטענה'), 'compute');
+
+// A second quantity after ואת was never examined: the first alternative looks
+// only at the letter directly after "מצא את", which here is a rejected a_1.
+check('a second named unknown after ואת counts', shapeOf('מצא את $a_1$ ואת $q$.'), 'find-parameter');
+check('a Hebrew word after ואת does not', shapeOf('מצאו את סכום האיברים ואת מספרם.'), 'sum');
+
 // `proof` — the imperative, not the noun.
 check('proof does NOT fire on the noun alone', hasMech('בהוכחה שלפניכם יש שלושה שלבים', 'proof'), false);
 check('proof DOES fire on the imperative', hasMech('הוכיחו כי הסדרה הנדסית', 'proof'), true);
+
+// ===========================================================================
+// The signature carries how many quantities the question asks for. Without it,
+// "recover a₁ AND q from a₂·a₄=81 and a₆=243" (nine steps) and "the geometric
+// mean of 4 and 9" (one step, recall) were the SAME signature, and the
+// collision rule reported a nine-step question as a restatement of a one-liner.
+// ===========================================================================
+const sigOf = (q: Partial<PracticeQuestion>) => signatureOf(q as PracticeQuestion);
+const ONE_Q = { question: 'מצא את המנה $q$ של הסדרה ההנדסית.', expected: { kind: 'value', value: '3' } };
+const TWO_Q = {
+  question: 'מצא את המנה $q$ של הסדרה ההנדסית.',
+  expected: { kind: 'set', values: ['3', '5'] },
+  answerLabels: ['q', 'a₁'],
+};
+check('a one-quantity ask is tagged nQ=1', sigOf(ONE_Q).endsWith('|nQ=1'), true);
+check('a two-quantity ask is tagged nQ=2', sigOf(TWO_Q).endsWith('|nQ=2'), true);
+check(
+  'two questions identical but for the number of quantities do NOT collide',
+  sigOf(ONE_Q) === sigOf(TWO_Q),
+  false,
+);
+check(
+  'two genuinely identical questions still DO collide',
+  sigOf(ONE_Q) === sigOf({ ...ONE_Q, question: ONE_Q.question.replace('$q$', '$q$ ') }),
+  true,
+);
+check(
+  'answerLabels count when expected is not a set',
+  sigOf({ question: 'מצא את $q$.', answerLabels: ['q', 'd', 'n'] }).endsWith('|nQ=3'),
+  true,
+);
 
 // ===========================================================================
 console.log(`${pass} assertion(s) passed, ${fails.length} failed.`);

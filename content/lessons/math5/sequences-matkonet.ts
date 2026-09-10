@@ -1081,7 +1081,7 @@ export const GE_INFINITE_EXTRA: PracticeQuestion[] = [
   },
   {
     id: 'seq-gei-007',
-    difficulty: 'hard',
+    difficulty: 'mid',
     kind: 'open',
     question: 'בסדרה הנדסית אינסופית $a_1 = 24$ והמנה $q = \\dfrac12$. חשב את ההפרש $S_\\infty - S_2$, כלומר כמה "נשאר" מהסכום אחרי שני האיברים הראשונים.',
     hint: 'אפשר לחשב את שני הסכומים ולחסר, או לשים לב שהשארית היא בעצמה סכום אינסופי שמתחיל מהאיבר שבמקום $3$.',
@@ -1403,7 +1403,7 @@ export const GE_PRACTICE_EXTRA: PracticeQuestion[] = [
   },
   {
     id: 'seq-gex-012',
-    difficulty: 'hard',
+    difficulty: 'mid',
     kind: 'open',
     question: 'מכונה מאבדת $10\\%$ מערכה בכל שנה. ערכה כיום $50{,}000$ ש"ח. מה יהיה ערכה בעוד $3$ שנים?',
     hint: 'ירידה של $10\\%$ = כפל פי $0.9$ בכל שנה, סדרה הנדסית עם $q = 0.9$.',

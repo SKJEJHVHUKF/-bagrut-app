@@ -89,8 +89,14 @@ export const EXPRESS_IN_TERMS_OF =
  * `[a-z](?![_{])` is the whole fix: a bare letter is an unknown to recover,
  * `a_1` / `a_{12}` is one concrete numbered term of a known sequence.
  */
+// The `ואת \$?[a-z]` alternative: the archive and our own content routinely ask
+// for two quantities at once — "מצא את $a_1$ **ואת** $q$" — and the first
+// alternative only ever looks at the letter directly after "מצא את". There the
+// letter is `a_1`, correctly rejected as a numbered term, and the `q` that
+// follows was never examined at all, so a parametric ask scored `compute`. It
+// demands a LATIN letter after ואת, so "ואת מספרם" does not qualify.
 export const FIND_NAMED_UNKNOWN =
-  /מצא(?:ו)? את (?:הערך של )?\$?[a-z](?![_{])\$?|מצא(?:ו)? את הפרמטר|מצא(?:ו)? את (?:שיעור|ההפרש|המנה|האיבר הראשון)|פרמטר/;
+  /מצא(?:ו)? את (?:הערך של )?\$?[a-z](?![_{])\$?|מצא(?:ו)? את [^.]{0,40}ואת \$?[a-z](?![_{])\$?|מצא(?:ו)? את הפרמטר|מצא(?:ו)? את (?:שיעור|ההפרש|המנה|האיבר הראשון)|פרמטר/;
 
 /** The `parameter` MECHANISM: the shared "find the named unknown" regex, plus
  *  the two phrasings that mean a parameter without naming one. Built from
@@ -242,7 +248,15 @@ export function askShape(q: PracticeQuestion): string {
   // `prove` — the same bug that made a whole geometry stage report one ask
   // shape when it makes several. Demand the imperative; the infinitive
   // (להוכיח) stays, because "עליכם להוכיח" really is a proof task.
-  if (/הוכיח|(?:^|[\s"״'(])הוכח(?=[\s.,:!?]|$)|הראו כי|הראה כי|הסיקו כי/.test(t)) return 'prove';
+  // 🔴 `ו?` — a regression I introduced when tightening this to reject the
+  // nouns. Hebrew glues its conjunction to the word, so "…**ו**הוכח שהסדרה
+  // חשבונית" has no boundary character before הוכח and scored `compute`. That
+  // is the commonest way a multi-part question tacks a proof onto a
+  // computation, and `seq-ars-004` — a nine-step question that recovers three
+  // quantities AND proves the sequence arithmetic — was reading as a plain sum.
+  // The nouns stay excluded: ההוכחה has ה before הוכח (not a boundary, and `ו?`
+  // does not match ה), and והוכחה fails the trailing lookahead.
+  if (/הוכיח|(?:^|[\s"״'(])ו?הוכח(?=[\s.,:!?]|$)|הראו כי|הראה כי|הסיקו כי/.test(t)) return 'prove';
   // "הביעו את מנתה באמצעות $q$" — the archive's second most common ask (it
   // appears in 4 of the 6 papers). With no shape of its own it fell through
   // every net to `compute`, which is both the wrong label and, since `compute`
@@ -290,8 +304,37 @@ function scoreOf(q: PracticeQuestion): number {
   );
 }
 
-const signatureOf = (q: PracticeQuestion) =>
-  `${askShape(q)}|${mechanismsOf(q).sort().join(',')}${hasParameter(q) ? '|param' : ''}${isReverse(q) ? '|rev' : ''}`;
+/**
+ * 🔴 `nQ` — how many quantities the question asks the student to produce. Added
+ * after reading all five pairs the collision rule flagged, which is the only way
+ * to tell a real clone from a coarse model. Three of the five were NOT clones:
+ *
+ *   seq-geg-007  a₂·a₄=81 and a₆=243 → recover a₁ AND q   (9 steps)
+ *   seq-sub-ge-004  the geometric mean of 4 and 9          (1 step, recall)
+ *
+ * Identical signature, and nothing alike. The same held for a three-quantity
+ * "find x, q and a₅ with an increasing constraint" against a one-quantity
+ * "find x", and for a nine-step "recover a₁, a₂, d AND prove it is arithmetic"
+ * against "for which n is Sₙ maximal". A question that asks for three things is
+ * not the same ask as one that asks for one, and the model simply could not see
+ * the difference.
+ *
+ * The trade-off, stated so nobody has to rediscover it: widening a signature
+ * makes every collision rarer, including the true ones this rule exists to
+ * catch. It is worth it here because the axis is real difficulty rather than
+ * incidental phrasing — but the two pairs that stayed collided after the change
+ * were then read individually and genuinely were mislabelled, so the rule kept
+ * its teeth exactly where it should.
+ */
+const quantitiesAsked = (q: PracticeQuestion): number => {
+  const spec = q.expected as { kind?: string; values?: unknown[] } | undefined;
+  if (spec?.kind === 'set' && Array.isArray(spec.values)) return spec.values.length;
+  return q.answerLabels?.length || 1;
+};
+
+export const signatureOf = (q: PracticeQuestion) =>
+  `${askShape(q)}|${mechanismsOf(q).sort().join(',')}${hasParameter(q) ? '|param' : ''}` +
+  `${isReverse(q) ? '|rev' : ''}|nQ=${quantitiesAsked(q)}`;
 
 // ---------------------------------------------------------------------------
 // Readability rules — the three complaints the owner has made on every topic
