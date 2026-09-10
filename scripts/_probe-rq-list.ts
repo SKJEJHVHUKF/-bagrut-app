@@ -14,7 +14,7 @@ for (const st of ROOT_QUOTIENT_STAGES) {
     }
     console.log(`  [${lv.kind}] ${lv.title} — ${lv.questions.length || lv.bagrut.length}`);
     lv.questions.forEach((q, i) => {
-      console.log(`    #${i + 1} ${q.id} (${q.type})  ${q.question.replace(/\n/g, ' ')}`);
+      console.log(`    #${i + 1} ${q.id} (${q.kind})  ${q.question.replace(/\n/g, ' ')}`);
     });
     lv.bagrut.forEach((b, i) => {
       console.log(`    #${i + 1} ${b.id} :: ${b.context.replace(/\n/g, ' ')}`);
