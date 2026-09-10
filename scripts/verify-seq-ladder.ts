@@ -301,8 +301,30 @@ const hasParameter = (q: PracticeQuestion) =>
 const isReverse = (q: PracticeQuestion) =>
   /נתון (?:כי )?(?:הסכום|האיבר ה|היחס|ההפרש)[^.]*(?:מצא|חשב)|ידוע (?:כי|ש)[^.]*(?:מצא|חשב)|מהי הסדרה/.test(q.question ?? '');
 
+/**
+ * 🔴 MOVES, not array entries. `steps` used to be `solution.steps.length`, which
+ * measures how the author happened to punctuate rather than how much work the
+ * question demands: one entry holding two paragraphs scored 1, and the same two
+ * paragraphs as two entries scored 2. Two consequences, and the second is the
+ * one that matters.
+ *
+ *  1. It made the score gameable by pressing Enter.
+ *  2. It under-counted סדרות specifically. 14% of this topic's steps pack two
+ *     moves into one entry, against 1% in טריגונומטריה and **0% in the archived
+ *     exam solutions** — so every comparison against the exam bar was reading
+ *     our work as smaller than it is, for a punctuation reason.
+ *
+ * Counting blank-line-separated blocks makes the number invariant to formatting.
+ * That matters right now because the topic's steps are about to be split apart
+ * for readability (Itay: "התשובות דחוסות ולא מסודרות לעיין"), and a difficulty
+ * model that moved when prose was re-flowed would report that cosmetic edit as a
+ * ladder improvement.
+ */
+const moveCount = (q: PracticeQuestion) =>
+  (q.solution?.steps ?? []).reduce((n, s) => n + s.split(/\n\s*\n/).filter((b) => b.trim()).length, 0);
+
 function scoreOf(q: PracticeQuestion): number {
-  const steps = (q.solution?.steps ?? []).length;
+  const steps = moveCount(q);
   const mech = mechanismsOf(q).length;
   const shape = askShape(q);
   return (
@@ -356,7 +378,7 @@ const tall = (line: string) =>
   ).length;
 
 const CLAIMS = [/הסכום הוא|ההפרש הוא|המנה היא|a_?n ?=|S_?n ?=/, /ומכאן \$?[a-z]\$? ?=|מקבלים ש?\$?[a-z]\$? ?=/];
-const SHOWS = /מציבים|מחלקים|כופלים|מחסרים|מחברים|מעלים|מצמצמים|פותחים|מעבירים|לפי הנוסחה|לפי הכלל|פותרים|מכנסים|מפרקים/;
+const SHOWS = /מציבים|מחלקים|כופלים|מחסרים|מחברים|מעלים|מצמצמים|פותחים|מעבירים|לפי הנוסחה|לפי הכלל|פותרים|מכנסים|מפרקים|כותבים|רושמים|מעלים בריבוע/;
 
 const OFF_STYLE: [string, RegExp][] = [
   ['count-the-errors', /כמה טעויות|מספר הטעויות|כמה שגיאות/],
@@ -372,17 +394,63 @@ function checkQuestion(q: PracticeQuestion) {
   const text = steps.join('\n');
 
   if (!steps.length) return err(w, 'no-solution');
+
+  // 🔴 Itay, 2026-09-10: **"התשובות דחוסות ולא מסודרות לעיין"**.
+  // The renderer already gives each entry a numbered circle and a wide gap
+  // (space-y-6, widened twice before this), so the crowding was never a layout
+  // problem — it was that ONE entry held two moves separated by a blank line,
+  // rendering as a single bullet containing two thoughts. 254 steps across 134
+  // questions did it. Measured against the neighbours when this rule went in:
+  // טריגונומטריה 1%, גאומטריה 3%, סדרות 14%, and the ARCHIVED EXAM SOLUTIONS 0% —
+  // so one move per entry is the exam's own shape, not a house preference.
+  // `scoreOf` counts blank-line-separated blocks rather than array entries, so
+  // splitting these apart moved no difficulty number at all: the fix is purely
+  // presentational, and the gate proves it stayed that way.
+  for (const [i, s] of steps.entries())
+    if (/\n\s*\n/.test(s))
+      err(w, 'packed-step', `step ${i + 1} holds two moves in one entry — give each its own line`);
   if (!/\*\*הכלל:\*\*/.test(steps[0] ?? '')) warn(w, 'no-rule-line', 'the first step should name the criterion');
   if (!/\*\*הנוסחה:\*\*/.test(text)) err(w, 'no-formula-line', 'name the rule the solution applies, in general form, before substituting');
   else if (!/\*\*ההצבה:\*\*/.test(text)) warn(w, 'formula-without-substitution', '**הנוסחה:** with no **ההצבה:** after it');
 
-  for (const s of steps) {
-    if (/^\*\*(?:הנוסחה|ההצבה|הכלל):\*\*/.test(s.trim())) continue;
-    const plain = s.replace(/\$\$[\s\S]*?\$\$/g, ' ');
-    if (CLAIMS.some((re) => re.test(plain)) && !SHOWS.test(plain)) {
-      err(w, 'leap', `announces a result without the move: "${s.replace(/\s+/g, ' ').slice(0, 60)}…"`);
-      break;
+  // 🔴 The window is the step AND THE ONE BEFORE IT, because that is the unit a
+  // reader takes in. This rule used to read each array entry in isolation, which
+  // was right while an entry held a whole paragraph — the operation word and its
+  // result lived together. Splitting the packed entries apart for readability
+  // (Itay: "התשובות דחוסות ולא מסודרות לעיין") moved 35 of those pairs into
+  // ADJACENT entries, and the rule reported every one as a leap: "מציבים…" in
+  // step 4 and "$a_n = 9n - 41$" in step 5 is not a student left stranded, it is
+  // two lines of exam working.
+  //
+  // The trade-off, stated so it is not rediscovered: a genuine leap whose
+  // predecessor happens to contain an operation word now passes. That is the
+  // price of matching how the content is actually read, and it is the right side
+  // to err on — the alternative was rewording 35 correct steps to satisfy a rule
+  // written for a layout that no longer exists.
+  const plainOf = (s: string) => s.replace(/\$\$[\s\S]*?\$\$/g, ' ');
+  const isMarker = (s: string) => /^\*\*(?:הנוסחה|ההצבה|הכלל):\*\*/.test((s ?? '').trim());
+  let inFormulaBlock = false;
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i];
+    if (isMarker(s)) {
+      inFormulaBlock = /^\*\*הנוסחה:\*\*/.test(s.trim());
+      continue;
     }
+    const plain = plainOf(s);
+    if (!CLAIMS.some((re) => re.test(plain)) || SHOWS.test(plain)) continue;
+    // A **הנוסחה:** block quotes the formulas the solution is about to use, one
+    // per line — often two or three of them. Splitting the packed entries
+    // stranded those lines from their marker, and CLAIMS fires on `a_n =`
+    // whether the equation is a derived RESULT or the general formula itself, so
+    // 30 formula statements read as leaps. The block runs from the **הנוסחה:**
+    // marker to the **ההצבה:** that consumes it — which is the authoring
+    // contract this gate already enforces elsewhere — and nothing inside it is a
+    // derived result by definition.
+    if (inFormulaBlock) continue;
+    const prev = i > 0 ? plainOf(steps[i - 1]) : '';
+    if (SHOWS.test(prev)) continue;
+    err(w, 'leap', `announces a result without the move: "${s.replace(/\s+/g, ' ').slice(0, 60)}…"`);
+    break;
   }
   for (const line of text.split('\n')) {
     const t = line.trim();
