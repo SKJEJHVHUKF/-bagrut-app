@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hasPlan } from '@/lib/study-plan';
 import MathUpLogo from '@/components/MathUpLogo';
+import PointerGlow from '@/components/PointerGlow';
 import TutorMascot from '@/components/tutor/TutorMascot';
 import {
   fadeUp,
@@ -120,6 +121,9 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen text-slate-800 relative overflow-x-hidden">
+      {/* Pointer-reactive field, behind everything. Landing only — see the
+          comment in the component for why it stops here. */}
+      <PointerGlow />
       {/* Navbar — real glass: it sits over scrolling content, so the blur
           has something to work on and the cost is one layer, not forty. */}
       <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
