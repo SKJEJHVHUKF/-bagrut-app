@@ -1,6 +1,7 @@
-import type { Lesson } from '../types';
+import type { Lesson, SubTopic } from '../types';
 import { ARITHMETIC_BAGRUT, ARITHMETIC_STAGES } from './sequences-arithmetic';
 import { GEOMETRIC_BAGRUT, GEOMETRIC_STAGES } from './sequences-geometric';
+import { withSeqExtra } from './seq-extra';
 import { INDUCTION_EXTRA } from './sequences-matkonet';
 
 export const math5Sequences: Lesson = {
@@ -807,7 +808,7 @@ $$S_n = a_1 \\cdot \\frac{q^n - 1}{q - 1} = \\frac{a_1(q^n - 1)}{q - 1}$$
     ...GEOMETRIC_BAGRUT,
   ],
 
-  subTopics: [
+  subTopics: ([
     // The סדרות track (2026-08-19): the student picks סדרות חשבוניות or
     // סדרות הנדסיות, and each group is four stages. The eight stage sub-topics
     // live in sequences-arithmetic.ts / sequences-geometric.ts and replace the
@@ -1664,5 +1665,9 @@ $$(1 + r)^n = \\frac{A}{P} \\quad\\Longrightarrow\\quad 1 + r = \\sqrt[n]{\\frac
         ...INDUCTION_EXTRA,
       ],
     },
-  ],
+    // The 2026-09 widening wave (./seq-extra) is appended here, at the ONE
+    // point where all ten stages are assembled — the arithmetic and geometric
+    // stages arrive already built, so a per-file merge would have needed three
+    // separate hooks and would have missed these last two entirely.
+  ] as SubTopic[]).map(withSeqExtra),
 };
