@@ -16,6 +16,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sigma, X, ChevronDown, ExternalLink } from 'lucide-react';
 import { MathText } from './practice/MathText';
+import Calculator from './Calculator';
 import type { Formula } from '@/content/lessons/types';
 // NO static import of @/content/lessons. This drawer is mounted by the root
 // layout on every page, and a static ESM import is resolved at build time — so
@@ -206,16 +207,24 @@ export default function FormulaSheet() {
 
   return (
     <>
-      {/* Floating trigger — bottom-right, same side the drawer slides in from
-          (in RTL the scrollbar sits on the left, so the right edge is clear). */}
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="דף הנוסחאות"
-        className="formula-fab fixed bottom-4 right-4 z-[55] inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur border border-violet-500/25 shadow-lg shadow-violet-500/15 px-3.5 py-2.5 text-violet-800 font-bold text-sm hover:bg-violet-500/5 hover:scale-[1.03] transition-all"
-      >
-        <Sigma className="w-4 h-4" />
-        <span className="hidden sm:inline">נוסחאות</span>
-      </button>
+      {/* Floating triggers — bottom-right, same side the drawer slides in from
+          (in RTL the scrollbar sits on the left, so the right edge is clear).
+          The calculator trigger lives in this wrapper rather than in the root
+          layout so it shows on exactly the same study pages as the formula
+          sheet, and so it inherits the bottom-nav lift `.formula-fab` applies.
+          Its panel positions itself against the viewport (and is draggable), so
+          nothing here constrains it. */}
+      <div className="formula-fab fixed bottom-4 right-4 z-[55] flex items-center gap-2">
+        <Calculator />
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="דף הנוסחאות"
+          className="inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur border border-violet-500/25 shadow-lg shadow-violet-500/15 px-3.5 py-2.5 text-violet-800 font-bold text-sm hover:bg-violet-500/5 hover:scale-[1.03] transition-all"
+        >
+          <Sigma className="w-4 h-4" />
+          <span className="hidden sm:inline">נוסחאות</span>
+        </button>
+      </div>
 
       <AnimatePresence>
         {open && topics && (
