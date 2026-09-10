@@ -298,18 +298,21 @@ const EPS = 1e-3;
     [-10, -5, 0, 6].reduce((s, v) => s + defined('sqrt(x+4)/sqrt(-7-x)', v), 0), 0);
 }
 
-// rq-sub-dom-116 — g = sqrt(a * f'(x)) with f = x/(x^2+1) and a < 0 → x <= -1 or x >= 1
+// rq-sub-dom-116 — g = sqrt(a * h(x)) with h = (1-x^2)/(x^2+1)^2 and a < 0
+//   → x <= -1 or x >= 1. (h used to be given as f'(x) of x/(x^2+1); the owner
+//   ruled that stage 1 may not touch derivatives, so it is now given outright —
+//   the same function, hence the same answer and the same figure.)
 {
-  const f = 'x/(x^2+1)';
-  const fp = '(1-x^2)/(x^2+1)^2';
-  dcheck("116 the authored f' is the symbolic derivative of f", f, fp);
-  checkSet('116 the derivative vanishes at -1 and 1', roots(fp, -20, 20), [-1, 1]);
-  check('116 the derivative is positive between them', Math.sign(num(fp)(0)), 1);
-  check('116 the derivative is negative outside them',
-    Math.sign(num(fp)(2)) + Math.sign(num(fp)(-2)), -2);
-  check('116 the derivative denominator is positive everywhere',
+  const h = '(1-x^2)/(x^2+1)^2';
+  checkSet('116 h vanishes at -1 and 1', roots(h, -20, 20), [-1, 1]);
+  check('116 h is positive between them', Math.sign(num(h)(0)), 1);
+  check('116 h is negative outside them',
+    Math.sign(num(h)(2)) + Math.sign(num(h)(-2)), -2);
+  check('116 the denominator of h is positive everywhere',
     Math.min(...[-5, -1, 0, 1, 5].map(v => num('(x^2+1)^2')(v))), 1);
-  const g = (a: number) => `sqrt((${a})*(${fp}))`;
+  check('116 h is defined for every x, so it adds no condition of its own',
+    [-100, -1, 0, 1, 100].reduce((s, v) => s + defined(h, v), 0), 5);
+  const g = (a: number) => `sqrt((${a})*(${h}))`;
   const probe = [-3, -1, -1 + EPS, 0, 1 - EPS, 1, 3];
   check('116 a = -3: the domain is the two outer branches',
     pattern(g(-3), probe) === '1100011' ? 1 : 0, 1);
@@ -317,9 +320,9 @@ const EPS = 1e-3;
     pattern(g(-0.5), probe) === '1100011' ? 1 : 0, 1);
   check('116 both endpoints give sqrt(0) = 0', num(g(-3))(1) + num(g(-3))(-1), 0);
   check('116 a POSITIVE parameter would give the opposite interval',
-    pattern(`sqrt(2*(${fp}))`, [-3, -1, 0, 1, 3]) === '01110' ? 1 : 0, 1);
-  check('116 figure: the marked point (-1, 0) is on the derivative curve', num(fp)(-1), 0);
-  check('116 figure: the marked point (1, 0) is on the derivative curve', num(fp)(1), 0);
+    pattern(`sqrt(2*(${h}))`, [-3, -1, 0, 1, 3]) === '01110' ? 1 : 0, 1);
+  check('116 figure: the marked point (-1, 0) is on the curve of h', num(h)(-1), 0);
+  check('116 figure: the marked point (1, 0) is on the curve of h', num(h)(1), 0);
 }
 
 // rq-sub-dom-117 — (x-1)/sqrt(x^2-6x+k) is defined for every x exactly when k > 9
@@ -430,41 +433,44 @@ const EPS = 1e-3;
   check('311 note: f(0) = sqrt(5/3), so g is defined at 0', num(fx)(0), Math.sqrt(5 / 3));
 }
 
-// rq-sub-dom-312 — f = (x^2+3)/(x-1), g = 1/f': domain x != 1, -1, 3; max at -1, min at 3
+// rq-sub-dom-312 — f = (x^2+3)/(x-1), g = 1/sqrt(f - k). One endpoint of g's
+//   domain sits at x = 2 → k = f(2) = 7, and then g is defined on 1 < x < 2 or
+//   x > 5. (The question used to build g on f', which stage 1 may not do.)
 {
   const f = '(x^2+3)/(x-1)';
-  const fp = '((x-3)*(x+1))/(x-1)^2';
-  // samples avoid x = 1, where both sides are infinite and the difference is NaN
-  dcheck("312 the authored f' is the symbolic derivative of f", f, fp, [-3, -2.3, -0.5, 0.7, 2.5, 4]);
-  check('312 the expanded numerator x^2-2x-3 matches the factored form',
-    num('x^2-2*x-3')(7) - E('(7-3)*(7+1)'), 0);
-  checkSet("312 f' vanishes at -1 and 3", roots(fp, -20, 20), [-1, 3]);
-  check("312 f' is undefined at x = 1, so g inherits that exclusion", defined(fp, 1), 0);
-  const g = `1/(${fp})`;
-  check('312 g is undefined at the two zeros of the derivative',
-    [-1, 3].reduce((s, v) => s + defined(g, v), 0), 0);
-  check('312 g is defined immediately beside all three excluded values',
-    [1, -1, 3].reduce((s, v) => s + defined(g, v - EPS) + defined(g, v + EPS), 0), 6);
-  // the sign table, column by column, and the extremum types it implies
-  check("312 f' > 0 left of -1", Math.sign(num(fp)(-2)), 1);
-  check("312 f' < 0 between -1 and 1", Math.sign(num(fp)(0)), -1);
-  check("312 f' < 0 between 1 and 3", Math.sign(num(fp)(2)), -1);
-  check("312 f' > 0 right of 3", Math.sign(num(fp)(4)), 1);
-  check('312 the denominator of the derivative is positive wherever it is defined',
-    Math.min(...[-5, -1, 0, 2, 3, 5].map(v => num('(x-1)^2')(v))), 1);
-  // maximum at -1 / minimum at 3, proved by comparing f itself with its neighbours
-  check('312 x = -1 is a local maximum of f',
-    (num(f)(-1) > num(f)(-1.1) && num(f)(-1) > num(f)(-0.9)) ? 1 : 0, 1);
-  check('312 x = 3 is a local minimum of f',
-    (num(f)(3) < num(f)(2.9) && num(f)(3) < num(f)(3.1)) ? 1 : 0, 1);
-  check('312 f(-1) = -2', num(f)(-1), -2);
-  check('312 f(3) = 6', num(f)(3), 6);
-  // wrongAnswer "3, -1" (types swapped) — the note's number
-  check("312 note: f'(-2) = 5/9", num(fp)(-2), 5 / 9);
-  // wrongAnswer "1, 3" / "-1, 1" — x = 1 is a pole, not an extremum
+  // k comes from the given endpoint, not from the author
+  check('312 k = f(2) = 7', num(f)(2), 7);
+  const inner = `(${f}) - 7`;
+  const g = `1/sqrt(${inner})`;
+  check('312 the inner expression collapses to (x-2)(x-5)/(x-1)',
+    Math.max(...[-3, 0, 0.5, 1.5, 3, 4, 6, 10].map(
+      v => Math.abs(num(inner)(v) - num('((x-2)*(x-5))/(x-1)')(v)))), 0);
+  check('312 the expanded numerator x^2-7x+10 matches the factored form',
+    num('x^2-7*x+10')(9) - E('(9-2)*(9-5)'), 0);
+  // roots of the NUMERATOR: the quotient also changes sign across the pole at
+  // x = 1, and a sign-change root finder reports that as a root of its own.
+  checkSet('312 the inner expression vanishes at 2 and 5',
+    roots('(x-2)*(x-5)', -20, 20), [2, 5]);
+  // the sign table, column by column
+  check('312 the quotient is negative left of 1', Math.sign(num('((x-2)*(x-5))/(x-1)')(0)), -1);
+  check('312 the quotient is positive between 1 and 2', Math.sign(num('((x-2)*(x-5))/(x-1)')(1.5)), 1);
+  check('312 the quotient is negative between 2 and 5', Math.sign(num('((x-2)*(x-5))/(x-1)')(3)), -1);
+  check('312 the quotient is positive right of 5', Math.sign(num('((x-2)*(x-5))/(x-1)')(7)), 1);
+  // the domain itself, probed on both sides of every boundary. x = 1 is left out
+  // of the probe on purpose: there f is already Infinity, and Infinity arithmetic
+  // walks the whole expression back to a finite 0, which `defined` would accept —
+  // so x = 1 is excluded by f, and that is asserted separately below.
+  const probe = [0, 1.0001, 1.5, 1.9999, 2, 3, 5, 5.0001, 7];
+  check('312 g is defined exactly on 1 < x < 2 and x > 5',
+    pattern(g, probe) === '011100011' ? 1 : 0, 1);
+  check('312 neither zero of the inner expression is in the domain',
+    [2, 5].reduce((s, v) => s + defined(g, v), 0), 0);
+  // wrongAnswer "2" — the endpoint is the x, not the parameter
+  check('312 note: f(2) uses (4+3)/(2-1)', E('(4+3)/(2-1)'), 7);
+  // wrongAnswer "1" — x = 1 is where f itself dies, not where k comes from
   check('312 f itself is undefined at x = 1', defined(f, 1), 0);
-  check('312 f grows without bound beside x = 1, so it is no extremum',
-    (Math.abs(num(f)(1 + 1e-4)) > 1e3 && Math.abs(num(f)(1 - 1e-4)) > 1e3) ? 1 : 0, 1);
+  // the check inside the solution
+  check('312 check: f(1.5) - 7 = 3.5', num(f)(1.5) - 7, 3.5);
 }
 
 // rq-sub-dom-313 — f = (x+a)/(x-6), g = sqrt(f) meets the x-axis at (-2, 0) → a = 2;

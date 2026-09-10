@@ -615,15 +615,26 @@ export function QuestionRunnerCard({
         />
       )}
 
-      {/* 2 · Open answer — no machine-checkable spec → solve on paper, self-report */}
+      {/* 2 · Open answer — no machine-checkable spec (a domain, a locus, a proof).
+          It still gets a box and the math keyboard: the owner asked (2026-09-10)
+          that a תחום question stop being a bare "פתרתי על דף" button —
+          "שיהיה מקום לכתוב את התשובה באמצעות <> וכו', כמו המקלדת המיוחדת".
+          Writing the answer down before seeing the solution is what makes the
+          comparison honest, and `selfReport` already carries `input` into the
+          log and to the tutor. Typing stays OPTIONAL — someone who solved on
+          paper can still go straight to the comparison. */}
       {q.kind === 'open' && !autoGradable && !revealed && (
-        <button
-          onClick={() => { setShowSolution(true); setRevealed(true); }}
-          className="w-full inline-flex items-center justify-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/40 px-4 py-3 rounded-xl font-bold text-violet-800 text-sm transition-colors"
-        >
-          <KeyRound className="w-4 h-4" />
-          <span>פתרתי על דף — הצג פתרון להשוואה</span>
-        </button>
+        <div className="space-y-2">
+          <div className="text-[11px] font-bold text-slate-600">התשובה שלך:</div>
+          <AnswerInput value={input} onChange={setInput} type="expression" />
+          <button
+            onClick={() => { setShowSolution(true); setRevealed(true); }}
+            className="w-full inline-flex items-center justify-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/40 px-4 py-3 rounded-xl font-bold text-violet-800 text-sm transition-colors"
+          >
+            <KeyRound className="w-4 h-4" />
+            <span>{input.trim() ? 'בדוק תשובה — הצג פתרון להשוואה' : 'פתרתי על דף — הצג פתרון להשוואה'}</span>
+          </button>
+        </div>
       )}
 
       {/* Wrong-first feedback: one free retry. "הצג פתרון" deliberately does NOT

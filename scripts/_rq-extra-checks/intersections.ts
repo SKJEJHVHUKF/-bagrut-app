@@ -251,20 +251,30 @@ const GRID = [-7, -5, -2.5, -1, 0.5, 1.5, 2.5, 4, 6, 9];
   checkSet('114 over -40 <= k <= 40 only 9 and 5 give one intercept', ones, [9, 5]);
 }
 
-// rq-sub-int-115 — x^2/(x-2) meets its own derivative exactly once, at (0,0)
+// rq-sub-int-115 — x^2/(x-2) meets the line y = x + c. The single intersection
+//   sits at x = -2 ⇒ c = 1, height -1; and because the line's slope is 1 the x^2
+//   cancels, so ANY such line meets the graph at most once. (The question used
+//   to meet f with f'; stage 2 may not touch derivatives.)
 {
-  const fx = 'x^2/(x-2)', fp = '(x^2-4*x)/(x-2)^2';
-  dcheck('115 the authored derivative is the derivative of f', fx, fp, [-3, -1, 0, 1, 3, 5]);
-  const diff = `${fx} - (${fp})`;
-  checkSet('115 f = f\' has one solution left of the pole', roots(diff, -10, 1.9), [0]);
-  checkSet('115 and none to its right', roots(diff, 2.1, 12), []);
-  check('115 f(0) = 0', num(fx)(0), 0);
-  check('115 f\'(0) = 0', num(fp)(0), 0);
-  check('115 the difference changes sign only at 0: negative at -1', num(diff)(-1) < 0 ? 1 : 0, 1);
-  check('115 and positive at 1', num(diff)(1) > 0 ? 1 : 0, 1);
-  checkSet('115 the quadratic factor x^2-3x+4 has no real root', roots('x^2-3*x+4', -100, 100), []);
-  check('115 its discriminant is -7', E('(-3)^2 - 4*1*4'), -7);
+  const fx = 'x^2/(x-2)';
+  check('115 f(-2) = -1', num(fx)(-2), -1);
+  check('115 the line through it has c = 1', E('-1 - (-2)'), 1);
+  const diff = `${fx} - (x + 1)`;
+  checkSet('115 f = x+1 has exactly one solution left of the pole', roots(diff, -10, 1.9), [-2]);
+  checkSet('115 and none to its right', roots(diff, 2.1, 40), []);
+  check('115 the line and f agree at x = -2', num('x + 1')(-2), num(fx)(-2));
+  // the reason for uniqueness: after clearing the denominator the x^2 cancels
+  // and a LINEAR equation is left, for every value of c
+  for (const c of [-4, 0, 1, 3.5]) {
+    check(`115 c = ${c}: x^2 - (x + c)(x - 2) is linear, its x^2 coefficient is 0`,
+      E(`(1^2 - (1 + ${c})*(1 - 2)) - 2*(2^2 - (2 + ${c})*(2 - 2)) + (3^2 - (3 + ${c})*(3 - 2))`), 0);
+  }
+  check('115 c = 3 still gives at most one meeting point',
+    roots(`${fx} - (x + 3)`, -40, 1.9).length + roots(`${fx} - (x + 3)`, 2.1, 40).length <= 1 ? 1 : 0, 1);
   check('115 f is undefined at 2', defined(fx, 2), 0);
+  check('115 the given x = -2 is inside the domain', defined(fx, -2), 1);
+  // wrongAnswer "-1, -1" / "1, 1" — the parameter and the height are different numbers
+  check('115 note: the line with c = -1 would give -3 at x = -2', E('-2 + (-1)'), -3);
 }
 
 // rq-sub-int-116 — (x+1)(x-4)/(x-2): zeros at -1 and 4, pole at 2, sign pattern - + - +
@@ -336,36 +346,33 @@ const GRID = [-7, -5, -2.5, -1, 0.5, 1.5, 2.5, 4, 6, 9];
 
 // rq-sub-int-303 — (x^2+2x+3)/(x-1) is ABOVE y = 2x+1 on x < -1 and 1 < x < 4
 {
-  const fx = '(x^2+2*x+3)/(x-1)', line = '2*x+1', diff = `(${fx}) - (${line})`;
-  // meeting points, from the two functions
-  checkSet('303 meeting points left of the pole', roots(diff, -20, 0.9), [-1]);
-  checkSet('303 meeting points right of the pole', roots(diff, 1.1, 20), [4]);
-  check('303 f(-1) = -1', num(fx)(-1), -1);
-  check('303 the line at -1 is also -1', num(line)(-1), -1);
-  check('303 f(4) = 9', num(fx)(4), 9);
-  check('303 the line at 4 is also 9', num(line)(4), 9);
-  // the authored factorisation of the difference
-  check('303 the difference equals -(x-4)(x+1)/(x-1) everywhere off the pole',
-    Math.max(...[-9, -3, -1.5, -0.5, 0.4, 1.7, 3, 5, 11].map(v => Math.abs(num(diff)(v) - num('-((x-4)*(x+1))/(x-1)')(v)))), 0, 1e-9);
-  // the sign row of the table, as one binary word over the four ranges: + - + -
-  const word = [-5, 0, 2, 10].map(v => (num(diff)(v) > 0 ? '1' : '0')).join('');
-  check('303 the sign table row is + - + -', parseInt(word, 2), 0b1010);
-  // …and it holds across each whole range, not only at the sample
-  check('303 above the line across all of x < -1', Math.min(...[-1.05, -2, -6, -40].map(v => num(diff)(v))) > 0 ? 1 : 0, 1);
-  check('303 below the line across all of -1 < x < 1', Math.max(...[-0.95, -0.5, 0, 0.5, 0.95].map(v => num(diff)(v))) < 0 ? 1 : 0, 1);
-  check('303 above the line across all of 1 < x < 4', Math.min(...[1.05, 1.5, 2, 3, 3.95].map(v => num(diff)(v))) > 0 ? 1 : 0, 1);
-  check('303 below the line across all of x > 4', Math.max(...[4.05, 5, 9, 40].map(v => num(diff)(v))) < 0 ? 1 : 0, 1);
-  // distractor B = the complement, i.e. the ranges where the graph is BELOW
-  check('303 distractor B: at x = 0 the graph is below, f(0) = -3', num(fx)(0), -3);
-  check('303 distractor B: and the line there is 1', num(line)(0), 1);
-  // distractor C = the denominator dropped: -(x-4)(x+1) > 0 gives -1 < x < 4
-  const noDen = [-5, 0, 2, 10].map(v => (num('-((x-4)*(x+1))')(v) > 0 ? '1' : '0')).join('');
-  check('303 distractor C: ignoring the denominator gives the row - + + -', parseInt(noDen, 2), 0b0110);
-  // distractor D = the minus dropped too: (x-4)(x+1) > 0 gives x < -1 or x > 4
-  const noMinus = [-5, 0, 2, 10].map(v => (num('(x-4)*(x+1)')(v) > 0 ? '1' : '0')).join('');
-  check('303 distractor D: dropping the minus as well gives the row + - - +', parseInt(noMinus, 2), 0b1001);
-  check('303 distractor D: but at x = 2 the graph is really above, f(2) = 11', num(fx)(2), 11);
-  check('303 distractor D: and the line there is 5', num(line)(2), 5);
+  // a and b are RECOVERED from the two given x-intercepts, not read off the author
+  const a = roots('(-1)^2 + a*(-1) - 5', -20, 20, 'a');   // (-1,0) on the graph, with b = -5
+  const b = roots('5^2 + (-4)*5 + b', -20, 20, 'b');      // (5,0) on the graph, with a = -4
+  checkSet('303 a = -4', a, [-4]);
+  checkSet('303 b = -5', b, [-5]);
+  // the recovered values are asserted above; the expressions below use the exact
+  // integers, because a bisected root is only approximately -4 and a near-zero
+  // denominator would then read as 'defined'.
+  const numer = 'x^2 - 4*x - 5';
+  const fx = `(${numer})/(x-3)`;
+  checkSet('303 with those values the numerator vanishes exactly at -1 and 5',
+    roots(numer, -20, 20), [-1, 5]);
+  check('303 the numerator equals the factored (x+1)(x-5) everywhere',
+    Math.max(...[-7, -2, 0, 1, 4, 6, 12].map(v => Math.abs(num(numer)(v) - num('(x+1)*(x-5)')(v)))), 0, 1e-9);
+  check('303 both intercepts are inside the domain', defined(fx, -1) + defined(fx, 5), 2);
+  check('303 f is undefined at 3', defined(fx, 3), 0);
+  check('303 and 3 is a pole, not a hole: the numerator there is -8', num(numer)(3), -8);
+  // the y-intercept
+  check('303 f(0) = 5/3', num(fx)(0), E('5/3'));
+  check('303 it is a quotient of two negatives', num(numer)(0) * num('x-3')(0) > 0 ? 1 : 0, 1);
+  // distractor B — a = 4 would move the intercepts to -5 and 1
+  checkSet('303 distractor B: a = 4 gives intercepts at -5 and 1',
+    roots('x^2 + 4*x - 5', -20, 20), [-5, 1]);
+  // distractor C — the sign of the y-intercept
+  check('303 distractor C: -5/-3 is positive, not negative', E('(-5)/(-3)') > 0 ? 1 : 0, 1);
+  // distractor D — b = 5 would not vanish at either given intercept
+  check('303 distractor D: with b = 5 the numerator at -1 is 10, not 0', num('x^2 - 4*x + 5')(-1), 10);
 }
 
 // rq-sub-int-304 — (x^2+ax+6)/(x+1) meets y = 2x at x = 2 ⇒ a = 1, second point (-3,-6)
@@ -393,53 +400,42 @@ const GRID = [-7, -5, -2.5, -1, 0.5, 1.5, 2.5, 4, 6, 9];
   check('304 wrong x = 3: while the line gives 6', num(line)(3), 6);
 }
 
-// rq-sub-int-305 — f = (x^2-2)/(x-1) meets f' at (0,2) and (2,2); g = 1/(f-2) misses both axes
+// rq-sub-int-305 — f = (x^2+kx-8)/(x-1) meets the x-axis at (2,0) ⇒ k = 2, the
+//   second intercept is (-4,0), f(0) = 8, and g = 1/f never meets the x-axis.
+//   (The question used to meet f with f'; stage 2 may not touch derivatives.)
 {
-  const fx = '(x^2-2)/(x-1)', fp = '(x^2-2*x+2)/(x-1)^2';
-  dcheck('305 the authored derivative is the derivative of f', fx, fp, [-3, -1, 0, 0.5, 2, 3, 5]);
-  const diff = `(${fx}) - (${fp})`;
-  // f - f' = x^2(x-2)/(x-1)^2 — the factorisation the solution reaches
-  check('305 (f - f\') * (x-1)^2 equals x^3 - 2x^2 across the domain',
-    Math.max(...[-6, -2, -0.5, 0.3, 0.9, 1.4, 3, 8].map(v => Math.abs(num(diff)(v) * num('(x-1)^2')(v) - num('x^3-2*x^2')(v)))), 0, 1e-9);
-  // the double root at 0 has no sign change, so bisection would miss it — scan a fine
-  // exact grid instead and collect every zero of the cubic
-  const zeros: number[] = [];
-  for (let k = -1000; k <= 1200; k++) {
-    const x = k / 100;
-    if (Math.abs(x ** 3 - 2 * x ** 2) < 1e-12) zeros.push(x);
-  }
-  checkSet('305 over -10 <= x <= 12 the cubic vanishes only at 0 and 2', zeros, [0, 2]);
-  check('305 f and f\' agree at 0', num(diff)(0), 0);
-  check('305 f and f\' agree at 2', num(diff)(2), 0);
-  check('305 f(0) = 2', num(fx)(0), 2);
-  check('305 f\'(0) = 2', num(fp)(0), 2);
-  check('305 f(2) = 2', num(fx)(2), 2);
-  check('305 f\'(2) = 2', num(fp)(2), 2);
-  check('305 both meeting points are inside the domain of f', defined(fx, 0) + defined(fx, 2), 2);
+  // k is RECOVERED from the given intercept, not read off the author
+  const k = roots('2^2 + k*2 - 8', -20, 20, 'k');
+  checkSet('305 k = 2', k, [2]);
+  // exact integer, for the same reason as in 303 above
+  const numer = 'x^2 + 2*x - 8';
+  const fx = `(${numer})/(x-1)`;
+  checkSet('305 the numerator vanishes exactly at 2 and -4', roots(numer, -20, 20), [-4, 2]);
+  check('305 the numerator equals the factored (x-2)(x+4) everywhere',
+    Math.max(...[-7, -3, 0, 1.5, 4, 9].map(v => Math.abs(num(numer)(v) - num('(x-2)*(x+4)')(v)))), 0, 1e-9);
+  check('305 both intercepts are inside the domain', defined(fx, 2) + defined(fx, -4), 2);
+  check('305 f(2) = 0', num(fx)(2), 0);
+  check('305 f(-4) = 0', num(fx)(-4), 0);
   check('305 f is undefined at 1', defined(fx, 1), 0);
-  // g = 1/(f-2): undefined exactly where f equals 2, i.e. at the two meeting points
-  const g = `1/((${fx}) - 2)`;
-  check('305 g is undefined at 0 and at 2, the very points found above', defined(g, 0) + defined(g, 2), 0);
-  // x = 1 is barred from g because f itself is undefined there (asserted above).
-  // Floating point still returns a value at 1 — and that value is 0, which is
-  // exactly the height of the missing point the solution describes.
-  check('305 the naive evaluation at 1 gives 0, the height of the missing point', num(g)(1), 0);
-  check('305 g agrees with (x-1)/(x(x-2)) everywhere both are defined',
-    Math.max(...[-6, -2, -0.4, 0.6, 1.5, 3, 9].map(v => Math.abs(num(g)(v) - num('(x-1)/(x*(x-2))')(v)))), 0, 1e-9);
-  checkSet('305 that numerator vanishes only at the barred value 1', roots('x-1'), [1]);
-  check('305 no y-intercept: 0 is outside the domain of g', defined(g, 0), 0);
-  // no x-intercept: |g| stays strictly positive everywhere it is defined
-  const GG = [-40, -9, -3, -0.7, 0.4, 0.9, 1.3, 1.8, 2.4, 5, 12, 60];
+  check('305 and 1 is a pole, not a hole: the numerator there is -5', num(numer)(1), -5);
+  // the y-intercept: -8 over -1
+  check('305 f(0) = 8', num(fx)(0), 8);
+  // g = 1/f never meets the x-axis: its numerator is the constant 1
+  const g = `1/(${fx})`;
+  check('305 the numerator of g is the constant 1, which never vanishes', roots('0*x+1', -100, 100).length, 0);
+  const GG = [-40, -9, -5, -3, -0.7, 0.4, 1.5, 2.5, 5, 12, 60];
   check('305 no x-intercept: |g| > 0 at every sampled point of the domain',
     Math.min(...GG.map(v => Math.abs(num(g)(v)))) > 0 ? 1 : 0, 1);
-  check('305 the numerator of g is the constant 1, which never vanishes', roots('0*x+1', -100, 100).length, 0);
-  // the missing point at (1,0): g approaches 0 from both sides of 1 but is undefined there
-  check('305 g tends to 0 on both sides of 1', Math.max(Math.abs(num(g)(0.999)), Math.abs(num(g)(1.001))) < 0.002 ? 1 : 0, 1);
-  // vertical asymptotes at 0 and 2: |g| blows up on both sides of each
-  check('305 |g| blows up around 0', Math.min(Math.abs(num(g)(-0.0001)), Math.abs(num(g)(0.0001))) > 1000 ? 1 : 0, 1);
-  check('305 |g| blows up around 2', Math.min(Math.abs(num(g)(1.9999)), Math.abs(num(g)(2.0001))) > 1000 ? 1 : 0, 1);
-  // the horizontal claim: g approaches the axis without reaching it
-  check('305 g tends to 0 far out, yet stays non-zero', Math.abs(num(g)(10000)) < 1e-3 && num(g)(10000) !== 0 ? 1 : 0, 1);
+  check('305 g tends to 0 far out, yet stays non-zero',
+    Math.abs(num(g)(10000)) < 1e-3 && num(g)(10000) !== 0 ? 1 : 0, 1);
+  // where f vanishes, g is not defined at all — so no intercept sneaks in there
+  check('305 g is undefined at both zeros of f', defined(g, 2) + defined(g, -4), 0);
+  // wrongAnswers re-enacted
+  check('305 wrong k = -2: the numerator at 2 is -8, not 0', num('x^2 - 2*x - 8')(2), -8);
+  checkSet('305 wrong k = -2 would put the intercepts at -2 and 4',
+    roots('x^2 - 2*x - 8', -20, 20), [-2, 4]);
+  check('305 wrong second intercept 4: the numerator there is 16, not 0', num(numer)(4), 16);
+  check('305 wrong y-intercept -8: -8 over -1 is +8', E('(-8)/(0-1)'), 8);
 }
 
 summary('intersections');
