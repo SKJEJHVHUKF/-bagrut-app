@@ -227,6 +227,136 @@ check('a bare a_1 is not a parameter', hasParameterForTest('מצאו את $a_1$'
 check('a named letter is a parameter', hasParameterForTest('מצאו את הערך של $q$'), true);
 
 // ===========================================================================
+// ROUND 2 — the ten defects the four authoring agents found while writing
+// against this gate, every one verified before being accepted. None was found
+// by the gate; all were found by an author reading the mechanism list beside
+// its own question, which is the pattern this file exists to end.
+// ===========================================================================
+
+// 🔴 The one that undermined the gate's own new rule. `find-parameter` is an
+// EXAM_SHAPE, so labelling an ordinary substitution question with it let a
+// stage satisfy "no bagrut-shaped ask" without asking anything the exam asks.
+check('a numbered term is NOT find-parameter', shapeOf('מצאו את $a_{12}$ בסדרה'), 'compute');
+check('a numbered term is not a parameter mechanism', hasMech('מצאו את $a_{12}$ בסדרה', 'parameter'), false);
+check('a bare letter IS find-parameter', shapeOf('מצאו את $q$'), 'find-parameter');
+check('a named quantity IS find-parameter', shapeOf('מצאו את ההפרש של הסדרה'), 'find-parameter');
+check(
+  'the three copies of "find the unknown" now agree',
+  [shapeOf('מצאו את $a_1$') === 'find-parameter', hasMech('מצאו את $a_1$', 'parameter'), hasParameterForTest('מצאו את $a_1$')],
+  [false, false, false],
+);
+
+// `parameter` on the negation — three of four authors hit this one, and two
+// rewrote correct Hebrew to shed the credit.
+check(
+  'parameter does NOT fire on "אינו תלוי ב"',
+  hasMech('היחס אינו תלוי במקום $n$, ולכן הסדרה הנדסית', 'parameter'),
+  false,
+);
+check('parameter DOES fire on a real dependence', hasMech('הסכום תלוי בערך של $k$', 'parameter'), true);
+
+// `recursion` matched the bare symbol, which appears in nearly every derived
+// sequence's definition. The backreference makes the two mutually exclusive.
+check(
+  'recursion does NOT fire on a derived-sequence definition',
+  hasMech('הסדרה $b_n$ מקיימת $b_n = 6a_n$ לכל $n$ טבעי, וגם $a_{n+1}$ מוזכר', 'recursion'),
+  false,
+);
+check('recursion DOES fire on a real recursion rule', hasMech('נתון $a_{n+1} = a_n \\cdot q$', 'recursion'), true);
+check('recursion DOES fire on the Hebrew name', hasMech('נתון כלל הנסיגה של הסדרה', 'recursion'), true);
+check(
+  'the two are mutually exclusive on a recursion',
+  hasMech('נתון $a_{n+1} = a_n + 3$', 'derived-sequence'),
+  false,
+);
+
+// `position` — a prefix collision, and an arm reachable only through a string
+// another gate fails the build on.
+check('position does NOT fire on "מספר האיברים"', hasMech('מהו מספר האיברים בסדרה?', 'position'), false);
+check('position DOES fire on "מספר האיבר"', hasMech('מהו מספר האיבר שערכו $40$?', 'position'), true);
+check(
+  'the maqaf-free phrasing scores what the forbidden one used to',
+  hasMech('מהו האיבר במקום $n$?', 'position'),
+  true,
+);
+
+// `three-terms` is the mean THEOREM, not an arithmetic count of terms.
+check(
+  'three-terms does NOT fire on a count',
+  hasMech('מהמקום $3$ עד המקום $5$ יש שלושה איברים', 'three-terms'),
+  false,
+);
+check(
+  'three-terms does NOT fire on an illustration',
+  hasMech('נחשב את שלושת האיברים הראשונים ונתבונן בסימנים', 'three-terms'),
+  false,
+);
+check(
+  'three-terms DOES fire on the theorem',
+  hasMech('שלושה איברים עוקבים בסדרה חשבונית', 'three-terms'),
+  true,
+);
+
+// `inequality` needs a stated bound, not narration about which term is smaller.
+check('inequality does NOT fire on narration', hasMech('כל איבר קטן מקודמו, ולכן הסדרה יורדת', 'inequality'), false);
+check('inequality DOES fire on a bound', hasMech('מהו האיבר הראשון שגדול מ-$150$?', 'inequality'), true);
+check('inequality DOES fire on "גדול מהמספר"', hasMech('האיבר הראשון שגדול מהמספר $100$', 'inequality'), true);
+
+// `sum-ratio` is a ratio between SUMS — the archive's way of hiding q.
+check(
+  'sum-ratio does NOT fire on a term-to-term ratio',
+  hasMech('האיבר החמישי גדול פי $4$ מהאיבר השלישי', 'sum-ratio'),
+  false,
+);
+for (const t of [
+  'נתון כי סכום הסדרה $b_n$ גדול פי $1.96$ מסכום הסדרה $a_n$.',
+  'נתון: $\\;S_C = 12\\cdot S_B$.',
+])
+  check(`sum-ratio still fires on the archive form: "${t.slice(0, 30)}…"`, hasMech(t, 'sum-ratio'), true);
+
+// `sign-analysis` — the guard its neighbour had and it did not.
+check(
+  'sign-analysis does NOT fire on the stem premise',
+  hasMech('$a_n$ היא סדרה הנדסית יורדת שכל איבריה חיוביים, ומנתה $q$.', 'sign-analysis'),
+  false,
+);
+check(
+  'sign-analysis DOES fire on the archive ask',
+  hasMech('קבעו אם כל איברי הסדרה חיוביים או שליליים. נמקו.', 'sign-analysis'),
+  true,
+);
+check(
+  'sign-analysis DOES fire on the conclusion',
+  hasMech('המנה חיובית והאיבר הראשון שלילי, ולכן כל האיברים שליליים', 'sign-analysis'),
+  true,
+);
+
+// `word-problem` was a nine-noun whitelist that decided what the topic could be
+// about: every scenario this round set out to ADD scored zero on it.
+for (const [why, t] of [
+  ['car depreciation', 'ערך הרכב יורד בכל שנה ב-$20$ אחוזים מערכו'],
+  ['machine depreciation', 'ערך המכונה יורד בשיעור קבוע, וזהו פחת שנתי'],
+  ['half-life', 'לחומר רדיואקטיבי יש מחצית חיים של $5$ שנים'],
+  ['a bouncing ball', 'כדור מוקפץ וחוזר בכל פעם לגובה קטן יותר'],
+  ['a repeated price drop', 'מחיר המוצר יורד בכל חודש בשיעור קבוע'],
+] as const)
+  check(`word-problem now sees ${why}`, hasMech(t, 'word-problem'), true);
+check('word-problem still sees the old scenarios', hasMech('הפקדה בריבית דריבית שנתית', 'word-problem'), true);
+check('word-problem does NOT fire on a bare abstract sequence', hasMech('נתון $a_1 = 5$ וההפרש $d = 3$', 'word-problem'), false);
+
+// `askShape` sum — `\s+\S*` cannot cross a space.
+check('a counted finite sum is a sum ask', shapeOf('מצאו את סכום חמשת האיברים הראשונים בסדרה.'), 'sum');
+check('an uncounted finite sum is still a sum ask', shapeOf('מצאו את סכום האיברים הראשונים בסדרה.'), 'sum');
+
+// `position-subseries` and the Hebrew maqaf U+05BE.
+check('position-subseries sees תת־סדרה (U+05BE)', hasMech('נתבונן בתת־סדרה חדשה', 'position-subseries'), true);
+check('position-subseries sees תת-סדרה (ASCII)', hasMech('נתבונן בתת-סדרה חדשה', 'position-subseries'), true);
+
+// `proof` — the imperative, not the noun.
+check('proof does NOT fire on the noun alone', hasMech('בהוכחה שלפניכם יש שלושה שלבים', 'proof'), false);
+check('proof DOES fire on the imperative', hasMech('הוכיחו כי הסדרה הנדסית', 'proof'), true);
+
+// ===========================================================================
 console.log(`${pass} assertion(s) passed, ${fails.length} failed.`);
 for (const f of fails) console.log(`  ✗ ${f}`);
 if (fails.length) process.exit(1);

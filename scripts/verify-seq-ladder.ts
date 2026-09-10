@@ -72,20 +72,91 @@ const warn = (where: string, rule: string, detail = '') => findings.push({ sev: 
 export const EXPRESS_IN_TERMS_OF =
   /(?:הבע|הבעו|הביע|הביעו|בטא|בטאו)\s+(?:את\s+)?[^.]{0,60}באמצעות|באמצעות \$[^$]+\$|עבור אילו ערכים/;
 
+/**
+ * 🔴 THE OTHER shared phrase — "find the value of X" — and the reason this hoist
+ * exists at all. It was carried in THREE divergent copies: `hasParameter` ended
+ * with `(?!_)`, while the `parameter` MECHANISM and the `find-parameter` ASK
+ * SHAPE did not. So "מצאו את $a_{12}$" — an ordinary substitution question —
+ * was correctly rejected by the boolean while collecting a `parameter`
+ * mechanism and, worse, the ask shape `find-parameter` from the other two.
+ *
+ * `find-parameter` is one of the four EXAM_SHAPES, so **the `no bagrut-shaped
+ * ask` rule added in this same round could be satisfied by a question that asks
+ * nothing the exam asks.** A gate that reports false success is worse than no
+ * gate. Found by an author reading the mechanism list beside its own question,
+ * which is where every one of these has ever been found.
+ *
+ * `[a-z](?![_{])` is the whole fix: a bare letter is an unknown to recover,
+ * `a_1` / `a_{12}` is one concrete numbered term of a known sequence.
+ */
+export const FIND_NAMED_UNKNOWN =
+  /מצא(?:ו)? את (?:הערך של )?\$?[a-z](?![_{])\$?|מצא(?:ו)? את הפרמטר|מצא(?:ו)? את (?:שיעור|ההפרש|המנה|האיבר הראשון)|פרמטר/;
+
+/** The `parameter` MECHANISM: the shared "find the named unknown" regex, plus
+ *  the two phrasings that mean a parameter without naming one. Built from
+ *  `FIND_NAMED_UNKNOWN.source` rather than restating it — restating it is how
+ *  the three copies diverged in the first place. */
+const PARAMETER_RE = new RegExp(
+  `${FIND_NAMED_UNKNOWN.source}|עבור אילו ערכים|(?<!אינו\\s)(?<!אינה\\s)(?<!לא\\s)תלוי ב`,
+);
+
 export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
   ['arithmetic-term', /איבר\s+\S*כללי[^.]*חשבונית|a_?n ?= ?a_?1 ?\+|הפרש\s+\S*סדרה|\bd\b ?=/],
   ['geometric-term', /סדרה\s+\S*הנדסית|מנת\s+\S*סדרה|a_?n ?= ?a_?1\s*\\?cdot|q\s*\^|\bq\b ?=/],
   ['sum', /סכום\s+\S*איברים|S_?n|סכום\s+\S*ראשונים|נוסחת\s+\S*סכום/],
   ['infinite-sum', /סכום\s+\S*אינסופי|טור\s+\S*מתכנס|\|q\| ?< ?1|מתכנס/],
-  ['recursion', /נוסחת\s+\S*נסיגה|רקורסי|a_?\{?n\+1\}?|כל איבר.*הקודם/],
+  // 🔴 `a_?\{?n\+1\}?` matched the SYMBOL, and that symbol appears in the
+  // definition of nearly every derived sequence — a warm-up whose only content
+  // is "multiply every term by 6" was collecting 2.5 points for a recursion it
+  // does not contain, inflating exactly the חימום rung Itay wants kept light.
+  // Note where the flaw sat: the `derived-sequence` entry below carries a long
+  // comment about precisely this error ("a letter is a name, not a move") and
+  // the line above it kept it. A guard written for the branch where the bug was
+  // reported, while the sibling branch keeps it.
+  // The backreference is what makes the two mutually exclusive by construction:
+  // the SAME letter on both sides is a recursion, a NEW letter on the left is a
+  // derivation.
+  ['recursion', /נוסחת\s+\S*נסיגה|כלל\s+\S*נסיגה|רקורסי|([abc])_?\{?n\+1\}?\s*=\s*[^$]*\1_?\{?n\}?|כל איבר.*הקודם/],
   ['system', /שתי משוואות|מערכת\s+\S*משוואות|מציבים במשוואה השנייה|נציב.*ונקבל מערכת/],
-  ['parameter', /פרמטר|עבור אילו ערכים|מצא(?:ו)? את (?:הערך של )?\$?[a-z]\$?|תלוי ב/],
-  ['position', /המקום\s+\S*איבר|באיזה מקום|האיבר ה-?\$?n|מספר האיבר/],
+  // `תלוי ב` used to be here bare, and it matched **אינו תלוי ב** — the
+  // standard closing sentence of a proof that a ratio is constant ("היחס אינו
+  // תלוי במקום $n$"), i.e. a phrase asserting the ABSENCE of a parameter scored
+  // as training on one. THREE of the four authors in this round hit it, and two
+  // rewrote correct Hebrew to shed the credit. That is the ruler editing the
+  // prose, which is worse than a wrong number.
+  ['parameter', PARAMETER_RE],
+  // `מספר האיבר` is a strict PREFIX of `מספר האיברים`, so "how many terms" read
+  // as "in which place". An author wrote כמות האיברים throughout to dodge it.
+  // The `האיבר ה-?\$?n` arm is gone: the only natural string satisfying it was
+  // `האיבר ה-$n$`, which check-rtl-maqaf exists to reject — two gates in direct
+  // contradiction, so one of them had to give.
+  ['position', /המקום\s+\S*איבר|באיזה מקום|האיבר במקום \$?n|האיבר שמקומו|מספר האיבר(?!ים)/],
   ['induction', /אינדוקציה|הנחת\s+\S*אינדוקציה|צעד\s+\S*אינדוקציה|בסיס\s+\S*אינדוקציה/],
-  ['word-problem', /שכר|חיסכון|אוכלוסי|ריבית|מדרגות|שורות|כיסאות|צמיחה|ייצור/],
-  ['proof', /הוכיח|הוכחה|הראו כי|מש״ל|צריך להוכיח/],
-  ['inequality', /אי[- ]שוויון|גדול מ|קטן מ|לראשונה|מתי יעבור/],
-  ['three-terms', /שלושה איברים|שלושת האיברים|יוצרים סדרה/],
+  // 🔴 This was a whitelist of NINE nouns, and it decided what the topic could
+  // be about. Every scenario this round set out to add — car and machine
+  // depreciation, half-life, repeated percentage price drops, a bouncing ball —
+  // scored ZERO on it, so the only way to earn the mechanism was to write about
+  // interest or salary again. That is the exact concentration the round exists
+  // to break: a detector that rewards the status quo enforces it. Widened to
+  // the shape of a word problem (a real-world quantity changing over a named
+  // period) rather than a list of the nouns we happened to have used.
+  ['word-problem', /שכר|משכורת|חיסכון|חוסכ|אוכלוסי|ריבית|מדרגות|שורות|כיסאות|צמיחה|ייצור|פחת|מתפרק|דועכ|מחצית\s+\S*חיים|קרינ|כדור|מקפ|מחיר|עלות|רכב|מכונ|יורד ב-?\$?\d+\\?%|עולה ב-?\$?\d+\\?%/],
+  // The imperative, not the noun: /הוכחה/ matches ההוכחה · בהוכחה · הוכחת, and
+  // a question ABOUT a proof is not a proof. Kept wider than askShape's `prove`
+  // because a MECHANISM legitimately fires on the solution's own working.
+  ['proof', /הוכיח|הראו כי|הראה כי|מש״ל|צריך להוכיח|יש להוכיח|ולכן ההוכחה/],
+  // 🔴 `גדול מ` / `קטן מ` bare matched NARRATION: "כל איבר קטן מקודמו" is the
+  // ANSWER to a monotonicity part, not an inequality to solve. At the
+  // 2-mechanism warm-up budget one such firing breaks a stage's gradient, and
+  // an author reported rewriting natural Hebrew ("קטן יותר מן") to avoid it.
+  // An inequality question compares against a stated BOUND, so require one.
+  ['inequality', /אי[- ]שוויון|גדול מ-?\$?\d|קטן מ-?\$?\d|גדול מהמספר|קטן מהמספר|לראשונה|מתי יעבור|עובר את/],
+  // 🔴 `/שלושה איברים/` matched a counting sanity-check ("מהמקום $3$ עד המקום
+  // $5$ יש שלושה איברים") and an illustration ("נחשב את שלושת האיברים
+  // הראשונים"). This mechanism means the THEOREM — three consecutive terms of
+  // an arithmetic/geometric sequence, i.e. the mean property — so it demands
+  // the word that carries it.
+  ['three-terms', /שלושה איברים עוקבים|שלושת האיברים העוקבים|איברים עוקבים\s+\S*יוצרים|יוצרים סדרה|ממוצע\s+\S*(?:חשבוני|הנדסי)/],
 
   // ── EXAM MOVES ──────────────────────────────────────────────────────────
   // Read off the archive, not off priors. Counts below are over the whole
@@ -118,11 +189,19 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
 
   // The sub-series on the even / odd places, ratio $q^2$ — and the general
   // "every 5th place", ratio $q^5$.
-  ['position-subseries', /מקומות\s+ה?זוגיים|מקומות\s+ה?אי[- ]זוגיים|מקומם מתחלק|תת[- ]סדרה/],
+  // `תת[-־ ]סדרה`, both hyphens: the ASCII `-` and the Hebrew maqaf U+05BE,
+  // which is the typographically correct spelling and which the ASCII-only
+  // class silently missed.
+  ['position-subseries', /מקומות\s+ה?זוגיים|מקומות\s+ה?אי[-־ ]זוגיים|מקומם מתחלק|תת[-־ ]סדרה/],
 
   // Two infinite sums, and their RATIO is the given: $S_C = 12\cdot S_B$,
   // "גדול פי $1.96$ מסכום". This is how the archive hides $q$.
-  ['sum-ratio', /גדול פי|קטן פי|גדול ב-?\$?\d[^.]{0,20}מסכום|S_?\{?\w+\}?\s*=\s*[^$]*S_?\{?\w+\}?/],
+  // 🔴 A bare `גדול פי` is ANY multiplicative comparison — it fired on "האיבר
+  // החמישי גדול פי $4$ מהאיבר השלישי", a term-to-term ratio with no sum in it
+  // at all. This mechanism means the archive's move: two SUMS whose ratio is
+  // the given, from which $q$ or $a_1$ falls out. So a sum must be named on at
+  // least one side of the comparison.
+  ['sum-ratio', /סכום[^.]{0,40}(?:גדול|קטן) פי|(?:גדול|קטן) פי[^.]{0,30}מסכום|סכום[^.]{0,40}גדול ב-?\$?\d[^.]{0,20}מסכום|S_?\{?\w+\}?\s*=\s*[^$]*S_?\{?\w+\}?/],
 
   // 🔴 The DECISION, never the description. "סדרה הנדסית אינסופית יורדת" is a
   // GIVEN and appears in most of ge-infinite's stems; the move is being asked
@@ -131,7 +210,14 @@ export const MECHANISMS_FOR_TEST: [string, RegExp][] = [
 
   // Likewise for the sign of the terms: the archive asks "קבעו אם כל איברי
   // הסדרה חיוביים או שליליים. נמקו".
-  ['sign-analysis', /חיוביים או שליליים|שליליים או חיוביים|האם[^.]{0,40}(?:חיובי|שלילי)|סימן\s+\S*איברים|כל איבריה\s+\S*(?:חיוביים|שליליים)/],
+  // 🔴 The DECISION, never the description — the guard written two entries
+  // above for `monotonicity` and never applied to its own neighbour. The
+  // dropped alternative `כל איבריה\s+\S*(?:חיוביים|שליליים)` matched the STEM
+  // PREMISE "…שכל איבריה חיוביים", which the archive states as a GIVEN in most
+  // of its questions, so questions with no sign part at all collected 2.5 —
+  // and the topic-wide coverage line reported the move as trained by content
+  // that never asks it.
+  ['sign-analysis', /חיוביים או שליליים|שליליים או חיוביים|האם[^.]{0,40}(?:חיובי|שלילי)|קבעו אם[^.]{0,40}(?:חיובי|שלילי)|סימן\s+\S*איברים|ולכן[^.]{0,30}(?:חיובי|שלילי)|מכאן ש[^.]{0,30}(?:חיובי|שלילי)/],
 ];
 
 /** Subsumption, so one idea is never paid twice: a `derived-sequence`
@@ -165,11 +251,19 @@ export function askShape(q: PracticeQuestion): string {
   // Named quantities count too: a question asking for the annual interest rate
   // or for the common difference IS a find-parameter, even with no single
   // letter in the stem.
-  if (/מצא(?:ו)? את (?:הערך של )?\$?[a-z]\$?|עבור אילו ערכים|מצא(?:ו)? את הפרמטר|מצא(?:ו)? את (?:שיעור|ההפרש|המנה|האיבר הראשון)/.test(t)) return 'find-parameter';
+  // Reads the SHARED regex — see FIND_NAMED_UNKNOWN. Its private copy lacked
+  // the `(?![_{])` guard, so "מצאו את $a_{12}$" was labelled `find-parameter`,
+  // one of the four EXAM_SHAPES, letting an ordinary substitution question
+  // satisfy the "no bagrut-shaped ask" rule.
+  if (FIND_NAMED_UNKNOWN.test(t) || /עבור אילו ערכים/.test(t)) return 'find-parameter';
   if (/באיזה מקום|מהו המקום|כמה איברים|לראשונה|מתי/.test(t)) return 'locate';
   // A SERIES sum, not the money sense — "סכום של 5000 ש״ח" was counting as an
   // ask shape and hiding that a whole stage asks only one thing.
-  if (/סכום\s+\S*(?:איברים|הסדרה|הטור|ראשונים|כל)/.test(t) || /S_?n|סכום אינסופי/.test(t)) return 'sum';
+  // 🔴 `\s+\S*` cannot cross a space, so "סכום חמשת האיברים הראשונים" fell
+  // through to `compute` while "סכום האיברים הראשונים" was `sum` — the same
+  // defect that had an author writing stilted Hebrew on the trigonometry port.
+  // A bounded `[^.]` window spans the counting word.
+  if (/סכום\s+[^.]{0,20}(?:איברים|הסדרה|הטור|ראשונים)/.test(t) || /S_?n|סכום אינסופי/.test(t)) return 'sum';
   if (/נמק|הסבירו מדוע|האם .*\?/.test(t)) return 'justify';
   if (/נתונ\S*\s+(?:הסכום|האיבר|היחס)[^.]*מצא|ידוע (?:כי|ש)[^.]*מצא/.test(t)) return 'reverse';
   return 'compute';
@@ -177,8 +271,7 @@ export function askShape(q: PracticeQuestion): string {
 
 export const hasParameterForTest = (text: string) => hasParameter({ question: text } as PracticeQuestion);
 const hasParameter = (q: PracticeQuestion) =>
-  EXPRESS_IN_TERMS_OF.test(q.question ?? '') ||
-  /פרמטר|מצא(?:ו)? את (?:הערך של )?\$?[a-z]\$?(?!_)|תלוי ב/.test(q.question ?? '');
+  EXPRESS_IN_TERMS_OF.test(q.question ?? '') || PARAMETER_RE.test(q.question ?? '');
 
 /** The inference runs BACKWARDS: a later property is given, an earlier one asked. */
 const isReverse = (q: PracticeQuestion) =>
