@@ -113,6 +113,42 @@ export const EXTRA: PracticeQuestion[] = [
         'מחברים את שני השינויים: $g(x) = \\dfrac{1}{(x - 3)^2} + 2$.',
         'בדיקה: האסימפטוטה האנכית עברה מהערך $x = 0$ אל $x = 3$, והאופקית עלתה מהגובה $0$ אל $2$.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="207.9" x2="284" y2="207.9" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="200.9" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="99.7" y1="16" x2="99.7" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="106.7" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="204.9" x2="26" y2="210.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="222.9" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="173.4" y1="204.9" x2="173.4" y2="210.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="173.4" y="222.9" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="247.1" y1="204.9" x2="247.1" y2="210.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="247.1" y="222.9" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="96.7" y1="147.8" x2="102.7" y2="147.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="93.7" y="151.3" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="96.7" y1="87.7" x2="102.7" y2="87.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="93.7" y="91.2" font-size="10.5" fill="#0F172A" text-anchor="end">4</text>
+<line x1="96.7" y1="27.6" x2="102.7" y2="27.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="93.7" y="31.1" font-size="10.5" fill="#0F172A" text-anchor="end">6</text>
+<line x1="210.3" y1="16" x2="210.3" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="147.8" x2="284" y2="147.8" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,200.4 36.3,197.8 43.2,195.2 48.4,192.5 53.5,188.8 58.7,183.7 62.1,179.1 65.6,173 69,164.7 74.2,145.4 77.6,124.5 81,90.9 84.5,32.1" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="115.4,42.9 118.9,96.8 120.6,114.4 124,139 127.5,155 132.6,170.3 137.8,179.8 141.2,184.3 144.7,187.8 151.6,192.8 160.2,196.8 172.2,200.2 186,202.5 204.9,204.3 225.5,205.4 284,206.7" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,146.6 84.5,145.3 118.9,143 134.4,140.8 144.7,138.4 153.3,135.3 160.2,131.6 165.3,127.7 168.8,124.2 172.2,119.7 177.4,110.2 180.8,100.9 186,78.9 189.4,54.3 191.1,36.7" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="229,30.8 232.4,64.4 235.8,85.3 239.3,99.3 244.4,112.9 247.9,119 251.3,123.6 259.9,131.3 270.2,136.5 284,140.3" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="99.7" cy="144.5" r="4.5" fill="#4F46E5"/>
+<text x="73.2" y="165.5" font-size="10.5" fill="#0F172A">(0, 19/9)</text>
+<text x="215.3" y="234" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 3</text>
+<text x="30" y="142.8" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 2</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = f(x - 3) + 2$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{1}{x^2}$. מסומנים: האסימפטוטה האנכית $x = 3$; האסימפטוטה האופקית $y = 2$; החיתוך עם ציר $y$ בנקודה $\\left(0,\\; \\dfrac{19}{9}\\right)$.',
+        },
+      ],
       finalAnswer: '$g(x) = \\dfrac{1}{(x - 3)^2} + 2$',
       explanation: 'המיקום של המספר בנוסחה קובע את סוג ההזזה: בתוך הסוגריים אופקי והפוך, מחוץ לפונקציה אנכי וישיר.',
     },
@@ -151,6 +187,38 @@ export const EXTRA: PracticeQuestion[] = [
         '**הנוסחה:** חיתוך עם ציר $x$: מציבים $y = 0$ ופותרים.',
         '**ההצבה:** $3\\sqrt{x - 6} = 0$.\n\nמחלקים בשלוש: $\\sqrt{x - 6} = 0$, ומכאן $x = 6$.',
         'המתיחה הכפילה את הגובה אפס, וגם אחריה הוא אפס, ולכן הנקודה $(6, 0)$ נשארת על הציר.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="201.9" x2="284" y2="201.9" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="194.9" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="77.6" y1="16" x2="77.6" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="84.6" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="198.9" x2="26" y2="204.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="216.9" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="129.2" y1="198.9" x2="129.2" y2="204.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="129.2" y="216.9" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="180.8" y1="198.9" x2="180.8" y2="204.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="180.8" y="216.9" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="232.4" y1="198.9" x2="232.4" y2="204.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="232.4" y="216.9" font-size="10.5" fill="#0F172A" text-anchor="middle">6</text>
+<line x1="284" y1="198.9" x2="284" y2="204.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="216.9" font-size="10.5" fill="#0F172A" text-anchor="middle">8</text>
+<line x1="74.6" y1="129.8" x2="80.6" y2="129.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="71.6" y="133.3" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="74.6" y1="57.6" x2="80.6" y2="57.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="71.6" y="61.1" font-size="10.5" fill="#0F172A" text-anchor="end">4</text>
+<polyline points="232.4,201.9 234.1,192.6 235.8,188.7 239.3,183.3 244.4,177.3 251.3,171 261.6,163.5 270.2,158.2 284,150.9" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="232.4,201.9 234.1,174 235.8,162.4 239.3,146 244.4,128 253,105.1 261.6,86.7 270.2,70.8 284,48.9" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="232.4" cy="201.9" r="4.5" fill="#4F46E5"/>
+<text x="189" y="193.9" font-size="10.5" fill="#0F172A">(6, 0)</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = 3f(x)$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\sqrt{x - 6}$. מסומנים: נקודת הקצה של התחום $(6,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$.',
+        },
       ],
       finalAnswer: 'תחום ההגדרה $x \\ge 6$, והחיתוך עם ציר $x$ בנקודה $(6, 0)$',
       explanation:
@@ -191,6 +259,41 @@ export const EXTRA: PracticeQuestion[] = [
         'מאפסים את המכנה: $x + 3 = 0$, ולכן $x = -3$, ושם המונה הוא $-6$, שונה מאפס.',
         '**הנוסחה:** דרגות שוות במונה ובמכנה: האסימפטוטה האופקית היא מנת המקדמים המובילים.',
         'המקדם המוביל במונה הוא $2$ והמקדם המוביל במכנה הוא $1$, ולכן האסימפטוטה האופקית היא הישר $y = 2$, בדיוק כמו של $f$.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="138.7" x2="284" y2="138.7" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="131.7" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="210.3" y1="16" x2="210.3" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="217.3" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="62.9" y1="135.7" x2="62.9" y2="141.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="62.9" y="153.7" font-size="10.5" fill="#0F172A" text-anchor="middle">-4</text>
+<line x1="136.6" y1="135.7" x2="136.6" y2="141.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="136.6" y="153.7" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="284" y1="135.7" x2="284" y2="141.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="153.7" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="207.3" y1="197" x2="213.3" y2="197" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="204.3" y="200.5" font-size="10.5" fill="#0F172A" text-anchor="end">-5</text>
+<line x1="207.3" y1="80.4" x2="213.3" y2="80.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="204.3" y="83.9" font-size="10.5" fill="#0F172A" text-anchor="end">5</text>
+<line x1="207.3" y1="22.1" x2="213.3" y2="22.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="204.3" y="25.6" font-size="10.5" fill="#0F172A" text-anchor="end">10</text>
+<line x1="99.7" y1="16" x2="99.7" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="115.3" x2="284" y2="115.3" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,124.1 94.8,126.7 143,129.8 184.2,134.2 203.2,137.2 216.9,140.1 230.7,143.9 239.3,146.9 249.6,151.5 258.2,156.5 266.8,163 272,168.1 278.8,176.7 284,185.3" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,80.4 32.9,76.8 41.5,71.1 50.1,63.4 55.2,57.4 60.4,49.8 65.6,39.8 69,31.4 72.4,20.8" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="122.3,229.4 125.8,214.3 129.2,202.8 132.6,193.7 137.8,183 141.2,177.4 149.8,166.8 158.4,159.2 165.3,154.6 175.6,149.3 184.2,145.8 196.3,142 210,138.7 225.5,135.8 246.2,132.9 284,129.3" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="210.3" cy="138.7" r="4.5" fill="#4F46E5"/>
+<text x="192.6" y="127.7" font-size="10.5" fill="#0F172A">(0, 0)</text>
+<text x="104.7" y="27" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = -3</text>
+<text x="30" y="110.3" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 2</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = f(-x)$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{2x}{x - 3}$. מסומנים: האסימפטוטה האנכית $x = -3$; האסימפטוטה האופקית $y = 2$; החיתוך עם שני הצירים בראשית הצירים $(0,\\; 0)$.',
+        },
       ],
       finalAnswer: 'אסימפטוטה אנכית $x = -3$ ואסימפטוטה אופקית $y = 2$',
       explanation:
@@ -308,6 +411,43 @@ export const EXTRA: PracticeQuestion[] = [
         'הביטוי $x + 2$ בתוך הסוגריים הוא הזזה שמאלה בגודל $2$, ולכן האסימפטוטה האנכית עוברת מהמקום $1$ אל $1 - 2 = -1$.',
         'החיסור $3$ מחוץ לפונקציה הוא הזזה למטה בגודל $3$, ולכן האסימפטוטה האופקית יורדת מהגובה $4$ אל $4 - 3 = 1$.',
         'תחום ההגדרה זז יחד עם הגרף: הוא כל $x$ שונה מהערך $-1$.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="144.4" x2="284" y2="144.4" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="137.4" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="226.7" y1="16" x2="226.7" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="233.7" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="54.7" y1="141.4" x2="54.7" y2="147.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="54.7" y="159.4" font-size="10.5" fill="#0F172A" text-anchor="middle">-6</text>
+<line x1="112" y1="141.4" x2="112" y2="147.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="112" y="159.4" font-size="10.5" fill="#0F172A" text-anchor="middle">-4</text>
+<line x1="169.3" y1="141.4" x2="169.3" y2="147.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="169.3" y="159.4" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="284" y1="141.4" x2="284" y2="147.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="159.4" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="223.7" y1="231.7" x2="229.7" y2="231.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="220.7" y="235.2" font-size="10.5" fill="#0F172A" text-anchor="end">-5</text>
+<line x1="223.7" y1="57.2" x2="229.7" y2="57.2" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="220.7" y="60.7" font-size="10.5" fill="#0F172A" text-anchor="end">5</text>
+<line x1="198" y1="16" x2="198" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="127" x2="284" y2="127" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,83.4 57,84.7 100,87.5 125.8,90.1 144.7,92.7 160.2,95.7 177.4,100.3 191.1,105.8 203.2,113 211.8,120.6 216.9,126.7 223.8,138.1 229,150.5 234.1,169 237.6,187.2 241,214.2 242.7,233.3" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,138.6 72.4,142.9 103.4,148.1 124,154 134.4,158.4 143,163.3 149.8,168.5 155,173.5 160.2,179.9 165.3,188.2 168.8,195.4 172.2,204.5 175.6,216.5 179.1,232.7" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="216.9,21.3 220.4,37.5 225.5,54.3 232.4,68.8 239.3,78.5 247.9,86.9 258.2,93.8 272,100 284,103.7" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="83.3" cy="144.4" r="4.5" fill="#4F46E5"/>
+<text x="91.3" y="136.4" font-size="10.5" fill="#0F172A">(-5, 0)</text>
+<circle cx="226.7" cy="57.2" r="4.5" fill="#4F46E5"/>
+<text x="234.7" y="49.2" font-size="10.5" fill="#0F172A">(0, 5)</text>
+<text x="193" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = -1</text>
+<text x="30" y="122" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 1</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = f(x + 2) - 3$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{4x}{x - 1}$. מסומנים: האסימפטוטה האנכית $x = -1$; האסימפטוטה האופקית $y = 1$; החיתוך עם ציר $x$ בנקודה $(-5,\\; 0)$; החיתוך עם ציר $y$ בנקודה $(0,\\; 5)$.',
+        },
       ],
       finalAnswer: 'אסימפטוטה אנכית $x = -1$ ואסימפטוטה אופקית $y = 1$',
       explanation:
@@ -446,6 +586,44 @@ export const EXTRA: PracticeQuestion[] = [
         'מצמצמים: $-5 = -6$, סתירה.',
         'למשוואה אין פתרון, ולכן הישר $y = 3$ אינו פוגש את הגרף.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="205.1" x2="284" y2="205.1" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="198.1" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="112" y1="16" x2="112" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="119" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="202.1" x2="26" y2="208.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="220.1" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="69" y1="202.1" x2="69" y2="208.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="69" y="220.1" font-size="10.5" fill="#0F172A" text-anchor="middle">-1</text>
+<line x1="155" y1="202.1" x2="155" y2="208.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="155" y="220.1" font-size="10.5" fill="#0F172A" text-anchor="middle">1</text>
+<line x1="241" y1="202.1" x2="241" y2="208.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="241" y="220.1" font-size="10.5" fill="#0F172A" text-anchor="middle">3</text>
+<line x1="284" y1="202.1" x2="284" y2="208.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="220.1" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="109" y1="139.4" x2="115" y2="139.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="106" y="142.9" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="109" y1="73.7" x2="115" y2="73.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="106" y="77.2" font-size="10.5" fill="#0F172A" text-anchor="end">4</text>
+<line x1="198" y1="16" x2="198" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="106.5" x2="284" y2="106.5" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,114.7 74.2,117.9 94.8,120.2 110.3,122.6 124,125.6 134.4,128.7 144.7,133 153.3,138.1 160.2,143.9 165.3,149.8 170.5,157.9 173.9,165.2 177.4,175 180.8,188.7 184.2,209.2 186,223.9" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="215.2,24.4 218.6,38.1 223.8,51.8 229,60.9 235.8,69.2 244.4,76.1 253,80.9 265.1,85.5 284,90.1" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="183.7" cy="205.1" r="4.5" fill="#4F46E5"/>
+<text x="191.7" y="197.1" font-size="10.5" fill="#0F172A">(5/3, 0)</text>
+<circle cx="112" cy="123" r="4.5" fill="#4F46E5"/>
+<text x="120" y="115" font-size="10.5" fill="#0F172A">(0, 5/2)</text>
+<text x="193" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = 2</text>
+<text x="30" y="101.5" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 3</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\dfrac{3x - 5}{x - 2}$. מסומנים: האסימפטוטה האנכית $x = 2$; האסימפטוטה האופקית $y = 3$; החיתוך עם ציר $x$ בנקודה $\\left(\\dfrac{5}{3},\\; 0\\right)$; החיתוך עם ציר $y$ בנקודה $\\left(0,\\; \\dfrac{5}{2}\\right)$; הישר $y = 3$, שהוא האסימפטוטה האופקית.',
+        },
+      ],
       finalAnswer: 'אין פתרונות: הגובה $3$ הוא האסימפטוטה האופקית, והגרף אינו מגיע אליה',
       explanation: 'הגרף מתקרב לאסימפטוטה האופקית ככל שרוצים אך אינו מגיע אליה, ולכן ישר אופקי בגובה האסימפטוטה הוא הישר היחיד שאינו פוגש אף ענף.',
     },
@@ -491,6 +669,45 @@ export const EXTRA: PracticeQuestion[] = [
         '**ההצבה:** מציבים בפונקציה: $f(3) = \\dfrac{27}{18} = 1.5$.\n\nובאותו אופן $f(-3) = -1.5$.',
         'בערך $3$ הנגזרת עוברת מחיובי לשלילי, ולכן שם מקסימום, ובערך $-3$ היא עוברת משלילי לחיובי, ולכן שם מינימום.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="127" x2="284" y2="127" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="120" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="155" y1="16" x2="155" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="162" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="51.8" y1="124" x2="51.8" y2="130" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="51.8" y="142" font-size="10.5" fill="#0F172A" text-anchor="middle">-4</text>
+<line x1="103.4" y1="124" x2="103.4" y2="130" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="103.4" y="142" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="206.6" y1="124" x2="206.6" y2="130" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="206.6" y="142" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="258.2" y1="124" x2="258.2" y2="130" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="258.2" y="142" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="152" y1="215.8" x2="158" y2="215.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="219.3" font-size="10.5" fill="#0F172A" text-anchor="end">-2</text>
+<line x1="152" y1="171.4" x2="158" y2="171.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="174.9" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="152" y1="82.6" x2="158" y2="82.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="86.1" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="152" y1="38.2" x2="158" y2="38.2" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="41.7" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="26" y1="127" x2="284" y2="127" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,185.8 60.4,192.3 70.7,193.4 79.3,193.6 89.6,192.7 94.8,191.6 103.4,188.5 110.3,184.7 117.2,179.6 122.3,174.7 129.2,167 134.4,160.2 143,147.2 167,106.8 175.6,93.8 180.8,87 192.8,74.4 201.4,68.2 206.6,65.5 213.5,62.9 220.4,61.3 230.7,60.4 237.6,60.5 253,62.2 284,68.2" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="155" cy="127" r="4.5" fill="#4F46E5"/>
+<text x="111.6" y="119" font-size="10.5" fill="#0F172A">(0, 0)</text>
+<circle cx="232.4" cy="60.4" r="4.5" fill="#059669"/>
+<text x="240.4" y="52.4" font-size="10.5" fill="#0F172A">(3, 3/2)</text>
+<circle cx="77.6" cy="193.6" r="4.5" fill="#059669"/>
+<text x="10.6" y="210.6" font-size="10.5" fill="#0F172A">(-3, -3/2)</text>
+<text x="30" y="122" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 0</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\dfrac{9x}{x^2 + 9}$. מסומנים: האסימפטוטה האופקית $y = 0$; החיתוך עם שני הצירים בראשית הצירים $(0,\\; 0)$; נקודת מקסימום $\\left(3,\\; \\dfrac{3}{2}\\right)$; נקודת מינימום $\\left(-3,\\; -\\dfrac{3}{2}\\right)$.',
+        },
+      ],
       finalAnswer: 'הפונקציה אי-זוגית, מקסימום בנקודה $(3,\\; 1.5)$ ומינימום בנקודה $(-3,\\; -1.5)$',
       explanation:
         'האי-זוגיות אינה רק תכונה יפה: היא מנבאת את התוצאה. ברגע שנמצא המקסימום $(3,\\; 1.5)$, הסימטריה סביב הראשית מחייבת נקודה נגדית לו בכל רכיב, וחצי סיבוב הופך פסגה לתחתית.',
@@ -531,6 +748,52 @@ export const EXTRA: PracticeQuestion[] = [
         'מעבירים אגף: $\\dfrac{6}{x + 1} = 3$.',
         'כופלים במכנה ומחלקים בשלוש: $x + 1 = 2$.',
         'מחסרים אחד משני האגפים: $x = 2 - 1 = 1$.\n\nולכן הגרף חותך את ציר $x$ בנקודה $(1,\\; 0)$.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="107.4" x2="284" y2="107.4" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="100.4" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="155" y1="16" x2="155" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="162" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="104.4" x2="26" y2="110.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="122.4" font-size="10.5" fill="#0F172A" text-anchor="middle">-3</text>
+<line x1="69" y1="104.4" x2="69" y2="110.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="69" y="122.4" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="198" y1="104.4" x2="198" y2="110.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="198" y="122.4" font-size="10.5" fill="#0F172A" text-anchor="middle">1</text>
+<line x1="241" y1="104.4" x2="241" y2="110.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="241" y="122.4" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="284" y1="104.4" x2="284" y2="110.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="122.4" font-size="10.5" fill="#0F172A" text-anchor="middle">3</text>
+<line x1="152" y1="233.9" x2="158" y2="233.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="237.4" font-size="10.5" fill="#0F172A" text-anchor="end">-15</text>
+<line x1="152" y1="191.7" x2="158" y2="191.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="195.2" font-size="10.5" fill="#0F172A" text-anchor="end">-10</text>
+<line x1="152" y1="149.6" x2="158" y2="149.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="153.1" font-size="10.5" fill="#0F172A" text-anchor="end">-5</text>
+<line x1="152" y1="65.2" x2="158" y2="65.2" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="68.7" font-size="10.5" fill="#0F172A" text-anchor="end">5</text>
+<line x1="152" y1="23" x2="158" y2="23" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="26.5" font-size="10.5" fill="#0F172A" text-anchor="end">10</text>
+<line x1="112" y1="16" x2="112" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="132.7" x2="284" y2="132.7" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,109 84.5,112.8 106.8,115.1 125.8,117.8 146.4,121.9 161.9,126.4 175.6,132.2 182.5,136.1 189.4,141.1 196.3,147.6 203.2,156.5 208.3,165.5 213.5,178 216.9,189.3 220.4,204.4 223.8,225.5" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="268.5,19.8 275.4,35.6 278.8,41.4 284,48.3" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,158 41.5,163.5 51.8,168.8 62.1,176.3 69,183.3 75.9,192.9 81,203 86.2,217.1 89.6,230" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="130.9,17.6 134.4,35.3 137.8,48.3 141.2,58.2 144.7,66.1 149.8,75.1 155,82 160.2,87.5 167,93.1 175.6,98.5 184.2,102.5 198,107.4 210,110.5 239.3,115.6 259.9,118 284,120" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="198" cy="107.4" r="4.5" fill="#4F46E5"/>
+<text x="206" y="99.4" font-size="10.5" fill="#0F172A">(1, 0)</text>
+<circle cx="155" cy="82" r="4.5" fill="#4F46E5"/>
+<text x="163" y="74" font-size="10.5" fill="#0F172A">(0, 3)</text>
+<text x="107" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = -1</text>
+<text x="30" y="145.7" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = -3</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = f(x + 3) - 4$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{6}{x - 2} + 1$. מסומנים: האסימפטוטה האנכית $x = -1$; האסימפטוטה האופקית $y = -3$; החיתוך עם ציר $x$ בנקודה $(1,\\; 0)$; החיתוך עם ציר $y$ בנקודה $(0,\\; 3)$.',
+        },
       ],
       finalAnswer: 'כן. הגרף של $g$ חותך את ציר $x$ בנקודה $(1,\\; 0)$',
       explanation:
@@ -575,6 +838,46 @@ export const EXTRA: PracticeQuestion[] = [
         '**הנוסחה:** חיתוך עם ציר $x$: מציבים $y = 0$ ופותרים.',
         '**ההצבה:** $\\dfrac{15}{x} + 2 = 0$.\n\nמעבירים אגף: $\\dfrac{15}{x} = -2$.',
         'כופלים במכנה: $15 = -2x$, ומכאן $x = -7.5$.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="138.7" x2="284" y2="138.7" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="131.7" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="235.6" y1="16" x2="235.6" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="242.6" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="63.6" y1="135.7" x2="63.6" y2="141.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="63.6" y="153.7" font-size="10.5" fill="#0F172A" text-anchor="middle">-8</text>
+<line x1="106.6" y1="135.7" x2="106.6" y2="141.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="106.6" y="153.7" font-size="10.5" fill="#0F172A" text-anchor="middle">-6</text>
+<line x1="149.6" y1="135.7" x2="149.6" y2="141.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149.6" y="153.7" font-size="10.5" fill="#0F172A" text-anchor="middle">-4</text>
+<line x1="192.6" y1="135.7" x2="192.6" y2="141.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192.6" y="153.7" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="278.6" y1="135.7" x2="278.6" y2="141.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="278.6" y="153.7" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="232.6" y1="197" x2="238.6" y2="197" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="229.6" y="200.5" font-size="10.5" fill="#0F172A" text-anchor="end">-5</text>
+<line x1="232.6" y1="80.4" x2="238.6" y2="80.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="229.6" y="83.9" font-size="10.5" fill="#0F172A" text-anchor="end">5</text>
+<line x1="232.6" y1="22.1" x2="238.6" y2="22.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="229.6" y="25.6" font-size="10.5" fill="#0F172A" text-anchor="end">10</text>
+<line x1="235.6" y1="16" x2="235.6" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="115.3" x2="284" y2="115.3" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,144.6 86.2,147 127.5,150.2 156.7,154.5 168.8,157.4 180.8,161.5 187.7,164.8 196.3,170.5 203.2,177.3 208.3,184.6 213.5,195.3 216.9,205.7 220.4,220.8 222.1,231.2" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="246.2,19.7 247.9,36.4 251.3,58.8 254.8,73.2 258.2,83.1 261.6,90.5 268.5,100.6 277.1,108.5 284,112.7" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,133.3 70.7,138.1 94.8,142 106.8,144.5 118.9,147.5 136.1,153.1 153.3,161 163.6,167.5 172.2,174.6 179.1,181.8 186,191.1 191.1,199.8 196.3,210.9 201.4,225.3 204.9,237.6" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="273.7,16.5 278.8,28.3 284,37.6" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="74.4" cy="138.7" r="4.5" fill="#4F46E5"/>
+<text x="82.4" y="130.7" font-size="10.5" fill="#0F172A">(-15/2, 0)</text>
+<text x="240.6" y="234" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 0</text>
+<text x="30" y="110.3" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 2</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = 3f(x) + 2$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{5}{x}$. מסומנים: האסימפטוטה האנכית $x = 0$; האסימפטוטה האופקית $y = 2$; החיתוך עם ציר $x$ בנקודה $\\left(-\\dfrac{15}{2},\\; 0\\right)$.',
+        },
       ],
       finalAnswer: 'אסימפטוטה אנכית $x = 0$, אסימפטוטה אופקית $y = 2$, וחיתוך עם ציר $x$ בשיעור $-7.5$',
       explanation:
@@ -665,6 +968,41 @@ export const EXTRA: PracticeQuestion[] = [
         'משווים: $S_g = S_h = 6$, ולכן שני השטחים שווים.',
         'לשתי הפונקציות אותה אסימפטוטה אנכית, $x = 0$, אך רק $g$ קיבלה אסימפטוטה אופקית חדשה בגובה $1$, ואילו $h$ נשארה עם הגובה $0$.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<path d="M 122.8,99.8 L 123.8,106.7 L 124.9,113 L 126,118.7 L 127.1,123.9 L 128.1,128.7 L 129.2,133 L 130.3,137.1 L 131.4,140.8 L 132.4,144.2 L 133.5,147.4 L 134.6,150.4 L 135.6,153.1 L 136.7,155.6 L 137.8,158 L 138.9,160.3 L 140,162.3 L 141,164.3 L 142.1,166.1 L 143.2,167.8 L 144.3,169.4 L 145.3,171 L 146.4,172.4 L 147.5,173.8 L 148.6,175 L 149.6,176.2 L 150.7,177.4 L 151.8,178.5 L 152.9,179.5 L 153.9,180.5 L 155,181.4 L 156.1,182.3 L 157.2,183.1 L 158.2,183.9 L 159.3,184.7 L 160.4,185.4 L 161.5,186.1 L 162.5,186.8 L 163.6,187.4 L 164.7,188 L 165.8,188.6 L 166.8,189.2 L 167.9,189.7 L 169,190.2 L 170.1,190.7 L 171.1,191.2 L 172.2,191.7 L 173.3,192.1 L 174.4,192.5 L 175.4,192.9 L 176.5,193.3 L 177.6,193.7 L 178.7,194.1 L 179.7,194.4 L 180.8,194.7 L 181.9,195.1 L 183,195.4 L 184,195.7 L 185.1,196 L 186.2,196.3 L 187.3,196.5 L 188.3,196.8 L 189.4,197 L 190.5,197.3 L 191.5,197.5 L 192.6,197.8 L 193.7,198 L 194.8,198.2 L 195.9,198.4 L 196.9,198.6 L 198,198.8 L 199.1,199 L 200.2,199.2 L 201.2,199.4 L 202.3,199.6 L 203.4,199.7 L 204.5,199.9 L 205.5,200.1 L 206.6,200.2 L 207.7,200.4 L 208.7,200.5 L 209.8,200.7 L 210.9,200.8 L 212,200.9 L 213.1,201.1 L 214.1,201.2 L 215.2,201.3 L 216.3,201.5 L 217.4,201.6 L 218.4,201.7 L 219.5,201.8 L 219.5,208.6 L 218.4,208.6 L 217.4,208.6 L 216.3,208.6 L 215.2,208.6 L 214.1,208.6 L 213.1,208.6 L 212,208.6 L 210.9,208.6 L 209.8,208.6 L 208.7,208.6 L 207.7,208.6 L 206.6,208.6 L 205.5,208.6 L 204.5,208.6 L 203.4,208.6 L 202.3,208.6 L 201.2,208.6 L 200.2,208.6 L 199.1,208.6 L 198,208.6 L 196.9,208.6 L 195.9,208.6 L 194.8,208.6 L 193.7,208.6 L 192.6,208.6 L 191.5,208.6 L 190.5,208.6 L 189.4,208.6 L 188.3,208.6 L 187.3,208.6 L 186.2,208.6 L 185.1,208.6 L 184,208.6 L 183,208.6 L 181.9,208.6 L 180.8,208.6 L 179.7,208.6 L 178.7,208.6 L 177.6,208.6 L 176.5,208.6 L 175.4,208.6 L 174.4,208.6 L 173.3,208.6 L 172.2,208.6 L 171.1,208.6 L 170.1,208.6 L 169,208.6 L 167.9,208.6 L 166.8,208.6 L 165.8,208.6 L 164.7,208.6 L 163.6,208.6 L 162.5,208.6 L 161.5,208.6 L 160.4,208.6 L 159.3,208.6 L 158.2,208.6 L 157.2,208.6 L 156.1,208.6 L 155,208.6 L 153.9,208.6 L 152.9,208.6 L 151.8,208.6 L 150.7,208.6 L 149.6,208.6 L 148.6,208.6 L 147.5,208.6 L 146.4,208.6 L 145.3,208.6 L 144.3,208.6 L 143.2,208.6 L 142.1,208.6 L 141,208.6 L 140,208.6 L 138.9,208.6 L 137.8,208.6 L 136.7,208.6 L 135.6,208.6 L 134.6,208.6 L 133.5,208.6 L 132.4,208.6 L 131.4,208.6 L 130.3,208.6 L 129.2,208.6 L 128.1,208.6 L 127.1,208.6 L 126,208.6 L 124.9,208.6 L 123.8,208.6 L 122.8,208.6 Z" fill="#059669" opacity="0.16"/>
+<line x1="26" y1="208.6" x2="284" y2="208.6" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="201.6" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="90.5" y1="16" x2="90.5" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="97.5" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="205.6" x2="26" y2="211.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="223.6" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="155" y1="205.6" x2="155" y2="211.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="155" y="223.6" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="219.5" y1="205.6" x2="219.5" y2="211.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="219.5" y="223.6" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="284" y1="205.6" x2="284" y2="211.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="223.6" font-size="10.5" fill="#0F172A" text-anchor="middle">6</text>
+<line x1="87.5" y1="154.2" x2="93.5" y2="154.2" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="84.5" y="157.7" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="87.5" y1="99.8" x2="93.5" y2="99.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="84.5" y="103.3" font-size="10.5" fill="#0F172A" text-anchor="end">4</text>
+<line x1="87.5" y1="45.4" x2="93.5" y2="45.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="84.5" y="48.9" font-size="10.5" fill="#0F172A" text-anchor="end">6</text>
+<line x1="90.5" y1="16" x2="90.5" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="208.6" x2="284" y2="208.6" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,181.4 32.9,174.5 39.8,164.7 46.6,149.8 51.8,133 55.2,117.6 58.7,96.8 62.1,68.1 65.6,26.7" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="115.4,26.7 120.6,83.7 124,108 127.5,125.9 132.6,144.9 137.8,158 143,167.5 149.8,176.5 158.4,184.1 167,189.3 173.9,192.4 182.5,195.3 194.6,198.2 208.3,200.5 230.7,202.9 284,205.6" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<text x="95.5" y="234" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 0</text>
+<text x="30" y="203.6" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 0</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\dfrac{4}{x^2}$. מסומנים: האסימפטוטה האנכית $x = 0$; האסימפטוטה האופקית $y = 0$; השטח שבין הגרף לבין ציר $x$ בתחום $1 \\le x \\le 4$.',
+        },
+      ],
       finalAnswer: 'שני השטחים שווים, וכל אחד מהם $6$',
       explanation:
         'הכפל נראה חזק יותר, אך הוא רק מכפיל שטח קטן, ואילו ההזזה מוסיפה מלבן על פני קטע ארוך; שתי התוספות יוצאות כאן שוות בדיוק, וכל אחת מהן מוסיפה $3$.',
@@ -705,6 +1043,48 @@ export const EXTRA: PracticeQuestion[] = [
         'ישר אופקי מתחת לגובה $0$ או מעל לגובה $4$ חותך ענף פעמיים, ובין הגבהים $0$ לבין $4$ אינו פוגש אף ענף.',
         'פגישה יחידה מתקבלת רק בגובה של קיצון: $k = 0$ או $k = 4$.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="178.8" x2="284" y2="178.8" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="171.8" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="112" y1="16" x2="112" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="119" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="175.8" x2="26" y2="181.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="193.8" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="69" y1="175.8" x2="69" y2="181.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="69" y="193.8" font-size="10.5" fill="#0F172A" text-anchor="middle">-1</text>
+<line x1="198" y1="175.8" x2="198" y2="181.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="198" y="193.8" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="241" y1="175.8" x2="241" y2="181.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="241" y="193.8" font-size="10.5" fill="#0F172A" text-anchor="middle">3</text>
+<line x1="284" y1="175.8" x2="284" y2="181.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="193.8" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="109" y1="230.7" x2="115" y2="230.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="106" y="234.2" font-size="10.5" fill="#0F172A" text-anchor="end">-2</text>
+<line x1="109" y1="127" x2="115" y2="127" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="106" y="130.5" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="109" y1="75.2" x2="115" y2="75.2" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="106" y="78.7" font-size="10.5" fill="#0F172A" text-anchor="end">4</text>
+<line x1="109" y1="23.3" x2="115" y2="23.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="106" y="26.8" font-size="10.5" fill="#0F172A" text-anchor="end">6</text>
+<line x1="155" y1="16" x2="155" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="75.2" x2="284" y2="75.2" stroke="#059669" stroke-width="2" stroke-dasharray="5 3"/>
+<polyline points="26,213.4 58.7,196.6 84.5,185.3 93.1,182.3 103.4,179.7 112,178.8 115.4,179 120.6,180.1 125.8,182.8 129.2,185.8 132.6,190.3 136.1,197.3 137.8,202.2 141.2,216.3 143,226.8" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="167,27.2 168.8,37.7 172.2,51.8 173.9,56.7 177.4,63.7 180.8,68.2 184.2,71.2 189.4,73.9 194.6,75 198,75.2 206.6,74.3 216.9,71.7 225.5,68.7 251.3,57.4 284,40.6" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="112" cy="178.8" r="4.5" fill="#4F46E5"/>
+<text x="120" y="170.8" font-size="10.5" fill="#0F172A">(0, 0)</text>
+<circle cx="198" cy="75.2" r="4.5" fill="#059669"/>
+<text x="206" y="92.2" font-size="10.5" fill="#0F172A">(2, 4)</text>
+<text x="160" y="234" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 1</text>
+<text x="30" y="70.2" font-size="10.5" fill="#059669" text-anchor="start" font-weight="bold">y = 4</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\dfrac{x^2}{x - 1}$. מסומנים: האסימפטוטה האנכית $x = 1$; החיתוך עם שני הצירים בראשית הצירים $(0,\\; 0)$; נקודת מקסימום $(0,\\; 0)$; נקודת מינימום $(2,\\; 4)$; הישר $y = 4$ בקו ירוק מקווקו; נקודת המפגש של הגרף עם הישר $(2,\\; 4)$.',
+        },
+      ],
       finalAnswer: '$k = 0$ או $k = 4$',
       explanation: 'הענף השמאלי מקבל רק גבהים עד $0$ והימני רק גבהים מגובה $4$, ולכן רק הישרים שנוגעים בקצה של טווח הערכים של ענף פוגשים את הגרף פעם אחת בדיוק.',
     },
@@ -736,6 +1116,45 @@ export const EXTRA: PracticeQuestion[] = [
         'משוואה שנייה: $x^2 - 2x - 3 = -4$, כלומר $x^2 - 2x + 1 = 0$.',
         'מקבלים $(x - 1)^2 = 0$, פתרון אחד: הישר עובר בדיוק דרך גובה המינימום.',
         'בסך הכול $2 + 1 = 3$ פתרונות.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="208.6" x2="284" y2="208.6" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="201.6" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="128.3" y1="16" x2="128.3" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="135.3" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="74.8" y1="205.6" x2="74.8" y2="211.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="74.8" y="223.6" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="181.7" y1="205.6" x2="181.7" y2="211.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="181.7" y="223.6" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="235.2" y1="205.6" x2="235.2" y2="211.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="235.2" y="223.6" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="125.3" y1="127" x2="131.3" y2="127" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="122.3" y="130.5" font-size="10.5" fill="#0F172A" text-anchor="end">5</text>
+<line x1="125.3" y1="45.4" x2="131.3" y2="45.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="122.3" y="48.9" font-size="10.5" fill="#0F172A" text-anchor="end">10</text>
+<line x1="26" y1="143.3" x2="284" y2="143.3" stroke="#059669" stroke-width="2" stroke-dasharray="5 3"/>
+<polyline points="50.1,22.2 63.8,83.9 75.9,130.8 89.6,176.2 96.5,195.7 101.7,208.3 106.8,196.4 115.4,179.1 122.3,167.7 129.2,158.5 136.1,151.5 143,146.6 149.8,143.9 155,143.3 160.2,143.9 167,146.6 173.9,151.5 180.8,158.5 187.7,167.7 194.6,179.1 203.2,196.4 208.3,208.3 213.5,195.7 220.4,176.2 234.1,130.8 246.2,83.9 259.9,22.2" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="101.6" cy="208.6" r="4.5" fill="#4F46E5"/>
+<text x="109.6" y="200.6" font-size="10.5" fill="#0F172A">(-1, 0)</text>
+<circle cx="208.4" cy="208.6" r="4.5" fill="#4F46E5"/>
+<text x="216.4" y="200.6" font-size="10.5" fill="#0F172A">(3, 0)</text>
+<circle cx="128.3" cy="159.6" r="4.5" fill="#4F46E5"/>
+<text x="84.9" y="151.6" font-size="10.5" fill="#0F172A">(0, 3)</text>
+<circle cx="155" cy="143.3" r="4.5" fill="#059669"/>
+<text x="163" y="135.3" font-size="10.5" fill="#0F172A">(1, 4)</text>
+<circle cx="79.4" cy="143.3" r="4.5" fill="#DB2777"/>
+<text x="12.4" y="160.3" font-size="10.5" fill="#0F172A">(-1.83, 4)</text>
+<circle cx="230.6" cy="143.3" r="4.5" fill="#DB2777"/>
+<text x="238.6" y="135.3" font-size="10.5" fill="#0F172A">(3.83, 4)</text>
+<text x="30" y="138.3" font-size="10.5" fill="#059669" text-anchor="start" font-weight="bold">y = 4</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $g(x) = |x^2 - 2x - 3|$. מסומנים: החיתוך עם ציר $x$ בנקודות $(-1,\\; 0)$ וגם $(3,\\; 0)$; החיתוך עם ציר $y$ בנקודה $(0,\\; 3)$; נקודת מקסימום $(1,\\; 4)$; נקודות מינימום $(-1,\\; 0)$ וגם $(3,\\; 0)$; הישר $y = 4$ בקו ירוק מקווקו; נקודות המפגש של הגרף עם הישר בערך $(-1.83,\\; 4)$ וגם $(1,\\; 4)$ וגם בערך $(3.83,\\; 4)$.',
+        },
       ],
       finalAnswer: 'שלושה פתרונות',
       explanation: 'הקיפול הופך את התחתית בעומק $-4$ לפסגה בגובה $4$, והישר $y = 4$ נוגע בפסגה הזו ובנוסף חותך את שני הענפים שהיו מעל הציר מלכתחילה.',
@@ -776,6 +1195,50 @@ export const EXTRA: PracticeQuestion[] = [
         'האסימפטוטה האופקית של $f$ היא $y = -2$, והשיקוף הופך אותה אל $y = 2$, שהיא אכן האסימפטוטה האופקית של $h$.',
         'תחום ההגדרה של $f$ הוא כל $x$ פרט לערך $-2$, כי שם המכנה מתאפס.',
         'גם נקודות החיתוך מתאימות: המונה של $f$ מתאפס בערך $x = -1.5$, ואצל $h$ המונה מתאפס בערך $x = 3.5$, שהוא $-1.5 + 5$.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="54.6" x2="284" y2="54.6" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="47.6" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="198" y1="16" x2="198" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="205" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="51.6" x2="26" y2="57.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="69.6" font-size="10.5" fill="#0F172A" text-anchor="middle">-4</text>
+<line x1="69" y1="51.6" x2="69" y2="57.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="69" y="69.6" font-size="10.5" fill="#0F172A" text-anchor="middle">-3</text>
+<line x1="155" y1="51.6" x2="155" y2="57.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="155" y="69.6" font-size="10.5" fill="#0F172A" text-anchor="middle">-1</text>
+<line x1="241" y1="51.6" x2="241" y2="57.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="241" y="69.6" font-size="10.5" fill="#0F172A" text-anchor="middle">1</text>
+<line x1="284" y1="51.6" x2="284" y2="57.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="69.6" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="195" y1="208.9" x2="201" y2="208.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192" y="212.4" font-size="10.5" fill="#0F172A" text-anchor="end">-4</text>
+<line x1="195" y1="170.3" x2="201" y2="170.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192" y="173.8" font-size="10.5" fill="#0F172A" text-anchor="end">-3</text>
+<line x1="195" y1="131.7" x2="201" y2="131.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192" y="135.2" font-size="10.5" fill="#0F172A" text-anchor="end">-2</text>
+<line x1="195" y1="93.2" x2="201" y2="93.2" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192" y="96.7" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="195" y1="16" x2="201" y2="16" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192" y="19.5" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="112" y1="16" x2="112" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="131.7" x2="284" y2="131.7" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,151 43.2,155.8 53.5,160.1 60.4,163.9 65.6,167.5 74.2,175.6 81,185.3 86.2,196 91.4,212.1 94.8,228.2" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="127.5,24.6 132.6,51.4 136.1,62.8 139.5,71.5 144.7,81 149.8,87.9 155,93.2 163.6,99.6 172.2,104.2 184.2,108.8 204.9,113.9 234.1,118.2 284,122.1" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="133.5" cy="54.6" r="4.5" fill="#4F46E5"/>
+<text x="141.5" y="46.6" font-size="10.5" fill="#0F172A">(-3/2, 0)</text>
+<circle cx="198" cy="112.4" r="4.5" fill="#4F46E5"/>
+<text x="206" y="104.4" font-size="10.5" fill="#0F172A">(0, -3/2)</text>
+<text x="107" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = -2</text>
+<text x="30" y="126.7" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = -2</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = -h(x + 5)$, כאשר $h(x) = \\dfrac{2x - 7}{x - 3}$. מסומנים: האסימפטוטה האנכית $x = -2$; האסימפטוטה האופקית $y = -2$; החיתוך עם ציר $x$ בנקודה $\\left(-\\dfrac{3}{2},\\; 0\\right)$; החיתוך עם ציר $y$ בנקודה $\\left(0,\\; -\\dfrac{3}{2}\\right)$.',
+        },
       ],
       finalAnswer: '$f(x) = \\dfrac{-2x - 3}{x + 2}$',
       explanation:
@@ -872,6 +1335,46 @@ export const EXTRA: PracticeQuestion[] = [
         'האסימפטוטה האופקית היא הישר $y = -6$, שהוא ציר $x$ שהוזז שש יחידות למטה.',
         'בדיקה: מציבים $x = 2$ ומקבלים $g(2) = \\dfrac{24}{4} - 6 = 0$, כנדרש.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="143.3" x2="284" y2="143.3" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="136.3" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="155" y1="16" x2="155" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="162" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="140.3" x2="26" y2="146.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="158.3" font-size="10.5" fill="#0F172A" text-anchor="middle">-4</text>
+<line x1="90.5" y1="140.3" x2="90.5" y2="146.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="90.5" y="158.3" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="219.5" y1="140.3" x2="219.5" y2="146.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="219.5" y="158.3" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="284" y1="140.3" x2="284" y2="146.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="158.3" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="152" y1="197.7" x2="158" y2="197.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="201.2" font-size="10.5" fill="#0F172A" text-anchor="end">-5</text>
+<line x1="152" y1="88.9" x2="158" y2="88.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="92.4" font-size="10.5" fill="#0F172A" text-anchor="end">5</text>
+<line x1="152" y1="34.5" x2="158" y2="34.5" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="38" font-size="10.5" fill="#0F172A" text-anchor="end">10</text>
+<line x1="155" y1="16" x2="155" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="208.6" x2="284" y2="208.6" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,137.9 48.4,135.4 58.7,133.6 74.2,129.5 82.8,126 91.4,121 96.5,116.8 101.7,111.5 106.8,104.3 110.3,98 113.7,90.2 117.2,80.1 122.3,58.5 127.5,23.8" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="182.5,23.8 187.7,58.5 192.8,80.1 196.3,90.2 199.7,98 203.2,104.3 208.3,111.5 213.5,116.8 218.6,121 227.2,126 235.8,129.5 251.3,133.6 261.6,135.4 284,137.9" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,192.3 38,188.8 46.6,185.5 57,180.4 65.6,174.7 74.2,167.1 79.3,161.2 84.5,154 89.6,145 93.1,137.8 98.2,124.3 101.7,113.1 105.1,99.4 108.6,82.7 112,61.7 117.2,18.9" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="192.8,18.9 198,61.7 201.4,82.7 204.9,99.4 208.3,113.1 211.8,124.3 216.9,137.8 220.4,145 225.5,154 230.7,161.2 235.8,167.1 244.4,174.7 253,180.4 263.4,185.5 272,188.8 284,192.3" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="90.5" cy="143.3" r="4.5" fill="#4F46E5"/>
+<text x="98.5" y="135.3" font-size="10.5" fill="#0F172A">(-2, 0)</text>
+<circle cx="219.5" cy="143.3" r="4.5" fill="#4F46E5"/>
+<text x="176.1" y="135.3" font-size="10.5" fill="#0F172A">(2, 0)</text>
+<text x="160" y="234" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 0</text>
+<text x="30" y="203.6" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = -6</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = 3f(x) - 6$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{8}{x^2}$. מסומנים: האסימפטוטה האנכית $x = 0$; האסימפטוטה האופקית $y = -6$; החיתוך עם ציר $x$ בנקודות $(-2,\\; 0)$ וגם $(2,\\; 0)$.',
+        },
+      ],
       finalAnswer: '$k = 3$, והאסימפטוטה האופקית היא הישר $y = -6$',
       explanation:
         'המתיחה קובעת כמה רחוק מציר $y$ נמצאות נקודות החיתוך, וההזזה קובעת את הגובה שאליו הגרף נצמד; שני התנאים נפרדים זה מזה, ולכן כל אחד מהם נותן בדיוק מספר אחד.',
@@ -928,6 +1431,40 @@ export const EXTRA: PracticeQuestion[] = [
         'חיתוך עם ציר $x$: מציבים $y = 0$ ופותרים $x - 8 = 0$, ולכן $x = 8$.',
         'חיתוך עם ציר $y$: מציבים $x = 0$ ומחשבים $\\dfrac{-8}{5} = -1.6$.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="136.6" x2="284" y2="136.6" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="129.6" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="136.4" y1="16" x2="136.4" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="143.4" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="198.4" y1="133.6" x2="198.4" y2="139.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="198.4" y="151.6" font-size="10.5" fill="#0F172A" text-anchor="middle">5</text>
+<line x1="260.4" y1="133.6" x2="260.4" y2="139.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="260.4" y="151.6" font-size="10.5" fill="#0F172A" text-anchor="middle">10</text>
+<line x1="133.4" y1="201.8" x2="139.4" y2="201.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="130.4" y="205.3" font-size="10.5" fill="#0F172A" text-anchor="end">-5</text>
+<line x1="133.4" y1="71.5" x2="139.4" y2="71.5" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="130.4" y="75" font-size="10.5" fill="#0F172A" text-anchor="end">5</text>
+<line x1="74.4" y1="16" x2="74.4" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="123.6" x2="284" y2="123.6" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,42.7 32.9,39.8 44.9,32.7 51.8,27.1 60.4,17.3" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="112,235.5 113.7,216.1 117.2,188.4 120.6,169.6 124,156 127.5,145.7 132.6,134.3 136.1,128.4 141.2,121.4 148.1,114.4 158.4,106.9 167,102.4 177.4,98.3 192.8,93.9 210,90.4 230.7,87.4 259.9,84.5 284,82.8" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,80.1 31.2,75 34.6,70.8 39.8,62.9 43.2,56.2 48.4,42.8 53.5,22.8" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="93.1,236 98.2,211.7 103.4,196 108.6,185.1 115.4,174.8 122.3,167.4 129.2,161.9 137.8,156.7 148.1,152.1 161.9,147.6 173.9,144.7 192.8,141.3 230.7,137 284,133.6" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="235.6" cy="136.6" r="4.5" fill="#4F46E5"/>
+<text x="192.2" y="128.6" font-size="10.5" fill="#0F172A">(8, 0)</text>
+<circle cx="136.4" cy="157.5" r="4.5" fill="#4F46E5"/>
+<text x="144.4" y="174.5" font-size="10.5" fill="#0F172A">(0, -8/5)</text>
+<text x="79.4" y="27" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = -5</text>
+<text x="30" y="118.6" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 1</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = f(x + 2) - 4$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{5x + 2}{x + 3}$. מסומנים: האסימפטוטה האנכית $x = -5$; האסימפטוטה האופקית $y = 1$; החיתוך עם ציר $x$ בנקודה $(8,\\; 0)$; החיתוך עם ציר $y$ בנקודה $\\left(0,\\; -\\dfrac{8}{5}\\right)$.',
+        },
+      ],
       finalAnswer:
         '$g(x) = \\dfrac{x - 8}{x + 5}$, אסימפטוטה אנכית $x = -5$, אסימפטוטה אופקית $y = 1$, וחיתוכים בנקודות $(8,\\; 0)$ וגם $(0,\\; -1.6)$',
       explanation:
@@ -968,6 +1505,52 @@ export const EXTRA: PracticeQuestion[] = [
         '**הנוסחה:** דרגות שוות במונה ובמכנה: האסימפטוטה האופקית היא מנת המקדמים המובילים.',
         'המקדם המוביל במונה הוא $3$ והמקדם המוביל במכנה הוא $1$, ולכן האסימפטוטה האופקית היא הישר $y = 3$.',
         'בדיקה: מציבים $y = 0$ ופותרים $3x - 3 = 0$, ולכן הגרף פוגש את ציר $x$ בערך $x = 1$, ואילו הסדר ההפוך היה נותן שבר אחר לגמרי.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="146.6" x2="284" y2="146.6" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="139.6" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="155" y1="16" x2="155" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="162" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="143.6" x2="26" y2="149.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="161.6" font-size="10.5" fill="#0F172A" text-anchor="middle">-3</text>
+<line x1="69" y1="143.6" x2="69" y2="149.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="69" y="161.6" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="198" y1="143.6" x2="198" y2="149.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="198" y="161.6" font-size="10.5" fill="#0F172A" text-anchor="middle">1</text>
+<line x1="241" y1="143.6" x2="241" y2="149.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="241" y="161.6" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="284" y1="143.6" x2="284" y2="149.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="161.6" font-size="10.5" fill="#0F172A" text-anchor="middle">3</text>
+<line x1="152" y1="231" x2="158" y2="231" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="234.5" font-size="10.5" fill="#0F172A" text-anchor="end">-10</text>
+<line x1="152" y1="188.8" x2="158" y2="188.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="192.3" font-size="10.5" fill="#0F172A" text-anchor="end">-5</text>
+<line x1="152" y1="104.4" x2="158" y2="104.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="107.9" font-size="10.5" fill="#0F172A" text-anchor="end">5</text>
+<line x1="152" y1="62.3" x2="158" y2="62.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="65.8" font-size="10.5" fill="#0F172A" text-anchor="end">10</text>
+<line x1="152" y1="20.1" x2="158" y2="20.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="23.6" font-size="10.5" fill="#0F172A" text-anchor="end">15</text>
+<line x1="112" y1="16" x2="112" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="121.3" x2="284" y2="121.3" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,155.1 41.5,160.6 51.8,165.9 62.1,173.4 69,180.4 75.9,190 82.8,204.2 87.9,220.2 91.4,235.2" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="132.6,24.3 136.1,39.4 139.5,50.7 143,59.4 148.1,69.5 153.3,77 158.4,82.9 163.6,87.6 172.2,93.6 182.5,98.9 192.8,102.8 206.6,106.8 215.2,108.7 239.3,112.7 284,117.1" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,96 41.5,90.5 51.8,85.2 62.1,77.7 69,70.7 75.9,61.1 81,51 86.2,36.9 89.6,24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="130.9,236.4 134.4,218.7 137.8,205.7 141.2,195.8 144.7,187.9 149.8,178.9 155,172 160.2,166.5 167,160.9 175.6,155.5 184.2,151.5 198,146.6 210,143.5 239.3,138.4 259.9,136 284,134" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="198" cy="146.6" r="4.5" fill="#4F46E5"/>
+<text x="154.6" y="138.6" font-size="10.5" fill="#0F172A">(1, 0)</text>
+<circle cx="155" cy="172" r="4.5" fill="#4F46E5"/>
+<text x="163" y="189" font-size="10.5" fill="#0F172A">(0, -3)</text>
+<text x="107" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = -1</text>
+<text x="30" y="116.3" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 3</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = -f(x) + 5$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{2x + 8}{x + 1}$. מסומנים: האסימפטוטה האנכית $x = -1$; האסימפטוטה האופקית $y = 3$; החיתוך עם ציר $x$ בנקודה $(1,\\; 0)$; החיתוך עם ציר $y$ בנקודה $(0,\\; -3)$.',
+        },
       ],
       finalAnswer: '$g(x) = \\dfrac{3x - 3}{x + 1}$, אסימפטוטה אנכית $x = -1$ ואסימפטוטה אופקית $y = 3$',
       explanation:
@@ -1017,6 +1600,46 @@ export const EXTRA: PracticeQuestion[] = [
         'טבלת הסימנים של השבר:\n\n| הביטוי | $x < 3$ | $3 < x < 7$ | $x > 7$ |\n| --- | --- | --- | --- |\n| $21 - 3x$ | $+$ | $+$ | $-$ |\n| $x - 3$ | $-$ | $+$ | $+$ |\n| $g(x)$ | $-$ | $+$ | $-$ |',
         'בערך $x = 3$ הפונקציה אינה מוגדרת ובערך $x = 7$ הגובה הוא אפס, ולכן $g$ חיובית בדיוק בין הערך $3$ לבין הערך $7$, ושלילית משני צידי הקטע הזה.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="104.7" x2="284" y2="104.7" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="97.7" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="74.4" y1="16" x2="74.4" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="81.4" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="28.3" y1="101.7" x2="28.3" y2="107.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="28.3" y="119.7" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="120.4" y1="101.7" x2="120.4" y2="107.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="120.4" y="119.7" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="166.5" y1="101.7" x2="166.5" y2="107.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="166.5" y="119.7" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="212.6" y1="101.7" x2="212.6" y2="107.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="212.6" y="119.7" font-size="10.5" fill="#0F172A" text-anchor="middle">6</text>
+<line x1="258.7" y1="101.7" x2="258.7" y2="107.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="258.7" y="119.7" font-size="10.5" fill="#0F172A" text-anchor="middle">8</text>
+<line x1="71.4" y1="177.7" x2="77.4" y2="177.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="68.4" y="181.2" font-size="10.5" fill="#0F172A" text-anchor="end">-10</text>
+<line x1="71.4" y1="31.7" x2="77.4" y2="31.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="68.4" y="35.2" font-size="10.5" fill="#0F172A" text-anchor="end">10</text>
+<line x1="143.5" y1="16" x2="143.5" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="126.6" x2="284" y2="126.6" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,133 39.8,139.7 48.4,145.8 57,154.6 63.8,164.8 69,175.7 74.2,191.5 77.6,206.6 81,228" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="120.6,17.7 124,28.9 127.5,37.6 132.6,47.4 137.8,54.7 141.2,58.7 149.8,66.2 156.7,70.7 165.3,75 184.2,81.5 210,86.8 244.4,91 284,93.9" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,143.8 46.6,147.4 65.6,152.5 75.9,156.4 82.8,159.8 94.8,168 103.4,176.9 108.6,184.4 112,190.7 118.9,208.6 124,230.4" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="161.9,16.9 167,40.9 170.5,51.8 173.9,60.3 179.1,69.9 182.5,74.9 187.7,80.9 192.8,85.7 201.4,91.8 208.3,95.5 215.2,98.5 227.2,102.5 242.7,106.3 253,108.2 284,112.2" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="235.6" cy="104.7" r="4.5" fill="#4F46E5"/>
+<text x="243.6" y="84.7" font-size="10.5" fill="#0F172A">(7, 0)</text>
+<circle cx="74.4" cy="155.8" r="4.5" fill="#4F46E5"/>
+<text x="82.4" y="147.8" font-size="10.5" fill="#0F172A">(0, -7)</text>
+<text x="148.5" y="234" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 3</text>
+<text x="280" y="139.6" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">y = -3</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = f(x - 2) - 3$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{12}{x - 1}$. מסומנים: האסימפטוטה האנכית $x = 3$; האסימפטוטה האופקית $y = -3$; החיתוך עם ציר $x$ בנקודה $(7,\\; 0)$; החיתוך עם ציר $y$ בנקודה $(0,\\; -7)$.',
+        },
+      ],
       finalAnswer:
         '$g(x) = \\dfrac{21 - 3x}{x - 3}$, אסימפטוטה אנכית $x = 3$, אסימפטוטה אופקית $y = -3$, חיתוכים בנקודות $(7,\\; 0)$ וגם $(0,\\; -7)$, והפונקציה חיובית בתחום $3 < x < 7$',
       explanation:
@@ -1060,6 +1683,40 @@ export const EXTRA: PracticeQuestion[] = [
         'המכנה $x^2$ חיובי, ולכן מאפסים את המונה: $x^2 = 16$, ולכן $x = 4$ או $x = -4$.\n\nעבור $x < -4$ המונה חיובי ובין הערך $-4$ לבין הערך $0$ הוא שלילי, כלומר $f$ עולה ואז יורדת, ולכן בערך $-4$ יש מקסימום.',
         'מציבים בפונקציה: $f(-4) = \\dfrac{32}{-4} = -8$, ולכן המקסימום של $f$ הוא בנקודה $(-4,\\; -8)$.',
         'מזיזים גם את הפסגה חמש ימינה ושש למטה: $(-4 + 5,\\; -8 - 6)$.\n\nבדיקה בפונקציה החדשה: $g(1) = \\dfrac{1 - 16 + 71}{1 - 5} = -14$',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="89.6" x2="284" y2="89.6" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="82.6" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="74.4" y1="16" x2="74.4" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="81.4" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="253.5" y1="86.6" x2="253.5" y2="92.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="253.5" y="104.6" font-size="10.5" fill="#0F172A" text-anchor="middle">10</text>
+<line x1="71.4" y1="215.4" x2="77.4" y2="215.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="68.4" y="218.9" font-size="10.5" fill="#0F172A" text-anchor="end">-20</text>
+<line x1="71.4" y1="152.5" x2="77.4" y2="152.5" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="68.4" y="156" font-size="10.5" fill="#0F172A" text-anchor="end">-10</text>
+<line x1="71.4" y1="26.7" x2="77.4" y2="26.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="68.4" y="30.2" font-size="10.5" fill="#0F172A" text-anchor="end">10</text>
+<line x1="164" y1="16" x2="164" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,143.9 31.2,146.5 34.6,148.9 39.8,153.9 44.9,161.2 48.4,168.1 51.8,177.4 55.2,190.6 58.7,210 60.4,223.6" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="103.4,17.3 106.8,22.7 112,28.5 115.4,31.3 120.6,34.4 130.9,37.9 139.5,39.1 148.1,39.3 165.3,37.9 189.4,33.6 222.1,25.6 254.8,16.3" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,188.9 55.2,182.1 70.7,179.4 81,178.2 89.6,177.7 100,178 106.8,179 113.7,180.9 118.9,183.2 125.8,188 130.9,193.6 134.4,198.7 137.8,205.5 141.2,214.7 143,220.6 146.4,236.2" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="182.5,23.7 187.7,43 192.8,54.8 199.7,64.4 204.9,68.9 210,72.1 218.6,75.2 225.5,76.5 239.3,77 259.9,74.9 284,70.2" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="74.4" cy="179" r="4.5" fill="#4F46E5"/>
+<text x="82.4" y="171" font-size="10.5" fill="#0F172A">(0, -71/5)</text>
+<circle cx="92.3" cy="177.7" r="4.5" fill="#059669"/>
+<text x="68.7" y="198.7" font-size="10.5" fill="#0F172A">(1, -14)</text>
+<circle cx="235.6" cy="77" r="4.5" fill="#059669"/>
+<text x="243.6" y="69" font-size="10.5" fill="#0F172A">(9, 2)</text>
+<text x="159" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = 5</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = f(x - 5) - 6$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{x^2 + 16}{x}$. מסומנים: האסימפטוטה האנכית $x = 5$; החיתוך עם ציר $y$ בנקודה $\\left(0,\\; -\\dfrac{71}{5}\\right)$; נקודת מקסימום $(1,\\; -14)$; נקודת מינימום $(9,\\; 2)$.',
+        },
       ],
       finalAnswer:
         'ההזזה היא חמש יחידות ימינה ושש יחידות למטה, $g(x) = \\dfrac{x^2 - 16x + 71}{x - 5}$, ונקודת המקסימום שלה היא $(1,\\; -14)$',

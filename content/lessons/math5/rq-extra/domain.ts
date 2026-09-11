@@ -64,6 +64,51 @@ export const EXTRA: PracticeQuestion[] = [
         'ריבוע של מספר ממשי אינו שלילי לעולם, ולכן למשוואה אין פתרון.',
         'המכנה אינו מתאפס עבור שום ערך, ולכן אין מה לפסול.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="98.3" x2="284" y2="98.3" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="91.3" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="87.9" y1="16" x2="87.9" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="94.9" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="43.2" y1="95.3" x2="43.2" y2="101.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="43.2" y="113.3" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="132.6" y1="95.3" x2="132.6" y2="101.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="132.6" y="113.3" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="177.4" y1="95.3" x2="177.4" y2="101.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="177.4" y="113.3" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="222.1" y1="95.3" x2="222.1" y2="101.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="222.1" y="113.3" font-size="10.5" fill="#0F172A" text-anchor="middle">6</text>
+<line x1="266.8" y1="95.3" x2="266.8" y2="101.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="266.8" y="113.3" font-size="10.5" fill="#0F172A" text-anchor="middle">8</text>
+<line x1="84.9" y1="213.1" x2="90.9" y2="213.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="81.9" y="216.6" font-size="10.5" fill="#0F172A" text-anchor="end">-1.5</text>
+<line x1="84.9" y1="174.8" x2="90.9" y2="174.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="81.9" y="178.3" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="84.9" y1="136.6" x2="90.9" y2="136.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="81.9" y="140.1" font-size="10.5" fill="#0F172A" text-anchor="end">-0.5</text>
+<line x1="84.9" y1="60" x2="90.9" y2="60" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="81.9" y="63.5" font-size="10.5" fill="#0F172A" text-anchor="end">0.5</text>
+<line x1="84.9" y1="21.8" x2="90.9" y2="21.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="81.9" y="25.3" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="26" y1="98.3" x2="284" y2="98.3" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,136.1 34.6,140.8 53.5,152.9 63.8,158.8 72.4,161.4 77.6,161.2 84.5,158.3 91.4,152.4 113.7,124.8 124,114.3 130.9,109 136.1,105.8 149.8,99.8 161.9,96.7 168.8,95.5 194.6,93.2 225.5,92.5 284,92.9" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="155" cy="98.3" r="4.5" fill="#4F46E5"/>
+<text x="163" y="90.3" font-size="10.5" fill="#0F172A">(3, 0)</text>
+<circle cx="87.9" cy="155.7" r="4.5" fill="#4F46E5"/>
+<text x="95.9" y="172.7" font-size="10.5" fill="#0F172A">(0, -3/4)</text>
+<circle cx="235.6" cy="92.5" r="4.5" fill="#059669"/>
+<text x="200.2" y="81.5" font-size="10.5" fill="#0F172A">(6.61, 0.08)</text>
+<circle cx="74.4" cy="161.5" r="4.5" fill="#059669"/>
+<text x="82.4" y="190.5" font-size="10.5" fill="#0F172A">(-0.61, -0.83)</text>
+<text x="30" y="93.3" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 0</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\dfrac{x - 3}{x^2 + 4}$. מסומנים: האסימפטוטה האופקית $y = 0$; החיתוך עם ציר $x$ בנקודה $(3,\\; 0)$; החיתוך עם ציר $y$ בנקודה $\\left(0,\\; -\\dfrac{3}{4}\\right)$; נקודת מקסימום בערך $(6.61,\\; 0.08)$; נקודת מינימום בערך $(-0.61,\\; -0.83)$.',
+        },
+      ],
       finalAnswer: 'הפונקציה מוגדרת לכל $x$',
       explanation:
         'מכנה שהוא סכום של ריבוע ומספר חיובי הוא חיובי תמיד, ולכן התנאי מתקיים מאליו ואין הגבלה.',
@@ -95,6 +140,35 @@ export const EXTRA: PracticeQuestion[] = [
         'מחלקים במינוס חמש, שהוא מספר שלילי, ולכן כיוון האי-שוויון מתהפך: $x \\le 3$.',
         'הקצה כלול, כי הצבת $x = 3$ נותנת $\\sqrt{0} = 0$, שהוא ערך חוקי.',
         'הערך הגדול ביותר בתחום הוא הקצה עצמו.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="205.8" x2="284" y2="205.8" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="198.8" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="99.7" y1="16" x2="99.7" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="106.7" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="202.8" x2="26" y2="208.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="220.8" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="173.4" y1="202.8" x2="173.4" y2="208.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="173.4" y="220.8" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="247.1" y1="202.8" x2="247.1" y2="208.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="247.1" y="220.8" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="96.7" y1="141.5" x2="102.7" y2="141.5" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="93.7" y="145" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="96.7" y1="77.1" x2="102.7" y2="77.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="93.7" y="80.6" font-size="10.5" fill="#0F172A" text-anchor="end">4</text>
+<polyline points="26,45 60.4,60.7 82.8,72 101.7,82.3 118.9,92.5 136.1,103.7 160.2,121.9 179.1,139.6 187.7,149.5 194.6,158.8 199.7,167.3 204.9,178.3 208.3,189.2 210,200" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="210.3" cy="205.8" r="4.5" fill="#4F46E5"/>
+<text x="218.3" y="197.8" font-size="10.5" fill="#0F172A">(3, 0)</text>
+<circle cx="99.7" cy="81.2" r="4.5" fill="#4F46E5"/>
+<text x="107.7" y="73.2" font-size="10.5" fill="#0F172A">(0, 3.87)</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\sqrt{15 - 5x}$. מסומנים: נקודת הקצה של התחום $(3,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$; החיתוך עם ציר $y$ בנקודה בערך $(0,\\; 3.87)$.',
+        },
       ],
       finalAnswer: '$x = 3$',
       explanation:
@@ -132,6 +206,46 @@ export const EXTRA: PracticeQuestion[] = [
         'מחלקים בשלוש: $x = -4$.',
         'זהו הערך היחיד שאינו נמצא בתחום.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="139.8" x2="284" y2="139.8" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="132.8" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="198" y1="16" x2="198" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="205" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="136.8" x2="26" y2="142.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="154.8" font-size="10.5" fill="#0F172A" text-anchor="middle">-6</text>
+<line x1="140.7" y1="136.8" x2="140.7" y2="142.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="140.7" y="154.8" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="255.3" y1="136.8" x2="255.3" y2="142.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="255.3" y="154.8" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="195" y1="215.5" x2="201" y2="215.5" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192" y="219" font-size="10.5" fill="#0F172A" text-anchor="end">-2</text>
+<line x1="195" y1="177.7" x2="201" y2="177.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192" y="181.2" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="195" y1="102" x2="201" y2="102" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192" y="105.5" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="195" y1="64.1" x2="201" y2="64.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192" y="67.6" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="195" y1="26.3" x2="201" y2="26.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="192" y="29.8" font-size="10.5" fill="#0F172A" text-anchor="end">3</text>
+<line x1="83.3" y1="16" x2="83.3" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="127.2" x2="284" y2="127.2" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,95.7 32.9,91.4 41.5,84 48.4,75.5 51.8,69.9 58.7,53.9 62.1,42 65.6,25.5" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="100,236 105.1,210.2 108.6,198.9 113.7,186.7 118.9,178.1 124,171.6 130.9,165.2 141.2,158.4 151.6,153.7 163.6,149.7 177.4,146.4 192.8,143.7 232.4,139.3 284,136.2" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="226.7" cy="139.8" r="4.5" fill="#4F46E5"/>
+<text x="234.7" y="131.8" font-size="10.5" fill="#0F172A">(1, 0)</text>
+<circle cx="198" cy="143" r="4.5" fill="#4F46E5"/>
+<text x="131" y="135" font-size="10.5" fill="#0F172A">(0, -1/12)</text>
+<text x="88.3" y="27" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = -4</text>
+<text x="30" y="122.2" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 1/3</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\dfrac{x - 1}{3x + 12}$. מסומנים: האסימפטוטה האנכית $x = -4$; האסימפטוטה האופקית $y = \\dfrac{1}{3}$; החיתוך עם ציר $x$ בנקודה $(1,\\; 0)$; החיתוך עם ציר $y$ בנקודה $\\left(0,\\; -\\dfrac{1}{12}\\right)$.',
+        },
+      ],
       finalAnswer: '$x = -4$',
       explanation:
         'מכנה לינארי מתאפס בנקודה אחת בדיוק, וכדי למצוא אותה חייבים לבודד את $x$ עד הסוף, כולל החלוקה במקדם.',
@@ -160,6 +274,37 @@ export const EXTRA: PracticeQuestion[] = [
         'מעבירים אגף: $x > 3$.',
         'בדיקת הקצה: הצבת $x = 3$ נותנת מכנה $\\sqrt{0} = 0$, ולכן הקצה עצמו אינו בתחום.',
         'בדיקה מהצד השני: הצבת $x = 4$ נותנת $\\dfrac{1}{\\sqrt{1}} = 1$, ערך חוקי, ולכן התחום מתחיל מיד אחרי שלוש.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="173.4" x2="284" y2="173.4" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="166.4" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="99.7" y1="16" x2="99.7" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="106.7" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="170.4" x2="26" y2="176.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="188.4" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="173.4" y1="170.4" x2="173.4" y2="176.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="173.4" y="188.4" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="247.1" y1="170.4" x2="247.1" y2="176.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="247.1" y="188.4" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="96.7" y1="238" x2="102.7" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="93.7" y="241.5" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="96.7" y1="108.9" x2="102.7" y2="108.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="93.7" y="112.4" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="96.7" y1="44.3" x2="102.7" y2="44.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="93.7" y="47.8" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="210.3" y1="16" x2="210.3" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="173.4" x2="284" y2="173.4" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="216.9,21.3 220.4,49.9 223.8,66.8 229,82.7 232.4,90.1 235.8,95.9 244.4,106.4 254.8,114.7 268.5,122.1 284,127.8" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<text x="205.3" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = 3</text>
+<text x="30" y="168.4" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 0</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\dfrac{1}{\\sqrt{x - 3}}$. מסומנים: האסימפטוטה האנכית $x = 3$; האסימפטוטה האופקית $y = 0$.',
+        },
       ],
       finalAnswer: '$x > 3$',
       explanation:
@@ -198,6 +343,43 @@ export const EXTRA: PracticeQuestion[] = [
         'מהגורם השני: $x = 6$.',
         'פוסלים את שני הערכים.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="130.7" x2="284" y2="130.7" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="123.7" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="77.6" y1="16" x2="77.6" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="84.6" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="127.7" x2="26" y2="133.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="145.7" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="129.2" y1="127.7" x2="129.2" y2="133.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="129.2" y="145.7" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="180.8" y1="127.7" x2="180.8" y2="133.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="180.8" y="145.7" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="284" y1="127.7" x2="284" y2="133.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="145.7" font-size="10.5" fill="#0F172A" text-anchor="middle">8</text>
+<line x1="74.6" y1="195.3" x2="80.6" y2="195.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="71.6" y="198.8" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="74.6" y1="66.1" x2="80.6" y2="66.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="71.6" y="69.6" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="77.6" y1="16" x2="77.6" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="232.4" y1="16" x2="232.4" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="130.7" x2="284" y2="130.7" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,146.8 38,150.4 46.6,154.6 53.5,160 58.7,166.4 62.1,173.1 65.6,183.5 69,202.1 70.7,218.3" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="82.8,30.5 84.5,57.4 87.9,84.5 89.6,92.3 93.1,102.8 98.2,112 105.1,119.2 110.3,122.8 115.4,125.5 129.2,130.7 161.9,139.8 173.9,143.9 186,149.5 196.3,156.7 203.2,164.2 206.6,169.4 210,176.2 213.5,185.3 216.9,198.5 218.6,207.5 222.1,234.5" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="242.7,19.7 244.4,35.1 247.9,55.6 251.3,68.8 254.8,77.9 259.9,87.3 266.8,95.4 275.4,102 284,106.5" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="129.2" cy="130.7" r="4.5" fill="#4F46E5"/>
+<text x="137.2" y="122.7" font-size="10.5" fill="#0F172A">(2, 0)</text>
+<text x="72.6" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = 0</text>
+<text x="227.4" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = 6</text>
+<text x="30" y="125.7" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 0</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\dfrac{x - 2}{x^2 - 6x}$. מסומנים: האסימפטוטות האנכיות $x = 0$ וגם $x = 6$; האסימפטוטה האופקית $y = 0$; החיתוך עם ציר $x$ בנקודה $(2,\\; 0)$.',
+        },
+      ],
       finalAnswer: '$x \\ne 0$ וגם $x \\ne 6$',
       explanation:
         'מכנה ריבועי בלי איבר חופשי מתאפס בשני ערכים, ואחד מהם הוא אפס. חלוקה במשתנה מוחקת אותו בשקט, והוצאת גורם משותף שומרת עליו.',
@@ -232,6 +414,40 @@ export const EXTRA: PracticeQuestion[] = [
         'מקדם $x^2$ הוא $1$, שהוא חיובי, ולכן הפרבולה פתוחה כלפי מעלה.',
         'פרבולה פתוחה כלפי מעלה נמצאת מעל הציר מחוץ לנקודות החיתוך עם ציר $x$, כולל הערכים האלה עצמם.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="203.1" x2="284" y2="203.1" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="196.1" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="83.3" y1="16" x2="83.3" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="90.3" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="200.1" x2="26" y2="206.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="218.1" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="140.7" y1="200.1" x2="140.7" y2="206.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="140.7" y="218.1" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="198" y1="200.1" x2="198" y2="206.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="198" y="218.1" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="255.3" y1="200.1" x2="255.3" y2="206.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="255.3" y="218.1" font-size="10.5" fill="#0F172A" text-anchor="middle">6</text>
+<line x1="80.3" y1="133.4" x2="86.3" y2="133.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="77.3" y="136.9" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="80.3" y1="63.7" x2="86.3" y2="63.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="77.3" y="67.2" font-size="10.5" fill="#0F172A" text-anchor="end">4</text>
+<polyline points="26,43.4 48.4,73.6 65.6,98 82.8,124.3 93.1,142 101.7,159.5 108.6,178.6 110.3,185.9 112,203.1" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="227.2,193.3 229,183.2 232.4,171.2 235.8,162.2 242.7,147.4 253,129 261.6,115.2 284,82.4" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="112" cy="203.1" r="4.5" fill="#4F46E5"/>
+<text x="120" y="195.1" font-size="10.5" fill="#0F172A">(1, 0)</text>
+<circle cx="226.7" cy="203.1" r="4.5" fill="#4F46E5"/>
+<text x="234.7" y="195.1" font-size="10.5" fill="#0F172A">(5, 0)</text>
+<circle cx="83.3" cy="125.2" r="4.5" fill="#4F46E5"/>
+<text x="91.3" y="117.2" font-size="10.5" fill="#0F172A">(0, 2.24)</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\sqrt{x^2 - 6x + 5}$. מסומנים: נקודת הקצה של התחום $(1,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$; נקודת הקצה של התחום $(5,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$; החיתוך עם ציר $y$ בנקודה בערך $(0,\\; 2.24)$.',
+        },
+      ],
       finalAnswer: '$x \\le 1$ או $x \\ge 5$',
       explanation:
         'ביטוי ריבועי עם איבר אמצעי נפתר בדיוק כמו הפרש ריבועים: נקודות חיתוך, כיוון, צד. ההבדל היחיד הוא שהערכים האלה אינם סימטריים סביב אפס.',
@@ -252,6 +468,43 @@ export const EXTRA: PracticeQuestion[] = [
         '**הנוסחה:** תנאי השורש שבמכנה הוא $5 - x > 0$.',
         'מעבירים אגף: $x < 5$, והקצה אינו כלול כי שם המכנה מתאפס.',
         'חותכים את שני התנאים על ציר המספרים.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="188.6" x2="284" y2="188.6" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="181.6" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="103.4" y1="16" x2="103.4" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="110.4" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="51.8" y1="185.6" x2="51.8" y2="191.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="51.8" y="203.6" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="155" y1="185.6" x2="155" y2="191.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="155" y="203.6" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="206.6" y1="185.6" x2="206.6" y2="191.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="206.6" y="203.6" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="258.2" y1="185.6" x2="258.2" y2="191.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="258.2" y="203.6" font-size="10.5" fill="#0F172A" text-anchor="middle">6</text>
+<line x1="100.4" y1="238" x2="106.4" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="97.4" y="241.5" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="100.4" y1="139.1" x2="106.4" y2="139.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="97.4" y="142.6" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="100.4" y1="89.7" x2="106.4" y2="89.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="97.4" y="93.2" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="100.4" y1="40.2" x2="106.4" y2="40.2" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="97.4" y="43.7" font-size="10.5" fill="#0F172A" text-anchor="end">3</text>
+<line x1="232.4" y1="16" x2="232.4" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="77.6,188.6 79.3,183.3 81,181.1 87.9,175.3 100,168.2 127.5,154.5 151.6,141.3 163.6,133.3 172.2,126.6 180.8,118.6 187.7,111 194.6,101.6 199.7,93 203.2,86.1 208.3,73.4 211.8,62.5 215.2,48.7 220.4,18.3" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="77.6" cy="188.6" r="4.5" fill="#4F46E5"/>
+<text x="28.3" y="180.6" font-size="10.5" fill="#0F172A">(-1, 0)</text>
+<circle cx="103.4" cy="166.4" r="4.5" fill="#4F46E5"/>
+<text x="42.3" y="158.4" font-size="10.5" fill="#0F172A">(0, 0.45)</text>
+<text x="237.4" y="27" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 5</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\dfrac{\\sqrt{x + 1}}{\\sqrt{5 - x}}$. מסומנים: האסימפטוטה האנכית $x = 5$; נקודת הקצה של התחום $(-1,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$; החיתוך עם ציר $y$ בנקודה בערך $(0,\\; 0.45)$.',
+        },
       ],
       finalAnswer: '$-1 \\le x < 5$',
       explanation:
@@ -285,6 +538,44 @@ export const EXTRA: PracticeQuestion[] = [
         'מחשבים: $9 - a = 0$.',
         'מכאן $a = 9$.',
         'בדיקה: עם $a = 9$ הביטוי הוא $x^2 - 9$, פרבולה פתוחה כלפי מעלה עם נקודות חיתוך בערכים $3$ וגם $-3$, ותחומה הוא בדיוק הנתון.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="200.3" x2="284" y2="200.3" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="193.3" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="155" y1="16" x2="155" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="162" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="51.8" y1="197.3" x2="51.8" y2="203.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="51.8" y="215.3" font-size="10.5" fill="#0F172A" text-anchor="middle">-4</text>
+<line x1="103.4" y1="197.3" x2="103.4" y2="203.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="103.4" y="215.3" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="206.6" y1="197.3" x2="206.6" y2="203.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="206.6" y="215.3" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="258.2" y1="197.3" x2="258.2" y2="203.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="258.2" y="215.3" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="152" y1="238" x2="158" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="241.5" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="152" y1="162.7" x2="158" y2="162.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="166.2" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="152" y1="125" x2="158" y2="125" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="128.5" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="152" y1="87.4" x2="158" y2="87.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="90.9" font-size="10.5" fill="#0F172A" text-anchor="end">3</text>
+<line x1="152" y1="49.7" x2="158" y2="49.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="53.2" font-size="10.5" fill="#0F172A" text-anchor="end">4</text>
+<polyline points="26,49.7 39.8,75.7 48.4,93.3 57,112.5 65.6,134.9 70.7,151.7 74.2,166.3 75.9,176.4 77.6,200.3" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="232.4,200.3 234.1,176.4 235.8,166.3 239.3,151.7 244.4,134.9 253,112.5 261.6,93.3 270.2,75.7 284,49.7" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="77.6" cy="200.3" r="4.5" fill="#4F46E5"/>
+<text x="85.6" y="192.3" font-size="10.5" fill="#0F172A">(-3, 0)</text>
+<circle cx="232.4" cy="200.3" r="4.5" fill="#4F46E5"/>
+<text x="189" y="192.3" font-size="10.5" fill="#0F172A">(3, 0)</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\sqrt{x^2 - a}$ עבור $a = 9$. מסומנים: נקודת הקצה של התחום $(-3,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$; נקודת הקצה של התחום $(3,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$.',
+        },
       ],
       finalAnswer: '$a = 9$',
       explanation:
@@ -408,6 +699,39 @@ export const EXTRA: PracticeQuestion[] = [
         'הנימוק בעבור $x = 1$: אותו ביטוי שווה $-1$, ושוב אין לו שורש.',
         'הנימוק בעבור $x = 2$: אותו ביטוי שווה אפס, ולכן המכנה כולו אפס, ואי אפשר לחלק באפס.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="127" x2="284" y2="127" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="120" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="90.5" y1="16" x2="90.5" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="97.5" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="124" x2="26" y2="130" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="142" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="284" y1="124" x2="284" y2="130" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="284" y="142" font-size="10.5" fill="#0F172A" text-anchor="middle">6</text>
+<line x1="87.5" y1="185.3" x2="93.5" y2="185.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="84.5" y="188.8" font-size="10.5" fill="#0F172A" text-anchor="end">-5</text>
+<line x1="87.5" y1="68.7" x2="93.5" y2="68.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="84.5" y="72.2" font-size="10.5" fill="#0F172A" text-anchor="end">5</text>
+<line x1="219.5" y1="16" x2="219.5" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="155" y1="16" x2="155" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="115.3" x2="284" y2="115.3" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="91.4,139.7 94.8,141.5 115.4,149.7 129.2,156.4 143,165.2 153.3,174 163.6,186 172.2,200 179.1,215.4 186,237" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="265.1,17.5 268.5,24.1 273.7,32.4 278.8,39.2 284,45" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="158.4,38.8 160.2,54.7 161.9,64.1 165.3,75.2 168.8,81.7 172.2,86.2 177.4,90.8 182.5,94 189.4,97 198,99.7 218.6,103.6 249.6,106.7 284,108.6" fill="none" stroke="#059669" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="90.5" cy="138.7" r="4.5" fill="#4F46E5"/>
+<text x="98.5" y="130.7" font-size="10.5" fill="#0F172A">(0, -1)</text>
+<text x="224.5" y="27" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 4</text>
+<text x="160" y="27" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 2</text>
+<text x="30" y="110.3" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 1</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $f(x) = \\dfrac{\\sqrt{x + 4}}{\\sqrt{x} - 2}$, ובירוק הגרף של $h(x) = \\dfrac{\\sqrt{x + 4}}{\\sqrt{x - 2}}$. מסומנים: האסימפטוטה האנכית $x = 4$; האסימפטוטה האופקית $y = 1$; לגרף של $h(x)$ האסימפטוטה האנכית $x = 2$; נקודת הקצה של התחום $(0,\\; -1)$, שהיא גם נקודת החיתוך עם ציר $y$.',
+        },
+      ],
       finalAnswer:
         'תחום ההגדרה של $f$ הוא $x \\ge 0$ וגם $x \\ne 4$, תחום ההגדרה של $h$ הוא $x > 2$, והמספרים השלמים שבתחום של $f$ בלבד הם $0$, $1$ וגם $2$',
       explanation:
@@ -451,6 +775,39 @@ export const EXTRA: PracticeQuestion[] = [
         'מכאן $x = -1$, ערך שנמצא בתוך התחום $-6 < x < 6$, ולכן הוא נוסף רק בגלל המכנה החדש.',
         'בדיקה: הצבת $x = -1$ נותנת $f(-1) = \\dfrac{0}{\\sqrt{35}} = 0$, ואז המכנה של $g$ מתאפס.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="148.7" x2="284" y2="148.7" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="141.7" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="155" y1="16" x2="155" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="162" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="87.8" y1="145.7" x2="87.8" y2="151.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="87.8" y="163.7" font-size="10.5" fill="#0F172A" text-anchor="middle">-5</text>
+<line x1="222.2" y1="145.7" x2="222.2" y2="151.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="222.2" y="163.7" font-size="10.5" fill="#0F172A" text-anchor="middle">5</text>
+<line x1="152" y1="234.8" x2="158" y2="234.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="238.3" font-size="10.5" fill="#0F172A" text-anchor="end">-5</text>
+<line x1="152" y1="62.6" x2="158" y2="62.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="66.1" font-size="10.5" fill="#0F172A" text-anchor="end">5</text>
+<line x1="141.6" y1="16" x2="141.6" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="75.9,221.7 77.6,197.5 79.3,187.3 81,181.2 82.8,177 86.2,171.4 89.6,167.7 94.8,163.7 105.1,158.6 118.9,154.1 177.4,140.8 194.6,135.7 203.2,132.3 210,128.7 215.2,125.1 220.4,120 223.8,115 227.2,107.5 229,101.8 230.7,93.5 232.4,79.4 234.1,45.9" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="75.9,152.8 79.3,156.4 91.4,165.7 100,173.1 105.1,178.6 110.3,185.6 115.4,195 118.9,203.4 122.3,214.7 125.8,230.6" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="153.3,30.2 156.7,57.1 158.4,66.5 161.9,80.6 167,94.8 173.9,107 180.8,115.2 184.2,118.4 192.8,124.8 201.4,129.8 229,142.4 234.1,145.8" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="155" cy="45.4" r="4.5" fill="#4F46E5"/>
+<text x="163" y="37.4" font-size="10.5" fill="#0F172A">(0, 6)</text>
+<circle cx="74.4" cy="148.7" r="4.5" fill="#FFFFFF" stroke="#4F46E5" stroke-width="2"/>
+<text x="82.4" y="140.7" font-size="10.5" fill="#0F172A">(-6, 0)</text>
+<circle cx="235.6" cy="148.7" r="4.5" fill="#FFFFFF" stroke="#4F46E5" stroke-width="2"/>
+<text x="243.6" y="165.7" font-size="10.5" fill="#0F172A">(6, 0)</text>
+<text x="136.6" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = -1</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = \\dfrac{1}{f(x)}$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\dfrac{x + 1}{\\sqrt{36 - x^2}}$. מסומנים: האסימפטוטה האנכית $x = -1$; עיגול ריק בנקודה $(-6,\\; 0)$, שאינה שייכת לגרף; עיגול ריק בנקודה $(6,\\; 0)$, שאינה שייכת לגרף; החיתוך עם ציר $y$ בנקודה $(0,\\; 6)$.',
+        },
+      ],
       finalAnswer:
         'תחום ההגדרה של $f$ הוא $-6 < x < 6$, והערך הנוסף שאינו נמצא בתחום ההגדרה של $g$ הוא $x = -1$',
       explanation:
@@ -477,6 +834,42 @@ export const EXTRA: PracticeQuestion[] = [
         'מהטבלה: המנה חיובית בתחום $x < -3$ וגם בתחום $x > 1$.',
         'הקצה $x = 1$ כלול, כי שם המנה שווה אפס והשורש מקבל אפס.',
         'הקצה $x = -3$ אינו כלול, כי שם המכנה מתאפס והמנה כלל אינה מוגדרת.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="190.9" x2="284" y2="190.9" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="183.9" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="187.3" y1="16" x2="187.3" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="194.3" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="58.3" y1="187.9" x2="58.3" y2="193.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="58.3" y="205.9" font-size="10.5" fill="#0F172A" text-anchor="middle">-4</text>
+<line x1="122.8" y1="187.9" x2="122.8" y2="193.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="122.8" y="205.9" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="251.8" y1="187.9" x2="251.8" y2="193.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="251.8" y="205.9" font-size="10.5" fill="#0F172A" text-anchor="middle">2</text>
+<line x1="184.3" y1="238" x2="190.3" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="181.3" y="241.5" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="184.3" y1="143.9" x2="190.3" y2="143.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="181.3" y="147.4" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="184.3" y1="96.8" x2="190.3" y2="96.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="181.3" y="100.3" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="184.3" y1="49.8" x2="190.3" y2="49.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="181.3" y="53.3" font-size="10.5" fill="#0F172A" text-anchor="end">3</text>
+<line x1="90.5" y1="16" x2="90.5" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="143.9" x2="284" y2="143.9" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,109.4 39.8,102.4 48.4,96.1 57,87.3 62.1,80.1 67.3,70.4 72.4,56.6 75.9,43.4 79.3,24.3" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="220.4,187.1 222.1,184.3 227.2,179.7 232.4,176.7 241,173.1 258.2,168.3 284,163.8" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="219.5" cy="190.9" r="4.5" fill="#4F46E5"/>
+<text x="176.1" y="182.9" font-size="10.5" fill="#0F172A">(1, 0)</text>
+<text x="95.5" y="27" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = -3</text>
+<text x="30" y="138.9" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 1</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\sqrt{\\dfrac{x - 1}{x + 3}}$. מסומנים: האסימפטוטה האנכית $x = -3$; האסימפטוטה האופקית $y = 1$; נקודת הקצה של התחום $(1,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$.',
+        },
       ],
       finalAnswer: '$x < -3$ או $x \\ge 1$',
       explanation:
@@ -555,6 +948,41 @@ export const EXTRA: PracticeQuestion[] = [
         'בדיקת הקצה השמאלי: הצבת $x = -4$ נותנת $\\dfrac{\\sqrt{0}}{\\sqrt{11}} = 0$, ערך חוקי, ולכן הקצה אכן סגור.',
         'בדיקת הקצה הימני: הצבת $x = 7$ נותנת מכנה $\\sqrt{0} = 0$, ולכן הקצה אכן פתוח.',
         'הפונקציה שהתקבלה היא $f(x) = \\dfrac{\\sqrt{x + 4}}{\\sqrt{7 - x}}$.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="189" x2="284" y2="189" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="182" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="133" y1="16" x2="133" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="140" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="59.7" y1="186" x2="59.7" y2="192" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="59.7" y="204" font-size="10.5" fill="#0F172A" text-anchor="middle">-5</text>
+<line x1="206.3" y1="186" x2="206.3" y2="192" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="206.3" y="204" font-size="10.5" fill="#0F172A" text-anchor="middle">5</text>
+<line x1="279.6" y1="186" x2="279.6" y2="192" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="279.6" y="204" font-size="10.5" fill="#0F172A" text-anchor="middle">10</text>
+<line x1="130" y1="238" x2="136" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="127" y="241.5" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="130" y1="140.1" x2="136" y2="140.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="127" y="143.6" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="130" y1="91.1" x2="136" y2="91.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="127" y="94.6" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="130" y1="42.2" x2="136" y2="42.2" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="127" y="45.7" font-size="10.5" fill="#0F172A" text-anchor="end">3</text>
+<line x1="235.6" y1="16" x2="235.6" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="75.9,184.3 81,178.9 89.6,173.2 98.2,168.6 134.4,151.4 146.4,145.1 160.2,136.9 173.9,126.9 186,115.7 191.1,109.8 198,100.3 203.2,91.5 208.3,80.6 211.8,71.6 215.2,60.5 218.6,46.4 222.1,27.4" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="74.4" cy="189" r="4.5" fill="#4F46E5"/>
+<text x="25.1" y="181" font-size="10.5" fill="#0F172A">(-4, 0)</text>
+<circle cx="133" cy="152" r="4.5" fill="#4F46E5"/>
+<text x="141" y="169" font-size="10.5" fill="#0F172A">(0, 0.76)</text>
+<text x="240.6" y="27" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 7</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\dfrac{\\sqrt{x + c}}{\\sqrt{d - x}}$ עבור $c = 4$ וגם $d = 7$. מסומנים: האסימפטוטה האנכית $x = 7$; נקודת הקצה של התחום $(-4,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$; החיתוך עם ציר $y$ בנקודה בערך $(0,\\; 0.76)$.',
+        },
       ],
       finalAnswer: '$c = 4$ וגם $d = 7$, ולכן $f(x) = \\dfrac{\\sqrt{x + 4}}{\\sqrt{7 - x}}$',
       explanation:
@@ -665,6 +1093,44 @@ export const EXTRA: PracticeQuestion[] = [
         'הקצה $x = 2$ אינו כלול, כי שם המכנה מתאפס והמנה כלל אינה מוגדרת.',
         'התחום מתחיל בקצה סגור, ולכן הקצה עצמו הוא המספר השלם הקטן ביותר שנמצא בתוכו.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="193.5" x2="284" y2="193.5" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="186.5" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="155" y1="16" x2="155" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="162" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="51.8" y1="190.5" x2="51.8" y2="196.5" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="51.8" y="208.5" font-size="10.5" fill="#0F172A" text-anchor="middle">-4</text>
+<line x1="103.4" y1="190.5" x2="103.4" y2="196.5" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="103.4" y="208.5" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="258.2" y1="190.5" x2="258.2" y2="196.5" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="258.2" y="208.5" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="152" y1="238" x2="158" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="241.5" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="152" y1="148.9" x2="158" y2="148.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="152.4" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="152" y1="104.4" x2="158" y2="104.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="107.9" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="152" y1="59.8" x2="158" y2="59.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="149" y="63.3" font-size="10.5" fill="#0F172A" text-anchor="end">3</text>
+<line x1="206.6" y1="16" x2="206.6" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="77.6,193.5 79.3,180.8 81,175.6 86.2,165.1 94.8,153.1 105.1,141.9 115.4,132.3 144.7,108 160.2,94.1 168.8,84.9 175.6,75.9 182.5,64.2 187.7,52 191.1,40.9 194.6,25.3" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="232.4,193.5 234.1,166 235.8,155.6 239.3,142.3 244.4,129.6 249.6,120.7 253,116 261.6,106.7 272,98.3 284,90.6" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="77.6" cy="193.5" r="4.5" fill="#4F46E5"/>
+<text x="85.6" y="185.5" font-size="10.5" fill="#0F172A">(-3, 0)</text>
+<circle cx="232.4" cy="193.5" r="4.5" fill="#4F46E5"/>
+<text x="189" y="185.5" font-size="10.5" fill="#0F172A">(3, 0)</text>
+<circle cx="155" cy="99" r="4.5" fill="#4F46E5"/>
+<text x="93.9" y="91" font-size="10.5" fill="#0F172A">(0, 2.12)</text>
+<text x="211.6" y="27" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 2</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $f(x) = \\sqrt{\\dfrac{x^2 - 9}{x - 2}}$. מסומנים: האסימפטוטה האנכית $x = 2$; נקודת הקצה של התחום $(-3,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$; נקודת הקצה של התחום $(3,\\; 0)$, שהיא גם נקודת חיתוך עם ציר $x$; החיתוך עם ציר $y$ בנקודה בערך $(0,\\; 2.12)$.',
+        },
+      ],
       finalAnswer:
         'תחום ההגדרה הוא $-3 \\le x < 2$ או $x \\ge 3$, והמספר השלם הקטן ביותר בתחום הוא $x = -3$',
       explanation:
@@ -750,6 +1216,43 @@ export const EXTRA: PracticeQuestion[] = [
         'מעבירים אגפים ומקבלים $2x = -2$, ולכן הערך שיוצא הוא $x = -1$, והוא נמצא בתוך התחום שמצאנו.',
         'בדיקה: הצבת $x = -1$ נותנת $f(-1) = \\sqrt{\\dfrac{4}{4}} = 1$, ואז המכנה של $g$ מתאפס.\n\nלעומת זאת הצבת $x = 0$ נותנת $f(0) = \\sqrt{\\dfrac{5}{3}}$, ערך שאינו שווה לאחד, ולכן $g$ מוגדרת שם.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="118.3" x2="284" y2="118.3" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="111.3" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="175.2" y1="16" x2="175.2" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="182.2" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="74.4" y1="115.3" x2="74.4" y2="121.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="74.4" y="133.3" font-size="10.5" fill="#0F172A" text-anchor="middle">-5</text>
+<line x1="275.9" y1="115.3" x2="275.9" y2="121.3" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="275.9" y="133.3" font-size="10.5" fill="#0F172A" text-anchor="middle">5</text>
+<line x1="172.2" y1="203.1" x2="178.2" y2="203.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="169.2" y="206.6" font-size="10.5" fill="#0F172A" text-anchor="end">-4</text>
+<line x1="172.2" y1="160.7" x2="178.2" y2="160.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="169.2" y="164.2" font-size="10.5" fill="#0F172A" text-anchor="end">-2</text>
+<line x1="172.2" y1="75.8" x2="178.2" y2="75.8" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="169.2" y="79.3" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="172.2" y1="33.4" x2="178.2" y2="33.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="169.2" y="36.9" font-size="10.5" fill="#0F172A" text-anchor="end">4</text>
+<line x1="155" y1="16" x2="155" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="75.9,116.2 79.3,114.5 87.9,111.8 136.1,101.6 163.6,94.7 184.2,87.3 198,79.8 204.9,74.6 211.8,67.4 218.6,56.5 223.8,42.9 227.2,27.7 229,16.1" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="75.9,141.8 101.7,156.9 110.3,163.9 118.9,173.7 125.8,185.4 129.2,193.4 134.4,210.3 137.8,227.1" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="170.5,19.4 173.9,39.8 179.1,59.5 184.2,72.4 189.4,81.5 196.3,90.4 204.9,98.3 213.5,104.2 234.1,116" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="175.2" cy="45.4" r="4.5" fill="#4F46E5"/>
+<text x="114.1" y="62.4" font-size="10.5" fill="#0F172A">(0, 3.44)</text>
+<circle cx="235.6" cy="118.3" r="4.5" fill="#FFFFFF" stroke="#4F46E5" stroke-width="2"/>
+<text x="192.2" y="135.3" font-size="10.5" fill="#0F172A">(3, 0)</text>
+<circle cx="74.4" cy="139.5" r="4.5" fill="#4F46E5"/>
+<text x="82.4" y="131.5" font-size="10.5" fill="#0F172A">(-5, -1)</text>
+<text x="150" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = -1</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $g(x) = \\dfrac{1}{f(x) - 1}$; בקו אפור מקווקו, לשם השוואה, הגרף של $f(x) = \\sqrt{\\dfrac{x + 5}{3 - x}}$. מסומנים: האסימפטוטה האנכית $x = -1$; עיגול ריק בנקודה $(3,\\; 0)$, שאינה שייכת לגרף; נקודת הקצה של התחום $(-5,\\; -1)$; החיתוך עם ציר $y$ בנקודה בערך $(0,\\; 3.44)$.',
+        },
+      ],
       finalAnswer:
         'תחום ההגדרה של $f$ הוא $-5 \\le x < 3$, תחום ההגדרה של $g$ הוא $-5 \\le x < 3$ וגם $x \\ne -1$, והערך היחיד שנמצא בתחום של $f$ ואינו בתחום של $g$ הוא $x = -1$',
       explanation:
@@ -795,6 +1298,42 @@ export const EXTRA: PracticeQuestion[] = [
         'אף אחד מן הקצוות אינו נכלל: בערך $1$ המכנה של $f$ מתאפס, ובערכים $2$ וגם $5$ מתאפס הביטוי שמתחת לשורש, שהוא כל המכנה של $g$.',
         'בדיקה: הצבת $x = 1.5$ נותנת $f(1.5) = \\dfrac{5.25}{0.5} = 10.5$, ולכן $f(1.5) - 7 = 3.5$, מספר חיובי, ואכן $g$ מוגדרת שם.',
       ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="173.4" x2="284" y2="173.4" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="166.4" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="83.3" y1="16" x2="83.3" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="90.3" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="26" y1="170.4" x2="26" y2="176.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="26" y="188.4" font-size="10.5" fill="#0F172A" text-anchor="middle">-2</text>
+<line x1="198" y1="170.4" x2="198" y2="176.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="198" y="188.4" font-size="10.5" fill="#0F172A" text-anchor="middle">4</text>
+<line x1="255.3" y1="170.4" x2="255.3" y2="176.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="255.3" y="188.4" font-size="10.5" fill="#0F172A" text-anchor="middle">6</text>
+<line x1="80.3" y1="238" x2="86.3" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="77.3" y="241.5" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="80.3" y1="108.7" x2="86.3" y2="108.7" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="77.3" y="112.2" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="80.3" y1="44.1" x2="86.3" y2="44.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="77.3" y="47.6" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="140.7" y1="16" x2="140.7" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="226.7" y1="16" x2="226.7" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="173.4" x2="284" y2="173.4" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="113.7,165.1 125.8,140.3 130.9,124.1 134.4,105.5 136.1,90.1 137.8,63.2" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="234.1,28.5 237.6,54 241,69.7 244.4,80.6 249.6,92.1 253,97.9 261.6,108.3 270.2,115.4 277.1,119.8 284,123.3" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="112" cy="173.4" r="4.5" fill="#FFFFFF" stroke="#4F46E5" stroke-width="2"/>
+<text x="120" y="165.4" font-size="10.5" fill="#0F172A">(1, 0)</text>
+<text x="145.7" y="27" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">x = 2</text>
+<text x="221.7" y="27" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = 5</text>
+<text x="30" y="168.4" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 0</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'הגרף של $g(x) = \\dfrac{1}{\\sqrt{f(x) - k}}$ עבור $k = 7$, כאשר $f(x) = \\dfrac{x^2 + 3}{x - 1}$. מסומנים: האסימפטוטות האנכיות $x = 2$ וגם $x = 5$; האסימפטוטה האופקית $y = 0$; עיגול ריק בנקודה $(1,\\; 0)$, שאינה שייכת לגרף.',
+        },
+      ],
       finalAnswer:
         '$k = 7$, ותחום ההגדרה של $g$ הוא $1 < x < 2$ או $x > 5$',
       explanation:
@@ -837,6 +1376,42 @@ export const EXTRA: PracticeQuestion[] = [
         'מהטבלה: המנה חיובית בתחום $x < -2$ וגם בתחום $x > 6$, והקצה $x = -2$ כלול כי שם המנה מתאפסת, ואילו הקצה $x = 6$ אינו כלול כי שם המכנה מתאפס.',
         '**הנוסחה:** אצל $h$ הפונקציה $g$ יושבת במכנה, ולכן מתווסף התנאי $g(x) \\ne 0$.\n\nהפונקציה $g$ מתאפסת בדיוק בנקודה הנתונה, כלומר כאשר $x = -2$, ולכן הקצה הסגור הזה נפתח.',
         'בדיקה: הצבת $x = -3$ נותנת $g(-3) = \\sqrt{\\dfrac{-1}{-9}} = \\dfrac{1}{3}$, ערך שונה מאפס, ולכן $h$ מוגדרת שם.',
+      ],
+      diagrams: [
+        {
+          type: 'custom',
+          svg: `
+<line x1="26" y1="194.2" x2="284" y2="194.2" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="284" y="187.2" font-size="11" fill="#0F172A" text-anchor="end">x</text>
+<line x1="114.7" y1="16" x2="114.7" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.5"/>
+<text x="121.7" y="26" font-size="11" fill="#0F172A">y</text>
+<line x1="215.5" y1="191.2" x2="215.5" y2="197.2" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="215.5" y="209.2" font-size="10.5" fill="#0F172A" text-anchor="middle">5</text>
+<line x1="111.7" y1="238" x2="117.7" y2="238" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="108.7" y="241.5" font-size="10.5" fill="#0F172A" text-anchor="end">-1</text>
+<line x1="111.7" y1="150.4" x2="117.7" y2="150.4" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="108.7" y="153.9" font-size="10.5" fill="#0F172A" text-anchor="end">1</text>
+<line x1="111.7" y1="106.6" x2="117.7" y2="106.6" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="108.7" y="110.1" font-size="10.5" fill="#0F172A" text-anchor="end">2</text>
+<line x1="111.7" y1="62.9" x2="117.7" y2="62.9" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="108.7" y="66.4" font-size="10.5" fill="#0F172A" text-anchor="end">3</text>
+<line x1="111.7" y1="19.1" x2="117.7" y2="19.1" stroke="rgba(51,65,85,.85)" stroke-width="1.2"/>
+<text x="108.7" y="22.6" font-size="10.5" fill="#0F172A" text-anchor="end">4</text>
+<line x1="74.4" y1="16" x2="74.4" y2="238" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<line x1="26" y1="150.4" x2="284" y2="150.4" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4"/>
+<polyline points="26,173.2 46.6,177.4 57,180.5 67.3,185.2 72.4,189.4 74.2,192.6" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="246.2,17.4 247.9,29.5 251.3,47.2 254.8,59.8 259.9,73.2 265.1,82.8 270.2,90.1 275.4,95.8 284,103.1" fill="none" stroke="rgba(51,65,85,.55)" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="5 3"/>
+<polyline points="26,103.1 34.6,95.8 39.8,90.1 44.9,82.8 50.1,73.2 55.2,59.8 58.7,47.2 62.1,29.5 63.8,17.4" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="235.8,192.6 237.6,189.4 242.7,185.2 253,180.5 263.4,177.4 284,173.2" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="235.6" cy="194.2" r="4.5" fill="#FFFFFF" stroke="#4F46E5" stroke-width="2"/>
+<text x="192.2" y="186.2" font-size="10.5" fill="#0F172A">(6, 0)</text>
+<text x="69.4" y="234" font-size="10.5" fill="#B45309" text-anchor="end" font-weight="bold">x = -2</text>
+<text x="30" y="145.4" font-size="10.5" fill="#B45309" text-anchor="start" font-weight="bold">y = 1</text>
+`,
+          viewBox: '0 0 300 260',
+          caption:
+            'בכחול הגרף של $h(x) = \\dfrac{1}{g(x)}$ עבור $a = 2$; בקו אפור מקווקו, לשם השוואה, הגרף של $g(x) = \\sqrt{f(x)}$. מסומנים: האסימפטוטה האנכית $x = -2$; האסימפטוטה האופקית $y = 1$; עיגול ריק בנקודה $(6,\\; 0)$, שאינה שייכת לגרף.',
+        },
       ],
       finalAnswer:
         '$a = 2$, תחום ההגדרה של $g$ הוא $x \\le -2$ או $x > 6$, ותחום ההגדרה של $h$ הוא $x < -2$ או $x > 6$',
