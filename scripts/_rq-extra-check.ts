@@ -23,6 +23,7 @@ import { RQ_EXTRA } from '../content/lessons/math5/rq-extra';
 import type { PracticeQuestion, SubTopic } from '../content/lessons/types';
 import { checkAnswer, checkAnswerParts, matchKnownMistake } from '../lib/answer-check';
 import { leaksAnswer } from '../lib/help-ladder';
+import { MECHANISMS } from './_rq-mechanisms';
 
 const TOPIC = 'פונקציות';
 
@@ -289,44 +290,7 @@ function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
 
 /** Named moves a quotient/root question can require. Read from the question AND
  *  its solution, because the move often shows only in the working. */
-const MECHANISMS: [string, RegExp][] = [
-  ['domain', /תחום ההגדרה|תחום הגדרה|מוגדרת עבור|מכנה שונה מ|ביטוי שתחת השורש|אי[- ]שוויון/],
-  // 🔴 Write these to survive the definite article: "האסימפטוטה האופקית" must
-  // match as surely as "אסימפטוטה אופקית". A gate that misses the inflected form
-  // silently scores a question lower and then blames it for restating an easier
-  // one — the same trap as /משלים/ vs /המשלימה/ in the probability gate.
-  ['vertical-asymptote', /אסימפטוט\S*\s+\S*אנכי|מאפסי המכנה/],
-  ['horizontal-asymptote', /אסימפטוט\S*\s+\S*אופקי|כאשר \$?x\$? שואף|שואף לאינסוף/],
-  // Every one of these must survive the definite article: "הנגזרת הפנימית",
-  // "נקודת הקיצון", "טבלת הסימנים". Three separate mechanism regexes have now
-  // been caught missing an inflected form and scoring a question low for it,
-  // so the words are joined with \s+\S* rather than a literal space.
-  ['quotient-rule', /כלל\s+\S*מנה|נגזרת\s+(?:של\s+)?\S*מנה|u'v ?- ?uv'/],
-  ['chain-rule', /נגזרת\s+(?:של\s+)?\S*שורש|נגזרת\s+\S*פנימית|\\dfrac\{1\}\{2\\sqrt/],
-  ['extremum', /נקוד\S*\s+\S*קיצון|מקסימום|מינימום|מאפסים את הנגזרת/],
-  ['monotonicity', /עולה|יורדת|תחומי\s+\S*עלייה|תחומי\s+\S*ירידה|טבלת\s+\S*סימנים/],
-  ['sign-table', /טבלת\s+\S*סימנים|סימן\s+\S*נגזרת|טבלה של סימנים/],
-  // NOT "גרף הפונקציה": naming the graph is not drawing it, and every question
-  // whose stem said "מצאו … של גרף הפונקציה" was collecting a sketch's 2.5
-  // points without a sketch. Found by an author whose five new questions all
-  // scored high for the wrong reason.
-  ['sketch', /סקיצה|סרטט|שרטט/],
-  ['integral', /אינטגרל|פונקציה קדומה|הקדומה|שטח הכלוא|\\int/],
-  ['intersections', /נקודות החיתוך|חיתוך עם הציר|מציבים \$?y ?= ?0|f\(x\) ?= ?0/],
-  // The last alternative read `\\bg\(` — a literal backslash then "bg", which no
-  // content contains, so it never fired. `\b` would have been no better: it is a
-  // boundary between \w and non-\w, and a Hebrew letter is not \w, so beside
-  // Hebrew there is no boundary at all and /\bWORD\b/ matches NOTHING. The
-  // Unicode lookaround is the form that works on both sides.
-  ['transformation', /הזזה|שיקוף|מתיחה|הזזת גרף|(?<!\p{L})g\(x\) ?= ?f\(/u],
-  ['tangent', /משיק|שיפוע המשיק|משוואת המשיק/],
-  ['parameter', /פרמטר|עבור אילו ערכים|מצאו את הערך של \$?[a-z]\$?|תלוי ב\$?[a-z]\$?/],
-  ['derivative-graph', /גרף הנגזרת|f\s*['׳]|הנגזרת השנייה|f''/],
-  ['second-derivative', /נגזרת שנייה|נקודת פיתול|קמור|קעור/],
-  // Telling a hole from an asymptote is its own move: both come from a zero of
-  // the denominator, and only the numerator decides which one it is.
-  ['hole', /חור בגרף|חור ב(?:ערך|נקודה)|נקודה חסרה|שני הצדדים מתאפסים/],
-];
+// MECHANISMS lives in ./_rq-mechanisms.ts — one copy, shared with test-rq-detectors.ts.
 
 const mechanismsOf = (q: PracticeQuestion): string[] => {
   const text = `${q.question} ${(q.solution?.steps ?? []).join(' ')}`;
@@ -418,15 +382,22 @@ function examBar(): { bar: number; n: number } {
   for (const q of ALL_PAST_BAGRUYOT) {
     const whole = [q.context ?? '', ...(q.parts ?? []).map((p) => p.prompt ?? '')].join(' ');
     if (!isRQ(whole)) continue;
-    const parts = (q.parts ?? []).map((p) =>
-      scoreOf({
-        id: `${q.id}/${p.label}`,
-        difficulty: 'hard',
-        kind: 'open',
-        question: `${q.context ?? ''} ${p.prompt ?? ''}`,
-        solution: { steps: p.solution?.steps ?? [], finalAnswer: p.solution?.final_answer ?? '' },
-      } as unknown as PracticeQuestion),
+    const pqs = (q.parts ?? []).map(
+      (p) =>
+        ({
+          id: `${q.id}/${p.label}`,
+          difficulty: 'hard',
+          kind: 'open',
+          question: `${q.context ?? ''} ${p.prompt ?? ''}`,
+          solution: { steps: p.solution?.steps ?? [], finalAnswer: p.solution?.final_answer ?? '' },
+        }) as unknown as PracticeQuestion,
     );
+    // --archive prints every archived part with the signature this model gives it,
+    // so a move the exam asks and no detector sees shows up as a bare signature.
+    if (process.argv.includes('--archive')) {
+      for (const pq of pqs) console.log(`   ${pq.id.padEnd(40)} ${scoreOf(pq).toFixed(1).padStart(5)}  ${signatureOf(pq)}`);
+    }
+    const parts = pqs.map(scoreOf);
     if (parts.length) tops.push(Math.max(...parts));
   }
   return { bar: tops.reduce((a, b) => a + b, 0) / Math.max(1, tops.length), n: tops.length };
@@ -451,6 +422,17 @@ const ROUND3_FLOOR: Record<string, { mid: number; hard: number }> = {
 };
 /** …and enough of them that the rung actually thickens at the top. */
 const ROUND3_MIN = { mid: 2, hard: 3 };
+
+/** Round 4 — Itay, 2026-09-11: סעיפי חשיבה in רמה 6, built backwards from the
+ *  late sections of the 571 archive. A `<prefix>4NN` question must carry one of
+ *  the thinking moves the round exists for, and a mid/hard one must clear what
+ *  its rung averaged when the round opened (measured AFTER the four thinking
+ *  detectors joined MECHANISMS). Easy questions are the round's entry rung and
+ *  carry no floor. */
+const ROUND4_FLOOR: Record<string, { mid: number; hard: number }> = {
+  'rq-transformations': { mid: 18.7, hard: 26.8 },
+};
+const THINKING_MOVES = new Set(['parity', 'solution-count', 'absolute', 'built-from-f']);
 
 function checkStage(stageId: string): boolean {
   const cfg = STAGES[stageId];
@@ -536,6 +518,23 @@ function checkStage(stageId: string): boolean {
     const n = (d: string) => round3.filter((q) => q.difficulty === d).length;
     if (round3.length && (n('mid') < ROUND3_MIN.mid || n('hard') < ROUND3_MIN.hard)) {
       err(stageId, 'round3-below-minimum', `${n('mid')} mid + ${n('hard')} hard — need ${ROUND3_MIN.mid} + ${ROUND3_MIN.hard}`);
+    }
+  }
+
+  // --- round 4: every סעיף חשיבה question carries a thinking move, and a mid or
+  // hard one clears the floor its rung averaged when the round opened.
+  const floor4 = ROUND4_FLOOR[stageId];
+  const round4 = extra.filter((q) => new RegExp(`^${cfg.prefix}4\\d\\d$`).test(q.id));
+  if (round4.length && !floor4) err(stageId, 'round4-without-floor', 'add the stage to ROUND4_FLOOR before authoring round 4 there');
+  if (floor4) {
+    for (const q of round4) {
+      if (!mechanismsOf(q).some((m) => THINKING_MOVES.has(m))) {
+        err(q.id, 'round4-no-thinking-move', `carries none of ${[...THINKING_MOVES].join(' / ')} — ${signatureOf(q)}`);
+      }
+      const d = q.difficulty as 'easy' | 'mid' | 'hard';
+      if (d === 'easy') continue;
+      const s = scoreOf(q);
+      if (s < floor4[d]) err(q.id, 'round4-below-the-rung', `scores ${s.toFixed(1)} against a ${d} rung that averaged ${floor4[d]} when round 4 opened`);
     }
   }
 
