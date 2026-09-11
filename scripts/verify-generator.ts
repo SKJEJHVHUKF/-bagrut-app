@@ -37,7 +37,7 @@ import { checkAnswer, checkAnswerParts } from '../lib/answer-check';
 import { getSubTopic } from '../content/lessons';
 import { checkGeoFences } from '../lib/geo-figure';
 import { leaksAnswer } from '../lib/help-ladder';
-import { allTemplates, generate, generateById, getTemplate } from '../lib/generator';
+import { allTemplates, generate, generateById, getTemplate, templatesFor } from '../lib/generator';
 import type { GeneratedQuestion } from '../lib/generator';
 import { buildFixPath, buildSupply, MIN_STEPS, resolveFixQuestion } from '../lib/remediation';
 import type { Weakness } from '../lib/remediation';
@@ -358,12 +358,27 @@ for (const { subject, topic, id } of subTopicsWithTemplates.values()) {
   }
 
   const generated = path.steps.filter((s) => s.origin === 'generated');
-  if (generated.length < MIN_STEPS) {
+  // One template feeds ONE step (Itay, 2026-09-11: the same question five
+  // times with different numbers is worse than a seen one). So the most new
+  // material a path can carry is one step per template this sub-topic has —
+  // a single-template sub-topic legitimately builds 1 new + 4 from the bank.
+  // The lever for more new material is more templates, not repetition.
+  const templates = templatesFor(subject, topic, id).length;
+  const wantNew = Math.min(MIN_STEPS, templates);
+  if (generated.length < wantNew) {
     fail(
       where,
-      `רק ${generated.length} מתוך ${path.steps.length} צעדים הם תרגילים חדשים — ` +
+      `רק ${generated.length} מתוך ${path.steps.length} צעדים הם תרגילים חדשים (יש ${templates} תבניות) — ` +
         'התלמיד מקבל בחזרה את מה שכבר ראה במסלול הלמידה',
     );
+  }
+  const perTemplate = new Map<string, number>();
+  for (const s of generated) {
+    const t = s.questionId.split(':')[1];
+    perTemplate.set(t, (perTemplate.get(t) ?? 0) + 1);
+  }
+  for (const [t, n] of perTemplate) {
+    if (n > 1) fail(where, `התבנית "${t}" מופיעה ${n} פעמים באותו מסלול תיקון — אותה שאלה עם מספרים אחרים`);
   }
   for (const s of path.steps) {
     if (!resolveFixQuestion(path, s)) fail(where, `הצעד "${s.questionId}" אינו ניתן לפתרון`);
