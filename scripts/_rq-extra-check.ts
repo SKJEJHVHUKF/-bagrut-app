@@ -138,7 +138,7 @@ function functionDefs(q: string): string[] {
 function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
   const w = q.id || '(no id)';
   // 1NN was the first widening, 2NN the second, 3NN this round's — all valid.
-  if (!new RegExp(`^${prefix}[123]\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN, ${prefix}2NN or ${prefix}3NN`);
+  if (!new RegExp(`^${prefix}[1234]\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN … ${prefix}4NN`);
   if (!['easy', 'mid', 'hard'].includes(q.difficulty)) err(w, 'bad-difficulty', String(q.difficulty));
   if (!['mcq', 'open'].includes(q.kind)) err(w, 'bad-kind', String(q.kind));
 
