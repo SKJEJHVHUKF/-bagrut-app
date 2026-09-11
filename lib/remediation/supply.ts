@@ -58,12 +58,20 @@ const TIER: Record<FixStepOrigin, number> = {
 };
 
 /**
- * Generated variants offered per difficulty rung.
+ * Generated variants offered per difficulty rung — at most one per TEMPLATE
+ * across the whole supply.
  *
  * Three is deliberate. `rankQuota` in ./path never asks for more than two at a
  * single rung, so three guarantees the ladder can be built entirely from unseen
  * material while still leaving the authored bank in the pool as a fallback for
  * sub-topics with no template.
+ *
+ * ⚠️ ONE TEMPLATE FEEDS ONE STEP OF A REPAIR PATH, NEVER MORE. Three variants
+ * per rung from a sub-topic with a single template made the five-step path the
+ * same question five times with different numbers ("מהן האסימפטוטות של g…" ×5
+ * in rq-transformations, at every band) — Itay reported it (2026-09-11), and it
+ * was 95 of 144 band-paths across the 571 track. The ladder already follows the
+ * same rule (lib/roadmap-levels.ts); the authored bank fills the other steps.
  */
 const GENERATED_PER_RANK = 3;
 
@@ -129,17 +137,32 @@ export function buildSupply(w: Weakness, opts: SupplyOptions = {}): SupplyItem[]
 
   // Generated first, so a collision with an authored id (which cannot happen —
   // generated ids are namespaced `gen:` — would still resolve in this order).
-  for (const rank of RANK_DIFFICULTY) {
+  //
+  // Only on the rungs this band's path climbs (./path `rankQuota`: one below
+  // the band, the band, one above), easiest first, so a single-template
+  // sub-topic's one variant is not spent on a rung the path never visits.
+  const usedTemplates = new Set<string>();
+  const band = rankOf(w.band);
+  for (let r = Math.max(0, band - 1); r <= Math.min(RANK_DIFFICULTY.length - 1, band + 1); r++) {
+    const rank = RANK_DIFFICULTY[r];
+    let kept = 0;
+    // Over-ask, then keep only templates not yet used: generateBatch
+    // round-robins across the pool, so a wider ask reaches more distinct
+    // templates rather than more variants of the same one.
     for (const g of generateBatch(
       w.subject,
       w.topic,
       w.subTopicId,
       rank,
-      GENERATED_PER_RANK,
+      GENERATED_PER_RANK * 4,
       (opts.seed ?? 0) + rankOf(rank) * 10007,
       answered,
     )) {
+      const templateId = g.question.id.split(':')[1];
+      if (!templateId || usedTemplates.has(templateId)) continue;
+      usedTemplates.add(templateId);
       add(g.question, 'generated');
+      if (++kept === GENERATED_PER_RANK) break;
     }
   }
 
