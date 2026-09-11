@@ -577,4 +577,32 @@ function rootsF(g: (v: number) => number, lo = -20, hi = 20): number[] {
     dAt(fx, -5) * (-5 + 3) ** 2, -12);
 }
 
+// ---------------------------------------------------------------------------
+// fn-bag-rq-004 / ה — the part added 2026-09-10: g(x) = x²/(x-a), a > 0. The
+// candidates are 0 and 2a; 0 is ALWAYS the maximum and 2a the minimum, and for
+// a = 6 the minimum sits at x = 12. Lives in the stage file, so nothing else
+// re-derives it; checked here for several a, not just the one asked about.
+// ---------------------------------------------------------------------------
+{
+  dcheck("bag-004-ה for a = 6 the authored g' is the symbolic derivative",
+    'x^2/(x-6)', 'x*(x-12)/(x-6)^2', [-3, -1, 1, 4, 8, 13, 20]);
+  for (const a of [1, 4, 6, 9.5]) {
+    const gp = `x*(x-${2 * a})/(x-${a})^2`;
+    checkSet(`bag-004-ה a = ${a}: the numerator of g' vanishes at 0 and 2a`,
+      roots(`x*(x-${2 * a})`, -40, 40), [0, 2 * a]);
+    // sign pattern + | - | - | + over x<0 | 0<x<a | a<x<2a | x>2a
+    const probe = [-1, a / 2, (3 * a) / 2, 2 * a + 1];
+    // `check` compares NUMBERS — two equal strings read as NaN ≠ NaN and fail
+    check(`bag-004-ה a = ${a}: the sign table reads + - - +`,
+      probe.map((v) => sgn(f(gp)(v))).join(',') === '1,-1,-1,1' ? 1 : 0, 1);
+    // …so 0 is a maximum and 2a a minimum, whatever a is
+    check(`bag-004-ה a = ${a}: x = 0 is a local maximum of g`,
+      (f(`x^2/(x-${a})`)(0) > f(`x^2/(x-${a})`)(-0.01) && f(`x^2/(x-${a})`)(0) > f(`x^2/(x-${a})`)(0.01)) ? 1 : 0, 1);
+    check(`bag-004-ה a = ${a}: x = 2a is a local minimum of g`,
+      (f(`x^2/(x-${a})`)(2 * a) < f(`x^2/(x-${a})`)(2 * a - 0.01) && f(`x^2/(x-${a})`)(2 * a) < f(`x^2/(x-${a})`)(2 * a + 0.01)) ? 1 : 0, 1);
+  }
+  check('bag-004-ה the answer box: for a = 6 the minimum is at x = 12', 2 * 6, 12);
+  check('bag-004-ה cross-check with part ג (a = 4): the minimum is at 8', 2 * 4, 8);
+}
+
 summary('derivative');

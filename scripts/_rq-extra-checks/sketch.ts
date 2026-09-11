@@ -504,4 +504,26 @@ const sgn = (v: number) => (v > 0 ? 1 : v < 0 ? -1 : 0);
   check('305 wrong "y = 0": g is nowhere near 0 far out', Math.abs(HA(gs)) > 0.9 ? 1 : 0, 1);
 }
 
+// ---------------------------------------------------------------------------
+// fn-bag-rq-005 / ה — the part added 2026-09-10: g(x) = 2x/(x-3) + k crosses the
+// x-axis at 6 ⇒ k = -4; the horizontal asymptote drops to y = -2, the vertical
+// one stays at x = 3, and g is f moved four units down. Lives in the stage file,
+// so nothing else re-derives it.
+// ---------------------------------------------------------------------------
+{
+  const fx = '2*x/(x-3)';
+  // k is RECOVERED from the stated intercept, not copied from the author
+  const k = -f(fx)(6);
+  check('bag-005-ה k = -f(6) = -4', k, -4);
+  const gx = `${fx} + (${k})`;
+  check('bag-005-ה with that k, g really vanishes at 6', f(gx)(6), 0);
+  check('bag-005-ה the horizontal asymptote of f is y = 2', HA(fx), 2, 1e-4);
+  check('bag-005-ה the horizontal asymptote of g is y = -2', HA(gx), -2, 1e-4);
+  checkSet('bag-005-ה the vertical asymptote stays at x = 3', vAsyms('2*x', 'x-3'), [3]);
+  check('bag-005-ה g blows up at 3 just like f', blowsUp(gx, 3), 1);
+  check('bag-005-ה g is f moved exactly four units down, everywhere',
+    Math.max(...[-7, -1, 0, 2.5, 3.5, 6, 11].map((v) => Math.abs(f(gx)(v) - (f(fx)(v) - 4)))), 0, 1e-9);
+  checkSet('bag-005-ה 6 is the ONLY x-intercept of g', roots('2*x - 4*(x-3)', -40, 40), [6]);
+}
+
 summary('sketch');
