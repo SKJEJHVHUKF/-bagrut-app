@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 
 /* Pointer-reactive ambient background — landing page only.
 
-   Two parts, both following the visitor:
+   Two parts, both following the visitor's pointer — or finger, on a phone:
 
    1. Two soft colour fields, members of the Lumina canvas (app/globals.css,
       "Global Lumina canvas") in the same violet + cyan.
@@ -23,11 +23,22 @@ import { useEffect, useRef } from 'react';
    field behind KaTeX competes with the maths for the same attention, and costs
    battery in exactly the screens a student sits in for 40 minutes. */
 
-/* On alpha: the static Lumina fields sit at 0.06–0.09 because they are meant to
-   be felt and never seen. These have the opposite job — a field nobody can see
-   cannot read as reacting to you — so they run louder, calibrated against the
-   live page until the tint was legible on the #FCF8FF canvas without competing
-   with the hero. They still never carry contrast for any text or icon. */
+/* On visibility — calibrated twice. The first pass judged 1:1 crops and
+   shipped a trail nobody could see at page scale (pale violet-400 lines at
+   0.26 on the #FCF8FF canvas): the owner opened the live page and saw no
+   change at all. Judge a decorative effect the way a visitor meets it — the
+   whole page, at a glance, without knowing where to look.
+
+   The trail now carries the effect, in the saturated brand violet (#8B5CF6) at
+   0.7 with a wider fully-lit core: 1px lines leave the canvas between them
+   untouched, so they cost no text its contrast.
+
+   ponytail: the colour fields stay at 0.34 / 0.26 and must not go higher. At a
+   field's centre the canvas behind the hero's gradient headline becomes
+   ~(214,195,252), which already takes the headline's cyan end (#0891B2) to
+   ~2.3:1 — under the 3:1 its ends are held to — for as long as the pointer sits
+   behind it. Raising the fields deepens that; fixing it means keeping the
+   fields out from behind the headline, not just making them fainter. */
 
 /** Each layer chases the same point at its own speed. That spread IS the
  *  effect — matched durations read as one shape stuck to the cursor. */
@@ -39,10 +50,9 @@ const WIN = 520;
 
 /* Must equal the hero graph paper's backgroundSize in app/page.tsx. The phase
    correction lines the two lattices up only when the pitch matches; with any
-   other pitch the trail reads as a second grid. Only the alpha is raised, from
-   the hero's 0.07 to 0.26. */
+   other pitch the trail reads as a second grid. */
 const PITCH = 46;
-const GRID_LINE = 'rgba(167, 139, 250, 0.26)';
+const GRID_LINE = 'rgba(139, 92, 246, 0.7)';
 
 export default function PointerGlow() {
   const violet = useRef<HTMLDivElement>(null);
@@ -102,28 +112,29 @@ export default function PointerGlow() {
 
     const onPointer = (e: PointerEvent) => aim(e.clientX, e.clientY);
 
-    /* Touch never hovers. A finger reports a position only while it is down,
-       and on a page like this that is almost always a scroll — so following it
-       would mean the field lives only during a gesture that is about to take
-       the section off screen. Scroll depth is the honest mobile input: it
-       drifts across the page as the visitor reads down. On a mouse, scrolling
-       does not move the pointer relative to the viewport — only the hero's
-       lines move — so scroll there re-phases the paper and nothing else. */
-    const fine = window.matchMedia('(pointer: fine)').matches;
-    const onScroll = fine
-      ? setPhase
-      : () => {
-          const max = document.documentElement.scrollHeight - window.innerHeight;
-          const t = max > 0 ? Math.min(1, window.scrollY / max) : 0;
-          aim(window.innerWidth * (0.25 + 0.5 * t), window.innerHeight * (0.25 + 0.4 * t));
-        };
+    /* The finger, as the owner asked for. `touchmove` keeps firing through a
+       scroll gesture, whereas `pointermove` stops with a `pointercancel` the
+       moment the browser claims the gesture for scrolling — so on a phone the
+       field stays under the finger while it drags, and rests where it lifts.
+       (An earlier version drove the field from scroll depth instead. It
+       worked, but it was not what was asked, and nobody could tell it was
+       reacting to them.) */
+    const onTouch = (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (t) aim(t.clientX, t.clientY);
+    };
 
-    if (fine) window.addEventListener('pointermove', onPointer, { passive: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('pointermove', onPointer, { passive: true });
+    window.addEventListener('touchstart', onTouch, { passive: true });
+    window.addEventListener('touchmove', onTouch, { passive: true });
+    // On every device, scrolling moves the hero's lines and not the pointer.
+    window.addEventListener('scroll', setPhase, { passive: true });
 
     return () => {
       window.removeEventListener('pointermove', onPointer);
-      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('touchstart', onTouch);
+      window.removeEventListener('touchmove', onTouch);
+      window.removeEventListener('scroll', setPhase);
     };
   }, []);
 
@@ -136,7 +147,7 @@ export default function PointerGlow() {
   const gridPaint =
     `linear-gradient(${GRID_LINE} 1px, transparent 1px),` +
     `linear-gradient(90deg, ${GRID_LINE} 1px, transparent 1px)`;
-  const softEdge = 'radial-gradient(closest-side, #000 22%, rgba(0,0,0,0) 74%)';
+  const softEdge = 'radial-gradient(closest-side, #000 30%, rgba(0,0,0,0) 78%)';
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
