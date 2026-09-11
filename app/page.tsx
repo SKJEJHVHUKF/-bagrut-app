@@ -164,7 +164,11 @@ export default function Landing() {
       >
         {/* Signature math motif — graph-paper grid + an elegant function curve */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: -1 }}>
+          {/* data-grid-paper: components/PointerGlow.tsx measures where these
+              lines fall and draws its grid trail in phase with them. Its PITCH
+              must match the 46px backgroundSize below. */}
           <div
+            data-grid-paper
             className="absolute inset-0"
             style={{
               backgroundImage:
