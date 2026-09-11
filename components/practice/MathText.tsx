@@ -8,6 +8,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { ProbTreeFromJson } from './ProbTree';
 import { GeoFigureFromJson } from './GeoFigure';
+import { SignTableFromJson } from './SignTable';
 
 // Renders markdown + LaTeX (Hebrew prose with LTR math islands).
 //
@@ -135,20 +136,26 @@ function MdSegment({ text }: { text: string }) {
 
 // A ```probtree fenced block carries a JSON ProbTree spec — a probability-tree
 // diagram drawn the way the bagrut draws it; a ```geo block carries a JSON
-// GeoSpec — the geometry sketch printed beside the question. Split the text
-// around the fences and render each spec as an SVG between the markdown
-// segments. The outer wrapper stays a single element, preserving the
-// one-element contract above.
-const FIGURE_FENCE = /```(probtree|geo)\s*\n([\s\S]*?)```/g;
+// GeoSpec — the geometry sketch printed beside the question; a ```signtable
+// block carries a JSON SignTableSpec — the sign table drawn the way it is
+// drawn on the board. Split the text around the fences and render each spec
+// between the markdown segments. The outer wrapper stays a single element,
+// preserving the one-element contract above.
+const FIGURE_FENCE = /```(probtree|geo|signtable)\s*\n([\s\S]*?)```/g;
+const FENCED: Record<string, (json: string, key: number) => ReactNode> = {
+  geo: (json, key) => <GeoFigureFromJson key={key} json={json} />,
+  probtree: (json, key) => <ProbTreeFromJson key={key} json={json} />,
+  signtable: (json, key) => <SignTableFromJson key={key} json={json} />,
+};
 
 export function MathText({ children: raw, inline = false }: { children: string; inline?: boolean }) {
-  if (!inline && (raw.includes('```probtree') || raw.includes('```geo'))) {
+  if (!inline && (raw.includes('```probtree') || raw.includes('```geo') || raw.includes('```signtable'))) {
     const parts = raw.split(FIGURE_FENCE); // [text, lang, json, text, lang, json, …]
     return (
       <div dir="rtl" className="mathtext-block">
         {parts.map((part, i) => {
           if (i % 3 === 1) return null; // the fence language, consumed below
-          if (i % 3 === 2) return parts[i - 1] === 'geo' ? <GeoFigureFromJson key={i} json={part} /> : <ProbTreeFromJson key={i} json={part} />;
+          if (i % 3 === 2) return FENCED[parts[i - 1]](part, i);
           return part.trim() ? <MdSegment key={i} text={part} /> : null;
         })}
       </div>

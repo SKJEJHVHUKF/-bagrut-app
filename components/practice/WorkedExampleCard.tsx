@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronDown, CheckCircle, PencilLine } from 'lucide-react';
 import type { WorkedExample } from '@/content/lessons/types';
 import { MathText } from './MathText';
+import { DiagramRenderer } from './DiagramRenderer';
 
 const DIFFICULTY_META: Record<WorkedExample['difficulty'], { label: string; dot: string; color: string }> = {
   easy: { label: 'קל', dot: '🟢', color: 'text-emerald-700' },
@@ -72,6 +73,10 @@ export function WorkedExampleCard({ example, index }: { example: WorkedExample; 
               </li>
             ))}
           </ol>
+
+          {/* The graph the example is about, between the steps and the answer —
+              the same place a solution's figure sits on the practice rungs. */}
+          {example.diagrams && example.diagrams.length > 0 && <DiagramRenderer diagrams={example.diagrams} />}
 
           <div className="result-box rounded-xl px-4 py-3.5">
             <div className="text-[11px] font-bold tracking-wide text-emerald-700 mb-1.5 flex items-center gap-1.5">

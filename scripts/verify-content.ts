@@ -19,6 +19,7 @@ import { join, relative } from 'path';
 import { pathToFileURL } from 'url';
 import { checkGeoFences } from '../lib/geo-figure';
 import { checkProbTreeFences, checkProbTables } from '../lib/prob-figure';
+import { checkSignTableFences } from '../lib/sign-table';
 
 const STRICT = process.argv.includes('--strict');
 const HEB = /[֐-׿]/;
@@ -133,6 +134,10 @@ function checkString(file: string, path: string, key: string, value: string, own
   // checked against its own coordinates, so a figure can never contradict the
   // question it illustrates.
   if (value.includes('```geo')) for (const e of checkGeoFences(value)) add('geo-figure', 'error', file, path, e);
+  // A ```signtable fence is a model too: every row has one cell per column,
+  // and the verdict written over a point (קיצון / מחוץ לתחום) must agree with
+  // the signs in the result row around it.
+  if (value.includes('```signtable')) for (const e of checkSignTableFences(value)) add('sign-table', 'error', file, path, e);
   // A ```probtree fence is a model too: sibling branches must sum to 1 and a
   // leaf's number must be the product along its path, else the drawing
   // contradicts the steps beside it. Markdown probability tables: a total

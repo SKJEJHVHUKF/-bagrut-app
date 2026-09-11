@@ -64,7 +64,7 @@ export const GEO_FENCE = /```geo\s*\n([\s\S]*?)```/g;
 /** Text for a model or a chat bubble: figure fences (```geo / ```probtree)
  *  replaced by a short marker, so a JSON sketch never eats a prompt budget. */
 export function stripFigureFences(text: string, marker = '[סרטוט]'): string {
-  return text.replace(/```(?:geo|probtree)\s*\n[\s\S]*?```/g, marker).replace(/[ \t]*\n{3,}/g, '\n\n').trim();
+  return text.replace(/```(?:geo|probtree|signtable)\s*\n[\s\S]*?```/g, marker).replace(/[ \t]*\n{3,}/g, '\n\n').trim();
 }
 
 const NAME = /[A-Z][0-9']*/g;

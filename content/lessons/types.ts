@@ -159,6 +159,10 @@ export type WorkedExample = {
   problem: string;
   steps: string[];
   answer: string;
+  /** Optional figure(s) shown under the steps, before the answer — the graph
+   *  the example is about. `type:'custom'` raw SVG only, like every other
+   *  content figure (a `fn:` closure breaks the RSC boundary). */
+  diagrams?: DiagramSpec[];
 };
 
 // ============================================================
