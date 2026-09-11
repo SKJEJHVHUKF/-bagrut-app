@@ -149,6 +149,17 @@ export type ChainState = {
   lastVerdict: 'correct' | 'wrong' | null;
   /** Whether the previous message was a complaint — a second one goes to the model. */
   lastComplaint: boolean;
+  /**
+   * The MODEL spoke last, and its reply ended in a question to the student.
+   *
+   * The student's next message is then an ANSWER to that question, not a fresh
+   * query — and every free layer here was built for fresh queries. Measured
+   * from Itay's screenshots (2026-09-11): the model asks "מה הצעד הבא לדעתך?",
+   * the student replies "צריך לגזור", and the bank answers with an entry that
+   * lexically resembles those two words and has nothing to do with the
+   * conversation. Whoever asked the question gets the answer.
+   */
+  modelAsked: boolean;
   /** The topic this CONVERSATION established, when no screen names one. */
   convTopic: string;
   /**
@@ -172,6 +183,7 @@ export const emptyChainState = (): ChainState => ({
   tutorSpoke: false,
   lastVerdict: null,
   lastComplaint: false,
+  modelAsked: false,
   convTopic: '',
   overviewFor: '',
 });
@@ -185,6 +197,13 @@ export type ChainInput = {
    * the place `focus.topic` holds in the bubble.
    */
   screenTopic?: string;
+  /**
+   * The student TYPED this, as opposed to tapping a chip. A chip is a bare
+   * ask by construction and the ladder template is its right answer; a typed
+   * sentence carries intent the template cannot see. Defaults to false so
+   * every existing caller and test keeps the chip behaviour.
+   */
+  typed?: boolean;
   state: ChainState;
   /**
    * Called at the point the chain stops being instant and starts awaiting a
@@ -234,9 +253,22 @@ export type ChainResult = ChainHit | ChainMiss;
  * Returns as soon as a layer answers. On a miss the caller sends the turn to
  * the model with the fields on ChainMiss.
  */
+/**
+ * Did this reply end by asking the student something? The caller records it
+ * on `ChainState.modelAsked` after a MODEL reply; local templates need no
+ * such record because `tutor-pending` already reads what they asked for.
+ */
+export function endsWithQuestion(reply: string): boolean {
+  const lastLine = reply.trim().split('\n').filter((l) => l.trim()).pop() ?? '';
+  return /\?[\s*_`~)]*$/.test(lastLine.trim());
+}
+
 export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   const { message: text, focus, screenTopic = '', onSlow } = input;
-  const state: ChainState = { ...input.state, servedKinds: [...input.state.servedKinds] };
+  // `modelAsked` is about the LAST reply and is consumed by this turn; the
+  // caller sets it again after the next model reply.
+  const state: ChainState = { ...input.state, servedKinds: [...input.state.servedKinds], modelAsked: false };
+  const modelAsked = input.state.modelAsked;
 
   // `cardTopic` is resolved further down, once the instant layers have had
   // their turn; before that the only topic known is the screen's.
@@ -312,6 +344,20 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
     state.lastVerdict = null;
     state.pending = null;
 
+    // ===== 1½. the model asked — the model gets the answer =====
+    //
+    // Before grading, before the bank, before every template. When the last
+    // reply came from the model and ended in a question, this message answers
+    // it, and only the model can read it in that light: `routeMessage` would
+    // grade a typed intermediate value against the FINAL answer, and the bank
+    // would match two words of it to an entry about something else. Both were
+    // seen live. "תודה" / "הבנתי" stay free — an ack is an ack in any context.
+    if (modelAsked && route.kind !== 'ack') {
+      grounded = groundTopic();
+      if (grounded) state.convTopic = grounded;
+      return { answered: false, probe: text, routeKind: 'model-asked', topic: grounded, faqMissed: false, state };
+    }
+
     if (route.kind === 'answer' && focus) {
       const graded = answerGradedLocally(route, focus);
       if (graded) {
@@ -355,6 +401,15 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   // one conversation that we missed has told us the template is not working,
   // whatever came between.
   if (metaAsk?.kind === 'complaint') state.lastComplaint = true;
+  // A complaint that CARRIES the question — "לא ענית לי, למה מכפילים ב-3" —
+  // has already told us what to answer. The stock "תכתוב לי במשפט אחד מה לא
+  // ברור" asks for exactly what was just typed (judged as a stall on every
+  // live instance, 2026-09-11). The model gets the sentence as it is.
+  if (metaAsk?.kind === 'complaint' && hasContentBeyondAsk(text, focus)) {
+    grounded = groundTopic();
+    if (grounded) state.convTopic = grounded;
+    return { answered: false, probe: text, routeKind: 'complaint-with-question', topic: grounded, faqMissed: false, state };
+  }
   if (metaAsk) return hit(metaAsk.text, 'meta');
 
   // ⚠️ AND WHEN IT DECLINES, THE CHAIN STOPS — it does not carry on down.
@@ -454,6 +509,30 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   // Bare asks are untouched — they carry no content, so `carriesContent` is
   // false and every free rung serves exactly as before. That is the bulk of
   // the traffic and the bulk of the saving.
+  //
+  // AND A SECOND FENCE, FOR THE TYPED RE-ASK. "עדיין לא הבנתי", "תסביר את זה
+  // יותר", "אבל למה זה דווקא התשובה" carry no maths, so the first fence lets
+  // them through — to the NEXT rung of the ladder, which is a template about
+  // the exercise in general. Judged on live traffic (2026-09-11): every typed
+  // help/explain ask after the tutor had already spoken was graded a stall or
+  // irrelevant. A chip tap after a hint still climbs the ladder for free; a
+  // typed one after the tutor has spoken is a student saying the ladder did
+  // not work, and is worth the call.
+  //
+  // A MISS, not a skip. Measured with a skip first: "תסביר את זה יותר" fell
+  // through to the bank (an entry matched on the word תסביר) and "עדיין לא
+  // הבנתי" to the compiler's next-step line — the same stall from a different
+  // layer. The turn belongs to the model, which has the two previous replies.
+  const typedReAsk =
+    input.typed === true &&
+    state.tutorSpoke &&
+    routeKind === 'ask' &&
+    (state.lastAsk === 'help' || state.lastAsk === 'explain');
+  if (typedReAsk) {
+    grounded = groundTopic();
+    if (grounded) state.convTopic = grounded;
+    return { answered: false, probe: text, routeKind: 'typed-re-ask', topic: grounded, faqMissed: false, state };
+  }
   if (!(routeKind === 'ask' && carriesContent)) {
     const local = answerLocally(probe, focus, state.servedKinds);
     if (local) {

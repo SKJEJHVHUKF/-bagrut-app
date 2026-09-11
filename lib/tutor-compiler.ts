@@ -319,6 +319,11 @@ export async function compileTutorResponse(input: CompilerInput): Promise<Compil
   // `foreignSubject` screen, and study tips are about no exercise at all.
   {
     if (foreignOperation(input.message ?? '', exerciseText(q))) return unhandled('no_local_content');
+    // Same screen, for SUBJECTS. It ran only on `concept`; the exercise intents
+    // had no subject screen at all, so "מה זה אינדוקציה" classified as a step
+    // ask and was answered with this exercise's next step. Judged live
+    // (2026-09-11): every such hit irrelevant.
+    if (foreignSubject(input.message ?? '', exerciseText(q))) return unhandled('no_local_content');
   }
 
   // ---- 2. the exercise intents — grounded or nothing ----------------

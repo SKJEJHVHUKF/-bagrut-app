@@ -476,6 +476,55 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     }
   }
 
+  // ===== the model asked, the student answered — the model gets it =====
+  //
+  // Itay's central complaint (2026-09-11): the model asks "מה הצעד הבא
+  // לדעתך?", the student replies, and the bank answers with an entry that
+  // lexically resembles the reply and has nothing to do with the conversation.
+  console.log('\n— the model asked; its question is answered by the model, not the bank —');
+  {
+    const { endsWithQuestion } = await import('../lib/tutor-chain');
+    const { getLesson } = await import('../content/lessons');
+    ok(endsWithQuestion('מה הצעד הבא לדעתך?'), 'a reply ending in ? asked');
+    ok(endsWithQuestion('נחשב יחד.\n\nמה יוצא לך בשלב הזה? **'), 'trailing markdown after ? still asked');
+    ok(!endsWithQuestion('הצעד הבא הוא להציב. תעשה אותו.'), 'a statement did not ask');
+
+    const L = getLesson('math5', 'גיאומטריה אוקלידית');
+    let q: unknown = null;
+    let st: unknown = null;
+    for (const s of L?.subTopics ?? [])
+      for (const x of s.questions ?? []) if (x.id === 'eg-sub-thales-002') { q = x; st = s; }
+    const focus = {
+      where: 'תרגול', topic: 'גיאומטריה אוקלידית', subTopicId: (st as { id: string })?.id ?? '',
+      questionText: (q as { question: string })?.question ?? '', question: q, subTopic: st,
+    } as never;
+    const asked = { ...emptyChainState(), tutorSpoke: true, modelAsked: true };
+    for (const msg of ['צריך להשתמש במשפט תאלס', 'מה הנוסחה', 'לא הבנתי', '12']) {
+      const r = await runTutorChain({ message: msg, focus, state: asked });
+      ok(!r.answered && r.routeKind === 'model-asked', `"${msg}" after the model asked → model`);
+      ok(!r.state.modelAsked, `"${msg}" consumed the flag`);
+    }
+    const ack = await runTutorChain({ message: 'תודה', focus, state: asked });
+    ok(ack.answered && ack.layer === 'ack', '"תודה" after the model asked is still a free ack');
+    const fresh = await runTutorChain({ message: 'לא הבנתי', focus, state: { ...emptyChainState(), tutorSpoke: true } });
+    ok(fresh.answered && fresh.layer === 'local:hint', 'without the flag, "לא הבנתי" still climbs the ladder for free');
+
+    // ----- a TYPED re-ask after the tutor spoke is not another template -----
+    const spoke = { ...emptyChainState(), tutorSpoke: true };
+    const chip = await runTutorChain({ message: 'תסביר', focus, state: spoke });
+    ok(chip.answered && chip.layer.startsWith('local:'), 'chip "תסביר" after a hint → the ladder, free');
+    const typed = await runTutorChain({ message: 'תסביר את זה יותר', focus, state: spoke, typed: true });
+    ok(!typed.answered, 'typed "תסביר את זה יותר" after the tutor spoke → model');
+    const typedFirst = await runTutorChain({ message: 'לא הבנתי', focus, state: emptyChainState(), typed: true });
+    ok(typedFirst.answered && typedFirst.layer === 'local:hint', 'typed "לא הבנתי" as the FIRST turn → hint, free');
+
+    // ----- a complaint carrying its own question goes to the model -----
+    const c = await runTutorChain({ message: 'לא ענית לי, למה מכפילים ב-3 ולא מחברים', focus, state: spoke });
+    ok(!c.answered && c.routeKind === 'complaint-with-question', 'complaint + question → model, not the apology');
+    const bare = await runTutorChain({ message: 'לא ענית לי', focus, state: spoke });
+    ok(bare.answered && bare.layer === 'meta', 'bare complaint → the apology, free');
+  }
+
   console.log(
     failed === 0
       ? '\nOK tutor chain: one chain, both surfaces, and nothing answered that should not be\n'

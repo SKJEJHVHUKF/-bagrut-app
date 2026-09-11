@@ -43,6 +43,9 @@ const NOUNS = [
   'דיסקרימיננט', 'קיצון', 'חשבונית', 'הנדסית', 'מותנית', 'בלתי תלוי',
   'סינוס', 'קוסינוס', 'טנגנס', 'חזקה', 'שורש', 'צמוד', 'ארגומנט',
   'בייס', 'קומבינטורי', 'פרמוטצי', 'התכנסות', 'מתכנסת', 'חסומה',
+  // Asked live on unrelated screens and answered from the exercise (2026-09-11):
+  // "מה זה אינדוקציה" on a probability question got a line about a tree.
+  'אינדוקצי', 'הצבה לינארית',
 ];
 
 /** Does this sentence NAME a piece of mathematics, rather than point at the

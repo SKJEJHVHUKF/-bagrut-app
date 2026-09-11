@@ -48,7 +48,7 @@ import {
   type TutorFocus,
 } from '@/lib/tutor-presence';
 import { type LocalAnswerKind } from '@/lib/tutor-local';
-import { runTutorChain } from '@/lib/tutor-chain';
+import { runTutorChain, endsWithQuestion } from '@/lib/tutor-chain';
 import type { Ask } from '@/lib/tutor-router';
 import { tutorFlag, adoptFlagsFromUrl } from '@/lib/tutor-flags';
 import { AI_DAILY_LIMIT } from '@/lib/access';
@@ -269,9 +269,14 @@ export default function TutorBubble() {
   /** The topic whose menu was already shown — see ChainState.overviewFor. */
   const overviewForRef = useRef('');
   const msgsRef = useRef<Msg[]>([]);
+  /** The model spoke last and asked something — see ChainState.modelAsked. */
+  const modelAskedRef = useRef(false);
   useEffect(() => {
     msgsRef.current = msgs;
     if (msgs.some((m) => m.role === 'assistant')) tutorSpokeRef.current = true;
+    const last = msgs[msgs.length - 1];
+    modelAskedRef.current =
+      Boolean(last) && last.role === 'assistant' && !last.local && endsWithQuestion(last.text);
   }, [msgs]);
   /** Was the PREVIOUS turn a complaint we answered with the stock sentence? */
   const lastComplaintRef = useRef(false);
@@ -404,7 +409,7 @@ export default function TutorBubble() {
   }, [focus]);
 
   const send = useCallback(
-    async (raw: string) => {
+    async (raw: string, opts?: { typed?: boolean }) => {
       const text = raw.trim();
       if (!text || sending) return;
       if (text.length > MAX_LEN) {
@@ -467,7 +472,9 @@ export default function TutorBubble() {
       const chain = await runTutorChain({
         message: text,
         focus: focusNow,
+        typed: opts?.typed === true,
         state: {
+          modelAsked: modelAskedRef.current,
           lastAsk: lastAskRef.current,
           servedKinds: servedRef.current.kinds,
           pending: pendingNow,
@@ -1027,7 +1034,7 @@ export default function TutorBubble() {
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    void send(input);
+                    void send(input, { typed: true });
                   }}
                   className="flex items-end gap-2"
                 >
@@ -1037,7 +1044,7 @@ export default function TutorBubble() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
-                        void send(input);
+                        void send(input, { typed: true });
                       }
                     }}
                     rows={1}

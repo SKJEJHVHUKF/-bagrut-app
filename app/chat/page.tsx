@@ -13,7 +13,7 @@ import {
   type TutorGreeting,
 } from '@/lib/tutor-greeting';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
-import { runTutorChain, emptyChainState, type ChainState } from '@/lib/tutor-chain';
+import { runTutorChain, emptyChainState, endsWithQuestion, type ChainState } from '@/lib/tutor-chain';
 import TutorMascot from '@/components/tutor/TutorMascot';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -453,6 +453,9 @@ export default function ChatPage() {
           } else {
             setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, content: acc } : x)));
           }
+          // Re-evaluated on every chunk; the last chunk's verdict is the one
+          // the next turn reads. See ChainState.modelAsked.
+          chainRef.current.modelAsked = endsWithQuestion(acc);
         } else if (event === 'action') {
           // The server already resolved this to a real route and dropped it if
           // it couldn't — so anything that arrives here is safe to render.

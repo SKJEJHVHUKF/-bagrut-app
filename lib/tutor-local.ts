@@ -489,7 +489,11 @@ const TEMPLATES: Record<string, Tpl> = {
 
   'A:formulas-q': T(
     'formulas',
-    'שאלת בדיוק את השאלה הנכונה — קודם בוחרים כלי, רק אחר כך מחשבים. בשאלה הזאת:\n\n{rule}\n\nוכל שאר הכלים של {title}, כדי לראות איפה זה יושב:\n\n{formulas}\n\nעכשיו תציב בכלל הזה את המספרים מהשאלה — מה יוצא לך?',
+    // No `{formulas}` dump after the rule: "באיזו נוסחה משתמשים כאן" asks for
+    // ONE tool, and the six others of the sub-topic under it were judged
+    // irrelevant on every live instance (6 of 6, 2026-09-11). The whole list
+    // is still one chip away, from A:formulas.
+    'שאלת בדיוק את השאלה הנכונה — קודם בוחרים כלי, רק אחר כך מחשבים. בשאלה הזאת:\n\n{rule}\n\nעכשיו תציב בכלל הזה את המספרים מהשאלה — מה יוצא לך?',
     'שאלת בדיוק את השאלה הנכונה — קודם בוחרים כלי, רק אחר כך מחשבים. בשאלה הזאת:\n\n{rule}\n\nעכשיו תציב בכלל הזה את המספרים מהשאלה — מה יוצא לך?',
   ),
   'A:formulas': T(
