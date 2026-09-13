@@ -55,3 +55,4 @@ logs/faq-misses.json
 # Rasterised geometry contact sheets (scripts/_probe-geo3-sheets.tsx). Regenerated
 # on demand; ~200 KB a figure and worthless in history.
 scratch/
+.tutor-work/

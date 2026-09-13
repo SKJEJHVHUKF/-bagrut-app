@@ -37,6 +37,38 @@ import { leaksAnswer } from '@/lib/help-ladder';
 import { exerciseText, foreignOperation, foreignSubject, namesAMathsSubject } from '@/lib/maths-vocabulary';
 import { resolveTopic } from '@/lib/resolve-topic';
 import { classifyShape } from '@/lib/question-shape';
+import { FAQ_SIGNATURES } from '@/content/tutor-faq/signatures';
+import type { PracticeQuestion } from '@/content/lessons/types';
+
+// ------------------------------------------------------------
+// Is the bank still about THIS version of the exercise?
+// ------------------------------------------------------------
+
+/**
+ * A fingerprint of what the bank's answers were written against: the question
+ * text, the solution steps and the final answer. Recorded per unit at banking
+ * time (`npm run build:faq-sig`) and compared at serve time.
+ *
+ * Itay edits and re-numbers questions continuously, and `check:faq-coverage`
+ * counts ids, not truth — a rewritten question kept reporting 100% while its
+ * nine entries described a solution that no longer existed (פונקציות, 2026-09).
+ */
+export function unitSignature(q: PracticeQuestion): number {
+  const sol = q.solution as { steps?: unknown; finalAnswer?: unknown } | undefined;
+  const steps = Array.isArray(sol?.steps) ? sol.steps.filter((s): s is string => typeof s === 'string') : [];
+  const text = [q.question ?? '', ...steps, String(sol?.finalAnswer ?? '')].join('');
+  // djb2 — stable, tiny, runs in the browser. Collisions cost one stale answer
+  // served, and only if the edit lands on the same 32-bit value.
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+  return h >>> 0;
+}
+
+/** True when the unit has no recorded signature (never banked, or pre-dates the file) or it still matches. */
+export function isUnitCurrent(q: PracticeQuestion): boolean {
+  const recorded = (FAQ_SIGNATURES as Record<string, number>)[q.id];
+  return recorded === undefined || recorded === unitSignature(q);
+}
 
 // ------------------------------------------------------------
 // Normalisation
@@ -972,7 +1004,11 @@ export async function answerFromFaq(message: string, focus: TutorFocus | null, s
   const shape = classifyShape(message);
 
   const bank = await loadFaqBank(subject, focus.topic);
-  const entries = bank?.[q.id] ?? [];
+  // A unit whose question or solution changed since its bank was written is
+  // served NOTHING from its own entries — nine answers about a version of the
+  // exercise that no longer exists are worse than one model call. Silent by
+  // design; `npm run check:faq-stale` is where it becomes visible.
+  const entries = isUnitCurrent(q as PracticeQuestion) ? bank?.[q.id] ?? [] : [];
   const canReveal = answered(focus);
   const usable = entries.filter((f) => !f.reveals || canReveal);
 

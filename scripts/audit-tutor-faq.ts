@@ -23,6 +23,8 @@ import { allLessonKeys, getLesson } from '../content/lessons';
 import { conceptBankEntries, getConceptQuestions, CONCEPT_LEVELS } from '../content/concept-quiz';
 import { conceptAsQuestion } from '../lib/tutor-presence';
 import { loadFaqBank } from '../content/tutor-faq';
+import { isUnitCurrent } from '../lib/tutor-faq';
+import { allScreens } from './_screens';
 
 const [topicArg, outDir, sliceArg = '15'] = process.argv.slice(2);
 if (!topicArg || !outDir) {
@@ -179,9 +181,18 @@ async function main() {
   // validates every authored unit against it, and a filtered rows file would
   // reject entries for units it simply did not list.
   writeFileSync(join(outDir, `rows-${topicArg}.json`), JSON.stringify(rows, null, 1), 'utf8');
+  // A unit whose exercise changed since banking is not banked any more — its
+  // entries are dark at serve time (lib/tutor-faq isUnitCurrent), so it is
+  // handed out again here.
+  const screens = allScreens();
   const banked = process.argv.includes('--all')
     ? new Set<string>()
-    : new Set(Object.keys((await loadFaqBank('math5', topicArg)) ?? {}));
+    : new Set(
+        Object.keys((await loadFaqBank('math5', topicArg)) ?? {}).filter((unit) => {
+          const s = screens.get(unit);
+          return !s || isUnitCurrent(s.question);
+        }),
+      );
   const byKind = KINDS ? rows.filter((r) => KINDS.has(r.kind)) : rows;
   const selected = byKind.filter((r) => !banked.has(r.unit));
   const slices: FaqRow[][] = [];
