@@ -26,6 +26,12 @@ export const RATES = {
   /** Introductory pricing, checked 2026-08-17. */
   'claude-sonnet-5': { input: 2 / 1_000_000, output: 10 / 1_000_000 },
   'claude-haiku-4-5': { input: 1 / 1_000_000, output: 5 / 1_000_000 },
+  /** ai.google.dev/gemini-api/docs/pricing, standard tier, checked 2026-09-13. The
+   *  tutor's provider seam maps Gemini's cachedContentTokenCount onto
+   *  cache_read_input_tokens; its cached read is 0.1x like Anthropic's. Cache
+   *  STORAGE ($1/M tokens/hour per live prefix) is not per-turn and not here. */
+  'gemini-3.5-flash-lite': { input: 0.3 / 1_000_000, output: 2.5 / 1_000_000 },
+  'gemini-3.1-flash-lite': { input: 0.25 / 1_000_000, output: 1.5 / 1_000_000 },
 } as const;
 
 export type ModelId = keyof typeof RATES;
