@@ -63,6 +63,7 @@ Answer with exactly three lines:
 ANSWER: RELEVANT | IRRELEVANT | STALL   (does the reply address what the student actually wrote, in the context of this exercise; STALL = only "try again / re-read / tell me more" with no content)
 HEBREW: OK | BROKEN   (BROKEN = an invented Hebrew word form, an English sentence, Hebrew letters inside $...$, or Hebrew that reads as machine-translated)
 LEAK: NONE | STEP | FINAL   (STEP = states a solution step beyond the next one after REVEALED; FINAL = states the final answer while "full" is not in REVEALED)
+CLARITY: CLEAR | DENSE   (CLEAR = a student can read it at a glance: one idea per line, any formula on its own line, the question separated; DENSE = rule, formula, numbers and question packed into one paragraph, or a formula buried mid-sentence)
 Then one short English sentence of reasoning.`;
 
 async function withBackoff<T>(fn: () => Promise<T>): Promise<T> {
@@ -153,7 +154,7 @@ async function main() {
   mkdirSync('.tutor-work', { recursive: true });
   const out = `.tutor-work/ab-${new Date().toISOString().slice(0, 10)}.jsonl`;
   const lines: string[] = [];
-  type Tally = { n: number; relevant: number; irrelevant: number; stall: number; hebrewBroken: number; leak: number; usd: number; inTok: number; outTok: number; cached: number; ms: number };
+  type Tally = { n: number; relevant: number; irrelevant: number; stall: number; hebrewBroken: number; leak: number; dense: number; usd: number; inTok: number; outTok: number; cached: number; ms: number };
   const tally: Record<string, Tally> = {};
   let judgeIn = 0;
   let judgeOut = 0;
@@ -187,7 +188,7 @@ async function main() {
       }
       const ms = Date.now() - started;
       const steps = (focus.question?.solution?.steps ?? []).map((s, i) => `${i + 1}. ${s}`).join('\n').slice(0, 900);
-      let verdict = { answer: 'ERROR', hebrew: '-', leak: '-', why: err };
+      let verdict = { answer: 'ERROR', hebrew: '-', leak: '-', clarity: '-', why: err };
       if (reply) {
         const j = await ai.messages.create({
           model: 'claude-haiku-4-5',
@@ -199,16 +200,17 @@ async function main() {
         judgeOut += j.usage.output_tokens;
         const text = j.content[0]?.type === 'text' ? j.content[0].text : '';
         const pick = (k: string) => (text.match(new RegExp(`${k}:\\s*([A-Z]+)`)) ?? [])[1] ?? '?';
-        verdict = { answer: pick('ANSWER'), hebrew: pick('HEBREW'), leak: pick('LEAK'), why: text.split('\n').slice(3).join(' ').trim() };
+        verdict = { answer: pick('ANSWER'), hebrew: pick('HEBREW'), leak: pick('LEAK'), clarity: pick('CLARITY'), why: text.split('\n').slice(4).join(' ').trim() };
       }
       const k = `${p.id}:${p.model}`;
-      const ty = (tally[k] ??= { n: 0, relevant: 0, irrelevant: 0, stall: 0, hebrewBroken: 0, leak: 0, usd: 0, inTok: 0, outTok: 0, cached: 0, ms: 0 });
+      const ty = (tally[k] ??= { n: 0, relevant: 0, irrelevant: 0, stall: 0, hebrewBroken: 0, leak: 0, dense: 0, usd: 0, inTok: 0, outTok: 0, cached: 0, ms: 0 });
       ty.n++;
       if (verdict.answer === 'RELEVANT') ty.relevant++;
       else if (verdict.answer === 'IRRELEVANT') ty.irrelevant++;
       else if (verdict.answer === 'STALL') ty.stall++;
       if (verdict.hebrew === 'BROKEN') ty.hebrewBroken++;
       if (verdict.leak === 'STEP' || verdict.leak === 'FINAL') ty.leak++;
+      if (verdict.clarity === 'DENSE') ty.dense++;
       ty.usd += cost(p.model, usage);
       ty.inTok += usage.input_tokens;
       ty.outTok += usage.output_tokens;
@@ -220,11 +222,11 @@ async function main() {
   }
   writeFileSync(out, lines.join('\n') + '\n');
 
-  console.log('\n\nprovider                         n  relevant  irrelev  stall  hebrew-broken  leak   $/turn   in(fresh)  cached   out   ms');
+  console.log('\n\nprovider                         n  relevant  irrelev  stall  hebrew-broken  leak  dense   $/turn   in(fresh)  cached   out   ms');
   for (const [k, v] of Object.entries(tally)) {
     const pc = (x: number) => `${((100 * x) / v.n).toFixed(0)}%`.padStart(7);
     console.log(
-      `${k.padEnd(32)} ${String(v.n).padStart(3)} ${pc(v.relevant)} ${pc(v.irrelevant)} ${pc(v.stall)} ${pc(v.hebrewBroken).padStart(14)} ${pc(v.leak)}  $${(v.usd / v.n).toFixed(4)}  ${String(Math.round(v.inTok / v.n)).padStart(9)} ${String(Math.round(v.cached / v.n)).padStart(7)} ${String(Math.round(v.outTok / v.n)).padStart(5)} ${String(Math.round(v.ms / v.n)).padStart(5)}`,
+      `${k.padEnd(32)} ${String(v.n).padStart(3)} ${pc(v.relevant)} ${pc(v.irrelevant)} ${pc(v.stall)} ${pc(v.hebrewBroken).padStart(14)} ${pc(v.leak)} ${pc(v.dense)}  $${(v.usd / v.n).toFixed(4)}  ${String(Math.round(v.inTok / v.n)).padStart(9)} ${String(Math.round(v.cached / v.n)).padStart(7)} ${String(Math.round(v.outTok / v.n)).padStart(5)} ${String(Math.round(v.ms / v.n)).padStart(5)}`,
     );
   }
   console.log(`\njudge: ${judgeIn} in + ${judgeOut} out ≈ $${(judgeIn / 1e6 + (5 * judgeOut) / 1e6).toFixed(3)} · replies: ${out}`);

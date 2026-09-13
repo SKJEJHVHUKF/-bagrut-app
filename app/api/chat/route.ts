@@ -88,7 +88,10 @@ const MAX_TURN_LEN = 500;
 // starves exactly the traffic it gets.
 
 /** A NUDGE on an exercise the student is looking at: one point, one question. */
-const REPLY_TOKENS_NUDGE = 200;
+// 200 → 280 with the layout rule (2026-09-14): a rule line, a display formula
+// and an "אצלך" line before the question is ~4 lines, and a cut-off layout is
+// worse than a dense one. Billing is per token generated, so the room is free.
+const REPLY_TOKENS_NUDGE = 280;
 /** A CONCEPT question with no exercise on screen — "מה זה הסתברות מותנית". */
 const REPLY_TOKENS_CONCEPT = 400;
 /** The two long-path exceptions TUTOR_CORE names. */
