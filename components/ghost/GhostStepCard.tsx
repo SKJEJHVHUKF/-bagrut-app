@@ -17,6 +17,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Lightbulb, Sparkles } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
+import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
 import { buttonTap } from '@/lib/animations';
 import type { GhostBranch, GhostReplayStep } from '@/content/ghost-replay/types';
 import { CommitPrompt } from './CommitPrompt';
@@ -122,6 +123,11 @@ export function GhostStepCard({
               <div className="chat-md math-content mt-1.5 text-sm leading-relaxed text-slate-800">
                 <MathText>{step.coreLogic}</MathText>
               </div>
+              {step.diagrams && step.diagrams.length > 0 && (
+                <div className="mt-3">
+                  <DiagramRenderer diagrams={step.diagrams} />
+                </div>
+              )}
             </div>
 
             <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/[0.08] px-4 py-3">

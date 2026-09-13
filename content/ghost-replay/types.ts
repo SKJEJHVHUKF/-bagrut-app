@@ -17,6 +17,7 @@
 // is what keeps it free, instant, and checkable by scripts/verify-*.ts.
 
 import type { MisconceptionId } from '@/content/cognition/types';
+import type { DiagramSpec } from '@/content/lessons/types';
 
 export type GhostOption = {
   /** Unique WITHIN the step. Also the key a failure branch is attached to. */
@@ -55,6 +56,10 @@ export type GhostReplayStep = {
   title: string;
   /** The intuition — WHY a solver would even think of this. Not the algebra. */
   coreLogic: string;
+  /** Optional sketch of this step (Itay, 2026-09-13: "גם ברמת החשיבה צריך
+   *  להוסיף שרטוטים"). Rendered with `coreLogic`, i.e. AFTER the commit — a
+   *  graph shown before it would answer "which curve is on top" by itself. */
+  diagrams?: DiagramSpec[];
   /** A classic matriculation pitfall, rendered as a red flag. */
   examinerTrap?: { warning: string; description: string };
   /** The gate. Nothing past this renders until the student picks. */
