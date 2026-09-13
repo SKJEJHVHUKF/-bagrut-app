@@ -264,9 +264,11 @@ function checkQuestion(q: PracticeQuestion, stageId: string, prefix: string) {
   const saysSketch = /סקיצה|סרטט|שרטט|גרף הפונקציה|הגרף של/.test(stepsText);
   // טבלה / טבלת / הטבלה / בטבלת — one more inflection the gate was blind to.
   const saysTable = /טבל[הת]|בטבלה/.test(stepsText);
-  const hasTable = /^\s*\|.*\|\s*$/m.test(stepsText);
+  // A sign table is a ```signtable fence (lib/sign-table.ts, the board format
+  // since f58d724); a markdown pipe table still counts for the comparison tables.
+  const hasTable = /^\s*\|.*\|\s*$/m.test(stepsText) || /```signtable/.test(stepsText);
   if (saysSketch && !(sol.diagrams ?? []).length) err(w, 'sketch-without-figure', 'the solution sketches the graph — attach the drawn figure (lib/fn-figure)');
-  if (saysTable && !hasTable) err(w, 'table-without-table', 'the solution builds a sign table — draw it as a markdown table');
+  if (saysTable && !hasTable) err(w, 'table-without-table', 'the solution builds a sign table — draw it as a ```signtable fence');
 
   // --- figures
   for (const [i, d] of (sol.diagrams ?? []).entries()) {
@@ -305,7 +307,7 @@ function askShape(q: PracticeQuestion): string {
   const t = q.question;
   if (/סרטט|שרטט|סקיצה/.test(t)) return 'sketch';
   if (/הוכיחו|הוכח|הראו כי/.test(t)) return 'prove';
-  if (/מצאו את הערך של \$?[a-z]|עבור אילו ערכים|מצאו את הפרמטר|כך ש.*יהיה|מצאו את \$?[a-z]\$?(?: ואת)?/.test(t)) return 'find-parameter';
+  if (/מצאו את הערך של \$?[a-z]|עבור אילו ערכים|מצאו את הפרמטר|כך ש.*יהיה|מצאו את \$?[a-z]\$?(?!['(])(?: ואת)?/.test(t)) return 'find-parameter';
   if (/נתונה?\s+(?:האסימפטוט|נקודת הקיצון|נקודת החיתוך|תחום ההגדרה)|ידוע (?:כי|ש)[^.]*מצא|מהי הפונקציה/.test(t)) return 'reverse';
   if (/שטח|אינטגרל|הקדומה/.test(t)) return 'area';
   if (/נמקו|הסבירו מדוע|קבעו (?:את סוגן|אם)|האם .*\?/.test(t)) return 'justify';
@@ -330,7 +332,9 @@ const OFF_STYLE: [string, RegExp][] = [
 
 const hasParameter = (q: PracticeQuestion) =>
   // "מצא את $a$" (singular, no "הערך של") is how half the shipped questions ask.
-  /פרמטר|עבור אילו ערכים|מצא(?:ו)? את (?:הערך של )?\$?[a-z]\$?|נתון ש[^.]*\$?[abmk]\$?[^.]*מצא|תלוי ב/.test(q.question);
+  // `[a-z]\$?` must not be followed by `'` or `(`: "מצאו את $f'(-3)$" asks for a
+  // VALUE of the derivative, not a parameter (credited 3 points on rq-sub-tr-401).
+  /פרמטר|עבור אילו ערכים|מצא(?:ו)? את (?:הערך של )?\$?[a-z]\$?(?!['(])|נתון ש[^.]*\$?[abmk]\$?[^.]*מצא|תלוי ב/.test(q.question);
 
 /** The inference runs BACKWARDS: a property is given and the function (or a
  *  coefficient inside it) is what the student must recover. */
