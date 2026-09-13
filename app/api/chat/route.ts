@@ -12,7 +12,7 @@ import { normalizeUnitLevel, normalizeFormNumber, MAX_CONTEXT_LEN } from '@/lib/
 import { logCost } from '@/lib/mathscan/cost';
 import { recordTutorTrace } from '@/lib/tutor-trace-store';
 import { findLearnedAnswer, captureAnswer, countHit } from '@/lib/tutor-answer-library';
-import { isQuestion, NOT_A_QUESTION_REPLY } from '@/lib/is-question';
+import { isQuestion, isReplyWords, NOT_A_QUESTION_REPLY } from '@/lib/is-question';
 import { sanitizeClientTrace } from '@/lib/tutor-telemetry';
 import { TUTOR_TOOLS, resolveSuggestion } from '@/lib/agents/tools';
 import { readFacts, writeFacts, mergeFact, renderMemoryBlock } from '@/lib/tutor-memory';
@@ -458,7 +458,9 @@ export async function POST(request: Request) {
     // לגזור" / "24" / "לא" answer the tutor's question and are not questions;
     // bouncing them as "not a question" is the bug this gate must not become.
     // Keyboard mash on a first message is still caught.
-    const asked = body.reply === true ? { isQuestion: true as const } : isQuestion(message, attemptContext || undefined);
+    // A reply still owes the gate one thing: at least one real word. Measured
+    // live 2026-09-14: "עכעיעחי" mid-conversation reached Gemini.
+    const asked = body.reply === true && isReplyWords(message) ? { isQuestion: true as const } : isQuestion(message, attemptContext || undefined);
     if (!asked.isQuestion) {
       void recordTutorTrace(
         { ...clientTrace, fallbackReason: 'no_fallback' },

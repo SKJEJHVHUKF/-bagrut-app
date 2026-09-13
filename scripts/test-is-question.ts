@@ -27,7 +27,7 @@
  */
 
 import { readFileSync, readdirSync, existsSync } from 'fs';
-import { isQuestion, NOT_A_QUESTION_REPLY } from '../lib/is-question';
+import { isQuestion, isReplyWords, NOT_A_QUESTION_REPLY } from '../lib/is-question';
 
 let failed = 0;
 const ok = (cond: boolean, name: string) => {
@@ -135,6 +135,12 @@ for (const route of TUTOR_ROUTES) {
       ? 'no ungated conversation endpoint exists'
       : `UNGATED conversation endpoint(s): ${found.join(', ')} — add the gate, then add it to TUTOR_ROUTES`,
   );
+}
+
+// ===== a REPLY in a conversation: real words pass, a keyboard mash still does not =====
+{
+  for (const m of ['כן', 'לא', 'בטוח', 'צריך לגזור', 'אה נכון', '24', 'x=3', 'לא יודע']) ok(isReplyWords(m), `reply "${m}" passes`);
+  for (const m of ['עכעיעחי', 'ייעיעעיעי', 'לול', 'חחחח', '', 'ץץץ']) ok(!isReplyWords(m), `reply "${m}" is still gated`);
 }
 
 console.log(

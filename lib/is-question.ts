@@ -137,3 +137,26 @@ export function isQuestion(message: string, questionText?: string): QuestionVerd
 
   return no;
 }
+
+/**
+ * The gate for a REPLY inside a conversation the tutor already spoke in.
+ *
+ * `isQuestion` asks whether a message is worth a model call as an OPENING;
+ * "כן", "לא", "בטוח" fail it and are right to. A reply to the tutor's own
+ * question is worth the call whatever its shape — unless it is a hand on the
+ * keyboard. So the only thing a reply must clear is: at least one real word
+ * (either lexicon), a digit, or a Latin symbol. "עכעיעחי" mid-conversation
+ * went to the model on 2026-09-14 because the route skipped the gate on
+ * every reply; this is the half of the gate a reply still owes.
+ */
+const REPLY_WORDS: ReadonlySet<string> = new Set(['כן', 'לא', 'נכון', 'בסדר', 'אוקיי', 'אוקי', 'טוב', 'אה', 'יאללה', 'הבנתי', 'רגע']);
+
+export function isReplyWords(message: string): boolean {
+  const raw = message.trim();
+  if (!raw) return false;
+  if (/[0-9a-z]/i.test(raw)) return true;
+  // Raw whitespace tokens, not `words()`: that helper drops the two-letter
+  // tokens a reply is often made of ("כן", "לא").
+  if (raw.split(/s+/).some((x) => REPLY_WORDS.has(x))) return true;
+  return words(raw).some((x) => HEBREW_LEXICON.has(x) || ASKING_LEXICON.has(x));
+}
