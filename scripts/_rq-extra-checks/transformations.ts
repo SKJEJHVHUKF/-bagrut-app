@@ -702,4 +702,87 @@ const TR313_G = 'abs((x^2-9)/(x^2+3))';
   if (process.argv.includes('emit')) console.log(svg);
 }
 
+// ───────────── round 4 (rq-sub-tr-401…412 + fn-bag-rq-006ב/009/010) — independent re-solve ─────────────
+// Written by the verifier, not the author: the round shipped with no checks for these ids.
+{
+  const sgn = (expr: string, lo: number, hi: number) => { const g = f(expr); return [...new Set(Array.from({ length: 199 }, (_, i) => Math.sign(g(lo + ((hi - lo) * (i + 0.5)) / 199))))]; };
+  const allSign = (expr: string, lo: number, hi: number, s: number) => (sgn(expr, lo, hi).every((v) => v === s) ? 1 : 0);
+  // 401: derivative of an even function is odd — figure model 5/6 x^2 has f'(3)=5, f'(-3)=-5, f(±3)=7.5
+  check("tr-401 model f'(3) = 5", f('5/3*x')(3), 5); check("tr-401 f'(-3) = -5", f('5/3*x')(-3), -5); check('tr-401 fig height', f('5/6*x^2')(-3), 7.5);
+  // 402: h = (x-4)/(x+1)·√(x-2): domain x ≥ 2, negative exactly on (2,4)
+  const h402 = '(x-4)/(x+1)*sqrt(x-2)';
+  check('tr-402 undefined left of 2', notReal(f(h402)(1.5)) ? 1 : 0, 1); check('tr-402 h(2) = 0', f(h402)(2), 0); check('tr-402 h(4) = 0', f(h402)(4), 0);
+  check('tr-402 negative on (2,4)', allSign(h402, 2, 4, -1), 1); check('tr-402 positive on (4,∞)', allSign(h402, 4, 40, 1), 1);
+  check('tr-402 B is the negativity of f alone', allSign('(x-4)/(x+1)', -1, 4, -1) * allSign('(x-4)/(x+1)', -40, -1, 1), 1);
+  // 403: g' = (x-2)/(x+3) > 0 on x<-3 and x>2
+  check('tr-403 g rises left of -3', allSign('(x-2)/(x+3)', -40, -3, 1), 1); check('tr-403 g falls on (-3,2)', allSign('(x-2)/(x+3)', -3, 2, -1), 1); check('tr-403 g rises right of 2', allSign('(x-2)/(x+3)', 2, 40, 1), 1);
+  // 404: g = 1/f² = x²/(x²+4), x ≠ 0; g' = 8x/(x²+4)²
+  check('tr-404 g = 1/f^2', f('x^2/(x^2+4)')(3), 1 / f('(sqrt(x^2+4)/x)^2')(3)); dcheck("tr-404 g'", 'x^2/(x^2+4)', '8*x/(x^2+4)^2');
+  check('tr-404 falls left of 0', allSign('8*x/(x^2+4)^2', -40, 0, -1), 1); check('tr-404 rises right of 0', allSign('8*x/(x^2+4)^2', 0, 40, 1), 1); check('tr-404 f has no value at 0', Number.isFinite(f('sqrt(x^2+4)/x')(0)) ? 1 : 0, 0);
+  // 405: h = f·g reduces to (x+3)/(x+1): VA -1, HA 1, hole (2, 5/3)
+  const h405 = '(x+3)/(x-2)*(x-2)/(x+1)';
+  check('tr-405 hole height 5/3', f(h405)(2 + 1e-9), E('5/3'), 1e-6); check('tr-405 HA y = 1', f(h405)(1e7), 1, 1e-6); check('tr-405 VA at -1', Math.abs(f(h405)(-1 + 1e-7)) > 1e6 ? 1 : 0, 1); check('tr-405 x = 2 is NOT a pole', Math.abs(f(h405)(2 + 1e-7)) < 10 ? 1 : 0, 1);
+  check('tr-405 wrong 0 = numerator of the un-reduced product at 2', f('(x+3)*(x-2)')(2), 0); check('tr-405 wrong 5 = numerator only of the reduced form', f('x+3')(2), 5);
+  // 406: |f - 2| = |4/(x-1)|: never zero, VA 1, HA 0
+  const g406 = 'abs((2*x+2)/(x-1) - 2)';
+  check('tr-406 f - 2 = 4/(x-1)', f('(2*x+2)/(x-1) - 2')(5), f('4/(x-1)')(5)); check('tr-406 no x-intercepts', crossings(g406, [1]), 0); check('tr-406 g(-1) = 2 where f = 0', f(g406)(-1), 2); check('tr-406 f(-1) = 0', f('(2*x+2)/(x-1)')(-1), 0);
+  check('tr-406 HA y = 0', f(g406)(1e7), 0, 1e-6); check('tr-406 D: |f| - 2 vanishes at 0', f('abs((2*x+2)/(x-1)) - 2')(0), 0);
+  // 407: f' = (x²-4)/x², domain of √(-2f') = [-2,0)∪(0,2]
+  dcheck("tr-407 f'", '(x^2+4)/x', '(x^2-4)/x^2'); const g407 = 'sqrt(-2*(x^2-4)/x^2)';
+  check('tr-407 g(-2) = 0', f(g407)(-2), 0); check('tr-407 g(2) = 0', f(g407)(2), 0); check('tr-407 g(1) real', notReal(f(g407)(1)) ? 1 : 0, 0); check('tr-407 g(2.1) not real', notReal(f(g407)(2.1)) ? 1 : 0, 1); check('tr-407 g(-2.1) not real', notReal(f(g407)(-2.1)) ? 1 : 0, 1); check('tr-407 g undefined at 0', Number.isFinite(f(g407)(0)) ? 1 : 0, 0);
+  check("tr-407 B is f' ≥ 0", notReal(f('sqrt((x^2-4)/x^2)')(3)) ? 1 : 0, 0);
+  // 408: g' = a/(x-3) + 2, g'(1) = 0 → a = 4; maximum
+  check('tr-408 a = 4', E('-(-2)*2'), 4); check("tr-408 g'(1) = 0", f('4/(x-3)+2')(1), 0); check('tr-408 combined form', f('4/(x-3)+2')(7), f('(2*x-2)/(x-3)')(7));
+  check("tr-408 g' > 0 left of 1", allSign('(2*x-2)/(x-3)', -40, 1, 1), 1); check("tr-408 g' < 0 on (1,3)", allSign('(2*x-2)/(x-3)', 1, 3, -1), 1);
+  check('tr-408 wrong -4 makes f(1) = +2', f('-4/(x-3)')(1), 2); check('tr-408 wrong 0 makes f(1) = 0', f('0/(x-3)')(1), 0);
+  // 409: (x³-x²+x-1)/(x²-x) = (x²+1)/x with a hole at (1,2); y = k meets once only at k = -2
+  const g409 = '(x^3-x^2+x-1)/(x^2-x)', r409 = '(x^2+1)/x';
+  check('tr-409 reduces', f(g409)(2.5), f(r409)(2.5)); check('tr-409 hole height 2', f(r409)(1), 2); check('tr-409 left max height -2', f(r409)(-1), -2); check('tr-409 (-1,-2) is a maximum', kind(r409, -1), -1); check('tr-409 (1,2) would be a minimum', kind(r409, 1), 1);
+  // a tangency is no sign change: k = -2 is the max height, and the count jumps 0 → 2 across it
+  check('tr-409 just above -2: none', crossings(`${r409} - (-2 + 1e-4)`, [0]), 0); check('tr-409 just below -2: two', crossings(`${r409} - (-2 - 1e-4)`, [0]), 2); check('tr-409 k = 2 meets only at the hole', crossings(`${r409} - 2`, [0, 1]), 0); check('tr-409 k = 2.5 meets twice', crossings(`${r409} - 2.5`, [0]), 2); check('tr-409 k = 0 never', crossings(`${r409}`, [0]), 0);
+  // 410: f = 4x/(x²+1); g = |f - 1|: 4 extrema, top height 3
+  const f410 = '4*x/(x^2+1)';
+  dcheck("tr-410 f'", f410, '(4-4*x^2)/(x^2+1)^2'); check('tr-410 f(1) = 2', f(f410)(1), 2); check('tr-410 f(-1) = -2', f(f410)(-1), -2);
+  checkSet('tr-410 zeros of f - 1', [2 - Math.sqrt(3), 2 + Math.sqrt(3)], [E('2-sqrt(3)'), E('2+sqrt(3)')]); check('tr-410 x^2-4x+1 at 2+√3', f('x^2-4*x+1')(2 + Math.sqrt(3)), 0);
+  const g410 = `abs(${f410} - 1)`;
+  check('tr-410 (-1,3) is a maximum of g', kind(g410, -1), -1); check('tr-410 g(-1) = 3', f(g410)(-1), 3); check('tr-410 (1,1) stays a maximum', kind(g410, 1), -1); check('tr-410 g(1) = 1', f(g410)(1), 1);
+  check('tr-410 corner minimum at 2-√3', kind(g410, 2 - Math.sqrt(3), 0.01), 1); check('tr-410 corner minimum at 2+√3', kind(g410, 2 + Math.sqrt(3), 0.01), 1);
+  check("tr-410 no other extremum: f' has exactly two zeros", crossings('4-4*x^2'), 2);
+  // 411: f = 6x/(x²+9), max (3,1); one VA iff c = 1; HA of g is -1
+  const f411 = '6*x/(x^2+9)';
+  dcheck("tr-411 f'", f411, '(54-6*x^2)/(x^2+9)^2'); check('tr-411 f(3) = 1', f(f411)(3), 1); check('tr-411 (3,1) is a maximum', kind(f411, 3), -1); check('tr-411 f(-3) = -1', f(f411)(-3), -1);
+  check('tr-411 c just below 1: two zeros', crossings(`${f411} - (1 - 1e-4)`), 2); check('tr-411 c just above 1: none', crossings(`${f411} - (1 + 1e-4)`), 0); check('tr-411 c = 0.5: two', crossings(`${f411} - 0.5`), 2); check('tr-411 c = 1.5: none', crossings(`${f411} - 1.5`), 0);
+  check('tr-411 HA of g is -1', f(`1/(${f411} - 1)`)(1e7), -1, 1e-6); check('tr-411 g(-3) = -0.5', f(`1/(${f411} - 1)`)(-3), -0.5); check('tr-411 wrong (3, -1/3) = 1/(x-c) read at the x of the max', E('1/(0-3)'), E('-1/3'));
+  // 412: g' = x/(x²+3): min at 0; g'' = f' = (3-x²)/(x²+3)²: inflections ±√3; f'' vanishes at 0, ±3
+  const f412 = 'x/(x^2+3)';
+  dcheck("tr-412 f'", f412, '(3-x^2)/(x^2+3)^2'); check('tr-412 f changes sign - to + at 0', allSign(f412, -40, 0, -1) * allSign(f412, 0, 40, 1), 1);
+  checkSet("tr-412 zeros of f'", [Math.sqrt(3), -Math.sqrt(3)], [E('sqrt(3)'), E('-sqrt(3)')]); check("tr-412 f' > 0 between them", allSign('3-x^2', -Math.sqrt(3), Math.sqrt(3), 1), 1); check("tr-412 f' < 0 outside", allSign('3-x^2', Math.sqrt(3), 40, -1), 1);
+  checkSet("tr-412 wrong ±3 are the zeros of f''", [0, 3, -3].filter((x) => Math.abs(f('-2*x*(x^2+3)*(9-x^2)')(x)) < 1e-9), [0, 3, -3]); dcheck("tr-412 f'' numerator", '(3-x^2)/(x^2+3)^2', '-2*x*(x^2+3)*(9-x^2)/(x^2+3)^4');
+  // fn-bag-rq-006 ב: 2√a = 6 → a = 9
+  check('bag-006ב a = 9', E('(6/2)^2'), 9); check('bag-006ב f(3) = 6 for a = 9', f('x+9/x')(3), 6); check('bag-006ב (3,6) is the minimum', kind('x+9/x', 3), 1);
+  // fn-bag-rq-009: f = a(x-2)/x², f' = a(4-x)/x³, max (4, a/8); ג a = 16; ד h < 0 on (0,4); ה p → -1/2, p → 0 at 0
+  dcheck("bag-009ב f'", '16*(x-2)/x^2', '16*(4-x)/x^3'); check('bag-009ב f(4) = a/8', f('16*(x-2)/x^2')(4), 2); check('bag-009ב (4, a/8) is a maximum', kind('16*(x-2)/x^2', 4), -1);
+  check('bag-009ב falls left of 0', allSign('16*(4-x)/x^3', -40, 0, -1), 1); check('bag-009ב rises on (0,4)', allSign('16*(4-x)/x^3', 0, 4, 1), 1); check('bag-009ב falls right of 4', allSign('16*(4-x)/x^3', 4, 40, -1), 1);
+  check('bag-009ג a = 16 puts the max exactly at height 2', f('16*(x-2)/x^2')(4), 2); check('bag-009ג the touch is a double root', f('-2*(x-4)^2/x^2')(4), 0); check('bag-009ג g = -2(x-4)²/x²', f('16*(x-2)/x^2 - 2')(3), f('-2*(x-4)^2/x^2')(3)); check('bag-009ג a = 15 gives none', crossings('15*(x-2)/x^2 - 2', [0]), 0); check('bag-009ג a = 17 gives two', crossings('17*(x-2)/x^2 - 2', [0]), 2);
+  const h009 = '(16*(x-2)/x^2 - 2)*(16*(4-x)/x^3)';
+  check('bag-009ד h < 0 on (0,4)', allSign(h009, 0, 4, -1), 1); check('bag-009ד h > 0 left of 0', allSign(h009, -40, 0, 1), 1); check('bag-009ד h > 0 right of 4', allSign(h009, 4, 40, 1), 1);
+  check('bag-009ה p → -1/2', f('1/(16*(x-2)/x^2 - 2)')(1e7), -0.5, 1e-6); check('bag-009ה p → 0 at 0 (no asymptote)', f('1/(16*(x-2)/x^2 - 2)')(1e-6), 0, 1e-9); check('bag-009ה p → -∞ at 4', f('1/(16*(x-2)/x^2 - 2)')(4 + 1e-6) < -1e6 ? 1 : 0, 1);
+  // fn-bag-rq-010: f = x√(4-x²)
+  const f010 = 'x*sqrt(4-x^2)', s2 = Math.SQRT2, s3 = Math.sqrt(3);
+  check('bag-010א domain edge', notReal(f(f010)(2.01)) ? 1 : 0, 1); check('bag-010א odd', f(f010)(1.3) + f(f010)(-1.3), 0);
+  dcheck("bag-010ב f'", f010, '(4-2*x^2)/sqrt(4-x^2)', [-1.9, -1, -0.5, 0.7, 1, 1.9]); check('bag-010ב f(√2) = 2', f(f010)(s2), 2); check('bag-010ב max at √2', kind(f010, s2, 0.01), -1); check('bag-010ב min at -√2', kind(f010, -s2, 0.01), 1);
+  check('bag-010ב left edge is a max-edge (f falls from it)', f(f010)(-2) > f(f010)(-1.99) ? 1 : 0, 1); check('bag-010ב right edge is a min-edge (f falls to it)', f(f010)(1.99) > f(f010)(2) ? 1 : 0, 1);
+  checkSet('bag-010ג f = √3 at 1 and √3', [1, s3].filter((x) => Math.abs(f(f010)(x) - s3) < 1e-9), [1, E('sqrt(3)')]); check('bag-010ג no negative solution', crossings(`${f010} - sqrt(3)`, [], -2, 0, 400), 0); check('bag-010ג exactly two solutions', crossings(`${f010} - sqrt(3)`, [], -2, 2, 4000), 2);
+  const g010 = `abs(${f010} - sqrt(3))`;
+  check('bag-010ד g(-√2) = 2+√3', f(g010)(-s2), 2 + s3); check('bag-010ד max at -√2', kind(g010, -s2, 0.01), -1); check('bag-010ד g(√2) = 2-√3', f(g010)(s2), 2 - s3); check('bag-010ד max at √2', kind(g010, s2, 0.01), -1);
+  check('bag-010ד corner min at 1', kind(g010, 1, 0.01), 1); check('bag-010ד corner min at √3', kind(g010, s3, 0.01), 1); check('bag-010ד g(±2) = √3', f(g010)(2) - f(g010)(-2), 0); check('bag-010ד g(2) = √3', f(g010)(2), s3);
+  check('bag-010ד left edge is a min-edge (g rises from it)', f(g010)(-1.99) > f(g010)(-2) ? 1 : 0, 1); check('bag-010ד right edge is a max-edge (g rises to it)', f(g010)(2) > f(g010)(1.99) ? 1 : 0, 1);
+  // ה: count meetings of y = k with g on [-2,2] as connected runs of |g - k| < 2e-4 (a tangency or an edge counts once)
+  const meets = (k: number) => { const g = f(g010); let n = 0, inside = false; for (let i = 0; i <= 400000; i++) { const near = Math.abs(g(-2 + i / 100000) - k) < 2e-4; if (near && !inside) n++; inside = near; } return n; };
+  check('bag-010ה k = 0 → 2', meets(0), 2); check('bag-010ה 0 < k < 2-√3 → 4', meets(0.1), 4); check('bag-010ה k = 2-√3 → 3', meets(2 - s3), 3); check('bag-010ה 2-√3 < k < √3 → 2', meets(1), 2); check('bag-010ה k = √3 → 3', meets(s3), 3); check('bag-010ה √3 < k < 2+√3 → 2', meets(3), 2); check('bag-010ה k = 2+√3 → 1', meets(2 + s3), 1);
+  check('bag-010ה g(0) = √3 is the middle meeting', f(g010)(0), s3);
+  // lesson worked example: 4/x - x > 0 exactly on x < -2 and 0 < x < 2
+  check('lesson 4/x > x left of -2', allSign('4/x - x', -40, -2, 1), 1); check('lesson 4/x < x on (-2,0)', allSign('4/x - x', -2, 0, -1), 1); check('lesson 4/x > x on (0,2)', allSign('4/x - x', 0, 2, 1), 1); check('lesson 4/x < x right of 2', allSign('4/x - x', 2, 40, -1), 1);
+}
+
 summary('transformations');
