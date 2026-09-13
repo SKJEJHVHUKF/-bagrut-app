@@ -1,6 +1,6 @@
 /* Figures for the two סעיפי חשיבה added to the בגרות rung of רמה 6 (2026-09-11).
  *
- *   bag-009-e   fn-bag-rq-009/ה — p(x) = 1/g(x), g(x) = f(x) - 2, f(x) = 8(x-1)/x^2
+ *   bag-009-e   fn-bag-rq-009/ה — p(x) = 1/g(x), g(x) = f(x) - 2, f(x) = 16(x-2)/x^2
  *   bag-010-b   fn-bag-rq-010/ב — f(x) = x*sqrt(4-x^2)
  *   bag-010-d   fn-bag-rq-010/ד — g(x) = |f(x) - sqrt(3)|
  *   bag-010-e   fn-bag-rq-010/ה — the same g, crossed by y = 2-sqrt(3) and y = sqrt(3)
@@ -28,9 +28,9 @@ const r2 = Math.SQRT2;
 const r3 = Math.sqrt(3);
 
 // ---- the functions, exactly as the two questions define them ----------------
-// 009, with the a = 8 that part ג pins down. g is undefined wherever f is: a
+// 009, with the a = 16 that part ג pins down. g is undefined wherever f is: a
 // composite has no value where an inner denominator is zero.
-const f9 = (x: number) => (8 * (x - 1)) / (x * x);
+const f9 = (x: number) => (16 * (x - 2)) / (x * x);
 const g9 = (x: number) => (x === 0 ? null : f9(x) - 2);
 const p9 = (x: number) => {
   const g = g9(x);
@@ -73,7 +73,7 @@ type Level = { y: number; label: string; atX: number };
 type Fig = { spec: FnFigureSpec; levels?: Level[] };
 
 const FIGS: Record<string, Fig> = {
-  // 009/ה — the trap made visible: x = 2 is the only vertical asymptote, and at
+  // 009/ה — the trap made visible: x = 4 is the only vertical asymptote, and at
   // x = 0 the graph runs into a MISSING POINT at the origin, not to infinity.
   'bag-009-e': {
     spec: {
@@ -82,7 +82,7 @@ const FIGS: Record<string, Fig> = {
       xMax: 12,
       yMin: -3,
       yMax: 0.7,
-      vAsymptotes: [2],
+      vAsymptotes: [4],
       hAsymptotes: [-0.5],
       points: [{ x: 0, y: 0, label: '(0, 0)', hole: true }],
     },

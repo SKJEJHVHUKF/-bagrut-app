@@ -166,21 +166,33 @@ const kind = (expr: string, x0: number, h = 0.05) => {
   check('tr-108 x^2/(x^2-1) is not odd', oddness('x^2/(x^2-1)') > 0.1 ? 1 : 0, 1);
 }
 
-// rq-sub-tr-109 — min height 3, g = c + f touches the x-axis once → c = -3 (open)
+// rq-sub-tr-109 — f = 3/x above g = 1/(x-2): sign table of f - g (MCQ, 2026-09-13)
 {
-  const fm = '(x-1)^2 + 3'; // model: unique min of height 3, rises without bound
-  const minVal = Math.min(...Array.from({ length: 4001 }, (_, i) => f(fm)(-20 + i * 0.01)));
-  check('tr-109 model minimum value 3', minVal, 3);
-  // g(x) = (x-1)^2 + 3 + c = 0 ⇔ (x-1)^2 = -(3 + c): solutions counted by the discriminant
-  const count = (c: number) => quadCount(1, -2, 1 + 3 + c);
-  check('tr-109 c = -3 gives exactly one common point', count(-3), 1);
-  check('tr-109 c from -c = minVal', -minVal, E('-3'));
-  check('tr-109 c = -4 gives two (line above the min)', count(-4), 2);
-  check('tr-109 c = -2 gives none (line below the min)', count(-2), 0);
-  // wrongs
-  check('tr-109 wrong c = 3: min height 6, no common point', f(`${fm} + 3`)(1), 6);
-  check('tr-109 wrong c = 3 count', count(3), 0);
-  check('tr-109 wrong c = 0 count', count(0), 0);
+  const fx = '3/x', gx = '1/(x-2)';
+  const d = f(`${fx} - (${gx})`);
+  // the difference simplifies to 2(x-3)/(x(x-2))
+  for (const x of [-4, 0.5, 2.5, 7]) check(`tr-109 f - g = 2(x-3)/(x(x-2)) at ${x}`, d(x), f('2*(x-3)/(x*(x-2))')(x));
+  check('tr-109 the only meeting is x = 3 (no sign change elsewhere but at the poles)', crossings(`${fx} - (${gx})`, [0, 2]), 1);
+  check('tr-109 f(3) = g(3)', f(fx)(3), f(gx)(3));
+  check('tr-109 f(3) = 1', f(fx)(3), 1);
+  // the sign table, column by column
+  check('tr-109 x < 0: f below g', d(-1) < 0 ? 1 : 0, 1);
+  check('tr-109 0 < x < 2: f above g', d(1) > 0 ? 1 : 0, 1);
+  check('tr-109 2 < x < 3: f below g', d(2.5) < 0 ? 1 : 0, 1);
+  check('tr-109 x > 3: f above g', d(5) > 0 ? 1 : 0, 1);
+  check('tr-109 check point f(1) = 3', f(fx)(1), 3);
+  check('tr-109 check point g(1) = -1', f(gx)(1), -1);
+  check('tr-109 poles: f undefined at 0', Number.isFinite(f(fx)(0)) ? 1 : 0, 0);
+  check('tr-109 poles: g undefined at 2', Number.isFinite(f(gx)(2)) ? 1 : 0, 0);
+  // distractor B: multiplying by x(x-2) as if positive → 3(x-2) > x → x > 3 only; loses 0 < x < 2
+  check('tr-109 B: naive cross-multiplication root', E('6/2'), 3);
+  check('tr-109 B: x(x-2) is negative on (0, 2), so the inequality flips there', f('x*(x-2)')(1) < 0 ? 1 : 0, 1);
+  // distractor C: the sign read backwards — at x = -1 f is BELOW g
+  check('tr-109 C: f(-1) = -3', f(fx)(-1), -3);
+  check('tr-109 C: g(-1) = -1/3', f(gx)(-1), E('-1/3'));
+  check('tr-109 C: so f - g < 0 there', d(-1) < 0 ? 1 : 0, 1);
+  // distractor D: x = 3 included — the graphs MEET there, f is not above g
+  check('tr-109 D: f(3) - g(3) = 0', d(3), 0);
 }
 
 // rq-sub-tr-110 — (3x-5)/(x-2) = 3 has no solution (open)
@@ -357,20 +369,53 @@ const kind = (expr: string, x0: number, h = 0.05) => {
   check('tr-203 wrong (4,2): height 2 belongs to x = 0', f(gx)(0), 2);
 }
 
-// rq-sub-tr-204 — 4/x^2 on [1,4]: area 3; +1 gives 6 and ×2 gives 6 — equal
+// rq-sub-tr-204 — y = k meets f = (x^3-4x)/(x^2+5) in exactly three points ⇔ -0.5 < k < 0.5 (MCQ, 2026-09-13)
 {
-  const fx = '4/x^2';
-  icheck('tr-204 area of f on [1,4]', fx, 1, 4, E('4*(1/1 - 1/4)'));
-  icheck('tr-204 area of g = f + 1', `${fx} + 1`, 1, 4, E('3 + 1*3'));
-  icheck('tr-204 area of h = 2f', `2*(${fx})`, 1, 4, E('2*3'));
-  check('tr-204 the interval is 3 wide', 4 - 1, E('3'));
-  check('tr-204 the added rectangle is 1*3', 1 * (4 - 1), E('3'));
-  check('tr-204 both areas are equal', E('3 + 1*3') - E('2*3'), 0);
-  check('tr-204 distractor B: 3 + 2 = 5 for h', 3 + 2, 5);
-  check('tr-204 distractor B difference 6 - 5', 6 - 5, 1);
-  check('tr-204 distractor C: 3 + 1 = 4 for g', 3 + 1, 4);
-  check('tr-204 distractor C difference 6 - 4', 6 - 4, 2);
-  check('tr-204 f is undefined at 0', Number.isFinite(f(fx)(0)) ? 1 : 0, 0);
+  const fx = '(x^3 - 4x)/(x^2 + 5)';
+  const fp = '((3x^2 - 4)(x^2 + 5) - (x^3 - 4x)*2x)/(x^2 + 5)^2';
+  dcheck('tr-204 quotient-rule derivative', fx, fp);
+  dcheck('tr-204 numerator collects to x^4 + 19x^2 - 20', fx, '(x^4 + 19x^2 - 20)/(x^2 + 5)^2');
+  for (const x of [-3, 0.5, 2]) check(`tr-204 x^4+19x^2-20 = (x^2-1)(x^2+20) at ${x}`, f('x^4 + 19x^2 - 20')(x), f('(x^2 - 1)(x^2 + 20)')(x));
+  check('tr-204 x^2 + 20 never vanishes', f('x^2 + 20')(0) > 0 ? 1 : 0, 1);
+  check("tr-204 f' has exactly two roots", crossings(fp), 2);
+  check("tr-204 f'(1) = 0", f(fp)(1), 0);
+  check("tr-204 f'(-1) = 0", f(fp)(-1), 0);
+  check('tr-204 f(-1) = 0.5', f(fx)(-1), E('(-1 + 4)/(1 + 5)'));
+  check('tr-204 f(1) = -0.5', f(fx)(1), E('(1 - 4)/(1 + 5)'));
+  check('tr-204 (-1, 0.5) is a maximum', kind(fx, -1), -1);
+  check('tr-204 (1, -0.5) is a minimum', kind(fx, 1), 1);
+  checkSet('tr-204 x-intercepts', [-2, 0, 2].filter((x) => Math.abs(f(fx)(x)) < 1e-12), [-2, 0, 2]);
+  check('tr-204 no vertical asymptote: x^2 + 5 > 0', f('x^2 + 5')(0) > 0 ? 1 : 0, 1);
+  check('tr-204 rises without bound', f(fx)(1e4) > 1e3 ? 1 : 0, 1);
+  check('tr-204 falls without bound', f(fx)(-1e4) < -1e3 ? 1 : 0, 1);
+  // the claim itself, as a fine-grid meeting count: crossings + touchings of y = k
+  const meet = (k: number) => {
+    const g = f(`${fx} - (${k})`);
+    let n = crossings(`${fx} - (${k})`, [], -60, 60, 24000);
+    const dx = 120 / 24000;
+    for (let i = 1; i < 24000; i++) {
+      const x = -60 + i * dx;
+      const a = Math.abs(g(x - dx)), b = Math.abs(g(x)), c = Math.abs(g(x + dx));
+      if (b < a && b < c && b < 1e-3 && g(x - dx) * g(x + dx) > 0) n++;
+    }
+    return n;
+  };
+  for (const k of [-0.49, -0.2, 0, 0.2, 0.49]) check(`tr-204 k = ${k} gives three points`, meet(k), 3);
+  for (const k of [-0.5, 0.5]) check(`tr-204 k = ${k} (an extremum height) gives two: a touch and a cross`, meet(k), 2);
+  for (const k of [-2, -0.51, 0.51, 2]) check(`tr-204 k = ${k} gives one point`, meet(k), 1);
+  const three: number[] = [];
+  for (let k = -1.5; k <= 1.5 + 1e-9; k += 0.05) { const kk = Number(k.toFixed(2)); if (meet(kk) === 3) three.push(kk); }
+  check('tr-204 the three-point set on a 0.05 grid is exactly (-0.5, 0.5): count', three.length, 19);
+  check('tr-204 …lowest', three[0], -0.45);
+  check('tr-204 …highest', three[three.length - 1], 0.45);
+  // distractor B: the closed interval — the endpoints give two points, not three (checked above)
+  check('tr-204 B: at k = 0.5 the line touches the peak', f(fx)(-1) - 0.5, 0);
+  // distractor C: the x-coordinates ±1 used as heights — those lines meet once
+  check('tr-204 C: k = 1 gives one point', meet(1), 1);
+  check('tr-204 C: k = -1 gives one point', meet(-1), 1);
+  // distractor D: the sign reversed — outside the band there is one meeting
+  check('tr-204 D: k = 3 gives one point', meet(3), 1);
+  check('tr-204 D: k = -3 gives one point', meet(-3), 1);
 }
 
 // rq-sub-tr-211 — h = (2x-7)/(x-3) came from f moved 5 right then reflected in the x-axis
