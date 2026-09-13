@@ -573,14 +573,8 @@ export const SOLUTION_PLACEMENT: { id: string; question: string; caption: string
     id: 'SOL_DER009', question: 'rq-sub-der-009',
     caption: 'המינימום בתחום החיובי. שימו לב שהענף השמאלי נפרד לגמרי, ולכן הערכים שלו אינם משתתפים בהשוואה.',
   },
-  {
-    id: 'SOL_IN005', question: 'rq-sub-in-005',
-    caption: 'האזור שחושב: כולו מעל הציר בין שני השורשים, ולכן אינטגרל אחד בלי פיצול.',
-  },
-  {
-    id: 'AREA_BETWEEN', question: 'rq-sub-in-006',
-    caption: 'האזור הכלוא בין הפרבולה לישר. הגבולות הם נקודות המפגש, והישר הוא העליון לכל אורך התחום.',
-  },
+  // rq-sub-in-005 / rq-sub-in-006: moved to scripts/_gen-rq-integral-figures.ts
+  // (2026-09-13) with every other רמה 7 figure, in the hatched-area style.
   {
     id: 'SOL_BG002', question: 'rq-sub-bg-002',
     caption: 'כל מה שהסעיף מצא, על גרף אחד: האסימפטוטות המקווקוות ושתי נקודות החיתוך.',
@@ -647,27 +641,8 @@ export const PLACEMENT: { id: string; stage: string; step: number; caption: stri
     caption:
       'פונקציה אי-זוגית: שני ערכי $x$ נגדיים נותנים גבהים נגדיים, ולכן הגרף סימטרי סביב ראשית הצירים.',
   },
-  {
-    id: 'AREA_UNDER',
-    stage: 'rq-integral',
-    step: 5,
-    caption:
-      'השטח שבין $f(x) = 4-x^2$ לבין ציר $x$. הגבולות הם שורשי הפונקציה, וכל האזור נמצא מעל הציר ולכן אין מה לפצל.',
-  },
-  {
-    id: 'AREA_SPLIT',
-    stage: 'rq-integral',
-    step: 5,
-    caption:
-      'כשהגרף חוצה את הציר מפצלים בנקודת החיתוך: הקטע הוורוד שמתחת לציר תורם $\\dfrac{16}{3}$ בערך מוחלט, והקטע הירוק שמעליו תורם $\\dfrac{7}{3}$, ובסך הכול $\\dfrac{23}{3}$.',
-  },
-  {
-    id: 'AREA_BETWEEN',
-    stage: 'rq-integral',
-    step: 6,
-    caption:
-      'השטח הכלוא בין $y = x^2$ לבין $y = 2x+3$. הגבולות הם נקודות המפגש, והישר הוא העליון לכל אורך התחום, ולכן מחסרים אותו פחות הפרבולה.',
-  },
+  // רמה 7 (rq-integral) lesson figures live in scripts/_gen-rq-integral-figures.ts
+  // since 2026-09-13 — the SPECS above are kept only as their numeric checks.
 ];
 
 // ---------------------------------------------------------------- run
