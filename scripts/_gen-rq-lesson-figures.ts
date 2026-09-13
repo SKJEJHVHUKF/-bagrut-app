@@ -154,7 +154,13 @@ function build(fig: Fig): string {
     const p = pointOnCurve(svg, fig.spec, x)!;
     extra.push(`<text x="${p[0]}" y="${(p[1] - 8).toFixed(1)}" font-size="10.5" fill="${fig.before ? SOLID_TWO : DASHED}" text-anchor="middle" font-weight="bold">${name}</text>`);
   }
-  for (const lv of fig.levels ?? []) extra.unshift(levelLine(fig.spec, lv));
+  for (const lv of fig.levels ?? []) {
+    extra.unshift(levelLine(fig.spec, lv));
+    // A level line at a tick height runs straight through that axis number, and its
+    // own label already names the height: drop the number (seen on the contact sheet).
+    const num = `>${Number.isInteger(lv.y) ? lv.y : lv.y.toFixed(1)}</text>`;
+    out = out.split('\n').filter((l) => !(l.startsWith('<text ') && l.includes('font-size="10" ') && l.includes('text-anchor="end"') && l.endsWith(num))).join('\n');
+  }
   // The "before" ink goes under the primary curve. Index splice, never replace().
   const at = out.indexOf('<polyline');
   if (at < 0) throw new Error('nothing to draw');
@@ -238,6 +244,33 @@ const inv = (x: number) => (Math.abs(x) < 1e-9 ? null : 1 / x);
     spec: { f: g, xMin: -1.5, xMax: 5.5, yMin: -6, yMax: 6, points: [{ x: 2, y: -2, label: '(2, -2)' }] },
     before: { f: P, points: [{ x: 2, y: -4, label: '(2, -4)' }] },
     names: { primary: ['0.5f(x)', -1.3], before: ['f(x)', 1.2] },
+  };
+}
+// lesson · the horizontal-line example: f = 8x/(x^2 + 4), g = f - 1 meets the x-axis twice
+// (the line y = 1 crosses the rise and the fall of the right side), g = f - 2 once (y = 2 touches the maximum).
+{
+  const f = (x: number) => (8 * x) / (x * x + 4);
+  const r1 = 4 - 2 * Math.sqrt(3);
+  const r2 = 4 + 2 * Math.sqrt(3);
+  eq('level f(0) = 0', f(0), 0);
+  eq('level maximum f(2) = 2', f(2), 2);
+  eq('level minimum f(-2) = -2', f(-2), -2);
+  eq("level f'(2) = 0", D(f, 2), 0, 1e-6);
+  eq("level f'(-2) = 0", D(f, -2), 0, 1e-6);
+  for (const x of [-7, -2.5, -1, 0.3, 1.9, 3, 11]) eq(`level f'(${x}) = 8(4 - x^2)/(x^2 + 4)^2`, D(f, x), (8 * (4 - x * x)) / (x * x + 4) ** 2, 1e-6);
+  for (const x of [0.5, 1.5, 3, 9]) eq(`level odd at x=${x}`, f(-x), -f(x), 1e-12);
+  ok('level f < 0 for every x < 0', maxOn(f, -80, -0.001) < 0);
+  ok('level f never rises above 2', maxOn(f, -80, 80) <= 2 + 1e-9);
+  eq('level horizontal asymptote y = 0', f(1e7), 0, 1e-5);
+  const at1 = signChanges((x) => f(x) - 1, -80, 80);
+  ok(`level f(x) = 1 exactly twice, at 4 ± 2√3 (found ${at1.map((v) => v.toFixed(4))})`, at1.length === 2 && Math.abs(at1[0] - r1) < 1e-6 && Math.abs(at1[1] - r2) < 1e-6);
+  ok('level f(x) = 2 only by touching at x = 2', signChanges((x) => f(x) - 2, -80, 80).length === 0 && maxOn((x) => f(x) - 2, -80, 80) <= 1e-9);
+  FIGS['lsn-level-lines'] = {
+    spec: {
+      f, xMin: -6, xMax: 12, yMin: -3, yMax: 3,
+      points: [{ x: 2, y: 2, label: '(2, 2)' }, { x: -2, y: -2, label: '(-2, -2)' }, { x: r1, y: 1 }, { x: r2, y: 1 }],
+    },
+    levels: [{ y: 1, label: 'y = 1', atX: -4.3 }, { y: 2, label: 'y = 2', atX: -4.3 }],
   };
 }
 // lesson · worked example "f above g": f = 4/x, g = x. f - g = (4 - x^2)/x.

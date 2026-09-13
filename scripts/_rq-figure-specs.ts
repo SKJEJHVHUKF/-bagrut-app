@@ -31,7 +31,6 @@ const f_root = (x: number) => Math.sqrt(x + 1);
 const f_absbase = (x: number) => x * x - 4;
 const f_even = (x: number) => x * x - 2;
 const f_odd = (x: number) => (x * x * x) / 6;
-const f_hyp = (x: number) => x + 4 / x;
 const f_dome = (x: number) => 4 - x * x;
 const f_line = (x: number) => 2 * x + 3;
 
@@ -240,40 +239,6 @@ export const SPECS: Spec[] = [
       ['the two marked heights are opposite', f_odd(-1.8), -f_odd(1.8)],
       ['the guide passes through the origin', f_odd(0), 0],
       ['and the value is not symmetric in the even sense', Math.round((f_odd(1.8) - f_odd(-1.8)) * 1000) / 1000, 1.944],
-    ],
-  },
-  {
-    id: 'HORIZONTAL_LINE',
-    where: 'rq-transformations / step 4 — שיטת הישר האופקי',
-    fig: {
-      w: 300, h: 285,
-      xRange: [-9, 9], yRange: [-11, 11],
-      curves: [{ f: f_hyp }],
-      vAsym: [{ x: 0 }],
-      guides: [
-        { x1: -9, y1: -4, x2: 9, y2: -4, color: EMERALD, dashed: true },
-        { x1: -9, y1: 0, x2: 9, y2: 0, color: AMBER, dashed: true },
-        { x1: -9, y1: 6, x2: 9, y2: 6, color: PINK, dashed: true },
-      ],
-      points: [
-        { x: -2, y: -4, color: EMERALD, label: '' },
-        { x: 3 - Math.sqrt(5), y: 6, color: PINK, label: '' },
-        { x: 3 + Math.sqrt(5), y: 6, color: PINK, label: '' },
-      ],
-      texts: [
-        { x: -6.4, y: -3.2, text: 'y = -4', color: EMERALD, bold: true },
-        { x: -6.4, y: 0.9, text: 'y = 0', color: AMBER, bold: true },
-        { x: -6.4, y: 6.9, text: 'y = 6', color: PINK, bold: true },
-      ],
-      yTicks: [{ y: 4, label: '4' }, { y: -4, label: '-4' }],
-    },
-    checks: [
-      ['the left branch peaks at -4', f_hyp(-2), -4],
-      ['so y = -4 TOUCHES it, one point', f_hyp(-2), -4],
-      ['the right branch bottoms at +4', f_hyp(2), 4],
-      ['y = 0 falls in the gap between them, so no solution', 0, 0],
-      ['y = 6 cuts the right branch twice, first root', Math.round(f_hyp(3 - Math.sqrt(5)) * 1e9) / 1e9, 6],
-      ['and second root', Math.round(f_hyp(3 + Math.sqrt(5)) * 1e9) / 1e9, 6],
     ],
   },
   // =====================================================================
@@ -681,13 +646,6 @@ export const PLACEMENT: { id: string; stage: string; step: number; caption: stri
     step: 3,
     caption:
       'פונקציה אי-זוגית: שני ערכי $x$ נגדיים נותנים גבהים נגדיים, ולכן הגרף סימטרי סביב ראשית הצירים.',
-  },
-  {
-    id: 'HORIZONTAL_LINE',
-    stage: 'rq-transformations',
-    step: 4,
-    caption:
-      'הגרף של $f(x) = x + \\dfrac{4}{x}$. הישר בגובה $-4$ נוגע בפסגה בנקודה אחת בלבד, הישר בגובה $0$ נופל ברווח שבין ערכי הקיצון ואינו פוגש כלום, והישר בגובה $6$ חותך את הענף הימני פעמיים.',
   },
   {
     id: 'AREA_UNDER',
