@@ -145,7 +145,10 @@ async function main() {
       let err = '';
       try {
         const r = await p.stream(
-          { system, messages: [{ role: 'user', content: user }], maxTokens: 200, temperature: 0.3, tools: p.id === 'anthropic' ? TUTOR_TOOLS : undefined },
+          // 400, not the route's 200 nudge cap: with no history the sample is
+          // concept-heavy, and at 200 the judge graded cut-off replies as broken
+          // Hebrew (first run: 3 of 5 "broken" were truncations).
+          { system, messages: [{ role: 'user', content: user }], maxTokens: 400, temperature: 0.3, tools: p.id === 'anthropic' ? TUTOR_TOOLS : undefined },
           () => {},
         );
         reply = r.text;

@@ -525,7 +525,7 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     ok(!typedBank.answered && (typedBank.candidates?.length ?? 0) > 0, 'typed question the bank could answer → model, WITH the bank entry as a candidate');
     const chipBank = await runTutorChain({ message: 'מה בנתונים מרמז שצריך את משפט קטע האמצעים', focus, state: emptyChainState() });
     ok(chipBank.answered && chipBank.layer === 'faq:early', 'the same sentence as a chip still serves from the bank');
-    for (const [msg, layer] of [['תודה', 'ack'], ['זה יבוא בבגרות?', 'exam-meta']] as Array<[string, string]>) {
+    for (const [msg, layer] of [['תודה', 'ack'], ['זה יבוא בבגרות?', 'exam-meta'], ['יש לך טיפים לבגרות?', 'tips']] as Array<[string, string]>) {
       const r = await runTutorChain({ message: msg, focus, state: emptyChainState(), typed: true });
       ok(r.answered && r.layer === layer, `typed "${msg}" is exact → still free (${layer})`);
     }

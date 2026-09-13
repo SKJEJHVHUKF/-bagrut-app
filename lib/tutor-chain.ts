@@ -415,6 +415,19 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
     // The curriculum table is exact and stays free — see step 3 below.
     const typedMeta = examMetaAnswer(text, focus?.topic || screenTopic || undefined);
     if (typedMeta) return hit(typedMeta, 'exam-meta');
+    // Two more answers that come from DATA, not from guessing about the
+    // exercise: the student's own plan ("על מה כדאי לעבוד", "שלח אותי
+    // לתרגול") and the static exam tips. Measured in the A/B (2026-09-13):
+    // the model answered both with "על איזה נושא אתה עובד עכשיו?".
+    {
+      const { planAnswer } = await import('@/lib/tutor-plan-answer');
+      const fromPlan = planAnswer(text, Boolean(focus?.question));
+      if (fromPlan) return hit(fromPlan, 'plan');
+      if (canonicalIntent(text, undefined).intent === 'study_tips') {
+        const { studyTips } = await import('@/lib/study-tips');
+        return hit(studyTips(focus?.topic || screenTopic || undefined), 'tips');
+      }
+    }
     grounded = groundTopic();
     if (grounded) state.convTopic = grounded;
     const { faqCandidates } = await import('@/lib/tutor-faq');
