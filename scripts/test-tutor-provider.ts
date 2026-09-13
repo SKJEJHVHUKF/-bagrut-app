@@ -8,7 +8,7 @@
  * selectTutorProvider refuses to silently fall back when the chosen
  * provider has no key.
  */
-import { toGeminiBody, foldGeminiChunk, selectTutorProvider, type TurnRequest, type TurnResult } from '../lib/llm/tutor-provider';
+import { toGeminiBody, foldGeminiChunk, selectTutorProvider, splitForCache, GEMINI_HEBREW_GUARD, type TurnRequest, type TurnResult } from '../lib/llm/tutor-provider';
 
 let failed = 0;
 const ok = (cond: boolean, name: string) => {
@@ -32,7 +32,18 @@ const req: TurnRequest = {
 
 console.log('— request mapping —');
 const body = toGeminiBody(req);
-ok(body.systemInstruction.parts[0].text === 'CORE\n\nGROUNDING', 'system blocks joined into one instruction, cache markers dropped');
+const sys = body.systemInstruction?.parts[0].text ?? '';
+ok(sys.startsWith('CORE\n\nGROUNDING'), 'system blocks joined into one instruction, cache markers dropped');
+ok(sys.endsWith(GEMINI_HEBREW_GUARD), 'the Hebrew morphology guard is appended on Gemini only');
+ok(toGeminiBody(req, { temperature: 0.1 }).generationConfig.temperature === 0.1, 'Gemini temperature override wins over the request value');
+
+console.log('— explicit cache mapping —');
+const split = splitForCache(req.system);
+ok(split.prefix === 'CORE' && split.tail === 'GROUNDING', 'prefix = blocks up to the last cache marker, tail = the rest');
+const cached = toGeminiBody(req, {}, { name: 'cachedContents/abc', tail: split.tail });
+ok(!('systemInstruction' in cached) && cached.cachedContent === 'cachedContents/abc', 'with a cache: cachedContent set and NO systemInstruction (Gemini forbids both)');
+ok(cached.contents[0].parts[0].text === 'GROUNDING\n\nשלום' && cached.contents[2].parts[0].text === 'צריך לגזור', 'the uncached tail rides at the top of the FIRST user message only');
+ok(splitForCache([{ type: 'text', text: 'X' }]).prefix === '', 'no cache marker → nothing to cache');
 ok(body.contents.length === 3 && body.contents[1].role === 'model' && body.contents[2].role === 'user', 'assistant → model, user stays user');
 ok(body.contents[2].parts[0].text === 'צריך לגזור', 'Hebrew text passes through untouched');
 ok(body.generationConfig.maxOutputTokens === 200 && body.generationConfig.temperature === 0.3, 'budget and temperature carried');

@@ -92,7 +92,14 @@ async function main() {
   // AB_SKIP_ANTHROPIC=1 re-runs only the Gemini arm (the Anthropic arm is the expensive one, and its numbers do not change).
   const providers: TutorProvider[] = process.env.AB_SKIP_ANTHROPIC ? [] : [new AnthropicTutorProvider('claude-haiku-4-5', anthropicKey)];
   if (process.env.GEMINI_API_KEY) {
-    providers.push(new GeminiTutorProvider((process.env.TUTOR_GEMINI_MODEL ?? 'gemini-2.5-flash-lite').trim(), process.env.GEMINI_API_KEY));
+    // The same knobs production reads (lib/llm/tutor-provider selectTutorProvider):
+    // TUTOR_GEMINI_TEMPERATURE (default 0.1) and TUTOR_GEMINI_CACHE=off.
+    providers.push(
+      new GeminiTutorProvider((process.env.TUTOR_GEMINI_MODEL ?? 'gemini-3.5-flash-lite').trim(), process.env.GEMINI_API_KEY, {
+        temperature: Number(process.env.TUTOR_GEMINI_TEMPERATURE ?? 0.1),
+        cache: process.env.TUTOR_GEMINI_CACHE !== 'off',
+      }),
+    );
   } else {
     console.log('no GEMINI_API_KEY — running the Anthropic arm only');
   }

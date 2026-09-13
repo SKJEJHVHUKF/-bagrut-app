@@ -131,24 +131,87 @@ export class AnthropicTutorProvider implements TutorProvider {
 // Gemini — REST, no SDK (one fetch; a dependency for one endpoint is not worth it)
 // ------------------------------------------------------------
 
-/** The generateContent request body. Exported so a test can pin the mapping without a network. */
-export function toGeminiBody(req: TurnRequest) {
+/**
+ * Gemini-specific tuning. Everything here is what the A/B found Gemini needs
+ * that Anthropic does not — kept out of TUTOR_CORE so the shared prompt (and
+ * its cache entry) does not change for the provider that did not need it.
+ */
+export type GeminiOptions = {
+  /**
+   * 0.1, not the 0.3 the Anthropic path uses. Measured 2026-09-14 on
+   * gemini-3.5-flash-lite at 0.3: 3 of 60 replies with broken Hebrew
+   * ("פונקציה מורכב", "המקקדמים", "המאגד המאוחד"). Same failure class Haiku
+   * had at 1.0; the fix there was the temperature, so it is tried here first.
+   */
+  temperature?: number;
+  /** Explicit context caching of the shared system prefix (below). Default on. */
+  cache?: boolean;
+  /** Cache TTL in seconds. 3600 matches the Anthropic 1h breakpoints. */
+  cacheTtlSeconds?: number;
+};
+
+/**
+ * Appended to the system instruction on Gemini only. The Hebrew rules in
+ * TUTOR_CORE are about register and layout; this one is about morphology,
+ * which is where a small model's sampling noise shows first.
+ */
+export const GEMINI_HEBREW_GUARD = `# Hebrew proofreading — mandatory, Gemini
+Before sending, re-read every Hebrew word of the reply. Each must be a real, dictionary Hebrew word in a correctly inflected form: gender and number agree (פונקציה מורכבת, not פונקציה מורכב), no doubled or dropped letters (המקדמים, not המקקדמים), no invented compounds (say "האיחוד", never "המאגד המאוחד"). If unsure of a word, use a simpler one. Hebrew letters never appear inside $...$.`;
+
+/**
+ * Where the cacheable prefix ends: the last system block that carries a
+ * cache_control marker. Blocks up to it are byte-identical across turns
+ * (core + curriculum map, then the topic grounding); blocks after it vary
+ * per student (level, memory) and are sent per turn.
+ *
+ * Exported for the mapping test.
+ */
+export function splitForCache(system: SystemBlock[]): { prefix: string; tail: string } {
+  let last = -1;
+  system.forEach((b, i) => {
+    if ((b as { cache_control?: unknown }).cache_control) last = i;
+  });
+  const prefix = system.slice(0, last + 1).map((b) => b.text).join('\n\n');
+  const tail = system.slice(last + 1).map((b) => b.text).join('\n\n');
+  return { prefix, tail };
+}
+
+/**
+ * The generateContent request body. Exported so a test can pin the mapping
+ * without a network.
+ *
+ * With `cachedContent`: Gemini forbids `systemInstruction` alongside a cache
+ * (the cache carries it), so the varying tail of the system prompt rides at
+ * the top of the first user message instead. Same words, same order, billed
+ * at 1x exactly as the uncached tail is on Anthropic.
+ */
+export function toGeminiBody(req: TurnRequest, opts: GeminiOptions = {}, cachedContent?: { name: string; tail: string }) {
+  const temperature = opts.temperature ?? req.temperature;
+  const generationConfig = {
+    maxOutputTokens: req.maxTokens,
+    temperature,
+    // ⚠️ Thinking tokens bill as OUTPUT (5x input). Off, or the "cheap"
+    // provider is not cheap. Not every Gemini model accepts this field;
+    // the adapter strips it on a 400.
+    thinkingConfig: { thinkingBudget: 0 },
+  };
+  const contents = req.messages.map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
+  if (cachedContent) {
+    const first = contents.findIndex((c) => c.role === 'user');
+    if (cachedContent.tail && first >= 0) {
+      contents[first] = { ...contents[first], parts: [{ text: `${cachedContent.tail}\n\n${contents[first].parts[0].text}` }] };
+    }
+    return { cachedContent: cachedContent.name, contents, generationConfig };
+  }
   return {
     // System blocks are concatenated: Gemini has one system instruction and
-    // no breakpoints. Its 2.5 tier caches an identical prefix implicitly.
-    systemInstruction: { parts: [{ text: req.system.map((b) => b.text).join('\n\n') }] },
-    contents: req.messages.map((m) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
-    })),
-    generationConfig: {
-      maxOutputTokens: req.maxTokens,
-      temperature: req.temperature,
-      // ⚠️ Thinking tokens bill as OUTPUT (5x input). Off, or the "cheap"
-      // provider is not cheap. Not every Gemini model accepts this field;
-      // the adapter strips it on a 400 that names it.
-      thinkingConfig: { thinkingBudget: 0 },
-    },
+    // no breakpoints.
+    systemInstruction: { parts: [{ text: [...req.system.map((b) => b.text), GEMINI_HEBREW_GUARD].join('\n\n') }] },
+    contents,
+    generationConfig,
   };
 }
 
@@ -192,28 +255,91 @@ export function foldGeminiChunk(
   }
 }
 
+const GEMINI = 'https://generativelanguage.googleapis.com/v1beta';
+
+function hash(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(16);
+}
+
+/**
+ * Per-process registry of the caches this instance created. A serverless
+ * instance that has never seen a prefix creates it once (one full-price
+ * input, ~$0.002) and reads it for the rest of its life; an expired or
+ * deleted cache answers 4xx and is simply recreated. A prefix that Gemini
+ * refuses to cache (under the model's minimum, or a model without caching)
+ * is remembered as `null` so the request goes out uncached without a second
+ * failed create on every turn.
+ */
+const CACHES = new Map<string, { name: string; expiresAt: number } | null>();
+
 export class GeminiTutorProvider implements TutorProvider {
   readonly id = 'gemini';
-  constructor(readonly model: string, private apiKey: string) {}
+  constructor(readonly model: string, private apiKey: string, private opts: GeminiOptions = {}) {}
+
+  private headers() {
+    return { 'Content-Type': 'application/json', 'x-goog-api-key': this.apiKey };
+  }
+
+  /** The cachedContents name for this prefix, creating it if needed; null = send uncached. */
+  private async ensureCache(prefix: string): Promise<string | null> {
+    if (this.opts.cache === false || !prefix) return null;
+    const key = `${this.model}:${hash(prefix)}`;
+    const now = Date.now();
+    const known = CACHES.get(key);
+    if (known === null) return null;
+    if (known && known.expiresAt > now + 60_000) return known.name;
+    const ttl = this.opts.cacheTtlSeconds ?? 3600;
+    const res = await fetch(`${GEMINI}/cachedContents`, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify({
+        model: `models/${this.model}`,
+        displayName: `tutor:${key}`,
+        systemInstruction: { parts: [{ text: `${prefix}\n\n${GEMINI_HEBREW_GUARD}` }] },
+        ttl: `${ttl}s`,
+      }),
+    });
+    if (!res.ok) {
+      // Below the minimum, unsupported model, or a quota problem: uncached
+      // for this process. Logged once, because it changes the bill.
+      console.warn(`[gemini-cache] create failed ${res.status}: ${(await res.text()).slice(0, 200)} — sending uncached`);
+      CACHES.set(key, null);
+      return null;
+    }
+    const j = (await res.json()) as { name: string };
+    CACHES.set(key, { name: j.name, expiresAt: now + ttl * 1000 });
+    return j.name;
+  }
 
   async stream(req: TurnRequest, onDelta: (text: string) => void): Promise<TurnResult> {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:streamGenerateContent?alt=sse`;
-    const body = toGeminiBody(req);
-    let res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.apiKey },
-      body: JSON.stringify(body),
-    });
-    if (res.status === 400 && (body.generationConfig as { thinkingConfig?: unknown }).thinkingConfig) {
+    const url = `${GEMINI}/models/${this.model}:streamGenerateContent?alt=sse`;
+    const { prefix, tail } = splitForCache(req.system);
+    const cacheName = await this.ensureCache(prefix);
+    let body = toGeminiBody(req, this.opts, cacheName ? { name: cacheName, tail } : undefined);
+    const post = () => fetch(url, { method: 'POST', headers: this.headers(), body: JSON.stringify(body) });
+    let res = await post();
+    if (!res.ok && cacheName && (res.status === 403 || res.status === 404 || res.status === 400)) {
+      // The cache expired or was deleted under us: forget it, recreate once.
+      const err = await res.text();
+      if (/cachedContent|CachedContent|not found|expired/i.test(err)) {
+        CACHES.delete(`${this.model}:${hash(prefix)}`);
+        const fresh = await this.ensureCache(prefix);
+        body = toGeminiBody(req, this.opts, fresh ? { name: fresh, tail } : undefined);
+        res = await post();
+      } else if (res.status === 400 && body.generationConfig.thinkingConfig) {
+        delete (body.generationConfig as { thinkingConfig?: unknown }).thinkingConfig;
+        res = await post();
+      } else {
+        throw new Error(`gemini ${res.status}: ${err.slice(0, 300)}`);
+      }
+    } else if (res.status === 400 && body.generationConfig.thinkingConfig) {
       // A model with no thinking knob answers a bare "Request contains an
       // invalid argument" (gemini-3.5-flash-lite, 2026-09-13) — it does not
       // name the field. One resend without it; a second 400 is real.
       delete (body.generationConfig as { thinkingConfig?: unknown }).thinkingConfig;
-      res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.apiKey },
-        body: JSON.stringify(body),
-      });
+      res = await post();
     }
     if (!res.ok || !res.body) throw new Error(`gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
 
@@ -256,18 +382,21 @@ export class GeminiTutorProvider implements TutorProvider {
 
 /**
  * TUTOR_PROVIDER=anthropic (default) | gemini.
- * TUTOR_GEMINI_MODEL defaults to the 2.5 Flash-Lite tier — the only Gemini
- * tier measured cheaper than Haiku 4.5 (2026-09 prices; the 3.x Flash tiers
- * are not). Returns null when the chosen provider has no key, so the route
- * can fail loudly instead of silently falling back to a paid provider the
- * operator did not pick.
+ * TUTOR_GEMINI_MODEL defaults to 3.5 Flash-Lite (2.5 is 404 for new accounts;
+ * A/B 2026-09-14: 3.5-lite matched Haiku on relevance, 3.1-lite did not).
+ * Returns null when the chosen provider has no key, so the route can fail
+ * loudly instead of silently falling back to a paid provider the operator
+ * did not pick.
  */
 export function selectTutorProvider(anthropicModel: string): TutorProvider | null {
   const which = (process.env.TUTOR_PROVIDER ?? 'anthropic').trim().toLowerCase();
   if (which === 'gemini') {
     const key = process.env.GEMINI_API_KEY;
     if (!key) return null;
-    return new GeminiTutorProvider((process.env.TUTOR_GEMINI_MODEL ?? 'gemini-2.5-flash-lite').trim(), key);
+    return new GeminiTutorProvider((process.env.TUTOR_GEMINI_MODEL ?? 'gemini-3.5-flash-lite').trim(), key, {
+      temperature: Number(process.env.TUTOR_GEMINI_TEMPERATURE ?? 0.1),
+      cache: process.env.TUTOR_GEMINI_CACHE !== 'off',
+    });
   }
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return null;
