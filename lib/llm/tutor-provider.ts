@@ -204,10 +204,10 @@ export class GeminiTutorProvider implements TutorProvider {
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.apiKey },
       body: JSON.stringify(body),
     });
-    if (res.status === 400) {
-      const err = await res.text();
-      if (!/thinking/i.test(err)) throw new Error(`gemini 400: ${err.slice(0, 300)}`);
-      // This model has no thinking knob — resend without it.
+    if (res.status === 400 && (body.generationConfig as { thinkingConfig?: unknown }).thinkingConfig) {
+      // A model with no thinking knob answers a bare "Request contains an
+      // invalid argument" (gemini-3.5-flash-lite, 2026-09-13) — it does not
+      // name the field. One resend without it; a second 400 is real.
       delete (body.generationConfig as { thinkingConfig?: unknown }).thinkingConfig;
       res = await fetch(url, {
         method: 'POST',

@@ -45,8 +45,13 @@ const DAYS = 90;
 // Gemini 2.5 Flash-Lite: in 0.10 / cached 0.025 / out 0.40.
 const PRICE: Record<string, { in: number; cached: number; write: number; out: number }> = {
   'claude-haiku-4-5': { in: 1, cached: 0.1, write: 1.25, out: 5 },
-  'gemini-2.5-flash-lite': { in: 0.1, cached: 0.025, write: 0, out: 0.4 },
+  // ⚠️ 2.5 Flash-Lite answers 404 "no longer available to new users" (2026-09-13).
+  'gemini-2.5-flash-lite': { in: 0.1, cached: 0.01, write: 0, out: 0.4 },
   'gemini-2.5-flash': { in: 0.3, cached: 0.075, write: 0, out: 2.5 },
+  // ai.google.dev/gemini-api/docs/pricing, standard tier, read 2026-09-13.
+  'gemini-3.1-flash-lite': { in: 0.25, cached: 0.025, write: 0, out: 1.5 },
+  'gemini-3.5-flash-lite': { in: 0.3, cached: 0.03, write: 0, out: 2.5 },
+  'gemini-3.5-flash': { in: 1.5, cached: 0.15, write: 0, out: 9 },
 };
 const cost = (model: string, u: TurnUsage) => {
   const p = PRICE[model] ?? PRICE['claude-haiku-4-5'];
@@ -70,7 +75,8 @@ async function main() {
     console.error('missing Supabase or Anthropic credentials');
     process.exit(2);
   }
-  const providers: TutorProvider[] = [new AnthropicTutorProvider('claude-haiku-4-5', anthropicKey)];
+  // AB_SKIP_ANTHROPIC=1 re-runs only the Gemini arm (the Anthropic arm is the expensive one, and its numbers do not change).
+  const providers: TutorProvider[] = process.env.AB_SKIP_ANTHROPIC ? [] : [new AnthropicTutorProvider('claude-haiku-4-5', anthropicKey)];
   if (process.env.GEMINI_API_KEY) {
     providers.push(new GeminiTutorProvider((process.env.TUTOR_GEMINI_MODEL ?? 'gemini-2.5-flash-lite').trim(), process.env.GEMINI_API_KEY));
   } else {
