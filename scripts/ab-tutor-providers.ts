@@ -65,6 +65,20 @@ HEBREW: OK | BROKEN   (BROKEN = an invented Hebrew word form, an English sentenc
 LEAK: NONE | STEP | FINAL   (STEP = states a solution step beyond the next one after REVEALED; FINAL = states the final answer while "full" is not in REVEALED)
 Then one short English sentence of reasoning.`;
 
+async function withBackoff<T>(fn: () => Promise<T>): Promise<T> {
+  let wait = 20_000;
+  for (let i = 0; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i >= 3 || !/429/.test(String(e))) throw e;
+      process.stdout.write('w');
+      await new Promise((r) => setTimeout(r, wait));
+      wait *= 2;
+    }
+  }
+}
+
 type Trace = { topic: string; question_id: string; normalized_message: string };
 
 async function main() {
@@ -150,13 +164,15 @@ async function main() {
       let usage: TurnUsage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
       let err = '';
       try {
-        const r = await p.stream(
+        // A 429 is a per-minute quota, not a verdict on the model: wait it out
+        // and retry, up to three times, so the sample stays the same 60 turns.
+        const r = await withBackoff(() => p.stream(
           // 400, not the route's 200 nudge cap: with no history the sample is
           // concept-heavy, and at 200 the judge graded cut-off replies as broken
           // Hebrew (first run: 3 of 5 "broken" were truncations).
           { system, messages: [{ role: 'user', content: user }], maxTokens: 400, temperature: 0.3, tools: p.id === 'anthropic' ? TUTOR_TOOLS : undefined },
           () => {},
-        );
+        ));
         reply = r.text;
         usage = r.usage;
       } catch (e) {
