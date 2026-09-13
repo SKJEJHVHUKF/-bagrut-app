@@ -80,6 +80,22 @@ async function withBackoff<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
+/** Hebrew inside $…$ or $$…$$ renders reversed in KaTeX (no bidi). Deterministic; the judge missed 6 of 60. */
+export function hebrewInMath(s: string): boolean {
+  let i = 0;
+  while (i < s.length) {
+    const dd = s.startsWith('$$', i);
+    if (dd || s[i] === '$') {
+      const open = dd ? 2 : 1;
+      const j = s.indexOf(dd ? '$$' : '$', i + open);
+      if (j < 0) return false;
+      if (/[א-ת]/.test(s.slice(i + open, j))) return true;
+      i = j + open;
+    } else i++;
+  }
+  return false;
+}
+
 type Trace = { topic: string; question_id: string; normalized_message: string };
 
 async function main() {
@@ -154,7 +170,7 @@ async function main() {
   mkdirSync('.tutor-work', { recursive: true });
   const out = `.tutor-work/ab-${new Date().toISOString().slice(0, 10)}.jsonl`;
   const lines: string[] = [];
-  type Tally = { n: number; relevant: number; irrelevant: number; stall: number; hebrewBroken: number; leak: number; dense: number; usd: number; inTok: number; outTok: number; cached: number; ms: number };
+  type Tally = { n: number; relevant: number; irrelevant: number; stall: number; hebrewBroken: number; leak: number; dense: number; hebMath: number; usd: number; inTok: number; outTok: number; cached: number; ms: number };
   const tally: Record<string, Tally> = {};
   let judgeIn = 0;
   let judgeOut = 0;
@@ -203,7 +219,7 @@ async function main() {
         verdict = { answer: pick('ANSWER'), hebrew: pick('HEBREW'), leak: pick('LEAK'), clarity: pick('CLARITY'), why: text.split('\n').slice(4).join(' ').trim() };
       }
       const k = `${p.id}:${p.model}`;
-      const ty = (tally[k] ??= { n: 0, relevant: 0, irrelevant: 0, stall: 0, hebrewBroken: 0, leak: 0, dense: 0, usd: 0, inTok: 0, outTok: 0, cached: 0, ms: 0 });
+      const ty = (tally[k] ??= { n: 0, relevant: 0, irrelevant: 0, stall: 0, hebrewBroken: 0, leak: 0, dense: 0, hebMath: 0, usd: 0, inTok: 0, outTok: 0, cached: 0, ms: 0 });
       ty.n++;
       if (verdict.answer === 'RELEVANT') ty.relevant++;
       else if (verdict.answer === 'IRRELEVANT') ty.irrelevant++;
@@ -211,6 +227,7 @@ async function main() {
       if (verdict.hebrew === 'BROKEN') ty.hebrewBroken++;
       if (verdict.leak === 'STEP' || verdict.leak === 'FINAL') ty.leak++;
       if (verdict.clarity === 'DENSE') ty.dense++;
+      if (hebrewInMath(reply)) ty.hebMath++;
       ty.usd += cost(p.model, usage);
       ty.inTok += usage.input_tokens;
       ty.outTok += usage.output_tokens;
@@ -222,11 +239,11 @@ async function main() {
   }
   writeFileSync(out, lines.join('\n') + '\n');
 
-  console.log('\n\nprovider                         n  relevant  irrelev  stall  hebrew-broken  leak  dense   $/turn   in(fresh)  cached   out   ms');
+  console.log('\n\nprovider                         n  relevant  irrelev  stall  hebrew-broken  leak  dense  heb-in-math   $/turn   in(fresh)  cached   out   ms');
   for (const [k, v] of Object.entries(tally)) {
     const pc = (x: number) => `${((100 * x) / v.n).toFixed(0)}%`.padStart(7);
     console.log(
-      `${k.padEnd(32)} ${String(v.n).padStart(3)} ${pc(v.relevant)} ${pc(v.irrelevant)} ${pc(v.stall)} ${pc(v.hebrewBroken).padStart(14)} ${pc(v.leak)} ${pc(v.dense)}  $${(v.usd / v.n).toFixed(4)}  ${String(Math.round(v.inTok / v.n)).padStart(9)} ${String(Math.round(v.cached / v.n)).padStart(7)} ${String(Math.round(v.outTok / v.n)).padStart(5)} ${String(Math.round(v.ms / v.n)).padStart(5)}`,
+      `${k.padEnd(32)} ${String(v.n).padStart(3)} ${pc(v.relevant)} ${pc(v.irrelevant)} ${pc(v.stall)} ${pc(v.hebrewBroken).padStart(14)} ${pc(v.leak)} ${pc(v.dense)} ${pc(v.hebMath).padStart(12)}  $${(v.usd / v.n).toFixed(4)}  ${String(Math.round(v.inTok / v.n)).padStart(9)} ${String(Math.round(v.cached / v.n)).padStart(7)} ${String(Math.round(v.outTok / v.n)).padStart(5)} ${String(Math.round(v.ms / v.n)).padStart(5)}`,
     );
   }
   console.log(`\njudge: ${judgeIn} in + ${judgeOut} out ≈ $${(judgeIn / 1e6 + (5 * judgeOut) / 1e6).toFixed(3)} · replies: ${out}`);
