@@ -46,6 +46,7 @@
 
 import { routeMessage, answerGradedLocally, canonicalFor, type Ask } from '@/lib/tutor-router';
 import { answerLocally, type LocalAnswerKind } from '@/lib/tutor-local';
+import type { FaqCandidate } from '@/lib/tutor-faq';
 import { classifyMetaAsk, metaAnswer } from '@/lib/tutor-meta-asks';
 import { stripFigureFences } from '@/lib/geo-figure';
 import { examMetaAnswer } from '@/lib/tutor-exam-meta';
@@ -242,6 +243,10 @@ export type ChainMiss = {
   topic: string;
   /** True when a per-question bank existed and had nothing — the FAQ-authoring worklist. */
   faqMissed: boolean;
+  /** The unit's closest authored entries, for the model's AUTHORED block. Typed turns only. */
+  candidates?: FaqCandidate[];
+  /** This message continues a conversation the tutor spoke in — the server skips its is-question gate. */
+  reply?: boolean;
   state: ChainState;
 };
 
@@ -376,6 +381,58 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
       probe = canonicalFor(route.ask);
       state.lastAsk = route.ask;
     }
+  }
+
+  // ===== 1¾. TYPED = MODEL. Everything below this line is for chips. =====
+  //
+  // ⚠️ THIS IS THE ARCHITECTURE, AND IT REVERSES THE ONE ABOVE IT.
+  //
+  // Every layer below answers by matching WORDS: a template keyed on an ask,
+  // a bank entry keyed on tokens, the compiler keyed on an intent rule. None
+  // of them reads the sentence. Judged on live traffic (scripts/
+  // judge-tutor-traces.ts, 2026-09-11/13): the replies those layers served to
+  // TYPED messages were graded relevant 72–74% of the time — the "robot"
+  // Itay kept reporting. Model replies read the sentence, and are the ones
+  // students do not complain about. His benchmark (mode53) sends every turn
+  // to a model with the exercise and the revealed steps in context.
+  //
+  // So a typed sentence is the model's, once the layers that are EXACT have
+  // had their turn: an ack (step 1), a typed value graded by mathjs against
+  // the solution (step 1), a curriculum fact from the table (step 3). Those
+  // are not guesses about the sentence, so they stay free.
+  //
+  // What the model gets, and what makes this precise rather than merely
+  // paid: the question, the verified solution, which ladder rungs the student
+  // has already seen (so it never reveals the next one), and the top bank
+  // entries for this unit as MATERIAL (`candidates`) — the authored
+  // pedagogy, decided on by something that can read.
+  //
+  // Chips (`typed` false) are bare asks by construction — "רמז" means the
+  // hint — and keep the whole ladder below at $0. Measured unit cost of a
+  // model turn: $0.0034 (Haiku 4.5, cached prefix). At 500 students × 40
+  // typed turns that is ~$70/month, against a tutor that answers.
+  if (input.typed === true) {
+    // The curriculum table is exact and stays free — see step 3 below.
+    const typedMeta = examMetaAnswer(text, focus?.topic || screenTopic || undefined);
+    if (typedMeta) return hit(typedMeta, 'exam-meta');
+    grounded = groundTopic();
+    if (grounded) state.convTopic = grounded;
+    const { faqCandidates } = await import('@/lib/tutor-faq');
+    const candidates = await faqCandidates(text, focus);
+    return {
+      answered: false,
+      probe: text,
+      routeKind: 'typed',
+      topic: grounded,
+      faqMissed: Boolean(focus?.question) && candidates.length === 0,
+      candidates,
+      // The server's is-question gate exists for keyboard mash on a FIRST
+      // message. A typed turn in a conversation the tutor is part of is a
+      // reply — "צריך לגזור", "24", "לא" — and must not be bounced as "not a
+      // question".
+      reply: state.tutorSpoke,
+      state,
+    };
   }
 
   // ===== 2. about the TUTOR, or about studying — not about the exercise =====
@@ -523,16 +580,8 @@ export async function runTutorChain(input: ChainInput): Promise<ChainResult> {
   // through to the bank (an entry matched on the word תסביר) and "עדיין לא
   // הבנתי" to the compiler's next-step line — the same stall from a different
   // layer. The turn belongs to the model, which has the two previous replies.
-  const typedReAsk =
-    input.typed === true &&
-    state.tutorSpoke &&
-    routeKind === 'ask' &&
-    (state.lastAsk === 'help' || state.lastAsk === 'explain');
-  if (typedReAsk) {
-    grounded = groundTopic();
-    if (grounded) state.convTopic = grounded;
-    return { answered: false, probe: text, routeKind: 'typed-re-ask', topic: grounded, faqMissed: false, state };
-  }
+  // (The typed re-ask fence that used to sit here is subsumed by step 1¾:
+  // no typed message reaches this line any more.)
   if (!(routeKind === 'ask' && carriesContent)) {
     const local = answerLocally(probe, focus, state.servedKinds);
     if (local) {

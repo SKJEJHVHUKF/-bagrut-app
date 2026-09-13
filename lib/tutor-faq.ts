@@ -482,21 +482,31 @@ const SHAPE_TIEBREAK_FLOOR = 0.75;
 /** …and how many of the query's word-groups the winner must actually cover. */
 const SHAPE_TIEBREAK_MATCHED = 3;
 
-export function matchFaq(
+export type MatchOpts = {
+  step?: number | null;
+  threshold?: number;
+  minContentMatches?: number;
+  /**
+   * The shape the student's question has, when it is known. Passed in rather
+   * than computed here so one message classifies once for all the stages, and
+   * so a gate can run the matcher with the prior off.
+   */
+  shape?: { shape: string; confidence: number } | null;
+};
+
+export type ScoredFaq = { faq: TutorFaq; score: number; matched: number };
+
+/**
+ * Every entry of the index scored against the message, best first. The
+ * DECISION (threshold, margin, tie-break) lives in `matchFaq`; this is the
+ * scoring alone, so a caller that wants CANDIDATES rather than a verdict —
+ * the model's context, see `faqCandidates` — gets the same numbers.
+ */
+export function scoreFaqIndex(
   index: FaqIndex,
   message: string,
-  opts: {
-    step?: number | null;
-    threshold?: number;
-    minContentMatches?: number;
-    /**
-     * The shape the student's question has, when it is known. Passed in rather
-     * than computed here so one message classifies once for all the stages, and
-     * so a gate can run the matcher with the prior off.
-     */
-    shape?: { shape: string; confidence: number } | null;
-  } = {},
-): FaqMatch | null {
+  opts: MatchOpts = {},
+): { groups: string[][]; scored: ScoredFaq[] } | null {
   const groups = tokenGroups(message);
   if (groups.length === 0) return null;
   // A word's weight is that of its best-known variant; a word with no known
@@ -559,6 +569,13 @@ export function matchFaq(
       return { faq: it.faq, score: best, matched: bestMatched };
     })
     .sort((a, b) => b.score - a.score);
+  return { groups, scored };
+}
+
+export function matchFaq(index: FaqIndex, message: string, opts: MatchOpts = {}): FaqMatch | null {
+  const s = scoreFaqIndex(index, message, opts);
+  if (!s) return null;
+  const { groups, scored } = s;
 
   const threshold = opts.threshold ?? FAQ_THRESHOLD;
   const top = scored[0];
@@ -978,6 +995,53 @@ export async function answerTopicFaq(
     score: hit.score,
     text: hit.faq.a,
   };
+}
+
+export type FaqCandidate = { q: string; a: string; score: number };
+
+/**
+ * The bank as CONTEXT, not as a verdict.
+ *
+ * A typed message goes to the model (lib/tutor-chain, "typed = model"). The
+ * model reads the student's sentence, which is what the lexical layers could
+ * not do — but the authored answers on this unit are still the best material
+ * about it, and they were paid for once. So the top few are handed to the
+ * model as AUTHORED lines: it decides whether they answer what was actually
+ * asked. No threshold, no margin, no tie-break — those exist to keep a wrong
+ * entry from being SERVED, and nothing is served here.
+ *
+ * Own unit only. Cross-question transfer was justified for concept/mistake/
+ * check entries under a strict score; as context for a model that sees the
+ * exercise, a sibling's entry is more likely to mislead than to help.
+ * `reveals` entries are excluded until the page has revealed the answer,
+ * exactly as they are for serving — the model must not see the final answer
+ * spelled out in a form it might echo.
+ */
+export async function faqCandidates(
+  message: string,
+  focus: TutorFocus | null,
+  n = 3,
+  subject = 'math5',
+): Promise<FaqCandidate[]> {
+  const q = focus?.question;
+  if (!q || !focus?.topic) return [];
+  try {
+    const bank = await loadFaqBank(subject, focus.topic);
+    const entries = isUnitCurrent(q as PracticeQuestion) ? bank?.[q.id] ?? [] : [];
+    const canReveal = answered(focus);
+    const usable = entries.filter((f) => !f.reveals || canReveal);
+    if (!bank || usable.length === 0) return [];
+    const s = scoreFaqIndex(buildFaqIndex(usable, { idf: topicIdf(bank) }), message, { shape: classifyShape(message) });
+    if (!s) return [];
+    // 0.25: below this the shared words are frame words ("מה", "למה") and the
+    // entry is about something else on the same exercise.
+    return s.scored
+      .filter((x) => x.score >= 0.25)
+      .slice(0, n)
+      .map((x) => ({ q: x.faq.q, a: x.faq.a, score: Math.round(x.score * 100) / 100 }));
+  } catch {
+    return [];
+  }
 }
 
 export async function answerFromFaq(message: string, focus: TutorFocus | null, subject = 'math5'): Promise<FaqAnswer | null> {

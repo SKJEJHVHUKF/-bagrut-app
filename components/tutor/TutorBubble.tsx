@@ -518,7 +518,13 @@ export default function TutorBubble() {
       // (≤1200 chars) for the model's guidance, which is why the cap grew from
       // 2000: at 2000 the solution would have evicted the snapshot.
       const f = getTutorFocus();
-      let context = renderFocusContext(f);
+      // REVEALED: what the ladder already served on this question, so the model
+      // never reveals the next rung. AUTHORED: the unit's closest bank entries,
+      // as material. Both are read by TUTOR_CORE's context-block rules.
+      let context = renderFocusContext(f, {
+        revealed: servedRef.current.kinds,
+        candidates: chain.candidates,
+      });
       try {
         const { buildStudentSnapshot } = await import('@/lib/tutor-context');
         // The topic the request is actually grounded in — the screen's when it
@@ -624,6 +630,10 @@ export default function TutorBubble() {
             // abstained — the server logs it as `[faq-miss]`, and that log is
             // the next authoring list. The model's answer is still billed.
             ...(faqMissed && f?.question ? { faqMiss: f.question.id } : {}),
+            // A typed turn inside a conversation the tutor spoke in is a reply
+            // ("צריך לגזור", "24"), not a fresh question — the server's
+            // is-question gate must not bounce it. See ChainMiss.reply.
+            ...(chain.reply ? { reply: true } : {}),
             // ⚠️ WHY the model is being asked, recorded at the only place that
             // knows. `/api/chat` counts model calls perfectly and cannot see a
             // reason: the router, the ladder, the FAQ bank and the compiler

@@ -515,8 +515,22 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     ok(chip.answered && chip.layer.startsWith('local:'), 'chip "תסביר" after a hint → the ladder, free');
     const typed = await runTutorChain({ message: 'תסביר את זה יותר', focus, state: spoke, typed: true });
     ok(!typed.answered, 'typed "תסביר את זה יותר" after the tutor spoke → model');
+    // ----- TYPED = MODEL: a typed sentence never gets a template, a bank entry or the compiler -----
     const typedFirst = await runTutorChain({ message: 'לא הבנתי', focus, state: emptyChainState(), typed: true });
-    ok(typedFirst.answered && typedFirst.layer === 'local:hint', 'typed "לא הבנתי" as the FIRST turn → hint, free');
+    ok(!typedFirst.answered && typedFirst.routeKind === 'typed', 'typed "לא הבנתי" as the FIRST turn → model (routeKind typed)');
+    ok(typedFirst.answered || typedFirst.reply === false, 'first typed turn is not marked as a reply (the is-question gate still runs)');
+    const typedLater = await runTutorChain({ message: 'צריך לגזור', focus, state: spoke, typed: true });
+    ok(!typedLater.answered && typedLater.reply === true, 'typed "צריך לגזור" after the tutor spoke is a reply → gate skipped');
+    const typedBank = await runTutorChain({ message: 'מה בנתונים מרמז שצריך את משפט קטע האמצעים', focus, state: emptyChainState(), typed: true });
+    ok(!typedBank.answered && (typedBank.candidates?.length ?? 0) > 0, 'typed question the bank could answer → model, WITH the bank entry as a candidate');
+    const chipBank = await runTutorChain({ message: 'מה בנתונים מרמז שצריך את משפט קטע האמצעים', focus, state: emptyChainState() });
+    ok(chipBank.answered && chipBank.layer === 'faq:early', 'the same sentence as a chip still serves from the bank');
+    for (const [msg, layer] of [['תודה', 'ack'], ['זה יבוא בבגרות?', 'exam-meta']] as Array<[string, string]>) {
+      const r = await runTutorChain({ message: msg, focus, state: emptyChainState(), typed: true });
+      ok(r.answered && r.layer === layer, `typed "${msg}" is exact → still free (${layer})`);
+    }
+    const typedNumber = await runTutorChain({ message: '12', focus, state: emptyChainState(), typed: true });
+    ok(typedNumber.answered ? typedNumber.layer === 'graded' : typedNumber.routeKind === 'typed', 'a typed value is graded by mathjs when parseable, else the model');
 
     // ----- a complaint carrying its own question goes to the model -----
     const c = await runTutorChain({ message: 'לא ענית לי, למה מכפילים ב-3 ולא מחברים', focus, state: spoke });

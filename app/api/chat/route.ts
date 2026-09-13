@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { selectTutorProvider } from '@/lib/llm/tutor-provider';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { isGroundedTopic } from '@/lib/tutor-grounding';
@@ -201,6 +201,7 @@ export async function POST(request: Request) {
       formNumber?: unknown;
       /** Unit id when the client's local tutor + FAQ bank both abstained. */
       faqMiss?: unknown;
+      reply?: unknown;
       /** The turns the client has on screen, INCLUDING the local ones this
        *  route never stored. Validated at the boundary like everything else
        *  the client sends — see section 8b. */
@@ -452,7 +453,12 @@ export async function POST(request: Request) {
     // Measured on the twelve rows that cost $0.06: "ייעיעעיעי", "י", "אוקקי"
     // and a keyboard mash are blocked, and all thirty real messages tested —
     // including "אינדקס", "19", "x=3" and one-word maths terms — pass.
-    const asked = isQuestion(message, attemptContext || undefined);
+    // ⚠️ NOT ON A REPLY. The client marks a typed turn inside a conversation
+    // the tutor already spoke in (`reply: true`, lib/tutor-chain). "צריך
+    // לגזור" / "24" / "לא" answer the tutor's question and are not questions;
+    // bouncing them as "not a question" is the bug this gate must not become.
+    // Keyboard mash on a first message is still caught.
+    const asked = body.reply === true ? { isQuestion: true as const } : isQuestion(message, attemptContext || undefined);
     if (!asked.isQuestion) {
       void recordTutorTrace(
         { ...clientTrace, fallbackReason: 'no_fallback' },
@@ -545,14 +551,7 @@ data: ${JSON.stringify(data)}
       await logAgentUsage(supabase, user.id, 'chat');
     }
 
-    // ===== 10. CALL ANTHROPIC =====
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      // Reserved a credit for a call that will never happen.
-      if (creditTaken) await releaseAiCall(user.id);
-      return Response.json({ error: 'Server configuration error' }, { status: 500 });
-    }
-    const client = new Anthropic({ apiKey });
+    // ===== 10. CALL THE MODEL (provider chosen below, once the tier is known) =====
 
     // ===== Grounded "private tutor" — every topic with an authored lesson =====
     // Grounded topics get the tutor-bar system prompt anchored in the verified
@@ -610,7 +609,16 @@ data: ${JSON.stringify(data)}
       grounded &&
       sonnetAllowlist !== '' &&
       sonnetAllowlist.split(',').map((s) => s.trim()).includes(topic);
-    const model = useSonnet ? 'claude-sonnet-4-6' : 'claude-haiku-4-5';
+    const anthropicModel = useSonnet ? 'claude-sonnet-4-6' : 'claude-haiku-4-5';
+    // ===== WHO ANSWERS: one seam, chosen by TUTOR_PROVIDER (lib/llm/tutor-provider) =====
+    const provider = selectTutorProvider(anthropicModel);
+    if (!provider) {
+      if (creditTaken) await releaseAiCall(user.id);
+      return Response.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+    // The wire model — what every trace row, cost line and captured answer is
+    // labelled with. `anthropicModel` above only decides the Anthropic tier.
+    const model = provider.model;
 
     // Inject the question/attempt snapshot (if any) into THIS turn only, so
     // the tutor can diagnose what the student is actually working on. We
@@ -706,67 +714,36 @@ data: ${JSON.stringify(data)}
           // below — tools, memory, the trace, the capture — belongs to a turn
           // that was actually paid for.
           if (!learned) {
-            const stream = client.messages.stream({
-              model,
-              // Per-turn, not flat — see replyBudget() at the top of this file.
-              // 200 nudge / 400 concept / 500 full. Billing is per token
-              // GENERATED, so the high branches cost nothing on the turns that
-              // do not use them, and the low branch stops a one-line nudge from
-              // being budgeted like a full derivation.
-              max_tokens: maxTokens,
-              // ⚠️ NOT THE DEFAULT 1.0, AND THE REASON IS HEBREW, NOT VARIETY.
-              //
-              // claude-haiku-4-5 fabricates Hebrew verb forms when it samples
-              // freely. Real replies from the live tutor, all of them words
-              // that do not exist:
-              //
-              //   "בטעות הנתת 14 חלקי משהו"      (הזנת)
-              //   "אתה חישבת ... והקבלן לך 2.3"   (והתקבל)
-              //   "אם המחשבון שלך בוגדר"          (מוגדר)
-              //   "בואנו נבנה זאת מחדש"           (בוא נבנה את זה)
-              //
-              // Hebrew morphology is where a small model's sampling noise
-              // shows first: the binyan is almost right and the word is not a
-              // word. A/B'd at 0.2 against the default on the same six turns —
-              // visibly fewer invented forms, same Socratic behaviour.
-              //
-              // 0.3 rather than 0: this tutor is told never to repeat an
-              // explanation in other words, and greedy decoding is exactly how
-              // a model repeats itself.
-              temperature: 0.3,
-              system,
-              messages: claudeMessages,
-              // The tutor may suggest an in-app action and may remember a fact.
-              // Neither executes anything here: `suggest_action` becomes a button
-              // the student chooses to press, and that is why there is no
-              // tool_result round-trip and no agent loop — the turn ends when the
-              // text ends. ⚠️ Tools serialise ahead of `system` in the cached
-              // prefix; editing lib/agents/tools.ts invalidates every tutor cache
-              // entry once (see the note there).
-              tools: TUTOR_TOOLS,
-              // Cost valve: effort:'low' only on the Sonnet path. ⚠️ Haiku 4.5
-              // (ungrounded) 400s on effort ("This model does not support the
-              // effort parameter"), so gate on useSonnet. Haiku is cheap anyway.
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              ...(useSonnet ? ({ output_config: { effort: 'low' } } as any) : {}),
-            });
-
-            stream.on('text', (delta: string) => {
-              fullText += delta;
-              send('delta', { text: delta });
-            });
-
-            const final = await stream.finalMessage();
-
-            // ⚠️ This used to read content[0] and assume it was the text block.
-            // With tools in play the model can put a tool_use block first, and
-            // that assumption silently discarded the authoritative text — so join
-            // every text block instead of trusting a position.
-            const authoritative = final.content
-              .filter((b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text')
-              .map((b) => b.text)
-              .join('');
-            if (authoritative.trim()) fullText = authoritative;
+            // One request shape, whichever provider answers. The Anthropic
+            // adapter is the code that used to live inline here; the temperature,
+            // tools and effort notes moved with it (lib/llm/tutor-provider.ts).
+            //
+            // temperature 0.3, NOT the default 1.0, and the reason is Hebrew:
+            // claude-haiku-4-5 fabricates Hebrew verb forms when it samples
+            // freely ("הנתת", "והקבלן", "בוגדר", "בואנו" — all seen live). A/B'd
+            // at 0.2 against the default on the same six turns: visibly fewer
+            // invented forms, same Socratic behaviour. 0.3 rather than 0
+            // because greedy decoding is exactly how a model repeats itself.
+            //
+            // ⚠️ Tools serialise ahead of  in the cached prefix; editing
+            // lib/agents/tools.ts invalidates every tutor cache entry once.
+            const final = await provider.stream(
+              {
+                system,
+                messages: claudeMessages,
+                // Per-turn, not flat — see replyBudget() at the top of this file.
+                maxTokens,
+                temperature: 0.3,
+                tools: TUTOR_TOOLS,
+                // Cost valve: effort:'low' only on the Sonnet path (Haiku 400s on it).
+                effortLow: useSonnet,
+              },
+              (delta) => {
+                fullText += delta;
+                send('delta', { text: delta });
+              },
+            );
+            if (final.text.trim()) fullText = final.text;
 
             usageIn = final.usage.input_tokens;
             usageOut = final.usage.output_tokens;
@@ -802,7 +779,7 @@ data: ${JSON.stringify(data)}
               model,
               outputTokens: usageOut,
             });
-            if (final.stop_reason === 'max_tokens') {
+            if (final.stopReason === 'max_tokens') {
               console.warn(
                 `[truncated] chat reply hit max_tokens (out=${usageOut} cap=${maxTokens}) — the student ` +
                   'got a cut-off answer and will likely ask again, which costs more than the cap saves. ' +
@@ -818,8 +795,7 @@ data: ${JSON.stringify(data)}
             // Both are best-effort and deliberately AFTER the text is settled.
             // Nothing here may throw past its own guard: a malformed tool input
             // must not cost the student the answer that already streamed.
-            for (const b of final.content) {
-              if (b.type !== 'tool_use') continue;
+            for (const b of final.toolUses) {
 
               if (b.name === 'suggest_action') {
                 // resolveSuggestion drops anything it cannot map to a real route.

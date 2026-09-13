@@ -252,7 +252,7 @@ export default function ChatPage() {
    *   brief. Merged with the student snapshot and injected server-side into the
    *   current turn only; never persisted into the transcript.
    */
-  async function send(text: string, extraContext?: string) {
+  async function send(text: string, extraContext?: string, opts?: { typed?: boolean }) {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
     if (trimmed.length > MAX_MESSAGE_LEN) {
@@ -279,6 +279,7 @@ export default function ChatPage() {
       focus: null,
       // What `?topic=` names, standing in for the focus's topic.
       screenTopic: topic,
+      typed: opts?.typed === true,
       state: chainRef.current,
     });
     chainRef.current = chain.state;
@@ -379,6 +380,7 @@ export default function ChatPage() {
           // app's traffic already warms.
           topic: chain.topic,
           conversationId,
+          ...(chain.reply ? { reply: true } : {}),
           // ⚠️ WHAT THE STUDENT AND THE TUTOR ACTUALLY SAID, so the model and
           // the verified answers cannot contradict each other. Without it the
           // server rebuilds the window from the database, which does not yet
@@ -511,14 +513,14 @@ export default function ChatPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    send(input);
+    send(input, undefined, { typed: true });
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     // Enter sends, Shift+Enter inserts newline
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      send(input);
+      send(input, undefined, { typed: true });
     }
   }
 

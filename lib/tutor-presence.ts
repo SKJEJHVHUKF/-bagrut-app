@@ -372,7 +372,14 @@ export function subscribeTutorFocus(cb: () => void): () => void {
  * authored-solution block below is capped at 1200 for the same reason: focus
  * (~800) + solution (≤1200) + snapshot (≤1800) must fit.
  */
-export function renderFocusContext(focus: TutorFocus | null): string {
+export type FocusContextExtra = {
+  /** Ladder rungs already served on this question (ChainState.servedKinds). */
+  revealed?: readonly string[];
+  /** The unit's closest authored entries (lib/tutor-faq faqCandidates). */
+  candidates?: ReadonlyArray<{ q: string; a: string }>;
+};
+
+export function renderFocusContext(focus: TutorFocus | null, extra: FocusContextExtra = {}): string {
   if (!focus) return '';
   // ⚠️ HEADERS AND VALUES, NOT SENTENCES. This block is rebuilt per turn and
   // rides in the user message, so it is billed at full price every time — while
@@ -399,6 +406,18 @@ export function renderFocusContext(focus: TutorFocus | null): string {
     // Figure fences (a JSON sketch) would eat most of the budget — the model gets a marker instead.
     const body = steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n').slice(0, 1200);
     lines.push(`SOLUTION\n${body}`);
+  }
+  // Where the reveal line is — what TUTOR_CORE's REVEALED rule reads. Sent
+  // only when something was revealed; the rule treats absence as "nothing".
+  if (extra.revealed?.length) lines.push(`REVEALED\n${extra.revealed.join(', ')}`);
+  // The bank as material. Capped so that focus + solution + this block stay
+  // inside MAX_CONTEXT_LEN with room for the student snapshot: 3 × ~200.
+  if (extra.candidates?.length) {
+    const body = extra.candidates
+      .slice(0, 3)
+      .map((c) => `- ${c.q.slice(0, 80)} → ${stripFigureFences(c.a).replace(/\s+/g, ' ').slice(0, 220)}`)
+      .join('\n');
+    lines.push(`AUTHORED\n${body}`);
   }
   return lines.join('\n');
 }
