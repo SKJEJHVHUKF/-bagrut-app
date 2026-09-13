@@ -3,7 +3,7 @@
 // concrete model function that has the stated feature; every "how many solutions" claim is a
 // counted crossing (grid sign changes) or a discriminant computed from k; every distractor and
 // wrongAnswer note is re-enacted as the mistake it names and must land on THAT option.
-import { check, dcheck, checkSet, icheck, summary, math, E } from './_lib';
+import { check, dcheck, checkSet, summary, math, E } from './_lib';
 import { fnFigure } from '../../lib/fn-figure';
 
 const f = (expr: string) => {
