@@ -144,6 +144,17 @@ body {
    through. */
 body {
   position: relative;
+  /* Makes body the root stacking context for everything the app renders.
+     Without it, a `z-index < 0` layer paints UNDER body's own background:
+     `html, body` both set background-color above, so body's background does
+     not propagate to the canvas — body paints it as an ordinary block, and in
+     the root stacking context that happens after negative-z layers. The
+     landing page's pointer-following background (components/PointerGlow.tsx,
+     -z-10) was live for three days and never once visible because of this.
+     It changes no ordering between elements inside body — all of them are in
+     body — only that negative-z layers now sit above body's paint instead of
+     beneath it. */
+  isolation: isolate;
   /* Violet fields plus one cyan. Ambient glow is the ONLY place the logo's
      cyan can appear on a light canvas — at 0.10 alpha it tints, it never has
      to carry contrast. */
