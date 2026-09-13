@@ -31,6 +31,45 @@ export const DEFAULT_MATH_SYMBOLS: MathSymbol[] = [
   { label: '∞', insert: '∞', title: 'אינסוף' },
 ];
 
+/** For an answer that IS an algebraic expression in x (an antiderivative, a
+ *  derivative): the keys needed to TYPE one on a phone. Itay, 2026-09-13, on
+ *  "חשב את ∫ x/√(x²+1) dx": the box asks for an expression with a root, and
+ *  ≠ ≤ ≥ ∞ ° are no help writing it — "שורש ועוד פחות חילוק כפל". A Hebrew
+ *  phone keyboard has no Latin x on its first page either. */
+export const EXPRESSION_SYMBOLS: MathSymbol[] = [
+  { label: 'x', insert: 'x', title: 'המשתנה x' },
+  { label: '√', insert: '√()', caretBack: 1, title: 'שורש' },
+  { label: '( )', insert: '()', caretBack: 1, title: 'סוגריים' },
+  { label: '+', insert: '+', title: 'ועוד' },
+  { label: '−', insert: '−', title: 'פחות' },
+  { label: '×', insert: '×', title: 'כפל' },
+  { label: '÷', insert: '/', title: 'חילוק (קו שבר)' },
+  { label: 'x²', insert: '^2', title: 'בריבוע' },
+  { label: 'xⁿ', insert: '^()', caretBack: 1, title: 'חזקה' },
+];
+
+const CONSTANT_OF_INTEGRATION: MathSymbol = { label: '+C', insert: '+C', title: 'קבוע האינטגרציה' };
+
+/** Pick the keys from what the expected answer IS, not from the topic:
+ *  an antiderivative gets the expression keys and +C, any other expression in
+ *  x gets the expression keys, and everything else (a number, a point, a
+ *  domain with < >) keeps the set it had. */
+export function symbolsForAnswer(finalAnswer?: string, topic?: string): MathSymbol[] {
+  const raw = finalAnswer ?? '';
+  const islands = raw.match(/\$[^$]+\$/g) ?? [];
+  // LaTeX command names removed: \times and \max contain an x
+  const bare = (s: string) => s.slice(1, -1).replace(/\\[a-zA-Z]+/g, ' ');
+  if (islands.some((s) => /\+\s*C(?![a-zA-Z])/.test(bare(s)))) return [...EXPRESSION_SYMBOLS, CONSTANT_OF_INTEGRATION];
+  // An expression answer is ONE island that is an expression in x, optionally
+  // introduced as "f'(x) =" or "y =". Several islands are points, values or
+  // a list, and "ציר $x$" names the axis — neither is typed with these keys.
+  if (islands.length !== 1) return symbolsForTopic(topic);
+  const body = bare(islands[0]).replace(/^\s*(?:[a-zA-Z]'*\s*\(\s*x\s*\)|y)\s*=/, '');
+  const relation = /[<>≤≥≠∞=]/.test(body) || /\\(?:le|ge|leq|geq|ne|neq|infty)(?![a-zA-Z])/.test(islands[0]);
+  if (/x/.test(body) && /[\d)}^]\s*x|x\s*[\^+\-−*/]|[+\-−]\s*x|√|sqrt/.test(body + islands[0]) && !relation) return EXPRESSION_SYMBOLS;
+  return symbolsForTopic(topic);
+}
+
 /** Extra symbols worth surfacing for specific topics. */
 export function symbolsForTopic(topic?: string): MathSymbol[] {
   if (!topic) return DEFAULT_MATH_SYMBOLS;

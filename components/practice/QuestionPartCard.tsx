@@ -19,6 +19,7 @@ import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
 import type { DiagramSpec } from '@/content/lessons/types';
 import { AnswerInput, AnswerParts, describeParts } from './AnswerInput';
+import { symbolsForAnswer } from './MathSymbolBar';
 import { AITutorActions } from './AITutorActions';
 import { SolutionAudit } from './SolutionAudit';
 import { checkAnswer as runDeterministicCheck, checkAnswerParts, type AnswerSpec } from '@/lib/answer-check';
@@ -481,6 +482,7 @@ export function QuestionPartCard({
                 disabled={answerLocked}
                 wrong={wrongParts}
                 locked={lockedParts}
+                symbols={symbolsForAnswer(part.solution?.final_answer)}
               />
             ) : (
               <AnswerInput
@@ -488,6 +490,7 @@ export function QuestionPartCard({
                 onChange={setAnswer}
                 type={part.answer_type}
                 disabled={answerLocked}
+                symbols={symbolsForAnswer(part.solution?.final_answer)}
               />
             )}
 

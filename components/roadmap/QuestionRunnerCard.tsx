@@ -26,6 +26,7 @@ import { CheckCircle, XCircle, KeyRound, LifeBuoy, ArrowLeft, RotateCcw, Wrench 
 import { MathText } from '@/components/practice/MathText';
 import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
 import { AnswerInput, AnswerParts, describeParts } from '@/components/practice/AnswerInput';
+import { symbolsForAnswer } from '@/components/practice/MathSymbolBar';
 import { MistakeTagger } from '@/components/practice/MistakeTagger';
 import { AITutorActions } from '@/components/practice/AITutorActions';
 import { buttonTap } from '@/lib/animations';
@@ -528,9 +529,16 @@ export function QuestionRunnerCard({
               disabled={firstTryCorrect === true}
               wrong={check?.parts?.map((v) => v === 'wrong')}
               locked={lockedParts}
+              symbols={symbolsForAnswer(q.solution?.finalAnswer)}
             />
           ) : (
-            <AnswerInput value={input} onChange={setInput} type="expression" disabled={firstTryCorrect === true} />
+            <AnswerInput
+              value={input}
+              onChange={setInput}
+              type="expression"
+              disabled={firstTryCorrect === true}
+              symbols={symbolsForAnswer(q.solution?.finalAnswer)}
+            />
           )}
           {/* Partly right: say which box is right and which to fix — instead of
               a bare "wrong" that reads as "everything is wrong". */}
@@ -635,7 +643,7 @@ export function QuestionRunnerCard({
       {q.kind === 'open' && !autoGradable && !revealed && (
         <div className="space-y-2">
           <div className="text-[11px] font-bold text-slate-600">התשובה שלך:</div>
-          <AnswerInput value={input} onChange={setInput} type="expression" />
+          <AnswerInput value={input} onChange={setInput} type="expression" symbols={symbolsForAnswer(q.solution?.finalAnswer)} />
           <button
             onClick={() => { setShowSolution(true); setRevealed(true); }}
             className="w-full inline-flex items-center justify-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/40 px-4 py-3 rounded-xl font-bold text-violet-800 text-sm transition-colors"
