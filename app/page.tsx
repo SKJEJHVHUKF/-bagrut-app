@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hasPlan } from '@/lib/study-plan';
 import MathUpLogo from '@/components/MathUpLogo';
-import PointerGlow from '@/components/PointerGlow';
+import GridTrail from '@/components/GridTrail';
 import TutorMascot from '@/components/tutor/TutorMascot';
 import {
   fadeUp,
@@ -121,9 +121,9 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen text-slate-800 relative overflow-x-hidden">
-      {/* Pointer-reactive field, behind everything. Landing only — see the
-          comment in the component for why it stops here. */}
-      <PointerGlow />
+      {/* Grid trail: the hero's squares light up under the pointer. Landing only —
+          see the comment in the component for why it stops here. */}
+      <GridTrail />
       {/* Navbar — real glass: it sits over scrolling content, so the blur
           has something to work on and the cost is one layer, not forty. */}
       <nav className="sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
@@ -164,7 +164,7 @@ export default function Landing() {
       >
         {/* Signature math motif — graph-paper grid + an elegant function curve */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: -1 }}>
-          {/* data-grid-paper: components/PointerGlow.tsx measures where these
+          {/* data-grid-paper: components/GridTrail.tsx measures where these
               lines fall and draws its grid trail in phase with them. Its PITCH
               must match the 46px backgroundSize below. */}
           <div

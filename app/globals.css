@@ -149,7 +149,7 @@ body {
      `html, body` both set background-color above, so body's background does
      not propagate to the canvas — body paints it as an ordinary block, and in
      the root stacking context that happens after negative-z layers. The
-     landing page's pointer-following background (components/PointerGlow.tsx,
+     landing page's grid trail (components/GridTrail.tsx,
      -z-10) was live for three days and never once visible because of this.
      It changes no ordering between elements inside body — all of them are in
      body — only that negative-z layers now sit above body's paint instead of
