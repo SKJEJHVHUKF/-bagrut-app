@@ -13,6 +13,7 @@
 
 import { Frac, type Rng } from '../rng';
 import { mcq, open } from './shared';
+import { renderPlot } from '../../plot-svg';
 import type { GenTemplate } from '../types';
 
 const TOPIC = 'פונקציות';
@@ -591,8 +592,27 @@ const intRecipSquare: GenTemplate = {
     const x2 = x1 + rng.int(1, difficulty === 'hard' ? 6 : 3);
     const area = new Frac(a * (x2 - x1), x1 * x2);
 
+    // The figure is drawn from these same parameters (lib/plot-svg), in the
+    // stage's area style: green fill + hatching + dashed lines at both limits.
+    const f = (x: number) => a / (x * x);
+    const top = f(x1);
+    const right = x2 + 0.8;
+    const figure = renderPlot({
+      xRange: [-0.12 * right, right],
+      yRange: [-0.1 * top, top * 1.2],
+      curves: [{ f }],
+      vAsym: [{ x: 0, label: 'x = 0' }],
+      shade: [{ from: x1, to: x2, upper: f, opacity: 0.12, hatch: true, bounds: true }],
+      xTicks: [
+        { x: x1, label: String(x1) },
+        { x: x2, label: String(x2) },
+      ],
+      points: [{ x: x1, y: top, color: '#4F46E5' }],
+      halo: true,
+    });
+
     return open({
-      question: `חשב את השטח המוגבל בין הגרף של $f(x) = \\dfrac{${a}}{x^2}$, ציר ה-$x$ והישרים $x = ${x1}$ ו-$x = ${x2}$.`,
+      question: `חשב את השטח המוגבל בין הגרף של $f(x) = \\dfrac{${a}}{x^2}$, ציר $x$ והישרים $x = ${x1}$ וגם $x = ${x2}$.`,
       expected: { kind: 'value', value: area.expr() },
       wrongAnswers: [
         {
@@ -604,15 +624,24 @@ const intRecipSquare: GenTemplate = {
           note: `המקדם $${a}$ נשמט. הוא נשאר לאורך כל האינטגרל ומכפיל את התוצאה.`,
         },
       ],
-      hint: 'כתוב את הפונקציה כחזקה שלילית, מצא קדומה והצב את הגבולות.',
+      hint: 'כתוב את הפונקציה כחזקה שלילית, מצא פונקציה קדומה והצב את הגבולות.',
       solution: {
         steps: [
-          '**הכלל:** שטח בין גרף חיובי לציר ה-$x$ הוא האינטגרל המסוים בין הגבולות, ואת המנה כותבים כחזקה שלילית כדי לגזור ממנה קדומה.',
-          `**הנוסחה:** $\\int_{${x1}}^{${x2}} ${a}x^{-2}\\,dx = \\left[ -\\dfrac{${a}}{x} \\right]_{${x1}}^{${x2}}$.`,
-          `**ההצבה:** $-\\dfrac{${a}}{${x2}} - \\left(-\\dfrac{${a}}{${x1}}\\right) = \\dfrac{${a}}{${x1}} - \\dfrac{${a}}{${x2}}$.`,
+          '**הכלל:** שטח בין גרף חיובי לבין ציר $x$ הוא האינטגרל המסוים בין הגבולות, ואת המנה רושמים כחזקה שלילית כדי למצוא לה פונקציה קדומה.',
+          '**הנוסחה:** $\\int x^n\\,dx = \\dfrac{x^{n+1}}{n+1} + C$, עם $n = -2$.',
+          `רושמים כחזקה, $\\dfrac{${a}}{x^2} = ${a}x^{-2}$, ומחלקים בחזקה החדשה $-1$: $F(x) = -\\dfrac{${a}}{x}$.`,
+          `**ההצבה:** $F(${x2}) - F(${x1}) = -\\dfrac{${a}}{${x2}} + \\dfrac{${a}}{${x1}}$.`,
         ],
         finalAnswer: `$S = ${area.tex()}$`,
-        explanation: 'הקדומה של מספר חלקי x בריבוע היא מינוס אותו מספר חלקי x.',
+        explanation: 'הפונקציה הקדומה של מספר חלקי $x^2$ היא מינוס אותו מספר חלקי $x$.',
+        diagrams: [
+          {
+            type: 'custom',
+            svg: figure,
+            viewBox: '0 0 300 260',
+            caption: `הגרף של $f(x) = \\dfrac{${a}}{x^2}$. האזור המקווקו כלוא בין הגרף לבין ציר $x$, מהישר $x = ${x1}$ עד הישר $x = ${x2}$, וכולו מעל הציר.`,
+          },
+        ],
       },
     });
   },

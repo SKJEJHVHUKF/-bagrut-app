@@ -4,6 +4,24 @@
 // the question's own function and bounds; every distractor and wrongAnswer note is re-enacted as
 // the mistake it names and must land on THAT option.
 import { check, dcheck, checkSet, icheck, summary, math, E } from './_lib';
+import { getLesson, getSubTopic } from '../../content/lessons';
+import type { PracticeQuestion } from '../../content/lessons/types';
+
+// Bind a check to the LIVE question, not to a copy of it. Every section below
+// used to re-derive from its own literals, so 2026-09-13's rewrite of 102/104/
+// 109/111 left 279/279 passing about questions that no longer existed.
+const STAGE = getSubTopic('math5', 'פונקציות', 'rq-integral');
+const live = (id: string): PracticeQuestion => {
+  const q = (STAGE?.questions ?? []).find((x) => x.id === id);
+  if (!q) throw new Error(`${id} is not on the rq-integral ladder`);
+  return q as PracticeQuestion;
+};
+const expectedValue = (id: string): number => {
+  const e = live(id).expected;
+  if (e?.kind !== 'value') throw new Error(`${id}: expected is not a value`);
+  return E(e.value);
+};
+const has = (id: string, literal: string) => (live(id).question.includes(literal) ? 1 : 0);
 
 const f = (expr: string) => {
   const c = math.parse(expr).compile();
@@ -69,15 +87,20 @@ function solveFor(g: (t: number) => number, lo: number, hi: number): number {
   check('101 d3 6/(x^5/5) = 30/x^5 at x=2', E('6/(2^5/5)'), E('30/2^5'));
 }
 
-// rq-sub-in-102 — f' = 3x^2 - 4x through (1, 2): find f(3) → 12
+// rq-sub-in-102 — f' = 2x - 2/x^2 through (1, 4): find f(2) → 6   (rewritten 2026-09-13)
 {
-  const F = 'x^3 - 2*x^2';
-  dcheck('102 F\' = 3x^2 - 4x', F, '3*x^2 - 4*x');
-  const C = 2 - f(F)(1);
-  check('102 C from (1,2)', C, 3);
-  check('102 f(3)', f(F)(3) + C, 12);
-  check('102 wrong 9 = F(3) without C', f(F)(3), 9);
-  check('102 wrong 15 = f\'(3)', f('3*x^2 - 4*x')(3), 15);
+  check('102 the live question is this one', has('rq-sub-in-102', "f'(x) = 2x - \\dfrac{2}{x^2}"), 1);
+  const F = 'x^2 + 2/x';
+  dcheck('102 F\' = 2x - 2/x^2', F, '2*x - 2/x^2', [0.7, 1, 1.9, 3.2]);
+  const C = 4 - f(F)(1);
+  check('102 C from (1,4)', C, 1);
+  check('102 f(2) equals the live expected', f(F)(2) + C, expectedValue('rq-sub-in-102'));
+  check('102 f(2) = 6', f(F)(2) + C, 6);
+  check('102 wrong 5 = F(2) without C', f(F)(2), 5);
+  check('102 wrong 7/2 = f\'(2)', f('2*x - 2/x^2')(2), 3.5);
+  const Fs = 'x^2 - 2/x'; // the sign slip on the negative power
+  check('102 wrong 8 = sign slip, then its own C', f(Fs)(2) + (4 - f(Fs)(1)), 8);
+  check('102 explanation: (1,4) is the minimum because f\'(1) = 0', f('2*x - 2/x^2')(1), 0);
 }
 
 // rq-sub-in-103 — ∫ (2x+5)^-3 dx (MCQ): linear argument, negative power → -1/(4(2x+5)^2) + C
@@ -92,18 +115,23 @@ function solveFor(g: (t: number) => number, lo: number, hi: number): number {
   dcheck('103 d3 = derivative of (2x+5)^-3', '1/(2*x+5)^3', '-6/(2*x+5)^4');
 }
 
-// rq-sub-in-104 — ∫_1^3 (2x - 6) dx → -4 (a definite integral may be negative)
+// rq-sub-in-104 — ∫_1^4 (1 - 2/√x) dx → -1 (a definite integral may be negative)   (rewritten 2026-09-13)
 {
-  icheck('104 ∫_1^3 (2x-6)', '2*x-6', 1, 3, -4);
-  const F = f('x^2 - 6*x');
-  check('104 F(3) - F(1)', F(3) - F(1), -4);
-  check('104 F(3)', F(3), -9);
-  check('104 F(1)', F(1), -5);
-  check('104 wrong 4 = |integral|', Math.abs(F(3) - F(1)), 4);
-  check('104 wrong -9 = F(3) alone', F(3), -9);
-  // explanation: the line is on/below the axis on the whole interval (max at x=3 is 0)
-  check('104 2x-6 at x=1 is negative', sgn(f('2*x-6')(1)), -1);
-  check('104 2x-6 at x=3 is 0', f('2*x-6')(3), 0);
+  check('104 the live question is this one', has('rq-sub-in-104', '1 - \\dfrac{2}{\\sqrt{x}}'), 1);
+  icheck('104 ∫_1^4 (1 - 2/√x)', '1 - 2/sqrt(x)', 1, 4, -1);
+  dcheck('104 F = x - 4√x integrates it', 'x - 4*sqrt(x)', '1 - 2/sqrt(x)', POS);
+  const F = f('x - 4*sqrt(x)');
+  check('104 F(4) - F(1) equals the live expected', F(4) - F(1), expectedValue('rq-sub-in-104'));
+  check('104 F(4)', F(4), -4);
+  check('104 F(1)', F(1), -3);
+  check('104 wrong 1 = |integral|', Math.abs(F(4) - F(1)), 1);
+  check('104 wrong -4 = F(4) alone', F(4), -4);
+  const Fw = f('x - sqrt(x)'); // divided by 1/2 as if multiplying by it
+  check('104 wrong 2 = ×½ instead of ×2', Fw(4) - Fw(1), 2);
+  // explanation: on [1,4] √x ≤ 2, so 2/√x ≥ 1 and the integrand is never positive
+  check('104 integrand at x=1 is -1', f('1 - 2/sqrt(x)')(1), -1);
+  check('104 integrand at x=4 is 0', f('1 - 2/sqrt(x)')(4), 0);
+  check('104 never positive on [1,4]', Math.max(...[1, 1.5, 2, 2.5, 3, 3.5, 4].map(f('1 - 2/sqrt(x)'))) <= 1e-12 ? 1 : 0, 1);
 }
 
 // rq-sub-in-105 — ∫ 3/√x dx (MCQ): root in the denominator as power -1/2 → 6√x + C
@@ -165,27 +193,20 @@ function solveFor(g: (t: number) => number, lo: number, hi: number): number {
   check('108 wrong 9 = F(4) alone', F(4), 9);
 }
 
-// rq-sub-in-109 — diagnose ∫_0^4 (x^2-3x) = -8/3 taken as area: split at x=3, area 19/3 (MCQ)
+// rq-sub-in-109 — area of x - 3√x over [4,16]: split at 9 → 11/2 + 27/2 = 19 (MCQ)   (rewritten 2026-09-13)
 {
-  const fx = 'x^2 - 3*x';
-  checkSet('109 roots of x^2-3x', roots(fx), [0, 3]);
-  check('109 the split point 3 lies inside (0,4)', 0 < 3 && 3 < 4 ? 1 : 0, 1);
-  check('109 f(1) = -2 (below)', f(fx)(1), -2);
-  check('109 f(3.5) = 1.75 (above)', f(fx)(3.5), 1.75);
-  check('109 student: 64/3 - 24', E('64/3 - 24'), E('-8/3'));
-  icheck('109 student\'s unsplit integral', fx, 0, 4, E('-8/3'));
-  icheck('109 part [0,3]', fx, 0, 3, E('-9/2'));
-  icheck('109 part [3,4]', fx, 3, 4, E('11/6'));
-  check('109 area 9/2 + 11/6', E('9/2 + 11/6'), E('19/3'));
-  const F = f('x^3/3 - 3*x^2/2');
-  check('109 F(3) - F(0)', F(3) - F(0), E('-9/2'));
-  check('109 F(4) - F(3)', F(4) - F(3), E('11/6'));
-  // d1: |student's integral| = 8/3; d2: only the part above = 11/6; d3: only between the roots = 9/2
-  check('109 d1 = |−8/3|', Math.abs(E('64/3 - 24')), E('8/3'));
-  check('109 d2 = part above only', Math.abs(F(4) - F(3)), E('11/6'));
-  check('109 d3 = between the roots only', Math.abs(F(3) - F(0)), E('9/2'));
-  // explanation: the student's number is 11/6 − 9/2
-  check('109 explanation 11/6 - 9/2 = -8/3', E('11/6 - 9/2'), E('-8/3'));
+  check('109 the live question is this one', has('rq-sub-in-109', 'x - 3\\sqrt{x}'), 1);
+  const fx = 'x - 3*sqrt(x)';
+  checkSet('109 roots of x - 3√x in (0.5, 20)', roots(fx, 0.5, 20), [9]);
+  check('109 f(4) = -2 (below)', f(fx)(4), -2);
+  check('109 f(16) = 4 (above)', f(fx)(16), 4);
+  dcheck('109 F = x^2/2 - 2x^(3/2) integrates it', 'x^2/2 - 2*x^(3/2)', fx, POS);
+  const F = f('x^2/2 - 2*x^(3/2)');
+  check('109 F(4) = -8', F(4), -8);
+  check('109 F(9) = -27/2', F(9), E('-27/2'));
+  check('109 F(16) = 0', F(16), 0);
+  icheck('109 part [4,9]', fx, 4, 9, E('-11/2'));
+  icheck('109 part [9,16]', fx, 9, 16, E('27/2'));
 }
 
 // rq-sub-in-110 — f = 2/x^2, area from x=1 to x=a equals 3/2, a > 1 → a = 4
@@ -207,21 +228,29 @@ function solveFor(g: (t: number) => number, lo: number, hi: number): number {
   check('110 F(1) = -2', f('-2/x')(1), -2);
 }
 
-// rq-sub-in-111 — area between x^3 and x: three meeting points, split at 0 → 1/2
+// rq-sub-in-111 — f = 16/x^2: tangent at x=2, its x-intercept, and the area it cuts off   (rewritten 2026-09-13)
 {
-  checkSet('111 x^3 = x', roots('x^3 - x', -5, 5), [-1, 0, 1]);
-  check('111 x^3 above x on [-1,0] (x=-1/2)', sgn(E('(-1/2)^3 - (-1/2)')), 1);
-  check('111 x^3 at -1/2', E('(-1/2)^3'), -0.125);
-  check('111 x above x^3 on [0,1] (x=1/2)', sgn(E('1/2 - (1/2)^3')), 1);
-  icheck('111 ∫_{-1}^0 (x^3 - x)', 'x^3 - x', -1, 0, 0.25);
-  icheck('111 ∫_0^1 (x - x^3)', 'x - x^3', 0, 1, 0.25);
-  const F = f('x^4/4 - x^2/2');
-  check('111 first part via F', F(0) - F(-1), 0.25);
-  check('111 second part via F', -(F(1) - F(0)), 0.25);
-  check('111 total', 0.25 + 0.25, 0.5);
-  // wrong 0: one integral over [-1,1]; wrong 1/4: one part only
-  icheck('111 wrong 0 = unsplit integral', 'x^3 - x', -1, 1, 0);
-  check('111 wrong 1/4 = one part', F(0) - F(-1), 0.25);
+  check('111 the live question is this one', has('rq-sub-in-111', '\\dfrac{16}{x^2}'), 1);
+  const fx = f('16/x^2');
+  dcheck("111 f' = -32/x^3", '16/x^2', '-32/x^3', POS);
+  const slope = E('-32/2^3');
+  const tan = (x: number) => fx(2) + slope * (x - 2);
+  const root = 2 - fx(2) / slope;
+  const e = live('rq-sub-in-111').expected;
+  const vals = e?.kind === 'set' ? e.values.map(E) : [];
+  check('111 box 1 = slope -4', vals[0], slope);
+  check('111 box 2 = tangent root 3', vals[1], root);
+  check('111 tangent is y = -4x + 12', tan(0), 12);
+  // the region: under the curve from 2 to 4, minus the triangle under the tangent from 2 to 3
+  const under = quad('16/x^2', 2, 4);
+  const triangle = (root - 2) * fx(2) / 2;
+  check('111 area under the curve [2,4] = 4', under, 4, 1e-6);
+  check('111 triangle = 2', triangle, 2);
+  check('111 box 3 = 4 - 2', vals[2], under - triangle, 1e-6);
+  check('111 convex: the tangent stays under the curve on (2,4]', [2.2, 2.6, 3, 3.5, 4].every((x) => fx(x) > tan(x)) ? 1 : 0, 1);
+  check('111 so the region is bounded below by max(tangent, 0)', quad('16/x^2', 2, 4) - quad('max(-4*x + 12, 0)', 2, 4), 2, 1e-6);
+  check('111 wrong 4 = no triangle removed', under, 4, 1e-6);
+  check('111 wrong 6 = triangle added', under + triangle, 6, 1e-6);
 }
 
 // rq-sub-in-112 — area between 3√x and x (MCQ): meet at 0 and 9 (by squaring), root above → 27/2
@@ -373,12 +402,9 @@ function solveFor(g: (t: number) => number, lo: number, hi: number): number {
   check('207 G(4) = 64', G(4), 64);
 }
 
-// rq-sub-in-111 / 112 — the rows the rewritten solutions now show
+// rq-sub-in-112 — the rows the rewritten solution shows
 {
-  // 111's sign table: the two representative values it prints
-  check('111 table row: x^3 - x at x = -0.5 is positive', sgn(E('(-0.5)^3 - (-0.5)')), 1);
-  check('111 table row: x^3 - x at x = 0.5 is negative', sgn(E('0.5^3 - 0.5')), -1);
-  // 112's domain remark and the figure's three marked points
+  // 112's domain remark and the difference it integrates
   check('112 3√x has no real value left of 0', Number.isFinite(f('3*sqrt(x)')(-1) as number) ? 0 : 1, 1);
   check('112 3√x is real at the domain edge', Number.isFinite(f('3*sqrt(x)')(0)) ? 1 : 0, 1);
   check('112 difference at x = 4 is positive', sgn(E('3*sqrt(4) - 4')), 1);
@@ -402,19 +428,18 @@ function solveFor(g: (t: number) => number, lo: number, hi: number): number {
   check('106 just beside 0 it does blow up, which is why the asymptote is worth naming', Math.abs(f(fx)(1e-4)) > 1e6 ? 1 : 0, 1);
 }
 
-// rq-sub-in-109 — the four options are now four AREA values; each must be reachable
+// rq-sub-in-109 — the four options are four AREA values; each must be reachable
 // only by the mistake its note names
 {
-  const fx = f('x^2 - 3*x');
-  const F = f('x^3/3 - 3*x^2/2');
-  // F really is an antiderivative of f: check the derivative numerically.
-  check('109 F is an antiderivative of f', (F(2.0001) - F(1.9999)) / 0.0002, fx(2), 1e-4);
-  check('109 correct option: |[0,3]| + |[3,4]| = 19/3', Math.abs(F(3) - F(0)) + Math.abs(F(4) - F(3)), E('19/3'), 1e-9);
-  check('109 option 8/3 = one unsplit integral, in absolute value', Math.abs(F(4) - F(0)), E('8/3'), 1e-9);
-  check('109 option 11/6 = the part above the axis only', F(4) - F(3), E('11/6'), 1e-9);
-  check('109 option 9/2 = the part between the roots only', Math.abs(F(3) - F(0)), E('9/2'), 1e-9);
-  check('109 the four options are four different numbers', new Set([E('19/3'), E('8/3'), E('11/6'), E('9/2')]).size, 4);
-  check('109 the cancellation is exactly 11/6 - 9/2', E('11/6 - 9/2'), F(4) - F(0), 1e-9);
+  const F = f('x^2/2 - 2*x^(3/2)');
+  const opts = live('rq-sub-in-109').answers ?? [];
+  const num = (s: string) => E(s.replace(/\$|יחידות שטח/g, '').replace(/\\dfrac\{(\d+)\}\{(\d+)\}/, '($1)/($2)').trim());
+  check('109 option 0 (correct) = |[4,9]| + |[9,16]| = 19', num(opts[0]), Math.abs(F(9) - F(4)) + Math.abs(F(16) - F(9)));
+  check('109 option 1 = one unsplit integral', num(opts[1]), F(16) - F(4));
+  check('109 option 2 = the part above the axis only', num(opts[2]), F(16) - F(9));
+  check('109 option 3 = the part below the axis only', num(opts[3]), Math.abs(F(9) - F(4)));
+  check('109 the four options are four different numbers', new Set(opts.map(num)).size, 4);
+  check('109 correct index is 0', live('rq-sub-in-109').correct ?? -1, 0);
 }
 
 // rq-sub-in-206 part ג — the upper limit recovered from a required area of 0.5
@@ -598,6 +623,108 @@ function solveFor(g: (t: number) => number, lo: number, hi: number): number {
   // wrong 81/2: the integral of a product taken as the product of the integrals
   check('305 wrong 81/2 = (∫x^2)·(∫(3-x))', quad('x^2', 0, 3) * quad('3-x', 0, 3), E('81/2'), 1e-6);
   check('305 the three values are three different numbers', new Set([E('27/4'), 54, E('81/2')]).size, 3);
+}
+
+// ---------------------------------------------------------------------------
+// 2026-09-13, Itay's round on רמה 7: "הפונקציות באינטגרלים יהיו טיפה יותר
+// מסובכות" and "רמת בגרות יותר גבוהה עם פונקציה יותר מסובכת". The main-file
+// questions 001/002/003/005/008 and the bagrut question fn-bag-rq-007 were
+// rewritten on quotient/root integrands; each is re-derived here from the LIVE
+// content and every distractor re-enacted as the mistake its note names.
+// ---------------------------------------------------------------------------
+
+// rq-sub-in-001 — ∫(3x² − 6/x³) dx (MCQ) → x³ + 3/x² + C
+{
+  check('001 the live question is this one', has('rq-sub-in-001', '3x^2 - \\dfrac{6}{x^3}'), 1);
+  dcheck('001 F = x^3 + 3/x^2', 'x^3 + 3/x^2', '3*x^2 - 6/x^3', POS);
+  dcheck('001 d1 the derivative option is (3x² − 6/x³)\'', '3*x^2 - 6/x^3', '6*x + 18/x^4', POS);
+  dcheck('001 d2 the sign slip integrates 3x² + 6/x³', 'x^3 - 3/x^2', '3*x^2 + 6/x^3', POS);
+  check('001 coefficient -6/(-3+1)', E('-6/(-3+1)'), 3);
+}
+
+// rq-sub-in-002 — ∫_1^4 x√x dx → 62/5
+{
+  check('002 the live question is this one', has('rq-sub-in-002', 'x\\sqrt{x}'), 1);
+  icheck('002 ∫_1^4 x√x', 'x*sqrt(x)', 1, 4, E('62/5'));
+  dcheck('002 F = (2/5)x^(5/2)', '(2/5)*x^(5/2)', 'x*sqrt(x)', POS);
+  check('002 equals the live expected', expectedValue('rq-sub-in-002'), E('62/5'));
+  check('002 wrong 7 = integrand substituted', E('4*sqrt(4) - 1*sqrt(1)'), 7);
+  check('002 wrong 64/5 = F(4) alone', E('(2/5)*4^(5/2)'), E('64/5'));
+  check('002 wrong 62/3 = divided by the old power 3/2', E('(2/3)*(4^(5/2) - 1)'), E('62/3'));
+}
+
+// rq-sub-in-003 — ∫ 2x/(x²+4)³ dx (MCQ) → −1/(2(x²+4)²) + C
+{
+  check('003 the live question is this one', has('rq-sub-in-003', '\\dfrac{2x}{(x^2 + 4)^3}'), 1);
+  const S = [-1.7, -0.4, 0.6, 1.3, 2.9];
+  dcheck('003 F = -1/(2(x²+4)²)', '-1/(2*(x^2+4)^2)', '2*x/(x^2+4)^3', S);
+  dcheck('003 d1 sign slip integrates the negative', '1/(2*(x^2+4)^2)', '-2*x/(x^2+4)^3', S);
+  dcheck('003 d2 power went down to -4', '-1/(4*(x^2+4)^4)', '2*x/(x^2+4)^5', S);
+  // d3: numerator integrated apart → −x²/(2(x²+4)²), whose derivative is NOT the integrand
+  const d3 = math.derivative('-x^2/(2*(x^2+4)^2)', 'x');
+  check('003 d3 is not an antiderivative (x = 1)', Math.abs((d3.evaluate({ x: 1 }) as number) - E('2/5^3')) > 1e-3 ? 1 : 0, 1);
+}
+
+// rq-sub-in-005 — area between (4 − x)√x and the x-axis → 128/15
+{
+  check('005 the live question is this one', has('rq-sub-in-005', '(4 - x)\\sqrt{x}'), 1);
+  checkSet('005 roots in [0, 6]', [0, ...roots('(4-x)*sqrt(x)', 0.01, 6)], [0, 4]);
+  dcheck('005 F = (8/3)x^(3/2) - (2/5)x^(5/2)', '(8/3)*x^(3/2) - (2/5)*x^(5/2)', '(4-x)*sqrt(x)', POS);
+  const F = f('(8/3)*x^(3/2) - (2/5)*x^(5/2)');
+  check('005 F(4) - F(0) equals the live expected', F(4) - F(0), expectedValue('rq-sub-in-005'));
+  check('005 above the axis inside (0,4)', sgn(f('(4-x)*sqrt(x)')(2)), 1);
+  check('005 below the axis right of 4 (no closed region there)', sgn(f('(4-x)*sqrt(x)')(5)), -1);
+  check('005 wrong 128/3 = product of the two integrals', quad('sqrt(x)', 0, 4) * quad('4-x', 0, 4), E('128/3'), 1e-4);
+  check('005 wrong 64/3 = first term only', E('(8/3)*8'), E('64/3'));
+}
+
+// rq-sub-in-008 — area of 3 − 12/x² over [1,4]: parts 3 + 3 = 6, signed integral 0 (MCQ)
+{
+  check('008 the live question is this one', has('rq-sub-in-008', '3 - \\dfrac{12}{x^2}'), 1);
+  const fx = '3 - 12/x^2';
+  checkSet('008 roots in [0.5, 5]', roots(fx, 0.5, 5), [2]);
+  const F = f('3*x + 12/x');
+  dcheck('008 F = 3x + 12/x', '3*x + 12/x', fx, POS);
+  check('008 F(1), F(2), F(4)', F(1) * 100 + F(2) * 10 + F(4), 15 * 100 + 12 * 10 + 15);
+  check('008 area equals the live expected', Math.abs(F(2) - F(1)) + Math.abs(F(4) - F(2)), expectedValue('rq-sub-in-008'));
+  check('008 option 0 unsplit integral', F(4) - F(1), 0);
+  check('008 option one part', F(4) - F(2), 3);
+  const Fw = f('3*x - 12/x');
+  check('008 option 18 = the sign slip', Math.abs(Fw(2) - Fw(1)) + Math.abs(Fw(4) - Fw(2)), 18);
+}
+
+// fn-bag-rq-007 — f(x) = 8x/(x²+3)², parts א–ה
+{
+  const bag = getLesson('math5', 'פונקציות')?.bagrutQuestions?.find((b) => b.id === 'fn-bag-rq-007');
+  check('bag the live context is this function', bag?.context.includes('\\dfrac{8x}{(x^2 + 3)^2}') ? 1 : 0, 1);
+  const fx = '8*x/(x^2+3)^2';
+  const S = [-2.5, -0.6, 0.3, 1.4, 3.1];
+  check('bag א the denominator never vanishes (min of x²+3 is 3)', E('0^2 + 3'), 3);
+  check('bag א horizontal asymptote y = 0', Math.abs(f(fx)(1e5)) < 1e-8 ? 1 : 0, 1);
+  dcheck("bag ב f' = 24(1−x²)/(x²+3)³", fx, '24*(1-x^2)/(x^2+3)^3', S);
+  const partB = bag?.parts.find((p) => p.label === 'ב')?.expected;
+  const xs = partB?.kind === 'set' ? partB.values.map(E) : [];
+  check('bag ב box 1 (max) = 1', xs[0], 1);
+  check('bag ב box 2 (min) = -1', xs[1], -1);
+  check("bag ב f' changes + → − at 1 (max)", sgn(f('24*(1-x^2)/(x^2+3)^3')(0.9)) - sgn(f('24*(1-x^2)/(x^2+3)^3')(1.1)), 2);
+  check('bag ב f(1) = 1/2', f(fx)(1), 0.5);
+  check('bag ג odd: f(-x) = -f(x)', f(fx)(-1.7) + f(fx)(1.7), 0);
+  dcheck('bag ד F = -4/(x²+3)', '-4/(x^2+3)', fx, S);
+  const partD = bag?.parts.find((p) => p.label === 'ד')?.expected;
+  check('bag ד area [0,3] equals the live expected', quad(fx, 0, 3), partD?.kind === 'value' ? E(partD.value) : NaN, 1e-9);
+  check('bag ד f > 0 on (0,3]', Math.min(...[0.01, 1, 2, 3].map(f(fx))) > 0 ? 1 : 0, 1);
+  const partE = bag?.parts.find((p) => p.label === 'ה')?.expected;
+  const k = partE?.kind === 'value' ? E(partE.value) : NaN;
+  check('bag ה k solves 2(4/3 − 4/(k²+3)) = 4/3', 2 * (4 / 3 - 4 / (k * k + 3)), 4 / 3, 1e-12);
+  check('bag ה the area over [−k, k] is 4/3 by quadrature', quad(`abs(${fx})`, -k, k), 4 / 3, 1e-6);
+  check('bag ה one integral over [−k, k] is 0 — the trap', quad(fx, -k, k), 0, 1e-9);
+}
+
+// lesson — the why-step trapezoid and the new inner-derivative quotient example
+{
+  icheck('lesson ∫_1^3 (2x+1) = trapezoid (3+7)·2/2', '2*x+1', 1, 3, (3 + 7) * 2 / 2);
+  icheck('drill-008 ∫_1^4 (√x + 1) is the area it names', 'sqrt(x)+1', 1, 4, E('14/3 + 3'));
+  dcheck('lesson ∫2x/(x²+1)² = −1/(x²+1)', '-1/(x^2+1)', '2*x/(x^2+1)^2', [-1.3, 0.2, 1.1, 2.4]);
 }
 
 summary('integral');
