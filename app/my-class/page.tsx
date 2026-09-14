@@ -13,6 +13,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { School, LogIn, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import StudentFocus from '@/components/StudentFocus';
@@ -85,6 +86,15 @@ export default function MyClassPage() {
       ) : (
         <JoinClass onJoined={load} />
       )}
+
+      {/* The console is linked from nowhere else (lib/nav keeps it out of the
+          student menu on purpose), so a teacher who lands here has a way in. */}
+      <p className="mt-8 text-center text-sm text-slate-500">
+        מורה?{' '}
+        <Link href="/console" className="font-medium text-violet-700 underline underline-offset-4">
+          לקונסולת המורה
+        </Link>
+      </p>
     </main>
   );
 }

@@ -66,6 +66,10 @@ export type ClassPayload = {
     byStudent: Record<string, StudentMistakes>;
     shared: SharedMistake[];
   };
+  /** Sub-topic id → title for every id in the window, resolved by the route
+   *  because the titles live in the content, which the client must not
+   *  import. Optional for the same cached-response reason as `mistakes`. */
+  subTopicTitles?: Record<string, string>;
 };
 
 /**

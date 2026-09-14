@@ -14,7 +14,7 @@
  * whole product; the board does not know a student's gender.
  */
 
-import type { StudentRow, StudentState, TopicState } from '@/lib/class-board';
+import type { StudentRow, StudentState, TopicState, TopicTrend } from '@/lib/class-board';
 
 // ---- the three groups a class is sorted into --------------------------------
 export const GROUP = {
@@ -36,6 +36,18 @@ export const TOPIC_WORD: Record<TopicState, string> = {
   strong: 'הכיתה שולטת',
   borderline: 'על הגבול',
   reteach: 'ללמד שוב',
+};
+
+/** Where inside a topic the class is weakest: "בעיקר בסדרה הנדסית — …". The
+ *  sub-topic's own title, and nothing measured next to it. */
+export function mainlyIn(title: string): string {
+  return `בעיקר ב${title}`;
+}
+
+/** Which way a topic moved since last week — a word, never a number. */
+export const TREND_WORD: Record<TopicTrend, string> = {
+  up: 'השתפרו השבוע',
+  down: 'ירדו השבוע',
 };
 
 // ---- buttons ----------------------------------------------------------------

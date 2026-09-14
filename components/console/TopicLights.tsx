@@ -11,15 +11,20 @@
  * The words come from lib/class-board topicSummary(): "ללמד שוב" is exactly
  * the board's reteach zone, never a second opinion. A topic without enough
  * students to judge is not labelled — it is named in one footnote.
+ *
+ * Under the word, two more WORDS when the board can stand behind them: where
+ * inside the topic ("בעיקר ב…") and which way it moved ("השתפרו / ירדו
+ * השבוע"). No percentage, no digit — the numbers stay on the student page.
  */
 
 import { motion } from 'framer-motion';
 import { BookOpen, Target } from 'lucide-react';
-import { topicSummary, RETEACH_MIN_STUDENTS, type TopicState } from '@/lib/class-board';
+import { topicSummary, RETEACH_MIN_STUDENTS, type TopicState, type TopicTrend } from '@/lib/class-board';
+import { DEMO_SUB_TOPIC_TITLES } from '@/lib/demo-board';
 import { fadeUp, inViewProps } from '@/lib/animations';
 import { TopicIcon } from '@/components/roadmap/TopicIcon';
 import { useClass } from '@/components/console/ClassContext';
-import { TOPIC_WORD, EMPTY, BTN, thinTopics, stuckUnder } from '@/components/console/copy';
+import { TOPIC_WORD, TREND_WORD, EMPTY, BTN, thinTopics, stuckUnder, mainlyIn } from '@/components/console/copy';
 import { SectionHead, Btn } from '@/components/console/ui';
 
 const LOOK: Record<TopicState, { dot: string; text: string }> = {
@@ -28,9 +33,35 @@ const LOOK: Record<TopicState, { dot: string; text: string }> = {
   reteach: { dot: 'bg-orange-500', text: 'text-orange-800' },
 };
 
+/** "בעיקר ב… · ירדו השבוע" — either half alone when only one is known. */
+function TopicDetail({ where, trend }: { where: string | null; trend: TopicTrend | null }) {
+  if (!where && !trend) return null;
+  return (
+    <span className="basis-full text-base text-slate-700">
+      {where && mainlyIn(where)}
+      {where && trend && ' · '}
+      {trend && (
+        <span className={`font-bold ${LOOK[trend === 'up' ? 'strong' : 'reteach'].text}`}>
+          {TREND_WORD[trend]}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export default function TopicLights() {
-  const { board, isDemo, openFocus } = useClass();
+  const { board, data, isDemo, openFocus } = useClass();
   const rows = topicSummary(board);
+  // The route titles a real class's sub-topics (the client never imports the
+  // content); the sample class carries its own. An id without a title renders
+  // nothing — a raw id is not a word — and so does a title with math in it
+  // (1 of 93 today, ln-integrals): this line has no KaTeX, so it would print
+  // the raw LaTeX.
+  const titles = isDemo ? DEMO_SUB_TOPIC_TITLES : (data.subTopicTitles ?? {});
+  const titleOf = (id: string | null) => {
+    const title = id ? titles[id] : undefined;
+    return typeof title === 'string' && !title.includes('$') ? title : null;
+  };
   const thin = board.topics.filter((t) => !rows.some((r) => r.topic === t));
   // Below the sample-size gate no topic can ever get a word, so the footnote
   // has to explain the THRESHOLD rather than imply nobody practised.
@@ -81,6 +112,7 @@ export default function TopicLights() {
                   )}
                 </span>
               )}
+              <TopicDetail where={titleOf(r.hardestSub)} trend={r.trend} />
               {r.stuckStudents.length > 0 && (
                 <span className="basis-full text-base text-slate-700">
                   {stuckUnder(r.stuckStudents.map((s) => s.name))}

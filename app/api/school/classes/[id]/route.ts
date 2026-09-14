@@ -22,6 +22,7 @@ import { formatJoinCode } from '@/lib/join-code';
 import { buildReport } from '@/lib/report';
 import type { ResultEvent } from '@/lib/results';
 import { classMistakes, type StudentMistakes } from '@/lib/class-mistakes';
+import { resolveRoadmapNode } from '@/constants/roadmapData';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,6 +104,17 @@ export async function GET(
   );
 
   const board = buildClassBoard(roster, attempts, Date.now());
+
+  // Titles for "בעיקר ב…" on the topic list. Resolved HERE because the title
+  // lives in the content corpus, and a client component that looked it up
+  // would ship the corpus to every teacher's browser. Every id in the window,
+  // so the screen never needs a second round trip; an id the content no longer
+  // has is simply left out, and the screen then says nothing for it.
+  const subTopicTitles: Record<string, string> = {};
+  for (const subId of new Set(attempts.map((a) => a.sub_topic_id))) {
+    const title = subId ? resolveRoadmapNode(subId)?.node.title : undefined;
+    if (subId && title) subTopicTitles[subId] = title;
+  }
 
   // ---- what is actually broken, per student and for the class --------------
   //
@@ -274,6 +286,7 @@ export async function GET(
       // the practice goes to those seven and nobody else.
       shared: classMistakes(byStudent, new Map(roster.map((r) => [r.id, r.name]))),
     },
+    subTopicTitles,
     // Told, never inferred: an empty board because nobody has joined is a
     // different screen from an empty board because nobody has worked.
     windowDays: WINDOW_DAYS,
