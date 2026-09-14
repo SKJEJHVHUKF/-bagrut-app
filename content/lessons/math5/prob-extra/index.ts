@@ -27,21 +27,36 @@ import { EXTRA as TABLES, EXTRA_BAGRUT as TABLES_BAG } from './tables';
 import { EXTRA as BERNOULLI, EXTRA_BAGRUT as BERNOULLI_BAG } from './bernoulli';
 import { EXTRA as CONDITIONAL, EXTRA_BAGRUT as CONDITIONAL_BAG } from './conditional';
 import { EXTRA as PRACTICE, EXTRA_BAGRUT as PRACTICE_BAG } from './practice';
+// Round 3 (2026-09-14, owner: "לפחות 20 תרגילים" on every rung, the 🎓 rung
+// included). One file per stage per kind, so no two authors share a file.
+import { R3 as R3_BASICS } from './r3/basics';
+import { R3 as R3_TREE } from './r3/tree';
+import { R3 as R3_TABLES } from './r3/tables';
+import { R3 as R3_BERNOULLI } from './r3/bernoulli';
+import { R3 as R3_CONDITIONAL } from './r3/conditional';
+import { R3 as R3_PRACTICE } from './r3/practice';
+import { R3_BAGRUT as R3_BASICS_BAG } from './r3/basics-bagrut';
+import { R3_BAGRUT as R3_TREE_BAG } from './r3/tree-bagrut';
+import { R3_BAGRUT as R3_TABLES_BAG } from './r3/tables-bagrut';
+import { R3_BAGRUT as R3_BERNOULLI_BAG } from './r3/bernoulli-bagrut';
+import { R3_BAGRUT as R3_CONDITIONAL_BAG } from './r3/conditional-bagrut';
+import { R3_BAGRUT as R3_PRACTICE_BAG } from './r3/practice-bagrut';
 
 /** Extra multi-part bagrut questions, one file per stage so parallel authors
  *  never share a file; `subTopicId` on each is what makes it a stage's 🎓 rung. */
 export const PROB_EXTRA_BAGRUT: StaticBagrutQuestion[] = [
   ...BASICS_BAG, ...TREE_BAG, ...TABLES_BAG, ...BERNOULLI_BAG, ...CONDITIONAL_BAG, ...PRACTICE_BAG,
+  ...R3_BASICS_BAG, ...R3_TREE_BAG, ...R3_TABLES_BAG, ...R3_BERNOULLI_BAG, ...R3_CONDITIONAL_BAG, ...R3_PRACTICE_BAG,
 ];
 
 /** Stage sub-topic id → the questions appended to that stage. */
 export const PROB_EXTRA: Record<string, PracticeQuestion[]> = {
-  'pr-basics': BASICS,
-  'pr-tree': TREE,
-  'pr-tables': TABLES,
-  'pr-bernoulli': BERNOULLI,
-  'pr-conditional': CONDITIONAL,
-  'pr-practice': PRACTICE,
+  'pr-basics': [...BASICS, ...R3_BASICS],
+  'pr-tree': [...TREE, ...R3_TREE],
+  'pr-tables': [...TABLES, ...R3_TABLES],
+  'pr-bernoulli': [...BERNOULLI, ...R3_BERNOULLI],
+  'pr-conditional': [...CONDITIONAL, ...R3_CONDITIONAL],
+  'pr-practice': [...PRACTICE, ...R3_PRACTICE],
 };
 
 /** Append the extras to whichever stages appear in `stages`, in rung order.

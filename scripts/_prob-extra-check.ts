@@ -37,13 +37,16 @@
  * its answer is right. scripts/_prob-extra-checks/<stage>.ts re-derives the
  * numbers; a human reads for interest.
  */
-import { getSubTopic } from '../content/lessons';
+import { getSubTopic, getLesson } from '../content/lessons';
 import { PROB_EXTRA, PROB_EXTRA_BAGRUT } from '../content/lessons/math5/prob-extra';
 import type { PracticeQuestion, SubTopic } from '../content/lessons/types';
 import { checkAnswer, checkAnswerParts, matchKnownMistake } from '../lib/answer-check';
 import { leaksAnswer } from '../lib/help-ladder';
 import { ALL_PAST_BAGRUYOT } from '../content/past-bagruyot';
 import { checkProbTreeFences, checkProbTables, hasProbTree, hasTable, pickedTotal, numeric } from '../lib/prob-figure';
+import { renderFocusContext, partAsQuestion, partQuestionText } from '../lib/tutor-presence';
+import { stripFigureFences } from '../lib/geo-figure';
+import type { StaticBagrutQuestion } from '../content/lessons/types';
 
 const TOPIC = 'הסתברות';
 const BASELINE = process.argv.includes('--baseline');
@@ -66,6 +69,48 @@ const ROUND2_FLOOR: Record<string, { mid: number; hard: number }> = {
   'pr-practice': { mid: 14.9, hard: 19.2 },
 };
 const ROUND2_MIN = { mid: 4, hard: 4 };
+
+/**
+ * ROUND 3 (2026-09-14, owner): "בכל רמה שבתוך כל תת נושא … חימום ביסוס אתגר
+ * ובגרות … לפחות 20 תרגילים", with the rise between them kept gradual: "ברמת
+ * חימום … קלות … ביסוס יעלה הרמה ועוד יותר … אתגר וברמת בגרות הרבה יותר".
+ *
+ * The numbers are each rung's average when round 3 opened (`all --dump` on
+ * origin/main fbad91a). A round-3 question (…-3NN) is held to a BAND, not only a
+ * floor: a floor alone pushes warm-ups up (a mean-based floor sits above the
+ * rung's median), and a mid question scoring like the hard rung is a mislabelled
+ * hard question, which flattens the step the student is promised.
+ *   easy  < the mid average          — a warm-up, not a ביסוס question
+ *   mid   ≥ the easy average + 2      — and < the hard average
+ *   hard  ≥ the hard average          — "ולא משהו קליל"
+ */
+const ROUND3_SNAPSHOT: Record<string, { easy: number; mid: number; hard: number }> = {
+  'pr-basics': { easy: 6.1, mid: 12.8, hard: 19.9 },
+  'pr-tree': { easy: 7.8, mid: 14.5, hard: 20.9 },
+  'pr-tables': { easy: 9.7, mid: 16.2, hard: 21.9 },
+  'pr-bernoulli': { easy: 9.6, mid: 15.7, hard: 19.1 },
+  'pr-conditional': { easy: 8.0, mid: 14.3, hard: 18.3 },
+  'pr-practice': { easy: 11.1, mid: 16.7, hard: 22.3 },
+};
+/** Authored questions per rung, and bagrut questions per stage. */
+const RUNG_MIN = 20;
+const BAGRUT_MIN = 20;
+/** A round-3 bagrut question must sit ABOVE the exam, not at it: its hardest
+ *  part above the archive's hardest-part average by 15%, and its AVERAGE part at
+ *  least the archive's HARDEST-part average (the archive's average part is ~12). */
+const R3_BAGRUT_HARDEST = 1.15;
+const R3_BAGRUT_MEAN = 1.0;
+/** `1.5 + 0.3 === 1.8000000000000003`: a threshold met exactly must pass. */
+const EPS = 1e-6;
+const DUMP = process.argv.includes('--dump');
+const isR3 = (id: string) => /-3\d\d$/.test(id);
+const isR3Bagrut = (id: string) => /^prob-bag-x-[a-z]{3}-(?:0[2-9]|[1-9]\d)$/.test(id);
+/**
+ * Stems the archive never uses. Itay on the מנה ושורש round, 2026-09-06: "יש שם
+ * שאלות שבדרך כלל בבגרות לא שואלים" — the variety rule had made a quiz gimmick
+ * the cheapest new ask shape. Refused outright for round 3 rather than scored.
+ */
+const OFF_EXAM_STEM = /כמה טעויות|איזו (?:מן |מבין )?(?:הטענות|טענה)|ומה אם|אילו היה|לו היה|תלמיד (?:כתב|טען|חישב)|תלמידה (?:כתבה|טענה|חישבה)|מה הטעות|היכן השגיאה|מצאו את הטעות/;
 
 /** Stage → id prefix, minimum EXTRA questions per rung, and minimum distinct
  *  ask-shapes the stage's whole rung set must show. */
@@ -245,10 +290,109 @@ function checkText(where: string, value: string) {
   for (const re of MONOLOGUE) { const m = value.match(re); if (m) err(where, 'author-monologue', `"${m[0]}"`); }
 }
 
+/**
+ * The tutor model reads a question and its solution through renderFocusContext,
+ * capped in lib/tutor-presence. A question that does not fit is cut silently and
+ * the model re-solves it from scratch; scripts/test-tutor-context-fit.ts fails
+ * the build on it. Checked here with the same renderer and the same test, where
+ * the author can still shorten the item.
+ */
+function checkContextFit(where: string, questionText: string, question: PracticeQuestion) {
+  const brief = renderFocusContext({ where: 'gate', questionText, question } as never);
+  if (!brief.includes(`q: ${questionText}`)) err(where, 'context-cut-question', `${questionText.length} chars; the tutor would not see the whole question`);
+  const steps = question.solution?.steps ?? [];
+  const cut = steps.findIndex((s, i) => !brief.includes(`${i + 1}. ${stripFigureFences(s)}`));
+  if (cut >= 0) err(where, 'context-cut-solution', `steps from ${cut} on never reach the tutor; shorten the solution`);
+}
+
+/** Which of the topic's four tools a solution actually uses. A figure counts,
+ *  not a word: "טבלה" in prose is not a table the student sees. */
+function toolsOf(text: string, mech: string[]) {
+  return {
+    table: hasTable(text),
+    tree: hasProbTree(text),
+    binomial: mech.includes('binomial'),
+    conditional: mech.includes('conditional'),
+  };
+}
+type Tools = ReturnType<typeof toolsOf>;
+const questionTools = (q: PracticeQuestion): Tools => toolsOf((q.solution?.steps ?? []).join('\n'), mechanisms(q));
+const bagrutTools = (b: StaticBagrutQuestion): Tools => {
+  const steps = b.parts.flatMap((p) => p.solution?.steps ?? []).join('\n');
+  const pseudo = { question: `${b.context} ${b.parts.map((p) => p.prompt).join(' ')}`, solution: { steps: [steps] } } as PracticeQuestion;
+  return toolsOf(steps, mechanisms(pseudo));
+};
+
+/**
+ * THE OWNER'S MIX (2026-09-14): "ברמת תרגול מסכם הכל יחד … הרוב שם זה הסתברות
+ * עץ כמעט בלי טבלה". A summary stage that is mostly trees trains one tool. Per
+ * rung, each tool must appear in at least `min` questions, and no tool may carry
+ * more than `maxShare` of the rung. pr-conditional teaches the conditional in all
+ * three models (its own summary: "בטבלה, בעץ ובברנולי"), so it gets a lighter mix.
+ */
+const MIX: Record<string, { practice: Partial<Record<keyof Tools, number>>; bagrut: Partial<Record<keyof Tools, number>>; maxShare: number }> = {
+  'pr-practice': { practice: { table: 5, tree: 5, binomial: 4, conditional: 4 }, bagrut: { table: 7, tree: 7, binomial: 8, conditional: 10 }, maxShare: 0.5 },
+  'pr-conditional': { practice: { table: 4, tree: 4, binomial: 3 }, bagrut: { table: 5, tree: 5, binomial: 4 }, maxShare: 0.6 },
+};
+
+/** Every numeral except the ones every probability question shares. */
+function numbersOf(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const m of text.replace(/\\[a-zA-Z]+/g, ' ').matchAll(/\d+(?:\.\d+)?/g)) {
+    const n = String(Number(m[0]));
+    if (!['0', '1', '2', '100'].includes(n)) out.add(n);
+  }
+  return out;
+}
+const answersOf = (specs: (unknown | undefined)[]): Set<string> => {
+  const out = new Set<string>();
+  for (const s of specs) {
+    const spec = s as { kind?: string; value?: string; values?: string[] } | undefined;
+    for (const v of spec?.kind === 'value' ? [spec.value] : spec?.kind === 'set' ? (spec.values ?? []) : []) {
+      const n = numeric(v);
+      if (n !== null) out.add(n.toFixed(6));
+    }
+  }
+  return out;
+};
+
+/**
+ * "Parallel authors clone what they cannot see" (round 2: three of six stages
+ * shipped a practice question with the same ask, numbers and answer as a part of
+ * their OWN bagrut question, every signature gate green). A round-3 item is a
+ * clone of another item in its stage — a practice question, a bagrut question,
+ * or a lesson step's example/drill — when it keeps most of the other's
+ * distinctive numbers AND lands on one of its answers (or keeps five numbers).
+ */
+type Statement = { id: string; nums: Set<string>; answers: Set<string>; lesson: boolean };
+function cloneOf(me: Statement, pool: Statement[]): string | null {
+  if (me.nums.size < 3) return null;
+  for (const o of pool) {
+    if (o.id === me.id || o.nums.size < 3) continue;
+    let shared = 0;
+    for (const n of me.nums) if (o.nums.has(n)) shared++;
+    if (shared < 3 || shared / Math.min(me.nums.size, o.nums.size) < 0.75) continue;
+    const sameAnswer = [...me.answers].some((a) => o.answers.has(a));
+    // Calibrated on the shipped stages (CLONE_PROBE=1): shared numbers alone
+    // over-fire, because probability tables reuse round totals — pr-x-tab-105
+    // and -106 share 30/60/90/120/150 and are different questions. A kept answer
+    // is what makes it the same question; without one, nearly every number must go.
+    if (sameAnswer || (shared >= 6 && shared / Math.min(me.nums.size, o.nums.size) >= 0.9)) {
+      return `${o.id} (${shared} shared numbers${sameAnswer ? ' and an answer' : ''})`;
+    }
+  }
+  return null;
+}
+
 function checkQuestion(q: PracticeQuestion, prefix: string) {
   const w = q.id || '(no id)';
-  if (!new RegExp(`^${prefix}[12]\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN (round 1) or ${prefix}2NN (round 2)`);
+  if (!new RegExp(`^${prefix}[123]\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN / 2NN / 3NN (rounds 1–3)`);
   checkText(`${w}.question`, q.question ?? '');
+  if (isR3(q.id)) {
+    const stem = q.question.match(OFF_EXAM_STEM);
+    if (stem) err(w, 'off-exam-stem', `"${stem[0]}" — the archive never asks this way; ask what a 571 part asks`);
+    checkContextFit(w, q.question, q);
+  }
   if (!q.hint?.trim()) err(w, 'missing-hint'); else checkText(`${w}.hint`, q.hint);
   (q.answers ?? []).forEach((a, i) => checkText(`${w}.answers[${i}]`, a));
   (q.distractorNotes ?? []).forEach((n, i) => { if (n) checkText(`${w}.distractorNotes[${i}]`, n); });
@@ -387,11 +531,20 @@ function checkBagrut(stageId: string, prefix: string) {
   const abbr = prefix.replace('pr-x-', '').replace(/-$/, '');
   const mine = PROB_EXTRA_BAGRUT.filter((b) => b.subTopicId === stageId);
   if (!mine.length) { err(stageId, 'bagrut-below-minimum', 'no EXTRA_BAGRUT question for this stage'); return; }
+  const rungSize = (getLesson('math5', TOPIC)?.bagrutQuestions ?? []).filter((b) => b.subTopicId === stageId).length;
+  if (rungSize < BAGRUT_MIN) err(stageId, 'bagrut-rung-below-20', `${rungSize} bagrut questions on the 🎓 rung < ${BAGRUT_MIN}`);
   const LABELS = ['א', 'ב', 'ג', 'ד', 'ה'];
   for (const b of mine) {
     const w = b.id;
     if (!new RegExp(`^prob-bag-x-${abbr}-\\d{2}$`).test(w)) err(w, 'bad-bagrut-id', `expected prob-bag-x-${abbr}-NN`);
     if (!b.context?.trim()) err(w, 'bagrut-no-context'); else checkText(`${w}.context`, b.context);
+    if (isR3Bagrut(w)) {
+      for (const [field, s] of [['context', b.context], ...b.parts.map((p) => [`${p.label}.prompt`, p.prompt])] as [string, string][]) {
+        const stem = (s ?? '').match(OFF_EXAM_STEM);
+        if (stem) err(`${w}.${field}`, 'off-exam-stem', `"${stem[0]}" — the archive never asks this way`);
+      }
+      for (const p of b.parts) checkContextFit(`${w}/${p.label}`, partQuestionText(b.context, p), partAsQuestion(p, { questionId: w }));
+    }
     const parts = b.parts ?? [];
     if (parts.length < 4 || parts.length > 5) err(w, 'bagrut-parts-count', `${parts.length} (a real 571 question has 4–5)`);
     const scores: number[] = [];
@@ -432,9 +585,14 @@ function checkBagrut(stageId: string, prefix: string) {
       if (isReverse({ question: p.prompt } as PracticeQuestion)) anyReverse = true;
     });
     const max = scores.length ? Math.max(...scores) : 0;
+    const mean = scores.length ? scores.reduce((a, c) => a + c, 0) / scores.length : 0;
     if (max < BAR.score * 0.9) err(w, 'bagrut-below-exam-bar', `hardest part ${max.toFixed(1)} vs the real 571 bar ${BAR.score.toFixed(1)}`);
+    if (isR3Bagrut(w)) {
+      if (max < BAR.score * R3_BAGRUT_HARDEST - EPS) err(w, 'round3-bagrut-hardest-below', `hardest part ${max.toFixed(2)} < ${(BAR.score * R3_BAGRUT_HARDEST).toFixed(2)} (the exam's hardest-part average × ${R3_BAGRUT_HARDEST}); "ברמת בגרות הרבה יותר"`);
+      if (mean < BAR.score * R3_BAGRUT_MEAN - EPS) err(w, 'round3-bagrut-mean-below', `average part ${mean.toFixed(2)} < ${(BAR.score * R3_BAGRUT_MEAN).toFixed(2)} (the exam's hardest-part average)`);
+    }
     if (!anyParam && !anyReverse) err(w, 'bagrut-no-parameter-or-reverse', 'a real 571 question opens on "מצאו את P/x" or turns backwards with "ידוע ש…"');
-    console.log(`   🎓 ${w}: ${parts.length} parts · part scores ${scores.map((s) => s.toFixed(0)).join('/')} · hardest ${max.toFixed(1)} = ${((max / (BAR.score || 1)) * 100).toFixed(0)}% of the exam bar`);
+    console.log(`   🎓 ${w}: ${parts.length} parts · part scores ${scores.map((s) => s.toFixed(0)).join('/')} · mean ${mean.toFixed(1)} · hardest ${max.toFixed(1)} = ${((max / (BAR.score || 1)) * 100).toFixed(0)}% of the exam bar`);
   }
 }
 
@@ -477,6 +635,78 @@ function checkStage(stageId: string): boolean {
       for (const d of ['mid', 'hard'] as const) {
         const n = round2.filter((q) => q.difficulty === d).length;
         if (n < ROUND2_MIN[d]) err(stageId, 'round2-below-minimum', `${d}: ${n} < ${ROUND2_MIN[d]}`);
+      }
+    }
+
+    // ---- round 3: a band per rung, 20 per rung, variety, clones, the mix ----
+    const snap = ROUND3_SNAPSHOT[stageId];
+    const r3 = extra.filter((q) => isR3(q.id));
+    for (const q of r3) {
+      const s = difficulty(q).score;
+      if (q.difficulty === 'easy' && s >= snap.mid - 1 - EPS) err(q.id, 'round3-easy-too-hard', `scores ${s.toFixed(1)}; the ביסוס rung averages ${snap.mid}, so a warm-up stays under ${(snap.mid - 1).toFixed(1)}`);
+      if (q.difficulty === 'mid' && s < snap.mid - 1.5 - EPS) err(q.id, 'round3-mid-too-light', `scores ${s.toFixed(1)}; need ≥ ${(snap.mid - 1.5).toFixed(1)} (the ביסוס average ${snap.mid} − 1.5)`);
+      if (q.difficulty === 'mid' && s >= snap.hard - EPS) err(q.id, 'round3-mid-too-hard', `scores ${s.toFixed(1)}; the אתגר rung averages ${snap.hard}, so this is a hard question`);
+      if (q.difficulty === 'hard' && s < snap.hard - EPS) err(q.id, 'round3-hard-too-light', `scores ${s.toFixed(1)}; the אתגר rung already averaged ${snap.hard}, "ולא משהו קליל"`);
+    }
+    for (const d of ['easy', 'mid', 'hard'] as const) {
+      const n = (st.questions ?? []).filter((q) => q.difficulty === d).length;
+      if (n < RUNG_MIN) err(stageId, 'rung-below-20', `${d}: ${n} authored questions < ${RUNG_MIN}`);
+    }
+    if (r3.length) {
+      const shapes3 = new Set(r3.map(askShape));
+      const compute3 = r3.filter((q) => askShape(q) === 'compute').length / r3.length;
+      if (shapes3.size < 3) err(stageId, 'round3-too-few-shapes', `${shapes3.size} ask shapes among the new questions (${[...shapes3].join(', ')}), need 3`);
+      if (compute3 > 0.75 + EPS) err(stageId, 'round3-mostly-compute', `${Math.round(compute3 * 100)}% of the new questions only ask "compute"`);
+    }
+
+    // clones, against everything the student meets in this stage
+    const bagrutHere = (getLesson('math5', TOPIC)?.bagrutQuestions ?? []).filter((b) => b.subTopicId === stageId);
+    const pool: Statement[] = [
+      ...(st.questions ?? []).map((q) => ({ id: q.id, nums: numbersOf(q.question), answers: answersOf([q.expected]), lesson: false })),
+      ...bagrutHere.map((b) => ({ id: b.id, nums: numbersOf(`${b.context} ${b.parts.map((p) => p.prompt).join(' ')}`), answers: answersOf(b.parts.map((p) => p.expected)), lesson: false })),
+      ...(st.lesson ?? []).flatMap((step, i) => {
+        const s = step as unknown as { example?: { problem?: string; answer?: string }; drill?: { question?: string; answers?: string[]; correct?: number; expected?: unknown; solution?: { finalAnswer?: string } } };
+        const textAnswers = (t: string | undefined) => new Set([...numbersOf(t ?? '')].map((n) => Number(n).toFixed(6)));
+        const out: Statement[] = [];
+        if (s.example?.problem) out.push({ id: `${stageId} lesson step ${i + 1} example`, nums: numbersOf(s.example.problem), answers: textAnswers(s.example.answer), lesson: true });
+        if (s.drill?.question) {
+          const d = s.drill;
+          const ans = d.answers && d.correct !== undefined ? textAnswers(d.answers[d.correct]) : new Set([...answersOf([d.expected]), ...textAnswers(d.solution?.finalAnswer)]);
+          out.push({ id: `${stageId} lesson step ${i + 1} drill`, nums: numbersOf(d.question), answers: ans, lesson: true });
+        }
+        return out;
+      }),
+    ];
+    // CLONE_PROBE=1 runs the detector over every item, to calibrate it on shipped content
+    for (const me of pool.filter((s) => isR3(s.id) || isR3Bagrut(s.id) || (process.env.CLONE_PROBE && !s.lesson))) {
+      const twin = cloneOf(me, pool);
+      if (twin) err(me.id, 'round3-numeric-clone', `keeps the numbers of ${twin}; change the scenario's numbers`);
+    }
+
+    // the mix
+    const mix = MIX[stageId];
+    if (mix) {
+      for (const d of ['easy', 'mid', 'hard'] as const) {
+        const qs = (st.questions ?? []).filter((q) => q.difficulty === d);
+        const tools = qs.map(questionTools);
+        for (const [tool, min] of Object.entries(mix.practice) as [keyof Tools, number][]) {
+          const n = tools.filter((t) => t[tool]).length;
+          if (n < min) err(stageId, 'mix-below', `${d}: ${tool} in ${n} questions < ${min}`);
+          if (qs.length && n / qs.length > mix.maxShare + EPS) err(stageId, 'mix-one-tool', `${d}: ${tool} in ${n}/${qs.length} questions (> ${Math.round(mix.maxShare * 100)}%)`);
+        }
+      }
+      const btools = bagrutHere.map(bagrutTools);
+      for (const [tool, min] of Object.entries(mix.bagrut) as [keyof Tools, number][]) {
+        const n = btools.filter((t) => t[tool]).length;
+        if (n < min) err(stageId, 'mix-below', `bagrut: ${tool} in ${n} questions < ${min}`);
+      }
+    }
+
+    if (DUMP) {
+      for (const q of all) {
+        const d = difficulty(q);
+        const t = questionTools(q);
+        console.log(`   · ${q.id.padEnd(22)} ${q.difficulty.padEnd(4)} ${d.score.toFixed(1).padStart(5)}  steps ${String(d.steps).padStart(2)}  ${d.shape.padEnd(14)}${hasParameter(q) ? ' param' : ''}${isReverse(q) ? ' reverse' : ''}  [${d.mechanisms.join(',')}]  ${Object.entries(t).filter(([, v]) => v).map(([k]) => k).join('+')}`);
       }
     }
 
