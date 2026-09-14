@@ -64,6 +64,27 @@ const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה'];
  * remounted (it is keyed by position), so without it a revisit would show a
  * blank question the student would be invited to answer a second time.
  */
+/** The whole working state of a question still in progress. */
+export type QuestionDraft = {
+  qid: string;
+  selected: number | null;
+  wrongPicks: number[];
+  input: string;
+  parts: string[];
+  lockedParts: boolean[];
+  tries: number;
+  firstTryCorrect: boolean | null;
+  revealed: boolean;
+  solved: boolean;
+  showSolution: boolean;
+  missedWith: string | null;
+  missedIndex: number | null;
+  openedLevels: number[];
+  check: CheckResult | null;
+  mistakeId: string | null;
+  aiCategory: ErrorCategory | null;
+};
+
 export type AnswerSnapshot = {
   firstTryCorrect: boolean;
   /** ORIGINAL option index the student ended on (MCQ). */
@@ -87,6 +108,8 @@ export function QuestionRunnerCard({
   subId,
   source,
   saved,
+  draft,
+  onDraft,
   onResolved,
   onBackToLearn,
 }: {
@@ -100,6 +123,12 @@ export function QuestionRunnerCard({
   source: ResultSource;
   /** Set when the student is REVISITING a question they already answered. */
   saved?: AnswerSnapshot | null;
+  /** A question left half-worked (a wrong try, an opened hint) — restores that
+   *  screen instead of a blank one. Ignored when `saved` is set. */
+  draft?: QuestionDraft | null;
+  /** Reports the working state after every change, so the rung can persist it
+   *  (lib/level-run-resume) and resume mid-question, on any device. */
+  onDraft?: (draft: QuestionDraft) => void;
   /** Called when the student presses "next" — `firstTryCorrect` is what the
    *  rung scores on, and the snapshot is what a later revisit renders from. */
   onResolved: (firstTryCorrect: boolean, snapshot: AnswerSnapshot) => void;
@@ -114,39 +143,40 @@ export function QuestionRunnerCard({
     [q],
   );
 
-  const [selected, setSelected] = useState<number | null>(saved?.selected ?? null); // MCQ original index
+  const d = saved ? null : (draft ?? null);
+  const [selected, setSelected] = useState<number | null>(saved?.selected ?? d?.selected ?? null); // MCQ original index
   /** Every option picked and found wrong. Kept SEPARATELY from `selected`
    *  because a retry clears the selection, and the owner asked for the wrong
    *  answer to stay on screen with its ✗ rather than vanish. */
-  const [wrongPicks, setWrongPicks] = useState<number[]>(saved?.wrongPicks ?? []);
-  const [input, setInput] = useState(saved && !question.answerLabels ? saved.typed : '');
+  const [wrongPicks, setWrongPicks] = useState<number[]>(saved?.wrongPicks ?? d?.wrongPicks ?? []);
+  const [input, setInput] = useState(saved && !question.answerLabels ? saved.typed : (d?.input ?? ''));
   // A question that asks for several named quantities ("מצא את $a_1$ ואת $d$")
   // gets one labelled box per quantity (question.answerLabels) instead of one
   // box for all of them. `typed` is the whole answer as one string — what the
   // logs, the tutor and the "למה טעית?" box read; grading uses the boxes.
   const labels = q.answerLabels;
   const [parts, setParts] = useState<string[]>(
-    () => saved?.parts ?? (q.answerLabels ?? []).map(() => ''),
+    () => saved?.parts ?? d?.parts ?? (q.answerLabels ?? []).map(() => ''),
   );
   const typed = labels ? labels.map((l, i) => `${l} = ${(parts[i] ?? '').trim()}`).join(', ') : input;
   const filled = labels ? parts.every((p) => p.trim()) : input.trim().length > 0;
   // Boxes already graded right. They stay right (green, not editable), so a
   // retry only has to fix the box that missed.
-  const [lockedParts, setLockedParts] = useState<boolean[]>(() => (q.answerLabels ?? []).map(() => false));
-  const [tries, setTries] = useState(saved ? 1 : 0);
-  const [firstTryCorrect, setFirstTryCorrect] = useState<boolean | null>(saved?.firstTryCorrect ?? null);
+  const [lockedParts, setLockedParts] = useState<boolean[]>(() => d?.lockedParts ?? (q.answerLabels ?? []).map(() => false));
+  const [tries, setTries] = useState(saved ? 1 : (d?.tries ?? 0));
+  const [firstTryCorrect, setFirstTryCorrect] = useState<boolean | null>(saved?.firstTryCorrect ?? d?.firstTryCorrect ?? null);
   // A revisit opens fully resolved: the answer, the marks and the solution are
   // all on screen, and every answer handler early-returns on `resolved`, so the
   // question can never be logged or scored twice.
-  const [revealed, setRevealed] = useState(!!saved);
+  const [revealed, setRevealed] = useState(!!saved || !!d?.revealed);
   /** The student got there IN THE END — on the first try or a later one. The
    *  rung still scores `firstTryCorrect`, but the screen must not tell someone
    *  who fixed their own mistake that they were wrong: that is the one message
    *  guaranteed to stop them from retrying next time. */
-  const [solved, setSolved] = useState(saved?.solved ?? false);
+  const [solved, setSolved] = useState(saved?.solved ?? d?.solved ?? false);
   /** A student who solved it can still open the worked solution — on request.
    *  It is not pushed at them, which is what "הסבר מלא רק אחרי כישלון" means. */
-  const [showSolution, setShowSolution] = useState(false);
+  const [showSolution, setShowSolution] = useState(d?.showSolution ?? false);
   /** The answer the student actually gave on a wrong FIRST attempt, captured at
    *  the moment it happened. The render state it used to be derived from is
    *  cleared by retryMCQ, so it could not survive to the tutor. */
@@ -157,11 +187,11 @@ export function QuestionRunnerCard({
   const missedOnFirstTry =
     saved && !saved.firstTryCorrect && saved.wrongPicks.length > 0 ? saved.wrongPicks[0] : null;
   const [missedWith, setMissedWith] = useState<string | null>(
-    missedOnFirstTry !== null ? (question.answers?.[missedOnFirstTry] ?? null) : null,
+    missedOnFirstTry !== null ? (question.answers?.[missedOnFirstTry] ?? null) : (d?.missedWith ?? null),
   );
   /** ORIGINAL index of the wrong first pick — the key into distractorNotes,
    *  which is what lets the tutor answer "why is my answer wrong" for $0. */
-  const [missedIndex, setMissedIndex] = useState<number | null>(missedOnFirstTry);
+  const [missedIndex, setMissedIndex] = useState<number | null>(missedOnFirstTry ?? d?.missedIndex ?? null);
 
   // "למד אותי" — three graded rungs of help derived from what the question and
   // its sub-topic already carry (lib/help-ladder). `openedLevels` is the whole
@@ -169,12 +199,28 @@ export function QuestionRunnerCard({
   // "took the hint AND the first step", and so could not price help honestly.
   const subTopic = useMemo(() => getSubTopic(subject, topic, subId), [subject, topic, subId]);
   const ladder = useMemo(() => buildHelpLadder(q, subTopic), [q, subTopic]);
-  const [openedLevels, setOpenedLevels] = useState<number[]>([]);
+  const [openedLevels, setOpenedLevels] = useState<number[]>(d?.openedLevels ?? []);
   /** Any help taken at all — what `hintUsed` has always meant. */
   const helpTaken = openedLevels.length > 0;
-  const [check, setCheck] = useState<CheckResult | null>(null);
-  const [mistakeId, setMistakeId] = useState<string | null>(null);
-  const [aiCategory, setAiCategory] = useState<ErrorCategory | null>(null);
+  const [check, setCheck] = useState<CheckResult | null>(d?.check ?? null);
+  const [mistakeId, setMistakeId] = useState<string | null>(d?.mistakeId ?? null);
+  const [aiCategory, setAiCategory] = useState<ErrorCategory | null>(d?.aiCategory ?? null);
+
+  // ===== report the working state for resume =====
+  // Everything a half-worked question needs to come back as it was. `tries`
+  // and `firstTryCorrect` are what stop a resumed question from logging its
+  // first attempt a second time (logFirst runs only on try 1).
+  useEffect(() => {
+    if (saved || !onDraft) return;
+    onDraft({
+      qid: q.id,
+      selected, wrongPicks, input, parts, lockedParts, tries, firstTryCorrect, revealed, solved,
+      showSolution, missedWith, missedIndex, openedLevels, check, mistakeId, aiCategory,
+    });
+  }, [
+    saved, onDraft, q.id, selected, wrongPicks, input, parts, lockedParts, tries, firstTryCorrect,
+    revealed, solved, showSolution, missedWith, missedIndex, openedLevels, check, mistakeId, aiCategory,
+  ]);
 
   const resolved = revealed || firstTryCorrect === true;
 

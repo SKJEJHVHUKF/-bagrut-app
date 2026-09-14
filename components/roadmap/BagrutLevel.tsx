@@ -5,19 +5,31 @@
 // card (deterministic checker + graded hints + grounded tutor). The student
 // works each part; finishing awards stars from how many parts came out right.
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Target, Flag } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
-import { QuestionPartCard } from '@/components/practice/QuestionPartCard';
+import { QuestionPartCard, type PartDraft } from '@/components/practice/QuestionPartCard';
 import { buttonTap } from '@/lib/animations';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
 import type { AttemptResult } from '@/lib/roadmap-progress';
 import { LevelClearedPanel, LevelFailedPanel } from './ladder-ui';
+import { useHydrated } from '@/lib/use-client-value';
+import { clearRun, loadRun, loadRunIfNewer, saveRun } from '@/lib/level-run-resume';
+
+/** What lib/level-run-resume stores for the bagrut rung. */
+type StoredBagrutRun = {
+  /** The rung's question ids — a changed rung does not resume a stale round. */
+  sig: string;
+  status: Record<string, 'correct' | 'wrong'>;
+  isRetry: boolean;
+  drafts: Record<string, PartDraft>;
+};
 
 export function BagrutLevel({
   subject,
   topic,
+  subId,
   level,
   onSubmit,
   onBack,
@@ -52,6 +64,67 @@ export function BagrutLevel({
   }
 
   const [isRetry, setIsRetry] = useState(false);
+  /** Every part's working state, keyed like `status` — so a student who leaves
+   *  mid-question (typed answer, hints, a wrong check) comes back to it. */
+  const [drafts, setDrafts] = useState<Record<string, PartDraft>>({});
+  /** Bumped on a restore, to remount the part cards with the restored drafts. */
+  const [restoreNonce, setRestoreNonce] = useState(0);
+  const sig = level.bagrut.map((q) => q.id).join('|');
+
+  function applyRun(raw: unknown) {
+    const run = raw as Partial<StoredBagrutRun> | null;
+    const ok = !!run && run.sig === sig;
+    setStatus(ok ? (run.status ?? {}) : {});
+    setIsRetry(ok ? !!run.isRetry : false);
+    setDrafts(ok ? (run.drafts ?? {}) : {});
+    setResult(null);
+    setRestoreNonce((n) => n + 1);
+  }
+
+  // Resume the saved round once localStorage is readable (see RoadmapLevelRunner).
+  const hydrated = useHydrated();
+  const [restored, setRestored] = useState(false);
+  if (hydrated && !restored) {
+    setRestored(true);
+    applyRun(loadRun(topic, subId, level.kind));
+  }
+
+  // A newer round arrived from another device through sync.
+  useEffect(() => {
+    const onSynced = () => {
+      const next = loadRunIfNewer(topic, subId, level.kind);
+      if (next !== undefined) applyRun(next);
+    };
+    window.addEventListener('bagrut-state-synced', onSynced);
+    return () => window.removeEventListener('bagrut-state-synced', onSynced);
+  });
+
+  useEffect(() => {
+    if (!restored) return;
+    if (result) {
+      clearRun(topic, subId, level.kind);
+      return;
+    }
+    const touched = Object.keys(status).length > 0 || Object.values(drafts).some(
+      (d) => d.hintsShown > 0 || d.stepsShown >= 0 || !!d.answer || d.parts.some(Boolean) || !!d.checkResult,
+    );
+    if (!touched && !isRetry) return; // nothing to resume yet
+    const data: StoredBagrutRun = { sig, status, isRetry, drafts };
+    saveRun(topic, subId, level.kind, data);
+  }, [restored, result, status, isRetry, drafts, sig, topic, subId, level.kind]);
+
+  // One stable callback per part: a fresh arrow each render would re-fire the
+  // card's report effect on every render.
+  const onPartDraft = useMemo(() => {
+    const out: Record<string, (d: PartDraft) => void> = {};
+    level.bagrut.forEach((q, qi) =>
+      q.parts.forEach((_, pi) => {
+        const id = `${qi}.${pi}`;
+        out[id] = (d) => setDrafts((prev) => ({ ...prev, [id]: d }));
+      }),
+    );
+    return out;
+  }, [level.bagrut]);
 
   function finish() {
     setResult(onSubmit(correctParts, totalParts, { viaRetry: isRetry }));
@@ -59,6 +132,8 @@ export function BagrutLevel({
 
   function retry() {
     setStatus({});
+    setDrafts({});
+    setRestoreNonce((n) => n + 1); // fresh part cards for the new attempt
     setIsRetry(true);
     setResult(null);
   }
@@ -141,7 +216,7 @@ export function BagrutLevel({
             const id = `${qi}.${pi}`;
             return (
               <QuestionPartCard
-                key={id}
+                key={`${restoreNonce}-${id}`}
                 part={part}
                 subject={subject}
                 topic={topic}
@@ -151,6 +226,8 @@ export function BagrutLevel({
                 difficulty={q.difficulty}
                 onDone={() => setPart(id, 'correct')}
                 onSelfAssess={(correct) => setPart(id, correct ? 'correct' : 'wrong', true)}
+                draft={drafts[id] ?? null}
+                onDraft={onPartDraft[id]}
               />
             );
           })}

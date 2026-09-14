@@ -27,6 +27,7 @@ const store = new Map<string, string>();
 
 import { mergeResults, mergeRoadmap, rebuildSeen } from '../lib/sync/roadmap-sync';
 import { MAX_EVENTS, MIN_PER_WEEK_WINDOW, weeklyDelta } from '../lib/results';
+import { mergeRuns, canonical, saveRun, loadRun, clearRun, loadRunIfNewer, latestRun, RUNS_KEY } from '../lib/level-run-resume';
 
 const T0 = 1_700_000_000_000;
 const DAY = 24 * 60 * 60 * 1000;
@@ -235,6 +236,37 @@ section('weeklyDelta — "did I actually improve?"');
   put([...[...Array(12)].map(() => ev(30, true)), ...[...Array(12)].map(() => ev(2, true))]);
   assert(weeklyDelta('math5', NOW).enough === false, 'a month-old burst does not fill last week');
   store.delete('bagrut-results-v1');
+}
+
+// ============================================================
+// Unfinished rounds (lib/level-run-resume): newest per rung wins, tombstones
+// beat the round they close, and a restored round is never re-stamped.
+// ============================================================
+console.log('\n── Unfinished rounds — newest wins, graded stays graded ─────');
+{
+  (globalThis as unknown as { window: { dispatchEvent: () => void } }).window.dispatchEvent = () => {};
+  const NOW = T0 + 10 * DAY;
+  const phone = { 'a::s::hard': { savedAt: NOW - DAY, data: { pos: 1 } } };
+  const laptop = { 'a::s::hard': { savedAt: NOW - 60_000, data: { pos: 4 } } };
+  assert(canonical(mergeRuns(phone, laptop, NOW)) === canonical(mergeRuns(laptop, phone, NOW)), 'runs merge converges in either order');
+  assert((mergeRuns(phone, laptop, NOW)['a::s::hard'].data as { pos: number }).pos === 4, 'the newer round (question 5) wins over the stale one');
+  const graded = { 'a::s::hard': { savedAt: NOW } };
+  assert(mergeRuns(laptop, graded, NOW)['a::s::hard'].data === undefined, 'a graded round (tombstone) is not resurrected by an older copy');
+  assert(Object.keys(mergeRuns({ old: { savedAt: NOW - 200 * DAY, data: {} } }, {}, NOW)).length === 0, 'a round untouched for months is dropped');
+  assert(canonical({ b: 1, a: { d: 2, c: undefined } }) === canonical({ a: { d: 2 }, b: 1 }), 'canonical ignores key order (jsonb reorders keys)');
+
+  const recent = Date.now() - 1000;
+  store.set(RUNS_KEY, JSON.stringify({ 't::s::mid': { savedAt: recent, data: { z: 1, pos: 2 } } }));
+  saveRun('t', 's', 'mid', { pos: 2, z: 1 });
+  assert(JSON.parse(store.get(RUNS_KEY)!)['t::s::mid'].savedAt === recent, 're-saving the same round with reordered keys keeps its old savedAt');
+  assert((loadRun('t', 's', 'mid') as { pos: number }).pos === 2, 'loadRun returns the stored round');
+  assert(loadRunIfNewer('t', 's', 'mid') === undefined, 'nothing newer right after a load');
+  store.set(RUNS_KEY, JSON.stringify({ 't::s::mid': { savedAt: recent + 500, data: { pos: 3 } } }));
+  assert((loadRunIfNewer('t', 's', 'mid') as { pos: number }).pos === 3, 'a synced newer round is reported once');
+  assert(latestRun()?.pos === 3 && latestRun()?.kind === 'mid', 'latestRun points at the unfinished round');
+  clearRun('t', 's', 'mid');
+  assert(loadRun('t', 's', 'mid') === null && latestRun() === null, 'a cleared round leaves no resume point');
+  store.delete(RUNS_KEY);
 }
 
 // ============================================================

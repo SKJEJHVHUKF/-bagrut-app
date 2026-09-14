@@ -14,6 +14,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { MAX_EVENTS } from '@/lib/results';
+import { RUNS_KEY, mergeRuns, type RunStore } from '@/lib/level-run-resume';
 
 const ROADMAP_KEY = 'bagrut-roadmap-v1';
 const PLAN_KEY = 'bagrut-study-plan-v1';
@@ -302,6 +303,11 @@ export async function syncNow(): Promise<boolean> {
     writeJSON(RESULTS_KEY, mergedResults);
     writeJSON(RESULTS_SEEN_KEY, rebuildSeen(mergedResults));
 
+    // Unfinished rounds (lib/level-run-resume): newest per rung wins, so the
+    // student resumes on the phone the question they left on the computer.
+    const mergedRuns = mergeRuns(readJSON<RunStore>(RUNS_KEY, {}), (remote?.runs as RunStore) ?? {});
+    writeJSON(RUNS_KEY, mergedRuns);
+
     // Plan: a fresh device with no local plan adopts the remote one; otherwise
     // the local plan (what the student is using here) wins and is pushed up.
     let localPlan = readJSON<unknown | null>(PLAN_KEY, null);
@@ -315,7 +321,7 @@ export async function syncNow(): Promise<boolean> {
     // skip the write entirely when nothing changed (visibilitychange and
     // beforeunload both fire right after a debounced push and would otherwise
     // re-upload the same 200KB), and a longer debounce in initSync below.
-    const body = { roadmap: mergedRoadmap, plan: localPlan ?? null, results: mergedResults };
+    const body = { roadmap: mergedRoadmap, plan: localPlan ?? null, results: mergedResults, runs: mergedRuns };
     const signature = JSON.stringify(body);
     if (signature === lastPushed) {
       window.dispatchEvent(new Event('bagrut-state-synced'));
@@ -328,16 +334,19 @@ export async function syncNow(): Promise<boolean> {
       .upsert(payload, { onConflict: 'user_id' });
     if (upsertError) {
       // Same defence as the star select, on the write side: rather than let a
-      // missing `results` column break roadmap sync, drop it and push the rest.
-      console.warn('[sync] full upsert failed, retrying without results', upsertError.message);
-      const { results: _omit, ...legacy } = payload;
-      void _omit;
-      const { error: legacyError } = await supabase
-        .from('learning_state')
-        .upsert(legacy, { onConflict: 'user_id' });
-      if (legacyError) {
-        console.warn('[sync] fallback upsert failed too', legacyError.message);
-        return finish('no-table');
+      // column added later (`runs`, then `results`) break the sync that already
+      // works, drop the newest columns one at a time and push the rest.
+      const { runs: _runs, ...withoutRuns } = payload;
+      const { results: _results, ...legacy } = withoutRuns;
+      void _runs;
+      void _results;
+      let fallbackError = upsertError;
+      for (const attempt of [withoutRuns, legacy]) {
+        console.warn('[sync] upsert failed, retrying with fewer columns', fallbackError.message);
+        const { error } = await supabase.from('learning_state').upsert(attempt, { onConflict: 'user_id' });
+        if (!error) break;
+        fallbackError = error;
+        if (attempt === legacy) return finish('no-table');
       }
     } else {
       lastPushed = signature;

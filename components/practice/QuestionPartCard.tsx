@@ -68,6 +68,25 @@ export type QuestionPart = {
 type Verdict = 'correct' | 'partial' | 'wrong';
 type CheckResult = { verdict: Verdict; feedback: string; tip: string };
 
+/** The whole working state of a part — what a resumed bagrut rung restores. */
+export type PartDraft = {
+  open: boolean;
+  answer: string;
+  parts: string[];
+  wrongParts?: boolean[];
+  lockedParts: boolean[];
+  hintsShown: number;
+  stepsShown: number;
+  revealedFinal: boolean;
+  selfReport: 'correct' | 'wrong' | null;
+  mistakeId: string | null;
+  aiCategory: ErrorCategory | null;
+  recorded: boolean;
+  checkResult: CheckResult | null;
+  lastUserAnswer: string;
+  diagnosis?: AnswerDiagnosis;
+};
+
 export function QuestionPartCard({
   part,
   subject = 'math5',
@@ -78,6 +97,8 @@ export function QuestionPartCard({
   difficulty,
   onDone,
   onSelfAssess,
+  draft,
+  onDraft,
 }: {
   part: QuestionPart;
   /** Subject key for logging mistakes to the error notebook. */
@@ -99,34 +120,39 @@ export function QuestionPartCard({
    *  ("פתרתי נכון" / "טעיתי כאן"). Lets the parent record the result and
    *  (Task 7) log a mistake with a category. */
   onSelfAssess?: (correct: boolean) => void;
+  /** Restores a part left half-worked (typed answer, hints, a wrong check). */
+  draft?: PartDraft | null;
+  /** Reports the working state after every change, for resume + sync. */
+  onDraft?: (draft: PartDraft) => void;
 }) {
-  const [open, setOpen] = useState(true);
-  const [answer, setAnswer] = useState('');
+  const d = draft ?? null;
+  const [open, setOpen] = useState(d?.open ?? true);
+  const [answer, setAnswer] = useState(d?.answer ?? '');
   // A part that asks for several named quantities ("מצא את $d$ ואת $a_1$")
   // gets one labelled box each (part.answerLabels). `typed` is the whole
   // answer as one string for the logs, the tutor and the LLM fallback; grading
   // reads the boxes. `wrongParts` outlines the boxes that missed.
   const labels = part.answerLabels;
-  const [parts, setParts] = useState<string[]>(() => (part.answerLabels ?? []).map(() => ''));
-  const [wrongParts, setWrongParts] = useState<boolean[] | undefined>();
+  const [parts, setParts] = useState<string[]>(() => d?.parts ?? (part.answerLabels ?? []).map(() => ''));
+  const [wrongParts, setWrongParts] = useState<boolean[] | undefined>(d?.wrongParts);
   // Boxes already graded right stay right (green, not editable), so a retry
   // only has to fix the box that missed.
-  const [lockedParts, setLockedParts] = useState<boolean[]>(() => (part.answerLabels ?? []).map(() => false));
+  const [lockedParts, setLockedParts] = useState<boolean[]>(() => d?.lockedParts ?? (part.answerLabels ?? []).map(() => false));
   const typed = labels ? labels.map((l, i) => `${l} = ${(parts[i] ?? '').trim()}`).join(', ') : answer;
   const filled = labels ? parts.every((p) => p.trim()) : answer.trim().length > 0;
-  const [hintsShown, setHintsShown] = useState(0);
-  const [stepsShown, setStepsShown] = useState(-1);
-  const [revealedFinal, setRevealedFinal] = useState(false);
+  const [hintsShown, setHintsShown] = useState(d?.hintsShown ?? 0);
+  const [stepsShown, setStepsShown] = useState(d?.stepsShown ?? -1);
+  const [revealedFinal, setRevealedFinal] = useState(d?.revealedFinal ?? false);
   // Self-assessment after revealing the full solution (the "solved on paper"
   // path) — null until the student grades themselves.
-  const [selfReport, setSelfReport] = useState<'correct' | 'wrong' | null>(null);
+  const [selfReport, setSelfReport] = useState<'correct' | 'wrong' | null>(d?.selfReport ?? null);
   const [showAudit, setShowAudit] = useState(false);
   // Error-notebook state — one mistake per part, re-taggable.
-  const [mistakeId, setMistakeId] = useState<string | null>(null);
-  const [aiCategory, setAiCategory] = useState<ErrorCategory | null>(null);
+  const [mistakeId, setMistakeId] = useState<string | null>(d?.mistakeId ?? null);
+  const [aiCategory, setAiCategory] = useState<ErrorCategory | null>(d?.aiCategory ?? null);
   // Log the FIRST measured outcome (graded or self-assessed) to lib/results so
   // /insights + grade prediction count bagrut work — once per part.
-  const [recorded, setRecorded] = useState(false);
+  const [recorded, setRecorded] = useState(d?.recorded ?? false);
   // `selfReported` separates "lib/answer-check compared my expression to the
   // key" from "I looked at the solution and said I got it" — the tracer in
   // lib/cognition prices those very differently, and a bagrut part is the one
@@ -195,15 +221,27 @@ export function QuestionPartCard({
 
   // ===== Answer checking state =====
   const [checking, setChecking] = useState(false);
-  const [checkResult, setCheckResult] = useState<CheckResult | null>(null);
+  const [checkResult, setCheckResult] = useState<CheckResult | null>(d?.checkResult ?? null);
   const [checkError, setCheckError] = useState<string | null>(null);
   // Snapshot of the wrong answer so the "Why wrong?" tutor button can
   // explain THIS specific mistake (not the standard solution).
-  const [lastUserAnswer, setLastUserAnswer] = useState('');
+  const [lastUserAnswer, setLastUserAnswer] = useState(d?.lastUserAnswer ?? '');
   /** Shape of the last deterministic WRONG verdict (sign-flip, swapped, …).
    *  Kept so the tutor bubble can say what went wrong at $0 — the checker
    *  already computed it; discarding it was what forced a paid guess. */
-  const [diagnosis, setDiagnosis] = useState<AnswerDiagnosis | undefined>();
+  const [diagnosis, setDiagnosis] = useState<AnswerDiagnosis | undefined>(d?.diagnosis);
+
+  // Report the working state for resume. `recorded` travels with it, so a
+  // resumed part never logs its outcome a second time.
+  useEffect(() => {
+    onDraft?.({
+      open, answer, parts, wrongParts, lockedParts, hintsShown, stepsShown, revealedFinal,
+      selfReport, mistakeId, aiCategory, recorded, checkResult, lastUserAnswer, diagnosis,
+    });
+  }, [
+    onDraft, open, answer, parts, wrongParts, lockedParts, hintsShown, stepsShown, revealedFinal,
+    selfReport, mistakeId, aiCategory, recorded, checkResult, lastUserAnswer, diagnosis,
+  ]);
 
   // ===== the tutor sees THIS part once the student touches it =====
   // The container publishes the whole question at lesson level — every part

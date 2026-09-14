@@ -31,6 +31,11 @@ create table if not exists public.learning_state (
   updated_at timestamptz not null default now()
 );
 
+-- runs ← bagrut-level-run-v1 (the unfinished round of each rung: question
+-- position, answers, a half-worked question; newest per rung wins — see
+-- lib/level-run-resume.mergeRuns). Added 2026-09-14; safe to re-run.
+alter table public.learning_state add column if not exists runs jsonb;
+
 alter table public.learning_state enable row level security;
 
 -- A user may only ever read/write their own row.

@@ -13,10 +13,45 @@ import { retrySet } from '@/lib/roadmap-mastery';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
 import type { AttemptResult } from '@/lib/roadmap-progress';
 import type { PracticeQuestion } from '@/content/lessons/types';
-import { QuestionRunnerCard, type AnswerSnapshot } from './QuestionRunnerCard';
+import { QuestionRunnerCard, type AnswerSnapshot, type QuestionDraft } from './QuestionRunnerCard';
 import { LevelClearedPanel, LevelFailedPanel } from './ladder-ui';
 import { useClientValue, useHydrated } from '@/lib/use-client-value';
-import { clearLevelRun, loadLevelRun, saveLevelRun } from '@/lib/level-run-resume';
+import { clearRun, loadRun, loadRunIfNewer, saveRun } from '@/lib/level-run-resume';
+
+/** What lib/level-run-resume stores for a question rung. */
+type StoredRun = {
+  /** Question ids of the current round, in the order shown. */
+  poolIds: string[];
+  pos: number;
+  roundCorrect: number;
+  roundWrong: string[];
+  baseCorrect: number;
+  isRetry: boolean;
+  answers: Record<string, AnswerSnapshot>;
+  draft: QuestionDraft | null;
+};
+type RunData = StoredRun & { pool: PracticeQuestion[] };
+
+/** A stored round, resolved against the rung's questions — null when there is
+ *  none or the rung's content changed since (an id is gone): restart then. */
+function parseRun(raw: unknown, questions: PracticeQuestion[]): RunData | null {
+  const run = raw as Partial<StoredRun> | null;
+  if (!run || !Array.isArray(run.poolIds) || run.poolIds.length === 0 || typeof run.pos !== 'number') return null;
+  const byId = new Map(questions.map((q) => [q.id, q]));
+  const pool = run.poolIds.map((id) => byId.get(id));
+  if (pool.some((q) => !q) || run.pos < 0 || run.pos >= pool.length) return null;
+  return {
+    poolIds: run.poolIds,
+    pos: run.pos,
+    roundCorrect: run.roundCorrect ?? 0,
+    roundWrong: run.roundWrong ?? [],
+    baseCorrect: run.baseCorrect ?? 0,
+    isRetry: !!run.isRetry,
+    answers: run.answers ?? {},
+    draft: run.draft ?? null,
+    pool: pool as PracticeQuestion[],
+  };
+}
 
 export function RoadmapLevelRunner({
   subject,
@@ -65,37 +100,65 @@ export function RoadmapLevelRunner({
    *  revisited question is re-rendered from its snapshot instead of coming back
    *  blank, and is never scored or logged a second time. */
   const [answers, setAnswers] = useState<Record<string, AnswerSnapshot>>({});
+  /** The current question's working state (a wrong try, an opened hint) — so a
+   *  student who leaves mid-question comes back to that screen, not a blank one. */
+  const [draft, setDraft] = useState<QuestionDraft | null>(null);
+  /** Bumped when a round arrives from another device, to remount the card with it. */
+  const [restoreNonce, setRestoreNonce] = useState(0);
+
+  function applyRun(run: RunData | null) {
+    setPool(run ? run.pool : orderedFull);
+    setPos(run ? run.pos : 0);
+    setRoundCorrect(run ? run.roundCorrect : 0);
+    setRoundWrong(new Set(run ? run.roundWrong : []));
+    setBaseCorrect(run ? run.baseCorrect : 0);
+    setIsRetry(run ? run.isRetry : false);
+    setResult(null);
+    setAnswers(run ? run.answers : {});
+    setDraft(run?.draft ?? null);
+  }
 
   // A new ordering means a new level (or a newly-known tier) — resume the saved
-  // run of this rung if there is one (lib/level-run-resume), else restart.
+  // round of this rung if there is one (lib/level-run-resume), else restart.
   // Adjusted during render rather than in an effect so the stale round is never
   // committed: React re-runs this component with the reset state immediately.
-  // Waits for hydration: the saved run lives in localStorage.
+  // Waits for hydration: the saved round lives in localStorage.
   const hydrated = useHydrated();
   const [shownOrder, setShownOrder] = useState<PracticeQuestion[] | null>(null);
   if (hydrated && shownOrder !== orderedFull) {
-    const saved = loadLevelRun(topic, subId, level.kind, level.questions);
     setShownOrder(orderedFull);
-    setPool(saved ? saved.pool : orderedFull);
-    setPos(saved ? saved.pos : 0);
-    setRoundCorrect(saved ? saved.roundCorrect : 0);
-    setRoundWrong(new Set(saved ? saved.roundWrong : []));
-    setBaseCorrect(saved ? saved.baseCorrect : 0);
-    setIsRetry(saved ? saved.isRetry : false);
-    setResult(null);
-    setAnswers(saved ? saved.answers : {});
+    applyRun(parseRun(loadRun(topic, subId, level.kind), level.questions));
+    setRestoreNonce((n) => n + 1);
   }
 
-  // Keep the saved run in step with the round; a graded round is finished, so
-  // its snapshot goes (the next visit starts the rung fresh).
+  // A sync pulled a newer round of this rung from another device (the student
+  // moved on there) — show that one. Graded there → start fresh here.
+  useEffect(() => {
+    const onSynced = () => {
+      const next = loadRunIfNewer(topic, subId, level.kind);
+      if (next === undefined) return;
+      applyRun(parseRun(next, level.questions));
+      setRestoreNonce((n) => n + 1);
+    };
+    window.addEventListener('bagrut-state-synced', onSynced);
+    return () => window.removeEventListener('bagrut-state-synced', onSynced);
+  });
+
+  // Keep the saved round in step with the screen; a graded round is finished,
+  // so it is cleared (the next visit starts the rung fresh).
   useEffect(() => {
     if (shownOrder === null) return;
     if (result) {
-      clearLevelRun(topic, subId, level.kind);
+      clearRun(topic, subId, level.kind);
       return;
     }
-    if (pos === 0 && Object.keys(answers).length === 0 && !isRetry) return; // nothing to resume yet
-    saveLevelRun(topic, subId, level.kind, {
+    const current = pool[pos];
+    const liveDraft = draft && current && draft.qid === current.id ? draft : null;
+    const touched =
+      !!liveDraft &&
+      (liveDraft.tries > 0 || liveDraft.openedLevels.length > 0 || !!liveDraft.input || liveDraft.parts.some(Boolean));
+    if (pos === 0 && Object.keys(answers).length === 0 && !isRetry && !touched) return; // nothing to resume yet
+    const data: StoredRun = {
       poolIds: pool.map((q) => q.id),
       pos,
       roundCorrect,
@@ -103,9 +166,10 @@ export function RoadmapLevelRunner({
       baseCorrect,
       isRetry,
       answers,
-      savedAt: Date.now(),
-    });
-  }, [shownOrder, result, pool, pos, roundCorrect, roundWrong, baseCorrect, isRetry, answers, topic, subId, level.kind]);
+      draft: touched ? liveDraft : null,
+    };
+    saveRun(topic, subId, level.kind, data);
+  }, [shownOrder, result, pool, pos, roundCorrect, roundWrong, baseCorrect, isRetry, answers, draft, topic, subId, level.kind]);
 
   if (total === 0) {
     return <div className="text-sm text-slate-500 text-center py-6">אין תרגילים ברמה הזו.</div>;
@@ -147,6 +211,7 @@ export function RoadmapLevelRunner({
     setIsRetry(true);
     setResult(null);
     setAnswers({}); // the missed questions are being answered again, for score
+    setDraft(null); // and from a clean screen, not the attempt that missed
   }
 
   function continueAnyway() {
@@ -162,6 +227,7 @@ export function RoadmapLevelRunner({
     setIsRetry(false);
     setResult(null);
     setAnswers({});
+    setDraft(null);
   }
 
   // ===== Result: cleared or failed =====
@@ -242,7 +308,7 @@ export function RoadmapLevelRunner({
       </div>
 
       <QuestionRunnerCard
-        key={`${isRetry ? 'r' : 'p'}-${pos}-${current.id}`}
+        key={`${restoreNonce}-${isRetry ? 'r' : 'p'}-${pos}-${current.id}`}
         question={current}
         position={pos + 1}
         total={pool.length}
@@ -251,6 +317,8 @@ export function RoadmapLevelRunner({
         subId={subId}
         source="drill"
         saved={answers[current.id] ?? null}
+        draft={draft?.qid === current.id ? draft : null}
+        onDraft={setDraft}
         onResolved={handleResolved}
         onBackToLearn={onBackToLearn}
       />
