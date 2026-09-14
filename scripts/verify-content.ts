@@ -129,6 +129,11 @@ function checkString(file: string, path: string, key: string, value: string, own
   }
   if (SKIP_FIELDS.has(key)) return;
 
+  // Markdown reads a line indented 4+ spaces as a code block, so `### `, `**`
+  // and `$…$` print as raw symbols. A codemod once indented the tail of seven
+  // trig `teach` blocks this way, and every other gate stayed green.
+  if (PROSE_FIELDS.has(key) && /^ {4,}\S/m.test(value)) add('indented-prose', 'error', file, path, value);
+
   // A ```geo sketch is a model of the question: every mark it makes (right
   // angle, "50°", parallel, equal ticks, point on circle, lengths to scale) is
   // checked against its own coordinates, so a figure can never contradict the
