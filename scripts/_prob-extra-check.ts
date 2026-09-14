@@ -698,7 +698,11 @@ function checkStage(stageId: string): boolean {
     const r3 = extra.filter((q) => isR3(q.id));
     for (const q of r3) {
       const s = difficulty(q).score;
-      if (q.difficulty === 'easy' && s >= snap.mid - 1 - EPS) err(q.id, 'round3-easy-too-hard', `scores ${s.toFixed(1)}; the ביסוס rung averages ${snap.mid}, so a warm-up stays under ${(snap.mid - 1).toFixed(1)}`);
+      // Under the ביסוס AVERAGE, no margin: pr-x-bas-307 (two friends picking the
+      // same number, 11.0) is a true warm-up whose check step pushed it past a
+      // margin, and the only way to pass would have been to delete the check.
+      // The rung-level +2 escalation below is what keeps the rungs apart.
+      if (q.difficulty === 'easy' && s >= snap.mid - EPS) err(q.id, 'round3-easy-too-hard', `scores ${s.toFixed(1)}; the ביסוס rung averages ${snap.mid}, so a warm-up stays under it`);
       if (q.difficulty === 'mid' && s < snap.mid - 1.5 - EPS) err(q.id, 'round3-mid-too-light', `scores ${s.toFixed(1)}; need ≥ ${(snap.mid - 1.5).toFixed(1)} (the ביסוס average ${snap.mid} − 1.5)`);
       if (q.difficulty === 'mid' && s >= snap.hard - EPS) err(q.id, 'round3-mid-too-hard', `scores ${s.toFixed(1)}; the אתגר rung averages ${snap.hard}, so this is a hard question`);
       if (q.difficulty === 'hard' && s < snap.hard - EPS) err(q.id, 'round3-hard-too-light', `scores ${s.toFixed(1)}; the אתגר rung already averaged ${snap.hard}, "ולא משהו קליל"`);
