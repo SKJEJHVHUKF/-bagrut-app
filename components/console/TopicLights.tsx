@@ -60,7 +60,10 @@ export default function TopicLights() {
   const titles = isDemo ? DEMO_SUB_TOPIC_TITLES : (data.subTopicTitles ?? {});
   const titleOf = (id: string | null) => {
     const title = id ? titles[id] : undefined;
-    return typeof title === 'string' && !title.includes('$') ? title : null;
+    if (typeof title !== 'string' || title.includes('$')) return null;
+    // "רמה 1: …" (10 of 93 titles) names a rung; its digit would be the only
+    // number on this screen. The topic word already says how bad it is.
+    return title.replace(/^רמה\s*\d+\s*[:·]\s*/, '');
   };
   const thin = board.topics.filter((t) => !rows.some((r) => r.topic === t));
   // Below the sample-size gate no topic can ever get a word, so the footnote
