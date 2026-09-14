@@ -48,6 +48,9 @@ import { renderFocusContext, partAsQuestion, partQuestionText } from '../lib/tut
 import { stripFigureFences } from '../lib/geo-figure';
 import type { StaticBagrutQuestion } from '../content/lessons/types';
 import katex from 'katex';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { PROB_ORDER } from '../content/lessons/math5/prob-extra/order';
 
 const TOPIC = 'הסתברות';
 const BASELINE = process.argv.includes('--baseline');
@@ -530,6 +533,17 @@ function checkFigures(q: PracticeQuestion, stageId: string, shipped: boolean) {
   }
 }
 
+/** A bagrut part scored as a question whose statement is the context plus the
+ *  part's prompt — the context carries the mechanisms, the prompt the ask. */
+const partScore = (b: StaticBagrutQuestion, p: StaticBagrutQuestion['parts'][number]) =>
+  difficulty({
+    id: `${b.id}/${p.label}`,
+    difficulty: 'hard',
+    kind: 'open',
+    question: `${b.context} ${p.prompt}`,
+    solution: { steps: p.solution?.steps ?? [], finalAnswer: '', explanation: '' },
+  } as PracticeQuestion).score;
+
 /**
  * BAGRUT RUNG (2026-09-06, owner): more multi-part questions, exam-shaped. A
  * real שאלון 571 question has 4–5 parts, opens on a recovered parameter or
@@ -587,8 +601,7 @@ function checkBagrut(stageId: string, prefix: string) {
       if (/טבלה/.test(text) && !hasTable(text)) err(pw, 'table-without-figure', 'draw the table as a markdown table');
       for (const e of checkProbTreeFences(text)) err(pw, 'probtree-inconsistent', e);
       for (const e of checkProbTables(text)) err(pw, 'table-inconsistent', e);
-      const pseudo = { id: pw, difficulty: 'hard', kind: 'open', question: `${b.context} ${p.prompt}`, solution: { steps, finalAnswer: '', explanation: '' } } as PracticeQuestion;
-      scores.push(difficulty(pseudo).score);
+      scores.push(partScore(b, p));
       if (hasParameter({ question: p.prompt } as PracticeQuestion) || askShape({ question: p.prompt } as PracticeQuestion) === 'find-parameter') anyParam = true;
       if (isReverse({ question: p.prompt } as PracticeQuestion)) anyReverse = true;
     });
@@ -680,7 +693,7 @@ function checkStage(stageId: string): boolean {
         if (s.drill?.question) {
           const d = s.drill;
           const ans = d.answers && d.correct !== undefined ? textAnswers(d.answers[d.correct]) : new Set([...answersOf([d.expected]), ...textAnswers(d.solution?.finalAnswer)]);
-          out.push({ id: `${stageId} lesson step ${i + 1} drill`, nums: numbersOf(d.question), answers: ans, lesson: true });
+          out.push({ id: `${stageId} lesson step ${i + 1} drill`, nums: numbersOf(d.question ?? ''), answers: ans, lesson: true });
         }
         return out;
       }),
@@ -831,6 +844,43 @@ console.log(
 );
 const ids = arg === 'all' ? Object.keys(STAGES) : [arg];
 const ok = ids.map(checkStage).every(Boolean);
+
+/**
+ * THE ORDER INSIDE EVERY RUNG (owner, 2026-09-14: "חשוב מאוד העליה ההדרגתית של
+ * רמת הקושי בין כל השאלות"). A rung of 20 in authoring order climbs in steps
+ * and dips — the round-3 questions all sat after the shipped ones. The ladder
+ * reads content/lessons/math5/prob-extra/order.ts; this computes that list from
+ * the same score the bands use: per stage, each rung easiest first (ties keep
+ * their current place), then the 🎓 rung by the total of its parts.
+ */
+function computeOrder(): string[] {
+  const RUNGS = ['easy', 'mid', 'hard'] as const;
+  const bag = getLesson('math5', TOPIC)?.bagrutQuestions ?? [];
+  const out: string[] = [];
+  for (const stageId of Object.keys(STAGES)) {
+    const qs = getSubTopic('math5', TOPIC, stageId)?.questions ?? [];
+    const ranked = qs.map((q, i) => ({ id: q.id, rung: RUNGS.indexOf(q.difficulty), score: difficulty(q).score, i }));
+    ranked.sort((a, b) => a.rung - b.rung || a.score - b.score || a.i - b.i);
+    out.push(...ranked.map((r) => r.id));
+    const bags = bag.filter((b) => b.subTopicId === stageId).map((b, i) => ({ id: b.id, score: b.parts.reduce((s, p) => s + partScore(b, p), 0), i }));
+    bags.sort((a, b) => a.score - b.score || a.i - b.i);
+    out.push(...bags.map((b) => b.id));
+  }
+  return out;
+}
+if (arg === 'all' && !BASELINE) {
+  const order = computeOrder();
+  if (process.argv.includes('--write-order')) {
+    const file = join(process.cwd(), 'content/lessons/math5/prob-extra/order.ts');
+    const head = readFileSync(file, 'utf8').split('export const PROB_ORDER')[0];
+    writeFileSync(file, `${head}export const PROB_ORDER: string[] = [\n${order.map((id) => `  '${id}',`).join('\n')}\n];\n`);
+    console.log(`\nwrote ${order.length} ids to content/lessons/math5/prob-extra/order.ts`);
+  } else if (order.join('|') !== PROB_ORDER.join('|')) {
+    // ponytail: a warning while round 3 is being authored (every new question
+    // makes the list stale); flip to an error when the round closes.
+    console.log(`\n⚠ rung-order-stale — content/lessons/math5/prob-extra/order.ts is not the easiest-first order; run with --write-order`);
+  }
+}
 console.log(
   BASELINE
     ? '\n(baseline run — this grades the SHIPPED content, so failures here are the gap this round closes)'

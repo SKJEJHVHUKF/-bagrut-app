@@ -41,6 +41,7 @@ import { R3_BAGRUT as R3_TABLES_BAG } from './r3/tables-bagrut';
 import { R3_BAGRUT as R3_BERNOULLI_BAG } from './r3/bernoulli-bagrut';
 import { R3_BAGRUT as R3_CONDITIONAL_BAG } from './r3/conditional-bagrut';
 import { R3_BAGRUT as R3_PRACTICE_BAG } from './r3/practice-bagrut';
+import { PROB_ORDER } from './order';
 
 /** Extra multi-part bagrut questions, one file per stage so parallel authors
  *  never share a file; `subTopicId` on each is what makes it a stage's 🎓 rung. */
@@ -59,12 +60,19 @@ export const PROB_EXTRA: Record<string, PracticeQuestion[]> = {
   'pr-practice': [...PRACTICE, ...R3_PRACTICE],
 };
 
-/** Append the extras to whichever stages appear in `stages`, in rung order.
+const RANK = new Map(PROB_ORDER.map((id, i) => [id, i]));
+/** Easiest first (./order.ts). Array sort is stable, so ids the order does not
+ *  know yet keep their authoring position, after the ranked ones. */
+export function withProbOrder<T extends { id: string }>(items: T[]): T[] {
+  if (!RANK.size) return items;
+  return [...items].sort((a, b) => (RANK.get(a.id) ?? Infinity) - (RANK.get(b.id) ?? Infinity));
+}
+
+/** Append the extras to whichever stages appear in `stages`, then order each
+ *  stage easiest first. The ladder groups by `difficulty`, so this ordering is
+ *  the order inside every rung.
  *  Generic so the SubTopic shape survives — a `{id, questions}[]` parameter
  *  would widen every stage and break the Lesson type at the spread site. */
 export function withProbExtra<T extends { id: string; questions: PracticeQuestion[] }>(stages: T[]): T[] {
-  return stages.map((s) => {
-    const extra = PROB_EXTRA[s.id] ?? [];
-    return extra.length ? { ...s, questions: [...s.questions, ...extra] } : s;
-  });
+  return stages.map((s) => ({ ...s, questions: withProbOrder([...s.questions, ...(PROB_EXTRA[s.id] ?? [])]) }));
 }

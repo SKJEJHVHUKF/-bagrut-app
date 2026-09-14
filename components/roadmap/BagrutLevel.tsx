@@ -4,10 +4,19 @@
 // sub-topic's tagged multi-part bagrut question(s) with the real practice
 // card (deterministic checker + graded hints + grounded tutor). The student
 // works each part; finishing awards stars from how many parts came out right.
+//
+// ONE QUESTION AT A TIME (2026-09-14). The rung used to stack every question on
+// one page and grade all their parts together. That was fine at 1–3 questions;
+// the owner then asked for at least 20 bagrut questions per stage ("לפחות 20
+// תרגילים" on every rung, the בגרות rung included), and 20 four-part questions
+// on one page is ~90 parts to finish in a single sitting before "סיימתי" means
+// anything. So the rung now shows one question, grades that question's parts,
+// and offers the next one; the question the student reached is remembered per
+// sub-topic, so the 20 are actually reachable across visits.
 
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, Flag } from 'lucide-react';
+import { Target, Flag, ChevronRight, ChevronLeft } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { QuestionPartCard, type PartDraft } from '@/components/practice/QuestionPartCard';
 import { buttonTap } from '@/lib/animations';
@@ -25,6 +34,25 @@ type StoredBagrutRun = {
   isRetry: boolean;
   drafts: Record<string, PartDraft>;
 };
+
+/** Which question of the rung the student reached, per sub-topic. A viewer
+ *  convenience only: storage can be blocked, so every access is guarded. */
+const positionKey = (subId: string) => `mathup:bagrut-rung:${subId}`;
+function readPosition(subId: string, count: number): number {
+  try {
+    const n = Number(window.localStorage.getItem(positionKey(subId)));
+    return Number.isInteger(n) && n > 0 && n < count ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+function writePosition(subId: string, n: number) {
+  try {
+    window.localStorage.setItem(positionKey(subId), String(n));
+  } catch {
+    /* storage blocked: the rung still works, it just starts at question 1 */
+  }
+}
 
 export function BagrutLevel({
   subject,
@@ -47,12 +75,32 @@ export function BagrutLevel({
   subTopicTitle?: string;
 }) {
   const [result, setResult] = useState<AttemptResult | null>(null);
-  // Per-part outcome keyed by a stable "<qIndex>.<partIndex>" id.
+  // Per-part outcome of the CURRENT question, keyed by "<questionId>.<partIndex>".
   const [status, setStatus] = useState<Record<string, 'correct' | 'wrong'>>({});
+  const count = level.bagrut.length;
+  const [qi, setQi] = useState(0);
+  // Read after mount, never during render: the rung can open straight from the
+  // URL, and a server render has no storage to agree with.
+  useEffect(() => {
+    setQi(readPosition(subId, count));
+  }, [subId, count]);
 
-  const totalParts = level.bagrut.reduce((n, q) => n + q.parts.length, 0);
-  const doneParts = Object.keys(status).length;
-  const correctParts = Object.values(status).filter((s) => s === 'correct').length;
+  const q = level.bagrut[Math.min(qi, count - 1)];
+  const totalParts = q?.parts.length ?? 0;
+  // Only the current question's parts count: a restored round may carry others.
+  const mine = Object.entries(status).filter(([id]) => q && id.startsWith(`${q.id}.`));
+  const doneParts = mine.length;
+  const correctParts = mine.filter(([, s]) => s === 'correct').length;
+
+  function goTo(n: number) {
+    const next = Math.max(0, Math.min(count - 1, n));
+    setQi(next);
+    writePosition(subId, next);
+    setStatus({});
+    setIsRetry(false);
+    setResult(null);
+    window.scrollTo({ top: 0 });
+  }
 
   function setPart(id: string, outcome: 'correct' | 'wrong', force = false) {
     setStatus((prev) => {
@@ -117,9 +165,11 @@ export function BagrutLevel({
   // card's report effect on every render.
   const onPartDraft = useMemo(() => {
     const out: Record<string, (d: PartDraft) => void> = {};
-    level.bagrut.forEach((q, qi) =>
+    // Keyed like the part cards: by question id, since the rung shows one
+    // question at a time and its index no longer names a card.
+    level.bagrut.forEach((q) =>
       q.parts.forEach((_, pi) => {
-        const id = `${qi}.${pi}`;
+        const id = `${q.id}.${pi}`;
         out[id] = (d) => setDrafts((prev) => ({ ...prev, [id]: d }));
       }),
     );
@@ -142,6 +192,8 @@ export function BagrutLevel({
     setResult(onSubmit(correctParts, totalParts, { force: true }));
   }
 
+  const hasNextQuestion = qi < count - 1;
+
   if (result) {
     if (result.passed) {
       return (
@@ -152,7 +204,8 @@ export function BagrutLevel({
           subTopicTitle={subTopicTitle}
           onBack={onBack}
           onReplay={result.stars < 3 ? retry : undefined}
-          />
+          nextQuestion={hasNextQuestion ? { label: `לשאלת הבגרות הבאה (${qi + 2} מתוך ${count})`, onClick: () => goTo(qi + 1) } : undefined}
+        />
       );
     }
     return (
@@ -187,11 +240,29 @@ export function BagrutLevel({
         </p>
       </div>
 
-      {level.bagrut.map((q, qi) => (
+      {q && (
         <section key={q.id} className="space-y-3">
-          {level.bagrut.length > 1 && (
-            <div className="text-[11px] font-black tracking-widest text-slate-500 uppercase">
-              שאלה {qi + 1} מתוך {level.bagrut.length}
+          {count > 1 && (
+            <div className="flex items-center justify-between gap-2">
+              <button
+                onClick={() => goTo(qi - 1)}
+                disabled={qi === 0}
+                className="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-900/5 disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <ChevronRight className="w-4 h-4" />
+                <span>הקודמת</span>
+              </button>
+              <div className="text-[11px] font-black tracking-widest text-slate-500">
+                שאלה {qi + 1} מתוך {count}
+              </div>
+              <button
+                onClick={() => goTo(qi + 1)}
+                disabled={!hasNextQuestion}
+                className="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-900/5 disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <span>הבאה</span>
+                <ChevronLeft className="w-4 h-4" />
+              </button>
             </div>
           )}
           {/* Sticky, same reason as the ghost rung: the question sat at the top
@@ -213,7 +284,9 @@ export function BagrutLevel({
             </div>
           )}
           {q.parts.map((part, pi) => {
-            const id = `${qi}.${pi}`;
+            // Keyed by the question id so moving to another question remounts
+            // every part card instead of carrying the previous one's state over.
+            const id = `${q.id}.${pi}`;
             return (
               <QuestionPartCard
                 key={`${restoreNonce}-${id}`}
@@ -232,7 +305,7 @@ export function BagrutLevel({
             );
           })}
         </section>
-      ))}
+      )}
 
       <div className="surface-premium rounded-2xl p-4 space-y-3">
         <div className="text-center text-sm text-slate-600">

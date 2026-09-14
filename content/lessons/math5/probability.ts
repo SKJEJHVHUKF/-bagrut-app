@@ -1,7 +1,7 @@
 import type { Lesson } from '../types';
 import { PROBABILITY_BAGRUT_A, PROBABILITY_STAGES_A } from './probability-stages-a';
 import { PROBABILITY_BAGRUT_B, PROBABILITY_STAGES_B } from './probability-stages-b';
-import { withProbExtra, PROB_EXTRA_BAGRUT } from './prob-extra';
+import { withProbExtra, withProbOrder, PROB_EXTRA_BAGRUT } from './prob-extra';
 
 export const math5Probability: Lesson = {
   subject: 'math5',
@@ -412,7 +412,8 @@ $$P(k) = \\binom{n}{k}\\, p^k\\, (1-p)^{n-k}, \\quad k = 0, 1, \\ldots, n$$
     },
   ],
 
-  bagrutQuestions: [
+  // Easiest first on every stage's 🎓 rung (./prob-extra/order.ts).
+  bagrutQuestions: withProbOrder([
     {
       id: 'prob-bag-001',
       difficulty: 'mid',
@@ -624,7 +625,7 @@ $$P(k) = \\binom{n}{k}\\, p^k\\, (1-p)^{n-k}, \\quad k = 0, 1, \\ldots, n$$
     ...PROBABILITY_BAGRUT_A,
     ...PROBABILITY_BAGRUT_B,
     ...PROB_EXTRA_BAGRUT,
-  ],
+  ]),
 
   subTopics: [
     // The הסתברות track (2026-08-19): ONE run of six stages, authored per the
@@ -633,9 +634,9 @@ $$P(k) = \\binom{n}{k}\\, p^k\\, (1-p)^{n-k}, \\quad k = 0, 1, \\ldots, n$$
     // the four older modules (prob-basics / prob-conditional /
     // prob-combinatorics / prob-tables); their questions moved into the
     // stages with their ids unchanged.
-    // Each stage carries its EXTRA questions (./prob-extra) after the originals;
-    // the ladder groups by `difficulty`, so order within a rung is authoring
-    // order: reviewed baseline first, widening second.
+    // Each stage carries its EXTRA questions (./prob-extra), and the whole stage
+    // is ordered easiest first (./prob-extra/order.ts); the ladder groups by
+    // `difficulty`, so that is the order inside every rung.
     ...withProbExtra([...PROBABILITY_STAGES_A, ...PROBABILITY_STAGES_B]),
   ],
 };

@@ -45,9 +45,13 @@ export function LevelClearedPanel({
   subTopicTitle,
   onBack,
   onReplay,
+  nextQuestion,
 }: {
   level: RoadmapLevel;
   result: ClearResult;
+  /** The bagrut rung serves one question at a time: its first "next" is the
+   *  rung's next question, before the next sub-topic. */
+  nextQuestion?: { label: string; onClick: () => void };
   /** Title of the next rung (if any). */
   nextTitle?: string;
   onNext?: () => void;
@@ -101,6 +105,16 @@ export function LevelClearedPanel({
       </div>
 
       <div className="grid grid-cols-1 gap-2">
+        {nextQuestion && (
+          <motion.button
+            {...buttonTap}
+            onClick={nextQuestion.onClick}
+            className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-l from-cyan-700 to-violet-600 hover:from-cyan-700 hover:to-violet-500 px-5 py-3 rounded-2xl font-bold text-white shadow-lg shadow-violet-500/25 transition-colors"
+          >
+            <span>{nextQuestion.label}</span>
+            <ArrowLeft className="w-4 h-4" />
+          </motion.button>
+        )}
         {onNext && nextTitle && (
           <motion.button
             {...buttonTap}
