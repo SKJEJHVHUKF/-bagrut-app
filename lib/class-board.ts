@@ -85,6 +85,9 @@ export type BoardStudent = { id: string; name: string };
  */
 export type StudentState = 'no-data' | 'away' | 'stuck' | 'active';
 
+/** Measured answers (replays excluded) and how many of them were right. */
+export type Tally = { measured: number; correct: number };
+
 export type TopicMastery = {
   topic: string;
   /** Attempts that COUNT for mastery (replays excluded). */
@@ -95,6 +98,13 @@ export type TopicMastery = {
   /** Every attempt, replays included — the activity denominator. */
   attempts: number;
   hintRate: number | null;
+  /** The same measured answers, by sub-topic id. An answer without a sub-topic
+   *  counts for the topic only. */
+  subTopics: Record<string, Tally>;
+  /** The same measured answers in the last 7×24h and the 7×24h before it —
+   *  windows back from `now`, like the activity strip, never calendar weeks. */
+  thisWeek: Tally;
+  lastWeek: Tally;
 };
 
 export type StudentRow = {
@@ -189,6 +199,9 @@ export const RECENT_WRONG_LIMIT = 12;
  *  "שולטת" in. Between here and RETEACH_MAX_MASTERY it is "על הגבול"; at or
  *  below RETEACH_MAX_MASTERY it is "ללמד שוב". */
 export const STRONG_MIN_MASTERY = 0.7;
+/** How far a topic's class mean has to move between two weeks before the topic
+ *  list says "השתפרו השבוע" / "ירדו השבוע". A smaller move is noise. */
+export const TREND_MIN_CHANGE = 0.1;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -243,14 +256,30 @@ export function buildClassBoard(
     let correct = 0;
     const perTopic = new Map<
       string,
-      { attempts: number; measured: number; correct: number; hints: number }
+      {
+        attempts: number;
+        measured: number;
+        correct: number;
+        hints: number;
+        subTopics: Record<string, Tally>;
+        thisWeek: Tally;
+        lastWeek: Tally;
+      }
     >();
 
     for (const a of mine) {
       const at = Date.parse(a.created_at);
       if (Number.isFinite(at) && (lastActiveAt === null || at > lastActiveAt)) lastActiveAt = at;
 
-      const bucket = perTopic.get(a.topic) ?? { attempts: 0, measured: 0, correct: 0, hints: 0 };
+      const bucket = perTopic.get(a.topic) ?? {
+        attempts: 0,
+        measured: 0,
+        correct: 0,
+        hints: 0,
+        subTopics: {},
+        thisWeek: { measured: 0, correct: 0 },
+        lastWeek: { measured: 0, correct: 0 },
+      };
       bucket.attempts++;
       if (a.hint_used) bucket.hints++;
       // Replays are activity, never a measurement — same rule as the student's
@@ -261,6 +290,24 @@ export function buildClassBoard(
         if (a.correct) {
           bucket.correct++;
           correct++;
+        }
+        // The same measurement, split two more ways for topicSummary: by
+        // sub-topic ("בעיקר ב…") and by week ("השתפרו השבוע"). An unparseable
+        // date lands in neither week.
+        const day = Math.floor((now - at) / DAY_MS);
+        const week =
+          day >= 0 && day < ACTIVE_WINDOW_DAYS
+            ? bucket.thisWeek
+            : day >= ACTIVE_WINDOW_DAYS && day < 2 * ACTIVE_WINDOW_DAYS
+              ? bucket.lastWeek
+              : null;
+        const sub = a.sub_topic_id
+          ? (bucket.subTopics[a.sub_topic_id] ??= { measured: 0, correct: 0 })
+          : null;
+        for (const t of [week, sub]) {
+          if (!t) continue;
+          t.measured++;
+          if (a.correct) t.correct++;
         }
       }
       perTopic.set(a.topic, bucket);
@@ -274,6 +321,9 @@ export function buildClassBoard(
         correct: t.correct,
         mastery: ratio(t.correct, t.measured),
         hintRate: ratio(t.hints, t.attempts),
+        subTopics: t.subTopics,
+        thisWeek: t.thisWeek,
+        lastWeek: t.lastWeek,
       }))
       .sort((a, b) => b.attempts - a.attempts);
 
@@ -437,26 +487,79 @@ export function buildClassBoard(
 function classMeans(
   students: StudentRow[],
   topics: string[]
-): Map<string, { mean: number; n: number; belowHalf: number }> {
-  const out = new Map<string, { mean: number; n: number; belowHalf: number }>();
+): Map<string, ClassMean> {
+  const out = new Map<string, ClassMean>();
   for (const topic of topics) {
-    const masteries: number[] = [];
-    for (const s of students) {
-      const t = s.topics.find((x) => x.topic === topic);
-      if (t && t.measured >= STUCK_MIN_ATTEMPTS && t.mastery !== null) masteries.push(t.mastery);
-    }
-    if (masteries.length < RETEACH_MIN_STUDENTS) continue;
-    const mean = masteries.reduce((a, b) => a + b, 0) / masteries.length;
-    out.set(topic, {
-      mean,
-      n: masteries.length,
-      belowHalf: masteries.filter((m) => m < 0.5).length,
-    });
+    const m = classMean(students, (s) => topicOf(s, topic));
+    if (m) out.set(topic, m);
   }
   return out;
 }
 
+type ClassMean = { mean: number; n: number; belowHalf: number };
+
+/**
+ * The one sample gate, for every claim the board makes about the class — a
+ * topic, a sub-topic inside it, or one week of it. `pick` chooses the tally to
+ * read per student; the rules around it never change: under
+ * STUCK_MIN_ATTEMPTS measured answers a student is left out (not counted as
+ * zero), and under RETEACH_MIN_STUDENTS such students there is no mean (null).
+ */
+function classMean(
+  students: StudentRow[],
+  pick: (s: StudentRow) => Tally | undefined
+): ClassMean | null {
+  const masteries: number[] = [];
+  for (const s of students) {
+    const t = pick(s);
+    if (t && t.measured >= STUCK_MIN_ATTEMPTS) masteries.push(t.correct / t.measured);
+  }
+  if (masteries.length < RETEACH_MIN_STUDENTS) return null;
+  return {
+    mean: masteries.reduce((a, b) => a + b, 0) / masteries.length,
+    n: masteries.length,
+    belowHalf: masteries.filter((m) => m < 0.5).length,
+  };
+}
+
+function topicOf(s: StudentRow, topic: string): TopicMastery | undefined {
+  return s.topics.find((x) => x.topic === topic);
+}
+
+/**
+ * Where inside a topic the class is weakest: the sub-topic with the lowest
+ * class mean, among those that pass the same gate as the topic. A sub-topic
+ * that would itself read "הכיתה שולטת" is not where anything goes wrong, so it
+ * is never named — a borderline topic whose weak answers are spread too thin
+ * to measure names nothing rather than the one place the class is fine.
+ */
+function hardestSub(students: StudentRow[], topic: string): string | null {
+  const ids = new Set(students.flatMap((s) => Object.keys(topicOf(s, topic)?.subTopics ?? {})));
+  let best: { id: string; mean: number } | null = null;
+  for (const id of [...ids].sort()) {
+    const m = classMean(students, (s) => topicOf(s, topic)?.subTopics[id]);
+    if (m && m.mean < STRONG_MIN_MASTERY && (best === null || m.mean < best.mean)) {
+      best = { id, mean: m.mean };
+    }
+  }
+  return best?.id ?? null;
+}
+
+/** This week against last week, each through the same gate — a class that
+ *  only started this week has no trend, it has a first week. */
+function trendOf(students: StudentRow[], topic: string): TopicTrend | null {
+  const thisWeek = classMean(students, (s) => topicOf(s, topic)?.thisWeek);
+  const lastWeek = classMean(students, (s) => topicOf(s, topic)?.lastWeek);
+  if (!thisWeek || !lastWeek) return null;
+  const delta = thisWeek.mean - lastWeek.mean;
+  // + 1e-9: 0.7 − 0.6 is 0.0999…98 in floating point, and a move of exactly
+  // TREND_MIN_CHANGE is meant to count.
+  if (Math.abs(delta) + 1e-9 < TREND_MIN_CHANGE) return null;
+  return delta > 0 ? 'up' : 'down';
+}
+
 export type TopicState = 'strong' | 'borderline' | 'reteach';
+export type TopicTrend = 'up' | 'down';
 
 export type TopicSummaryRow = {
   topic: string;
@@ -474,6 +577,15 @@ export type TopicSummaryRow = {
    *  aimed at, and making a teacher re-find these people in a checkbox list is
    *  the manual work the board exists to remove. */
   stuckStudents: { id: string; name: string }[];
+  /** The sub-topic id the class is weakest in inside this topic, or null —
+   *  see hardestSub(). Never on a 'strong' row: a topic the class masters has
+   *  no "mainly in". An id, not a title: the title lives in the content, which
+   *  the route resolves (`subTopicTitles`) and the client never imports. */
+  hardestSub: string | null;
+  /** The class mean over the last 7×24h against the 7×24h before, both weeks
+   *  through the same gate; null when either is too thin or the move is under
+   *  TREND_MIN_CHANGE. */
+  trend: TopicTrend | null;
 };
 
 /**
@@ -502,7 +614,15 @@ export function topicSummary(board: ClassBoard): TopicSummaryRow[] {
       .filter((x): x is { id: string; name: string; t: TopicMastery } => x.t !== undefined)
       .sort((a, b) => (a.t.mastery ?? 0) - (b.t.mastery ?? 0))
       .map((x) => ({ id: x.id, name: x.name }));
-    rows.push({ topic, state, mean: m.mean, students: m.n, stuckStudents });
+    rows.push({
+      topic,
+      state,
+      mean: m.mean,
+      students: m.n,
+      stuckStudents,
+      hardestSub: state === 'strong' ? null : hardestSub(board.students, topic),
+      trend: trendOf(board.students, topic),
+    });
   }
   const rank: Record<TopicState, number> = { reteach: 0, borderline: 1, strong: 2 };
   rows.sort((a, b) => rank[a.state] - rank[b.state] || a.mean - b.mean);

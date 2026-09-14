@@ -34,70 +34,87 @@ const DAY = 24 * 60 * 60 * 1000;
  * apart at a glance:
  *   מאיה  joined and never started  → "אין נתונים", NOT 0%
  *   יובל  worked, then stopped      → "לא נכנס", and his mastery is untouched
+ *
+ * Two weeks of work on real sub-topic ids, so the topic list's "בעיקר ב…" and
+ * "השתפרו / ירדו השבוע" are computed here too, not typed: סדרות went from the
+ * arithmetic general term last week to the geometric one this week and fell;
+ * טריגונומטריה went from equations last week to identities this week and rose.
+ * Each student's per-topic totals are what they were before the split, so every
+ * other sentence on the demo screen reads the same.
  */
 const STUDENTS: {
   name: string;
-  /** [topic, measured attempts, of which correct, days ago] */
-  work: [string, number, number, number][];
+  /** [topic, measured attempts, of which correct, days ago, sub-topic id] */
+  work: [string, number, number, number, string][];
 }[] = [
   {
     name: 'נועה ב.',
     work: [
-      ['טריגונומטריה', 12, 11, 1],
-      ['פונקציות', 9, 7, 2],
-      ['סדרות', 6, 2, 1],
-      ['הסתברות', 8, 7, 4],
+      ['טריגונומטריה', 6, 5, 8, 'trig-equations'],
+      ['טריגונומטריה', 6, 6, 1, 'trig-identities'],
+      ['פונקציות', 9, 7, 2, 'rq-derivative'],
+      ['סדרות', 3, 2, 8, 'ar-general-term'],
+      ['סדרות', 3, 0, 1, 'ge-general-term'],
+      ['הסתברות', 8, 7, 4, 'pr-tree'],
     ],
   },
   {
     name: 'יובל ד.',
     // Every answer is nine days old — the whole point of this student.
     work: [
-      ['טריגונומטריה', 7, 4, 9],
-      ['פונקציות', 5, 3, 10],
-      ['סדרות', 4, 2, 9],
+      ['טריגונומטריה', 7, 4, 9, 'trig-equations'],
+      ['פונקציות', 5, 3, 10, 'rq-derivative'],
+      ['סדרות', 4, 2, 9, 'ar-general-term'],
     ],
   },
   {
     name: 'אמיר ל.',
     work: [
-      ['טריגונומטריה', 10, 8, 1],
-      ['פונקציות', 11, 10, 1],
-      ['סדרות', 8, 3, 2],
-      ['הסתברות', 6, 6, 3],
+      ['טריגונומטריה', 5, 3, 9, 'trig-equations'],
+      ['טריגונומטריה', 5, 5, 1, 'trig-identities'],
+      ['פונקציות', 11, 10, 1, 'rq-derivative'],
+      ['סדרות', 4, 2, 9, 'ar-general-term'],
+      ['סדרות', 4, 1, 2, 'ge-general-term'],
+      ['הסתברות', 6, 6, 3, 'pr-tree'],
     ],
   },
   {
     name: 'שיר מ.',
     work: [
-      ['טריגונומטריה', 8, 3, 2],
-      ['סדרות', 9, 1, 1],
-      ['פונקציות', 5, 2, 3],
+      ['טריגונומטריה', 4, 1, 9, 'trig-equations'],
+      ['טריגונומטריה', 4, 2, 2, 'trig-identities'],
+      ['סדרות', 4, 1, 8, 'ar-general-term'],
+      ['סדרות', 5, 0, 1, 'ge-general-term'],
+      ['פונקציות', 5, 2, 3, 'rq-derivative'],
     ],
   },
   {
     name: 'רן כ.',
     work: [
-      ['טריגונומטריה', 11, 2, 1],
-      ['סדרות', 5, 2, 2],
-      ['הסתברות', 7, 5, 5],
+      ['טריגונומטריה', 5, 0, 8, 'trig-equations'],
+      ['טריגונומטריה', 6, 2, 1, 'trig-identities'],
+      ['סדרות', 5, 2, 2, 'ge-general-term'],
+      ['הסתברות', 7, 5, 5, 'pr-tree'],
     ],
   },
   {
     name: 'דניאל ש.',
     work: [
-      ['פונקציות', 8, 7, 1],
-      ['סדרות', 7, 4, 2],
-      ['הסתברות', 9, 8, 2],
-      ['טריגונומטריה', 6, 5, 4],
+      ['פונקציות', 8, 7, 1, 'rq-derivative'],
+      ['סדרות', 3, 3, 9, 'ar-general-term'],
+      ['סדרות', 4, 1, 2, 'ge-general-term'],
+      ['הסתברות', 9, 8, 2, 'pr-tree'],
+      ['טריגונומטריה', 3, 2, 10, 'trig-equations'],
+      ['טריגונומטריה', 3, 3, 4, 'trig-identities'],
     ],
   },
   {
     name: 'תמר א.',
     work: [
-      ['פונקציות', 7, 6, 3],
-      ['סדרות', 6, 3, 3],
-      ['טריגונומטריה', 5, 4, 6],
+      ['פונקציות', 7, 6, 3, 'rq-derivative'],
+      ['סדרות', 3, 2, 10, 'ar-general-term'],
+      ['סדרות', 3, 1, 3, 'ge-general-term'],
+      ['טריגונומטריה', 5, 4, 6, 'trig-identities'],
     ],
   },
   // Joined, never opened a question. No `work` at all — the row that proves
@@ -134,12 +151,27 @@ const DIAGNOSES: Record<string, { kind: string; note: string }[]> = {
   הסתברות: [{ kind: 'independence', note: 'הכפיל הסתברויות של מאורעות תלויים' }],
 };
 
+/**
+ * The titles of the sub-topics above, exactly as the content names them. A
+ * real class gets these from its route (`subTopicTitles`, resolved on the
+ * server); the sample is built in the browser, which must not import the
+ * content corpus to look them up — so they are written out here.
+ */
+export const DEMO_SUB_TOPIC_TITLES: Record<string, string> = {
+  'ar-general-term': 'סדרה חשבונית — הפרש, איבר ראשון ואיבר כללי',
+  'ge-general-term': 'סדרה הנדסית — המנה, האיבר הכללי ומיקום של איבר',
+  'trig-equations': 'משוואות טריגונומטריות',
+  'trig-identities': 'מעגל היחידה וזהויות טריגונומטריות',
+  'rq-derivative': 'נגזרת — כל כללי הגזירה, שיפוע המשיק וקיצון',
+  'pr-tree': 'עץ הסתברויות — בונים, קוראים, עם נעלמים ועץ משתנה',
+};
+
 export function demoBoard(now: number = Date.now()): ClassBoard {
   const roster = STUDENTS.map((s, i) => ({ id: `demo-${i}`, name: s.name }));
 
   const attempts: BoardAttempt[] = [];
   STUDENTS.forEach((s, i) => {
-    for (const [topic, total, correct, daysAgo] of s.work) {
+    for (const [topic, total, correct, daysAgo, subTopicId] of s.work) {
       const pool = DIAGNOSES[topic] ?? [];
       let wrongSeen = 0;
       for (let k = 0; k < total; k++) {
@@ -156,6 +188,7 @@ export function demoBoard(now: number = Date.now()): ClassBoard {
         attempts.push({
           user_id: `demo-${i}`,
           topic,
+          sub_topic_id: subTopicId,
           correct: isCorrect,
           is_repeat: false,
           hint_used: !isCorrect && k % 4 === 0,

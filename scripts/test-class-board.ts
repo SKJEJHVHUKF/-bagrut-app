@@ -26,9 +26,10 @@ import {
   RETEACH_MIN_STUDENTS,
   ATTENTION_LIMIT,
   STRONG_MIN_MASTERY,
+  TREND_MIN_CHANGE,
   type BoardAttempt,
 } from '../lib/class-board';
-import { demoBoard, demoFocuses } from '../lib/demo-board';
+import { demoBoard, demoFocuses, DEMO_SUB_TOPIC_TITLES } from '../lib/demo-board';
 
 let checks = 0;
 let failures = 0;
@@ -50,11 +51,12 @@ function rows(
   topic: string,
   n: number,
   correctCount: number,
-  opts: { daysAgo?: number; repeat?: boolean } = {}
+  opts: { daysAgo?: number; repeat?: boolean; sub?: string } = {}
 ): BoardAttempt[] {
   return Array.from({ length: n }, (_, i) => ({
     user_id,
     topic,
+    sub_topic_id: opts.sub,
     correct: i < correctCount,
     is_repeat: opts.repeat ?? false,
     created_at: at(opts.daysAgo ?? 0),
@@ -381,6 +383,113 @@ function rows(
     demo[0].stuckStudents.some((x) => x.name === 'שיר מ.') &&
       demo[0].stuckStudents.some((x) => x.name === 'רן כ.'),
     'and the names under סדרות include the two the demo is built around'
+  );
+}
+
+// ============================================================
+// topicSummary — where inside a topic, and what changed this week
+// ============================================================
+//
+// "ללמד שוב" names a lesson; "בעיקר ב…" names which part of it, and "ירדו
+// השבוע" says it is getting worse. Both are claims about a CLASS, so both go
+// through the topic's own sample gate: a sub-topic or a week too few students
+// were measured in says nothing, rather than something loud about three kids.
+{
+  const six = Array.from({ length: 6 }, (_, i) => ({ id: `u${i}`, name: `ת${i}` }));
+  const summary = (roster: typeof six, attempts: BoardAttempt[]) =>
+    topicSummary(buildClassBoard(roster, attempts, NOW))[0];
+
+  // Three sub-topics at 2/3, 0/3 and 1/3: the lowest is neither first nor last.
+  const where = summary(
+    six,
+    six.flatMap((s) => [
+      ...rows(s.id, 'סדרות', 3, 2, { sub: 'a' }),
+      ...rows(s.id, 'סדרות', 3, 0, { sub: 'b' }),
+      ...rows(s.id, 'סדרות', 3, 1, { sub: 'c' }),
+    ])
+  );
+  assert(where?.state === 'reteach' && where.hardestSub === 'b', 'hardestSub is the sub-topic with the lowest class mean');
+
+  const thin = summary(six, [
+    ...six.slice(0, RETEACH_MIN_STUDENTS - 1).flatMap((s) => rows(s.id, 'סדרות', 3, 0, { sub: 'x' })),
+    ...six.slice(RETEACH_MIN_STUDENTS - 1).flatMap((s) => rows(s.id, 'סדרות', 3, 0)),
+  ]);
+  assert(
+    thin?.state === 'reteach' && thin.hardestSub === null,
+    `a sub-topic only ${RETEACH_MIN_STUDENTS - 1} students were measured in names nothing, however low`
+  );
+
+  const strong = summary(
+    six,
+    six.flatMap((s) => [
+      ...rows(s.id, 'הסתברות', 3, 3, { sub: 'a' }),
+      ...rows(s.id, 'הסתברות', 3, 2, { sub: 'b' }),
+    ])
+  );
+  assert(
+    strong?.state === 'strong' && strong.hardestSub === null,
+    'a הכיתה שולטת row never names a sub-topic, even with a weaker one measured inside it'
+  );
+
+  // Perfect in 'a', two misses each in 'b' (too few to measure): borderline
+  // overall, and the only measurable sub-topic is where the class is fine.
+  const fine = summary(
+    six,
+    six.flatMap((s) => [
+      ...rows(s.id, 'פונקציות', 3, 3, { sub: 'a' }),
+      ...rows(s.id, 'פונקציות', 2, 0, { sub: 'b' }),
+    ])
+  );
+  assert(
+    fine?.state === 'borderline' && fine.hardestSub === null,
+    'a sub-topic the class would be "strong" in is never named as where it goes wrong'
+  );
+
+  // This week at 6.9 days ago, last week at exactly 7 — the edge of the window.
+  const weeks = (roster: typeof six, thisWeek: [number, number], lastWeek: [number, number]) => [
+    ...roster.flatMap((s) => rows(s.id, 'פונקציות', thisWeek[0], thisWeek[1], { daysAgo: 6.9 })),
+    ...roster.flatMap((s) => rows(s.id, 'פונקציות', lastWeek[0], lastWeek[1], { daysAgo: 7 })),
+  ];
+  assert(summary(six, weeks(six, [3, 3], [3, 1]))?.trend === 'up', '1/3 last week → 3/3 this week: השתפרו השבוע');
+  assert(summary(six, weeks(six, [3, 1], [3, 3]))?.trend === 'down', '3/3 last week → 1/3 this week: ירדו השבוע');
+
+  const firstWeek = summary(six, [
+    ...six.slice(0, RETEACH_MIN_STUDENTS - 1).flatMap((s) => rows(s.id, 'פונקציות', 3, 3, { daysAgo: 1 })),
+    ...six.flatMap((s) => rows(s.id, 'פונקציות', 3, 1, { daysAgo: 8 })),
+  ]);
+  assert(
+    firstWeek?.trend === null,
+    `a week only ${RETEACH_MIN_STUDENTS - 1} students were measured in has no trend, however big the jump`
+  );
+
+  assert(
+    summary(six, weeks(six, [4, 3], [3, 2]))?.trend === null,
+    `a move under ${TREND_MIN_CHANGE} (2/3 → 3/4) is noise, not a word`
+  );
+
+  const five = six.slice(0, RETEACH_MIN_STUDENTS);
+  assert(
+    summary(five, weeks(five, [10, 7], [10, 6]))?.trend === 'up',
+    `a move of exactly ${TREND_MIN_CHANGE} counts, though 0.7 − 0.6 is 0.0999… in floating point`
+  );
+
+  assert(
+    summary(six, [
+      ...weeks(six, [3, 1], [3, 1]),
+      ...six.flatMap((s) => rows(s.id, 'פונקציות', 10, 10, { daysAgo: 1, repeat: true })),
+    ])?.trend === null,
+    'ten perfect replays this week are not an improvement — a week is measured like mastery'
+  );
+
+  const demoRows = topicSummary(demoBoard(NOW));
+  const weak = demoRows.filter((r) => r.state !== 'strong');
+  assert(
+    weak.length > 0 && weak.every((r) => r.hardestSub !== null && r.hardestSub in DEMO_SUB_TOPIC_TITLES),
+    'the sample class names where each weak topic goes wrong, with a title to show for it'
+  );
+  assert(
+    demoRows.some((r) => r.trend === 'up') && demoRows.some((r) => r.trend === 'down'),
+    '…and shows both השתפרו השבוע and ירדו השבוע on the screen the owner opens'
   );
 }
 
