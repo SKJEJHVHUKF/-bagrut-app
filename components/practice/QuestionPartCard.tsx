@@ -33,7 +33,13 @@ import {
 } from '@/lib/mistakes';
 import { recordResult } from '@/lib/results';
 import { MistakeTagger } from './MistakeTagger';
-import { publishTutorFocus, partAsQuestion, FOCUS_PRIORITY, type TutorFocus } from '@/lib/tutor-presence';
+import {
+  publishTutorFocus,
+  partAsQuestion,
+  partQuestionText,
+  FOCUS_PRIORITY,
+  type TutorFocus,
+} from '@/lib/tutor-presence';
 import { getSubTopic } from '@/content/lessons';
 import type { AnswerDiagnosis } from '@/lib/answer-check';
 
@@ -221,7 +227,7 @@ export function QuestionPartCard({
       where: `שאלת בגרות · ${topic ? `${topic} · ` : ''}סעיף ${part.label}`,
       topic,
       subTopicId,
-      questionText: [context, `${part.label}. ${part.prompt}`].filter(Boolean).join('\n\n'),
+      questionText: partQuestionText(context, part),
       question: partAsQuestion(part, { questionId: questionId ?? 'q', difficulty, hintsShown }),
       ...(subTopic ? { subTopic } : {}),
       // `lastUserAnswer` is the whole typed answer — for labelled parts it

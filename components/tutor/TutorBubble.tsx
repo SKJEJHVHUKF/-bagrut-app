@@ -48,6 +48,7 @@ import {
   focusPrompts,
   type TutorFocus,
 } from '@/lib/tutor-presence';
+import { MAX_CONTEXT_LEN } from '@/lib/agents/config';
 import { type LocalAnswerKind } from '@/lib/tutor-local';
 import { runTutorChain, endsWithQuestion } from '@/lib/tutor-chain';
 import type { Ask } from '@/lib/tutor-router';
@@ -513,11 +514,10 @@ export default function TutorBubble() {
       setSending(true);
 
       // Focus FIRST, student snapshot second. The server truncates `context`
-      // from the end at 4000 chars (MAX_CONTEXT_LEN), and the snapshot alone
-      // can reach 1800 — focus-last would silently drop the question the
-      // student is asking about. The focus now carries the authored solution
-      // (≤1200 chars) for the model's guidance, which is why the cap grew from
-      // 2000: at 2000 the solution would have evicted the snapshot.
+      // from the end at MAX_CONTEXT_LEN, and focus-last would silently drop the
+      // question the student is asking about. The focus carries the whole
+      // question and the whole authored solution; MAX_CONTEXT_LEN is sized so
+      // the snapshot still fits behind the longest one.
       const f = getTutorFocus();
       // REVEALED: what the ladder already served on this question, so the model
       // never reveals the next rung. AUTHORED: the unit's closest bank entries,
@@ -538,7 +538,7 @@ export default function TutorBubble() {
         // properly grounded in it. See resolveCognitive for why '' must never
         // mean "pick the student's most-practised topic".
         const snap = buildStudentSnapshot('math5', chain.topic);
-        context = [context, snap].filter(Boolean).join('\n\n').slice(0, 4000);
+        context = [context, snap].filter(Boolean).join('\n\n').slice(0, MAX_CONTEXT_LEN);
       } catch {
         /* snapshot is best-effort — never block the question */
       }

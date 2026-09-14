@@ -56,14 +56,16 @@ import { getWeaknesses, getActiveFix } from '@/lib/remediation';
 /**
  * 1200, down from 1800.
  *
- * The server caps the WHOLE `context` field at MAX_CONTEXT_LEN (4000) and
- * truncates from the END, so this block competes with the focus brief (~800)
- * and the authored solution it carries (≤1200). The compressed format below
+ * The server caps the WHOLE `context` field at MAX_CONTEXT_LEN and truncates
+ * from the END, where this block sits, behind the focus brief with the whole
+ * question and the whole authored solution. Exported: MAX_CONTEXT_LEN is sized
+ * from it (scripts/test-tutor-context-fit.ts). The compressed format below
  * fits the same signals in roughly a third of the characters, so the old
  * headroom is no longer needed — and a tighter cap means the mistake list can
  * never push the cognitive block out of a turn.
  */
-const MAX_LEN = 1200;
+export const SNAPSHOT_MAX_LEN = 1200;
+const MAX_LEN = SNAPSHOT_MAX_LEN;
 
 /** Below this the state is noise, not a diagnosis. Same reasoning as
  *  MIN_CONFIDENCE in lib/cognition: telling a tutor "he's weak at X" off two

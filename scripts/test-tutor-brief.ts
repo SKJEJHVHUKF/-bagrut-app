@@ -702,10 +702,10 @@ assert(renderMemoryBlock(mem).includes(mem[0].text), 'the prompt block carries t
 // The bubble is only "צמוד" if it knows what the student is looking at. Two
 // failure modes matter and neither throws: a focus that leaks the answer while
 // the student is still working, and a brief so long it pushes the cognitive
-// diagnosis out of the 2000-char server cap.
+// diagnosis out of the server's MAX_CONTEXT_LEN cap.
 // ============================================================
 
-import { renderFocusContext, focusPrompts, type TutorFocus } from '../lib/tutor-presence';
+import { renderFocusContext, focusPrompts, FOCUS_QUESTION_CAP, type TutorFocus } from '../lib/tutor-presence';
 
 section('tutor presence — what the bubble tells the tutor');
 
@@ -753,11 +753,12 @@ assert(
   'and present once it has',
 );
 
-// The server truncates `context` at 2000 chars from the END, and the student
+// The server truncates `context` at MAX_CONTEXT_LEN from the END, and the student
 // snapshot is appended after this — so an unbounded question would silently
-// delete the cognitive diagnosis rather than fail loudly.
+// delete the cognitive diagnosis rather than fail loudly. Clamped at
+// FOCUS_QUESTION_CAP; scripts/test-tutor-context-fit.ts proves the whole sum fits.
 const huge = renderFocusContext({ ...working, questionText: 'א'.repeat(5000) });
-assert(huge.length < 1000, `a giant question is clamped (was ${huge.length} chars)`);
+assert(huge.length < FOCUS_QUESTION_CAP + 400, `a giant question is clamped (was ${huge.length} chars)`);
 
 // ============================================================
 // PART 4 — answering without the API.

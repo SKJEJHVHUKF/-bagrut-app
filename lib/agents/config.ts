@@ -122,14 +122,15 @@ export const MAX_SOLUTION_LEN = 4000;
 export const MAX_QUESTION_LEN = 2000;
 export const MAX_TOPIC_LEN = 80;
 /**
- * 4000, up from 2000. The bubble's context is focus (~800) + the authored
- * solution the focus now carries for the model's guidance (≤1200, see
- * renderFocusContext) + the student snapshot (≤1800). At 2000 the solution
- * would have silently evicted the snapshot — and the truncation is from the
- * END, so nothing would have said so. Cost of the extra room at Haiku rates:
- * ≤2000 chars ≈ 800 input tokens ≈ $0.0008 per turn, uncached.
+ * 7500, up from 4000 (2026-09-14). The bubble's context is the focus brief —
+ * question ≤1200 + SOLUTION ≤3500 (FOCUS_QUESTION_CAP / FOCUS_SOLUTION_CAP in
+ * lib/tutor-presence) + WRONG/REVEALED/STUCK/AUTHORED ≤ ~1300 — then the student
+ * snapshot (≤1200, lib/tutor-context). Truncation is from the END, so a cap
+ * smaller than that sum silently evicts the snapshot first; the caps and this
+ * number move together, and scripts/test-tutor-context-fit.ts checks the sum.
+ * The room is only USED by long questions: the median brief is unchanged.
  */
-export const MAX_CONTEXT_LEN = 4000;
+export const MAX_CONTEXT_LEN = 7500;
 
 /** Turns of history replayed to the tutor (3 user/assistant pairs). */
 export const TUTOR_HISTORY_TURNS = 6;

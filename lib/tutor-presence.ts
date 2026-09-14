@@ -253,6 +253,13 @@ export function partAsQuestion(
   };
 }
 
+/** What the tutor reads as a part's question: the shared givens, then the part.
+ *  One function so the card that publishes it and the gate that proves it fits
+ *  (scripts/test-tutor-context-fit.ts) cannot build it two ways. */
+export function partQuestionText(context: string | undefined, part: { label: string; prompt: string }): string {
+  return [context, `${part.label}. ${part.prompt}`].filter(Boolean).join('\n\n');
+}
+
 /**
  * A /quiz question, seen as a question the local tutor can hold.
  *
@@ -366,12 +373,21 @@ export function subscribeTutorFocus(cb: () => void): () => void {
  * Returns '' when there is nothing worth saying, so the caller can omit the
  * context entirely rather than send a heading with nothing under it.
  *
- * ⚠️ Kept short on purpose. The server hard-caps `context` at 4000 chars
- * (MAX_CONTEXT_LEN) and the student snapshot alone can reach 1800, so anything
- * verbose here silently pushes the cognitive diagnosis out of the request. The
- * authored-solution block below is capped at 1200 for the same reason: focus
- * (~800) + solution (≤1200) + snapshot (≤1800) must fit.
+ * ⚠️ Headers and values, never prose. The server hard-caps `context` at
+ * MAX_CONTEXT_LEN and truncates from the END, where the student snapshot
+ * (≤1200) sits, so every cap here is sized together with that one.
+ *
+ * ⚠️ THE CAPS MUST HOLD THE WHOLE QUESTION AND THE WHOLE SOLUTION. At 600/1200
+ * (until 2026-09-14) 172 of 2,143 practice solutions lost steps — the longest,
+ * bagrut-level mixed questions, where a student most needs help — and for 24
+ * lesson bagrut parts the givens filled all 600 chars, so the part being asked
+ * about never reached the model at all. Wherever the brief was short, the model
+ * re-solved from scratch. scripts/test-tutor-context-fit.ts renders every
+ * question and part in the corpus and fails if anything is cut.
  */
+export const FOCUS_QUESTION_CAP = 1200;
+export const FOCUS_SOLUTION_CAP = 3500;
+
 export type FocusContextExtra = {
   /** Ladder rungs already served on this question (ChainState.servedKinds). */
   revealed?: readonly string[];
@@ -407,7 +423,7 @@ export function renderFocusContext(focus: TutorFocus | null, extra: FocusContext
   // ההקשר" section, at 0.1x, keyed on the SCREEN / WRONG / SOLUTION headers
   // below. Adding prose here silently un-does that.
   const lines = [`SCREEN\nat: ${focus.where}`];
-  if (focus.questionText) lines.push(`q: ${focus.questionText.slice(0, 600)}`);
+  if (focus.questionText) lines.push(`q: ${focus.questionText.slice(0, FOCUS_QUESTION_CAP)}`);
   if (focus.wrongAnswer) {
     lines.push(`WRONG\nans: ${focus.wrongAnswer.slice(0, 80)}`);
     if (focus.correctAnswer) lines.push(`ok: ${focus.correctAnswer.slice(0, 80)}`);
@@ -417,12 +433,16 @@ export function renderFocusContext(focus: TutorFocus | null, extra: FocusContext
   // the model precisely when the local tutor abstained — the hard cases — and
   // until now the model re-solved the question from scratch there, which can
   // disagree with the verified steps in front of the student. With the steps
-  // in hand it guides along the written path instead. ~1,200 chars is ~500
-  // Haiku input tokens: under $0.001 per turn for the accuracy it buys.
+  // in hand it guides along the written path instead. The median solution is
+  // ~450 chars; only the long tail pays for the higher cap, and only on its
+  // own turns (≈ +400 uncached tokens per extra 1,000 chars).
   const steps = focus.question?.solution?.steps ?? [];
   if (steps.length > 0) {
     // Figure fences (a JSON sketch) would eat most of the budget — the model gets a marker instead.
-    const body = steps.map((s, i) => `${i + 1}. ${stripFigureFences(s)}`).join('\n').slice(0, 1200);
+    const body = steps
+      .map((s, i) => `${i + 1}. ${stripFigureFences(s)}`)
+      .join('\n')
+      .slice(0, FOCUS_SOLUTION_CAP);
     lines.push(`SOLUTION\n${body}`);
   }
   // Where the reveal line is — what TUTOR_CORE's REVEALED rule reads. Sent
