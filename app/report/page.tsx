@@ -35,6 +35,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
+import { ShareWithParent } from '@/components/parent/ShareWithParent';
 import { MathText } from '@/components/practice/MathText';
 import { TAG_INFO, type PatternFinding, type Trend } from '@/lib/patterns';
 import { getReport, type ReportData, type RepairOutcome } from '@/lib/report';
@@ -211,6 +212,7 @@ export default function ReportPage() {
       <PageHeader
         title="דוח המעקב"
         description="מה חוזר על עצמו אצלך, ומה שתיקנת — האם החזיק"
+        actions={<ShareWithParent />}
       />
 
       {data.earlyDays ? (

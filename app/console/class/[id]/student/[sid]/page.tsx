@@ -34,10 +34,11 @@ import {
   STUDENT_NOT_FOUND,
 } from '@/components/console/copy';
 import { Avatar, StateChip, Btn, btnSecondary, SectionHead } from '@/components/console/ui';
+import { ShareWithParent } from '@/components/parent/ShareWithParent';
 
 export default function StudentPage() {
   const { sid } = useParams<{ sid: string }>();
-  const { board, focuses, base, isDemo, openFocus, mistakesOf } = useClass();
+  const { board, focuses, base, isDemo, classId, openFocus, mistakesOf } = useClass();
   const s = board.students.find((x) => x.id === sid);
 
   if (!s) {
@@ -100,6 +101,8 @@ export default function StudentPage() {
             <Printer className="h-4 w-4" aria-hidden />
             {BTN.report}
           </Link>
+          {/* classId is null in sample mode: the sample class has no real student to link. */}
+          {classId && <ShareWithParent classId={classId} studentId={s.id} name={s.name} />}
         </div>
       </motion.header>
 
