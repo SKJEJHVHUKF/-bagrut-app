@@ -47,6 +47,7 @@ import { checkProbTreeFences, checkProbTables, hasProbTree, hasTable, pickedTota
 import { renderFocusContext, partAsQuestion, partQuestionText } from '../lib/tutor-presence';
 import { stripFigureFences } from '../lib/geo-figure';
 import type { StaticBagrutQuestion } from '../content/lessons/types';
+import katex from 'katex';
 
 const TOPIC = 'הסתברות';
 const BASELINE = process.argv.includes('--baseline');
@@ -281,6 +282,13 @@ function checkText(where: string, value: string) {
     if (HEB.test(span)) err(where, 'hebrew-in-math', span);
     const bare = span.match(BARE_MATH);
     if (bare) err(where, 'lost-backslash', `bare "${bare[1]}"`);
+    // It has to PARSE: nothing else in the content chain renders a lesson island
+    // through KaTeX, so a `\dfrac{3}{` or an unknown macro ships as red text.
+    try {
+      katex.renderToString(span, { throwOnError: true, strict: false });
+    } catch (e) {
+      err(where, 'katex-parse', `${span.slice(0, 50)}: ${(e as Error).message.slice(0, 90)}`);
+    }
   }
   if (/[א-ת]-\$/.test(value)) err(where, 'maqaf-glued-to-math', value.match(/.{0,12}[א-ת]-\$.{0,10}/)?.[0] ?? '');
   if (/[א-ת]-\d/.test(value)) err(where, 'maqaf-glued-to-digit', value.match(/.{0,12}[א-ת]-\d.{0,10}/)?.[0] ?? '');
