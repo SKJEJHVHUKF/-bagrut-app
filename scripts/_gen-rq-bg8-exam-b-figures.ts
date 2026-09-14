@@ -12,12 +12,11 @@
 // the caption says. Writes content/lessons/math5/rq-extra/bagrut-exam-b-figures.ts.
 //
 //   npx tsx scripts/_gen-rq-bg8-exam-b-figures.ts [--sheet <dir>]
-import { region, areaOf, on, tick, ytick, t, PALETTE, emitFigureModule, type Spec, type Check } from './_fig-spec-helpers';
+import { region, areaOf, on, tick, t, PALETTE, emitFigureModule, type Spec, type Check } from './_fig-spec-helpers';
 
-const { INDIGO, PINK, EMERALD_DEEP, AMBER, INK } = PALETTE;
+const { INDIGO, PINK, AMBER, INK } = PALETTE;
 const S: Spec[] = [];
 const add = (s: Spec) => S.push(s);
-const r2 = Math.SQRT2;
 const near = (label: string, got: number, want: number, tol = 1e-6): Check => [label, got, want, tol];
 const yes = (label: string, cond: boolean): Check => [label, cond ? 1 : 0, 1];
 
