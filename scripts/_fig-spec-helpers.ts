@@ -1,0 +1,130 @@
+// ============================================================
+// Figure-spec helpers for the generated function figures
+// ============================================================
+//
+// The house recipe from scripts/_gen-rq-integral-figures.ts, shared so every new
+// generator draws, checks and emits figures the same way:
+//   - one Spec per figure: the Fig for lib/plot-svg, a Hebrew caption naming only
+//     what is drawn, and CHECKS (a marked point lies on its curve, a hatched
+//     region integrates to the number the solution states);
+//   - an area a student computes is green + hatched + dashed bounding lines
+//     (Itay, 2026-09-13), via `region()`;
+//   - the emitted SVG may hold no Hebrew (there is no bidi inside it), and no
+//     label may leave the frame or overlap another label.
+import { writeFileSync } from 'node:fs';
+import { renderPlot, PALETTE, type Fig, type Shade } from '../lib/plot-svg';
+
+export { PALETTE, type Fig, type Shade };
+export const GREEN = PALETTE.EMERALD_DEEP;
+
+export type Check = [label: string, got: number, want: number, tol?: number];
+export type Spec = { id: string; fig: Fig; caption: string; checks: Check[] };
+
+const zero = () => 0;
+
+/** Simpson on |upper − lower| — the AREA a hatched region covers. */
+export function areaOf(s: Shade, n = 20000): number {
+  const lo = s.lower ?? zero;
+  const g = (x: number) => Math.abs(s.upper(x) - lo(x));
+  const h = (s.to - s.from) / n;
+  let acc = g(s.from) + g(s.to);
+  for (let i = 1; i < n; i++) acc += (i % 2 ? 4 : 2) * g(s.from + i * h);
+  return (acc * h) / 3;
+}
+
+/** A computed area, in the one house style: green fill, hatching, bounding lines. */
+export const region = (from: number, to: number, upper: (x: number) => number, lower?: (x: number) => number): Shade => ({
+  from, to, upper, lower, opacity: 0.12, hatch: true, bounds: true,
+});
+
+/** A marked point must lie on its curve. */
+export const on = (label: string, f: (x: number) => number, x: number, y: number, tol = 1e-9): Check =>
+  [`${label}: (${x}, ${y}) on the curve`, f(x), y, tol];
+
+export const t = (x: number, y: number, text: string, bold = true) => ({ x, y, text, color: GREEN, bold });
+export const tick = (x: number, label = String(x)) => ({ x, label });
+export const ytick = (y: number, label = String(y)) => ({ y, label });
+
+/**
+ * Run every check and the label audit, then write a DiagramSpec module:
+ *   export const <exportName> = { <id>: fig(svg, caption), … }
+ * Exits 1 on any failure BEFORE writing, so a broken spec never leaves a stale
+ * module that looks current. `--sheet <dir>` also renders a contact sheet.
+ */
+export async function emitFigureModule(opts: { specs: Spec[]; outFile: string; exportName: string; generator: string; about: string }) {
+  const { specs, outFile, exportName, generator, about } = opts;
+  let fails = 0;
+  const seen = new Set<string>();
+  const out: Record<string, { svg: string; caption: string }> = {};
+  for (const s of specs) {
+    if (seen.has(s.id)) { fails++; console.log(`✗ ${s.id}: duplicate figure id`); }
+    seen.add(s.id);
+    if (!s.checks.length) { fails++; console.log(`✗ ${s.id}: a figure with no checks proves nothing`); }
+    for (const [label, got, want, tol] of s.checks) {
+      if (!(Number.isFinite(got) && Math.abs(got - want) <= (tol ?? 1e-9))) {
+        fails++;
+        console.log(`✗ ${s.id}: ${label} — got ${got}, want ${want}`);
+      }
+    }
+    const svg = renderPlot(s.fig);
+    if (/[֐-׿]/.test(svg)) { fails++; console.log(`✗ ${s.id}: Hebrew inside the SVG`); }
+    if (/NaN|Infinity/.test(svg)) { fails++; console.log(`✗ ${s.id}: NaN/Infinity in the SVG`); }
+    const texts = [...svg.matchAll(/<text x="([\d.-]+)" y="([\d.-]+)"([^>]*)>([^<]*)</g)].map((m) => {
+      const x = Number(m[1]);
+      const w = m[4].length * 5.5;
+      const anchor = /text-anchor="end"/.test(m[3]) ? 'end' : /text-anchor="middle"/.test(m[3]) ? 'middle' : 'start';
+      const x0 = anchor === 'end' ? x - w : anchor === 'middle' ? x - w / 2 : x;
+      return { x0, x1: x0 + w, y: Number(m[2]), t: m[4] };
+    });
+    for (const tx of texts) {
+      if (tx.x0 < -6 || tx.x1 > (s.fig.w ?? 300) + 6 || tx.y < 8 || tx.y > (s.fig.h ?? 260) + 2) {
+        fails++;
+        console.log(`✗ ${s.id}: label "${tx.t}" outside the frame at (${tx.x0.toFixed(0)}, ${tx.y})`);
+      }
+    }
+    for (let i = 0; i < texts.length; i++)
+      for (let j = i + 1; j < texts.length; j++) {
+        const a = texts[i], b = texts[j];
+        if (Math.abs(a.y - b.y) < 9 && a.x0 < b.x1 - 1 && b.x0 < a.x1 - 1) {
+          fails++;
+          console.log(`✗ ${s.id}: "${a.t}" overlaps "${b.t}"`);
+        }
+      }
+    out[s.id] = { svg, caption: s.caption };
+  }
+  const nChecks = specs.reduce((n, s) => n + s.checks.length, 0);
+  console.log(`${specs.length} figures · ${nChecks} checks · ${fails} failure(s)`);
+  if (fails) process.exit(1);
+
+  const body =
+    `// GENERATED by ${generator} — do not edit by hand.\n` +
+    `// ${about}\n` +
+    `import type { DiagramSpec } from '../../types';\n\n` +
+    `const fig = (svg: string, caption: string): DiagramSpec => ({ type: 'custom', svg, viewBox: '0 0 300 260', caption });\n\n` +
+    `export const ${exportName} = {\n` +
+    Object.entries(out)
+      .map(([k, v]) => `  ${JSON.stringify(k)}: fig(\n    \`${v.svg}\`,\n    ${JSON.stringify(v.caption)},\n  ),`)
+      .join('\n') +
+    `\n} satisfies Record<string, DiagramSpec>;\n`;
+  writeFileSync(outFile, body, 'utf8');
+  console.log(`wrote ${outFile}`);
+
+  const sheetAt = process.argv.indexOf('--sheet');
+  if (sheetAt > 0) {
+    const dir = process.argv[sheetAt + 1];
+    const { default: sharp } = await import('sharp');
+    const COLS = 4, CW = 600, CH = 520;
+    const ids = Object.keys(out);
+    const tiles = await Promise.all(
+      ids.map(async (k, i) => ({
+        input: await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 260" width="${CW}" height="${CH}"><rect width="100%" height="100%" fill="#FDFDFB"/><text x="4" y="12" font-size="10" fill="#DB2777">${k}</text>${out[k].svg}</svg>`)).png().toBuffer(),
+        left: (i % COLS) * CW,
+        top: Math.floor(i / COLS) * CH,
+      })),
+    );
+    const rows = Math.ceil(ids.length / COLS);
+    const file = `${dir}/${exportName}-sheet.png`;
+    await sharp({ create: { width: COLS * CW, height: rows * CH, channels: 3, background: '#CBD5E1' } }).composite(tiles).png().toFile(file);
+    console.log(`sheet → ${file}`);
+  }
+}

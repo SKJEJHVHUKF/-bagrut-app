@@ -1,10 +1,14 @@
-// Numeric re-derivation of content/lessons/math5/rq-extra/bagrut-mixed.ts (rq-sub-bg-101…110).
+// Numeric re-derivation of רמה 8's practice rungs: rq-extra/bagrut-mixed.ts (rq-sub-bg-101…308) and the
+// main-file questions rewritten on 2026-09-14 (rq-sub-bg-001, 002, 003, 005, 006), plus gr-rq-bg-005.
 // Every derivative is proved SYMBOLICALLY (dcheck), every area re-integrated by quadrature from the
 // question's own function and bounds, every domain / asymptote / "which statement" / "how many
 // mistakes" / נמק claim encoded as a computation, and every distractor / wrongAnswer note re-enacted
 // as the mistake it names and required to land on THAT option.
 import { check, dcheck, checkSet, icheck, summary, math, E } from './_lib';
 import { RQ_EXTRA } from '../../content/lessons/math5/rq-extra';
+import { getSubTopic } from '../../content/lessons';
+import type { PracticeQuestion } from '../../content/lessons/types';
+import { functionsGhostReplays } from '../../content/ghost-replay/math5/functions';
 
 const f = (expr: string) => {
   const c = math.parse(expr).compile();
@@ -45,31 +49,6 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
   check('101 f blows up toward 3+', f('4/sqrt(x - 3)')(3 + 1e-12) > 1e5 ? 1 : 0, 1);
 }
 
-// rq-sub-bg-102 — f = (x^2+3x+16)/x, given f' = 1 - 16/x^2: minimum on x > 0 is (4, 11)
-{
-  const F = '(x^2 + 3x + 16)/x';
-  dcheck('102 given derivative matches f', F, '1 - 16/x^2', [0.5, 1, 2, 4, -1, -2.5]);
-  checkSet('102 f\' = 0 ⇔ x^2 = 16', [E('sqrt(16)'), -E('sqrt(16)')], [4, -4]);
-  check('102 candidate -4 is outside x > 0', sgn(-E('sqrt(16)')), -1);
-  check('102 height from the ORIGINAL function f(4)', f(F)(4), 11);
-  // classification by the SIGN TABLE of f', not by f''
-  dcheck('102 f\' on a common denominator is (x^2-16)/x^2', F, '(x^2 - 16)/x^2', [0.5, 1, 2, 4, -1, -2.5]);
-  const fp102 = f('(x^2 - 16)/x^2');
-  check('102 table col x < -4: f\' > 0', sgn(fp102(-5)), 1);
-  check('102 table col -4 < x < 0: f\' < 0', sgn(fp102(-2)), -1);
-  check('102 table col 0 < x < 4: f\' < 0', sgn(fp102(2)), -1);
-  check('102 table col x > 4: f\' > 0', sgn(fp102(5)), 1);
-  check('102 sign flips - → + at 4, so (4, 11) is a MINIMUM', sgn(fp102(5)) - sgn(fp102(2)), 2);
-  // d1 (4, 0): height read off the derivative → f'(4)
-  check('102 d1 f\'(4) = 0', f('1 - 16/x^2')(4), 0);
-  // d2 (4, 8): 3x term dropped → (16 + 16)/4
-  check('102 d2 (x^2+16)/x at 4', f('(x^2 + 16)/x')(4), 8);
-  check('102 d2 note: 16 + 12 + 16 = 44', E('16 + 12 + 16'), 44);
-  // d3 (-4, -5): the left-branch maximum
-  check('102 d3 f(-4)', f(F)(-4), -5);
-  check('102 d3 sign flips + → - at -4, so (-4, -5) is the left-branch MAXIMUM', sgn(fp102(-5)) - sgn(fp102(-2)), 2);
-}
-
 // rq-sub-bg-103 — f = (x-6)/(x^2-9): y-intercept height 2/3 (0 in domain, double negative)
 {
   const F = '(x - 6)/(x^2 - 9)';
@@ -100,24 +79,6 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
   check('104 w3 F(2)', f('x + 4/x')(2), 4);
 }
 
-// rq-sub-bg-105 — f = x^2/(x-2): decreasing on 0 < x < 2 or 2 < x < 4 (split at the excluded 2)
-{
-  const F = 'x^2/(x - 2)';
-  const FP = '(x^2 - 4x)/(x - 2)^2';
-  dcheck('105 quotient-rule derivative', F, FP, [-1, 0.5, 1, 3, 5]);
-  checkSet('105 f\' = 0 at 0 and 4', math.polynomialRoot(0, -4, 1) as number[], [0, 4]);
-  check('105 f\'(1) < 0', sgn(f(FP)(1)), -1);
-  check('105 f\'(3) < 0', sgn(f(FP)(3)), -1);
-  check('105 f\'(-1) > 0', sgn(f(FP)(-1)), 1);
-  check('105 f\'(5) > 0', sgn(f(FP)(5)), 1);
-  check('105 denominator of f vanishes at 2', f('x - 2')(2), 0);
-  check('105 numerator of f at 2 is 4 ≠ 0 → asymptote', f('x^2')(2), 4);
-  check('105 (x-2)^2 positive on both sides of 2', sgn(f('(x - 2)^2')(1.9)) + sgn(f('(x - 2)^2')(2.1)), 2);
-  // d2 note: numerator of f' at 1 is -3, denominator 1
-  check('105 d2 note numerator at 1', f('x^2 - 4x')(1), -3);
-  check('105 d2 note denominator at 1', f('(x - 2)^2')(1), 1);
-}
-
 // rq-sub-bg-106 — f = (ax+b)/(x-2): y = 3 asymptote and (0, 2) on the graph → a = 3, b = -4
 {
   check('106 a = leading ratio → f(1e6) ≈ 3', f('(3x - 4)/(x - 2)')(1e6), 3, 1e-4);
@@ -128,21 +89,6 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
   check('106 w1 b = 2*2', E('2 * 2'), 4);
   // w2 3, -1: divided instead of multiplied → b = 2/(-2)
   check('106 w2 b = 2/(-2)', E('2/(-2)'), -1);
-}
-
-// rq-sub-bg-107 — f = (x^2+3)/(x-1): no x-intercept, y-intercept (0, -3), VA x = 1, no HA
-{
-  const F = '(x^2 + 3)/(x - 1)';
-  check('107 numerator discriminant negative', E('0^2 - 4*1*3'), -12);
-  check('107 numerator never changes sign', signChanges('x^2 + 3', -50, 50), 0);
-  check('107 f(0) = -3', f(F)(0), -3);
-  check('107 denominator at 1 is 0', f('x - 1')(1), 0);
-  check('107 numerator at 1 is 4 ≠ 0 → vertical asymptote', f('x^2 + 3')(1), 4);
-  check('107 no HA: f(1e6)/1e6 ≈ 1 (grows without bound)', f(F)(1e6) / 1e6, 1, 1e-4);
-  // d1 y = 1: leading-coefficient ratio applied although degrees differ
-  check('107 d1 ratio of leading coefficients', E('1/1'), 1);
-  // d3 (0, 3): denominator sign lost → 3/1
-  check('107 d3 3/1', E('3/1'), 3);
 }
 
 // rq-sub-bg-108 — 2026-09-06 exam-style rebuild: f = sqrt(16-2x), three parts.
@@ -177,45 +123,6 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
   check('108 wrong 16: solving 16 - 2x = 0 without dividing by 2', E('16/2'), 8);
   check('108 wrong 16 as a height: that is the radicand, not its root', rad(0), 16);
   check('108 wrong 0: that is where the y-intercept sits, and g is finite there', Number.isFinite(f(G)(0)) ? 1 : 0, 1);
-}
-
-// rq-sub-bg-109 — f = sqrt(x-1), area from 1 to a equals 16/3 → a = 5
-{
-  dcheck('109 F = 2/3 (x-1)^(3/2) integrates sqrt(x-1)', '2/3*(x - 1)^(3/2)', 'sqrt(x - 1)', [1.5, 2, 3, 5, 10]);
-  check('109 F(1) = 0', f('2/3*(x - 1)^(3/2)')(1), 0);
-  // sqrt has an infinite slope at the lower bound, so Simpson needs a fine grid to reach 1e-6
-  icheck('109 ∫_1^5 sqrt(x-1) = 16/3', 'sqrt(x - 1)', 1, 5, E('16/3'), 200000);
-  check('109 (a-1)^(3/2) = 16/3 ÷ 2/3 = 8', E('(16/3)/(2/3)'), 8);
-  check('109 a = 8^(2/3) + 1', E('8^(2/3) + 1'), 5);
-  check('109 area is increasing in a → unique', sgn(f('sqrt(x - 1)')(4)), 1);
-  // w1 4: stopped at a - 1
-  check('109 w1 8^(2/3)', E('8^(2/3)'), 4);
-  // w2 3: cube root instead of the 2/3 power
-  check('109 w2 8^(1/3) + 1', E('8^(1/3) + 1'), 3);
-  check('109 w2 note: 2^(3/2) ≠ 8 but 4^(3/2) = 8', E('4^(3/2)'), 8);
-  check('109 w2 note: 2^(3/2) is not 8', Math.abs(E('2^(3/2)') - 8) > 1 ? 1 : 0, 1);
-}
-
-// rq-sub-bg-110 — f = (x^2-4x+36)/x: minimum (6, 8) on x > 0; lowest value 8 > 0 → graph above axis
-{
-  const F = '(x^2 - 4x + 36)/x';
-  // the quotient-rule route: (u'v - uv')/v^2 with u = x^2-4x+36, v = x, expanded and collected
-  dcheck('110 quotient rule, unexpanded', F, '((2x - 4)*x - (x^2 - 4x + 36)*1)/x^2', [0.5, 1, 3, 6, -1]);
-  dcheck('110 numerator collects to x^2 - 36', F, '(x^2 - 36)/x^2', [0.5, 1, 2, 3, 6, -1]);
-  dcheck('110 factored numerator (x-6)(x+6) is the same', F, '((x - 6)*(x + 6))/x^2', [0.5, 2, 6, -1, -7]);
-  checkSet('110 f\' = 0 ⇔ x^2 = 36', [E('sqrt(36)'), -E('sqrt(36)')], [6, -6]);
-  check('110 candidate -6 outside x > 0', sgn(-E('sqrt(36)')), -1);
-  check('110 f(6) = 8', f(F)(6), 8);
-  // classification by the SIGN TABLE of f', not by f'': every column of the table
-  const fp = f('(x^2 - 36)/x^2');
-  check('110 table col x < -6: f\' > 0', sgn(fp(-7)), 1);
-  check('110 table col -6 < x < 0: f\' < 0', sgn(fp(-3)), -1);
-  check('110 table col 0 < x < 6: f\' < 0', sgn(fp(3)), -1);
-  check('110 table col x > 6: f\' > 0', sgn(fp(7)), 1);
-  check('110 sign flips - → + at 6, so (6, 8) is a MINIMUM', sgn(fp(7)) - sgn(fp(3)), 2);
-  check('110 נמק: minimum of f on x > 0 grid is 8', gridMin(F, 0.05, 100), 8, 1e-4);
-  check('110 נמק: f never changes sign on x > 0', signChanges(F, 0.01, 200), 0);
-  check('110 numerator discriminant negative (consistent)', E('(-4)^2 - 4*1*36'), -128);
 }
 
 // --- steps added to the shipped extras (formula lines + the 105 sign table) ---
@@ -359,7 +266,7 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
 }
 
 // ---------------------------------------------------------------------------
-// 2026-09-06, exam-style round. bg-101 and bg-107 kept their mathematics and lost
+// 2026-09-06, exam-style round. bg-101 kept its mathematics and lost
 // the "איזו טענה נכונה" framing, so each option is now a full set of findings —
 // and each of the four sets has to be reachable only by the mistake its note names.
 // ---------------------------------------------------------------------------
@@ -373,19 +280,6 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
   check('101 opt C "x != 3": at x = 1 the radicand is negative, so those values are out too', sgn(f('x - 3')(1)), -1);
   check('101 opt D "no asymptote": f(3.0001) is already enormous', f(fx)(3.0001) > 300 ? 1 : 0, 1);
   check('101 the values keep growing toward 3, which is what an asymptote means', f(fx)(3.0001) > f(fx)(3.01) ? 1 : 0, 1);
-}
-
-// rq-sub-bg-107 — the four options are full finding sets for (x^2+3)/(x-1)
-{
-  const F = '(x^2 + 3)/(x - 1)';
-  check('107 opt A: no x-intercept — the numerator never vanishes', signChanges('x^2 + 3', -100, 100), 0);
-  check('107 opt A: the y-intercept height is -3', f(F)(0), -3);
-  check('107 opt A: the denominator vanishes at 1 while the numerator is 4', f('x^2 + 3')(1), 4);
-  check('107 opt B "y = 1": f keeps growing instead of flattening', f(F)(1e6) > 1e5 ? 1 : 0, 1);
-  check('107 opt B: and it grows like x, not toward a constant', f(F)(1e6) / 1e6, 1, 1e-4);
-  check('107 opt C "(0,3)": the denominator at 0 is -1, so the sign flips', f('x - 1')(0), -1);
-  check('107 opt D "(-3,0)": substituting -3 does not give 0', f(F)(-3), E('12/(-4)'));
-  check('107 opt D: x^2 = -3 has no real solution — the numerator stays positive', sgn(f('x^2 + 3')(-3)), 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -613,6 +507,412 @@ const gridMax = (expr: string, lo: number, hi: number, n = 20000) => -gridMin(`-
     check(`${id} authored: four options`, byId.get(id)?.answers?.length ?? 0, 4);
     check(`${id} authored: the correct option is index 0`, byId.get(id)?.correct ?? -1, 0);
   }
+}
+
+// ---------------------------------------------------------------------------
+// 2026-09-14 round. Itay: "יש יותר מידי פונקציות בצורת המנה הזו". Seven of the nine
+// "polynomial over x" questions got new families, 109 left a function the lesson now
+// owns, 002 / 003 / 201 got one box per number, and 305…308 are new. Every section below
+// reads the LIVE question through the stage accessor (main file and extras alike),
+// requires its stem to carry the function, re-derives the mathematics independently,
+// and compares the authored boxes / options / wrong answers with that computation.
+// ---------------------------------------------------------------------------
+const STAGE_QS = (getSubTopic('math5', 'פונקציות', 'rq-bagrut-mixed')?.questions ?? []) as PracticeQuestion[];
+const live = (id: string): PracticeQuestion => {
+  const q = STAGE_QS.find((x) => x.id === id);
+  if (!q) throw new Error(`${id} is not in the stage`);
+  return q;
+};
+const stemHas = (id: string, literal: string) => check(`${id} stem carries ${literal}`, live(id).question.includes(literal) ? 1 : 0, 1);
+const boxesOf = (id: string): number[] => {
+  const e = live(id).expected as { kind: string; value?: string; values?: string[] } | undefined;
+  return e?.kind === 'set' ? (e.values ?? []).map((v) => E(v)) : e?.kind === 'value' ? [E(e.value ?? 'NaN')] : [];
+};
+const wrongVals = (id: string): number[][] => (live(id).wrongAnswers ?? []).map((w) => w.value.split(',').map((v) => E(v.trim())));
+const optHas = (id: string, i: number, literal: string) =>
+  check(`${id} option ${i} shows ${literal}`, (live(id).answers ?? [])[i]?.includes(literal) ? 1 : 0, 1);
+/** the root of an increasing (or decreasing) function of one variable on [lo, hi], by bisection */
+const solveMono = (h: (t: number) => number, lo: number, hi: number) => {
+  const sLo = sgn(h(lo));
+  for (let i = 0; i < 200; i++) {
+    const m = (lo + hi) / 2;
+    if (sgn(h(m)) === sLo) lo = m; else hi = m;
+  }
+  return Number(((lo + hi) / 2).toFixed(6));
+};
+
+// rq-sub-bg-001 — f = (x^2+15)/sqrt(x+3): domain x > -3, candidates 1 and -5 (rejected), minimum (1, 8)
+{
+  const id = 'rq-sub-bg-001';
+  stemHas(id, '\\dfrac{x^2 + 15}{\\sqrt{x + 3}}');
+  const F = '(x^2 + 15)/sqrt(x + 3)';
+  const FP = '3*(x + 5)*(x - 1)/(2*(x + 3)*sqrt(x + 3))';
+  dcheck('001 the simplified derivative is the derivative', F, FP, [-2.5, -1, 0, 1, 2, 6]);
+  checkSet('001 the numerator 3x^2 + 12x - 15 vanishes at 1 and -5', math.polynomialRoot(-15, 12, 3) as number[], [1, -5]);
+  check('001 -5 is outside x > -3: f(-5) is not real', Number.isFinite(f(F)(-5)) ? 1 : 0, 0);
+  check('001 table: f\' < 0 on (-3, 1)', sgn(f(FP)(0)), -1);
+  check('001 table: f\' > 0 on (1, ∞)', sgn(f(FP)(2)), 1);
+  check('001 f blows up toward -3 (an asymptote, not an edge)', f(F)(-3 + 1e-10) > 1e5 ? 1 : 0, 1);
+  check('001 the minimum is the lowest value on the domain', gridMin(F, -2.999, 200, 400000), f(F)(1), 1e-5);
+  const b = boxesOf(id);
+  check('001 authored: two boxes', b.length, 2);
+  check('001 authored box x = the surviving candidate', b[0], 1);
+  check('001 authored box y = f(1)', b[1], f(F)(1));
+  const w = wrongVals(id);
+  check('001 w1 the height read off f\'(1)', w[0][1], f(FP)(1));
+  check('001 w2 the numerator alone at 1', w[1][1], f('x^2 + 15')(1));
+  check('001 w3 the denominator without its root', w[2][1], f('(x^2 + 15)/(x + 3)')(1));
+}
+
+// rq-sub-bg-002 — f = (2x-6)/(x+4): five boxes, in label order
+{
+  const id = 'rq-sub-bg-002';
+  stemHas(id, '\\dfrac{2x - 6}{x + 4}');
+  const F = '(2x - 6)/(x + 4)';
+  const zeroDen = math.polynomialRoot(4, 1) as number[];
+  const zeroNum = math.polynomialRoot(-6, 2) as number[];
+  check('002 the denominator has one zero', zeroDen.length, 1);
+  check('002 the numerator there is not 0, so an asymptote', Math.abs(f('2x - 6')(zeroDen[0])) > 0 ? 1 : 0, 1);
+  const want = [zeroDen[0], zeroDen[0], f(F)(1e9), zeroNum[0], f(F)(0)];
+  const b = boxesOf(id);
+  check('002 authored: five boxes', b.length, 5);
+  want.forEach((v, i) => check(`002 authored box ${i} equals the computed value`, b[i], v, 1e-6));
+  const w = wrongVals(id);
+  w.forEach((row, k) => check(`002 w${k + 1} carries five values`, row.length, 5));
+  check('002 w1 the root of x + 4 with its sign flipped', w[0][0], -zeroDen[0]);
+  check('002 w2 the root of 2x - 6 with its sign flipped', w[1][3], -zeroNum[0]);
+  check('002 w3 the numerator alone at 0', w[2][4], f('2x - 6')(0));
+}
+
+// rq-sub-bg-003 — f = sqrt(x+5): three boxes (x-intercept, y-intercept, area up to x = 4)
+{
+  const id = 'rq-sub-bg-003';
+  stemHas(id, '\\sqrt{x + 5}');
+  const edge = (math.polynomialRoot(5, 1) as number[])[0];
+  dcheck('003 the antiderivative (2/3)(x+5)^(3/2)', '(2/3)*(x + 5)^(3/2)', 'sqrt(x + 5)', [-4, -1, 0, 2, 4]);
+  const area = f('(2/3)*(x + 5)^(3/2)')(4) - f('(2/3)*(x + 5)^(3/2)')(edge);
+  const b = boxesOf(id);
+  check('003 authored: three boxes', b.length, 3);
+  check('003 authored box x-intercept = the radicand\'s zero', b[0], edge);
+  check('003 authored box y-intercept = f(0)', b[1], f('sqrt(x + 5)')(0));
+  check('003 authored box area', b[2], area);
+  const w = wrongVals(id);
+  check('003 w1 the root of x + 5 with its sign flipped', w[0][0], -edge);
+  check('003 w2 the radicand instead of its root', w[1][1], f('x + 5')(0));
+  check('003 w3 the antiderivative without its 2/3', w[2][2], f('(x + 5)^(3/2)')(4) - f('(x + 5)^(3/2)')(edge));
+}
+
+// rq-sub-bg-005 — f = sqrt(x - a)/x with a MAXIMUM at x = 18: a recovered from f'(18) = 0
+{
+  const id = 'rq-sub-bg-005';
+  stemHas(id, '\\dfrac{\\sqrt{x - a}}{x}');
+  stemHas(id, 'נקודת מקסימום בנקודה שבה $x = 18$');
+  const d = math.derivative('sqrt(x - a)/x', 'x');
+  const aStar = solveMono((a) => d.evaluate({ x: 18, a }) as number, 0.5, 17.5);
+  check('005 a solves f\'(18) = 0', aStar, 9);
+  const F = `sqrt(x - ${aStar})/x`;
+  dcheck('005 f\' = (18 - x)/(2x^2 sqrt(x - 9))', F, '(18 - x)/(2*x^2*sqrt(x - 9))', [10, 12, 17, 25, 40]);
+  check('005 18 lies inside x >= a and is not its edge', 18 > aStar ? 1 : 0, 1);
+  check('005 it is a MAXIMUM: nothing on the domain is higher', gridMax(F, aStar, 400, 400000), f(F)(18), 1e-6);
+  check('005 a = 18 would make x = 18 the edge, where f = 0 (an endpoint minimum)', f('sqrt(x - 18)/x')(18), 0);
+  const b = boxesOf(id);
+  check('005 authored box a', b[0], aStar);
+  check('005 authored box height = f(18)', b[1], f(F)(18));
+  const w = wrongVals(id);
+  check('005 w1 the height read off f\'(18)', w[0][1], f('(18 - x)/(2*x^2*sqrt(x - 9))')(18));
+  check('005 w2 the numerator alone', w[1][1], f('sqrt(x - 9)')(18));
+  check('005 w3 the root dropped', w[2][1], f('(x - 9)/x')(18));
+}
+
+// rq-sub-bg-006 — f = (x-3)sqrt(x), g = f + k meets the x-axis exactly once with k > 0 → k = 2
+{
+  const id = 'rq-sub-bg-006';
+  stemHas(id, '(x - 3)\\sqrt{x}');
+  const F = '(x - 3)*sqrt(x)';
+  dcheck('006 f\' = 3(x - 1)/(2 sqrt x)', F, '3*(x - 1)/(2*sqrt(x))', [0.2, 0.5, 1, 2, 5]);
+  const low = gridMin(F, 0, 60, 600000);
+  check('006 the lowest value of f is f(1)', low, f(F)(1), 1e-6);
+  check('006 the domain edge f(0) = 0', f(F)(0), 0);
+  const kStar = -f(F)(1);
+  // g = f + k: sign changes inside (0, 60] plus a zero exactly at the edge x = 0
+  const meets = (k: number) => signChanges(`${F} + (${k})`, 1e-9, 60) + (Math.abs(f(F)(0) + k) < 1e-12 ? 1 : 0);
+  check('006 k = 1: two common points', meets(1), 2);
+  check('006 k = 3: none (g stays above the axis)', meets(3) === 0 && gridMin(`${F} + 3`, 0, 60) > 0 ? 1 : 0, 1);
+  check('006 k = kStar: the curve TOUCHES at x = 1 only (no sign change, minimum exactly 0)', meets(kStar) === 0 && f(`${F} + ${kStar}`)(1) === 0 && gridMin(`${F} + ${kStar}`, 0, 0.99) > 0 && gridMin(`${F} + ${kStar}`, 1.01, 60) > 0 ? 1 : 0, 1);
+  check('006 k = 0: two points (0 and 3), so k = 0 does not qualify', meets(0), 2);
+  check('006 k = -1: one point, which is why the question says k is positive', meets(-1), 1);
+  check('006 authored value', boxesOf(id)[0], kStar);
+  const w = wrongVals(id);
+  check('006 w1 the minimum height itself', w[0][0], f(F)(1));
+  check('006 w2 the x of the minimum', w[1][0], 1);
+}
+
+// rq-sub-bg-102 — f = x/(x+1)^2, f' = (1-x)/(x+1)^3 given: maximum (1, 1/4)
+{
+  const id = 'rq-sub-bg-102';
+  stemHas(id, '\\dfrac{x}{(x + 1)^2}');
+  stemHas(id, '\\dfrac{1 - x}{(x + 1)^3}');
+  dcheck('102 the given derivative is the derivative of f', 'x/(x + 1)^2', '(1 - x)/(x + 1)^3', [-3, -0.5, 0, 1, 2.5]);
+  const FP = f('(1 - x)/(x + 1)^3');
+  check('102 table x < -1: f\' < 0', sgn(FP(-2)), -1);
+  check('102 table -1 < x < 1: f\' > 0', sgn(FP(0)), 1);
+  check('102 table x > 1: f\' < 0', sgn(FP(2)), -1);
+  check('102 1/4 is the largest value right of the asymptote', gridMax('x/(x + 1)^2', -0.999, 400, 400000), f('x/(x + 1)^2')(1), 1e-6);
+  check('102 the maximum height f(1)', f('x/(x + 1)^2')(1), 0.25);
+  optHas(id, 0, '\\dfrac{1}{4}');
+  check('102 d1 the height read off f\'(1)', FP(1), 0);
+  optHas(id, 1, '(1,\\; 0)');
+  check('102 d2 the square dropped: 1/(1 + 1)', f('x/(x + 1)')(1), 0.5);
+  optHas(id, 2, '\\dfrac{1}{2}');
+  checkSet('102 d3 f zeroed instead of f\': x = 0', math.polynomialRoot(0, 1) as number[], [0]);
+  optHas(id, 3, '(0,\\; 0)');
+}
+
+// rq-sub-bg-105 — f = 2x/(x^2-1): f' < 0 wherever it exists → three separate decreasing intervals
+{
+  const id = 'rq-sub-bg-105';
+  stemHas(id, '\\dfrac{2x}{x^2 - 1}');
+  const F = '2x/(x^2 - 1)';
+  const FP = '-2*(x^2 + 1)/(x^2 - 1)^2';
+  dcheck('105 the derivative', F, FP, [-3, -0.5, 0.3, 2, 4]);
+  check('105 f\' < 0 at a sample in each of the three intervals', [-3, 0, 3].every((x) => f(FP)(x) < 0) ? 1 : 0, 1);
+  check('105 not one decreasing interval: f(3) > f(-3)', f(F)(3) > f(F)(-3) ? 1 : 0, 1);
+  check('105 f(-3) = -3/4', f(F)(-3), -0.75);
+  optHas(id, 0, '$-1 < x < 1$');
+  check('105 d1 f itself is negative exactly on x < -1 and 0 < x < 1', sgn(f(F)(-2)) === -1 && sgn(f(F)(-0.5)) === 1 && sgn(f(F)(0.5)) === -1 && sgn(f(F)(2)) === 1 ? 1 : 0, 1);
+  optHas(id, 1, '$0 < x < 1$');
+  const unsquared = f('-2*(x^2 + 1)/(x^2 - 1)');
+  check('105 d2 an unsquared denominator is negative outside (-1, 1) and positive inside', sgn(unsquared(-2)) === -1 && sgn(unsquared(0)) === 1 && sgn(unsquared(2)) === -1 ? 1 : 0, 1);
+  optHas(id, 2, '$x > 1$');
+  const reversed = f('(2x*2x - 2*(x^2 - 1))/(x^2 - 1)^2');
+  check('105 d3 the reversed numerator gives f\' > 0 everywhere', [-3, -0.5, 0, 0.5, 3].every((x) => reversed(x) > 0) ? 1 : 0, 1);
+  check('105 d3 note: f(0.5) = -4/3', f(F)(0.5), E('-4/3'));
+  check('105 d3 note: f(0.9) is below -9', f(F)(0.9) < -9 ? 1 : 0, 1);
+}
+
+// rq-sub-bg-107 — g = 6/f, f = x^2 - x - 12: asymptotes at the zeros of f, no x-intercept, (0, -1/2), y = 0
+{
+  const id = 'rq-sub-bg-107';
+  stemHas(id, 'x^2 - x - 12');
+  stemHas(id, '\\dfrac{6}{f(x)}');
+  const zeros = math.polynomialRoot(-12, -1, 1) as number[];
+  checkSet('107 the zeros of f', zeros, [4, -3]);
+  const g = f('6/(x^2 - x - 12)');
+  for (const z of zeros) check(`107 g blows up beside ${z}`, Math.abs(g(z + 1e-7)) > 1e6 ? 1 : 0, 1);
+  check('107 g never crosses the axis between its asymptotes', signChanges('6/(x^2 - x - 12)', -2.999, 3.999), 0);
+  check('107 g never crosses the axis outside them', signChanges('6/(x^2 - x - 12)', 4.001, 300) + signChanges('6/(x^2 - x - 12)', -300, -3.001), 0);
+  check('107 g(0) = -1/2', g(0), -0.5);
+  check('107 g far out tends to 0', g(1e6), 0, 1e-9);
+  optHas(id, 0, '-\\dfrac{1}{2}');
+  optHas(id, 0, '$y = 0$');
+  optHas(id, 1, '(4,\\; 0)');
+  check('107 d2 f(0) instead of g(0)', f('x^2 - x - 12')(0), -12);
+  optHas(id, 2, '(0,\\; -12)');
+  check('107 d3 the ratio 6/1 that the degrees forbid', E('6/1'), 6);
+  optHas(id, 3, '$y = 6$');
+}
+
+// rq-sub-bg-109 — f = 18x/(x^2+9)^2, area from 0 to a equals 16/25 → a = 4
+{
+  const id = 'rq-sub-bg-109';
+  stemHas(id, '\\dfrac{18x}{(x^2 + 9)^2}');
+  dcheck('109 the antiderivative -9/(x^2 + 9)', '-9/(x^2 + 9)', '18x/(x^2 + 9)^2', [-2, 0, 1, 3, 5]);
+  const G = f('-9/(x^2 + 9)');
+  const aStar = solveMono((a) => G(a) - G(0) - 16 / 25, 0.1, 50);
+  check('109 a solves S(a) = 16/25', aStar, 4);
+  icheck('109 quadrature over [0, a] gives 16/25', '18x/(x^2 + 9)^2', 0, aStar, E('16/25'));
+  check('109 the graph is above the axis on (0, a]', gridMin('18x/(x^2 + 9)^2', 1e-6, aStar) > 0 ? 1 : 0, 1);
+  check('109 authored value', boxesOf(id)[0], aStar);
+  const w = wrongVals(id);
+  check('109 w1 a^2', w[0][0], aStar ** 2);
+  check('109 w2 the negative root', w[1][0], -aStar);
+  check('109 w3 sqrt(a^2 + 9)', w[2][0], Math.sqrt(aStar ** 2 + 9));
+}
+
+// rq-sub-bg-110 — f = 5sqrt(x^2+16) - 3x: minimum (3, 16) after rejecting the false root -3; f >= 16 > 0
+{
+  const id = 'rq-sub-bg-110';
+  stemHas(id, '5\\sqrt{x^2 + 16} - 3x');
+  const F = '5*sqrt(x^2 + 16) - 3x';
+  const FP = '5x/sqrt(x^2 + 16) - 3';
+  dcheck('110 the derivative', F, FP, [-4, -1, 0, 2, 3, 7]);
+  checkSet('110 after squaring, 16x^2 = 144', math.polynomialRoot(-144, 0, 16) as number[], [3, -3]);
+  check('110 x = 3 solves 5x = 3sqrt(x^2 + 16)', f('5x - 3*sqrt(x^2 + 16)')(3), 0);
+  check('110 x = -3 does not: a false root', f('5x - 3*sqrt(x^2 + 16)')(-3), -30);
+  check('110 f\'(0) = -3', f(FP)(0), -3);
+  check('110 f\'(4) is about 0.54', f(FP)(4), 0.5355, 1e-4);
+  check('110 16 is the lowest value anywhere', gridMin(F, -400, 400, 800000), f(F)(3), 1e-6);
+  const b = boxesOf(id);
+  check('110 authored box x', b[0], 3);
+  check('110 authored box y = f(3)', b[1], f(F)(3));
+  const w = wrongVals(id);
+  check('110 w1 the false root', w[0][0], -3);
+  check('110 w1 and its height', w[0][1], f(F)(-3));
+  check('110 w2 the height read off f\'(3)', w[1][1], f(FP)(3));
+  check('110 w3 the coefficient 5 dropped', w[2][1], f('sqrt(x^2 + 16) - 3x')(3));
+}
+
+// rq-sub-bg-201 — the four boxes added 2026-09-14
+{
+  const id = 'rq-sub-bg-201';
+  stemHas(id, 'x\\sqrt{3 - x}');
+  const d = math.derivative('x*sqrt(3 - x)', 'x');
+  const b = boxesOf(id);
+  check('201 authored: four boxes', b.length, 4);
+  check('201 authored box: the x-intercept other than 0', b[0], Math.max(...(math.polynomialRoot(0, 3, -1) as number[])));
+  check('201 authored box x: f\' vanishes there', d.evaluate({ x: b[1] }) as number, 0, 1e-12);
+  check('201 authored box y = f at that x', b[2], f('x*sqrt(3 - x)')(b[1]));
+  check('201 authored box area of g = f^2 over [0, 3]', b[3], f('x^3 - x^4/4')(3) - f('x^3 - x^4/4')(0));
+  const w = wrongVals(id);
+  w.forEach((row, k) => check(`201 w${k + 1} carries four values`, row.length, 4));
+}
+
+// rq-sub-bg-305 — f = sqrt(x+8) + sqrt(8-x): even, maximum (0, 4sqrt2), endpoint minima (±8, 4),
+// exactly two solutions of f(x) = k for 4 <= k < 4sqrt2, area 256/3
+{
+  const id = 'rq-sub-bg-305';
+  stemHas(id, '\\sqrt{x + 8} + \\sqrt{8 - x}');
+  const F = 'sqrt(x + 8) + sqrt(8 - x)';
+  const fx = f(F);
+  const FP = '1/(2*sqrt(x + 8)) - 1/(2*sqrt(8 - x))';
+  check('305 defined at both edges', Number.isFinite(fx(-8)) && Number.isFinite(fx(8)) ? 1 : 0, 1);
+  check('305 undefined just outside', Number.isFinite(fx(8.001)) || Number.isFinite(fx(-8.001)) ? 1 : 0, 0);
+  for (const x of [1, 3.5, 7]) check(`305 even: f(${x}) = f(-${x})`, fx(x), fx(-x));
+  dcheck('305 the derivative', F, FP, [-7, -3, 0.5, 2, 6]);
+  check('305 f\'(0) = 0', f(FP)(0), 0);
+  check('305 f\'(-4) is about 0.11', f(FP)(-4), 0.1057, 1e-3);
+  check('305 the maximum is the highest value', gridMax(F, -8, 8, 400000), fx(0), 1e-9);
+  check('305 the maximum height is 4sqrt2', fx(0), 4 * Math.SQRT2, 1e-12);
+  check('305 the edges are the lowest values', gridMin(F, -8, 8, 400000), fx(8), 1e-9);
+  const sols = (k: number) => signChanges(`${F} - (${k})`, -8 + 1e-9, 8 - 1e-9) + [fx(-8), fx(8)].filter((v) => Math.abs(v - k) < 1e-12).length;
+  check('305 k = 4: two solutions, the two edges', sols(4), 2);
+  check('305 k = 5: two solutions', sols(5), 2);
+  check('305 k = 3.9: none', sols(3.9), 0);
+  check('305 k = 6: none', sols(6), 0);
+  check('305 k = 4sqrt2: touches only at x = 0', gridMax(F, 0.01, 8) < fx(0) && gridMax(F, -8, -0.01) < fx(0) ? 1 : 0, 1);
+  const A = '(2/3)*(x + 8)^(3/2) - (2/3)*(8 - x)^(3/2)';
+  dcheck('305 the antiderivative', A, F, [-6, -1, 0, 3, 7]);
+  const area = f(A)(8) - f(A)(-8);
+  check('305 the area is 256/3', area, E('256/3'));
+  const b = boxesOf(id);
+  check('305 authored box max', b[0], fx(0));
+  check('305 authored box edges', b[1], fx(8));
+  check('305 authored box area', b[2], area);
+  const w = wrongVals(id);
+  check('305 w1 sqrt(8) + sqrt(8) written as sqrt(16)', w[0][0], Math.sqrt(8 + 8));
+  check('305 w2 only the root that vanishes at the edge', w[1][1], f('sqrt(8 - x)')(8));
+  check('305 w3 the area of one root only', w[2][2], f('(2/3)*(x + 8)^(3/2)')(8) - f('(2/3)*(x + 8)^(3/2)')(-8));
+}
+
+// rq-sub-bg-306 — f = sqrt(x) + 4/x: x > 0, asymptote x = 0, no horizontal one, minimum (4, 3);
+// g = 12/f: maximum (4, 4) and horizontal asymptote y = 0
+{
+  const id = 'rq-sub-bg-306';
+  stemHas(id, '\\sqrt{x} + \\dfrac{4}{x}');
+  stemHas(id, '\\dfrac{12}{f(x)}');
+  const F = 'sqrt(x) + 4/x';
+  const fx = f(F);
+  dcheck('306 the derivative on a common denominator', F, '(x*sqrt(x) - 8)/(2*x^2)', [0.3, 1, 4, 9, 20]);
+  check('306 x sqrt(x) = 8 at x = 4', f('x*sqrt(x)')(4), 8);
+  check('306 the minimum is the lowest value', gridMin(F, 1e-3, 400, 400000), fx(4), 1e-6);
+  check('306 f(4) = 3', fx(4), 3);
+  check('306 f blows up at 0+', fx(1e-9) > 1e8 ? 1 : 0, 1);
+  check('306 no horizontal asymptote: f(10^6) > 999', fx(1e6) > 999 ? 1 : 0, 1);
+  const G = '12/(sqrt(x) + 4/x)';
+  check('306 the maximum of g is g(4)', gridMax(G, 1e-3, 400, 400000), f(G)(4), 1e-6);
+  check('306 g tends to 0 at both ends', Math.max(f(G)(1e-9), f(G)(1e9)), 0, 1e-3);
+  const b = boxesOf(id);
+  check('306 authored box x', b[0], 4);
+  check('306 authored box f(4)', b[1], fx(4));
+  check('306 authored box g(4)', b[2], f(G)(4));
+  const w = wrongVals(id);
+  check('306 w1 the root alone', w[0][1], Math.sqrt(4));
+  check('306 w1 and 12 over it', w[0][2], 12 / Math.sqrt(4));
+  check('306 w2 f(4)/12 instead of 12/f(4)', w[1][2], fx(4) / 12);
+  check('306 w3 the height of f copied to g', w[2][2], fx(4));
+}
+
+// rq-sub-bg-307 — f = (sqrt(x) - a)/(sqrt(x) + a), a > 0: (0, -1), (a^2, 0), y = 1, increasing;
+// through (16, 1/3) → a = 2; no common point with y = k exactly for k < -1 or k >= 1
+{
+  const id = 'rq-sub-bg-307';
+  stemHas(id, '\\dfrac{\\sqrt{x} - a}{\\sqrt{x} + a}');
+  stemHas(id, '\\left(16,\\; \\dfrac{1}{3}\\right)');
+  const fa = (x: number, a: number) => (Math.sqrt(x) - a) / (Math.sqrt(x) + a);
+  for (const a of [0.5, 2, 7]) {
+    check(`307 a = ${a}: f(0) = -1`, fa(0, a), -1);
+    check(`307 a = ${a}: f(a^2) = 0`, fa(a * a, a), 0);
+    check(`307 a = ${a}: far out f tends to 1`, fa(1e16, a), 1, 1e-5);
+  }
+  dcheck('307 f\' = a/(sqrt(x)(sqrt(x) + a)^2) at a = 2', '(sqrt(x) - 2)/(sqrt(x) + 2)', '2/(sqrt(x)*(sqrt(x) + 2)^2)', [0.2, 1, 4, 9, 30]);
+  const aStar = solveMono((a) => fa(16, a) - 1 / 3, 0.01, 3.99);
+  check('307 a from f(16) = 1/3', aStar, 2);
+  check('307 increasing at samples', [0.1, 1, 5, 20, 100].every((x) => fa(x + 0.01, aStar) > fa(x, aStar)) ? 1 : 0, 1);
+  check('307 the graph never reaches y = 1', gridMax('(sqrt(x) - 2)/(sqrt(x) + 2)', 0, 1e6, 200000) < 1 ? 1 : 0, 1);
+  const b = boxesOf(id);
+  check('307 authored box a', b[0], aStar);
+  check('307 authored box y-intercept', b[1], fa(0, aStar));
+  check('307 authored box asymptote', b[2], fa(1e14, aStar), 1e-6);
+  const w = wrongVals(id);
+  check('307 w1 16 substituted without its root gives a = 8', w[0][0], solveMono((a) => (16 - a) / (16 + a) - 1 / 3, 0.01, 15.99));
+  check('307 w2 the minus lost: a/a', w[1][1], aStar / aStar);
+  check('307 w3 the free terms: -a/a', w[2][2], -aStar / aStar);
+}
+
+// rq-sub-bg-308 — f = x sqrt(x)/(x - 3): x >= 0, x != 3; asymptote x = 3; endpoint maximum (0, 0);
+// minimum (9, 9/2); f(x) = k has no solution exactly for 0 < k < 9/2
+{
+  const id = 'rq-sub-bg-308';
+  stemHas(id, '\\dfrac{x\\sqrt{x}}{x - 3}');
+  const F = 'x*sqrt(x)/(x - 3)';
+  const fx = f(F);
+  dcheck('308 f\' = sqrt(x)(x - 9)/(2(x - 3)^2)', F, 'sqrt(x)*(x - 9)/(2*(x - 3)^2)', [0.5, 2, 4, 9, 15]);
+  check('308 f(9) = 9/2', fx(9), 4.5);
+  check('308 f(0) = 0', fx(0), 0);
+  check('308 the numerator at 3 is not 0, so an asymptote', f('x*sqrt(x)')(3), 3 * Math.sqrt(3));
+  const leftTop = gridMax(F, 0, 2.9999, 300000);
+  const rightLow = gridMin(F, 3.0001, 400, 800000);
+  check('308 the left branch never rises above 0', leftTop, 0, 1e-12);
+  check('308 the left branch falls without bound', fx(3 - 1e-9) < -1e8 ? 1 : 0, 1);
+  check('308 the right branch never dips below 9/2', rightLow, 4.5, 1e-6);
+  for (const k of [-5, 0, 1, 4.4, 4.5, 10]) {
+    const reachable = k <= leftTop || k >= rightLow - 1e-6;
+    check(`308 k = ${k}: a solution exists exactly when k <= 0 or k >= 9/2`, reachable ? 1 : 0, k <= 0 || k >= 4.5 ? 1 : 0);
+  }
+  optHas(id, 0, '\\left(9,\\; \\dfrac{9}{2}\\right)');
+  optHas(id, 0, '$0 < k < \\dfrac{9}{2}$');
+  check('308 d1 the numerator alone at 9', f('x*sqrt(x)')(9), 27);
+  optHas(id, 1, '(9,\\; 27)');
+  check('308 d2 the left branch is real, so x > 3 loses it: f(1) = -1/2', fx(1), -0.5);
+  optHas(id, 2, '$x > 3$');
+  check('308 d3 negative heights are reached: f(2) = -2sqrt2', fx(2), -2 * Math.SQRT2, 1e-12);
+  optHas(id, 3, '$k < \\dfrac{9}{2}$');
+}
+
+// gr-rq-bg-005 — the walkthrough of rq-sub-bg-005: the numbers its steps reveal and its branches compute
+{
+  const r = functionsGhostReplays.replays.find((x) => x.id === 'gr-rq-bg-005');
+  check('ghost 005 exists and walks rq-sub-bg-005', r?.questionId === 'rq-sub-bg-005' ? 1 : 0, 1);
+  check('ghost 005 prompt is the live question', r?.prompt === live('rq-sub-bg-005').question ? 1 : 0, 1);
+  const text = JSON.stringify(r ?? {});
+  const has = (lit: string) => check(`ghost 005 carries ${lit}`, text.includes(JSON.stringify(lit).slice(1, -1)) ? 1 : 0, 1);
+  // step 1 b: f(18) = 0 forces a = 18, which puts 18 at the edge of x >= 18
+  check('ghost 005 s1b sqrt(18 - a) = 0 at a = 18', (math.polynomialRoot(18, -1) as number[])[0], 18);
+  // step 2: the three wrong numerators, each from its own slip, at a = 9
+  const right = (x: number, a: number) => x - 2 * (x - a);
+  check('ghost 005 s2 the right numerator is 2a - x', right(11, 9), 2 * 9 - 11);
+  check('ghost 005 s2b the reversed numerator has the opposite sign before 18', sgn(-right(10, 9)), -1);
+  check('ghost 005 s2c without the 2 the numerator is the constant a', 11 - (11 - 9), 9);
+  const aPlus = (math.polynomialRoot(54, -2) as number[])[0];
+  check('ghost 005 s2d 3x - 2a = 0 at x = 18 gives a = 27', aPlus, 27);
+  check('ghost 005 s2d and 18 is outside x >= 27', 18 >= aPlus ? 1 : 0, 0);
+  // step 3: a = 36 leaves 18 outside the domain
+  check('ghost 005 s3b a = 2·18 leaves 18 outside x >= a', 18 >= 2 * 18 ? 1 : 0, 0);
+  // step 4: the height and its three slips
+  check('ghost 005 s4 f(18) = 1/6', f('sqrt(x - 9)/x')(18), E('1/6'));
+  check('ghost 005 s4c the numerator alone', f('sqrt(x - 9)')(18), 3);
+  check('ghost 005 s4d the root forgotten', f('(x - 9)/x')(18), 0.5);
+  for (const lit of ["$f'(18) = 0$", '$2a - x$', '$3x - 2a$', '$a = 9$', '$a = 36$', '$a = 27$', '\\dfrac{1}{6}']) has(lit);
 }
 
 summary('bagrut-mixed');

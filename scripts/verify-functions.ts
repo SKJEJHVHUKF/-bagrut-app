@@ -518,25 +518,29 @@ const R4 = (v: number) => Math.round(v * 1e4) / 1e4;
     R4(lin(1) - par(1)), 4);
 }
 
-// --- gr-rq-bg-005: f(x) = (x^2 + b)/x with a minimum at x = 5 ---
+// --- gr-rq-bg-005: f(x) = √(x − a)/x, a > 0, with a maximum at x = 18 (rewritten 2026-09-14) ---
 {
-  const d1 = (b: number) => (x: number) => 1 - b / (x * x);
-  const d2 = (b: number) => (x: number) => (2 * b) / (x * x * x);
-  const fb = (b: number) => (x: number) => (x * x + b) / x;
-  check('ghost rq-bg-005: b = 25 is what makes the derivative vanish at x = 5', d1(25)(5), 0);
-  check('ghost rq-bg-005: and the second derivative there is 0.4, positive — a minimum',
-    R4(d2(25)(5)), 0.4);
-  check('ghost rq-bg-005: the height is f(5) = 10', R4(fb(25)(5)), 10);
-  check('ghost rq-bg-005 branch: 25 + 25 = 50, and 50/5 = 10 — the "30" answer stops early',
-    (25 + 25) / 5, 10);
-  check('ghost rq-bg-005 branch: b = 5 leaves f\'(5) = 0.8, not zero', R4(d1(5)(5)), 0.8);
-  check('ghost rq-bg-005 branch: b = -25 leaves f\'(5) = 2, not zero', R4(d1(-25)(5)), 2);
-  check('ghost rq-bg-005 branch: and with b = -25 the derivative is positive EVERYWHERE — no extremum',
-    R4(d1(-25)(1)), 26);
-  check('ghost rq-bg-005 branch: b = 1/25 leaves f\'(5) about 0.998', R4(d1(1 / 25)(5)), 0.9984);
-  check('ghost rq-bg-005 branch: b = 0 collapses the function to the line y = x', fb(0)(7), 7);
-  check('ghost rq-bg-005 branch: f\'(1) = -24 with b = 25, so "2x" is not the derivative',
-    d1(25)(1), -24);
+  const fa = (a: number) => (x: number) => Math.sqrt(x - a) / x;
+  // the authored derivative, and a numeric derivative of f to prove it
+  const d1 = (a: number) => (x: number) => (2 * a - x) / (2 * x * x * Math.sqrt(x - a));
+  const num = (a: number, x: number, h = 1e-6) => (fa(a)(x + h) - fa(a)(x - h)) / (2 * h);
+  check('ghost rq-bg-005: the authored f\' matches a numeric derivative at x = 12, a = 9', R4(d1(9)(12)), R4(num(9, 12)));
+  check('ghost rq-bg-005: and at x = 30, a = 4', R4(d1(4)(30) * 1e4), R4(num(4, 30) * 1e4));
+  check('ghost rq-bg-005: expanding x − 2(x − a) gives 2a − x (at x = 18, a = 9)', 18 - 2 * (18 - 9), 2 * 9 - 18);
+  check('ghost rq-bg-005: a = 9 is what makes f\'(18) vanish', d1(9)(18), 0);
+  check('ghost rq-bg-005: f\' > 0 just left of 18 — rising', Math.sign(d1(9)(17)), 1);
+  check('ghost rq-bg-005: f\' < 0 just right of 18 — falling, so a MAXIMUM', Math.sign(d1(9)(19)), -1);
+  check('ghost rq-bg-005: 18 is inside the domain x ≥ 9 and not its edge', 18 > 9 ? 1 : 0, 1);
+  check('ghost rq-bg-005: the height is f(18) = 1/6', R4(fa(9)(18)), R4(1 / 6));
+  check('ghost rq-bg-005 branch: f(18) = 0 forces a = 18 — then 18 is the domain EDGE, f = 0 there', fa(18)(18), 0);
+  check('ghost rq-bg-005 branch: with a = 18 the graph rises right after the edge — an endpoint minimum', fa(18)(20) > 0 ? 1 : 0, 1);
+  check('ghost rq-bg-005 branch: reversed quotient rule, x − 2a, is the negative of 2a − x (at x = 12)', 12 - 2 * 9, -(2 * 9 - 12));
+  check('ghost rq-bg-005 branch: dropping the 2 leaves x − (x − a) = a — never zero', 12 - (12 - 9), 9);
+  check('ghost rq-bg-005 branch: a plus sign gives x + 2(x − a) = 3x − 2a, zero at 18 when a = 27', 3 * 18 - 2 * 27, 0);
+  check('ghost rq-bg-005 branch: a = 27 puts 18 outside the domain x ≥ 27', 18 >= 27 ? 1 : 0, 0);
+  check('ghost rq-bg-005 branch: a = 2·18 = 36 also puts 18 outside the domain', 18 >= 36 ? 1 : 0, 0);
+  check('ghost rq-bg-005 branch: the numerator alone is √9 = 3', Math.sqrt(18 - 9), 3);
+  check('ghost rq-bg-005 branch: forgetting the root gives (18 − 9)/18 = 1/2', (18 - 9) / 18, 0.5);
 }
 
 console.log(`\nFUNCTIONS VERIFY: ${pass}/${pass + fail} passed.`);

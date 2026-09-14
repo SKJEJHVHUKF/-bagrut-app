@@ -326,7 +326,6 @@ const f_sk005 = (x: number) => 4 / (x - 2);
 const f_in005 = (x: number) => 9 - x * x;
 const f_asy008 = (x: number) => (x * x - 25) / (x * x - 5 * x);
 const f_der009 = (x: number) => (x * x + 3) / x;
-const f_bg002 = (x: number) => (2 * x - 6) / (x + 4);
 
 SPECS.push(
   {
@@ -408,28 +407,8 @@ SPECS.push(
       ['the left branch is a separate piece', f_der009(-1), -4],
     ],
   },
-  {
-    id: 'SOL_BG002',
-    where: 'solution of rq-sub-bg-002 — the whole investigation in one picture',
-    fig: {
-      xRange: [-13, 8], yRange: [-8, 8],
-      curves: [{ f: f_bg002 }],
-      vAsym: [{ x: -4, label: 'x = -4' }],
-      hAsym: [{ y: 2, label: 'y = 2' }],
-      points: [
-        { x: 3, y: 0, label: '(3,0)', color: EMERALD, dx: -30, dy: -10 },
-        { x: 0, y: -1.5, label: '(0,-1.5)', color: PINK, dx: -8, dy: 15 },
-      ],
-      xTicks: [{ x: 3, label: '3' }, { x: -4, label: '-4' }],
-    },
-    checks: [
-      ['the denominator vanishes at -4', -4 + 4, 0],
-      ['the numerator there is -14, so it is an asymptote', 2 * -4 - 6, -14],
-      ['the x-intercept is 3', f_bg002(3), 0],
-      ['the y-intercept is -1.5', f_bg002(0), -1.5],
-      ['equal degrees give y = 2', 2 / 1, 2],
-    ],
-  },
+  // rq-sub-bg-002: moved to scripts/_gen-rq-bg8-practice-figures.ts (2026-09-14),
+  // generated with the rest of רמה 8's figures.
 );
 
 // Every question in רמה 5 asks about the SHAPE of a graph. Four of them only
@@ -575,10 +554,6 @@ export const SOLUTION_PLACEMENT: { id: string; question: string; caption: string
   },
   // rq-sub-in-005 / rq-sub-in-006: moved to scripts/_gen-rq-integral-figures.ts
   // (2026-09-13) with every other רמה 7 figure, in the hatched-area style.
-  {
-    id: 'SOL_BG002', question: 'rq-sub-bg-002',
-    caption: 'כל מה שהסעיף מצא, על גרף אחד: האסימפטוטות המקווקוות ושתי נקודות החיתוך.',
-  },
 ];
 
 /** Where each figure goes, and what it says underneath. The caption runs
