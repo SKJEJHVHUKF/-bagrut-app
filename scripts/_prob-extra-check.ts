@@ -235,6 +235,9 @@ const isReverse = (q: PracticeQuestion) =>
 const hasParameter = (q: PracticeQuestion) =>
   askShape(q) === 'find-parameter' ||
   /\bx\b|\bp\b|נעלם|פרמטר/.test(q.question) ||
+  // The unknown is the recovered QUANTITY, not the letters x and p: an author
+  // renamed $n$ to $x$ to get the credit (pr-basics bagrut author, 2026-09-14).
+  /(?:נסמן|מצאו?|חשבו) (?:את )?(?:הערך של |ב)?\$[a-z]\$/.test(q.question) ||
   /גדול פי|קטן פי|גדולה פי|קטנה פי|פי \$?\d+ מ/.test(q.question);
 
 /**
