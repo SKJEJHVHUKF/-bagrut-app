@@ -172,7 +172,7 @@ export const TRIG_PLANE_MIXED: SubTopic = {
             answers: ['$2R = \\dfrac{AC}{\\sin B}$, עם התוצאה מסעיף א', '$2R = \\dfrac{AB}{\\sin B}$', 'חסר נתון: צריך עוד זווית כדי למצוא את $R$', '$R = \\dfrac{AC}{\\sin B}$'],
             correct: 0,
             distractorNotes: [
-              null,
+              undefined,
               'הצלע $AB$ אינה יושבת מול הזווית $\\angle B$, ולכן אינה זוג שלה. מול $\\angle B$ יושבת $AC$.',
               'הנתון החסר כבר בידיך: $AC$ מסעיף א יושבת מול $\\angle B$ הנתונה, וזה זוג שלם.',
               'המנה של צלע בסינוס הזווית שמולה היא הקוטר $2R$, ולא הרדיוס.',
