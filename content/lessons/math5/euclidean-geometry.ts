@@ -2998,6 +2998,7 @@ $$CH^2 = AH \\cdot HB, \\qquad CA^2 = AH \\cdot AB, \\qquad CB^2 = HB \\cdot AB.
           question:
             'במשולש חד-זווית $\\triangle ABC$ מעבירים את הגובה $AD$ (הנקודה $D$ על $BC$) ואת הגובה $BE$ (הנקודה $E$ על $AC$). הוכח כי $\\triangle ADC \\sim \\triangle BEC$, ובהינתן $AC = 12$ ס"מ, $CB = 8$ ס"מ וגם $CD = 6$ ס"מ — מצא את $CE$.\n\n```geo\n{"points":{"C":[0,0],"B":[8,0],"A":[6,10.3923],"D":[6,0],"E":[2,3.4641],"H":[6,1.1547]},"polygons":["ABC"],"segments":[{"s":"AD","accent":true},{"s":"BE","accent":true}],"right":[{"at":"D","from":"A","to":"B"},{"at":"E","from":"B","to":"C"}],"labels":[{"on":"AC","text":"12"},{"on":"CD","text":"6"},{"on":"DB","text":"2"}],"width":320}\n```',
           hint: 'שני הגבהים נותנים לך שתי זוויות ישרות. ואיזו זווית משותפת לשני המשולשים $\\triangle ADC$ ו-$\\triangle BEC$?',
+          expected: { kind: 'value', value: '4' },
           solution: {
             steps: [
               '**הכלל:** משפט דמיון ז.ז — שתי זוויות שוות בהתאמה מספיקות. גובה יוצר זווית ישרה, ולכן שני גבהים נותנים זוג זוויות ישרות שוות; הזווית השנייה מגיעה מהקודקוד המשותף לשני המשולשים.',
