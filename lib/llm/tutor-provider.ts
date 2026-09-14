@@ -146,7 +146,17 @@ export type GeminiOptions = {
   temperature?: number;
   /** Explicit context caching of the shared system prefix (below). Default on. */
   cache?: boolean;
-  /** Cache TTL in seconds. 3600 matches the Anthropic 1h breakpoints. */
+  /**
+   * Cache TTL in seconds. Default 600, NOT the Anthropic-style hour.
+   *
+   * Gemini bills explicit caches for STORAGE: $1 per million tokens per hour.
+   * The prefix is ~6,500 tokens per topic, so one hour of cache costs $0.0065
+   * — the same as ~4 turns' worth of the saving. At today's traffic (a few
+   * turns an hour across all topics) an hour-long cache costs MORE than
+   * sending the prefix uncached. Ten minutes covers one conversation's turns
+   * (where the saving is real: reads at 0.1x) and then expires; recreating it
+   * costs exactly one uncached input, i.e. nothing extra.
+   */
   cacheTtlSeconds?: number;
 };
 
@@ -290,7 +300,7 @@ export class GeminiTutorProvider implements TutorProvider {
     const known = CACHES.get(key);
     if (known === null) return null;
     if (known && known.expiresAt > now + 60_000) return known.name;
-    const ttl = this.opts.cacheTtlSeconds ?? 3600;
+    const ttl = this.opts.cacheTtlSeconds ?? 600;
     const res = await fetch(`${GEMINI}/cachedContents`, {
       method: 'POST',
       headers: this.headers(),
