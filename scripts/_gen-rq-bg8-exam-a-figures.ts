@@ -5,25 +5,11 @@
 //   npx tsx scripts/_gen-rq-bg8-exam-a-figures.ts [--sheet <dir>]
 //
 // Writes content/lessons/math5/rq-extra/bagrut-exam-a-figures.ts (EXAM_A_FIG).
-// Captions write g = 1/f and g = √f without "(x)": the stage gate treats any
-// string of the stage that CONTAINS a practice question's "f(x) = …" right-hand
-// side as a reused function, and rq-sub-bg-108 / rq-sub-bg-203 define exactly those.
 // Every curve is the question's real function; every marked point and every
 // hatched region is checked against the number the solution states.
 import { region, areaOf, on, t, tick, ytick, PALETTE, emitFigureModule, type Spec } from './_fig-spec-helpers';
 
 const { INDIGO, PINK, AMBER } = PALETTE;
-
-/** Bisection root of g on [lo, hi] (g changes sign there). */
-function root(g: (x: number) => number, lo: number, hi: number): number {
-  let a = lo, b = hi;
-  for (let i = 0; i < 200; i++) {
-    const m = (a + b) / 2;
-    if (Math.sign(g(m)) === Math.sign(g(a))) a = m;
-    else b = m;
-  }
-  return (a + b) / 2;
-}
 
 // fn-bag-rq-008 — f(x) = (x² + 3) / √x
 const f8 = (x: number) => (x * x + 3) / Math.sqrt(x);
@@ -63,38 +49,29 @@ add({
   ],
 });
 {
-  const lo8 = root((x) => f8(x) - 8, 0.01, 1);
-  const hi8 = root((x) => f8(x) - 8, 1, 6);
+  const r3 = Math.sqrt(3);
+  const slope8 = (4 * r3) / 3;
+  const tan8 = (x: number) => slope8 * x;
   add({
-    id: 'q8Lines',
+    id: 'q8Tangent',
     fig: {
-      xRange: [-0.9, 6.4], yRange: [-1.4, 11.5], curves: F8, halo: true,
+      xRange: [-0.9, 6.4], yRange: [-1.4, 16.5], curves: F8, halo: true,
       vAsym: [{ x: 0 }],
-      guides: [
-        { x1: -0.9, y1: 8, x2: 6.4, y2: 8, color: PINK, dashed: true },
-        { x1: -0.9, y1: 4, x2: 6.4, y2: 4, color: PINK, dashed: true },
-        { x1: -0.9, y1: 2, x2: 6.4, y2: 2, color: PINK, dashed: true },
-      ],
-      xTicks: [tick(1)],
+      guides: [{ x1: 0, y1: 0, x2: 6.4, y2: tan8(6.4), color: PINK }],
+      xTicks: [tick(3)],
       points: [
-        { x: lo8, y: 8, color: INDIGO },
-        { x: hi8, y: 8, color: INDIGO },
-        { x: 1, y: 4, color: INDIGO },
+        { x: 3, y: 4 * r3, label: '(3, 4√3)', color: INDIGO, dx: 9, dy: 12 },
+        { x: 0, y: 0, color: PINK },
       ],
-      texts: [
-        { x: 5.2, y: 8.55, text: 'k = 8', color: PINK, bold: true },
-        { x: 5.2, y: 4.55, text: 'k = 4', color: PINK, bold: true },
-        { x: 5.2, y: 2.55, text: 'k = 2', color: PINK, bold: true },
-      ],
+      texts: [{ x: 6.2, y: 3.2, text: 'y = (4√3/3)x', color: PINK, bold: true, anchor: 'end' as const }],
     },
     caption:
-      'הגרף של $f$ ושלושה ישרים אופקיים בוורוד. הישר $y = 8$, מעל המינימום, חותך את הגרף פעמיים. הישר $y = 4$ נוגע בגרף רק בנקודת המינימום $(1,\\; 4)$. הישר $y = 2$, מתחת למינימום, אינו פוגש את הגרף.',
+      'הגרף של $f$ ובוורוד המשיק $y = \\dfrac{4\\sqrt{3}}{3}x$, שעובר דרך ראשית הצירים ונוגע בגרף בנקודה $\\left(3,\\; 4\\sqrt{3}\\right)$. בכל נקודה אחרת הגרף מעל המשיק. הקו הכתום המקווקו הוא האסימפטוטה האנכית $x = 0$.',
     checks: [
-      on('f8', f8, 1, 4),
-      on('f8 left meet with y = 8', f8, lo8, 8, 1e-7),
-      on('f8 right meet with y = 8', f8, hi8, 8, 1e-7),
-      ['y = 8 meets twice: the two meets are on both sides of the minimum', lo8 < 1 && hi8 > 1 ? 1 : 0, 1],
-      ['y = 2 is below the minimum', Math.min(...Array.from({ length: 600 }, (_, i) => f8(0.01 + i * 0.01))) > 2 ? 1 : 0, 1],
+      on('f8 tangency point', f8, 3, 4 * r3),
+      on('tangent through the tangency point', tan8, 3, 4 * r3),
+      ['tangent slope = f\'(3)', (f8(3 + 1e-6) - f8(3 - 1e-6)) / 2e-6, slope8, 1e-6],
+      ['graph above the tangent away from 3', Math.min(...[0.2, 1, 2, 2.9, 3.1, 4, 6].map((x) => f8(x) - tan8(x))) > 0 ? 1 : 0, 1],
     ],
   });
 }
@@ -140,6 +117,31 @@ add({
   ],
 });
 {
+  const left = -2 - 2 * Math.sqrt(2), mid = -2 + 2 * Math.sqrt(2);
+  add({
+    id: 'q11Three',
+    fig: {
+      xRange: [-7, 7], yRange: [-0.35, 2.4], curves: [{ f: f11, to: -0.3 }, { f: f11, from: 0.6, to: 1.4 }, { f: f11, from: 1.4 }], halo: true,
+      vAsym: [{ x: 0 }],
+      guides: [{ x1: -7, y1: 1, x2: 7, y2: 1, color: PINK, dashed: true }],
+      points: [
+        { x: left, y: 1, color: INDIGO },
+        { x: mid, y: 1, color: INDIGO },
+        { x: 2, y: 1, label: '(2, 1)', color: INDIGO, dx: 4, dy: -9 },
+      ],
+      texts: [{ x: 6.6, y: 1.12, text: 'y = 1', color: PINK, bold: true, anchor: 'end' as const }],
+    },
+    caption:
+      'עבור $a = 16$: הגרף של $f$ ובוורוד הישר $y = 1$. הישר חותך את הענף שבו $x < 0$ פעם אחת, חותך את הקטע $0 < x < 1$ פעם אחת, ונוגע בגרף במקסימום $(2,\\; 1)$. לכן למשוואה $f(x) = 1$ שלושה פתרונות בדיוק.',
+    checks: [
+      on('f11 left meet', f11, left, 1, 1e-9),
+      on('f11 middle meet', f11, mid, 1, 1e-9),
+      on('f11 touch at the maximum', f11, 2, 1),
+      ['the line stays above the graph right of 1, except at 2', Math.max(...[1.2, 1.9, 2.1, 3, 6].map(f11)) < 1 ? 1 : 0, 1],
+    ],
+  });
+}
+{
   const meet = -2 + 2 * Math.sqrt(2);
   add({
     id: 'q11Recip',
@@ -162,7 +164,7 @@ add({
       ],
     },
     caption:
-      'בכחול $f$ ובוורוד $g = \\dfrac{1}{f}$. במקום שבו $f$ שואפת לאינסוף, $g$ שואפת לאפס, ולכן בנקודה $(0,\\; 0)$ יש לגרף של $g$ נקודה חסרה (עיגול ריק). במקום שבו $f$ מתאפסת, לגרף של $g$ יש אסימפטוטה אנכית $x = 1$. המקסימום $(2,\\; 1)$ של $f$ הוא המינימום של $g$. הקווים הכתומים המקווקווים הם הישרים $x = 0$ וגם $x = 1$.',
+      'בכחול $f$ ובוורוד $g(x) = \\dfrac{1}{f(x)}$. במקום שבו $f$ שואפת לאינסוף, $g$ שואפת לאפס, ולכן בנקודה $(0,\\; 0)$ יש לגרף של $g$ נקודה חסרה (עיגול ריק). במקום שבו $f$ מתאפסת, לגרף של $g$ יש אסימפטוטה אנכית $x = 1$. המקסימום $(2,\\; 1)$ של $f$ הוא המינימום של $g$. הקווים הכתומים המקווקווים הם הישרים $x = 0$ וגם $x = 1$.',
     checks: [
       on('f11', f11, 2, 1),
       on('g11', g11, 2, 1),
@@ -218,11 +220,11 @@ add({
   id: 'q12Sqrt',
   fig: {
     xRange: [-6.5, 10], yRange: [-2.6, 19], curves: [{ f: f12, to: 8 }, { f: g12, from: -4, to: 8, color: PINK }], halo: true,
-    xTicks: [tick(-4), tick(4), tick(8)], yTicks: [ytick(4), ytick(16)],
+    xTicks: [tick(4), tick(8)], yTicks: [ytick(4), ytick(16)],
     points: [
       { x: 4, y: 16, label: '(4, 16)', color: INDIGO, dx: 8, dy: -4 },
       { x: 4, y: 4, label: '(4, 4)', color: PINK, dx: 6, dy: -9 },
-      { x: -4, y: 0, color: PINK },
+      { x: -4, y: 0, color: PINK, label: '(-4, 0)', dx: 6, dy: 18 },
       { x: 8, y: 0, color: PINK },
     ],
     texts: [
@@ -231,7 +233,7 @@ add({
     ],
   },
   caption:
-    'בכחול $f$ ובוורוד $g = \\sqrt{f}$. הגרף של $g$ קיים רק שם שהגרף של $f$ אינו מתחת לציר $x$, כלומר בקטע $-4 \\le x \\le 8$. בשני קצות הקטע $g$ מתאפסת, והמקסימום $(4,\\; 16)$ של $f$ הופך למקסימום $(4,\\; 4)$ של $g$.',
+    'בכחול $f$ ובוורוד $g(x) = \\sqrt{f(x)}$. הגרף של $g$ קיים רק במקום שבו הגרף של $f$ אינו מתחת לציר $x$, כלומר בקטע $-4 \\le x \\le 8$. בשני קצות הקטע $g$ מתאפסת, והמקסימום $(4,\\; 16)$ של $f$ הופך למקסימום $(4,\\; 4)$ של $g$.',
   checks: [
     on('g12', g12, 4, 4),
     on('g12', g12, -4, 0),

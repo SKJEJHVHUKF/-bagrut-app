@@ -25,7 +25,7 @@ export const BG8_LESSON_FIG = {
 <circle cx="92.2" cy="124.1" r="4.5" fill="#4F46E5"/>
 <text x="100.2" y="118.1" font-size="10.5" fill="#0F172A" stroke="#FDFDFB" stroke-width="3" stroke-linejoin="round" paint-order="stroke">(3, 5)</text>
 `,
-    "סקיצה של $f(x) = \\dfrac{x + 2}{\\sqrt{x - 2}}$. הקו המקווקו הוא האסימפטוטה האנכית $x = 2$, והגרף עולה לאורכה כלפי מעלה. הוא יורד עד המינימום $(6,\\; 4)$ ומשם עולה בלי גבול. הגרף אינו פוגש אף ציר.",
+    "סקיצה של $f(x) = \\dfrac{x + 2}{\\sqrt{x - 2}}$. הקו המקווקו הוא האסימפטוטה האנכית $x = 2$, וככל שמתקרבים אליה מימין, הגרף גבוה יותר ויותר. הוא יורד עד המינימום $(6,\\; 4)$ ומשם עולה בלי גבול. הגרף אינו פוגש אף ציר.",
   ),
   "lsnLevels": fig(
     `
@@ -47,11 +47,11 @@ export const BG8_LESSON_FIG = {
 <circle cx="73.6" cy="113" r="4.5" fill="#DB2777"/>
 <circle cx="261.5" cy="113" r="4.5" fill="#DB2777"/>
 <circle cx="111.2" cy="134.5" r="4.5" fill="#DB2777"/>
-<text x="186.3" y="105.4" font-size="10.5" fill="#DB2777" text-anchor="middle" font-weight="bold" stroke="#FDFDFB" stroke-width="3" stroke-linejoin="round" paint-order="stroke">y = 5</text>
+<text x="148.7" y="122.7" font-size="10.5" fill="#DB2777" text-anchor="middle" font-weight="bold" stroke="#FDFDFB" stroke-width="3" stroke-linejoin="round" paint-order="stroke">y = 5</text>
 <text x="186.3" y="144.2" font-size="10.5" fill="#DB2777" text-anchor="middle" font-weight="bold" stroke="#FDFDFB" stroke-width="3" stroke-linejoin="round" paint-order="stroke">y = 4</text>
 <text x="186.3" y="165.8" font-size="10.5" fill="#DB2777" text-anchor="middle" font-weight="bold" stroke="#FDFDFB" stroke-width="3" stroke-linejoin="round" paint-order="stroke">y = 3</text>
 `,
-    "הגרף של $f$ ושלושה ישרים אופקיים. הישר $y = 5$ פוגש את הגרף פעמיים, כאשר $x = 3$ וגם כאשר $x = 18$. הישר $y = 4$ נוגע בגרף רק במינימום, והישר $y = 3$ אינו פוגש אותו כלל.",
+    "הגרף של $f$ ושלושה ישרים אופקיים. הישר $y = 5$ פוגש את הגרף פעמיים, כאשר $x = 3$ וגם כאשר $x = 18$. הישר $y = 4$ נוגע בגרף רק במינימום, והישר $y = 3$ אינו פוגש אותו כלל. ליד המינימום הגרף שטוח וצמוד לישר $y = 4$, אבל נוגע בו רק בנקודה $(6,\\; 4)$.",
   ),
   "lsnArea": fig(
     `

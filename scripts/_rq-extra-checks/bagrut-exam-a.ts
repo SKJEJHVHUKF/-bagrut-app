@@ -98,15 +98,20 @@ function live(id: string) {
   // ד — no horizontal asymptote: f ~ x^(3/2)
   check('008 ד f(x)/x^(3/2) → 1', f8(1e8) / 1e12, 1, 1e-6);
   check('008 ד f grows without bound', f8(1e6) > 1e8 ? 1 : 0, 1);
-  // ה — solutions of f(x) = k: two above 4, one at 4, none below (crossings AND the touch point)
-  for (const k of [4.2, 8, 50]) check(`008 ה k = ${k}: two crossings`, crossings((x) => f8(x) - k, 1e-4, 3000), 2);
-  check('008 ה k = 4: no crossing', crossings((x) => f8(x) - 4, 1e-4, 3000), 0);
-  check('008 ה k = 4: but a touch at x = 1 (residual minimum is 0)', Math.min(...grid(0.5, 1.5, 100000).map((x) => f8(x) - 4)), 0, 1e-8);
-  for (const k of [3.9, 2, -1]) {
-    check(`008 ה k = ${k}: no crossing`, crossings((x) => f8(x) - k, 1e-4, 3000), 0);
-    check(`008 ה k = ${k}: graph stays above`, Math.min(...grid(0.01, 50, 100000).map((x) => f8(x) - k)) > 0 ? 1 : 0, 1);
-  }
-  L.finalHas('ה', '$k > 4$');
+  // ה — the tangent through the origin: f(x0) = x0·f'(x0) ⇔ 2x0² + 6 = 3x0² − 3
+  const f8p = fx('(3x^2 - 3)/(2x*sqrt(x))');
+  check('008 ה f(x0) = x0 f\'(x0) times 2√x0 is 2x0² + 6 = 3x0² − 3 (at 1.7)', 2 * Math.sqrt(1.7) * (f8(1.7) - 1.7 * f8p(1.7)), E('2*1.7^2 + 6 - (3*1.7^2 - 3)'), 1e-9);
+  const x0 = Math.sqrt(9);
+  check('008 ה the other root −3 is outside x > 0', sgn(-x0), -1);
+  const [tx, ty, tm] = L.tuple('ה', 3);
+  check('008 ה box 1 = x0', tx, x0);
+  check('008 ה box 2 = f(3) = 4√3', ty, f8(x0));
+  check('008 ה box 3 = f\'(3) = 4√3/3', tm, f8p(x0));
+  check('008 ה the tangent at 3 passes through the origin', ty - tm * tx, 0);
+  check('008 ה it is the ONLY such tangent: f(x) − x f\'(x) changes sign once on x > 0', crossings((x) => f8(x) - x * f8p(x), 1e-3, 500), 1);
+  check('008 ה 12/√3 = 4√3', E('12/sqrt(3)'), E('4*sqrt(3)'));
+  check('008 ה 24/(6√3) = 4√3/3', E('24/(6*sqrt(3))'), E('4*sqrt(3)/3'));
+  L.finalHas('ה', '\\left(3,\\; 4\\sqrt{3}\\right)');
   // ו — area 92/5 from x = 1 to 4
   const F8 = '2/5*x^(5/2) + 6*sqrt(x)';
   dcheck('008 ו antiderivative F\' = f', F8, '(x^2 + 3)/sqrt(x)', pos);
@@ -144,10 +149,20 @@ function live(id: string) {
   const [xmin, xmax] = L.tuple('ב', 2);
   check('011 ב box 1 = x of the minimum', xmin, 1);
   check('011 ב box 2 = x of the maximum', xmax, 2);
-  // ג — a/16 = 1
-  const a011 = 16 * 1;
+  // ג — f(x) = 1 has exactly three solutions ⇔ the maximum a/16 equals 1
+  const count1 = (a: number) => {
+    const g = fx(`${a}(x - 1)^2/x^4 - 1`);
+    const touch = Math.abs(g(2)) < 1e-12 ? 1 : 0; // the maximum sits ON the line (a tangency, no sign change)
+    return crossings(g, -200, -1e-3) + crossings(g, 1e-3, 1) + crossings(g, 1, 200) + touch;
+  };
+  check('011 ג a = 16: three solutions', count1(16), 3);
+  check('011 ג a = 12 (maximum below the line): two', count1(12), 2);
+  check('011 ג a = 20 (maximum above the line): four', count1(20), 4);
+  check('011 ג each branch left of 1 gives one solution for any a > 0 (a = 3)', crossings(fx('3(x - 1)^2/x^4 - 1'), -200, -1e-3) + crossings(fx('3(x - 1)^2/x^4 - 1'), 1e-3, 1), 2);
+  const a011 = 16 * 1; // a/16 = 1
   check('011 ג a matches live expected', L.value('ג'), a011);
-  check('011 ג check f(2) = 1', fx(`${a011}(x - 1)^2/x^4`)(2), 1);
+  for (const r of [2, E('-2 + 2*sqrt(2)'), E('-2 - 2*sqrt(2)')]) check(`011 ג check root ${r.toFixed(4)} solves 16(x−1)² = x⁴`, E(`16*(${r} - 1)^2 - (${r})^4`), 0, 1e-9);
+  check('011 ג (x − 2)² = 0 is 4(x − 1) = x² rearranged (at 3.3)', E('4*(3.3 - 1) - 3.3^2'), -E('(3.3 - 2)^2'), 1e-12);
   L.finalHas('ד', '(2,\\; 1)');
   // ה — g = 1/f
   const f = fx('16(x - 1)^2/x^4');
@@ -196,7 +211,7 @@ function live(id: string) {
   }
   const a012 = 9 - 5; // (−5 − a)/2 = −4.5 ⇒ −5 − a = −9
   check('012 ב a matches live expected', L.value('ב'), a012);
-  // ג — a = 4
+  // ג — a = 4: maximum (4, 16) and the endpoint minimum (8, 0)
   const f = fx('(x + 4)*sqrt(8 - x)');
   const fp = fx('(12 - 3x)/(2*sqrt(8 - x))');
   check('012 ג root of 12 − 3x', 12 / 3, 4);
@@ -204,52 +219,59 @@ function live(id: string) {
   check('012 ג f\' < 0 on (4, 8)', sgn(fp(6)), -1);
   check('012 ג table cell 12 − 3x at x = 8 is negative', sgn(12 - 3 * 8), -1);
   check('012 ג derivative undefined at 8', Number.isFinite(fp(8)) ? 0 : 1, 1);
-  check('012 ג endpoint is a minimum: f(7.99) > f(8)', f(7.99) > f(8) ? 1 : 0, 1);
-  const [mx, my] = L.tuple('ג', 2);
+  check('012 ג endpoint is a minimum: f decreases into it', f(7.99) > f(8) && f(7.9) > f(7.99) ? 1 : 0, 1);
+  const [mx, my, ex, ey] = L.tuple('ג', 4);
   check('012 ג box 1 = x of the maximum', mx, 4);
   check('012 ג box 2 = f(4)', my, f(4));
+  check('012 ג box 3 = x of the endpoint', ex, 8);
+  check('012 ג box 4 = f(8)', ey, f(8));
   L.finalHas('ג', '(8,\\; 0)');
-  // ד
-  check('012 ד f(0) = 8√2', f(0), 8 * Math.SQRT2);
-  check('012 ד 4√8 = 8√2', E('4*sqrt(8)'), E('8*sqrt(2)'));
-  check('012 ד f → −∞ at the left', f(-1e6) < -1e8 ? 1 : 0, 1);
-  L.finalHas('ד', '8\\sqrt{2}');
-  // ה — tangent at x = −1
-  const y0 = f(-1), m = fp(-1);
-  check('012 ה f(−1) = 9', y0, 9);
-  check('012 ה f\'(−1) = 15/6', m, 15 / 6);
-  const [slope, icpt] = L.tuple('ה', 2);
-  check('012 ה box 1 = slope', slope, m);
-  check('012 ה box 2 = intercept y0 − m·(−1)', icpt, y0 + m);
-  L.finalHas('ה', '2.5x + 11.5');
-  // ו — g = √f on the closed domain where f ≥ 0
-  check('012 ו f < 0 just left of −4', sgn(f(-4.001)), -1);
-  check('012 ו f ≥ 0 on [−4, 8]', Math.min(...grid(-4, 8, 12000).map(f)) >= -1e-12 ? 1 : 0, 1);
-  const g = (x: number) => Math.sqrt(f(x));
-  check('012 ו g(−4) = 0', g(-4), 0);
-  check('012 ו g(8) = 0', g(8), 0);
-  check('012 ו g peaks at 4', grid(-4, 8, 12000).reduce((best, x) => (g(x) > g(best) ? x : best), -4), 4, 1e-9);
-  const [gx, gy] = L.tuple('ו', 2);
-  check('012 ו box 1 = x of g\'s maximum', gx, 4);
-  check('012 ו box 2 = √f(4)', gy, g(4));
-  L.finalHas('ו', '-4 \\le x \\le 8');
-  // ז — region between the graph and the chord through (4, 16) and (8, 0)
-  const chord = (x: number) => -4 * x + 32;
-  check('012 ז chord through (4, 16)', chord(4), f(4));
-  check('012 ז chord through (8, 0)', chord(8), f(8));
-  check('012 ז at 7: graph 11, chord 4', f(7) - 11 + (chord(7) - 4), 0);
-  check('012 ז graph above chord inside (4, 8)', Math.min(...grid(4.001, 7.999).map((x) => f(x) - chord(x))) > 0 ? 1 : 0, 1);
-  check('012 ז split x + 4 = 12 − (8 − x) at 2.5', f(2.5), E('12*(8 - 2.5)^(1/2) - (8 - 2.5)^(3/2)'));
+  // ד — the line through (4, 16) and (8, 0), and no other common point
+  const slope = (f(8) - f(4)) / (8 - 4);
+  const icpt = f(8) - slope * 8;
+  const [ls, li] = L.tuple('ד', 2);
+  check('012 ד box 1 = slope', ls, slope);
+  check('012 ד box 2 = intercept', li, icpt);
+  const line = (x: number) => slope * x + icpt;
+  check('012 ד −4x + 32 = 4(8 − x) at 2.5', line(2.5), 4 * (8 - 2.5));
+  check('012 ד squaring x + 4 = 4√(8 − x) gives x² + 24x − 112 (at 1.5)', E('(1.5 + 4)^2 - 16*(8 - 1.5)'), E('1.5^2 + 24*1.5 - 112'), 1e-12);
+  check('012 ד (x − 4)(x + 28) = x² + 24x − 112 (at 1.5)', E('(1.5 - 4)*(1.5 + 28)'), E('1.5^2 + 24*1.5 - 112'), 1e-12);
+  check('012 ד −28 is rejected: x + 4 < 0 there', sgn(-28 + 4), -1);
+  check('012 ד −28 does not solve the unsquared equation', Math.abs(f(-28) - line(-28)) > 1 ? 1 : 0, 1);
+  check('012 ד exactly one crossing of f − line left of 8 (at x = 4)', crossings((x) => f(x) - line(x), -300, 7.999), 1);
+  check('012 ד and the endpoint is the second common point', f(8) - line(8), 0);
+  L.finalHas('ד', '$y = -4x + 32$');
+  // ה — region between the graph and that line
+  check('012 ה at 7: graph 11, line 4', f(7) - 11 + (line(7) - 4), 0);
+  check('012 ה graph above the line inside (4, 8)', Math.min(...grid(4.001, 7.999).map((x) => f(x) - line(x))) > 0 ? 1 : 0, 1);
+  check('012 ה split x + 4 = 12 − (8 − x) at 2.5', f(2.5), E('12*(8 - 2.5)^(1/2) - (8 - 2.5)^(3/2)'));
   const F = '-8*(8 - x)^(3/2) + 2/5*(8 - x)^(5/2)';
-  dcheck('012 ז F\' = f', F, '(x + 4)*sqrt(8 - x)', left);
-  dcheck('012 ז first piece: (−8(8−x)^(3/2))\' = 12(8−x)^(1/2)', '-8*(8 - x)^(3/2)', '12*(8 - x)^(1/2)', left);
-  dcheck('012 ז second piece: (−2/5(8−x)^(5/2))\' = (8−x)^(3/2)', '-2/5*(8 - x)^(5/2)', '(8 - x)^(3/2)', left);
-  check('012 ז F(8) = 0', fx(F)(8), 0);
-  check('012 ז F(4) = −256/5', fx(F)(4), E('-256/5'));
+  dcheck('012 ה F\' = f', F, '(x + 4)*sqrt(8 - x)', left);
+  dcheck('012 ה first piece: (−8(8−x)^(3/2))\' = 12(8−x)^(1/2)', '-8*(8 - x)^(3/2)', '12*(8 - x)^(1/2)', left);
+  dcheck('012 ה second piece: (−2/5(8−x)^(5/2))\' = (8−x)^(3/2)', '-2/5*(8 - x)^(5/2)', '(8 - x)^(3/2)', left);
+  check('012 ה 12 / (−3/2) = −8', E('12/(-3/2)'), -8);
+  check('012 ה F(8) = 0', fx(F)(8), 0);
+  check('012 ה F(4) = −256/5', fx(F)(4), E('-256/5'));
   const underGraph = fx(F)(8) - fx(F)(4);
-  check('012 ז ∫ f from 4 to 8 by quadrature', simpson(f, 4, 8), underGraph, 1e-6);
-  check('012 ז triangle under the chord = ∫ chord', simpson(chord, 4, 8), (4 * 16) / 2, 1e-9);
-  check('012 ז area matches live expected', L.value('ז'), underGraph - (4 * 16) / 2);
+  check('012 ה ∫ f from 4 to 8 by quadrature', simpson(f, 4, 8), underGraph, 1e-6);
+  check('012 ה triangle under the line = ∫ line', simpson(line, 4, 8), (4 * 16) / 2, 1e-9);
+  check('012 ה area matches live expected', L.value('ה'), underGraph - (4 * 16) / 2);
+  // ו — y-intercept and the left end
+  check('012 ו f(0) = 8√2', f(0), 8 * Math.SQRT2);
+  check('012 ו 4√8 = 8√2', E('4*sqrt(8)'), E('8*sqrt(2)'));
+  check('012 ו f → −∞ at the left', f(-1e6) < -1e8 ? 1 : 0, 1);
+  L.finalHas('ו', '8\\sqrt{2}');
+  // ז — g = √f on the closed domain where f ≥ 0
+  check('012 ז f < 0 just left of −4', sgn(f(-4.001)), -1);
+  check('012 ז f ≥ 0 on [−4, 8]', Math.min(...grid(-4, 8, 12000).map(f)) >= -1e-12 ? 1 : 0, 1);
+  const g = (x: number) => Math.sqrt(f(x));
+  check('012 ז g(−4) = 0', g(-4), 0);
+  check('012 ז g(8) = 0', g(8), 0);
+  check('012 ז g peaks at 4', grid(-4, 8, 12000).reduce((best, x) => (g(x) > g(best) ? x : best), -4), 4, 1e-9);
+  const [gx, gy] = L.tuple('ז', 2);
+  check('012 ז box 1 = x of g\'s maximum', gx, 4);
+  check('012 ז box 2 = √f(4)', gy, g(4));
+  L.finalHas('ז', '-4 \\le x \\le 8');
 }
 
 summary('bagrut-exam-a');

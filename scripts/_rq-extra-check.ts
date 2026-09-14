@@ -125,12 +125,16 @@ function strings(v: unknown, out: string[] = []): string[] {
   return out;
 }
 
-/** `f(x) = <rhs>` definitions inside the maths of a question, normalised. */
+/** `f(x) = <rhs>` definitions inside the maths of a question, normalised.
+ *  A right-hand side that applies another function (`g(x) = \dfrac{1}{f(x)}`,
+ *  `\sqrt{f(x)}`, `f(x) + k`) is exam notation for a DERIVED function, not a new
+ *  one: counting it flagged every later text that wrote the exam's own
+ *  `g(x) = \dfrac{1}{f(x)}`, and pushed two רמה 8 authors into a gloss (2026-09-14). */
 function functionDefs(q: string): string[] {
   const out: string[] = [];
   for (const span of mathSpans(q)) {
     const m = span.match(/^\s*[a-zA-Z]\s*\(\s*x\s*\)\s*=\s*(.+?)\s*$/);
-    if (m && norm(m[1]).length >= 6) out.push(norm(m[1]));
+    if (m && norm(m[1]).length >= 6 && !/[a-zA-Z]\s*\(\s*x\s*\)/.test(m[1])) out.push(norm(m[1]));
   }
   return out;
 }

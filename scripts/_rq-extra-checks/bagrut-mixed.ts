@@ -712,16 +712,18 @@ const solveMono = (h: (t: number) => number, lo: number, hi: number) => {
   optHas(id, 3, '$y = 6$');
 }
 
-// rq-sub-bg-109 — f = 18x/(x^2+9)^2, area from 0 to a equals 16/25 → a = 4
+// rq-sub-bg-109 — f = x/sqrt(x^2+9), area from 0 to a equals 2 → a = 4
 {
   const id = 'rq-sub-bg-109';
-  stemHas(id, '\\dfrac{18x}{(x^2 + 9)^2}');
-  dcheck('109 the antiderivative -9/(x^2 + 9)', '-9/(x^2 + 9)', '18x/(x^2 + 9)^2', [-2, 0, 1, 3, 5]);
-  const G = f('-9/(x^2 + 9)');
-  const aStar = solveMono((a) => G(a) - G(0) - 16 / 25, 0.1, 50);
-  check('109 a solves S(a) = 16/25', aStar, 4);
-  icheck('109 quadrature over [0, a] gives 16/25', '18x/(x^2 + 9)^2', 0, aStar, E('16/25'));
-  check('109 the graph is above the axis on (0, a]', gridMin('18x/(x^2 + 9)^2', 1e-6, aStar) > 0 ? 1 : 0, 1);
+  stemHas(id, '\\dfrac{x}{\\sqrt{x^2 + 9}}');
+  stemHas(id, 'שווה $2$');
+  dcheck('109 the antiderivative sqrt(x^2 + 9)', 'sqrt(x^2 + 9)', 'x/sqrt(x^2 + 9)', [-2, 0, 1, 3, 5]);
+  const G = f('sqrt(x^2 + 9)');
+  check('109 F(0) = 3', G(0), 3);
+  const aStar = solveMono((a) => G(a) - G(0) - 2, 0.1, 50);
+  check('109 a solves S(a) = 2', aStar, 4);
+  icheck('109 quadrature over [0, a] gives 2', 'x/sqrt(x^2 + 9)', 0, aStar, 2);
+  check('109 the graph is above the axis on (0, a]', gridMin('x/sqrt(x^2 + 9)', 1e-6, aStar) > 0 ? 1 : 0, 1);
   check('109 authored value', boxesOf(id)[0], aStar);
   const w = wrongVals(id);
   check('109 w1 a^2', w[0][0], aStar ** 2);
@@ -765,6 +767,11 @@ const solveMono = (h: (t: number) => number, lo: number, hi: number) => {
   check('201 authored box area of g = f^2 over [0, 3]', b[3], f('x^3 - x^4/4')(3) - f('x^3 - x^4/4')(0));
   const w = wrongVals(id);
   w.forEach((row, k) => check(`201 w${k + 1} carries four values`, row.length, 4));
+  check('201 w1 only the first term of the antiderivative at 3', w[0][3], f('x^3')(3) - f('x^3')(0));
+  check('201 w2 squaring only the root: the area of x(3 - x) over [0, 3]', w[1][3], f('3*x^2/2 - x^3/3')(3) - f('3*x^2/2 - x^3/3')(0));
+  dcheck('201 w2 antiderivative of x(3 - x)', '3*x^2/2 - x^3/3', 'x*(3 - x)', [0.5, 1, 2, 2.5]);
+  check('201 w3 the limits swapped', w[2][3], -(f('x^3 - x^4/4')(3) - f('x^3 - x^4/4')(0)));
+  check('201 authored label names the non-origin intercept', (live(id).answerLabels ?? [])[0]?.includes('שאינו בראשית') ? 1 : 0, 1);
 }
 
 // rq-sub-bg-305 — f = sqrt(x+8) + sqrt(8-x): even, maximum (0, 4sqrt2), endpoint minima (±8, 4),

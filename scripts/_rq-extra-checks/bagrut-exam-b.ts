@@ -158,12 +158,19 @@ function shape(q: StaticBagrutQuestion) {
     const r = sq(a);
     const fp = (x: number) => (qa(a)(x) <= 0 || Math.abs(x * x - 4) < 1e-12 ? null : (x * (a - 4)) / ((x * x - 4) ** 2 * sq(qa(a)(x))));
     const [t] = tables(C);
-    const xs = [-r - 1, -(r + 2) / 2, -1, 0, 1, (r + 2) / 2, r + 1];
+    const xs = [-r - 1, -r, -(r + 2) / 2, -1, 0, 1, (r + 2) / 2, r, r + 1];
     row(`013/ג a = ${a}`, t, '$x$', xs, (x) => x);
     row(`013/ג a = ${a}`, t, "$f'(x)$", xs, fp);
     yes(`013/ג a = ${a}: the endpoint ±√a has no derivative (radicand 0 in the denominator)`, fp(r) === null && fp(-r) === null);
+    // the closed endpoints are minima: f = 0 there and f > 0 at every nearby point of the domain
+    check(`013/ג a = ${a}: f(√a) = f(-√a) = 0`, fa(a)(r) + fa(a)(-r), 0);
+    yes(`013/ג a = ${a}: endpoint minima — f > 0 just inside the domain`, [1e-6, 0.01, 0.3].every((h) => fa(a)(r + h) > 0 && fa(a)(-r - h) > 0));
+    const [tt] = tables(C);
+    const notes = (tt?.cols ?? []).map((c) => (c as { note?: string }).note ?? '');
+    yes(`013/ג a = ${a}: the table marks both endpoints as minima`, notes[1] === 'קצה התחום, מינימום' && notes[7] === 'קצה התחום, מינימום');
   }
   says('013/ג', C.solution.final_answer, '\\left(0,\\; \\dfrac{\\sqrt{a}}{2}\\right)');
+  says('013/ג', C.solution.final_answer, 'מינימום בקצה התחום בנקודות $(-\\sqrt{a},\\; 0)$ וגם $(\\sqrt{a},\\; 0)$');
 
   // ד — y = 3 meets the graph once exactly when √a/2 = 3
   const D = part(q, 'ד');
@@ -336,16 +343,26 @@ function shape(q: StaticBagrutQuestion) {
   check('015/א g → 0', g(1e12), 0, 1e-5);
   says('015/א', A.solution.final_answer, '$x = 0$ וגם $y = 0$');
 
-  // ב — meeting at x = 16 fixes a
+  // ב — two meetings whose x-coordinates are in ratio 16: roots t and 16t of x^2 − ax + 16 = 0
   const B = part(q, 'ב');
-  check('015/ב g(16) = 1', g(16), 1);
+  says('015/ב', B.prompt, 'גדול פי $16$');
+  for (const x of [0.3, 2, 9.5]) {
+    for (const a of [10, 17, 25]) check(`015/ב x(a - x) = 16 ⇔ x^2 - ax + 16 = 0 (a = ${a}, x = ${x})`, x * (a - x) - 16, -(x * x - a * x + 16), 1e-12);
+  }
+  yes('015/ב both sides of √(x(17 - x)) = 4 are positive on 0 < x < 17, so squaring is reversible', [0.01, 1, 8.5, 16, 16.99].every((x) => sq(x * (17 - x)) > 0));
+  check('015/ב product of the roots: t·16t = 16 ⇒ t^2 = 1', 16 / 16, 1);
+  check('015/ב the positive root t = 1', sq(1), 1);
+  check('015/ב sum of the roots: a = 1 + 16', 1 + 16, 17);
+  checkSet('015/ב roots of x^2 - 17x + 16', [(17 - sq(289 - 64)) / 2, (17 + sq(289 - 64)) / 2], [1, 16]);
+  yes('015/ב ratio 16 forces a = 17: a = 10 and a = 25 give other ratios', ((10 + sq(36)) / (10 - sq(36))) === 4 && ((25 + sq(561)) / (25 - sq(561))) !== 16);
   expectValue('015/ב', B, 17);
-  check('015/ב f(16) = 1 for a = 17', fa(17)(16), 1);
+  says('015/ב', all(B), '$x^2 - ax + 16 = 0$');
 
-  // ג — the squared equation and the check of both roots
+  // ג — the roots from ב, checked in the ORIGINAL equation, and their y-coordinates
   const C = part(q, 'ג');
   const f = fa(17);
-  checkSet('015/ג roots of x^2 - 17x + 16', [(17 - sq(289 - 64)) / 2, (17 + sq(289 - 64)) / 2], [1, 16]);
+  says('015/ג', C.prompt, 'הציבו $a = 17$ בסעיפים ג עד ה');
+  check('015/ג (x - 1)(x - 16) = x^2 - 17x + 16 at x = 3.3', (3.3 - 1) * (3.3 - 16), 3.3 ** 2 - 17 * 3.3 + 16, 1e-12);
   check('015/ג x(17 - x) = 16 at x = 1', 1 * 16, 16);
   check('015/ג x(17 - x) = 16 at x = 16', 16 * 1, 16);
   check('015/ג f(1) = g(1) = 4', f(1) + g(1), 8);

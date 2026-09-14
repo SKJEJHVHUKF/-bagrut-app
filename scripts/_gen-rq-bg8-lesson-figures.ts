@@ -33,7 +33,7 @@ specs.push({
     ],
   },
   caption:
-    'סקיצה של $f(x) = \\dfrac{x + 2}{\\sqrt{x - 2}}$. הקו המקווקו הוא האסימפטוטה האנכית $x = 2$, והגרף עולה לאורכה כלפי מעלה. הוא יורד עד המינימום $(6,\\; 4)$ ומשם עולה בלי גבול. הגרף אינו פוגש אף ציר.',
+    'סקיצה של $f(x) = \\dfrac{x + 2}{\\sqrt{x - 2}}$. הקו המקווקו הוא האסימפטוטה האנכית $x = 2$, וככל שמתקרבים אליה מימין, הגרף גבוה יותר ויותר. הוא יורד עד המינימום $(6,\\; 4)$ ומשם עולה בלי גבול. הגרף אינו פוגש אף ציר.',
   checks: [
     on('f', f, 6, 4), on('f', f, 3, 5),
     ['minimum: nothing on (2.2, 14] lies below 4', minOn(2.2, 14) >= 4 - 1e-9 ? 1 : 0, 1],
@@ -53,8 +53,8 @@ specs.push({
       { x1: 2.4, y1: 3, x2: 19.8, y2: 3, color: PINK, dashed: true },
     ],
     texts: [
-      // at x = 12 the curve sits at 4.43: between the lines y = 4 and y = 5, clear of all three labels
-      { x: 12, y: 5.35, text: 'y = 5', color: PINK, anchor: 'middle', bold: true },
+      // every label sits just BELOW its own line; at x = 9 the curve is at 4.16, under the y = 5 label
+      { x: 9, y: 4.55, text: 'y = 5', color: PINK, anchor: 'middle', bold: true },
       { x: 12, y: 3.55, text: 'y = 4', color: PINK, anchor: 'middle', bold: true },
       { x: 12, y: 2.55, text: 'y = 3', color: PINK, anchor: 'middle', bold: true },
     ],
@@ -66,7 +66,7 @@ specs.push({
     ],
   },
   caption:
-    'הגרף של $f$ ושלושה ישרים אופקיים. הישר $y = 5$ פוגש את הגרף פעמיים, כאשר $x = 3$ וגם כאשר $x = 18$. הישר $y = 4$ נוגע בגרף רק במינימום, והישר $y = 3$ אינו פוגש אותו כלל.',
+    'הגרף של $f$ ושלושה ישרים אופקיים. הישר $y = 5$ פוגש את הגרף פעמיים, כאשר $x = 3$ וגם כאשר $x = 18$. הישר $y = 4$ נוגע בגרף רק במינימום, והישר $y = 3$ אינו פוגש אותו כלל. ליד המינימום הגרף שטוח וצמוד לישר $y = 4$, אבל נוגע בו רק בנקודה $(6,\\; 4)$.',
   checks: [
     on('f', f, 3, 5), on('f', f, 18, 5), on('f', f, 6, 4),
     ['y = 3 misses: the graph stays at 4 and above', minOn(2.2, 41) > 3 ? 1 : 0, 1],

@@ -32,7 +32,7 @@ const yes = (label: string, ok: boolean): Check => [label, ok ? 1 : 0, 1];
     id: 'bg002',
     fig: {
       xRange: [-14, 10], yRange: [-9, 11], halo: true,
-      curves: [{ f, from: -14, to: -4.3 }, { f, from: -3.6, to: 10 }],
+      curves: [{ f, from: -14, to: -4.3 }, { f, from: -3.6, to: 9 }],
       vAsym: [{ x: -4, label: 'x = -4' }], hAsym: [{ y: 2, label: 'y = 2' }],
       points: [
         { x: 3, y: 0, label: '(3, 0)', color: INDIGO, dx: 6, dy: 16 },
@@ -161,7 +161,7 @@ const yes = (label: string, ok: boolean): Check => [label, ok ? 1 : 0, 1];
     id: 'q102',
     fig: {
       xRange: [-5, 7], yRange: [-2.6, 0.7], halo: true,
-      curves: [{ f, from: -5, to: -1.4 }, { f, from: -0.72, to: 7 }],
+      curves: [{ f, from: -5, to: -1.4 }, { f, from: -0.72, to: 6.3 }],
       vAsym: [{ x: -1 }],
       texts: [{ x: -1.25, y: 0.45, text: 'x = -1', color: AMBER, anchor: 'end', bold: true }],
       xTicks: [tick(1)], yTicks: [ytick(0.25, '1/4')],
@@ -184,7 +184,7 @@ const yes = (label: string, ok: boolean): Check => [label, ok ? 1 : 0, 1];
     id: 'q105',
     fig: {
       xRange: [-5, 5], yRange: [-5, 5], halo: true,
-      curves: [{ f, from: -5, to: -1.08 }, { f, from: -0.9, to: 0.9 }, { f, from: 1.08, to: 5 }],
+      curves: [{ f, from: -5, to: -1.08 }, { f, from: -0.9, to: 0.9 }, { f, from: 1.08, to: 4.5 }],
       vAsym: [{ x: -1 }, { x: 1 }],
       texts: [
         { x: -1.2, y: 4.55, text: 'x = -1', color: AMBER, anchor: 'end', bold: true },
@@ -225,22 +225,22 @@ const yes = (label: string, ok: boolean): Check => [label, ok ? 1 : 0, 1];
   });
 }
 
-// ── rq-sub-bg-109 · f(x) = 18x/(x² + 9)², area from 0 to a = 4 ───────────────
+// ── rq-sub-bg-109 · f(x) = x/√(x² + 9), area from 0 to a = 4 ─────────────────
 {
-  const f = (x: number) => (18 * x) / (x * x + 9) ** 2;
+  const f = (x: number) => x / Math.sqrt(x * x + 9);
   const R = region(0, 4, f);
   specs.push({
     id: 'q109',
     fig: {
-      xRange: [-1, 8], yRange: [-0.05, 0.3], halo: true,
-      curves: [{ f, from: -1, to: 8 }], shade: [R],
-      xTicks: [tick(4)], yTicks: [ytick(0.2, '0.2')],
-      texts: [t(2.2, 0.06, 'S = 16/25')],
+      xRange: [-1.2, 8], yRange: [-0.4, 1.1], halo: true,
+      curves: [{ f, from: -1.2, to: 8 }], shade: [R],
+      xTicks: [tick(4)],
+      texts: [t(2.3, 0.25, 'S = 2')],
     },
     caption:
-      'האזור המקווקו כלוא בין הגרף של $f(x) = \\dfrac{18x}{(x^2 + 9)^2}$, ציר $x$ והישר $x = 4$. בתחום $0 \\le x \\le 4$ הגרף מעל ציר $x$, ולכן השטח שווה לאינטגרל עצמו.',
+      'האזור המקווקו כלוא בין הגרף של $f(x) = \\dfrac{x}{\\sqrt{x^2 + 9}}$, ציר $x$ והישר $x = 4$. בתחום $0 \\le x \\le 4$ הגרף מעל ציר $x$, ולכן השטח שווה לאינטגרל עצמו.',
     checks: [
-      ['area 16/25', areaOf(R), 16 / 25, 1e-7],
+      ['area 2', areaOf(R), 2, 1e-7],
       yes('above the axis on (0, 4]', scan(f, 1e-6, 4).mn > 0),
     ],
   });
@@ -307,7 +307,7 @@ const yes = (label: string, ok: boolean): Check => [label, ok ? 1 : 0, 1];
       xRange: [-10, 10], yRange: [-0.8, 7.2], halo: true,
       curves: [{ f, from: -8, to: 8 }], shade: [R],
       xTicks: [tick(-8), tick(8)],
-      texts: [t(0, 2, 'S = 256/3')],
+      texts: [t(-4, 2, 'S = 256/3')],
     },
     caption:
       'האזור המקווקו כלוא בין הגרף של $f$, ציר $x$ והישרים $x = -8$ וגם $x = 8$. כל הגרף נמצא מעל הגובה $4$, ולכן השטח שווה לאינטגרל עצמו.',
@@ -345,7 +345,7 @@ const yes = (label: string, ok: boolean): Check => [label, ok ? 1 : 0, 1];
       ],
     },
     caption:
-      'הגרף של $g(x) = \\dfrac{12}{f(x)}$. המינימום של $f$ הופך למקסימום של $g$, בנקודה $(4,\\; 4)$. בשני הקצוות $f$ גדלה בלי גבול, ולכן $g$ מתקרבת לאפס: ציר $x$ הוא האסימפטוטה האופקית, וראשית הצירים אינה על הגרף (עיגול ריק).',
+      'הגרף של $g(x) = \\dfrac{12}{f(x)}$. המינימום של $f$ הופך למקסימום של $g$, בנקודה $(4,\\; 4)$. כאשר $x$ שואף לאינסוף $g$ מתקרבת לאפס, ולכן ציר $x$ הוא האסימפטוטה האופקית. ליד $x = 0$ הגרף מתקרב לראשית הצירים, שאינה על הגרף (עיגול ריק).',
     checks: [
       on('g', g, 4, 4),
       yes('nothing on (0, 400] lies above 4', scan(g, 1e-4, 400, 400000).mx <= 4 + 1e-9),
@@ -405,6 +405,51 @@ const yes = (label: string, ok: boolean): Check => [label, ok ? 1 : 0, 1];
       on('f', f, 9, 4.5), on('f', f, 0, 0),
       yes('right branch never below 9/2', scan(f, 3.0001, 400, 400000).mn >= 4.5 - 1e-9),
       yes('left branch never above 0', scan(f, 0, 2.9999).mx <= 1e-12),
+    ],
+  });
+}
+
+// ── rq-sub-bg-003 · f(x) = √(x + 5), area from −5 to 4 ───────────────────────
+{
+  const f = (x: number) => Math.sqrt(x + 5);
+  const R = region(-5, 4, f);
+  specs.push({
+    id: 'bg003',
+    fig: {
+      xRange: [-6, 5.5], yRange: [-0.6, 3.8], halo: true,
+      curves: [{ f, from: -5, to: 5.5 }], shade: [R],
+      points: [
+        { x: -5, y: 0, label: '(-5, 0)', color: INDIGO, dx: 6, dy: 16 },
+        { x: 4, y: 3, label: '(4, 3)', color: INDIGO, dx: -40, dy: -8 },
+      ],
+      texts: [t(-2, 1, 'S = 18')],
+    },
+    caption:
+      'האזור המקווקו כלוא בין הגרף של $f(x) = \\sqrt{x + 5}$, ציר $x$ והישר $x = 4$. הגרף מתחיל על הציר בנקודה $(-5,\\; 0)$, וכל האזור מעל הציר, ולכן אינטגרל אחד בלי פיצול.',
+    checks: [
+      on('f', f, -5, 0), on('f', f, 4, 3),
+      ['area 18 (Simpson converges slowly at the root endpoint)', areaOf(R, 200000), 18, 1e-6],
+    ],
+  });
+}
+
+// ── rq-sub-bg-201 · g(x) = (f(x))² = 3x² − x³, area from 0 to 3 ──────────────
+{
+  const g = (x: number) => x * x * (3 - x);
+  const R = region(0, 3, g);
+  specs.push({
+    id: 'bg201Area',
+    fig: {
+      xRange: [-0.8, 3.8], yRange: [-0.6, 5], halo: true,
+      curves: [{ f: g, from: -0.5, to: 3.15 }], shade: [R],
+      points: [{ x: 3, y: 0, label: '(3, 0)', color: INDIGO, dx: 6, dy: 16 }],
+      texts: [t(1.8, 1.4, 'S = 27/4')],
+    },
+    caption: 'האזור המקווקו כלוא בין הגרף של $g(x) = 3x^2 - x^3$ לבין ציר $x$, מהראשית ועד הנקודה $(3,\\; 0)$.',
+    checks: [
+      on('g', g, 3, 0), on('g', g, 0, 0),
+      ['area 27/4', areaOf(R), 27 / 4, 1e-7],
+      yes('g >= 0 on [0, 3]', scan(g, 0, 3).mn >= -1e-12),
     ],
   });
 }
