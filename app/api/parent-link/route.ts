@@ -21,6 +21,7 @@ import {
   parentLinkUrl,
   parentLinkVersion,
   revokedParentLinkMeta,
+  type ParentLinkKind,
 } from '@/lib/parent-link';
 
 export const dynamic = 'force-dynamic';
@@ -37,11 +38,15 @@ async function link(request: Request, revoke: boolean): Promise<Response> {
 
   let db: SupabaseClient;
   let userId: string;
+  // The issuer decides which version is read and bumped: a student replacing
+  // his own link never kills the one his teacher sent home, and vice versa.
+  let kind: ParentLinkKind;
   if (body.classId === undefined && body.studentId === undefined) {
     const ctx = await requireUser(request, true);
     if (ctx instanceof Response) return ctx;
     db = ctx.db;
     userId = ctx.user.id;
+    kind = 'self';
   } else {
     // Either field present = the teacher path, and it needs both. Falling back
     // to "the caller's own link" here would hand a teacher HIS link labelled
@@ -54,6 +59,7 @@ async function link(request: Request, revoke: boolean): Promise<Response> {
     if (!roster.some((s) => s.id === studentId)) return jsonError('forbidden', 403);
     db = ctx.db;
     userId = studentId;
+    kind = 'teacher';
   }
 
   const { data, error } = await db.auth.admin.getUserById(userId);
@@ -62,18 +68,18 @@ async function link(request: Request, revoke: boolean): Promise<Response> {
     return jsonError('לא הצלחנו ליצור קישור', 500);
   }
 
-  let version = parentLinkVersion(data.user.app_metadata);
+  let version = parentLinkVersion(data.user.app_metadata, kind);
   if (revoke) {
-    const app_metadata = revokedParentLinkMeta(data.user.app_metadata);
+    const app_metadata = revokedParentLinkMeta(data.user.app_metadata, kind);
     const { error: updateError } = await db.auth.admin.updateUserById(userId, { app_metadata });
     if (updateError) {
       console.error('[api/parent-link] revoke failed:', updateError.message);
       return jsonError('לא הצלחנו ליצור קישור חדש', 500);
     }
-    version = app_metadata.parent_link_v;
+    version = parentLinkVersion(app_metadata, kind);
   }
 
-  return Response.json({ url: parentLinkUrl(signParentToken(userId, version)) });
+  return Response.json({ url: parentLinkUrl(signParentToken(userId, kind, version)) });
 }
 
 export function POST(request: Request): Promise<Response> {

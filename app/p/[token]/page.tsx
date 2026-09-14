@@ -42,7 +42,9 @@ async function loadWeek(token: string): Promise<ParentWeek | null> {
 
   const { data, error } = await db.auth.admin.getUserById(parsed.userId);
   const user = data?.user;
-  if (error || !user || parsed.version !== parentLinkVersion(user.app_metadata)) return null;
+  // Compared against the version of the issuer the token names: a teacher's
+  // link survives the student replacing his own.
+  if (error || !user || parsed.version !== parentLinkVersion(user.app_metadata, parsed.kind)) return null;
 
   const { data: rows, error: rowsError } = await db
     .from('attempts')
