@@ -29,7 +29,12 @@ let unbound = 0;
 type Spec = { kind: string; value?: string; values?: string[] } | undefined;
 
 const evalNum = (s: string): number => {
-  const t = s.trim().replace(/\$/g, '').replace(/\\d?frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)').replace(/\\cdot/g, '*');
+  const t = s
+    .trim()
+    .replace(/\$/g, '')
+    .replace(/\\d?frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+    .replace(/\\d?frac(\d)(\d)/g, '($1)/($2)') // \dfrac14, the brace-less form content also uses
+    .replace(/\\cdot/g, '*');
   return Number(math.evaluate(t));
 };
 
