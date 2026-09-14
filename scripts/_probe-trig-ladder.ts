@@ -95,7 +95,9 @@ if (!basics) {
   // The unit-circle steps now come FIRST in stage 2 (identities are built on
   // the unit circle), so the motivation step is no longer index 0 — but it must
   // still come before any identity is stated.
-  const motiv = titles.indexOf('למה בכלל צריך זהויות');
+  // 2026-09-14: the motivation step was rewritten for the stage-2 position (it
+  // used to cite the laws and area formulas, taught only in stages 4-5).
+  const motiv = titles.indexOf('למה צריך את השלב הזה: מעבר לזווית חדה');
   const firstIdentity = titles.findIndex((t) => t.includes('180°') || t.includes('פיתגורס'));
   if (motiv < 0) fail('the "why identities" motivation step is gone');
   else if (firstIdentity >= 0 && motiv > firstIdentity)
