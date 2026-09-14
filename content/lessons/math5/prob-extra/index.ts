@@ -43,15 +43,44 @@ import { R3_BAGRUT as R3_CONDITIONAL_BAG } from './r3/conditional-bagrut';
 import { R3_BAGRUT as R3_PRACTICE_BAG } from './r3/practice-bagrut';
 import { PROB_ORDER } from './order';
 
+/**
+ * A question lives on the stage that TEACHES the tool it needs. Round 3's
+ * authors, reading the lessons (2026-09-14), found shipped round-1/2 questions
+ * that needed a tool only a later stage teaches: a table question that asks a
+ * conditional ("וברמה 5 המותנית תשב בדיוק על הטבלה הזאת", says pr-tables' own
+ * summary), backwards Bayes inside pr-tree, a conditional inside pr-bernoulli,
+ * and a tree inside pr-basics. A student meets them before the tool.
+ * They move, unchanged (same id, same text, same tutor bank), to the first stage
+ * whose lessons give the student everything they use.
+ */
+export const PROB_REHOME: Record<string, string> = {
+  // conditional / independence test → pr-conditional
+  'pr-x-tre-110': 'pr-conditional', 'pr-x-tre-205': 'pr-conditional',
+  'pr-x-tab-104': 'pr-conditional', 'pr-x-tab-105': 'pr-conditional', 'pr-x-tab-106': 'pr-conditional',
+  'pr-x-tab-108': 'pr-conditional', 'pr-x-tab-109': 'pr-conditional', 'pr-x-tab-110': 'pr-conditional',
+  'pr-x-tab-201': 'pr-conditional', 'pr-x-tab-202': 'pr-conditional', 'pr-x-tab-203': 'pr-conditional',
+  'pr-x-tab-204': 'pr-conditional', 'pr-x-tab-205': 'pr-conditional', 'pr-x-tab-206': 'pr-conditional',
+  'pr-x-tab-207': 'pr-conditional', 'pr-x-tab-208': 'pr-conditional',
+  'pr-x-ber-205': 'pr-conditional',
+  'prob-bag-x-tre-01': 'pr-conditional', 'prob-bag-x-tab-01': 'pr-conditional', 'prob-bag-x-ber-01': 'pr-conditional',
+  // a tree → pr-tree ("בנו עץ הסתברויות"; prob-bag-004 draws one in part א)
+  'prob-bag-x-bas-01': 'pr-tree', 'prob-bag-004': 'pr-tree',
+};
+
+/** Point every re-homed bagrut question at its new stage's 🎓 rung. */
+export function withProbRehome<T extends { id: string; subTopicId?: string }>(items: T[]): T[] {
+  return items.map((b) => (PROB_REHOME[b.id] ? { ...b, subTopicId: PROB_REHOME[b.id] } : b));
+}
+
 /** Extra multi-part bagrut questions, one file per stage so parallel authors
- *  never share a file; `subTopicId` on each is what makes it a stage's 🎓 rung. */
+ *  never share a file; `subTopicId` on each is what makes it a stage's 🎓 rung
+ *  (read it from the lesson, which applies PROB_REHOME). */
 export const PROB_EXTRA_BAGRUT: StaticBagrutQuestion[] = [
   ...BASICS_BAG, ...TREE_BAG, ...TABLES_BAG, ...BERNOULLI_BAG, ...CONDITIONAL_BAG, ...PRACTICE_BAG,
   ...R3_BASICS_BAG, ...R3_TREE_BAG, ...R3_TABLES_BAG, ...R3_BERNOULLI_BAG, ...R3_CONDITIONAL_BAG, ...R3_PRACTICE_BAG,
 ];
 
-/** Stage sub-topic id → the questions appended to that stage. */
-export const PROB_EXTRA: Record<string, PracticeQuestion[]> = {
+const byStage: Record<string, PracticeQuestion[]> = {
   'pr-basics': [...BASICS, ...R3_BASICS],
   'pr-tree': [...TREE, ...R3_TREE],
   'pr-tables': [...TABLES, ...R3_TABLES],
@@ -59,6 +88,9 @@ export const PROB_EXTRA: Record<string, PracticeQuestion[]> = {
   'pr-conditional': [...CONDITIONAL, ...R3_CONDITIONAL],
   'pr-practice': [...PRACTICE, ...R3_PRACTICE],
 };
+/** Stage sub-topic id → the questions appended to that stage (after PROB_REHOME). */
+export const PROB_EXTRA: Record<string, PracticeQuestion[]> = Object.fromEntries(Object.keys(byStage).map((s) => [s, []]));
+for (const [stage, qs] of Object.entries(byStage)) for (const q of qs) PROB_EXTRA[PROB_REHOME[q.id] ?? stage].push(q);
 
 const RANK = new Map(PROB_ORDER.map((id, i) => [id, i]));
 /** Easiest first (./order.ts). Array sort is stable, so ids the order does not

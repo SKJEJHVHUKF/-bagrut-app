@@ -38,7 +38,7 @@
  * numbers; a human reads for interest.
  */
 import { getSubTopic, getLesson } from '../content/lessons';
-import { PROB_EXTRA, PROB_EXTRA_BAGRUT } from '../content/lessons/math5/prob-extra';
+import { PROB_EXTRA, PROB_EXTRA_BAGRUT, PROB_REHOME } from '../content/lessons/math5/prob-extra';
 import type { PracticeQuestion, SubTopic } from '../content/lessons/types';
 import { checkAnswer, checkAnswerParts, matchKnownMistake } from '../lib/answer-check';
 import { leaksAnswer } from '../lib/help-ladder';
@@ -77,7 +77,6 @@ const ROUND2_FLOOR: Record<string, { mid: number; hard: number }> = {
   'pr-conditional': { mid: 12.7, hard: 15.6 },
   'pr-practice': { mid: 13.8, hard: 18.5 },
 };
-const ROUND2_MIN = { mid: 4, hard: 4 };
 
 /**
  * ROUND 3 (2026-09-14, owner): "בכל רמה שבתוך כל תת נושא … חימום ביסוס אתגר
@@ -96,12 +95,15 @@ const ROUND2_MIN = { mid: 4, hard: 4 };
 // Re-taken the same day with the fixed detectors (`all --snapshot`, everything
 // except round 3); the old detectors reproduce the first table exactly on that
 // filter, so these are the same rungs measured by a corrected instrument.
+// Re-taken again after PROB_REHOME moved 17 shipped questions to the stage that
+// teaches their tool: the rung a new question joins is the rung AFTER the move
+// (pr-tables lost its conditional questions, pr-conditional gained them).
 const ROUND3_SNAPSHOT: Record<string, { easy: number; mid: number; hard: number }> = {
   'pr-basics': { easy: 6.1, mid: 11.7, hard: 19.9 },
-  'pr-tree': { easy: 7.8, mid: 14.3, hard: 21.0 },
-  'pr-tables': { easy: 9.7, mid: 16.0, hard: 21.9 },
-  'pr-bernoulli': { easy: 9.2, mid: 13.9, hard: 18.7 },
-  'pr-conditional': { easy: 8.0, mid: 14.3, hard: 18.3 },
+  'pr-tree': { easy: 7.8, mid: 14.3, hard: 19.9 },
+  'pr-tables': { easy: 9.7, mid: 12.9, hard: 22.0 },
+  'pr-bernoulli': { easy: 9.2, mid: 13.9, hard: 18.2 },
+  'pr-conditional': { easy: 8.0, mid: 16.0, hard: 20.1 },
   'pr-practice': { easy: 11.1, mid: 16.0, hard: 21.9 },
 };
 /** Authored questions per rung, and bagrut questions per stage. */
@@ -144,7 +146,9 @@ const STAGES: Record<string, { prefix: string; min: { easy: number; mid: number;
  *  working ("נשתמש במשלים"). */
 const MECHANISMS: [string, RegExp][] = [
   // משלימ covers the inflected forms (המשלימה, המשלימות) — non-final mem.
-  ['complement', /משלימ|משלים|לא קורה|אף פעם לא|1 ?- ?P|אחד פחות/],
+  // (?<!ש) / (?! את): "ענף שמשלים את שני הסוגים" is a branch that COMPLETES
+  // something, not a complement (pr-tree author, 2026-09-14).
+  ['complement', /(?<!ש)משלימ(?!ים את)|(?<!ש)משלים(?! את)|לא קורה|אף פעם לא|1 ?- ?P|אחד פחות/],
   ['conditional', /מותנ|בהינתן|בידיעה ש|ידוע ש.*מה ההסתברות/],
   ['independence', /בלתי[- ]תלוי|תלויים זה בזה|אינם תלויים/],
   ['binomial', /ברנולי|בינומ|ניסויים חוזרים|\\binom|nCr|בדיוק \$?\d+ (?:פעמים|הצלחות)/],
@@ -168,7 +172,9 @@ const MECHANISMS: [string, RegExp][] = [
 ];
 
 const mechanisms = (q: PracticeQuestion): string[] => {
-  const text = `${q.question} ${(q.solution?.steps ?? []).join('\n')}`;
+  // "או" between two maths islands is a list of roots ($x = 2$ או $x = 3$), not
+  // the union of two events (pr-tree author, 2026-09-14) — blanked before matching.
+  const text = `${q.question} ${(q.solution?.steps ?? []).join('\n')}`.replace(/\$\s*או\s*\$/g, '$ ; $');
   const found = MECHANISMS.filter(([, re]) => re.test(text)).map(([n]) => n);
   // A tree is a drawn tree, the word עץ when it is not a coin face, or a branch.
   // "מסלול" is left out: in a commuting story it is a bus route. Round 3: the
@@ -431,7 +437,9 @@ function cloneOf(me: Statement, pool: Statement[]): string | null {
 
 function checkQuestion(q: PracticeQuestion, prefix: string) {
   const w = q.id || '(no id)';
-  if (!new RegExp(`^${prefix}[123]\\d\\d$`).test(q.id)) err(w, 'bad-id', `expected ${prefix}1NN / 2NN / 3NN (rounds 1–3)`);
+  // A re-homed question keeps the id of the stage it was written for (PROB_REHOME).
+  const idOk = PROB_REHOME[q.id] ? /^pr-x-[a-z]{3}-[12]\d\d$/.test(q.id) : new RegExp(`^${prefix}[123]\\d\\d$`).test(q.id);
+  if (!idOk) err(w, 'bad-id', `expected ${prefix}1NN / 2NN / 3NN (rounds 1–3)`);
   checkText(`${w}.question`, q.question ?? '');
   if (isR3(q.id)) {
     const stem = q.question.match(OFF_EXAM_STEM);
@@ -585,14 +593,17 @@ const partScore = (b: StaticBagrutQuestion, p: StaticBagrutQuestion['parts'][num
  */
 function checkBagrut(stageId: string, prefix: string) {
   const abbr = prefix.replace('pr-x-', '').replace(/-$/, '');
-  const mine = PROB_EXTRA_BAGRUT.filter((b) => b.subTopicId === stageId);
+  // From the LESSON, which applies PROB_REHOME: a re-homed question is checked on
+  // the rung it now sits on.
+  const extraIds = new Set(PROB_EXTRA_BAGRUT.map((b) => b.id));
+  const mine = (getLesson('math5', TOPIC)?.bagrutQuestions ?? []).filter((b) => b.subTopicId === stageId && extraIds.has(b.id));
   if (!mine.length) { err(stageId, 'bagrut-below-minimum', 'no EXTRA_BAGRUT question for this stage'); return; }
   const rungSize = (getLesson('math5', TOPIC)?.bagrutQuestions ?? []).filter((b) => b.subTopicId === stageId).length;
   if (rungSize < BAGRUT_MIN) err(stageId, 'bagrut-rung-below-20', `${rungSize} bagrut questions on the 🎓 rung < ${BAGRUT_MIN}`);
   const LABELS = ['א', 'ב', 'ג', 'ד', 'ה'];
   for (const b of mine) {
     const w = b.id;
-    if (!new RegExp(`^prob-bag-x-${abbr}-\\d{2}$`).test(w)) err(w, 'bad-bagrut-id', `expected prob-bag-x-${abbr}-NN`);
+    if (!PROB_REHOME[w] && !new RegExp(`^prob-bag-x-${abbr}-\\d{2}$`).test(w)) err(w, 'bad-bagrut-id', `expected prob-bag-x-${abbr}-NN`);
     if (!b.context?.trim()) err(w, 'bagrut-no-context'); else checkText(`${w}.context`, b.context);
     if (isR3Bagrut(w)) {
       for (const [field, s] of [['context', b.context], ...b.parts.map((p) => [`${p.label}.prompt`, p.prompt])] as [string, string][]) {
@@ -674,7 +685,10 @@ function checkStage(stageId: string): boolean {
     const round2 = extra.filter((q) => /-2\d\d$/.test(q.id));
     if (round2.length) {
       const floor = ROUND2_FLOOR[stageId];
-      const older = extra.filter((q) => !/-2\d\d$/.test(q.id)).concat(existing);
+      // Round 2 is compared with what came BEFORE it. "Not round 2" also took in
+      // round 3, so a new easy question made a shipped round-2 mid question fail,
+      // under the shipped id (pr-tree author, 2026-09-14).
+      const older = extra.filter((q) => !/-[23]\d\d$/.test(q.id)).concat(existing);
       const lowerSigsR1 = new Map<string, string>();
       for (const q of older) if (q.difficulty !== 'hard') lowerSigsR1.set(signature(q), q.id);
       for (const q of round2) {
@@ -687,10 +701,8 @@ function checkStage(stageId: string): boolean {
           if (twin) err(q.id, 'round2-mid-restatement', `same ask + mechanisms as ${twin}`);
         }
       }
-      for (const d of ['mid', 'hard'] as const) {
-        const n = round2.filter((q) => q.difficulty === d).length;
-        if (n < ROUND2_MIN[d]) err(stageId, 'round2-below-minimum', `${d}: ${n} < ${ROUND2_MIN[d]}`);
-      }
+      // (round 2's own "≥4 per rung" target retired 2026-09-14: RUNG_MIN = 20 is the
+      // floor now, and PROB_REHOME moves round-2 questions between stages.)
     }
 
     // ---- round 3: a band per rung, 20 per rung, variety, clones, the mix ----
@@ -800,11 +812,39 @@ function checkStage(stageId: string): boolean {
 
   // ---- the defect the owner actually reported: a hard question that is a mid
   //      question with different numbers ----
-  const lowerSigs = new Map<string, string>();
-  for (const q of [...rung('easy'), ...rung('mid')]) lowerSigs.set(signature(q), q.id);
+  // A pairwise rule fails the PAIR, and the item that CAUSED it is the newer
+  // one: when a round-3 easy/mid question takes a shipped hard question's
+  // signature, the error is filed under the round-3 id (the pr-tree author's
+  // first 322 made shipped 206 fail, and "no ✗ naming your ids" still passed).
+  const lowerSigs = new Map<string, string[]>();
+  for (const q of [...rung('easy'), ...rung('mid')]) lowerSigs.set(signature(q), [...(lowerSigs.get(signature(q)) ?? []), q.id]);
+  const newest = (ids: string[]) => ids.find(isR3) ?? ids[0];
+  // The SCORE GAP decides, not the shared signature alone (the טריגונומטריה port:
+  // a twin at 11.0 = 11.0 was a real restatement, twins +1…+3 apart mostly were
+  // not). With rungs of 20 inside one tool family, same-ask-same-mechanisms is
+  // common; it is a restatement when the higher-rung question is not clearly
+  // harder than its twin: under 3 points for אתגר, under 2 for ביסוס.
+  const scoreOf = new Map(all.map((q) => [q.id, difficulty(q).score]));
   for (const q of rung('hard')) {
-    const twin = lowerSigs.get(signature(q));
-    if (twin) err(q.id, 'hard-is-a-restatement', `same ask + same mechanisms as ${twin} (${signature(q)})`);
+    for (const twin of lowerSigs.get(signature(q)) ?? []) {
+      const gap = (scoreOf.get(q.id) ?? 0) - (scoreOf.get(twin) ?? 0);
+      if (gap >= 3 - EPS) continue;
+      const where = isR3(twin) && !isR3(q.id) ? twin : q.id;
+      err(where, 'hard-is-a-restatement', `${q.id} (hard) is only ${gap.toFixed(1)} above ${twin} (lower rung), with the same ask and mechanisms (${signature(q)})`);
+    }
+  }
+  // Round 3's ביסוס must climb above its חימום, not restate it.
+  if (!BASELINE) {
+    const easySigs = new Map<string, string[]>();
+    for (const q of rung('easy')) easySigs.set(signature(q), [...(easySigs.get(signature(q)) ?? []), q.id]);
+    for (const q of rung('mid')) {
+      const twins = (easySigs.get(signature(q)) ?? []).filter((t) => (scoreOf.get(q.id) ?? 0) - (scoreOf.get(t) ?? 0) < 2 - EPS);
+      if (!twins.length) continue;
+      if (isR3(q.id)) err(q.id, 'round3-mid-restatement', `${q.id} (mid) is less than 2 above ${twins.join(', ')} (easy), with the same ask and mechanisms (${signature(q)})`);
+      // A SHIPPED ביסוס question no harder than a warm-up is a label question,
+      // not the new warm-up's fault: listed for a reading, never auto-relabelled.
+      else if (twins.some(isR3)) warn(q.id, 'shipped-mid-reads-as-easy', `scores ${scoreOf.get(q.id)?.toFixed(1)}, within 2 of warm-ups ${twins.join(', ')} with the same ask and mechanisms — read it; relabel to easy if it is one`);
+    }
   }
 
   // ---- variety ----

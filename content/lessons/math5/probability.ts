@@ -1,7 +1,7 @@
 import type { Lesson } from '../types';
 import { PROBABILITY_BAGRUT_A, PROBABILITY_STAGES_A } from './probability-stages-a';
 import { PROBABILITY_BAGRUT_B, PROBABILITY_STAGES_B } from './probability-stages-b';
-import { withProbExtra, withProbOrder, PROB_EXTRA_BAGRUT } from './prob-extra';
+import { withProbExtra, withProbOrder, withProbRehome, PROB_EXTRA_BAGRUT } from './prob-extra';
 
 export const math5Probability: Lesson = {
   subject: 'math5',
@@ -412,8 +412,9 @@ $$P(k) = \\binom{n}{k}\\, p^k\\, (1-p)^{n-k}, \\quad k = 0, 1, \\ldots, n$$
     },
   ],
 
-  // Easiest first on every stage's 🎓 rung (./prob-extra/order.ts).
-  bagrutQuestions: withProbOrder([
+  // On the stage that teaches every tool it uses (PROB_REHOME), easiest first
+  // on every stage's 🎓 rung (./prob-extra/order.ts).
+  bagrutQuestions: withProbOrder(withProbRehome([
     {
       id: 'prob-bag-001',
       difficulty: 'mid',
@@ -625,7 +626,7 @@ $$P(k) = \\binom{n}{k}\\, p^k\\, (1-p)^{n-k}, \\quad k = 0, 1, \\ldots, n$$
     ...PROBABILITY_BAGRUT_A,
     ...PROBABILITY_BAGRUT_B,
     ...PROB_EXTRA_BAGRUT,
-  ]),
+  ])),
 
   subTopics: [
     // The הסתברות track (2026-08-19): ONE run of six stages, authored per the
