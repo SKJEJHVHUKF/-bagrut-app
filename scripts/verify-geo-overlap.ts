@@ -17,6 +17,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { GeoFigureFromJson } from '../components/practice/GeoFigure';
 import { getLesson } from '../content/lessons';
+import { ALL_PAST_BAGRUYOT } from '../content/past-bagruyot';
 
 type Box = { x: number; y: number; w: number; h: number; what: string };
 
@@ -41,6 +42,9 @@ for (const st of lesson?.subTopics ?? []) {
   collect(`${st.id}/teach`, { ...st, questions: undefined });
 }
 collect('bagrut', lesson?.bagrutQuestions);
+// The past-paper archive carries ```geo fences in its solutions too (geometry and
+// plane-trig questions) and renders them through the same GeoFigure.
+for (const q of ALL_PAST_BAGRUYOT) collect(q.id, q);
 
 /** Every <text> the renderer emitted, as a glyph box in SVG pixels. */
 function textBoxes(svg: string): Box[] {
