@@ -15,6 +15,9 @@ const csp = [
   "font-src 'self' data:",
   // Supabase REST + realtime websocket endpoints are on *.supabase.co
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  // Lesson videos (SubTopic.video) embed from YouTube's no-cookie host.
+  // Without this line default-src blocks the iframe — silently.
+  "frame-src 'self' https://www.youtube-nocookie.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

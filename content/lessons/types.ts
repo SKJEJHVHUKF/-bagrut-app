@@ -364,6 +364,10 @@ export type SubTopic = {
    *  landing renders THIS (one step at a time, each with a worked example)
    *  instead of the `summary` block — the "teach → example → next" flow. */
   lesson?: SubTopicLessonStep[];
+  /** Optional video played at the top of the ladder's 📖 "לומדים" rung.
+   *  `youtubeId` is the 11-character id from the share link
+   *  (youtu.be/<id>); `title` labels the card and the iframe. */
+  video?: { youtubeId: string; title: string };
   /** 5-8 focused practice questions. Same shape as the lesson's quick bank. */
   questions: PracticeQuestion[];
   /** Optional inline diagrams (SVG-rendered) shown beneath the summary.

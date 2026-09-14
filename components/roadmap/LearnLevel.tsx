@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, ArrowLeft } from 'lucide-react';
+import { GraduationCap, ArrowLeft, Play } from 'lucide-react';
 import { MathText } from '@/components/practice/MathText';
 import { FormulaCard } from '@/components/practice/FormulaCard';
 import { WorkedExampleCard } from '@/components/practice/WorkedExampleCard';
@@ -74,6 +74,27 @@ export function LearnLevel({
         </button>
         <span className="font-black text-violet-700">📖 רמת לומדים</span>
       </div>
+
+      {/* Intro video — first thing on the rung, before step 1. No-cookie host
+          (next.config.ts frame-src allows only it). Not a gate: the drills are. */}
+      {subTopic.video && (
+        <div className="surface-premium rounded-2xl p-4 sm:p-5">
+          <div className="flex items-center gap-2.5 mb-3 pb-3 border-b border-slate-900/[0.06]">
+            <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 shadow-sm shadow-violet-500/30">
+              <Play className="w-3.5 h-3.5 text-white fill-white" />
+            </div>
+            <div className="font-black text-slate-900 lesson-title">{subTopic.video.title}</div>
+          </div>
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${subTopic.video.youtubeId}?rel=0`}
+            title={subTopic.video.title}
+            className="w-full aspect-video rounded-xl bg-slate-900"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+      )}
 
       {/* Guided steps */}
       {steps.length > 0 ? (
