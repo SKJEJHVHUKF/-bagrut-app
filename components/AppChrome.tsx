@@ -79,7 +79,8 @@ const paperLabel = (paper: BagrutPaper) => `שאלון ${paper}`;
 // Hide only on the auth/onboarding flows. On the landing ("/") the avatar
 // shows for LOGGED-IN users (the component renders null when there's no
 // user, so logged-out marketing visitors never see it).
-const HIDDEN_PREFIXES = ['/login', '/signup', '/auth', '/onboarding'];
+// /p: the weekly parent link — a parent is not a learner, so no tabs or tutor.
+const HIDDEN_PREFIXES = ['/login', '/signup', '/auth', '/onboarding', '/p'];
 function isHiddenPath(path: string): boolean {
   // isStaffPath: /admin and /teacher carry none of the learner's chrome.
   return isStaffPath(path) || HIDDEN_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));

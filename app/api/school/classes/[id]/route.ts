@@ -110,9 +110,13 @@ export async function GET(
   // would ship the corpus to every teacher's browser. Every id in the window,
   // so the screen never needs a second round trip; an id the content no longer
   // has is simply left out, and the screen then says nothing for it.
+  // The "רמה N ·" rung prefix is dropped: its digit would be the only number on
+  // a screen that deliberately shows none.
+  const titleOfSub = (subId: string | null | undefined) =>
+    subId ? resolveRoadmapNode(subId)?.node.title?.replace(/^רמה\s*\d+\s*[:·]\s*/, '') : undefined;
   const subTopicTitles: Record<string, string> = {};
   for (const subId of new Set(attempts.map((a) => a.sub_topic_id))) {
-    const title = subId ? resolveRoadmapNode(subId)?.node.title : undefined;
+    const title = titleOfSub(subId);
     if (subId && title) subTopicTitles[subId] = title;
   }
 
@@ -247,11 +251,15 @@ export async function GET(
       topic: String(f.topic),
       subTopicId: (f.sub_topic_id as string) ?? null,
       rung: (f.rung as Rung) ?? null,
-      label: describeFocus({
-        topic: String(f.topic),
-        subTopicId: (f.sub_topic_id as string) ?? null,
-        rung: (f.rung as Rung) ?? null,
-      }),
+      // With the title: without it the board printed the raw id ("ar-general-term").
+      label: describeFocus(
+        {
+          topic: String(f.topic),
+          subTopicId: (f.sub_topic_id as string) ?? null,
+          rung: (f.rung as Rung) ?? null,
+        },
+        titleOfSub(f.sub_topic_id as string | null)
+      ),
       targetCount: target,
       dueOn: (f.due_on as string) ?? null,
       note: (f.note as string) ?? null,

@@ -16,16 +16,13 @@ import {
   buildClassBoard,
   STRONG_MIN_MASTERY,
   STUCK_MIN_ATTEMPTS,
+  TREND_MIN_CHANGE,
   type BoardAttempt,
   type TopicMastery,
 } from '@/lib/class-board';
 
 const DAY = 24 * 60 * 60 * 1000;
 export const WEEK_MS = 7 * DAY;
-/** |Δ mastery| a topic must move between the two weeks to be called a change.
- *  Mirrors the class board's week-over-week trend gate (plan B2, |Δ| ≥ 0.10),
- *  which lib/class-board.ts does not export on main yet. */
-const CHANGE_MIN = 0.1;
 /** Named mistakes shown under "על מה כדאי לעבוד". A list a parent can talk
  *  about, not a log. */
 const NOTE_LIMIT = 3;
@@ -67,7 +64,8 @@ export type ParentWeek = {
   /** This week's stuck topics (worst first, with their newest named mistake),
    *  then any other named mistakes, NOTE_LIMIT notes at most. */
   workOn: { topic: string; note?: string }[];
-  /** Topics measured enough in BOTH weeks whose mastery moved by CHANGE_MIN. */
+  /** Topics measured enough in BOTH weeks whose mastery moved by TREND_MIN_CHANGE
+   *  — the class board's own week-over-week gate, so teacher and parent agree. */
   changes: { topic: string; direction: 'up' | 'down' }[];
   /** null when last week had no answers — a first week is not "more". */
   practiceChange: 'more' | 'less' | 'same' | null;
@@ -121,7 +119,7 @@ export function buildParentWeek({
     if (!measured(t) || !measured(p)) continue;
     const delta = t.mastery - p.mastery;
     // The epsilon keeps 7/10 against 6/10 (0.0999…98 in floating point) a change.
-    if (Math.abs(delta) + 1e-9 >= CHANGE_MIN) changes.push({ topic: t.topic, direction: delta > 0 ? 'up' : 'down' });
+    if (Math.abs(delta) + 1e-9 >= TREND_MIN_CHANGE) changes.push({ topic: t.topic, direction: delta > 0 ? 'up' : 'down' });
   }
 
   return {
