@@ -4,6 +4,7 @@
  * map never feels like a wall. Pure read over the progress store (client-side).
  *
  * Priority:
+ *   0. a rung left mid-round (lib/level-run-resume) → that rung, same question
  *   1. the first node with rungs cleared but not core-done → its next rung
  *      (in progress); else the first not-core-done node in track order (next up)
  *   2. else the first not-yet-mastered node → its next rung (optional mastery)
@@ -14,6 +15,7 @@
  */
 
 import { nodeStatus, nodeLevelSummary } from '@/lib/roadmap-progress';
+import { latestLevelRun } from '@/lib/level-run-resume';
 import type { RoadmapLevel } from '@/lib/roadmap-levels';
 import type { RoadmapLevelKind } from '@/lib/roadmap-levels';
 import type { RoadmapNode } from '@/types/roadmap';
@@ -62,6 +64,18 @@ export function getResumePoint(
   mainTopics: TopicGroup[],
   levelsBySub: Record<string, RoadmapLevel[]>,
 ): ResumePoint | null {
+  // Pass 0 — a rung left mid-round (lib/level-run-resume) is exactly where the
+  // student stopped; "continue" opens it and the runner restores the question.
+  const run = latestLevelRun();
+  if (run) {
+    const level = levelsBySub[run.subId]?.find((l) => l.kind === run.kind);
+    const node = mainTopics.flatMap((mt) => mt.nodes).find((n) => n.subId === run.subId && n.topic === run.topic);
+    if (level && node) {
+      const point = makePoint(node, level, 'in-progress');
+      return { ...point, headline: `${point.headline} · שאלה ${run.pos + 1}` };
+    }
+  }
+
   // Pass 1 — the main climb. Every tile is open (no lock between sub-topics),
   // so a student may have jumped ahead: a node with rungs already cleared wins
   // over the first untouched one earlier in the order — "continue" should

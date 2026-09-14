@@ -6,7 +6,7 @@
 // over just the missed questions, and after two attempts a "continue anyway"
 // escape so the hardest rung can't dead-end the climb.
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { orderQuestions, studentTier } from '@/lib/adaptive';
 import { retrySet } from '@/lib/roadmap-mastery';
@@ -15,7 +15,8 @@ import type { AttemptResult } from '@/lib/roadmap-progress';
 import type { PracticeQuestion } from '@/content/lessons/types';
 import { QuestionRunnerCard, type AnswerSnapshot } from './QuestionRunnerCard';
 import { LevelClearedPanel, LevelFailedPanel } from './ladder-ui';
-import { useClientValue } from '@/lib/use-client-value';
+import { useClientValue, useHydrated } from '@/lib/use-client-value';
+import { clearLevelRun, loadLevelRun, saveLevelRun } from '@/lib/level-run-resume';
 
 export function RoadmapLevelRunner({
   subject,
@@ -65,21 +66,46 @@ export function RoadmapLevelRunner({
    *  blank, and is never scored or logged a second time. */
   const [answers, setAnswers] = useState<Record<string, AnswerSnapshot>>({});
 
-  // A new ordering means a new level (or a newly-known tier) — restart the run.
+  // A new ordering means a new level (or a newly-known tier) — resume the saved
+  // run of this rung if there is one (lib/level-run-resume), else restart.
   // Adjusted during render rather than in an effect so the stale round is never
   // committed: React re-runs this component with the reset state immediately.
-  const [shownOrder, setShownOrder] = useState(orderedFull);
-  if (shownOrder !== orderedFull) {
+  // Waits for hydration: the saved run lives in localStorage.
+  const hydrated = useHydrated();
+  const [shownOrder, setShownOrder] = useState<PracticeQuestion[] | null>(null);
+  if (hydrated && shownOrder !== orderedFull) {
+    const saved = loadLevelRun(topic, subId, level.kind, level.questions);
     setShownOrder(orderedFull);
-    setPool(orderedFull);
-    setPos(0);
-    setRoundCorrect(0);
-    setRoundWrong(new Set());
-    setBaseCorrect(0);
-    setIsRetry(false);
+    setPool(saved ? saved.pool : orderedFull);
+    setPos(saved ? saved.pos : 0);
+    setRoundCorrect(saved ? saved.roundCorrect : 0);
+    setRoundWrong(new Set(saved ? saved.roundWrong : []));
+    setBaseCorrect(saved ? saved.baseCorrect : 0);
+    setIsRetry(saved ? saved.isRetry : false);
     setResult(null);
-    setAnswers({});
+    setAnswers(saved ? saved.answers : {});
   }
+
+  // Keep the saved run in step with the round; a graded round is finished, so
+  // its snapshot goes (the next visit starts the rung fresh).
+  useEffect(() => {
+    if (shownOrder === null) return;
+    if (result) {
+      clearLevelRun(topic, subId, level.kind);
+      return;
+    }
+    if (pos === 0 && Object.keys(answers).length === 0 && !isRetry) return; // nothing to resume yet
+    saveLevelRun(topic, subId, level.kind, {
+      poolIds: pool.map((q) => q.id),
+      pos,
+      roundCorrect,
+      roundWrong: [...roundWrong],
+      baseCorrect,
+      isRetry,
+      answers,
+      savedAt: Date.now(),
+    });
+  }, [shownOrder, result, pool, pos, roundCorrect, roundWrong, baseCorrect, isRetry, answers, topic, subId, level.kind]);
 
   if (total === 0) {
     return <div className="text-sm text-slate-500 text-center py-6">אין תרגילים ברמה הזו.</div>;
