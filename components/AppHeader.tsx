@@ -24,8 +24,7 @@ import MathUpLogo from '@/components/MathUpLogo';
 import { PRIMARY_ITEMS, isActive, isStaffPath } from '@/lib/nav';
 
 // Pre-app flows own the whole viewport; the landing page ships its own nav.
-// /p: the weekly parent link — a parent is not a learner, so no app header.
-const HIDDEN_PREFIXES = ['/login', '/signup', '/auth', '/onboarding', '/p'];
+const HIDDEN_PREFIXES = ['/login', '/signup', '/auth', '/onboarding'];
 // isStaffPath below: /admin and /teacher have their own header.
 
 function isHidden(path: string): boolean {

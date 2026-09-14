@@ -238,8 +238,11 @@ export function locate(pathname: string): { group: NavGroup; item: NavItem } | n
  * the student joins his class from INSIDE the app he already uses, keeping
  * every bit of it. Putting both on one route was the mistake — a teacher was
  * shown "בוחן מהיר" and a tutor bubble while reading his class's results.
+ *
+ * /p is the weekly parent link: not staff, but the same rule — a parent reading
+ * a report is not a learner, so no tab bar, header, avatar or tutor mascot.
  */
-const STAFF_PREFIXES = ['/admin', '/teacher', '/console', '/console-demo'];
+const STAFF_PREFIXES = ['/admin', '/teacher', '/console', '/console-demo', '/p'];
 
 export function isStaffPath(pathname: string): boolean {
   return STAFF_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
