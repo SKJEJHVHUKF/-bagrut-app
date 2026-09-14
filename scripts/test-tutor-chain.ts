@@ -537,6 +537,15 @@ async function turn(message: string, over: Partial<ChainState> = {}, screenTopic
     ok(!c.answered && c.routeKind === 'complaint-with-question', 'complaint + question → model, not the apology');
     const bare = await runTutorChain({ message: 'לא ענית לי', focus, state: spoke });
     ok(bare.answered && bare.layer === 'meta', 'bare complaint → the apology, free');
+
+    // ----- STUCK: two "לא יודע" in a row is counted by the client, not by the model -----
+    const { stuckTwice, renderFocusContext, STUCK_LINE } = await import('../lib/tutor-presence');
+    ok(stuckTwice(['לא יודע זה מסובך', 'אמרתי לך לא יודע']), 'two consecutive "I do not know" → stuck');
+    ok(stuckTwice(['גזרתי', 'אמרתי לך לא יודע', 'גזרתי כבר אבל לא הבנתי את השלבים']), 'only the LAST two count');
+    ok(!stuckTwice(['לא יודע', 'יוצא 2']), 'a real attempt after "לא יודע" is not stuck');
+    ok(!stuckTwice(['לא יודע']), 'the first "לא יודע" alone is not stuck (it gets a question)');
+    const ctx = renderFocusContext(focus, { stuck: true });
+    ok(ctx.includes(STUCK_LINE) && !renderFocusContext(focus, {}).includes('STUCK'), 'the STUCK block rides in the context only when set');
   }
 
   console.log(

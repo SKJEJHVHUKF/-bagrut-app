@@ -14,6 +14,7 @@ import {
 } from '@/lib/tutor-greeting';
 import { getUnitLevel, getPaper } from '@/lib/study-plan';
 import { runTutorChain, emptyChainState, endsWithQuestion, type ChainState } from '@/lib/tutor-chain';
+import { stuckTwice, STUCK_LINE } from '@/lib/tutor-presence';
 import TutorMascot from '@/components/tutor/TutorMascot';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -354,6 +355,12 @@ export default function ChatPage() {
       // the server chop mid-sentence.
       if (extraContext) {
         studentContext = [extraContext, studentContext].filter(Boolean).join('\n\n').slice(0, 2000);
+      }
+      // STUCK: two "לא יודע" in a row — counted here, because the model does not count.
+      {
+        const priorUsers = messages.filter((m) => m.role === 'user').map((m) => m.content);
+        const users = priorUsers[priorUsers.length - 1] === trimmed ? priorUsers : [...priorUsers, trimmed];
+        if (stuckTwice(users)) studentContext = [STUCK_LINE, studentContext].filter(Boolean).join('\n\n').slice(0, 2000);
       }
 
       // Level + שאלון from the student's own plan, so the tutor pitches a

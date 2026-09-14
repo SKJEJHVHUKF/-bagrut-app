@@ -44,6 +44,7 @@ import {
   getTutorFocus,
   subscribeTutorFocus,
   renderFocusContext,
+  stuckTwice,
   focusPrompts,
   type TutorFocus,
 } from '@/lib/tutor-presence';
@@ -521,9 +522,13 @@ export default function TutorBubble() {
       // REVEALED: what the ladder already served on this question, so the model
       // never reveals the next rung. AUTHORED: the unit's closest bank entries,
       // as material. Both are read by TUTOR_CORE's context-block rules.
+      // STUCK: two "לא יודע" in a row — the model does not count, so it is counted here.
+      const priorUsers = msgsRef.current.filter((m) => m.role === 'user').map((m) => m.text);
+      const users = priorUsers[priorUsers.length - 1] === text ? priorUsers : [...priorUsers, text];
       let context = renderFocusContext(f, {
         revealed: servedRef.current.kinds,
         candidates: chain.candidates,
+        stuck: stuckTwice(users),
       });
       try {
         const { buildStudentSnapshot } = await import('@/lib/tutor-context');

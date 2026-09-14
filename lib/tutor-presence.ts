@@ -377,7 +377,25 @@ export type FocusContextExtra = {
   revealed?: readonly string[];
   /** The unit's closest authored entries (lib/tutor-faq faqCandidates). */
   candidates?: ReadonlyArray<{ q: string; a: string }>;
+  /** He said "לא יודע" / "לא הבנתי" / "אמרתי לך" twice in a row — see `stuckTwice`. */
+  stuck?: boolean;
 };
+
+/**
+ * Two consecutive student messages that both say "I don't know / I did not
+ * understand / I told you". Live 2026-09-14: after "לא יודע זה מסובך" the
+ * tutor asked a question; after "אמרתי לך לא יודע" it asked a shorter one;
+ * after "גזרתי כבר אבל לא הבנתי את השלבים שאחרי" it repeated its first reply
+ * word for word. A Socratic question is the wrong move the second time, and
+ * the model does not count on its own — so the count is made here and sent
+ * as a STUCK block that TUTOR_CORE turns into "tell him the step".
+ */
+export const STUCK_PHRASE = /לא\s*יודע|לא\s*יודעת|לא\s*הבנתי|לא\s*מובן|לא\s*מבין|לא\s*מבינה|אמרתי\s*לך|מסובך|תסביר\s*(לי\s*)?שוב|עדיין\s*לא/;
+export const STUCK_LINE = 'STUCK\nsecond consecutive "I do not know" — tell him this step yourself, then ask about the NEXT one';
+export function stuckTwice(userMessages: ReadonlyArray<string>): boolean {
+  const last = userMessages.slice(-2);
+  return last.length === 2 && last.every((m) => STUCK_PHRASE.test(m));
+}
 
 export function renderFocusContext(focus: TutorFocus | null, extra: FocusContextExtra = {}): string {
   if (!focus) return '';
@@ -410,6 +428,7 @@ export function renderFocusContext(focus: TutorFocus | null, extra: FocusContext
   // Where the reveal line is — what TUTOR_CORE's REVEALED rule reads. Sent
   // only when something was revealed; the rule treats absence as "nothing".
   if (extra.revealed?.length) lines.push(`REVEALED\n${extra.revealed.join(', ')}`);
+  if (extra.stuck) lines.push(STUCK_LINE);
   // The bank as material. Capped so that focus + solution + this block stay
   // inside MAX_CONTEXT_LEN with room for the student snapshot: 3 × ~200.
   if (extra.candidates?.length) {
