@@ -226,7 +226,7 @@ function askShape(q: PracticeQuestion): string {
  */
 const isReverse = (q: PracticeQuestion) =>
   /בהינתן ש|ידוע ש/.test(q.question) &&
-  /מאיזו|מאיזה|(?:הגיע|הגיעה|הגיעו|נבחר|נבחרה|נשלף|נשלפה|נלקח|נלקחה|יוצר|יוצרה|הוצא|הוצאה)\s+מ/.test(q.question);
+  /מאיזו|מאיזה|(?:הגיע|הגיעה|הגיעו|נבחר|נבחרה|נשלף|נשלפה|נלקח|נלקחה|יוצר|יוצרה|הוצא|הוצאה|נשלח|נשלחה|נשלחו)\s+מ/.test(q.question);
 
 /**
  * An unknown the student must recover before anything can be computed.
