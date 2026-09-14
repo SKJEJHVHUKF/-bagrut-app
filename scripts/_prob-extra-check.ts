@@ -148,7 +148,9 @@ const MECHANISMS: [string, RegExp][] = [
   // משלימ covers the inflected forms (המשלימה, המשלימות) — non-final mem.
   // (?<!ש) / (?! את): "ענף שמשלים את שני הסוגים" is a branch that COMPLETES
   // something, not a complement (pr-tree author, 2026-09-14).
-  ['complement', /(?<!ש)משלימ(?!ים את)|(?<!ש)משלים(?! את)|לא קורה|אף פעם לא|1 ?- ?P|אחד פחות/],
+  // Also not "משלימים לריבוע" (completing the square) or "משלימים מסכום" (filling
+  // a cell from a total) — pr-practice author, 2026-09-14.
+  ['complement', /(?<!ש)משלימ(?!ים (?:את|ל|מ))|(?<!ש)משלים(?! (?:את|ל|מ))|לא קורה|אף פעם לא|1 ?- ?P|אחד פחות/],
   ['conditional', /מותנ|בהינתן|בידיעה ש|ידוע ש.*מה ההסתברות/],
   ['independence', /בלתי[- ]תלוי|תלויים זה בזה|אינם תלויים/],
   ['binomial', /ברנולי|בינומ|ניסויים חוזרים|\\binom|nCr|בדיוק \$?\d+ (?:פעמים|הצלחות)/],
@@ -159,7 +161,8 @@ const MECHANISMS: [string, RegExp][] = [
   // no Hebrew letter after; מ is left out on purpose, since מתאים is "suitable".
   ['table', /טבלה|(?:^|[^א-ת])[והבלש]{0,2}תא(?:ים|י)?(?![א-ת])|שוליים|דו[- ]ממדית/],
   ['expectation', /תוחלת/],
-  ['combinatorics', /צירופ|עצרת|כמה דרכים|סידור/],
+  // (?<![א-ת])עצרת: "הרכבת נעצרת" is not a factorial (pr-practice author, 2026-09-14).
+  ['combinatorics', /צירופ|(?<![א-ת])עצרת|כמה דרכים|סידור/],
   ['no-replacement', /בלי החזרה|ללא החזרה|אינו מוחזר|לא מחזירים/],
   ['at-least', /לפחות|לכל היותר/],
   // 🔴 "או" needs an explicit Hebrew-letter boundary. JS `\b` is defined against
@@ -706,8 +709,11 @@ function checkStage(stageId: string): boolean {
         const f = floor[q.difficulty];
         if (s < f) err(q.id, 'round2-not-harder', `scores ${s.toFixed(1)}, but the ${q.difficulty} rung already averaged ${f} — "לא משהו קליל"`);
         if (q.difficulty === 'mid') {
+          // Same score-gap rule as round 3: a shared signature is a restatement only
+          // when the round-2 question is not clearly (2+) above its twin.
           const twin = lowerSigsR1.get(signature(q));
-          if (twin) err(q.id, 'round2-mid-restatement', `same ask + mechanisms as ${twin}`);
+          const twinQ = twin ? older.find((x) => x.id === twin) : undefined;
+          if (twinQ && s - difficulty(twinQ).score < 2 - EPS) err(q.id, 'round2-mid-restatement', `same ask + mechanisms as ${twin}, and only ${(s - difficulty(twinQ).score).toFixed(1)} above it`);
         }
       }
       // (round 2's own "≥4 per rung" target retired 2026-09-14: RUNG_MIN = 20 is the
