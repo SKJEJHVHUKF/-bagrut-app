@@ -96,21 +96,33 @@ function DiagramSVG({ spec }: { spec: DiagramSpec }) {
 // Helpers
 // ============================================================
 
+// SVG <text> is not KaTeX: content authors write angle names the way they do in
+// prose ('\\alpha'), and inside the RTL page that printed as "alpha\". Map the
+// commands to the letters themselves, once, for every label in every figure.
+const GREEK: Record<string, string> = {
+  alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', theta: 'θ', phi: 'φ', varphi: 'φ', pi: 'π',
+};
+const svgLabelText = (t: string) => t.replace(/\$/g, '').replace(/\\([a-zA-Z]+)/g, (m, n: string) => GREEK[n] ?? m);
+
 function Label({ x, y, text, dx = 0, dy = 0 }: { x: number; y: number; text: string; dx?: number; dy?: number }) {
+  const shown = svgLabelText(text);
+  const isGreek = /^[α-ω]$/.test(shown);
   return (
     <text
       x={x + dx}
       y={y + dy}
       fill={LABEL_FILL}
-      fontSize="14"
-      fontFamily="Heebo, sans-serif"
-      fontWeight="bold"
+      fontSize={isGreek ? '16' : '14'}
+      fontFamily={isGreek ? "KaTeX_Math, 'Times New Roman', serif" : 'Heebo, sans-serif'}
+      fontStyle={isGreek ? 'italic' : undefined}
+      fontWeight={isGreek ? 'normal' : 'bold'}
       textAnchor="middle"
+      direction="ltr"
       stroke="rgba(255, 255, 255, 0.9)"
       strokeWidth="0.4"
       paintOrder="stroke"
     >
-      {text}
+      {shown}
     </text>
   );
 }
@@ -164,6 +176,24 @@ function RightAngleMark({ vx, vy, ax, ay, bx, by, size = 10 }: { vx: number; vy:
   return (
     <polyline
       points={`${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`}
+      fill="none"
+      stroke={STROKE}
+      strokeWidth="1.4"
+    />
+  );
+}
+
+/** An arc marking the angle at vertex (vx, vy) between the sides toward
+ *  (ax, ay) and (bx, by) — the mark a teacher draws on the board. */
+function AngleArc({ vx, vy, ax, ay, bx, by, r = 16 }: { vx: number; vy: number; ax: number; ay: number; bx: number; by: number; r?: number }) {
+  const la = Math.hypot(ax - vx, ay - vy);
+  const lb = Math.hypot(bx - vx, by - vy);
+  const p1 = { x: vx + ((ax - vx) / la) * r, y: vy + ((ay - vy) / la) * r };
+  const p2 = { x: vx + ((bx - vx) / lb) * r, y: vy + ((by - vy) / lb) * r };
+  const sweep = (ax - vx) * (by - vy) - (ay - vy) * (bx - vx) > 0 ? 1 : 0;
+  return (
+    <path
+      d={`M ${p1.x} ${p1.y} A ${r} ${r} 0 0 ${sweep} ${p2.x} ${p2.y}`}
       fill="none"
       stroke={STROKE}
       strokeWidth="1.4"
@@ -236,14 +266,17 @@ function TriangleSVG({
           const dx = triCenter.x - v.x;
           const dy = triCenter.y - v.y;
           const len = Math.hypot(dx, dy) || 1;
-          const offset = 26;
-          return { x: v.x + (dx / len) * offset, y: v.y + (dy / len) * offset };
+          const offset = 32;
+          return { x: v.x + (dx / len) * offset, y: v.y + (dy / len) * offset + 5 };
         };
         const pa = inward(a);
         const pb = inward(b);
         const pc = inward(c);
         return (
           <>
+            {spec.rightAngle !== 'A' && <AngleArc vx={a.x} vy={a.y} ax={b.x} ay={b.y} bx={c.x} by={c.y} />}
+            {spec.rightAngle !== 'B' && <AngleArc vx={b.x} vy={b.y} ax={a.x} ay={a.y} bx={c.x} by={c.y} />}
+            {spec.rightAngle !== 'C' && <AngleArc vx={c.x} vy={c.y} ax={a.x} ay={a.y} bx={b.x} by={b.y} />}
             <Label x={pa.x} y={pa.y} text={spec.angleLabels[0]} />
             <Label x={pb.x} y={pb.y} text={spec.angleLabels[1]} />
             <Label x={pc.x} y={pc.y} text={spec.angleLabels[2]} />
