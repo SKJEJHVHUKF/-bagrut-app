@@ -807,22 +807,30 @@ function PartPracticeCard({ part }: { part: PastBagrutPart }) {
                   <DiagramRenderer diagrams={part.diagrams} />
                 </motion.div>
               )}
-              {part.solution.steps.map((step, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: 12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  // Cap the stagger: an uncapped 0.06s/step made a long solution
-                  // take over a second to finish appearing, which reads as lag.
-                  transition={{ duration: 0.25, delay: 0.1 + Math.min(i, 7) * 0.05, ease: 'easeOut' }}
-                  className="chat-md text-sm text-slate-800 leading-relaxed"
-                >
-                  <span className="text-emerald-700 font-bold">{i + 1}.</span>{' '}
-                  <span className="inline">
-                    <MathText inline>{step}</MathText>
-                  </span>
-                </motion.div>
-              ))}
+              {/* Block MathText, like the ladder's QuestionPartCard: `inline` ignored
+                  ```signtable/```probtree/```geo fences, markdown tables, `\n\n` line
+                  breaks and $$display$$ maths, so every solution read as one packed
+                  paragraph (Itay, 2026-09-14: "הכל דחוס וממש לא מובן"). */}
+              <ol className="space-y-5">
+                {part.solution.steps.map((step, i) => (
+                  <motion.li
+                    key={i}
+                    initial={{ opacity: 0, x: 12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    // Cap the stagger: an uncapped 0.06s/step made a long solution
+                    // take over a second to finish appearing, which reads as lag.
+                    transition={{ duration: 0.25, delay: 0.1 + Math.min(i, 7) * 0.05, ease: 'easeOut' }}
+                    className="flex gap-3"
+                  >
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-[11px] font-black text-emerald-800">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0 chat-md text-sm text-slate-800 leading-relaxed pt-0.5">
+                      <MathText>{step}</MathText>
+                    </div>
+                  </motion.li>
+                ))}
+              </ol>
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
