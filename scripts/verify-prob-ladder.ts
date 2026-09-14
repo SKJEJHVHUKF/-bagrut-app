@@ -33,7 +33,10 @@ const run = (args: string[]) => spawnSync(npx, ['tsx', ...args], { encoding: 'ut
 
 let bad = 0;
 
-for (const stage of STAGES) {
+// Rounds 1–2 per stage, then round 3 (2026-09-14), whose checkers read every
+// published answer from the live content and fail any round-3 item left unchecked.
+// A missing file fails here rather than being skipped.
+for (const stage of [...STAGES, ...STAGES.map((s) => `r3-${s}`)]) {
   const file = join('scripts', '_prob-extra-checks', `${stage}.ts`);
   const r = run([file]);
   const lines = (r.stdout + r.stderr).trim().split(/\r?\n/);

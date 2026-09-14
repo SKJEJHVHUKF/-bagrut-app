@@ -64,13 +64,18 @@ const STRICT_FIGURES = process.argv.includes('--strict-figures');
  * are that snapshot. Adding a question under its rung's mean is adding
  * something light, however it is labelled.
  */
+// 2026-09-14: shifted by exactly what the round-3 detector fixes (a bare תא, עץ
+// as a coin face and "מסלול" as a route, the plural מצאו, a justification demand
+// outside the justify shape) moved each rung's average on the same content
+// (`all --snapshot` before and after, everything except rounds 2–3). The anchor
+// stays the round-1 snapshot; only the instrument's error is taken out.
 const ROUND2_FLOOR: Record<string, { mid: number; hard: number }> = {
-  'pr-basics': { mid: 11.4, hard: 18.3 },
-  'pr-tree': { mid: 12.4, hard: 18.5 },
-  'pr-tables': { mid: 13.9, hard: 19.6 },
-  'pr-bernoulli': { mid: 14.8, hard: 18.2 },
+  'pr-basics': { mid: 10.2, hard: 18.3 },
+  'pr-tree': { mid: 12.1, hard: 18.5 },
+  'pr-tables': { mid: 13.6, hard: 19.6 },
+  'pr-bernoulli': { mid: 12.6, hard: 17.9 },
   'pr-conditional': { mid: 12.7, hard: 15.6 },
-  'pr-practice': { mid: 14.9, hard: 19.2 },
+  'pr-practice': { mid: 13.8, hard: 18.5 },
 };
 const ROUND2_MIN = { mid: 4, hard: 4 };
 
@@ -88,13 +93,16 @@ const ROUND2_MIN = { mid: 4, hard: 4 };
  *   mid   ≥ the easy average + 2      — and < the hard average
  *   hard  ≥ the hard average          — "ולא משהו קליל"
  */
+// Re-taken the same day with the fixed detectors (`all --snapshot`, everything
+// except round 3); the old detectors reproduce the first table exactly on that
+// filter, so these are the same rungs measured by a corrected instrument.
 const ROUND3_SNAPSHOT: Record<string, { easy: number; mid: number; hard: number }> = {
-  'pr-basics': { easy: 6.1, mid: 12.8, hard: 19.9 },
-  'pr-tree': { easy: 7.8, mid: 14.5, hard: 20.9 },
-  'pr-tables': { easy: 9.7, mid: 16.2, hard: 21.9 },
-  'pr-bernoulli': { easy: 9.6, mid: 15.7, hard: 19.1 },
+  'pr-basics': { easy: 6.1, mid: 11.7, hard: 19.9 },
+  'pr-tree': { easy: 7.8, mid: 14.3, hard: 21.0 },
+  'pr-tables': { easy: 9.7, mid: 16.0, hard: 21.9 },
+  'pr-bernoulli': { easy: 9.2, mid: 13.9, hard: 18.7 },
   'pr-conditional': { easy: 8.0, mid: 14.3, hard: 18.3 },
-  'pr-practice': { easy: 11.1, mid: 16.7, hard: 22.3 },
+  'pr-practice': { easy: 11.1, mid: 16.0, hard: 21.9 },
 };
 /** Authored questions per rung, and bagrut questions per stage. */
 const RUNG_MIN = 20;
@@ -140,8 +148,12 @@ const MECHANISMS: [string, RegExp][] = [
   ['conditional', /מותנ|בהינתן|בידיעה ש|ידוע ש.*מה ההסתברות/],
   ['independence', /בלתי[- ]תלוי|תלויים זה בזה|אינם תלויים/],
   ['binomial', /ברנולי|בינומ|ניסויים חוזרים|\\binom|nCr|בדיוק \$?\d+ (?:פעמים|הצלחות)/],
-  ['tree', /עץ|ענף|מסלול/],
-  ['table', /טבלה|תא|שוליים|דו[- ]ממדית/],
+  // 'tree' is decided in mechanisms() below: the word עץ is also a coin face.
+  // 🔴 A bare /תא/ matched inside ordinary words — מתאים, תאריך, פתאום, תאחר,
+  // מתאמן (round 3, 2026-09-14: shipped pr-x-bas-204 was paid 2.5 for a table
+  // it does not have). A cell is תא/תאים/תאי with at most a ו/ה/ב/ל/ש prefix and
+  // no Hebrew letter after; מ is left out on purpose, since מתאים is "suitable".
+  ['table', /טבלה|(?:^|[^א-ת])[והבלש]{0,2}תא(?:ים|י)?(?![א-ת])|שוליים|דו[- ]ממדית/],
   ['expectation', /תוחלת/],
   ['combinatorics', /צירופ|עצרת|כמה דרכים|סידור/],
   ['no-replacement', /בלי החזרה|ללא החזרה|אינו מוחזר|לא מחזירים/],
@@ -156,8 +168,13 @@ const MECHANISMS: [string, RegExp][] = [
 ];
 
 const mechanisms = (q: PracticeQuestion): string[] => {
-  const text = `${q.question} ${(q.solution?.steps ?? []).join(' ')}`;
-  return MECHANISMS.filter(([, re]) => re.test(text)).map(([n]) => n);
+  const text = `${q.question} ${(q.solution?.steps ?? []).join('\n')}`;
+  const found = MECHANISMS.filter(([, re]) => re.test(text)).map(([n]) => n);
+  // A tree is a drawn tree, the word עץ when it is not a coin face, or a branch.
+  // "מסלול" is left out: in a commuting story it is a bus route. Round 3: the
+  // figure rule the gate already applied (saysTree) was not the one scoring used.
+  if (hasProbTree(text) || saysTree(text) || /ענף/.test(text)) found.push('tree');
+  return found;
 };
 
 /** What the question ASKS the student to produce — the variety axis. */
@@ -172,8 +189,12 @@ function askShape(q: PracticeQuestion): string {
   if (/תלמיד (?:כתב|טען|חישב)|מה הטעות|היכן השגיאה|כמה טעויות/.test(t)) return 'find-the-error';
   if (/מה גדול יותר|איזו .* גדולה|כדאי|עדיף|השווה/.test(t)) return 'compare';
   if (/ומה אם|אילו היה|לו היה/.test(t)) return 'what-if';
-  if (/כמה .*(?:כדורים|תלמידים|פריטים|ניסויים|פעמים|צריך)|מצא את מספר|מהו מספר/.test(t)) return 'count';
-  if (/מצא את [^.]*\b[a-zA-Z]\b|מהו הערך של|נתון ש.*מצא את|כמה .* יש בכד/.test(t)) return 'find-parameter';
+  // "כמה" + any noun is a count (round 3: a nine-noun whitelist read "כמה
+  // סוכריות" as compute, so an author rewrote the ask); "פי כמה" is a ratio.
+  // The imperative is plural in this topic's questions (מצאו), which the
+  // singular pattern never matched.
+  if (/(?:^|[^א-ת])(?<!פי )כמה\s+[א-ת]|מצאו? את מספר|מהו מספר|מהו המספר/.test(t)) return 'count';
+  if (/מצאו? את [^.]*\b[a-zA-Z]\b|מהו הערך של|נתון ש.*מצאו? את|כמה .* יש בכד/.test(t)) return 'find-parameter';
   if (/הוכח(?!ה)|נמק|הסבר מדוע|האם .*\?|נכון או לא נכון/.test(t)) return 'justify';
   return 'compute';
 }
@@ -216,6 +237,7 @@ const hasParameter = (q: PracticeQuestion) =>
  * ponytail: hand-tuned weights; replace with a fit if we ever have real
  * per-question timing data from students.
  */
+const DEMANDS_REASON = /הוכיחו|הוכח(?!ה)|נמק|הסבירו מדוע|הסבר מדוע/;
 function difficulty(q: PracticeQuestion) {
   const m = mechanisms(q);
   const steps = q.solution?.steps?.length ?? 0;
@@ -226,8 +248,11 @@ function difficulty(q: PracticeQuestion) {
       m.length * 2.5 +
       (hasParameter(q) ? 3 : 0) +
       (isReverse(q) ? 4 : 0) +
-      (shape === 'justify' || shape === 'compare' ? 2 : 0) +
-      (shape === 'find-the-error' ? 2 : 0),
+      // A justification is a DEMAND, not only a shape: "מצאו את $p$ … האם ייתכן?
+      // נמקו" asks for both, and askShape can name only one of them (round 3:
+      // making `find-parameter` read the plural מצאו cost two such questions
+      // their justify credit while the demand stayed on the page).
+      (shape === 'justify' || shape === 'compare' || shape === 'find-the-error' || DEMANDS_REASON.test(q.question) ? 2 : 0),
     mechanisms: m,
     steps,
     shape,
@@ -238,8 +263,17 @@ function difficulty(q: PracticeQuestion) {
  *  the same thing with the same machinery — and neither hides an unknown the
  *  other does not. A question that makes the student recover a value before it
  *  can be computed is a different question, whatever else it shares. */
-const signature = (q: PracticeQuestion) =>
-  `${askShape(q)}|${mechanisms(q).slice().sort().join(',')}${hasParameter(q) ? '|param' : ''}`;
+const signature = (q: PracticeQuestion) => {
+  // Round 3 (rungs of 20): with only ask + mechanisms + param, the key has so few
+  // values that different questions collide — pr-x-bas-325 (cereal figures) and
+  // -321 (a card duel) matched on compute|combinatorics,complement,independence,
+  // union. How many quantities a question asks for, and whether it runs
+  // backwards, are part of what makes it a different question (same fix the
+  // סדרות port needed: "add nQ to the signature").
+  const spec = q.expected as { kind?: string; values?: string[] } | undefined;
+  const nQ = spec?.kind === 'set' ? (spec.values?.length ?? 1) : 1;
+  return `${askShape(q)}|${mechanisms(q).slice().sort().join(',')}${hasParameter(q) ? '|param' : ''}${isReverse(q) ? '|rev' : ''}|n${nQ}`;
+};
 
 // ---------------------------------------------------------------------------
 // House rules (same family as scripts/_rq-extra-check.ts)
@@ -843,6 +877,29 @@ console.log(
     `${BAR.score.toFixed(1)} (every part, including the scaffolded ones: ${BAR.perPart.toFixed(1)})`,
 );
 const ids = arg === 'all' ? Object.keys(STAGES) : [arg];
+
+/**
+ * --snapshot re-measures the two floor tables with the CURRENT detectors. A
+ * floor is a before/after comparison, and it only measures a question if the
+ * instrument is the same at both ends: when a detector is fixed, the rung
+ * averages the floors were taken from move too, and the constants are re-taken
+ * from the same content (ROUND3: everything but round 3; ROUND2: everything but
+ * rounds 2 and 3) rather than left at the buggy instrument's numbers.
+ */
+if (process.argv.includes('--snapshot')) {
+  const rungAvg = (stageId: string, keep: (id: string) => boolean, d: string) => {
+    const qs = (getSubTopic('math5', TOPIC, stageId)?.questions ?? []).filter((q) => q.difficulty === d && keep(q.id));
+    return qs.length ? Math.round((qs.reduce((s, q) => s + difficulty(q).score, 0) / qs.length) * 10) / 10 : 0;
+  };
+  const notR3 = (id: string) => !/-3\d\d$/.test(id);
+  const notR23 = (id: string) => !/-[23]\d\d$/.test(id);
+  console.log('ROUND2_FLOOR:');
+  for (const s of ids) console.log(`  '${s}': { mid: ${rungAvg(s, notR23, 'mid')}, hard: ${rungAvg(s, notR23, 'hard')} },`);
+  console.log('ROUND3_SNAPSHOT:');
+  for (const s of ids) console.log(`  '${s}': { easy: ${rungAvg(s, notR3, 'easy')}, mid: ${rungAvg(s, notR3, 'mid')}, hard: ${rungAvg(s, notR3, 'hard')} },`);
+  process.exit(0);
+}
+
 const ok = ids.map(checkStage).every(Boolean);
 
 /**
