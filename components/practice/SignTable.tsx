@@ -76,7 +76,10 @@ export function SignTable({ spec }: { spec: SignTableSpec }) {
 
   return (
     <div dir="ltr" className="my-3 overflow-x-auto">
-      <table className="mx-auto border-collapse text-center" style={{ minWidth: 'max-content' }}>
+      {/* direction inline: `.chat-md table { direction: rtl }` (globals.css) beats the
+          wrapper's dir="ltr" by inheritance, and every solution step renders inside
+          .chat-md, so the number line ran right-to-left. */}
+      <table className="mx-auto border-collapse text-center" style={{ minWidth: 'max-content', direction: 'ltr' }}>
         <thead>
           <tr>
             <th className="border border-slate-300 bg-violet-50 px-3 py-2 text-slate-900 font-black">

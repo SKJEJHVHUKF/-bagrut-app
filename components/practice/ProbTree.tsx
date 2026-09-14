@@ -89,7 +89,9 @@ export function ProbTree({ spec }: { spec: ProbTreeSpec }) {
     <div dir="ltr" className="my-4 overflow-x-auto">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        style={{ width: '100%', maxWidth: width, minWidth: Math.min(width, 300), display: 'block', margin: '0 auto' }}
+        // A floor of 60% scale: a flat 300px floor shrank an 8-leaf tree to ~37% on a
+        // phone (5px labels). Wider trees scroll inside the overflow-x-auto wrapper.
+        style={{ width: '100%', maxWidth: width, minWidth: Math.min(width, Math.max(300, width * 0.6)), display: 'block', margin: '0 auto' }}
         role="img"
         aria-label="עץ הסתברויות"
       >
