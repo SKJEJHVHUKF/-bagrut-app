@@ -169,6 +169,12 @@ const MECHANISMS: [string, RegExp][] = [
   // have. Same class as the dead \b table in lib/tutor-local's Hebrew cues.
   ['union', /(?:^|[^א-ת])או(?:[^א-ת]|$)|איחוד/],
   ['total-probability', /הסתברות שלמה|נוסחת ההסתברות השלמה|מפצלים למקרים/],
+  // A process that STOPS — "מפסיק מייד לאחר ש…" (571, summer 2025, part ד),
+  // "עד שיש אחד מכל סוג", first success on trial k. The event has to be split
+  // at the stopping trial before any formula applies (C(4,2)·p²q² is exactly
+  // double pr-x-ber-206's answer). The model had no detector for it at all
+  // (pr-bernoulli author, 2026-09-14), so the move scored as nothing.
+  ['stopping', /מפסיק(?:ה|ים|ות)?\s+(?:\S+\s+)?(?:ברגע|מייד|מיד|כאשר|כש|לאחר)|עד ש(?:יש|יתקבל|תתקבל|יצא|תצא|יגיע|תגיע|ינצח|תנצח|ימצא|נמצא|יופיע|תופיע|יקלע|תקלע)|בפעם הראשונה ש|לראשונה (?:ב|רק ב)/],
 ];
 
 const mechanisms = (q: PracticeQuestion): string[] => {
