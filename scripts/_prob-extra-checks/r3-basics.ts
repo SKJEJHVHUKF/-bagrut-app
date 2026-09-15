@@ -394,7 +394,7 @@ const B = 'prob-bag-x-bas-';
   checkLive('06ג', `${B}06/ג`, cat([D, D, D, D, D], (o) => stopAt(o) <= 4 && o[stopAt(o) - 1] === 1));
   checkLive('06ד', `${B}06/ד`, cat([D, D, D, D, D], (o) => stopAt(o) <= 4));
   // smallest planned number of calls n with P(stop within n) > 0.99, by brute force over n answers
-  const within = (n: number) => cat(Array(n).fill(D), (o) => stopAt(o) <= n);
+  const within = (n: number) => cat(Array.from({ length: n }, () => D), (o) => stopAt(o) <= n);
   checkLive('06ה', `${B}06/ה`, range(2, 14).find((n) => within(n) > 0.99)!);
 }
 { // 07 — football: win = 2 draw, P(no points in 2) = 0.16
@@ -526,7 +526,7 @@ const B = 'prob-bag-x-bas-';
 }
 { // 17 — debate bracket
   const beat: Record<string, number> = { AB: 0.6, AD: 0.9, CD: 0.7, BC: 0.4, BD: 0.6 };
-  const pr = (x: string, y: string, AC: number) => { const b = { ...beat, AC }; return b[x + y] ?? 1 - b[y + x]; };
+  const pr = (x: string, y: string, AC: number) => { const b: Record<string, number> = { ...beat, AC }; return b[x + y] ?? 1 - b[y + x]; };
   const champ = (team: string, AC: number, s1: [string, string] = ['A', 'B'], s2: [string, string] = ['C', 'D']) => {
     let t = 0;
     for (const w1 of s1) for (const w2 of s2) {

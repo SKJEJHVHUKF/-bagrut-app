@@ -98,40 +98,9 @@ const Pgiven = (pop: Person[], a: (p: Person) => boolean, b: (p: Person) => bool
 }
 
 // ===========================================================================
-// 104 — 45% car, 60% canteen, 30% both. A student's table has exactly two
-//       wrong squares. Asked: the correct margin, the correct cell, and then
-//       P(no car | no canteen) off the CORRECTED table.
+// 104 — rewritten 2026-09-15 (no longer a find-the-error on a faulty table) and
+//       moved to pr-conditional; checked against the live lesson in r3-conditional.ts.
 // ===========================================================================
-{
-  const pCar = 0.45, pEat = 0.60, pBoth = 0.30;
-  const carNot = pCar - pBoth;            // 0.15
-  const notCarEat = pEat - pBoth;         // 0.30
-  const notEatMargin = 1 - pEat;          // 0.40 — the student wrote 0.45
-  const notCarNotEat = (1 - pCar) - notCarEat; // 0.25 — the student wrote 0.30
-  check('104 car∧not-eat cell', carNot, 0.15);
-  check('104 not-car∧eat cell', notCarEat, 0.3);
-  checkSet('104 answers (a)', [notEatMargin, notCarNotEat], [0.4, 0.25]);
-  // the corrected table closes; the student's does not — that is what "two
-  // wrong squares" means, and it is checked, not asserted
-  check('104 corrected cells sum to 1', pBoth + carNot + notCarEat + notCarNotEat, 1);
-  check('104 student cells sum to 1.05', 0.3 + 0.15 + 0.3 + 0.3, 1.05);
-  check('104 not-eat column closes', carNot + notCarNotEat, notEatMargin);
-  check('104 not-car row closes', notCarEat + notCarNotEat, 1 - pCar);
-  // part (b), counted from the corrected population (per 100 employees)
-  const pop104 = population([
-    { count: 30, attrs: { car: 'yes', eat: 'yes' } },
-    { count: 15, attrs: { car: 'yes', eat: 'no' } },
-    { count: 30, attrs: { car: 'no', eat: 'yes' } },
-    { count: 25, attrs: { car: 'no', eat: 'no' } },
-  ]);
-  const b104 = Pgiven(pop104, (p) => p.car === 'no', (p) => p.eat === 'no');
-  check('104 P(no car | no canteen)', b104, 0.625);
-  check('104 (b) denominator is the column margin', P(pop104, (p) => p.eat === 'no'), 0.4);
-  // wrong answers
-  check('104 wrong: on the student table', frac(0.3, 0.45), 2 / 3);
-  check('104 wrong: margin fixed, cell not', frac(0.3, 0.4), 0.75);
-  check('104 wrong: divided by everyone', frac(0.25, 1), 0.25);
-}
 
 // ===========================================================================
 // 105 — 200 customers, card × promo. Independence test.
