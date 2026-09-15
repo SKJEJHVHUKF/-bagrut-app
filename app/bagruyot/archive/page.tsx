@@ -73,12 +73,35 @@ function sessionKeyOf(q: PastBagrutQuestion): string {
 }
 
 /** Card colour per שאלון — values from the design file, one hue family each. */
-const PAPER_STYLE: Record<string, { bg: string; border: string; badge: string; icon: 'doc' | 'book' | 'cap' }> = {
-  '571': { bg: '#E7F6EC', border: '#3DA85A', badge: '#2F8F4A', icon: 'doc' },
-  '572': { bg: '#E6F0FB', border: '#3B82C4', badge: '#2A6FB5', icon: 'book' },
-  '581': { bg: '#F2ECFF', border: '#8B5CF6', badge: '#7C3AED', icon: 'cap' },
-  '582': { bg: '#FDF5DE', border: '#C4940F', badge: '#B8860B', icon: 'cap' },
+const PAPER_STYLE: Record<
+  string,
+  { bg: string; border: string; badge: string; ink: string; icon: 'doc' | 'book' | 'cap' }
+> = {
+  '571': { bg: '#E7F6EC', border: '#3DA85A', badge: '#2F8F4A', ink: '#1E6B35', icon: 'doc' },
+  '572': { bg: '#E6F0FB', border: '#3B82C4', badge: '#2A6FB5', ink: '#1E4E80', icon: 'book' },
+  '581': { bg: '#F2ECFF', border: '#8B5CF6', badge: '#7C3AED', ink: '#5B21B6', icon: 'cap' },
+  '582': { bg: '#FDF5DE', border: '#C4940F', badge: '#B8860B', ink: '#7A5B08', icon: 'cap' },
 };
+
+/** `#RRGGBB` at an alpha — the soft-tint direction (round 10 ב) mixes every
+ *  border, badge and shadow from the one paper colour. */
+function hexA(hex: string, a: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+/** The soft pill badge of direction ב: tinted fill, same-hue border, dark ink. */
+function PaperBadge({ paper }: { paper: string }) {
+  const st = PAPER_STYLE[paper] ?? PAPER_STYLE['581'];
+  return (
+    <span
+      className="rounded-full px-2.5 py-[3px] text-xs font-semibold whitespace-nowrap border"
+      style={{ background: hexA(st.badge, 0.12), color: st.ink, borderColor: hexA(st.badge, 0.25) }}
+    >
+      שאלון {paper}
+    </span>
+  );
+}
 
 /** How many exam cards show before "עוד N בגרויות". */
 const FIRST_CARDS = 9;
@@ -229,7 +252,7 @@ export default function BagruyotArchivePage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {visible.map((s) => (
                 <ExamCard key={s.key} session={s} onOpen={() => setOpenSession(s.key)} />
               ))}
@@ -260,34 +283,33 @@ function ExamCard({ session, onOpen }: { session: Session; onOpen: () => void })
   return (
     <button
       onClick={onOpen}
-      className="relative overflow-hidden text-right rounded-[18px] p-6 h-40 flex flex-col items-start gap-2 border-[1.6px] shadow-[0_2px_4px_rgba(15,20,17,0.06),0_1px_2px_rgba(15,20,17,0.08)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7C3AED]"
-      style={{ background: st.bg, borderColor: st.border }}
+      className="relative overflow-hidden text-right rounded-[20px] p-6 h-44 flex flex-col items-start gap-2 border transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7C3AED]"
+      style={{
+        background: `linear-gradient(155deg, ${st.bg} 0%, #FFFFFF 78%)`,
+        borderColor: hexA(st.border, 0.45),
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.9), 0 14px 30px -18px ${hexA(st.badge, 0.45)}`,
+      }}
     >
-      <span
-        className="rounded-full px-2 py-0.5 text-xs font-medium text-white whitespace-nowrap"
-        style={{ background: st.badge }}
-      >
-        שאלון {session.paper}
-      </span>
-      <span className="text-[26px] font-bold leading-tight">{seasonLabel(session)}</span>
+      <PaperBadge paper={session.paper} />
+      <span className="text-[28px] font-bold leading-tight tracking-[-0.01em]">{seasonLabel(session)}</span>
       <span className="text-sm text-[#4F5566]">
         {session.moed ? `${MOED_LABEL[session.moed]} · ` : ''}
         {questionsLabel(session.count)}
       </span>
-      <PaperIcon kind={st.icon} />
+      <PaperIcon kind={st.icon} color={st.badge} />
     </button>
   );
 }
 
-/** The grey corner line-art from the design, one drawing per שאלון family. */
-function PaperIcon({ kind }: { kind: 'doc' | 'book' | 'cap' }) {
+/** The corner line-art, one drawing per שאלון family, in the paper's own colour. */
+function PaperIcon({ kind, color }: { kind: 'doc' | 'book' | 'cap'; color: string }) {
   return (
     <svg
       aria-hidden
       viewBox="0 0 160 160"
-      className="absolute left-2.5 -bottom-3 w-28 h-28 opacity-[0.22]"
+      className="absolute left-[18px] bottom-3.5 w-[84px] h-[84px] opacity-30"
       fill="none"
-      stroke="#1F2430"
+      stroke={color}
       strokeWidth={5}
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -347,12 +369,7 @@ function ExamView({
           <ArrowRight className="w-4 h-4" />
           כל הבגרויות
         </button>
-        <span
-          className="rounded-full px-2 py-0.5 text-xs font-medium text-white whitespace-nowrap"
-          style={{ background: st.badge }}
-        >
-          שאלון {session.paper}
-        </span>
+        <PaperBadge paper={session.paper} />
         <h1 className="m-0 text-[28px] sm:text-[32px] leading-10 font-bold">
           {seasonLabel(session)}
           {session.moed ? ` · ${MOED_LABEL[session.moed]}` : ''}
@@ -361,8 +378,12 @@ function ExamView({
       </header>
 
       <section
-        className="bg-white rounded-[18px] overflow-hidden border-[1.6px] divide-y divide-slate-900/[0.06] shadow-[0_2px_4px_rgba(15,20,17,0.06),0_1px_2px_rgba(15,20,17,0.08)]"
-        style={{ borderColor: st.border }}
+        className="rounded-[20px] overflow-hidden border divide-y divide-slate-900/[0.06]"
+        style={{
+          background: `linear-gradient(170deg, ${st.bg} 0%, #FFFFFF 22%)`,
+          borderColor: hexA(st.border, 0.45),
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.9), 0 14px 30px -20px ${hexA(st.badge, 0.4)}`,
+        }}
       >
         {questions.map((q) => (
           <QuestionCard
