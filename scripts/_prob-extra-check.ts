@@ -114,6 +114,17 @@ const BAGRUT_MIN = 20;
  *  least the archive's HARDEST-part average (the archive's average part is ~12). */
 const R3_BAGRUT_HARDEST = 1.15;
 const R3_BAGRUT_MEAN = 1.0;
+/**
+ * Pairs a READING found to be different questions where the signature cannot
+ * see the difference (it has no notion of the KIND of condition an unknown is
+ * recovered from). Keyed on the exact pair, so a new twin still fails.
+ */
+const READ_NOT_A_RESTATEMENT: Record<string, string> = {
+  // 105 recovers p from "none of 5 = 0.00243" (a fifth root); 201 from
+  // "P(2) = 6·P(3)" (a ratio of terms, linear). pr-bernoulli verifier, 2026-09-15.
+  'pr-x-ber-201': 'pr-x-ber-105',
+};
+
 /** `1.5 + 0.3 === 1.8000000000000003`: a threshold met exactly must pass. */
 const EPS = 1e-6;
 const DUMP = process.argv.includes('--dump');
@@ -713,7 +724,7 @@ function checkStage(stageId: string): boolean {
           // when the round-2 question is not clearly (2+) above its twin.
           const twin = lowerSigsR1.get(signature(q));
           const twinQ = twin ? older.find((x) => x.id === twin) : undefined;
-          if (twinQ && s - difficulty(twinQ).score < 2 - EPS) err(q.id, 'round2-mid-restatement', `same ask + mechanisms as ${twin}, and only ${(s - difficulty(twinQ).score).toFixed(1)} above it`);
+          if (twinQ && s - difficulty(twinQ).score < 2 - EPS && READ_NOT_A_RESTATEMENT[q.id] !== twin) err(q.id, 'round2-mid-restatement', `same ask + mechanisms as ${twin}, and only ${(s - difficulty(twinQ).score).toFixed(1)} above it`);
         }
       }
       // (round 2's own "≥4 per rung" target retired 2026-09-14: RUNG_MIN = 20 is the
