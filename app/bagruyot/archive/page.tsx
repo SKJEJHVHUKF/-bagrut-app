@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   ArrowRight,
   ScanLine,
+  Home,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { MathText } from '@/components/practice/MathText';
@@ -166,7 +167,15 @@ export default function BagruyotArchivePage() {
         }}
       />
 
-      <div className="mx-auto max-w-[1008px] flex flex-col gap-7">
+      <div className="relative mx-auto max-w-[1008px] flex flex-col gap-7">
+        {/* Top-left (the end side in RTL): back to the home screen, on both views. */}
+        <Link
+          href="/"
+          className="absolute left-0 top-0 inline-flex items-center gap-1.5 rounded-full border-[1.6px] border-[#E2E0EA] bg-white px-4 py-1.5 text-sm text-[#3D4250] transition-colors hover:border-[#8B5CF6] hover:text-[#5B21B6]"
+        >
+          <Home className="w-4 h-4" />
+          מסך הבית
+        </Link>
         {current ? (
           <ExamView
             session={current}
