@@ -232,6 +232,20 @@ const cond = <T>(sp: W<T>[], a: (o: T[]) => boolean, b: (o: T[]) => boolean) => 
   check('332 max neither .3 < .35', mxNeither < 0.35 ? 1 : 0, 1);
   check('332 w .65', 1 - x, 0.65);
 }
+{ // 333 — cinema, whole population of 100 viewers: teens 40, teens&popcorn 25, adults&no-popcorn 45; two independent picks, exactly one buys
+  const viewers: [string, boolean][] = [
+    ...Array.from({ length: 25 }, (): [string, boolean] => ['teen', true]),
+    ...Array.from({ length: 40 - 25 }, (): [string, boolean] => ['teen', false]),
+    ...Array.from({ length: 45 }, (): [string, boolean] => ['adult', false]),
+  ];
+  while (viewers.length < 100) viewers.push(['adult', true]); // the rest are adults who buy
+  const person: W<number> = viewers.map(([, buys]) => [buys ? 1 : 0, 1 / 100]);
+  checkLive('333', 'pr-x-prc-333', wEnum(rep(2, person), (o) => cnt1(o) === 1));
+  const buy = viewers.filter(([, b]) => b).length / 100;
+  check('333 w one path', buy * (1 - buy), 0.24);
+  check('333 w cell as p', wEnum(rep(2, bern(0.25)), (o) => cnt1(o) === 1), 0.375);
+  check('333 w both', wEnum(rep(2, person), (o) => cnt1(o) === 2), 0.16);
+}
 
 // ============================ bagrut ============================
 { // 02 — ring .6 / .2, P(sabachi | ring)=.75

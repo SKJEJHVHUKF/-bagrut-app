@@ -739,7 +739,7 @@ export const EXTRA_BAGRUT: StaticBagrutQuestion[] = [
             '$0.4p = 0.24$, ולכן $p = 0.6$.',
             'בדיקה: $0.51 + 0.4 \\cdot 0.6 = 0.51 + 0.24 = 0.75$ כנתון ✓.',
           ],
-          final_answer: 'ההסתברות שתפוז ממטע ב׳ מיועד לייצוא: $p = 0.6$',
+          final_answer: '⁦p $= 0.6$⁩',
         },
         expected: { kind: 'value', value: '0.6' },
       },

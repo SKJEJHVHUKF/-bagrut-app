@@ -1,6 +1,6 @@
 /**
  * r3-bernoulli.ts — adversarial re-derivation of the pr-bernoulli round-3 items:
- * practice pr-x-ber-301…334 and bagrut prob-bag-x-ber-02…19.
+ * practice pr-x-ber-301…335 and bagrut prob-bag-x-ber-02…19.
  *
  * No Bernoulli formula is re-applied here. Every answer is obtained by
  * ENUMERATING the outcome sequences (k^n of them, each weighted by the product of
@@ -294,6 +294,17 @@ const ints = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_,
   check('334 w exactly 1', seq(4, B(0.3), (s) => cnt(s, 'S') === 1), 0.4116);
   check('334 w 3 or 4', seq(4, B(0.3), (s) => cnt(s, 'S') >= 3), 0.0837);
 }
+{ // 335 10-question exam, m known for sure, the rest guessed at 1/4; pass at ≥ 8 correct
+  // every question is a trial: known ones succeed with probability 1
+  const pass = (m: number) => seqD([...Array(m).fill(B(1)), ...Array(10 - m).fill(B(0.25))], (s) => cnt(s, 'S') >= 8);
+  const minKnown = ints(0, 10).find((m) => pass(m) > 0.5)!;
+  checkLive('335', 'pr-x-ber-335', [pass(6), minKnown]);
+  check('335 monotone in m', ints(0, 9).every((m) => pass(m + 1) >= pass(m)) ? 1 : 0, 1);
+  check('335 w at most one guess', seqD(Array(4).fill(B(0.25)), (s) => cnt(s, 'S') <= 1), 189 / 256);
+  check('335 w exactly two guesses', seqD(Array(4).fill(B(0.25)), (s) => cnt(s, 'S') === 2), 27 / 128);
+  check('335 w exactly one of three', seqD(Array(3).fill(B(0.25)), (s) => cnt(s, 'S') === 1), 27 / 64);
+  check('335 w m=7 real', pass(7), 37 / 64);
+}
 
 // ============================ bagrut ============================
 { // 02 penalties
@@ -327,9 +338,14 @@ const ints = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_,
   checkLive('03ג', 'prob-bag-x-ber-03/ג', seq(5, run(x), (s) => cnt(s, 'RR') >= 2));
   checkLive('03ד', 'prob-bag-x-ber-03/ד', seq(5, run(x), (s) => cnt(s, 'RR') === 2 && cnt(s, 'RW') === 3));
 }
-{ // 04 museum: subscription 0.5, sub&tour 0.3, P(tour)=p from P(no tour among 3)=0.125
-  const p = solve((v) => seq(3, B(v), (s) => cnt(s, 'S') === 0), 0.125);
-  const cells: Out[] = [['ST', 0.3], ['Sx', 0.5 - 0.3], ['xT', p - 0.3], ['xx', 1 - 0.5 - (p - 0.3)]];
+{ // 04 museum: subscription 0.5, sub&tour 0.3, no-sub&no-tour 0.3 (whole population); p = P(tour)
+  // population of 10 equally likely visitor types built from the stated cells, p read off it
+  const pop = [...Array(3).fill('ST'), ...Array(5 - 3).fill('Sx'), ...Array(3).fill('xx')]; // 5 of 10 subscribe
+  while (pop.length < 10) pop.push('xT'); // the rest of the population is the one missing cell
+  check('04 subscription margin', pop.filter((o) => o[0] === 'S').length / 10, 0.5);
+  const share = (o: string) => pop.filter((x) => x === o).length / 10;
+  const p = share('ST') + share('xT');
+  const cells: Out[] = [['ST', share('ST')], ['Sx', share('Sx')], ['xT', share('xT')], ['xx', share('xx')]];
   checkLive('04א', 'prob-bag-x-ber-04/א', [p, cells[2][1]]);
   const orP = cells.filter(([o]) => o !== 'xx').reduce((a, [, v]) => a + v, 0);
   checkLive('04ב', 'prob-bag-x-ber-04/ב', seq(4, B(orP), (s) => cnt(s, 'S') >= 3));
@@ -396,12 +412,13 @@ const ints = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_,
   checkLive('09ד', 'prob-bag-x-ber-09/ד', decl);
   checkLive('09ה', 'prob-bag-x-ber-09/ה', seq(3, B(decl), (s) => cnt(s, 'S') === 1));
 }
-{ // 10 weekly lottery
-  const p = solve((x) => seq(2, B(x), (s) => cnt(s, 'S') >= 1), 5 / 9);
-  checkLive('10א', 'prob-bag-x-ber-10/א', p);
-  checkLive('10ב', 'prob-bag-x-ber-10/ב', seq(4, B(p), (s) => cnt(s, 'S') >= 2));
-  checkLive('10ג', 'prob-bag-x-ber-10/ג', seq(8, B(p), (s) => cnt(s, 'S') <= 2));
-  checkLive('10ד', 'prob-bag-x-ber-10/ד', seq(8, B(p), (s) => cnt(s.slice(0, 4), 'S') >= 1 && cnt(s.slice(4), 'S') >= 1 && cnt(s, 'S') <= 2));
+{ // 10 weekly lottery: win 1/3 a week, season of n weeks, P(exactly one win in a season) = 32/81
+  const p = 1 / 3;
+  const n = solve((m) => seq(m, B(p), (s) => cnt(s, 'S') === 1), 32 / 81, () => true, ints(1, 14));
+  checkLive('10א', 'prob-bag-x-ber-10/א', n);
+  checkLive('10ב', 'prob-bag-x-ber-10/ב', seq(n, B(p), (s) => cnt(s, 'S') >= 2));
+  checkLive('10ג', 'prob-bag-x-ber-10/ג', seq(2 * n, B(p), (s) => cnt(s, 'S') <= 2));
+  checkLive('10ד', 'prob-bag-x-ber-10/ד', seq(2 * n, B(p), (s) => cnt(s.slice(0, n), 'S') >= 1 && cnt(s.slice(n), 'S') >= 1 && cnt(s, 'S') <= 2));
 }
 { // 11 bolts
   const p = solve((x) => seq(4, B(x), (s) => cnt(s, 'S') === 0), 0.4096);
@@ -452,9 +469,11 @@ const ints = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_,
   checkLive('15ג', 'prob-bag-x-ber-15/ג', seq(6, B(p), (s) => Math.abs(cnt(s, 'S') - cnt(s, 'F')) === 2));
   checkLive('15ד', 'prob-bag-x-ber-15/ד', seq(6, B(p), (s) => cnt(s, 'S') > cnt(s, 'F') && cnt(s.slice(0, 3), 'F') > cnt(s.slice(0, 3), 'S')));
 }
-{ // 16 restaurant: web 60%, web & no-show 8%, both of 2 arrive = 0.64
-  const q = solve((v) => seq(2, B(v), (s) => cnt(s, 'S') === 2), 0.64);
-  const x = (1 - q) - 0.08;
+{ // 16 restaurant: web 60%, web & no-show 8%, phone & arrives 28% (whole population of 100 orders)
+  const orders = [...Array(60 - 8).fill('WA'), ...Array(8).fill('WN'), ...Array(28).fill('PA')];
+  while (orders.length < 100) orders.push('PN'); // the remaining orders are phone & no-show
+  const x = orders.filter((o) => o === 'PN').length / 100;
+  const q = orders.filter((o) => o[1] === 'A').length / 100; // P(arrives), used by ב–ד
   checkLive('16א', 'prob-bag-x-ber-16/א', x);
   checkLive('16ב', 'prob-bag-x-ber-16/ב', seq(6, B(q), (s) => 5 - cnt(s, 'S') >= 2));
   const ok = ints(5, 10).filter((m) => seq(m, B(q), (s) => cnt(s, 'S') > 5) <= 0.5);
@@ -462,10 +481,11 @@ const ints = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_,
   check('16ג monotone: 7 and 8 fail', ok.includes(7) || ok.includes(8) ? 0 : 1, 1);
   checkLive('16ד', 'prob-bag-x-ber-16/ד', seqD([...Array(6).fill(B(q)), ...Array(4).fill(B(0.5))], (s) => cnt(s, 'S') === 9));
 }
-{ // 17 servers
-  const p = solve((x) => seq(3, B(x), (s) => cnt(s, 'S') === 0), 0.008);
-  checkLive('17א', 'prob-bag-x-ber-17/א', p);
-  const a = seq(3, B(p), (s) => cnt(s, 'S') >= 2), b = seq(5, B(p), (s) => cnt(s, 'S') >= 3), c = seq(2, B(p), (s) => cnt(s, 'S') >= 1);
+{ // 17 servers: each up 0.8; service A on n servers, P(exactly one of them up) = 0.096
+  const p = 0.8;
+  const n = solve((m) => seq(m, B(p), (s) => cnt(s, 'S') === 1), 0.096, () => true, ints(1, 14));
+  checkLive('17א', 'prob-bag-x-ber-17/א', n);
+  const a = seq(n, B(p), (s) => cnt(s, 'S') >= 2), b = seq(5, B(p), (s) => cnt(s, 'S') >= 3), c = seq(2, B(p), (s) => cnt(s, 'S') >= 1);
   checkLive('17ב', 'prob-bag-x-ber-17/ב', a);
   checkLive('17ג', 'prob-bag-x-ber-17/ג', b);
   reviewedByHand('prob-bag-x-ber-17/ד', 'only service C (0.96) reaches 0.95; A 0.896 and B 0.94208 do not; enumerated below');
