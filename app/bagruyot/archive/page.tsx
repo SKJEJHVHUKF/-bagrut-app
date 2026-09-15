@@ -10,9 +10,6 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
-  Search,
-  Filter,
-  X,
   Lightbulb,
   Eye,
   CheckCircle2,
@@ -24,8 +21,6 @@ import { MathText } from '@/components/practice/MathText';
 import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
 import {
   ALL_PAST_BAGRUYOT,
-  availableYears,
-  availableTopics,
   availablePapers,
   totalQuestions,
   type PastBagrutQuestion,
@@ -39,7 +34,7 @@ const MOED_ORDER: Record<string, number> = { a: 0, b: 1, special: 2 };
 /** Within a year, קיץ is the later (newer) session. */
 const SEASON_ORDER: Record<string, number> = { summer: 0, winter: 1 };
 
-const MOED_LABEL: Record<string, string> = { a: 'מועד א׳', b: 'מועד ב׳', special: 'מועד מיוחד' };
+const MOED_LABEL: Record<string, string> = { a: 'מועד א', b: 'מועד ב', special: 'מועד מיוחד' };
 
 type Session = {
   key: string;
@@ -51,15 +46,14 @@ type Session = {
 };
 
 /**
- * The distinct exam sessions in the archive, newest first — one tile per real
- * bagrut. Without this the archive is a flat list of ~90 questions and there is
- * no way to say "show me that exam"; with it, one tap scopes the list to a
- * single שאלון+מועד.
+ * The distinct exam sessions in the archive, newest first — one card per real
+ * bagrut. Within a year the order is שאלון, then מועד, as in the 2026-09 design
+ * (M53Bagruyot): 571 א, 571 ב, 572, …
  */
 function examSessions(): Session[] {
   const map = new Map<string, Session>();
   for (const q of ALL_PAST_BAGRUYOT) {
-    const key = `${q.year}-${q.season}-${q.paper}-${q.moed ?? 'a'}`;
+    const key = sessionKeyOf(q);
     const found = map.get(key);
     if (found) found.count += 1;
     else map.set(key, { key, year: q.year, season: q.season, paper: q.paper, moed: q.moed, count: 1 });
@@ -68,14 +62,28 @@ function examSessions(): Session[] {
     (a, b) =>
       b.year - a.year ||
       SEASON_ORDER[a.season] - SEASON_ORDER[b.season] ||
-      MOED_ORDER[a.moed ?? 'a'] - MOED_ORDER[b.moed ?? 'a'] ||
-      a.paper.localeCompare(b.paper),
+      a.paper.localeCompare(b.paper) ||
+      MOED_ORDER[a.moed ?? 'a'] - MOED_ORDER[b.moed ?? 'a'],
   );
 }
 
 function sessionKeyOf(q: PastBagrutQuestion): string {
   return `${q.year}-${q.season}-${q.paper}-${q.moed ?? 'a'}`;
 }
+
+/** Card colour per שאלון — values from the design file, one hue family each. */
+const PAPER_STYLE: Record<string, { bg: string; border: string; badge: string; icon: 'doc' | 'book' | 'cap' }> = {
+  '571': { bg: '#E7F6EC', border: '#3DA85A', badge: '#2F8F4A', icon: 'doc' },
+  '572': { bg: '#E6F0FB', border: '#3B82C4', badge: '#2A6FB5', icon: 'book' },
+  '581': { bg: '#F2ECFF', border: '#8B5CF6', badge: '#7C3AED', icon: 'cap' },
+  '582': { bg: '#FDF5DE', border: '#C4940F', badge: '#B8860B', icon: 'cap' },
+};
+
+/** How many exam cards show before "עוד N בגרויות". */
+const FIRST_CARDS = 9;
+
+const questionsLabel = (n: number) => (n === 1 ? 'שאלה אחת' : `${n} שאלות`);
+const seasonLabel = (s: Session) => `${s.season === 'summer' ? 'קיץ' : 'חורף'} ${s.year}`;
 
 // The archive is open to every signed-in student — free and Pro alike.
 // Only the sign-in step remains, so progress can be attached to an account.
@@ -84,11 +92,9 @@ type AuthState = { status: 'loading' } | { status: 'unauthenticated' } | { statu
 export default function BagruyotArchivePage() {
   const [auth, setAuth] = useState<AuthState>({ status: 'loading' });
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [filterYear, setFilterYear] = useState<number | 'all'>('all');
   const [filterPaper, setFilterPaper] = useState<BagrutPaper | 'all'>('all');
-  const [filterTopic, setFilterTopic] = useState<string | 'all'>('all');
-  const [filterSession, setFilterSession] = useState<string | 'all'>('all');
-  const [query, setQuery] = useState('');
+  const [openSession, setOpenSession] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -101,93 +107,11 @@ export default function BagruyotArchivePage() {
     });
   }, []);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return ALL_PAST_BAGRUYOT.filter((qn) => {
-      if (filterSession !== 'all' && sessionKeyOf(qn) !== filterSession) return false;
-      if (filterYear !== 'all' && qn.year !== filterYear) return false;
-      if (filterPaper !== 'all' && qn.paper !== filterPaper) return false;
-      if (filterTopic !== 'all' && qn.topic !== filterTopic) return false;
-      if (q) {
-        const hay = [qn.context, qn.topic, ...qn.parts.map((p) => p.prompt)].join(' ').toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    })
-      // Newest session first — otherwise a paper added today lands at the
-      // bottom of ~80 questions and reads as "it isn't there".
-      .sort(
-        (a, b) =>
-          b.year - a.year ||
-          SEASON_ORDER[a.season] - SEASON_ORDER[b.season] ||
-          MOED_ORDER[a.moed ?? 'a'] - MOED_ORDER[b.moed ?? 'a'] ||
-          a.paper.localeCompare(b.paper) ||
-          a.questionNumber - b.questionNumber,
-      );
-  }, [filterSession, filterYear, filterPaper, filterTopic, query]);
-
-  const anyFilter =
-    filterSession !== 'all' ||
-    filterYear !== 'all' ||
-    filterPaper !== 'all' ||
-    filterTopic !== 'all' ||
-    !!query.trim();
-
-  /**
-   * The results, grouped by exam session instead of served as one long queue.
-   *
-   * A flat list of 100+ identical rows gives a student no way to see "this is
-   * one bagrut, these are its eight questions" — which is exactly how the exam
-   * is written and how revision is planned. Grouping turns the page into an
-   * index of ~20 exams that opens into questions 1–8, in the paper's own order.
-   */
-  const groups = useMemo(() => {
-    const out: { key: string; session: Session; questions: PastBagrutQuestion[] }[] = [];
-    for (const q of filtered) {
-      const key = sessionKeyOf(q);
-      const last = out[out.length - 1];
-      if (last && last.key === key) last.questions.push(q);
-      else
-        out.push({
-          key,
-          session: {
-            key,
-            year: q.year,
-            season: q.season,
-            paper: q.paper,
-            moed: q.moed,
-            count: 0,
-          },
-          questions: [q],
-        });
-    }
-    for (const g of out) g.session.count = g.questions.length;
-    return out;
-  }, [filtered]);
-
-  /**
-   * Which groups are open. Closed by default so the page opens as a tidy index;
-   * but the moment a filter narrows the list, keeping everything shut would hide
-   * the very questions the student searched for — so a filtered view opens all.
-   */
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
-  const groupIsOpen = (key: string) => (anyFilter ? !openGroups.has(key) : openGroups.has(key));
-  const toggleGroup = (key: string) =>
-    setOpenGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-
-  const clearFilters = () => {
-    setFilterSession('all');
-    setFilterYear('all');
-    setFilterPaper('all');
-    setFilterTopic('all');
-    setQuery('');
-    setOpenGroups(new Set());
-  };
+  const sessions = useMemo(() => examSessions(), []);
+  const shown = useMemo(
+    () => sessions.filter((s) => filterPaper === 'all' || s.paper === filterPaper),
+    [sessions, filterPaper],
+  );
 
   // ---------- Auth gates ----------
 
@@ -219,298 +143,228 @@ export default function BagruyotArchivePage() {
 
   // ---------- Main UI ----------
 
-  const years = availableYears();
-  const topics = availableTopics();
-  const papers = availablePapers();
   const totalCount = totalQuestions();
-  const sessions = examSessions();
-  const hasActiveFilter =
-    filterSession !== 'all' || filterYear !== 'all' || filterPaper !== 'all' || filterTopic !== 'all' || !!query;
+  const years = sessions.map((s) => s.year);
+  const current = openSession ? sessions.find((s) => s.key === openSession) : undefined;
+  const visible = showAll ? shown : shown.slice(0, FIRST_CARDS);
+  const hidden = shown.slice(visible.length);
 
   return (
-    <main className="min-h-screen px-4 sm:px-6 py-8 max-w-3xl mx-auto">
-      <header className="space-y-2 mb-6">
-        <Link
-          href="/bagruyot"
-          className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800"
-        >
-          <ArrowRight className="w-3 h-3" />
-          חזרה לדף המאגר
-        </Link>
-        <div className="text-xs font-black tracking-widest text-violet-700 uppercase flex items-center gap-2">
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>ארכיון בגרויות</span>
-        </div>
-        <h1 className="font-display text-2xl sm:text-3xl font-black leading-tight">
-          <span className="font-display text-slate-800">
-            תרגל מהבגרויות
-          </span>
-        </h1>
-        {totalCount > 0 ? (
-          <p className="text-sm text-slate-600">
-            {totalCount} שאלות מתוך {sessions.length} בגרויות אמיתיות
-            {hasActiveFilter ? ` · מוצגות ${filtered.length} שאלות ב-${groups.length} בגרויות` : ''}.
-          </p>
-        ) : (
-          <p className="text-sm text-slate-600">המאגר עדיין ריק — אנחנו בונים אותו משאלוני בגרות אמיתיים.</p>
-        )}
-      </header>
+    <main
+      className="relative min-h-screen px-4 sm:px-6 pt-10 pb-12 text-[#121420]"
+      style={{ fontFamily: 'var(--font-rubik), var(--font-heebo), Arial, sans-serif' }}
+    >
+      {/* The design's faint 40px grid and two soft corner washes. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          backgroundColor: '#FBFBFD',
+          backgroundImage:
+            'radial-gradient(800px 500px at 100% 0%, rgba(124,58,237,0.07), rgba(124,58,237,0) 70%), radial-gradient(700px 500px at 0% 100%, rgba(42,111,181,0.06), rgba(42,111,181,0) 70%), linear-gradient(rgba(124,58,237,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.055) 1px, transparent 1px)',
+          backgroundSize: 'auto, auto, 40px 40px, 40px 40px',
+        }}
+      />
 
-      {/* Empty repository — show big helpful card and skip filters */}
-      {totalCount === 0 && (
-        <div className="bg-gradient-to-br from-violet-600/10 to-violet-600/10 border border-violet-500/30 rounded-2xl p-6 sm:p-8 space-y-4">
-          <div className="text-base font-black text-slate-900">המאגר עדיין ריק — וזה במכוון</div>
-          <p className="text-sm text-slate-800 leading-relaxed">
-            המאגר הזה מיועד לשאלות מבגרויות <strong>אמיתיות</strong> בלבד, עם פתרונות מאומתים — כדי שכל
-            שאלה שתחפש פה תהיה אותנטית 100%.
-          </p>
-        </div>
-      )}
-
-      {/* Jump straight to one past exam. Without this the archive is a flat
-          list of every question ever transcribed, with no way to say
-          "show me that bagrut". */}
-      {sessions.length > 0 && (
-        <section className="mb-5">
-          <div className="text-xs font-black tracking-widest text-slate-600 uppercase mb-2">
-            קפיצה לבגרות מסוימת
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-            <button
-              onClick={() => setFilterSession('all')}
-              className={`flex-shrink-0 rounded-xl border px-3 py-2 text-right transition-colors ${
-                filterSession === 'all'
-                  ? 'bg-violet-600 border-violet-600 text-white'
-                  : 'surface-premium border-slate-900/[0.08] hover:bg-slate-900/[0.03]'
-              }`}
-            >
-              <div className="text-xs font-black leading-tight">כל השאלות</div>
-              <div className={`text-[10px] ${filterSession === 'all' ? 'text-white/80' : 'text-slate-600'}`}>
-                {totalCount} שאלות
-              </div>
-            </button>
-            {sessions.map((s) => {
-              const active = filterSession === s.key;
-              return (
-                <button
-                  key={s.key}
-                  onClick={() => setFilterSession(active ? 'all' : s.key)}
-                  className={`flex-shrink-0 rounded-xl border px-3 py-2 text-right transition-colors ${
-                    active
-                      ? 'bg-violet-600 border-violet-600 text-white'
-                      : 'surface-premium border-slate-900/[0.08] hover:bg-slate-900/[0.03]'
-                  }`}
-                >
-                  <div className="text-xs font-black leading-tight whitespace-nowrap">
-                    {s.season === 'summer' ? 'קיץ' : 'חורף'} {s.year}
-                    {s.moed ? ` · ${MOED_LABEL[s.moed]}` : ''}
-                  </div>
-                  <div
-                    className={`text-[10px] whitespace-nowrap ${active ? 'text-white/80' : 'text-slate-600'}`}
-                  >
-                    שאלון {s.paper} · {s.count} שאלות
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Search — hide when repo empty */}
-      {totalCount > 0 && (
-        <div className="relative mb-3">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="חיפוש בנוסח השאלות..."
-            className="w-full surface-premium focus:border-violet-500/60 rounded-xl pr-10 pl-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none transition-colors"
+      <div className="mx-auto max-w-[1008px] flex flex-col gap-7">
+        {current ? (
+          <ExamView
+            session={current}
+            questions={ALL_PAST_BAGRUYOT.filter((q) => sessionKeyOf(q) === current.key).sort(
+              (a, b) => a.questionNumber - b.questionNumber,
+            )}
+            onBack={() => {
+              setOpenSession(null);
+              setExpanded(null);
+            }}
+            expandedQuestion={expanded}
+            onToggleQuestion={(id) => setExpanded(expanded === id ? null : id)}
           />
-        </div>
-      )}
+        ) : (
+          <>
+            <header className="flex flex-col gap-1.5">
+              <h1 className="m-0 text-[28px] sm:text-[32px] leading-10 font-bold">בגרויות קודמות</h1>
+              {totalCount > 0 ? (
+                <p className="m-0 text-base text-[#4F5566]">
+                  {totalCount} שאלות רשמיות של משרד החינוך, {Math.min(...years)} עד {Math.max(...years)}, עם פתרון
+                  מלא לכל סעיף.
+                </p>
+              ) : (
+                <p className="m-0 text-base text-[#4F5566]">המאגר עדיין ריק, אנחנו בונים אותו משאלוני בגרות אמיתיים.</p>
+              )}
+            </header>
 
-      {/* Filters — hide when repo empty */}
-      {totalCount > 0 && (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
-            <FilterSelect
-              label="שנה"
-              value={filterYear === 'all' ? 'all' : String(filterYear)}
-              onChange={(v) => setFilterYear(v === 'all' ? 'all' : Number(v))}
-              options={[{ value: 'all', label: 'כל השנים' }, ...years.map((y) => ({ value: String(y), label: String(y) }))]}
-            />
-            <FilterSelect
-              label="שאלון"
-              value={filterPaper}
-              onChange={(v) => setFilterPaper(v as BagrutPaper | 'all')}
-              options={[
-                { value: 'all', label: 'כל השאלונים' },
-                ...papers.map((p) => ({ value: p, label: `שאלון ${p}` })),
-              ]}
-            />
-            <FilterSelect
-              label="נושא"
-              value={filterTopic}
-              onChange={setFilterTopic}
-              options={[{ value: 'all', label: 'כל הנושאים' }, ...topics.map((t) => ({ value: t, label: t }))]}
-            />
-          </div>
+            {sessions.length > 0 && (
+              <div className="flex flex-wrap gap-2" role="tablist" aria-label="סינון לפי שאלון">
+                {(['all', ...availablePapers()] as const).map((p) => {
+                  const active = filterPaper === p;
+                  return (
+                    <button
+                      key={p}
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => {
+                        setFilterPaper(p);
+                        setShowAll(false);
+                      }}
+                      className={`rounded-full px-4 py-1.5 text-sm transition-colors border-[1.6px] ${
+                        active
+                          ? 'bg-[#F2ECFF] text-[#5B21B6] border-[#8B5CF6] font-medium'
+                          : 'bg-white text-[#3D4250] border-[#E2E0EA] hover:border-[#C9C5D8]'
+                      }`}
+                    >
+                      {p === 'all' ? 'הכל' : `שאלון ${p}`}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
-          {hasActiveFilter && (
-            <button
-              onClick={clearFilters}
-              className="mb-4 inline-flex items-center gap-1.5 text-xs text-violet-700 hover:text-violet-800"
-            >
-              <X className="w-3 h-3" />
-              נקה סינונים
-            </button>
-          )}
-
-          {/* Results — one block per exam session, questions 1–8 inside it */}
-          {filtered.length === 0 ? (
-            <div className="surface-premium rounded-2xl p-8 text-center text-slate-600">
-              לא נמצאו שאלות לסינון הנוכחי. נסה לשנות פילטרים.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {groups.map((g) => (
-                <SessionGroup
-                  key={g.key}
-                  session={g.session}
-                  questions={g.questions}
-                  isOpen={groupIsOpen(g.key)}
-                  onToggle={() => toggleGroup(g.key)}
-                  expandedQuestion={expanded}
-                  onToggleQuestion={(id) => setExpanded(expanded === id ? null : id)}
-                />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
+              {visible.map((s) => (
+                <ExamCard key={s.key} session={s} onOpen={() => setOpenSession(s.key)} />
               ))}
             </div>
-          )}
-        </>
-      )}
 
-      {/* Bottom nav */}
-      <div className="mt-8 pt-6 border-t border-slate-900/10">
-        <Link href="/pricing" className="text-sm text-slate-600 hover:text-slate-800">
-          ← חזרה לתוכנית הלימוד
-        </Link>
+            {hidden.length > 0 && (
+              <button
+                onClick={() => setShowAll(true)}
+                className="self-start text-sm text-[#4F5566] hover:text-[#5B21B6] underline-offset-4 hover:underline"
+              >
+                עוד {hidden.length} בגרויות משנים {Math.min(...hidden.map((s) => s.year))} עד{' '}
+                {Math.max(...hidden.map((s) => s.year))}
+              </button>
+            )}
+          </>
+        )}
       </div>
     </main>
   );
 }
 
 // ============================================================
-// Helpers
+// ExamCard — one past bagrut in the grid (design: M53Bagruyot)
 // ============================================================
 
-function FilterSelect({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-}) {
+function ExamCard({ session, onOpen }: { session: Session; onOpen: () => void }) {
+  const st = PAPER_STYLE[session.paper] ?? PAPER_STYLE['581'];
   return (
-    <div>
-      <label className="block text-[10px] font-black tracking-widest text-slate-600 uppercase mb-1">
-        <Filter className="w-3 h-3 inline" /> {label}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full surface-premium focus:border-violet-500/60 rounded-xl px-3 py-2 text-sm text-slate-900 outline-none transition-colors"
+    <button
+      onClick={onOpen}
+      className="relative overflow-hidden text-right rounded-[18px] p-6 h-40 flex flex-col items-start gap-2 border-[1.6px] shadow-[0_2px_4px_rgba(15,20,17,0.06),0_1px_2px_rgba(15,20,17,0.08)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7C3AED]"
+      style={{ background: st.bg, borderColor: st.border }}
+    >
+      <span
+        className="rounded-full px-2 py-0.5 text-xs font-medium text-white whitespace-nowrap"
+        style={{ background: st.badge }}
       >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value} className="bg-white text-slate-900">
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
+        שאלון {session.paper}
+      </span>
+      <span className="text-[26px] font-bold leading-tight">{seasonLabel(session)}</span>
+      <span className="text-sm text-[#4F5566]">
+        {session.moed ? `${MOED_LABEL[session.moed]} · ` : ''}
+        {questionsLabel(session.count)}
+      </span>
+      <PaperIcon kind={st.icon} />
+    </button>
+  );
+}
+
+/** The grey corner line-art from the design, one drawing per שאלון family. */
+function PaperIcon({ kind }: { kind: 'doc' | 'book' | 'cap' }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 160 160"
+      className="absolute left-2.5 -bottom-3 w-28 h-28 opacity-[0.22]"
+      fill="none"
+      stroke="#1F2430"
+      strokeWidth={5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {kind === 'doc' && (
+        <>
+          <path d="M40 14h60l24 24v108H40Z" />
+          <path d="M100 14v24h24" />
+          <path d="M54 56h54M54 74h54M54 92h34" />
+          <path d="M60 118l12 12 24-26" />
+        </>
+      )}
+      {kind === 'book' && (
+        <>
+          <path d="M80 40C62 28 38 26 16 30v96c22-4 46-2 64 10 18-12 42-14 64-10V30c-22-4-46-2-64 10Z" />
+          <path d="M80 40v96" />
+          <path d="M30 52c14-2 28 0 38 6M30 72c14-2 28 0 38 6M92 58c10-6 24-8 38-6M92 78c10-6 24-8 38-6" />
+        </>
+      )}
+      {kind === 'cap' && (
+        <>
+          <path d="M12 64L80 34l68 30-68 30Z" />
+          <path d="M40 78v32c24 18 56 18 80 0V78" />
+          <path d="M148 64v40" />
+          <circle cx="148" cy="110" r="6" />
+        </>
+      )}
+    </svg>
   );
 }
 
 // ============================================================
-// SessionGroup — one real bagrut, with its questions in the paper's own order
+// ExamView — one bagrut opened from its card: questions 1–8 in paper order
 // ============================================================
-//
-// The header carries the identity (שאלון · עונה+שנה · מועד) once, so the rows
-// below it can drop those three badges and show only what differs between
-// them: the question number and its topic. That is what turns the page from a
-// queue of look-alike rows into an index a student can scan.
 
-function SessionGroup({
+function ExamView({
   session,
   questions,
-  isOpen,
-  onToggle,
+  onBack,
   expandedQuestion,
   onToggleQuestion,
 }: {
   session: Session;
   questions: PastBagrutQuestion[];
-  isOpen: boolean;
-  onToggle: () => void;
+  onBack: () => void;
   expandedQuestion: string | null;
   onToggleQuestion: (id: string) => void;
 }) {
-  const seasonHeb = session.season === 'summer' ? 'קיץ' : 'חורף';
-  const moedHeb = session.moed ? MOED_LABEL[session.moed] : null;
-  const topics = Array.from(new Set(questions.map((q) => q.topic)));
-
+  const st = PAPER_STYLE[session.paper] ?? PAPER_STYLE['581'];
   return (
-    <section className="surface-premium rounded-2xl overflow-hidden">
-      <button
-        onClick={onToggle}
-        aria-expanded={isOpen}
-        className="w-full text-right px-4 py-3.5 hover:bg-slate-900/[0.02] transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-violet-600/10 border border-violet-500/25 flex flex-col items-center justify-center leading-none">
-            <span className="text-[9px] font-bold text-violet-700">שאלון</span>
-            <span className="text-xs font-black text-violet-800">{session.paper}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="font-display text-base font-black text-slate-900">
-                {seasonHeb} {session.year}
-              </span>
-              {moedHeb && (
-                <span className="bg-amber-500/15 border border-amber-500/30 rounded-full px-2 py-0.5 text-[10px] font-bold text-amber-800">
-                  {moedHeb}
-                </span>
-              )}
-              <span className="text-[11px] font-bold text-slate-600">
-                {questions.length} שאלות
-              </span>
-            </div>
-            <div className="mt-0.5 text-[11px] text-slate-500 truncate">{topics.join(' · ')}</div>
-          </div>
-          <div className="flex-shrink-0 text-slate-500">
-            {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </div>
-        </div>
-      </button>
+    <>
+      <header className="flex flex-col items-start gap-2">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-1 text-sm text-[#4F5566] hover:text-[#5B21B6]"
+        >
+          <ArrowRight className="w-4 h-4" />
+          כל הבגרויות
+        </button>
+        <span
+          className="rounded-full px-2 py-0.5 text-xs font-medium text-white whitespace-nowrap"
+          style={{ background: st.badge }}
+        >
+          שאלון {session.paper}
+        </span>
+        <h1 className="m-0 text-[28px] sm:text-[32px] leading-10 font-bold">
+          {seasonLabel(session)}
+          {session.moed ? ` · ${MOED_LABEL[session.moed]}` : ''}
+        </h1>
+        <p className="m-0 text-base text-[#4F5566]">{questionsLabel(questions.length)}, עם פתרון מלא לכל סעיף.</p>
+      </header>
 
-      {isOpen && (
-        <div className="border-t border-slate-900/10 divide-y divide-slate-900/[0.06]">
-          {questions.map((q) => (
-            <QuestionCard
-              key={q.id}
-              question={q}
-              isOpen={expandedQuestion === q.id}
-              onToggle={() => onToggleQuestion(q.id)}
-            />
-          ))}
-        </div>
-      )}
-    </section>
+      <section
+        className="bg-white rounded-[18px] overflow-hidden border-[1.6px] divide-y divide-slate-900/[0.06] shadow-[0_2px_4px_rgba(15,20,17,0.06),0_1px_2px_rgba(15,20,17,0.08)]"
+        style={{ borderColor: st.border }}
+      >
+        {questions.map((q) => (
+          <QuestionCard
+            key={q.id}
+            question={q}
+            isOpen={expandedQuestion === q.id}
+            onToggle={() => onToggleQuestion(q.id)}
+          />
+        ))}
+      </section>
+    </>
   );
 }
 

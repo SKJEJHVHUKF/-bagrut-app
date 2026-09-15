@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Heebo, Frank_Ruhl_Libre, Plus_Jakarta_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Heebo, Frank_Ruhl_Libre, Plus_Jakarta_Sans, Rubik } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site";
@@ -43,6 +43,15 @@ const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
+});
+
+// Rubik — the face of the 2026-09 card redesign (past-bagruyot grid first).
+// Not preloaded: only pages that opt in via var(--font-rubik) fetch it.
+const rubik = Rubik({
+  variable: "--font-rubik",
+  subsets: ["latin", "hebrew"],
+  weight: ["400", "500", "700"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -98,7 +107,7 @@ export default function RootLayout({
     <html
       lang="he"
       dir="rtl"
-      className={`${geistSans.variable} ${geistMono.variable} ${heebo.variable} ${frankRuhlLibre.variable} ${plusJakarta.variable} w-screen`}
+      className={`${geistSans.variable} ${geistMono.variable} ${heebo.variable} ${frankRuhlLibre.variable} ${plusJakarta.variable} ${rubik.variable} w-screen`}
     >
       <body className="w-screen overflow-x-hidden m-0 p-0">
         <ServiceWorkerRegistration />
