@@ -20,6 +20,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { MathText } from '@/components/practice/MathText';
 import { DiagramRenderer } from '@/components/practice/DiagramRenderer';
+import { hexA, TINT_FONT } from '@/components/tint/tint';
 import {
   ALL_PAST_BAGRUYOT,
   availablePapers,
@@ -83,12 +84,6 @@ const PAPER_STYLE: Record<
   '582': { bg: '#FDF5DE', border: '#C4940F', badge: '#B8860B', ink: '#7A5B08', icon: 'cap' },
 };
 
-/** `#RRGGBB` at an alpha — the soft-tint direction (round 10 ב) mixes every
- *  border, badge and shadow from the one paper colour. */
-function hexA(hex: string, a: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-}
 
 /** The soft pill badge of direction ב: tinted fill, same-hue border, dark ink. */
 function PaperBadge({ paper }: { paper: string }) {
@@ -176,7 +171,7 @@ export default function BagruyotArchivePage() {
   return (
     <main
       className="relative min-h-screen px-4 sm:px-6 pt-10 pb-12 text-[#121420]"
-      style={{ fontFamily: 'var(--font-rubik), var(--font-heebo), Arial, sans-serif' }}
+      style={TINT_FONT}
     >
       {/* The design's faint 40px grid and two soft corner washes. */}
       <div

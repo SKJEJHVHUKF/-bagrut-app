@@ -24,6 +24,10 @@ import { PracticeShell } from '@/components/practice/PracticeShell';
 import { MathText } from '@/components/practice/MathText';
 import { TodayList } from '@/components/roadmap/TodayList';
 import { TopicIcon } from '@/components/roadmap/TopicIcon';
+import { TINTS, TINT_FONT, TintBadge, tintCard, hexA, type Tint } from '@/components/tint/tint';
+
+/** One colour per topic, in syllabus order (design round 9/10). */
+const TOPIC_TINTS: Tint[] = [TINTS.green, TINTS.blue, TINTS.gold, TINTS.rose, TINTS.violet, TINTS.slate];
 import { getTrack, isTrackPaper } from '@/content/tracks';
 import { paperLabel, type BagrutPaper } from '@/content/bagrut-curriculum';
 import { levelsForNodes, trackMainTopics, trackNodes } from '@/lib/track';
@@ -173,17 +177,19 @@ function Track({ paper }: { paper: BagrutPaper }) {
 
   return (
     <PracticeShell subtitle="מסלול הלמידה" backHref="/roadmap" backLabel="שאלונים" wide>
-      <div className="space-y-6">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-black tracking-[0.14em] text-violet-700 uppercase mb-1">מסלול הלמידה</div>
-            <h1 className="font-display text-2xl sm:text-3xl font-black text-ink leading-tight">{paperLabel(paper)}</h1>
+      <div className="space-y-6 text-[#121420]" style={TINT_FONT}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <h1 className="m-0 text-[28px] sm:text-[32px] leading-10 font-bold">{paperLabel(paper)}</h1>
+            <p className="m-0 text-base text-[#4F5566]">
+              {tree.topics.length} נושאים, כל אחד בנוי שלב אחרי שלב עד שאלות בגרות.
+            </p>
           </div>
           <Link
             href="/roadmap"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-white/70 border border-slate-900/[0.08] hover:border-violet-500/40 hover:bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-all shrink-0"
+            className="inline-flex items-center gap-1.5 rounded-full border-[1.6px] border-[#E2E0EA] bg-white px-4 py-1.5 text-sm text-[#3D4250] transition-colors hover:border-[#8B5CF6] hover:text-[#5B21B6] shrink-0"
           >
-            <ArrowLeftRight aria-hidden="true" className="w-3.5 h-3.5 text-violet-600" />
+            <ArrowLeftRight aria-hidden="true" className="w-4 h-4" />
             החלף שאלון
           </Link>
         </div>
@@ -209,7 +215,7 @@ function Track({ paper }: { paper: BagrutPaper }) {
         )}
 
         {/* ===== Status strip — "how am I doing", one quiet row under the action ===== */}
-        <div className="surface-premium rounded-2xl p-4 sm:p-5 space-y-3">
+        <div className="rounded-[20px] border p-4 sm:p-5 space-y-3" style={tintCard(TINTS.violet, 70)}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <span className="flex items-baseline gap-2 min-w-0">
               <span className="font-display text-2xl font-black text-ink tabular-nums">
@@ -301,8 +307,9 @@ function Track({ paper }: { paper: BagrutPaper }) {
             <h2 className="text-[11px] font-black tracking-[0.14em] text-slate-500 uppercase">הנושאים במסלול</h2>
             <span className="text-[11px] text-slate-500">{tree.topics.length} נושאים · לפי סדר הלימוד</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-3.5 perspective-1500">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-[18px]">
             {tree.topics.map((t, i) => {
+              const tint = TOPIC_TINTS[i % TOPIC_TINTS.length];
               const nodes = groups[i]?.nodes ?? [];
               const done = ready ? countCompleted(nodes) : 0;
               const pct = nodes.length ? Math.round((done / nodes.length) * 100) : 0;
@@ -324,49 +331,37 @@ function Track({ paper }: { paper: BagrutPaper }) {
                 >
                   <Link
                     href={`/roadmap/track/${paper}/${encodeURIComponent(t.id)}`}
-                    className={`card-3d group flex h-full min-h-[9.5rem] flex-col text-right rounded-2xl p-4 surface-premium transition-colors hover:border-violet-500/40 ${
-                      isHere ? 'ring-2 ring-violet-500/30' : ''
+                    className={`group relative overflow-hidden flex h-full min-h-[13rem] flex-col text-right rounded-[20px] border p-5 transition-transform hover:-translate-y-0.5 ${
+                      isHere ? 'ring-2 ring-offset-2 ring-violet-500/50' : ''
                     }`}
+                    style={tintCard(tint)}
                   >
-                    <div className="flex items-start gap-3">
-                      <span
-                        aria-hidden="true"
-                        className={`icon-3d w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-                          complete ? 'bg-emerald-500/15 text-emerald-700' : 'chip-primary'
-                        }`}
-                      >
-                        <TopicIcon id={t.id} className="w-6 h-6" />
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-[10px] font-black tracking-[0.14em] text-slate-500 uppercase">נושא {i + 1}</div>
-                          {isHere ? (
-                            <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-violet-600 text-white shrink-0">כאן אתה</span>
-                          ) : complete ? (
-                            <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-800 border border-emerald-500/25 shrink-0">הושלם</span>
-                          ) : null}
-                        </div>
-                        <div className="text-[15px] font-black text-ink leading-snug line-clamp-1">{t.title}</div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">
-                          {done}/{nodes.length} שלבים
-                          {soon > 0 && <span className="text-slate-400"> · {soon} בקרוב</span>}
-                        </div>
-                      </div>
+                    {/* The topic's own icon as the corner line-art, in the tile's colour. */}
+                    <span aria-hidden="true" className="absolute left-4 bottom-12 opacity-30" style={{ color: tint.solid }}>
+                      <TopicIcon id={t.id} className="w-16 h-16" strokeWidth={1.25} />
+                    </span>
+                    <div className="relative flex items-center justify-between gap-2">
+                      <TintBadge tint={tint}>נושא {i + 1}</TintBadge>
+                      {isHere ? (
+                        <span className="text-xs font-medium rounded-full px-2.5 py-[3px] bg-violet-600 text-white shrink-0">כאן אתה</span>
+                      ) : complete ? (
+                        <TintBadge tint={TINTS.green}>הושלם</TintBadge>
+                      ) : null}
                     </div>
-                    <div className="mt-2 text-xs text-slate-600 leading-snug line-clamp-2 chat-md flex-1">
+                    <div className="relative mt-2.5 text-[21px] font-bold leading-tight tracking-[-0.01em]">{t.title}</div>
+                    <div className="relative mt-1 text-sm text-[#4F5566]">
+                      {done}/{nodes.length} שלבים
+                      {soon > 0 && <span className="text-slate-400"> · {soon} בקרוב</span>}
+                    </div>
+                    <div className="relative mt-1.5 pl-16 text-[13px] text-[#4F5566] leading-snug line-clamp-2 chat-md flex-1">
                       <MathText inline>{inside}</MathText>
                     </div>
-                    <div className="mt-3 flex items-center gap-2">
-                      <div className="h-1.5 flex-1 bg-slate-900/[0.05] rounded-full overflow-hidden">
-                        <div
-                          className={`h-full transition-all duration-500 ${
-                            complete ? 'bg-gradient-to-l from-emerald-500 to-teal-500' : 'bg-gradient-to-l from-violet-500 to-violet-600'
-                          }`}
-                          style={{ width: `${pct}%` }}
-                        />
+                    <div className="relative mt-3 flex items-center gap-2">
+                      <div className="h-1.5 flex-1 rounded-full overflow-hidden" style={{ background: hexA(tint.solid, 0.12) }}>
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: tint.solid }} />
                       </div>
-                      <span className="text-xs font-black text-violet-700 shrink-0 w-9 text-left">{pct}%</span>
-                      <ArrowLeft aria-hidden="true" className="w-4 h-4 text-slate-400 group-hover:-translate-x-1 transition-transform shrink-0" />
+                      <span className="text-xs font-bold shrink-0 w-9 text-left tabular-nums" style={{ color: tint.ink }}>{pct}%</span>
+                      <ArrowLeft aria-hidden="true" className="w-4 h-4 group-hover:-translate-x-1 transition-transform shrink-0" style={{ color: tint.ink }} />
                     </div>
                   </Link>
                 </motion.div>
