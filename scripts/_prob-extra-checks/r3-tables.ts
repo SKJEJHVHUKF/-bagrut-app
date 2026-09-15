@@ -1,6 +1,6 @@
 /**
  * r3-tables.ts — adversarial re-derivation of the pr-tables round-3 items:
- * practice pr-x-tab-301…345 and bagrut prob-bag-x-tab-02…20.
+ * practice pr-x-tab-301…349 and bagrut prob-bag-x-tab-02…20.
  *
  * Every table is rebuilt as a POPULATION of individuals (a percentage table
  * becomes 10000 people) and answers are COUNTED from it; unknowns are found by
@@ -331,6 +331,43 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   check('345 w .175', drawNoReplacement(urn, 2, (s) => s[0] === 'b' && s[1] === 'b'), 0.175);
 }
 
+{ // 346 — community centre: head count from one cell, then another cell as a count
+  const pop = people([[{ kid: 1, sp: 1 }, 0.25 - 0.12], [{ kid: 1, sp: 0 }, 0.4 - (0.25 - 0.12)], [{ kid: 0, sp: 1 }, 0.12], [{ kid: 0, sp: 0 }, 0.6 - 0.12]]);
+  check('346 closes', N(pop), 10000);
+  const n = scan(1, 100000, (v) => near(P(pop, (i) => i.kid === 1 && i.sp === 0) * v, 81));
+  checkLive('346', 'pr-x-tab-346', P(pop, (i) => i.kid === 0 && i.sp === 0) * n);
+  check('346 d 36', P(pop, (i) => i.kid === 0 && i.sp === 1) * n, 36);
+  check('346 d 225', P(pop, (i) => i.sp === 0) * n, 225);
+  check('346 d 105', (P(pop, (i) => i.kid === 0) - P(pop, (i) => i.sp === 1)) * n, 105);
+}
+{ // 347 — eggs: scan the brown cell of coop B, compare the two unions by counting
+  const b = scan(0, 160, (v) => v + (v + 40) === 180);
+  const pop: Pop = [[{ A: 1, br: 1 }, b + 40], [{ A: 1, br: 0 }, 240 - (b + 40)], [{ A: 0, br: 1 }, b], [{ A: 0, br: 0 }, 160 - b]];
+  const u1 = P(pop, (i) => i.A === 1 || i.br === 1), u2 = P(pop, (i) => i.A === 0 || i.br === 0);
+  check('347 A or brown', u1, 0.775); check('347 B or white', u2, 0.725);
+  check('347 d swapped', 1 - cnt(pop, (i) => i.A === 1 && i.br === 1) / 400, 0.725);
+  reviewedByHand('pr-x-tab-347', 'counted 0.775 > 0.725; option 0 names "מלול א׳ או חומה" with those two values; option 1 swaps them, 2 claims equal, 3 claims undecidable');
+}
+{ // 348 — cinema: scan x on a 1e-4 grid until the union of the population is 0.52, then read the regular row
+  const mk = (x: number) => people([[{ t: 'r', k: 1 }, 0.22 - 0.04 - x], [{ t: 'r', k: 0 }, 0.4 - (0.22 - 0.04 - x)], [{ t: 's', k: 1 }, 0.04], [{ t: 's', k: 0 }, 0.21], [{ t: 'g', k: 1 }, x], [{ t: 'g', k: 0 }, 0.35 - x]]);
+  const x = scan(0, 1800, (v) => near(P(mk(v / 10000), (i) => i.t === 'r' || i.k === 1), 0.52)) / 10000;
+  const pop = mk(x);
+  check('348 closes', N(pop), 10000);
+  checkLive('348', 'pr-x-tab-348', [x, P(pop, (i) => i.t === 'r' && i.k === 0)]);
+  const xw = 0.52 - P(pop, (i) => i.t === 'r'); // whole gap booked to the pensioner cell
+  check('348 w .12', xw, 0.12); check('348 w .34', 0.4 - (0.22 - 0.04 - xw), 0.34);
+  check('348 w .1', P(pop, (i) => i.t === 'r' && i.k === 1), 0.1);
+  check('348 w .78', P(pop, (i) => i.k === 0), 0.78);
+}
+{ // 349 — screening: population table, wrong-result cells, independent pairs enumerated
+  const pop = people([[{ ill: 1, pos: 1 }, 0.1 - 0.03], [{ ill: 1, pos: 0 }, 0.03], [{ ill: 0, pos: 1 }, 0.15 - (0.1 - 0.03)], [{ ill: 0, pos: 0 }, 0.9 - (0.15 - (0.1 - 0.03))]]);
+  check('349 closes', N(pop), 10000);
+  const wrong = (i: Ind) => i.ill !== i.pos;
+  checkLive('349', 'pr-x-tab-349', [P(pop, wrong), tuples(pop, 2, (t) => t.some(wrong))]);
+  check('349 w .2775', tuples(pop, 2, (t) => t.some((i) => i.pos === 1)), 0.2775);
+  check('349 w .22', 2 * P(pop, wrong), 0.22);
+  check('349 w .0121', tuples(pop, 2, (t) => t.every(wrong)), 0.0121);
+}
 // ================================ bagrut ================================
 { // 02
   const y = scan(0, 40, (v) => 48 + 40 + 3 * v + v === 120);
@@ -366,8 +403,10 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   checkLive('04ג', 'prob-bag-x-tab-04/ג', tuples(pop, 2, (t) => t.filter((i) => i.b === 1).length === 1 && t.some((i) => i.s === 1)));
   const up = (k: number): Pop => [[{ b: 1, s: 1 }, 24], [{ b: 1, s: 0 }, 12 + k], [{ b: 0, s: 1 }, 108], [{ b: 0, s: 0 }, 96 - k]];
   checkLive('04ד', 'prob-bag-x-tab-04/ד', scan(0, 96, (k) => near(P(up(k), (i) => i.b === 1 || i.s === 1), 0.7)));
-  check('04ה invariant', Array.from({ length: 97 }, (_, k) => P(up(k), (i) => i.b === 0 || i.s === 0)).every((v) => near(v, 0.9)) ? 1 : 0, 1);
-  reviewedByHand('prob-bag-x-tab-04/ה', 'P(tourist or hand) stays 0.9 for every k in 0..96, scanned');
+  // ה: weigh every suitcase passenger (business 0.1, tourist 0.2), then upgrade j tourist-suitcase passengers
+  const heavy = (pp: Pop) => pp.reduce((s, [i, c]) => s + (i.s === 1 ? c * (i.b === 1 ? 0.1 : 0.2) : 0), 0) / N(pp);
+  const upS = (j: number): Pop => [[{ b: 1, s: 1 }, 24 + j], [{ b: 1, s: 0 }, 12], [{ b: 0, s: 1 }, 108 - j], [{ b: 0, s: 0 }, 96]];
+  checkLive('04ה', 'prob-bag-x-tab-04/ה', [heavy(pop), scan(0, 108, (j) => near(heavy(upS(j)), 0.085))]);
 }
 { // 05
   const x = scan(0, 3000, (v) => v + 1.5 * v === 3000) / 10000;
@@ -380,8 +419,8 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   const total = 96 / P(pop, (i) => i.e === 'T' && i.seat === 0 && i.app === 0);
   checkLive('05ג', 'prob-bag-x-tab-05/ג', P(pop, (i) => i.e === 'F' && i.app === 1) * total);
   checkLive('05ד', 'prob-bag-x-tab-05/ד', tuples(pop, 2, ([a, b]) => a.e === b.e && a.app === 1 && b.app === 1));
-  check('05ה max app', 1 - x, 0.88);
-  reviewedByHand('prob-bag-x-tab-05/ה', 'Fri-seat-box forced to 0.12 again, so app ≤ 0.88 < 0.9');
+  // ה: ordered pairs with replacement — first not box office, second box office, same evening
+  checkLive('05ה', 'prob-bag-x-tab-05/ה', tuples(pop, 2, ([a, b]) => a.app === 1 && b.app === 0 && a.e === b.e));
 }
 { // 06
   const cells = (x: number) => [0.3 + x, 0.15 - x, 2 * x, 0.35 - 2 * x, 0.1 + x, 0.1 - x];
@@ -403,8 +442,10 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   checkLive('07ב', 'prob-bag-x-tab-07/ב', P(pop, (i) => i.g === 1 || i.c === 1));
   checkLive('07ג', 'prob-bag-x-tab-07/ג', tuples(pop, 3, (tt) => tt.some((i) => i.c === 1)));
   checkLive('07ד', 'prob-bag-x-tab-07/ד', tuples(pop, 2, ([a, b]) => a.g !== b.g && a.c !== b.c));
-  check('07ה p=.3 gives .42', 2 * 0.3 * 0.7, 0.42);
-  reviewedByHand('prob-bag-x-tab-07/ה', '2p(1-p)=0.32 only at p=0.2/0.8; p=0.3 gives 0.42');
+  // ה: scale the 10000-person population to m apartments; scan m for the difference of 60
+  const cntIn = (m: number, f: (i: Ind) => boolean) => cnt(pop, f) * m / N(pop);
+  const m7 = scan(1, 100000, (m) => near(cntIn(m, (i) => i.g === 1 && i.c === 0) - cntIn(m, (i) => i.g === 0 && i.c === 1), 60));
+  checkLive('07ה', 'prob-bag-x-tab-07/ה', [m7, cntIn(m7, (i) => i.g === 1 || i.c === 1)]);
 }
 { // 08
   let a = NaN, b = NaN;
@@ -431,13 +472,18 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   for (let a = 0; a <= 10000; a++) { const yy = (10000 - 2.5 * a) / 3; if (Number.isInteger(yy) && yy >= 0 && near((2.5 * a + yy) / 10000, 0.8)) { x = a / 10000; y = yy / 10000; } }
   const pop = people([[{ ski: 1, r: 1 }, 1.5 * x], [{ ski: 1, r: 0 }, x], [{ ski: 0, r: 1 }, 2 * y], [{ ski: 0, r: 0 }, y]]);
   checkLive('10א', 'prob-bag-x-tab-10/א', [x, y]);
-  checkLive('10ב', 'prob-bag-x-tab-10/ב', [P(pop, (i) => (i.ski === 0) !== (i.r === 1)), P(pop, (i) => i.ski === 0 || i.r === 1)]);
+  checkLive('10ב', 'prob-bag-x-tab-10/ב', P(pop, (i) => (i.ski === 0) !== (i.r === 1)));
   const m = 300 / (2 * y);
   checkLive('10ג', 'prob-bag-x-tab-10/ג', [m, x * m]);
-  checkLive('10ד', 'prob-bag-x-tab-10/ד', tuples(pop, 2, ([a, b]) => a.ski === b.ski && !(a.r === 1 && b.r === 1)));
-  const minOr = Math.min(...Array.from({ length: 4001 }, (_, a) => a / 10000).map((xx) => [xx, (1 - 2.5 * xx) / 3]).filter(([, yy]) => yy >= 0).map(([xx, yy]) => 2.5 * xx + yy));
-  check('10ה min > .3', minOr > 0.3 ? 1 : 0, 1);
-  reviewedByHand('prob-bag-x-tab-10/ה', 'over all feasible x,y the event is ≥ 1/3 > 0.3, scanned');
+  // ד: tree over the cells — lesson rates by cell, then scale to the day of ג
+  const lesson = (i: Ind) => (i.r === 0 ? 0.1 : i.ski === 1 ? 0.5 : 0.8);
+  const pl = pop.reduce((s2, [i, c]) => s2 + c * lesson(i), 0) / N(pop);
+  checkLive('10ד', 'prob-bag-x-tab-10/ד', [pl, pl * m]);
+  // ה: another day, snowboard row 4500 of 10000, same ratios; split each row by scanning integers
+  const skiPriv = scan(0, 5500, (v) => v + 1.5 * v === 5500), snPriv = scan(0, 4500, (v) => v + 2 * v === 4500);
+  const day2: Pop = [[{ ski: 1, r: 1 }, 5500 - skiPriv], [{ ski: 1, r: 0 }, skiPriv], [{ ski: 0, r: 1 }, 4500 - snPriv], [{ ski: 0, r: 0 }, snPriv]];
+  checkLive('10ה', 'prob-bag-x-tab-10/ה', [P(day2, (i) => i.r === 1), P(day2, (i) => i.ski === 1 || i.r === 0)]);
+  check('10ה directions', P(day2, (i) => i.r === 1) > P(pop, (i) => i.r === 1) && P(day2, (i) => i.ski === 1 || i.r === 0) < P(pop, (i) => i.ski === 1 || i.r === 0) ? 1 : 0, 1);
 }
 { // 11
   const g1: Pop = [[{ g: 1, s: 1, t: 1 }, 4800], [{ g: 1, s: 1, t: 0 }, 2400], [{ g: 1, s: 0, t: 1 }, 1200], [{ g: 1, s: 0, t: 0 }, 3600]];
@@ -486,9 +532,16 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   checkLive('14א', 'prob-bag-x-tab-14/א', p);
   checkLive('14ב', 'prob-bag-x-tab-14/ב', P(pop, (i) => i.e !== i.g));
   checkLive('14ג', 'prob-bag-x-tab-14/ג', [tuples(pop, 2, ([a, b]) => pay(a) + pay(b) > 1500), tuples(pop, 2, ([a, b]) => pay(a) + pay(b) <= 600)]);
-  check('14ד cell ≤ margin', 0.35 > p ? 1 : 0, 1);
-  reviewedByHand('prob-bag-x-tab-14/ד', 'p forced to 0.3 again; a cell of the glasses column cannot be 0.35');
-  checkLive('14ה', 'prob-bag-x-tab-14/ה', tuples(pop, 3, (tt) => !tt.some((i) => i.e === 1 && i.g === 1) && tt.some((i) => i.g === 1)));
+  // ד: 20 people split by the table; every ordered pair of two different people
+  const p20: Pop = pop.map(([i, c]) => [i, c * 20 / N(pop)]);
+  const urn = urnOf(p20, (i) => `${i.e}${i.g}`);
+  const payOf = (k: string) => pay({ e: +k[0], g: +k[1] });
+  let pairs = 0, bothG = 0, big = 0;
+  urn.forEach((a, ia) => urn.forEach((b, ib) => { if (ia === ib) return; pairs++; if (a[1] === '1' && b[1] === '1') bothG++; if (payOf(a) + payOf(b) >= 1750) big++; }));
+  checkLive('14ד', 'prob-bag-x-tab-14/ד', [bothG / pairs, big / pairs]);
+  // ה: scan the day size from the 44 exam-and-glasses customers
+  const m14 = scan(1, 100000, (m) => near(P(pop, (i) => i.e === 1 && i.g === 1) * m, 44));
+  checkLive('14ה', 'prob-bag-x-tab-14/ה', [m14, P(pop, (i) => i.e === 0 && i.g === 0) * m14 * pay({ e: 0, g: 0 })]);
 }
 { // 15
   const x = scan(0, 80, (v) => 48 + 32 + v + 3 * v === 160);
@@ -498,10 +551,13 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   check('15 total', N(pop), 400);
   checkLive('15א', 'prob-bag-x-tab-15/א', [x, w]);
   checkLive('15ב', 'prob-bag-x-tab-15/ב', P(pop, (i) => i.y === 1 || i.wk === 0));
-  checkLive('15ג', 'prob-bag-x-tab-15/ג', [tuples(pop, 2, ([a, b]) => a.y === b.y && a.wk === b.wk && a.f !== b.f), tuples(pop, 2, (t) => t.some((i) => i.y === 1 && i.wk === 1))]);
+  checkLive('15ג', 'prob-bag-x-tab-15/ג', tuples(pop, 2, ([a, b]) => a.y === b.y && a.wk === b.wk && a.f !== b.f));
   checkLive('15ד', 'prob-bag-x-tab-15/ד', scan(0, 3 * x, (k) => near((200 + k) / 400, 0.6)));
-  check('15ה young only max', (200 + 3 * x) / 400 < 0.7 ? 1 : 0, 1);
-  checkLive('15ה', 'prob-bag-x-tab-15/ה', scan(0, 3 * x + 120 - 2 * x, (k) => (200 + k) / 400 >= 0.7));
+  // ה: move 40 env-monthly people to weekly, young (ד) or adults, and recount "young or monthly"
+  const move = (young: number, k: number): Pop => pop.map(([i, c]) => [i, i.y === young && i.f === 'env' ? c + (i.wk === 1 ? k : -k) : c]);
+  const yom = (pp: Pop) => P(pp, (i) => i.y === 1 || i.wk === 0);
+  checkLive('15ה', 'prob-bag-x-tab-15/ה', [yom(move(1, 40)), yom(move(0, 40))]);
+  check('15ה only adults change', near(yom(move(1, 40)), yom(pop)) && !near(yom(move(0, 40)), yom(pop)) ? 1 : 0, 1);
 }
 { // 16
   const f = scan(0, 50, (v) => v + v + 20 === 50);
@@ -513,7 +569,7 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   const fee = (i: Ind) => (i.r === 'first' ? 200 : 300) * (i.c ? 2 : 1);
   checkLive('16ג', 'prob-bag-x-tab-16/ג', tuples(pop, 2, ([a, b]) => fee(a) + fee(b) >= 800));
   const pf = P(pop, (i) => i.r === 'fail');
-  checkLive('16ד', 'prob-bag-x-tab-16/ד', [(1 - pf) ** 2 * P(pop, (i) => i.r === 'fail' && i.c === 1), tuples(pop, 3, (t) => t.some((i) => i.r === 'fail'))]);
+  checkLive('16ד', 'prob-bag-x-tab-16/ד', tuples(pop, 3, ([a, b, c]) => a.r !== 'fail' && b.r !== 'fail' && c.r === 'fail' && c.c === 1));
   // 16ה: all tables with the three margins, private-first = 0.68 - s; scan commercial row (s, re, fail) in 1/100
   const vals: number[] = [];
   for (let s = 0; s <= 30; s++) for (let re = 0; re <= 30 - s; re++) { const fl = 30 - s - re; if (re <= 22 && fl <= 10 && 68 - s <= 70) vals.push((68 - s) / 100); }
@@ -524,24 +580,28 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   const pop: Pop = [[{ s: 1, e: 1 }, 84], [{ s: 1, e: 0 }, 0.35 * n - 84], [{ s: 0, e: 1 }, 0.05 * n], [{ s: 0, e: 0 }, 0.6 * n]];
   checkLive('17א', 'prob-bag-x-tab-17/א', n);
   checkLive('17ב', 'prob-bag-x-tab-17/ב', [cnt(pop, (i) => i.s === 1 || i.e === 1), P(pop, (i) => i.s !== i.e)]);
-  checkLive('17ג', 'prob-bag-x-tab-17/ג', [tuples(pop, 2, (t) => t.filter((i) => i.e === 1).length === 1 && t.filter((i) => i.s === 1).length === 1), tuples(pop, 2, (t) => t.some((i) => i.e === 1))]);
+  checkLive('17ג', 'prob-bag-x-tab-17/ג', tuples(pop, 2, (t) => t.filter((i) => i.e === 1).length === 1 && t.filter((i) => i.s === 1).length === 1));
   const sub = (m: number): Pop => [[{ s: 1, e: 1 }, 84 + m], [{ s: 1, e: 0 }, 336], [{ s: 0, e: 1 }, 60 - m], [{ s: 0, e: 0 }, 720]];
   checkLive('17ד', 'prob-bag-x-tab-17/ד', scan(0, 60, (m) => near(P(sub(m), (i) => i.s !== i.e), 0.3)));
-  check('17ה 42% unreachable', P(sub(60), (i) => i.s === 1) < 0.42 ? 1 : 0, 1);
-  checkLive('17ה', 'prob-bag-x-tab-17/ה', scan(0, 60, (m) => P(sub(m), (i) => i.s === 1) >= 0.39 - 1e-12));
+  // ה: tree over the cells (EV+panels 0.9, EV only 0.5), before and after the subsidy of ד
+  const home = (pp: Pop) => pp.reduce((s2, [i, c]) => s2 + (i.e === 1 ? c * (i.s === 1 ? 0.9 : 0.5) : 0), 0) / N(pp);
+  const m17 = scan(0, 60, (m) => near(P(sub(m), (i) => i.s !== i.e), 0.3));
+  checkLive('17ה', 'prob-bag-x-tab-17/ה', [home(pop), home(sub(m17))]);
 }
 { // 18
   const cells = (x: number) => [2 * x, x + 0.1, 0.3 - 3 * x, 0.3 - 2 * x, 0.15 - x, 0.15 + 3 * x];
-  const xs = Array.from({ length: 10001 }, (_, i) => i / 10000).filter((x) => cells(x).every((c) => c >= -1e-12));
-  checkLive('18א', 'prob-bag-x-tab-18/א', [xs[0], xs[xs.length - 1]]);
-  const x = xs.find((v) => near(0.3 + 0.4 - 2 * v, 0.62)) as number;
-  const [fd, fp, fr, ad, ap, ar] = cells(x);
-  const pop = people([[{ f: 1, h: 'd' }, fd], [{ f: 1, h: 'p' }, fp], [{ f: 1, h: 'r' }, fr], [{ f: 0, h: 'd' }, ad], [{ f: 0, h: 'p' }, ap], [{ f: 0, h: 'r' }, ar]]);
-  checkLive('18ב', 'prob-bag-x-tab-18/ב', [x, P(pop, (i) => i.f === 0 && i.h !== 'r')]);
-  checkLive('18ג', 'prob-bag-x-tab-18/ג', [tuples(pop, 2, ([a, b]) => a.h === b.h && a.f !== b.f), tuples(pop, 2, (t) => t.some((i) => i.h === 'r'))]);
-  const m = 1500 / P(pop, (i) => i.h === 'd');
-  checkLive('18ד', 'prob-bag-x-tab-18/ד', [m, P(pop, (i) => i.f === 0 && i.h === 'r') * m]);
-  checkLive('18ה', 'prob-bag-x-tab-18/ה', Math.max(...xs.map((v) => 0.7 - 2 * v)));
+  // א: scan x on a 1e-4 grid (cells non-negative) and the head count m so both stated cell counts hold
+  let x = NaN, m = NaN;
+  for (let i = 0; i <= 10000; i++) { const v = i / 10000; if (!cells(v).every((c) => c >= -1e-12)) continue; const mm = Math.round(700 / (v + 0.1)); if (near((v + 0.1) * mm, 700) && near((0.3 - 2 * v) * mm, 1100)) { x = v; m = mm; } }
+  checkLive('18א', 'prob-bag-x-tab-18/א', [x, m]);
+  const [fd, fp, fr, ad, ap, ar] = cells(x).map((c) => Math.round(c * m));
+  const pop: Pop = [[{ f: 1, h: 'd' }, fd], [{ f: 1, h: 'p' }, fp], [{ f: 1, h: 'r' }, fr], [{ f: 0, h: 'd' }, ad], [{ f: 0, h: 'p' }, ap], [{ f: 0, h: 'r' }, ar]];
+  check('18 head count', N(pop), m);
+  checkLive('18ב', 'prob-bag-x-tab-18/ב', [P(pop, (i) => i.h === 'd' || i.f === 1), cnt(pop, (i) => i.f === 0 && i.h === 'r')]);
+  checkLive('18ג', 'prob-bag-x-tab-18/ג', tuples(pop, 2, ([a, b]) => a.h === b.h && a.f !== b.f));
+  // ד: tree over the renters (first year 0.5, advanced 0.2), then head count of applications
+  const apply = pop.reduce((s2, [i, c]) => s2 + (i.h === 'r' ? c * (i.f === 1 ? 0.5 : 0.2) : 0), 0);
+  checkLive('18ד', 'prob-bag-x-tab-18/ד', [apply / N(pop), apply]);
 }
 { // 19
   let x = NaN, y = NaN;
@@ -549,8 +609,9 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   const pop = people([[{ c: 'eu', apt: 0 }, 0.5 - x], [{ c: 'eu', apt: 1 }, x], [{ c: 'am', apt: 0 }, 0.3 - y], [{ c: 'am', apt: 1 }, y], [{ c: 'as', apt: 0 }, 0.16], [{ c: 'as', apt: 1 }, 0.04]]);
   checkLive('19א', 'prob-bag-x-tab-19/א', [x, y]);
   checkLive('19ב', 'prob-bag-x-tab-19/ב', P(pop, (i) => i.c !== 'eu' || i.apt === 0));
-  checkLive('19ג', 'prob-bag-x-tab-19/ג', [tuples(pop, 3, (t) => new Set(t.map((i) => i.c)).size === 3), tuples(pop, 3, (t) => t.some((i) => i.c === 'am'))]);
-  checkLive('19ד', 'prob-bag-x-tab-19/ד', tuples(pop, 2, ([a, b]) => a.apt === 1 && b.apt === 1 && a.c !== b.c));
+  checkLive('19ג', 'prob-bag-x-tab-19/ג', tuples(pop, 3, (t) => new Set(t.map((i) => i.c)).size === 3));
+  const m19 = scan(1, 1000000, (m) => near(P(pop, (i) => i.c === 'as' && i.apt === 0) * m, 2400));
+  checkLive('19ד', 'prob-bag-x-tab-19/ד', [m19, P(pop, (i) => i.c === 'eu' && i.apt === 1) * m19]);
   // stop once both lodging types seen: exactly three tourists
   checkLive('19ה', 'prob-bag-x-tab-19/ה', tuples(pop, 3, ([a, b, c]) => a.apt === b.apt && c.apt !== a.apt));
 }
@@ -560,12 +621,15 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   const pop: Pop = cells;
   checkLive('20א', 'prob-bag-x-tab-20/א', a);
   checkLive('20ב', 'prob-bag-x-tab-20/ב', [P(pop, (i) => i.dg === 1 || i.k === 'ki'), P(pop, (i) => (i.dg === 1) !== (i.k === 'ki'))]);
-  checkLive('20ג', 'prob-bag-x-tab-20/ג', [tuples(pop, 3, (t) => t.filter((i) => i.dg === 1).length === 1 && t.some((i) => i.dg === 1 && i.k === 'pr')), tuples(pop, 3, (t) => t.some((i) => i.dg === 0))]);
+  checkLive('20ג', 'prob-bag-x-tab-20/ג', tuples(pop, 3, (t) => t.filter((i) => i.dg === 1).length === 1 && t.some((i) => i.dg === 1 && i.k === 'pr')));
   const grow = (m: number): Pop => cells.map(([i, c]) => [i, c + m]);
   const m = scan(0, 5000, (v) => near(P(grow(v), (i) => i.k === 'ki' && i.dg === 1), 0.12));
   checkLive('20ד', 'prob-bag-x-tab-20/ד', [m, P(grow(m), (i) => i.dg === 0)]);
-  check('20ה never .2', Array.from({ length: 100000 }, (_, v) => P(grow(v), (i) => i.k === 'ki' && i.dg === 1)).every((p) => p < 1 / 6) ? 1 : 0, 1);
-  reviewedByHand('prob-bag-x-tab-20/ה', 'for every m in 0..99999 the cell stays below 1/6 < 0.2, scanned');
+  // ה: recount the two events of ב on the grown table of next month, and compare with this month
+  const nxt = grow(m);
+  const orE = (i: Ind) => i.dg === 1 || i.k === 'ki', oneE = (i: Ind) => (i.dg === 1) !== (i.k === 'ki');
+  checkLive('20ה', 'prob-bag-x-tab-20/ה', [P(nxt, orE), P(nxt, oneE)]);
+  check('20ה directions', P(nxt, orE) > P(pop, orE) && P(nxt, oneE) < P(pop, oneE) ? 1 : 0, 1);
 }
 
 coverage('pr-tables');
