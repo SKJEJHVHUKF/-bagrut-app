@@ -99,10 +99,12 @@ const cnt = (p: [Ind, number][], f: (i: Ind) => boolean) => p.reduce((s, [i, c])
   check('308 w 0.24', Pw(s, (t) => t[1] === 0 && B(t)), 0.24);
   check('308 w 1/3', s.filter(([t]) => B(t) && t[1] === 0).length / s.filter(([t]) => B(t)).length, 1 / 3);
 }
-{ // 309 — seeds p=0.7, exactly one sprouted, P(first)
-  const s = rep(bern(0.7), 2), one = (t: number[]) => sum(t) === 1;
-  checkLive('309', 'pr-x-cnd-309', cond(s, (t) => t[0] === 1, one));
-  check('309 d .7', Pw(s, (t) => t[0] === 1), 0.7); check('309 d .21', Pw(s, (t) => t[0] === 1 && one(t)), 0.21); check('309 d .42', Pw(s, one), 0.42);
+{ // 309 — seeds p=0.6, given at least one sprouted, P(both)
+  const s = rep(bern(0.6), 2), ge1 = (t: number[]) => sum(t) >= 1, both = (t: number[]) => sum(t) === 2;
+  checkLive('309', 'pr-x-cnd-309', cond(s, both, ge1));
+  check('309 d .6 (known seed fixed: P(other)|first)', cond(s, both, (t) => t[0] === 1), 0.6);
+  check('309 d .36', Pw(s, both), 0.36);
+  check('309 d 1/3', s.filter(([t]) => both(t)).length / s.filter(([t]) => ge1(t)).length, 1 / 3);
 }
 { // 310 — 3 tests fail 0.1, given ≤1 failure
   const s = rep(bern(0.1), 3), le1 = (t: number[]) => sum(t) <= 1;
@@ -137,8 +139,11 @@ const cnt = (p: [Ind, number][], f: (i: Ind) => boolean) => p.reduce((s, [i, c])
 // ============================ practice · mid ============================
 { // 315 — 4 free throws p=0.6
   const s = rep(bern(0.6), 4), e2 = (t: number[]) => sum(t) === 2, f = (t: number[]) => t[0] === 1;
-  checkLive('315', 'pr-x-cnd-315', [cond(s, e2, f), cond(s, f, e2)]);
-  check('315 w .3456', Pw(s, e2), 0.3456); check('315 w .1728', Pw(s, (t) => e2(t) && f(t)), 0.1728);
+  checkLive('315', 'pr-x-cnd-315', [cond(s, e2, f), Pw(s, e2)]);
+  check('315 dependent: P(E|F) != P(E)', near(cond(s, e2, f), Pw(s, e2)) ? 0 : 1, 1);
+  check('315 product P(F)P(E)', Pw(s, f) * Pw(s, e2), 0.20736); check('315 w .1728', Pw(s, (t) => e2(t) && f(t)), 0.1728);
+  check('315 w .288 (3 throws)', Pw(rep(bern(0.6), 3), (t) => sum(t) === 1), 0.288);
+  reviewedByHand('pr-x-cnd-315', 'independence verdict: counted P(E|F)=0.288 vs P(E)=0.3456, so dependent, as the final answer states');
 }
 { // 316 — 5 questions p=0.8, pass ≥4; P(pass), P(first wrong | pass)
   const s = rep(bern(0.8), 5), pass = (t: number[]) => sum(t) >= 4, fw = (t: number[]) => t[0] === 0;
@@ -177,6 +182,44 @@ const cnt = (p: [Ind, number][], f: (i: Ind) => boolean) => p.reduce((s, [i, c])
   check('320 dependent', near(pAB, pA * pB) ? 1 : 0, 0);
   reviewedByHand('pr-x-cnd-320', 'correct option "לא": counted urn draws P(B|A)=2/9 ≠ P(B)=0.3; distractor 3 value 0.09 ≠ P(A∩B)=1/15 verified');
 }
+// ============================ practice · hard ============================
+{ // 321 — 2 arrows per round, P(round ≥1 hit)=0.75 → p; 4 rounds; given exactly 3 good rounds, P(exactly 3 hits)
+  const round = (p: number) => rep(bern(p), 2);
+  const p = scan(1, 999, 1000, (p) => near(Pw(round(p), (t) => sum(t) >= 1), 0.75));
+  const arrows = rep(bern(p), 8); // rounds = pairs (0,1),(2,3),(4,5),(6,7)
+  const good = (t: number[]) => [0, 2, 4, 6].filter((i) => t[i] + t[i + 1] >= 1).length;
+  checkLive('321', 'pr-x-cnd-321', [p, Pw(arrows, (t) => good(t) === 3), cond(arrows, (t) => sum(t) === 3, (t) => good(t) === 3)]);
+  const pw = scan(1, 999, 1000, (q) => near(q + q, 0.75)), gw = Pw(rep(bern(0.75), 4), (t) => sum(t) === 3);
+  // w1 carries p=0.375 forward with the given P(good)=0.75 as the denominator
+  check('321 w1 p', pw, 0.375); check('321 w1 c', Math.pow(Pw(round(pw), (t) => sum(t) === 1) / 0.75, 3), 125 / 512);
+  check('321 w2 no coefficient', gw / 4, 27 / 256);
+  check('321 w3 unconditional one-hit per round', Math.pow(Pw(round(p), (t) => sum(t) === 1), 3), 1 / 8);
+}
+// ============================ moved shipped questions (not in coverage) ============================
+{ // pr-x-tab-104 — workers: car 45%, dining 60%, both 30%
+  const pop: [Ind, number][] = [[{ r: 1, d: 1 }, 30], [{ r: 1, d: 0 }, 45 - 30], [{ r: 0, d: 1 }, 60 - 30], [{ r: 0, d: 0 }, 100 - 45 - 60 + 30]];
+  const nr = (i: Ind) => i.r === 0, nd = (i: Ind) => i.d === 0;
+  checkLive('104', 'pr-x-tab-104', [cnt(pop, (i) => nr(i) && nd(i)) / 100, cnt(pop, (i) => nr(i) && nd(i)) / cnt(pop, nr), cnt(pop, (i) => i.r === 1 && i.d === 1) / cnt(pop, (i) => i.d === 1)]);
+  check('104 w1 independence cell', 0.55 * 0.4, 0.22); check('104 w1 b', 0.22 / 0.55, 0.4); check('104 w1 c', (0.45 * 0.6) / 0.6, 0.45);
+  check('104 w2 b', cnt(pop, (i) => nr(i) && nd(i)) / cnt(pop, nd), 0.625); check('104 w2 c', cnt(pop, (i) => i.r === 1 && i.d === 1) / cnt(pop, (i) => i.r === 1), 2 / 3);
+  check('104 w3 c', cnt(pop, (i) => i.r === 1 && i.d === 1) / 100, 0.3);
+}
+{ // pr-x-tab-202 — library 150, one missing cell; (א) P(young|digital) (ב) P(digital|young)
+  const pop: [Ind, number][] = [[{ y: 1, g: 1 }, 45], [{ y: 1, g: 0 }, 30], [{ y: 0, g: 1 }, 15], [{ y: 0, g: 0 }, 75 - 15]];
+  const a = cnt(pop, (i) => i.y === 1 && i.g === 1) / cnt(pop, (i) => i.g === 1);
+  const b = cnt(pop, (i) => i.y === 1 && i.g === 1) / cnt(pop, (i) => i.y === 1);
+  check('202 a', a, 0.75); check('202 b', b, 0.6); check('202 column closes', cnt(pop, (i) => i.g === 0), 90);
+  check('202 d2 cell/total', 45 / 150, 0.3);
+  reviewedByHand('pr-x-tab-202', 'option 0 "(א) 0.75; (ב) 0.6" matches counted a, b; distractors: both 0.75, both 0.3 (cell/150), swapped 0.6/0.75');
+}
+{ // pr-x-tab-207 — club 100: gym × pool 30/20/20/30
+  const pop: [Ind, number][] = [[{ a: 1, b: 1 }, 30], [{ a: 1, b: 0 }, 20], [{ a: 0, b: 1 }, 20], [{ a: 0, b: 0 }, 30]];
+  const PA = cnt(pop, (i) => i.a === 1) / 100, PB = cnt(pop, (i) => i.b === 1) / 100, PAB = cnt(pop, (i) => i.a === 1 && i.b === 1) / 100;
+  check('207 a P(A|B)', PAB / PB, 0.6); check('207 b P(B|A)', PAB / PA, 0.6);
+  check('207 c dependent', near(PAB, PA * PB) ? 0 : 1, 1); check('207 product', PA * PB, 0.25);
+  check('207 d3 cell/100', PAB, 0.3);
+  reviewedByHand('pr-x-tab-207', 'option 0: (א) 0.6 (ב) 0.6, dependent since P(A∩B)=0.3 ≠ 0.25; options 1-2 wrong reasons for "independent", option 3 divides by 100');
+}
 
 // ============================ bagrut ============================
 { // 02 — suitcases, three-stage tree with x
@@ -192,7 +235,7 @@ const cnt = (p: [Ind, number][], f: (i: Ind) => boolean) => p.reduce((s, [i, c])
   const x = scan(0, 10000, 10000, (x) => near(Pw(tree(x), L), 0.1));
   checkLive('02א', 'prob-bag-x-cnd-02/א', x);
   checkLive('02ב', 'prob-bag-x-cnd-02/ב', cond(tree(x), C, L));
-  checkLive('02ג', 'prob-bag-x-cnd-02/ג', cond(tree(x), (o) => o.n === 1, (o) => C(o) && L(o)));
+  checkLive('02ג', 'prob-bag-x-cnd-02/ג', [cond(tree(x), (o) => o.n === 1, L), cond(tree(x), (o) => C(o) && o.n === 0, L)]);
   let mn = 1; for (let k = 0; k <= 1000; k++) mn = Math.min(mn, cond(tree(k / 1000), C, L));
   check('02ד min P(C|L) over x', mn, 0.25); check('02ד min > 0.2', mn > 0.2 ? 1 : 0, 1);
   reviewedByHand('prob-bag-x-cnd-02/ד', 'P(C|L) scanned over x in [0,1]: minimum 0.25 at x=0, so below 20% is impossible');
@@ -338,7 +381,7 @@ const cnt = (p: [Ind, number][], f: (i: Ind) => boolean) => p.reduce((s, [i, c])
   const p = scan(1, 1000, 1000, (p) => { const s = rep(bern(p), 4); return near(Pw(s, (t) => sum(t) === 3), Pw(s, (t) => sum(t) === 4)); });
   checkLive('13א', 'prob-bag-x-cnd-13/א', p);
   const s4 = rep(bern(p), 4);
-  checkLive('13ב', 'prob-bag-x-cnd-13/ב', cond(s4, (t) => t[0] === 1, (t) => sum(t) >= 3));
+  checkLive('13ב', 'prob-bag-x-cnd-13/ב', cond(s4, (t) => sum(t) === 3, (t) => sum(t) >= 2));
   let n = 2; while (!(Pw(rep(bern(p), n), (t) => sum(t) >= 2) > 0.99)) n++;
   checkLive('13ג', 'prob-bag-x-cnd-13/ג', n);
   const a = Pw(s4, (t) => sum(t) >= 2), b = Pw(rep(bern(0.9), 3), (t) => sum(t) >= 2);

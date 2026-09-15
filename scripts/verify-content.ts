@@ -116,7 +116,6 @@ const proseOnly = (s: string) =>
  *  student's table so the reader can spot the two bad cells. The corrected
  *  figure in the same solution IS validated, so the answer stays covered. */
 const FIGURE_AS_WRITTEN: Record<string, string> = {
-  'pr-x-tab-104': 'find-the-error question: the student\'s table is faulty by design; the corrected table in its solution is checked',
 };
 
 function checkString(file: string, path: string, key: string, value: string, ownerId?: string) {
