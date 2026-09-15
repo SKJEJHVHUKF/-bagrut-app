@@ -161,7 +161,10 @@ const MECHANISMS: [string, RegExp][] = [
   // something, not a complement (pr-tree author, 2026-09-14).
   // Also not "משלימים לריבוע" (completing the square) or "משלימים מסכום" (filling
   // a cell from a total) — pr-practice author, 2026-09-14.
-  ['complement', /(?<!ש)משלימ(?!ים (?:את|ל|מ))|(?<!ש)משלים(?! (?:את|ל|מ))|לא קורה|אף פעם לא|1 ?- ?P|אחד פחות/],
+  // Only the plural verb forms are excluded: "המשלים לאירוע" (the complement OF
+  // an event) is the mechanism, and an earlier exclusion of every following
+  // ל/מ silently took it away (pr-tables polish, 2026-09-15).
+  ['complement', /(?<!ש)משלימ(?!ים (?:את|לריבוע|מסכום|מן הסכום))|(?<!ש)משלים(?! את)|לא קורה|אף פעם לא|1 ?- ?P|אחד פחות/],
   ['conditional', /מותנ|בהינתן|בידיעה ש|ידוע ש.*מה ההסתברות/],
   ['independence', /בלתי[- ]תלוי|תלויים זה בזה|אינם תלויים/],
   ['binomial', /ברנולי|בינומ|ניסויים חוזרים|\\binom|nCr|בדיוק \$?\d+ (?:פעמים|הצלחות)/],
@@ -1003,16 +1006,18 @@ if (arg === 'all' && !BASELINE) {
     writeFileSync(file, `${head}export const PROB_ORDER: string[] = [\n${order.map((id) => `  '${id}',`).join('\n')}\n];\n`);
     console.log(`\nwrote ${order.length} ids to content/lessons/math5/prob-extra/order.ts`);
   } else if (order.join('|') !== PROB_ORDER.join('|')) {
-    // ponytail: a warning while round 3 is being authored (every new question
-    // makes the list stale); flip to an error when the round closes.
-    console.log(`\n⚠ rung-order-stale — content/lessons/math5/prob-extra/order.ts is not the easiest-first order; run with --write-order`);
+    // An error since round 3 closed: a question added, relabelled or rescored
+    // without regenerating the order lands out of place in its rung.
+    console.log(`\n✗ rung-order-stale — content/lessons/math5/prob-extra/order.ts is not the easiest-first order; run with --write-order`);
+    process.exitCode = 1;
   }
 }
 console.log(
   BASELINE
     ? '\n(baseline run — this grades the SHIPPED content, so failures here are the gap this round closes)'
-    : ok
+    : ok && !process.exitCode
       ? '\n✅ clean — now run the numeric re-derivation (scripts/_prob-extra-checks/<stage>.ts)'
       : '\n❌ fix the errors above',
 );
-process.exit(BASELINE || ok ? 0 : 1);
+// process.exit(0) would overwrite the exitCode the order check set.
+process.exit(BASELINE || (ok && !process.exitCode) ? 0 : 1);
