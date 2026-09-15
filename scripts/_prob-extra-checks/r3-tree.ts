@@ -13,6 +13,18 @@
  */
 import { check, enumerate, drawNoReplacement, summary } from './_lib';
 import { checkLive, reviewedByHand, coverage } from './_live';
+import { getLesson } from '../../content/lessons';
+
+/** a live question by id (any stage), for reading MCQ options and wrongAnswers */
+const liveQ = (id: string) => {
+  for (const st of getLesson('math5', 'הסתברות')?.subTopics ?? []) {
+    const f = st.questions?.find((x) => x.id === id);
+    if (f) return f;
+  }
+  throw new Error(`no question ${id}`);
+};
+/** "$0.21$" / "0.81, 0.35" → numbers */
+const nums = (s: string) => s.replace(/\$/g, '').split(',').map((v) => Number(v.trim()));
 
 const R = (n: number) => Array.from({ length: n }, (_, i) => i);
 const urn = (...parts: [string, number][]) => parts.flatMap(([l, n]) => Array.from({ length: n }, () => l));
@@ -301,6 +313,29 @@ const sumW = <T>(ws: W<T>, pred: (t: T) => boolean) => ws.reduce((s, [t, w]) => 
   check('334 w 0.9 pass one junction', 0.5 + 0.5 * p, 0.9);
   check('334 w 0.16 exactly one return', exactlyOne, 0.16);
 }
+{ // 335 — app release: run1 pass 0.7; fail → run2 pass 0.8 else delayed; fault after release 0.1 (run1) / 0.25 (run2)
+  type O = { released: boolean; fault: boolean };
+  const tree: W<O> = [
+    [{ released: true, fault: true }, 0.7 * 0.1], [{ released: true, fault: false }, 0.7 * 0.9],
+    [{ released: true, fault: true }, 0.3 * 0.8 * 0.25], [{ released: true, fault: false }, 0.3 * 0.8 * 0.75],
+    [{ released: false, fault: false }, 0.3 * 0.2],
+  ];
+  check('335 tree sums to 1', sumW(tree, () => true), 1);
+  checkLive('335', 'pr-x-tre-335', [sumW(tree, (o) => o.released && !o.fault), sumW(tree, (o) => !o.released || o.fault)]);
+  const wa = liveQ('pr-x-tre-335').wrongAnswers!.map((w) => nums(w.value));
+  // w0: only the first-run path, then complement; w1: second run always passes; w2: delayed releases left out
+  const w1 = 0.7 * 0.9 + 0.3 * 0.75;
+  [[0.7 * 0.9, 1 - 0.7 * 0.9], [w1, 1 - w1], [sumW(tree, (o) => o.released && !o.fault), sumW(tree, (o) => o.fault)]]
+    .forEach((g, i) => g.forEach((v, k) => check(`335 wrong ${i}[${k}]`, v, wa[i][k])));
+}
+{ // prob-pt-002 (shipped, de-cloned from prob-pt-drill-002) — 3 green 7 white tokens, with replacement, P(different colours)
+  const bag = urn(['G', 3], ['W', 7]);
+  checkLive('pt-002', 'prob-pt-002', enumerate([bag, bag], ([a, b]) => a !== b));
+  const opts = liveQ('prob-pt-002').answers!.map((a) => nums(a)[0]);
+  check('pt-002 d1 one path only', enumerate([bag, bag], ([a, b]) => a === 'G' && b === 'W'), opts[1]);
+  check('pt-002 d2 same colour', enumerate([bag, bag], ([a, b]) => a === b), opts[2]);
+  check('pt-002 d3 guessed half', 0.5, opts[3]);
+}
 
 // ================================ bagrut ================================
 { // 02 — best of 3 (first to 2); P(ends after 2) = 0.52; p > 0.5
@@ -347,11 +382,13 @@ const sumW = <T>(ws: W<T>, pred: (t: T) => boolean) => ws.reduce((s, [t, w]) => 
   checkLive('04ד', 'prob-bag-x-tre-04/ד', 2 * r1 * (1 - r1));
   check('04ד gap 0.0546', 2 * r0 * (1 - r0) - 2 * r1 * (1 - r1), 0.0546);
 }
-{ // 05 — 7 batteries x empty; stop when 2 good in hand; P(stop after 2) = 10/21
+{ // 05 — 7 batteries x empty; stop when 2 good in hand; P(second battery drawn is empty) = 2/7
   const box = (good: number, empty: number) => urn(['G', good], ['E', empty]);
   /** index (0-based) of the draw at which the 2nd good appears */
   const stopAt = (s: string[]) => { let g = 0; for (let i = 0; i < s.length; i++) if (s[i] === 'G' && ++g === 2) return i; return -1; };
-  const x = firstInt(0, 5, (x) => near(drawNoReplacement(box(7 - x, x), 7, (s) => stopAt(s) === 1), 10 / 21));
+  const xs = R(8).filter((x) => near(drawNoReplacement(box(7 - x, x), 7, (s) => s[1] === 'E'), 2 / 7));
+  if (xs.length !== 1) check('05א unique x', xs.length, 1);
+  const x = xs[0];
   checkLive('05א', 'prob-bag-x-tre-05/א', x);
   const b = box(7 - x, x);
   checkLive('05ב', 'prob-bag-x-tre-05/ב', drawNoReplacement(b, 7, (s) => s.slice(0, stopAt(s) + 1).filter((c) => c === 'E').length === 1));

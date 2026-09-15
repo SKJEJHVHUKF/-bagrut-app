@@ -326,6 +326,15 @@ const solve = (f: (x: number) => number, target: number, lo = 0, hi = 1, step = 
   if (!(1 - (6 / 14) ** 2 < 0.84)) check('332 four not enough', 0, 1);
   wLive('pr-x-bas-332', 2, [x, range(0, 100).find((a) => 1 - ((x - 4) / (x + a)) ** 2 > 0.84 + 1e-12)!]);
 }
+{ // 333 — escape room: exit if (puzzle1 AND puzzle2) OR bonus; 0.9, 0.8, 0.5 independent
+  const ps = [0.9, 0.8, 0.5];
+  const exit = (v: number[]) => (v[0] && v[1]) || v[2];
+  checkLive('333', 'pr-x-bas-333', [bern(ps, (v) => !!exit(v)), bern(ps, (v) => !!exit(v) && !v[2])]);
+  // wrong 0: added the two ways; wrong 1: second box = both first puzzles only; wrong 2: at least one of three
+  wLive('pr-x-bas-333', 0, [bern(ps, (v) => !!(v[0] && v[1])) + ps[2], bern(ps, (v) => !!exit(v) && !v[2])]);
+  wLive('pr-x-bas-333', 1, [bern(ps, (v) => !!exit(v)), bern(ps, (v) => !!(v[0] && v[1]))]);
+  wLive('pr-x-bas-333', 2, [bern(ps, (v) => sum(v) >= 1), bern(ps, (v) => !!exit(v) && !v[2])]);
+}
 
 // ============================ bagrut ============================
 const B = 'prob-bag-x-bas-';
@@ -384,9 +393,9 @@ const B = 'prob-bag-x-bas-';
   checkLive('06ב', `${B}06/ב`, cat([D, D, D, D, D], (o) => stopAt(o) === 3));
   checkLive('06ג', `${B}06/ג`, cat([D, D, D, D, D], (o) => stopAt(o) <= 4 && o[stopAt(o) - 1] === 1));
   checkLive('06ד', `${B}06/ד`, cat([D, D, D, D, D], (o) => stopAt(o) <= 4));
-  const minMore3 = Math.min(...range(0, 1000).map((i) => (i / 1000) ** 3 + (1 - i / 1000) ** 3));
-  if (minMore3 < 0.25 - 1e-12) check('06ה', 0, 1);
-  reviewedByHand(`${B}06/ה`, 'min of q^3+(1-q)^3 on [0,1] is 0.25, never below');
+  // smallest planned number of calls n with P(stop within n) > 0.99, by brute force over n answers
+  const within = (n: number) => cat(Array(n).fill(D), (o) => stopAt(o) <= n);
+  checkLive('06ה', `${B}06/ה`, range(2, 14).find((n) => within(n) > 0.99)!);
 }
 { // 07 — football: win = 2 draw, P(no points in 2) = 0.16
   const loss = solve((v) => v * v, 0.16)[0];
@@ -417,7 +426,10 @@ const B = 'prob-bag-x-bas-';
   checkLive('09ב', `${B}09/ב`, bern([s, s, s], (v) => sum(v) >= 2));
   checkLive('09ג', `${B}09/ג`, bern([p, p, p, p], (v) => v.some((r, i) => r && v[i + 1])));
   checkLive('09ד', `${B}09/ד`, bern([s, s, s, s], (v) => sum(v) >= 3));
-  reviewedByHand(`${B}09/ה`, 'rain 0.4 → no rain 0.6; sail = w·0.6 ≤ 0.6, so not greater than 0.6');
+  // day = (wind, rain) independent; points: sail 2, wind+rain 1, no wind 0
+  const W: [number, number][] = [[1, 0.75], [0, 0.25]], R: [number, number][] = [[1, p], [0, 1 - p]];
+  const pts = (o: number[]) => [0, 1, 2].reduce((acc, d) => acc + (o[2 * d] ? (o[2 * d + 1] ? 1 : 2) : 0), 0);
+  checkLive('09ה', `${B}09/ה`, cat([W, R, W, R, W, R], (o) => pts(o) >= 5));
 }
 { // 10 — two fishermen, up to 3 hours
   const p = solve((v) => 0.6 * (1 - v), 0.15)[0];
@@ -463,9 +475,12 @@ const B = 'prob-bag-x-bas-';
   const both = [...dana, ...eli];
   checkLive('13ג', `${B}13/ג`, bern(both, (v) => sum(v.slice(0, 3)) === sum(v.slice(3))));
   checkLive('13ד', `${B}13/ד`, [bern(both, (v) => sum(v.slice(0, 3)) > sum(v.slice(3))), bern(both, (v) => sum(v.slice(0, 3)) < sum(v.slice(3)))]);
-  const maxUp = Math.max(...range(0, 100).map((i) => bern([0.8, i / 100, p], (v) => sum(v) >= 2)));
-  if (!(maxUp < 0.95)) check('13ה', 0, 1);
-  reviewedByHand(`${B}13/ה`, 'scan q in [0,1]: P(at least two stars) peaks at 0.92 < 0.95');
+  // new rule: judge 1 star = 2 points, others 1 each, advance with >= 3 points
+  const pts3 = (ps: number[]) => bern(ps, (v) => 2 * v[0] + v[1] + v[2] >= 3);
+  const dNew = pts3(dana), eNew = pts3(eli);
+  checkLive('13ה', `${B}13/ה`, [dNew, eNew]);
+  const dropD = bern(dana, (v) => sum(v) >= 2) - dNew, dropE = bern(eli, (v) => sum(v) >= 2) - eNew;
+  if (!(dropE > dropD)) check('13ה Eli drops more', dropE, dropD);
 }
 { // 14 — x branches, 0.3 each, P(at least one)=0.7599
   const x = range(1, 30).find((n) => Math.abs(1 - 0.7 ** n - 0.7599) < 1e-9)!;
@@ -477,9 +492,10 @@ const B = 'prob-bag-x-bas-';
   const stopF = (v: number[]) => (v.indexOf(1) === -1 ? 3 : v.indexOf(1));
   const stopB = (v: number[]) => (v.lastIndexOf(1) === -1 ? 0 : v.lastIndexOf(1));
   checkLive('14ד', `${B}14/ד`, bern(br, (v) => stopF(v) === stopB(v)));
-  const best = Math.max(...range(1, 40).map((m) => m * 0.3 * 0.7 ** (m - 1)));
-  if (!(best <= 0.45)) check('14ה', 0, 1);
-  reviewedByHand(`${B}14/ה`, 'max over m=1..40 of m·0.3·0.7^(m-1) is 0.441 (m=3) ≤ 0.45');
+  const opt1 = bern([0.3, 0.3, 0.3], (v) => sum(v) >= 1);
+  const opt2 = (u: number) => bern([u, 0.3, 0.3], (v) => sum(v) >= 1);
+  if (!(opt2(0.55) > opt1)) check('14ה option 2 better', opt2(0.55), opt1);
+  checkLive('14ה', `${B}14/ה`, [opt1, opt2(0.55), range(0, 1000).map((i) => i / 1000).find((u) => opt2(u) >= opt1 - 1e-12)!]);
 }
 { // 15 — chips ok 0.7, minor x, severe 0.3-x < x; P(same category of two) = 0.54
   const x = solve((v) => 0.49 + v * v + (0.3 - v) ** 2, 0.54, 0, 0.3).find((v) => v > 0.3 - v)!;
@@ -536,9 +552,9 @@ const B = 'prob-bag-x-bas-';
   checkLive('18ג', `${B}18/ג`, [cat([Aq(p), Bq], ([a, b]) => a < b), cat([Bq, Cq], ([b, c]) => b < c)]);
   const fastest = (i: number) => cat([Aq(p), Bq, Cq], (o) => o[i] === Math.min(...o));
   checkLive('18ד', `${B}18/ד`, [fastest(0), fastest(1), fastest(2)]);
-  const ok = range(0, 1000).map((i) => i / 1000).filter((v) => v > 0.5 && cat([Aq(v), Cq], ([a, c]) => a < c) > 0.5);
-  if (!(Math.abs(ok[0] - 0.715) < 1e-9)) check('18ה p>5/7', ok[0], 0.715);
-  reviewedByHand(`${B}18/ה`, 'grid: both comparisons > 0.5 exactly for p > 5/7 ≈ 0.714');
+  const ok = range(0, 1000).map((i) => i / 1000).filter((v) => cat([Aq(v), Bq], ([a, b]) => a < b) > 0.5 && cat([Aq(v), Cq], ([a, c]) => a < c) > 0.5);
+  if (!(Math.abs(ok[0] - 0.715) < 1e-9 && ok[ok.length - 1] === 1 && ok.length === 286)) check('18ה p in (5/7,1]', ok[0], 0.715);
+  reviewedByHand(`${B}18/ה`, 'grid: both comparisons > 0.5 exactly for 5/7 < p <= 1 (contiguous)');
 }
 { // 19 — light switch, parity
   const on = (ps: number[]) => bern(ps, (v) => sum(v) % 2 === 1);
@@ -575,16 +591,18 @@ const B = 'prob-bag-x-bas-';
 }
 { // 21 — scratch cards: 10 = 2·50; P(10,10) = 0.09
   const t = solve((v) => v * v, 0.09)[0];
-  checkLive('21א', `${B}21/א`, [t / 2, 1 - t - t / 2]);
+  checkLive('21א', `${B}21/א`, [t, t / 2, 1 - t - t / 2]);
   const card = (b: number, ten = t): [number, number][] => [[0, 1 - ten - b], [10, ten], [50, b]];
   const C = card(t / 2);
   checkLive('21ב', `${B}21/ב`, cat([C, C], (o) => sum(o) >= 50));
   checkLive('21ג', `${B}21/ג`, cat([C, C], (o) => sum(o) >= 20 && sum(o) <= 60));
   const b = solve((v) => cat([card(v, 0.3), card(v, 0.3)], (o) => sum(o) >= 50), 0.36, 0, 0.7)[0];
   checkLive('21ד', `${B}21/ד`, [b, cat([card(b, 0.3), card(b, 0.3)], (o) => sum(o) >= 20 && sum(o) <= 60)]);
-  const feasible = range(1, 333).some((i) => { const a = i / 1000; return 3 * a > 0.6 && (2 * a) ** 2 < 0.09; });
-  if (feasible) check('21ה', 0, 1);
-  reviewedByHand(`${B}21/ה`, '3a > 0.6 needs a > 0.2; (2a)^2 < 0.09 needs a < 0.15; grid confirms no overlap');
+  const prop1: [number, number][] = [[0, 0.55], [10, 0.25], [50, 0.2]];
+  const prop2: [number, number][] = [[0, 1 - t - t / 2], [10, t], [60, t / 2]];
+  const g1 = cat([prop1, prop1], (o) => sum(o) >= 60), g2 = cat([prop2, prop2], (o) => sum(o) >= 60);
+  checkLive('21ה', `${B}21/ה`, [g1, g2]);
+  if (!(g2 > g1)) check('21ה proposal 2 larger', g2, g1);
 }
 
 coverage('pr-basics');
