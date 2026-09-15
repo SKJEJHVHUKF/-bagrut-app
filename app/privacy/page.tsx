@@ -1,251 +1,141 @@
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import MathUpLogo from '@/components/MathUpLogo';
 import type { Metadata } from 'next';
-import { LegalFooter } from '@/components/LegalPage';
-import { CONTACT_EMAIL } from '@/lib/legal';
+import LegalPage, { BusinessDetails, ContactLink, LegalSection } from '@/components/LegalPage';
 
 export const metadata: Metadata = {
   title: 'מדיניות פרטיות — MathUp',
-  description: 'מדיניות הפרטיות של MathUp: איזה מידע נאסף, איך הוא מאוחסן, ומה הזכויות שלך.',
+  description: 'מדיניות הפרטיות של MathUp: איזה מידע נאסף, למה, עם מי הוא משותף ומה הזכויות שלך.',
 };
 
-const LAST_UPDATED = '15 בספטמבר 2026';
+const link = 'text-violet-700 hover:text-violet-800 underline underline-offset-2';
+
+const PROVIDERS: [string, string][] = [
+  ['Supabase', 'שמירת החשבונות וההתקדמות (בסיס הנתונים)'],
+  ['Vercel', 'אחסון והפעלת האתר'],
+  ['Anthropic (Claude) ו-Google (Gemini)', 'עיבוד הודעות למורה הווירטואלי ושאלות מצולמות'],
+  ['Mathpix', 'זיהוי כתב וסימנים מתמטיים בתמונת שאלה'],
+  ['YouTube', 'הצגת סרטוני שיעור, במצב פרטיות משופרת'],
+];
 
 export default function PrivacyPolicyPage() {
   return (
-    <div
-      className="min-h-screen text-slate-800 relative overflow-x-hidden"
-      style={{ fontFamily: 'var(--font-heebo), sans-serif' }}
-    >
-      <BackgroundOrbs />
-      <TopBar />
+    <LegalPage title="מדיניות פרטיות" updated="15 בספטמבר 2026">
+      <LegalSection title="1. מבוא">
+        <p>
+          ב-MathUp אכפת לנו מהפרטיות שלך — במיוחד כי רוב המשתמשים שלנו הם תלמידים. המדיניות הזו מסבירה בפשטות איזה
+          מידע אנחנו אוספים, למה, ומה אפשר לעשות איתו. היא נכתבה לפי חוק הגנת הפרטיות, התשמ&quot;א-1981.
+        </p>
+      </LegalSection>
 
-      <main className="relative z-10 max-w-3xl mx-auto px-4 py-6 sm:py-10 space-y-6">
-        <header className="text-center space-y-2">
-          <h1 className="font-display text-3xl sm:text-4xl font-black">
-            <span className="font-display text-slate-900">
-              מדיניות פרטיות
-            </span>
-          </h1>
-          <p className="text-xs text-slate-600">עודכן לאחרונה: {LAST_UPDATED}</p>
-        </header>
+      <LegalSection title="2. איזה מידע אנחנו אוספים">
+        <ul className="list-disc pr-5 space-y-2">
+          <li><strong className="text-slate-900">פרטי חשבון:</strong> שם, אימייל וסיסמה (הסיסמה נשמרת מוצפנת, ואין לנו גישה אליה).</li>
+          <li><strong className="text-slate-900">מידע לימודי:</strong> תשובות לתרגילים, התקדמות במסלול, טעויות, תאריך בגרות אם בחרת להזין.</li>
+          <li><strong className="text-slate-900">הודעות למורה הווירטואלי:</strong> מה ששאלת ומה נענה.</li>
+          <li><strong className="text-slate-900">תמונות שאלה:</strong> תמונה שצילמת נשלחת לעיבוד ואינה נשמרת אצלנו.</li>
+          <li><strong className="text-slate-900">כיתה:</strong> אם הצטרפת לכיתה — לאיזו כיתה ומי המורה.</li>
+          <li><strong className="text-slate-900">מידע טכני:</strong> כתובת IP, סוג דפדפן ומכשיר, ודוחות תקלה — לאבטחה ולתיקון באגים.</li>
+        </ul>
+        <p>
+          איננו מבקשים מספר טלפון, תעודת זהות, כתובת מגורים או שם בית ספר. אנחנו אוספים רק את מה שצריך כדי שהשירות
+          יעבוד.
+        </p>
+      </LegalSection>
 
-        <article className="surface-premium rounded-3xl p-6 sm:p-8 space-y-1 text-sm sm:text-base text-slate-700 leading-relaxed">
-          <Section title="1. מי אנחנו">
-            <p>
-              <strong className="text-slate-900">&quot;MathUp&quot;</strong> (להלן: &quot;השירות&quot; או &quot;האתר&quot;) הוא פלטפורמת תרגול עצמית לתלמידי תיכון לקראת בחינות הבגרות. השירות מופעל באופן עצמאי על-ידי בעלים פרטי בישראל.
-            </p>
-            <p>
-              לכל פנייה בנושאי פרטיות, ניתן ליצור קשר בכתובת:{' '}
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                className="text-violet-700 hover:text-violet-800 underline-offset-2 hover:underline"
-                dir="ltr"
-              >
-                {CONTACT_EMAIL}
-              </a>
-              .
-            </p>
-          </Section>
+      <LegalSection title="3. למה אנחנו משתמשים במידע">
+        <ul className="list-disc pr-5 space-y-1">
+          <li>כדי להפעיל את השירות: לשמור התקדמות, להתאים תרגול ולענות לשאלות</li>
+          <li>כדי לשפר את התוכן ואת איכות התשובות של המורה הווירטואלי</li>
+          <li>כדי להציג למורה את התקדמות התלמידים בכיתה שלו</li>
+          <li>כדי לשלוח הודעות חשובות על החשבון או על שינויים בשירות</li>
+          <li>כדי להגן על השירות מפני ניצול לרעה, ולעמוד בדרישות החוק</li>
+        </ul>
+      </LegalSection>
 
-          <Section title="2. איזה מידע אנחנו אוספים">
-            <p>במסגרת השימוש בשירות, נאסף עליך המידע הבא:</p>
-            <ul className="list-disc pr-5 space-y-2">
-              <li><strong className="text-slate-900">פרטי חשבון:</strong> כתובת אימייל וסיסמה (הסיסמה נשמרת ב-hash בלבד — אין לנו גישה לסיסמה עצמה).</li>
-              <li><strong className="text-slate-900">תוכן שיצרת בשירות:</strong> הודעות צ&apos;אט עם המורה הווירטואלי, תשובות לתרגילים, התקדמות בנושאים, תוכניות לימוד שיצרת.</li>
-              <li><strong className="text-slate-900">תמונות:</strong> אם השתמשת בפיצ&apos;ר &quot;צילום שאלה&quot;, התמונה מועברת לעיבוד AI ואינה נשמרת באופן קבוע אצלנו.</li>
-              <li><strong className="text-slate-900">מטא-דאטה טכנית:</strong> כתובת IP, סוג דפדפן ומערכת הפעלה — לצורך אבטחה והגנה מפני ניצול לרעה.</li>
-            </ul>
-          </Section>
+      <LegalSection title="4. שיתוף מידע">
+        <p>
+          <strong className="text-slate-900">אנחנו לא מוכרים מידע אישי ולא מציגים פרסומות.</strong> המידע משותף רק
+          במקרים האלה:
+        </p>
+        <ul className="list-disc pr-5 space-y-1">
+          <li><strong className="text-slate-900">המורה שלך</strong> — רק אם הצטרפת לכיתה שלו עם קוד.</li>
+          <li>
+            <strong className="text-slate-900">הורים</strong> — רק אם אתה או המורה שלחתם קישור לדוח ההתקדמות. אפשר
+            לבטל קישור בכל רגע, והקישור הישן מפסיק לעבוד.
+          </li>
+          <li><strong className="text-slate-900">ספקי שירות</strong> שעובדים בשבילנו (פירוט למטה).</li>
+          <li><strong className="text-slate-900">רשויות</strong> — כשהחוק מחייב.</li>
+        </ul>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="text-right border-b border-slate-900/10">
+                <th className="py-2 pl-3 font-bold text-slate-900">ספק</th>
+                <th className="py-2 font-bold text-slate-900">בשביל מה</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PROVIDERS.map(([name, why]) => (
+                <tr key={name} className="border-b border-slate-900/5">
+                  <td className="py-2 pl-3 whitespace-nowrap" dir="ltr">{name}</td>
+                  <td className="py-2">{why}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p>חלק מהספקים שומרים מידע בשרתים מחוץ לישראל, בהתאם לדין.</p>
+      </LegalSection>
 
-          <Section title="3. למה אנחנו אוספים את המידע">
-            <ul className="list-disc pr-5 space-y-2">
-              <li>כדי לספק לך את השירות — לאמת את החשבון שלך, לשמור התקדמות, להציג תוכניות לימוד מותאמות.</li>
-              <li>כדי לשפר את השירות — לזהות תקלות, להבין אילו פיצ&apos;רים פעילים, לבדוק שאיכות התוכן עומדת בסטנדרט.</li>
-              <li>כדי למנוע ניצול לרעה — לחסום בוטים, להגביל קצב בקשות, להגן מפני התקפות.</li>
-            </ul>
-          </Section>
+      <LegalSection title="5. אבטחת מידע">
+        <p>
+          החיבור לאתר מוצפן (HTTPS), סיסמאות נשמרות מוצפנות, וכל משתמש יכול לגשת רק למידע שלו. אין מערכת חסינה
+          לגמרי — אם יקרה אירוע אבטחה משמעותי, נודיע למי שהושפע ולרשויות כנדרש.
+        </p>
+      </LegalSection>
 
-          <Section title="4. שותפים שלישיים">
-            <p>השירות מסתמך על ספקים שלישיים שמעבדים חלק מהמידע עבורנו:</p>
-            <ul className="list-disc pr-5 space-y-2">
-              <li>
-                <strong className="text-slate-900">Supabase</strong> — אחסון בסיס הנתונים וניהול חשבונות.
-                {' '}
-                <a
-                  href="https://supabase.com/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-violet-700 hover:text-violet-800 underline-offset-2 hover:underline"
-                >
-                  מדיניות פרטיות של Supabase
-                </a>.
-              </li>
-              <li>
-                <strong className="text-slate-900">Anthropic</strong> — מעבד את הודעות הצ&apos;אט והבקשות ל-AI דרך מודלי Claude.
-                {' '}
-                <a
-                  href="https://www.anthropic.com/legal/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-violet-700 hover:text-violet-800 underline-offset-2 hover:underline"
-                >
-                  מדיניות פרטיות של Anthropic
-                </a>.
-              </li>
-              <li>
-                <strong className="text-slate-900">Google (Gemini)</strong> — מעבד חלק מהודעות המורה הווירטואלי.
-                {' '}
-                <a
-                  href="https://policies.google.com/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-violet-700 hover:text-violet-800 underline-offset-2 hover:underline"
-                >
-                  מדיניות פרטיות של Google
-                </a>.
-              </li>
-              <li>
-                <strong className="text-slate-900">YouTube</strong> — סרטוני שיעור מוטמעים במצב &quot;פרטיות משופרת&quot;; נתונים נשלחים ל-YouTube רק כשמפעילים סרטון.
-              </li>
-              <li>
-                <strong className="text-slate-900">Vercel</strong> — מארח את האתר ומספק תשתית הרצה.
-                {' '}
-                <a
-                  href="https://vercel.com/legal/privacy-policy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-violet-700 hover:text-violet-800 underline-offset-2 hover:underline"
-                >
-                  מדיניות פרטיות של Vercel
-                </a>.
-              </li>
-            </ul>
-            <p>אנחנו לא מוכרים את המידע שלך לאף גורם אחר ולא משתמשים בו לצרכי שיווק חיצוני.</p>
-          </Section>
+      <LegalSection title="6. כמה זמן נשמר המידע">
+        <p>
+          המידע נשמר כל עוד החשבון פעיל. אחרי בקשת מחיקה נמחק את המידע האישי תוך 30 יום, חוץ ממידע שהחוק מחייב
+          לשמור.
+        </p>
+      </LegalSection>
 
-          <Section title="5. משך אחסון המידע">
-            <p>
-              המידע שלך נשמר כל עוד החשבון שלך פעיל. אם תבקש למחוק את חשבונך, נמחק את כל הנתונים האישיים הקשורים אליך תוך 30 ימים מהבקשה (פרט למידע שהחוק מחייב אותנו לשמור — למשל לוגים לצורכי אבטחה).
-            </p>
-          </Section>
+      <LegalSection title="7. הזכויות שלך">
+        <ul className="list-disc pr-5 space-y-1">
+          <li>לראות איזה מידע אנחנו שומרים עליך</li>
+          <li>לתקן מידע שגוי</li>
+          <li>למחוק את החשבון ואת המידע</li>
+          <li>לקבל עותק של המידע שלך</li>
+          <li>להתנגד לשימוש מסוים במידע</li>
+        </ul>
+        <p>
+          כדי לממש זכות — כתבו אלינו: <ContactLink />. נענה תוך 30 יום לכל היותר.
+        </p>
+      </LegalSection>
 
-          <Section title="6. Cookies">
-            <p>
-              האתר משתמש ב-cookies חיוניים בלבד — אלו הדרושים להתחברות לחשבון ולשמירת ה-session שלך. איננו משתמשים ב-cookies מעקב לצרכי פרסום או profiling. אם נוסיף כלי אנליטיקס בעתיד — נעדכן את המדיניות הזו ונבקש את הסכמתך מראש.
-            </p>
-            <p>
-              פירוט מלא:{' '}
-              <Link href="/cookies" className="text-violet-700 hover:text-violet-800 underline-offset-2 hover:underline">
-                מדיניות עוגיות
-              </Link>
-              .
-            </p>
-          </Section>
+      <LegalSection title="8. קטינים">
+        <p>
+          ההרשמה מיועדת לגילאי 16 ומעלה, ומתחת לגיל 18 — באישור הורה. הורה שחושב שילד מתחת לגיל 16 נרשם, או שרוצה
+          לראות או למחוק את המידע של ילדו, מוזמן לפנות אלינו.
+        </p>
+      </LegalSection>
 
-          <Section title="6א. מידע מינימלי">
-            <p>
-              אנחנו אוספים רק את מה שנדרש להפעלת השירות: שם, אימייל וסיסמה. איננו מבקשים מספר טלפון, תעודת זהות, כתובת או פרטי בית ספר, ואיננו משתמשים בכלי מעקב או פרסום.
-            </p>
-          </Section>
+      <LegalSection title="9. עוגיות">
+        <p>
+          אנחנו משתמשים רק בעוגיות ובאחסון מקומי חיוניים — בלי מעקב ובלי פרסום. פירוט ב
+          <Link href="/cookies" className={link}>מדיניות העוגיות</Link>.
+        </p>
+      </LegalSection>
 
-          <Section title="7. קטינים">
-            <p>
-              השירות מיועד לתלמידים מגיל <strong className="text-slate-900">16 ומעלה</strong>. תלמידים מתחת לגיל 18 רשאים להירשם רק באישור הורה או אפוטרופוס. אם הינך הורה ונודע לך שילדך מתחת לגיל 16 פתח חשבון בשירות — פנה אלינו ונמחק את החשבון.
-            </p>
-          </Section>
+      <LegalSection title="10. שינויים במדיניות">
+        <p>נעדכן את המדיניות מעת לעת. על שינוי מהותי נודיע באתר או באימייל, ותאריך העדכון יופיע בראש העמוד.</p>
+      </LegalSection>
 
-          <Section title="8. הזכויות שלך">
-            <p>על-פי חוק הגנת הפרטיות, התשמ&quot;א-1981 (וכן תיקון 13 משנת 2025), עומדות לרשותך הזכויות הבאות:</p>
-            <ul className="list-disc pr-5 space-y-2">
-              <li><strong className="text-slate-900">זכות עיון</strong> — לבקש לראות איזה מידע אנחנו מחזיקים עליך.</li>
-              <li><strong className="text-slate-900">זכות תיקון</strong> — לבקש לתקן מידע שגוי.</li>
-              <li><strong className="text-slate-900">זכות מחיקה</strong> — לבקש למחוק את חשבונך ואת המידע האישי הקשור אליו.</li>
-              <li><strong className="text-slate-900">זכות הגבלה</strong> — לבקש להגביל עיבוד של חלק מהמידע.</li>
-            </ul>
-            <p>
-              לממש זכות כלשהי — שלח בקשה לאימייל שצוין למעלה. נשיב תוך 30 ימים.
-            </p>
-          </Section>
-
-          <Section title="9. אבטחת מידע">
-            <p>אנחנו נוקטים באמצעי אבטחה מקובלים להגנה על המידע שלך:</p>
-            <ul className="list-disc pr-5 space-y-2">
-              <li>תקשורת מוצפנת (HTTPS) בכל הבקשות לאתר.</li>
-              <li>סיסמאות נשמרות בצורה מוצפנת (hash) — לא ניתן לשחזר אותן גם אצלנו.</li>
-              <li>הפרדת גישות במסד הנתונים (Row Level Security) — משתמש יכול לראות רק את המידע שלו.</li>
-              <li>הגנה מפני בוטים, rate-limiting והגבלות גישה ל-API.</li>
-            </ul>
-            <p>
-              עם זאת, אין מערכת ב-100% חסינה. במקרה של אירוע אבטחה משמעותי — נודיע למשתמשים המושפעים ולרשויות הרלוונטיות כנדרש בחוק.
-            </p>
-          </Section>
-
-          <Section title="10. שינויים במדיניות">
-            <p>
-              אנחנו רשאים לעדכן את המדיניות הזו מעת לעת. שינוי מהותי יתעדכן בעמוד זה ויסומן בעדכון התאריך שבראש העמוד. אם השינוי משמעותי — נשלח גם הודעה למייל הרשום בחשבונך.
-            </p>
-          </Section>
-
-          <Section title="11. דין שולט וסמכות שיפוט">
-            <p>
-              מדיניות זו כפופה לחוקי מדינת ישראל. סמכות השיפוט הבלעדית לכל מחלוקת הנובעת ממדיניות זו תהיה לבתי המשפט המוסמכים בתל אביב-יפו.
-            </p>
-          </Section>
-        </article>
-
-        <LegalFooter />
-      </main>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="pt-6 first:pt-0 space-y-3">
-      <h2 className="font-display text-lg font-black text-slate-900">{title}</h2>
-      <div className="space-y-3">{children}</div>
-    </section>
-  );
-}
-
-function BackgroundOrbs() {
-  return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      <div
-        className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-400/12 blur-[130px] animate-pulse"
-        style={{ animationDuration: '8s' }}
-      />
-      <div
-        className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-400/10 blur-[130px] animate-pulse"
-        style={{ animationDuration: '10s', animationDelay: '2s' }}
-      />
-    </div>
-  );
-}
-
-function TopBar() {
-  return (
-    <nav className="md:hidden sticky top-0 z-50 glass-card border-x-0 border-t-0 rounded-none">
-      <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <MathUpLogo size="md" />
-          <div>
-            <div className="text-base font-black font-display text-slate-900">
-              MathUp
-            </div>
-            <div className="text-[10px] text-slate-600 -mt-0.5">מדיניות פרטיות</div>
-          </div>
-        </Link>
-        <Link
-          href="/"
-          className="flex items-center gap-2 bg-white/70 hover:bg-white border border-white/60 hover:border-violet-500/40 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-        >
-          <span>חזרה</span>
-          <ArrowLeft className="w-3.5 h-3.5" />
-        </Link>
-      </div>
-    </nav>
+      <LegalSection title="11. יצירת קשר">
+        <p>לשאלות בנושא פרטיות:</p>
+        <BusinessDetails />
+      </LegalSection>
+    </LegalPage>
   );
 }
