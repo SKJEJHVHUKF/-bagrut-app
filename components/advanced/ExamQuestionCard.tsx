@@ -112,7 +112,7 @@ function ExamPartCard({ part }: { part: ExamPart }) {
 
       {/* Scratch box */}
       {!solutionShown && (
-        <textarea
+        <textarea aria-label="התשובה שלך"
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="התשובה שלך…"

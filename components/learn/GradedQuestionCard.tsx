@@ -107,7 +107,7 @@ export function GradedQuestionCard({ q, index }: { q: GradedQuestion; index: num
 
       {/* Open answer */}
       {q.kind === 'open' && !solutionShown && (
-        <textarea
+        <textarea aria-label="התשובה שלך"
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="כתוב כאן את התשובה שלך (נסה לבד לפני שאתה חושף את הפתרון)…"

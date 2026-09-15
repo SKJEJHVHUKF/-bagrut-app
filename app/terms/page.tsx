@@ -2,14 +2,14 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import MathUpLogo from '@/components/MathUpLogo';
 import type { Metadata } from 'next';
+import { BusinessDetails, LegalFooter } from '@/components/LegalPage';
 
 export const metadata: Metadata = {
   title: 'תנאי שימוש — MathUp',
   description: 'תנאי השימוש של MathUp: כללי השימוש בשירות, אחריות, וזכויות.',
 };
 
-const LAST_UPDATED = '28 במאי 2026';
-const CONTACT_EMAIL = 'meitalm1020@gmail.com';
+const LAST_UPDATED = '15 בספטמבר 2026';
 
 export default function TermsPage() {
   return (
@@ -86,7 +86,7 @@ export default function TermsPage() {
 
           <Section title="6. הצהרה לגבי AI">
             <p>
-              חלק מהפיצ&apos;רים בשירות מבוססים על מודלי AI של חברת Anthropic (Claude). מודלי AI הם כלי סטטיסטי ואינם מובטחים להיות מדויקים. תשובות שגויות, חלקיות או מטעות יכולות להופיע — במיוחד בנושאים מתמטיים מורכבים או בחישובים.
+              חלק מהפיצ&apos;רים בשירות מבוססים על מודלי AI של חברות Anthropic (Claude) ו-Google (Gemini). מודלי AI הם כלי סטטיסטי ואינם מובטחים להיות מדויקים. תשובות שגויות, חלקיות או מטעות יכולות להופיע — במיוחד בנושאים מתמטיים מורכבים או בחישובים.
             </p>
             <p>
               <strong className="text-slate-900">המשתמש חייב לאמת כל פתרון או הסבר באופן עצמאי</strong> מול ספרי לימוד, מורים, או מקורות מהימנים אחרים. השירות אינו אחראי לתוצאות אקדמיות, ציוני בגרות, או החלטות שתקבל על סמך תכני AI.
@@ -135,28 +135,23 @@ export default function TermsPage() {
 
           <Section title="11. יצירת קשר">
             <p>
-              לכל שאלה, תלונה או בקשה בנוגע לתנאים אלה — ניתן ליצור קשר בכתובת:{' '}
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                className="text-violet-700 hover:text-violet-800 underline-offset-2 hover:underline"
-                dir="ltr"
-              >
-                {CONTACT_EMAIL}
-              </a>
-              .
+              לכל שאלה, תלונה או בקשה בנוגע לתנאים אלה — פרטי מפעיל השירות:
+            </p>
+            <BusinessDetails />
+          </Section>
+
+          <Section title="12. תשלומים וביטולים">
+            <p>
+              מנויים בתשלום כפופים ל
+              <Link href="/refunds" className="text-violet-700 hover:text-violet-800 underline-offset-2 hover:underline">
+                מדיניות הביטולים וההחזרים
+              </Link>
+              , בהתאם לחוק הגנת הצרכן.
             </p>
           </Section>
         </article>
 
-        <footer className="text-center pt-4 pb-8 text-xs text-slate-500 space-x-2 space-x-reverse">
-          <Link href="/privacy" className="hover:text-slate-900 underline-offset-2 hover:underline">
-            מדיניות פרטיות
-          </Link>
-          <span>·</span>
-          <Link href="/" className="hover:text-slate-900 underline-offset-2 hover:underline">
-            דף הבית
-          </Link>
-        </footer>
+        <LegalFooter />
       </main>
     </div>
   );

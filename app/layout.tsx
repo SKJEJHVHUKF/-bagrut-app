@@ -10,6 +10,7 @@ import TutorBubble from "@/components/tutor/TutorBubble";
 import BottomNav from "@/components/BottomNav";
 import GlobalSearch from "@/components/GlobalSearch";
 import FormulaSheet from "@/components/FormulaSheet";
+import CookieNotice from "@/components/CookieNotice";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -118,6 +119,7 @@ export default function RootLayout({
         <GlobalSearch />
         <FormulaSheet />
         {children}
+        <CookieNotice />
         <Toaster
           position="top-center"
           dir="rtl"

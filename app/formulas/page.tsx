@@ -76,7 +76,7 @@ export default function FormulasPage() {
         <section className="sticky top-16 z-30 -mx-2 px-2 py-2 bg-[var(--background)]/90 backdrop-blur-md rounded-2xl">
           <div className="relative">
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 pointer-events-none" />
-            <input
+            <input aria-label="חיפוש נוסחה"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}

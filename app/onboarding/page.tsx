@@ -310,7 +310,7 @@ function DateStep({
         <label className="block text-xs font-black tracking-widest text-violet-700 uppercase">
           תאריך הבגרות
         </label>
-        <input
+        <input aria-label="תאריך הבגרות"
           type="date"
           value={value}
           min={today ?? undefined}

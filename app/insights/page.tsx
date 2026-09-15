@@ -395,8 +395,8 @@ export default function InsightsPage() {
                 </div>
                 <div className="text-[11px] text-slate-600 font-bold mt-0.5 flex items-center gap-1.5">
                   <span>יעד יומי</span>
-                  <button onClick={() => bumpGoal(-5)} className="w-4 h-4 rounded bg-slate-900/5 hover:bg-slate-900/10 text-slate-700 text-[10px] font-black leading-none">−</button>
-                  <button onClick={() => bumpGoal(5)} className="w-4 h-4 rounded bg-slate-900/5 hover:bg-slate-900/10 text-slate-700 text-[10px] font-black leading-none">+</button>
+                  <button aria-label="הקטן יעד יומי" onClick={() => bumpGoal(-5)} className="w-4 h-4 rounded bg-slate-900/5 hover:bg-slate-900/10 text-slate-700 text-[10px] font-black leading-none">−</button>
+                  <button aria-label="הגדל יעד יומי" onClick={() => bumpGoal(5)} className="w-4 h-4 rounded bg-slate-900/5 hover:bg-slate-900/10 text-slate-700 text-[10px] font-black leading-none">+</button>
                 </div>
               </div>
             </div>

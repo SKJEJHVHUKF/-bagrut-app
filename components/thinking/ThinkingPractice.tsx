@@ -199,7 +199,7 @@ export function ThinkingPractice({ topic, subject = 'math5' }: { topic: string; 
 
           {!evaluation ? (
             <div className="space-y-2">
-              <textarea
+              <textarea aria-label="התשובה שלך"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 placeholder="הסבר במילים שלך — כמו שהיית כותב בבגרות…"

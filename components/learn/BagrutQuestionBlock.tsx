@@ -80,7 +80,7 @@ function BagrutPartCard({ part }: { part: BagrutPart; context: string }) {
 
       {/* Answer scratch box */}
       {!solutionShown && (
-        <textarea
+        <textarea aria-label="התשובה שלך"
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="התשובה שלך…"

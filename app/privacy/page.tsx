@@ -2,14 +2,15 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import MathUpLogo from '@/components/MathUpLogo';
 import type { Metadata } from 'next';
+import { LegalFooter } from '@/components/LegalPage';
+import { CONTACT_EMAIL } from '@/lib/legal';
 
 export const metadata: Metadata = {
   title: 'מדיניות פרטיות — MathUp',
   description: 'מדיניות הפרטיות של MathUp: איזה מידע נאסף, איך הוא מאוחסן, ומה הזכויות שלך.',
 };
 
-const LAST_UPDATED = '28 במאי 2026';
-const CONTACT_EMAIL = 'meitalm1020@gmail.com';
+const LAST_UPDATED = '15 בספטמבר 2026';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -94,6 +95,21 @@ export default function PrivacyPolicyPage() {
                 </a>.
               </li>
               <li>
+                <strong className="text-slate-900">Google (Gemini)</strong> — מעבד חלק מהודעות המורה הווירטואלי.
+                {' '}
+                <a
+                  href="https://policies.google.com/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-violet-700 hover:text-violet-800 underline-offset-2 hover:underline"
+                >
+                  מדיניות פרטיות של Google
+                </a>.
+              </li>
+              <li>
+                <strong className="text-slate-900">YouTube</strong> — סרטוני שיעור מוטמעים במצב &quot;פרטיות משופרת&quot;; נתונים נשלחים ל-YouTube רק כשמפעילים סרטון.
+              </li>
+              <li>
                 <strong className="text-slate-900">Vercel</strong> — מארח את האתר ומספק תשתית הרצה.
                 {' '}
                 <a
@@ -117,7 +133,20 @@ export default function PrivacyPolicyPage() {
 
           <Section title="6. Cookies">
             <p>
-              האתר משתמש ב-cookies חיוניים בלבד — אלו הדרושים להתחברות לחשבון ולשמירת ה-session שלך. איננו משתמשים ב-cookies מעקב לצרכי פרסום או profiling. אם תוסיף הסכמה לאנליטיקס בעתיד — נעדכן את המדיניות הזו ונבקש את הסכמתך מראש.
+              האתר משתמש ב-cookies חיוניים בלבד — אלו הדרושים להתחברות לחשבון ולשמירת ה-session שלך. איננו משתמשים ב-cookies מעקב לצרכי פרסום או profiling. אם נוסיף כלי אנליטיקס בעתיד — נעדכן את המדיניות הזו ונבקש את הסכמתך מראש.
+            </p>
+            <p>
+              פירוט מלא:{' '}
+              <Link href="/cookies" className="text-violet-700 hover:text-violet-800 underline-offset-2 hover:underline">
+                מדיניות עוגיות
+              </Link>
+              .
+            </p>
+          </Section>
+
+          <Section title="6א. מידע מינימלי">
+            <p>
+              אנחנו אוספים רק את מה שנדרש להפעלת השירות: שם, אימייל וסיסמה. איננו מבקשים מספר טלפון, תעודת זהות, כתובת או פרטי בית ספר, ואיננו משתמשים בכלי מעקב או פרסום.
             </p>
           </Section>
 
@@ -166,15 +195,7 @@ export default function PrivacyPolicyPage() {
           </Section>
         </article>
 
-        <footer className="text-center pt-4 pb-8 text-xs text-slate-500 space-x-2 space-x-reverse">
-          <Link href="/terms" className="hover:text-slate-900 underline-offset-2 hover:underline">
-            תנאי שימוש
-          </Link>
-          <span>·</span>
-          <Link href="/" className="hover:text-slate-900 underline-offset-2 hover:underline">
-            דף הבית
-          </Link>
-        </footer>
+        <LegalFooter />
       </main>
     </div>
   );

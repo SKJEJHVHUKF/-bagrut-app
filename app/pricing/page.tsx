@@ -265,6 +265,12 @@ export default function PricingPage() {
             <span>עדיין לא בטוח? התחל בחינם</span>
             <ArrowLeft className="w-4 h-4" />
           </Link>
+          <p className="text-xs text-slate-600">
+            ביטול תוך 14 יום לפי חוק הגנת הצרכן ·{' '}
+            <Link href="/refunds" className="underline underline-offset-2 hover:text-slate-900">
+              מדיניות ביטולים והחזרים
+            </Link>
+          </p>
         </div>
       </div>
     </div>

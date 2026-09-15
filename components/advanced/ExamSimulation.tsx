@@ -203,7 +203,7 @@ export function ExamSimulation({
               </span>
             </div>
 
-            <textarea
+            <textarea aria-label={`התשובה לסעיף ${part.label}`}
               value={answers[part.label] ?? ''}
               onChange={(e) => setAnswers((a) => ({ ...a, [part.label]: e.target.value }))}
               placeholder="התשובה שלך (או פתור על דף)…"

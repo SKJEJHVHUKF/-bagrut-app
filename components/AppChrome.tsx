@@ -37,6 +37,7 @@ import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { STORAGE_FULL_EVENT } from '@/lib/storage';
 import { NAV_GROUPS, isActive, isStaffPath } from '@/lib/nav';
+import { LEGAL_LINKS } from '@/lib/legal';
 import { isProUser, isTeacher } from '@/lib/access';
 import { currentStreak } from '@/lib/results';
 import { initSync, syncNow, syncStatus, type SyncStatus } from '@/lib/sync/roadmap-sync';
@@ -318,7 +319,7 @@ export default function AppChrome() {
                 <div className="mt-3">
                   {editing ? (
                     <div className="flex items-center gap-2">
-                      <input
+                      <input aria-label="השם שלך"
                         value={draftName}
                         onChange={(e) => setDraftName(e.target.value)}
                         placeholder="השם שלך"
@@ -503,8 +504,15 @@ export default function AppChrome() {
                 )}
               </nav>
 
-              {/* Sign out */}
+              {/* Sign out + legal links (the accessibility statement must be reachable from every page) */}
               <div className="p-3 border-t border-slate-900/[0.08]">
+                <nav aria-label="מסמכים משפטיים" className="flex flex-wrap gap-x-3 mb-2 text-[11px] text-slate-600">
+                  {LEGAL_LINKS.map((l) => (
+                    <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="py-1 hover:text-slate-900 hover:underline">
+                      {l.label}
+                    </Link>
+                  ))}
+                </nav>
                 <form action="/auth/signout" method="post">
                   <button
                     type="submit"

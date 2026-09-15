@@ -730,7 +730,7 @@ export default function ChatPage() {
             >
               <Camera className="w-5 h-5" />
             </button>
-            <textarea
+            <textarea aria-label="הודעה למורה"
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}

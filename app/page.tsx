@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hasPlan } from '@/lib/study-plan';
 import MathUpLogo from '@/components/MathUpLogo';
+import { LEGAL_LINKS } from '@/lib/legal';
 import GridTrail from '@/components/GridTrail';
 import TutorMascot from '@/components/tutor/TutorMascot';
 import {
@@ -716,14 +717,12 @@ export default function Landing() {
             <MathUpLogo size="sm" />
             <span className="font-display text-sm font-bold text-ink">MathUp</span>
           </div>
-          <nav className="flex items-center gap-3 text-xs text-slate-600">
-            <Link href="/privacy" className="inline-flex items-center min-h-[44px] px-2 hover:text-slate-800 underline-offset-2 hover:underline transition-colors">
-              מדיניות פרטיות
-            </Link>
-            <span className="text-slate-600" aria-hidden="true">·</span>
-            <Link href="/terms" className="inline-flex items-center min-h-[44px] px-2 hover:text-slate-800 underline-offset-2 hover:underline transition-colors">
-              תנאי שימוש
-            </Link>
+          <nav aria-label="מסמכים משפטיים" className="flex flex-wrap justify-center items-center gap-x-1 text-xs text-slate-600">
+            {LEGAL_LINKS.map((l) => (
+              <Link key={l.href} href={l.href} className="inline-flex items-center min-h-[44px] px-2 hover:text-slate-800 underline-offset-2 hover:underline transition-colors">
+                {l.label}
+              </Link>
+            ))}
           </nav>
           <div className="text-xs text-slate-500 text-center sm:text-left">
             {/* The build credit ("נוצר עם Claude AI של Anthropic") lived here.

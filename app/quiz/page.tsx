@@ -814,7 +814,7 @@ function Quiz() {
     return (
       <div className="quiz-inner">
         <div className="quiz-topbar">
-          <button className="back-icon-btn" onClick={() => setScreen('home')}>←</button>
+          <button aria-label="חזרה" className="back-icon-btn" onClick={() => setScreen('home')}>←</button>
           <div className="progress-track">
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: `${pct}%` }}></div>

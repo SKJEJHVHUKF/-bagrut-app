@@ -1053,7 +1053,7 @@ export default function TutorBubble() {
                   }}
                   className="flex items-end gap-2"
                 >
-                  <textarea
+                  <textarea aria-label="הודעה למורה"
                     value={input}
                     onChange={(e) => setInput(e.target.value.slice(0, MAX_LEN))}
                     onKeyDown={(e) => {

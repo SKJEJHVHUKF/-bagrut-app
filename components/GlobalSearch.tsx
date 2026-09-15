@@ -109,7 +109,7 @@ export default function GlobalSearch() {
             {/* Input */}
             <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-900/[0.08]">
               <Search className="w-5 h-5 text-violet-600 flex-shrink-0" />
-              <input
+              <input aria-label="חיפוש באתר"
                 ref={inputRef}
                 value={query}
                 onChange={(e) => {

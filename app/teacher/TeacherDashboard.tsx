@@ -949,7 +949,7 @@ function StudentDetail({
         </div>
 
         <form onSubmit={addAssignment} className="flex flex-wrap gap-2 items-center">
-          <input
+          <input aria-label="נושא המשימה"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="מה לתרגל — למשל: חקירת פונקציה, שאלות 1-5"

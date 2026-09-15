@@ -90,7 +90,7 @@ export function AnswerInput({
 
   const field =
     type === 'text' ? (
-      <textarea
+      <textarea aria-label="התשובה שלך"
         ref={setRef}
         value={value}
         onChange={onInput}
@@ -104,7 +104,7 @@ export function AnswerInput({
         } text-slate-900 placeholder:text-slate-500 outline-none transition-colors resize-y`}
       />
     ) : (
-      <input
+      <input aria-label="התשובה שלך"
         ref={setRef}
         type="text"
         inputMode={type === 'number' ? 'decimal' : 'text'}
