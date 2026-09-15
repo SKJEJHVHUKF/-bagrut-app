@@ -973,7 +973,7 @@ $$P(A \\cap B) = P(A) \\cdot P(B).$$
       },
       {
         id: 'prob-sub-tab-004',
-        difficulty: 'mid',
+        difficulty: 'easy',
         kind: 'open',
         question:
           'בטבלה: $P(A \\cap B) = 0.12$, $P(A \\cap \\bar B) = 0.28$, $P(\\bar A \\cap B) = 0.18$, $P(\\bar A \\cap \\bar B) = 0.42$. חשב את $P(A \\mid B)$.',
