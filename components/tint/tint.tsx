@@ -32,6 +32,20 @@ export function tintCard(t: Tint, washEnd = 78): CSSProperties {
   };
 }
 
+/** tintCard plus the colours as CSS variables, for components whose shape
+ *  lives in a stylesheet (`var(--tint-line)` for a selected outline, …). */
+export function tintVars(t: Tint): CSSProperties {
+  return {
+    ...tintCard(t),
+    ['--tint-line' as string]: t.line,
+    ['--tint-solid' as string]: t.solid,
+    ['--tint-ink' as string]: t.ink,
+  } as CSSProperties;
+}
+
+/** One colour per topic, in syllabus order (track tiles, quiz topics). */
+export const TOPIC_TINTS: Tint[] = [TINTS.green, TINTS.blue, TINTS.gold, TINTS.rose, TINTS.violet, TINTS.slate];
+
 export function TintBadge({ tint, children }: { tint: Tint; children: ReactNode }) {
   return (
     <span

@@ -24,10 +24,7 @@ import { PracticeShell } from '@/components/practice/PracticeShell';
 import { MathText } from '@/components/practice/MathText';
 import { TodayList } from '@/components/roadmap/TodayList';
 import { TopicIcon } from '@/components/roadmap/TopicIcon';
-import { TINTS, TINT_FONT, TintBadge, tintCard, hexA, type Tint } from '@/components/tint/tint';
-
-/** One colour per topic, in syllabus order (design round 9/10). */
-const TOPIC_TINTS: Tint[] = [TINTS.green, TINTS.blue, TINTS.gold, TINTS.rose, TINTS.violet, TINTS.slate];
+import { TINTS, TINT_FONT, TOPIC_TINTS, TintBadge, tintCard, hexA } from '@/components/tint/tint';
 import { getTrack, isTrackPaper } from '@/content/tracks';
 import { paperLabel, type BagrutPaper } from '@/content/bagrut-curriculum';
 import { levelsForNodes, trackMainTopics, trackNodes } from '@/lib/track';

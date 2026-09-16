@@ -27,6 +27,7 @@ import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { toast } from 'sonner';
 import { Flame, Sprout, Target, Zap } from 'lucide-react';
 import { TopicIcon } from '@/components/roadmap/TopicIcon';
+import { TINTS, TOPIC_TINTS, tintVars, type Tint } from '@/components/tint/tint';
 import type { LucideIcon } from 'lucide-react';
 import { useClientState, useClientValue } from '@/lib/use-client-value';
 
@@ -43,6 +44,7 @@ function readInitialConceptLevel(): ConceptLevel | null {
 // The three concept levels, drawn with the ladder's icon language (🌱⚡🔥 in
 // the content stays; only the rendering swaps to lucide).
 const LEVEL_ICONS: Record<1 | 2 | 3, LucideIcon> = { 1: Sprout, 2: Zap, 3: Flame };
+const LEVEL_TINTS: Record<1 | 2 | 3, Tint> = { 1: TINTS.green, 2: TINTS.blue, 3: TINTS.gold };
 
 
 
@@ -685,10 +687,6 @@ function Quiz() {
   const renderHome = () => (
     <div className="home-inner">
       <div className="hero">
-        <div className="hero-badge">
-          <Zap className="w-3.5 h-3.5" aria-hidden="true" />
-          בוחן מושגים · 3 רמות
-        </div>
         <h1>בוחן מושגים</h1>
         <p>
           {effectiveLevel === 3
@@ -710,7 +708,7 @@ function Quiz() {
           <div
             className={`topic-card ${selectedTopic === MIXED_TOPIC ? 'selected' : ''}`}
             onClick={() => setSelectedTopic(MIXED_TOPIC)}
-            style={{ gridColumn: '1 / -1' }}
+            style={{ gridColumn: '1 / -1', ...tintVars(TINTS.violet) }}
           >
             <span className="topic-check">✓</span>
             <span className="topic-emoji">
@@ -721,7 +719,12 @@ function Quiz() {
           </div>
         )}
         {visibleTopics.map((t, i) => (
-          <div key={i} className={`topic-card ${selectedTopic === t.name ? 'selected' : ''}`} onClick={() => setSelectedTopic(t.name)}>
+          <div
+            key={i}
+            className={`topic-card ${selectedTopic === t.name ? 'selected' : ''}`}
+            onClick={() => setSelectedTopic(t.name)}
+            style={tintVars(TOPIC_TINTS[i % TOPIC_TINTS.length])}
+          >
             <span className="topic-check">✓</span>
             <span className="topic-emoji">
               <TopicIcon id={t.name} />
@@ -758,6 +761,7 @@ function Quiz() {
               key={lv}
               className={`level-card ${effectiveLevel === lv ? 'selected' : ''}`}
               onClick={() => chooseLevel(lv)}
+              style={tintVars(LEVEL_TINTS[lv])}
             >
               <span className="level-emoji">
                 <LevelIcon aria-hidden="true" strokeWidth={1.75} />
@@ -1202,44 +1206,42 @@ function Quiz() {
         .screen { display: none; flex: 1; flex-direction: column; animation: fadeUp 0.4s cubic-bezier(.4,0,.2,1); }
         .screen.active { display: flex; }
         @keyframes fadeUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
-        .home-inner { padding: 0 28px 40px; display: flex; flex-direction: column; flex: 1; }
-        .hero { padding: 40px 0 32px; text-align: center; }
-        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(103,232,249,0.15)); border: 1.5px solid rgba(139,92,246,0.4); border-radius: 28px; padding: 8px 18px; font-size: 13px; font-weight: 700; color: #5B21B6; margin-bottom: 20px; }
-        .hero h1 { font-family: var(--font-jakarta), var(--font-heebo), sans-serif; font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; color: var(--ink); }
-        .hero p { color: var(--text2); font-size: 15px; line-height: 1.8; max-width: 320px; margin: 0 auto; font-weight: 500; }
-        .section-label { font-size: 12px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; margin-top: 8px; }
-        .subject-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 20px; scrollbar-width: none; }
+        /* ===== Home (setup) — the soft-tint card language, design round 10 ב =====
+           Each topic/level card carries its colour inline (tintCard + --tint-*),
+           so these rules own only shape, type and the selected state. */
+        .home-inner { padding: 0 28px 40px; display: flex; flex-direction: column; flex: 1; font-family: var(--font-rubik), var(--font-heebo), Arial, sans-serif; color: #121420; }
+        .hero { padding: 32px 0 20px; text-align: right; display: flex; flex-direction: column; gap: 6px; }
+        .hero h1 { font-family: inherit; font-size: 32px; font-weight: 700; line-height: 40px; margin: 0; color: #121420; letter-spacing: -0.01em; }
+        .hero p { color: #4F5566; font-size: 16px; line-height: 1.6; margin: 0; font-weight: 400; }
+        .section-label { font-size: 22px; font-weight: 700; color: #121420; margin: 18px 0 12px; }
+        .subject-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; scrollbar-width: none; }
         .subject-tabs::-webkit-scrollbar { display: none; }
-        .subject-tab { flex-shrink: 0; background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; padding: 10px 18px; font-family: var(--font-heebo), sans-serif; font-size: 14px; font-weight: 700; color: var(--text2); cursor: pointer; transition: all 0.25s; white-space: nowrap; }
-        .subject-tab:hover { color: var(--text); border-color: var(--accent); transform: translateY(-2px); }
-        .subject-tab.active { color: var(--accent); border-color: var(--accent); background: rgba(139,92,246,0.10); }
-        .tab-math.active { border-color: #6D28D9; background: rgba(109,40,217,0.10); color: #6D28D9; }
-        .topics-grid { display: grid; gap: 12px; margin-bottom: 24px; }
-        .topic-card { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px 16px 16px; cursor: pointer; transition: all 0.25s cubic-bezier(.4,0,.2,1); text-align: center; position: relative; overflow: hidden; }
-        .topic-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0, rgba(139,92,246,0.08), transparent); pointer-events: none; }
-        .topic-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 12px 32px -10px rgba(15,23,42,0.12); }
-        .topic-card.selected { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 16px 40px -12px rgba(124,58,237,0.20); }
-        .topic-check { position: absolute; top: 12px; left: 12px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; opacity: 0; transform: scale(0.3); transition: all 0.25s cubic-bezier(.34,1.56,.64,1); background: var(--accent); }
+        .subject-tab { flex-shrink: 0; background: #FFFFFF; border: 1.6px solid #E2E0EA; border-radius: 999px; padding: 6px 16px; font-family: inherit; font-size: 14px; font-weight: 400; color: #3D4250; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .subject-tab:hover { border-color: #C9C5D8; }
+        .subject-tab.active { color: #5B21B6; border-color: #8B5CF6; background: #F2ECFF; font-weight: 500; }
+        .tab-math.active { border-color: #8B5CF6; background: #F2ECFF; color: #5B21B6; }
+        .topics-grid { display: grid; gap: 14px; margin-bottom: 12px; }
+        .topic-card { border: 1px solid transparent; border-radius: 20px; padding: 18px 18px 16px; cursor: pointer; transition: transform 0.2s ease, outline-color 0.2s; text-align: right; position: relative; overflow: hidden; outline: 3px solid transparent; outline-offset: 3px; }
+        .topic-card:hover { transform: translateY(-2px); }
+        .topic-card.selected { outline-color: var(--tint-line); }
+        .topic-check { position: absolute; top: 14px; left: 14px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; opacity: 0; transform: scale(0.3); transition: all 0.25s cubic-bezier(.34,1.56,.64,1); background: var(--tint-solid); }
         .topic-card.selected .topic-check { opacity: 1; transform: scale(1); }
-        .topic-emoji { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; color: var(--accent); }
+        .topic-emoji { display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px; color: var(--tint-solid); }
         .topic-emoji svg { width: 28px; height: 28px; }
-        .topic-name { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; position: relative; z-index: 1; }
-        .topic-sub { font-size: 12px; color: var(--text3); margin-top: 4px; position: relative; z-index: 1; }
-        /* ===== Level picker (3 · בחר רמה) =====
-           Built on .topic-card's visual language so the third zone reads as a
-           sibling of the first two, not a new dialect. Three chips, always
-           clickable: the owner's standing rule is that levels never lock. */
-        .zone-hint { font-size: 13px; color: var(--text3); line-height: 1.6; margin-bottom: 14px; font-weight: 500; }
-        .level-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-        .level-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 16px 10px 14px; background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1.5px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.25s cubic-bezier(.4,0,.2,1); font-family: var(--font-heebo), sans-serif; text-align: center; }
-        .level-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 10px 26px -12px rgba(15,23,42,0.14); }
-        .level-card.selected { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border-color: var(--accent); box-shadow: 0 14px 34px -14px rgba(124,58,237,0.22); }
-        .level-emoji { display: flex; align-items: center; justify-content: center; color: var(--accent); }
-        .level-emoji svg { width: 22px; height: 22px; }
-        .level-title { font-size: 13px; font-weight: 800; color: var(--text); }
-        .level-blurb { font-size: 11px; color: var(--text3); line-height: 1.5; font-weight: 500; }
-        .level-count { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 0.03em; margin-top: 2px; }
-        .level-badge-rec { position: absolute; top: -8px; inset-inline-start: 50%; transform: translateX(50%); background: var(--accent); color: #fff; font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 10px; white-space: nowrap; letter-spacing: 0.04em; }
+        .topic-name { font-size: 18px; font-weight: 700; color: #121420; line-height: 1.3; letter-spacing: -0.01em; }
+        .topic-sub { font-size: 13px; color: #4F5566; margin-top: 4px; line-height: 1.5; }
+        /* ===== Level picker (3 · בחר רמה) — three cards, always open ===== */
+        .zone-hint { font-size: 14px; color: #4F5566; line-height: 1.6; margin-bottom: 14px; }
+        .level-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 10px 0 12px; }
+        .level-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; padding: 18px 16px 16px; border: 1px solid transparent; border-radius: 20px; cursor: pointer; transition: transform 0.2s ease, outline-color 0.2s; font-family: inherit; text-align: right; outline: 3px solid transparent; outline-offset: 3px; }
+        .level-card:hover { transform: translateY(-2px); }
+        .level-card.selected { outline-color: var(--tint-line); }
+        .level-emoji { display: flex; align-items: center; justify-content: flex-start; color: var(--tint-solid); }
+        .level-emoji svg { width: 24px; height: 24px; }
+        .level-title { font-size: 20px; font-weight: 700; color: #121420; letter-spacing: -0.01em; }
+        .level-blurb { font-size: 13px; color: #4F5566; line-height: 1.5; }
+        .level-count { font-size: 12px; font-weight: 600; color: var(--tint-ink); margin-top: 2px; }
+        .level-badge-rec { position: absolute; top: -10px; left: 14px; background: #7C3AED; color: #fff; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
         .level-note { font-size: 12px; color: var(--text2); line-height: 1.7; background: rgba(180,83,9,0.06); border: 1px solid rgba(180,83,9,0.25); border-radius: var(--radius-sm); padding: 11px 13px; margin-bottom: 18px; font-weight: 500; }
         /* ===== Hint (asked for, before answering) =====
            Reuses .lesson-tip's amber so it reads as help, not as a verdict. */
@@ -1249,8 +1251,8 @@ function Quiz() {
         .hint-text { font-size: 14px; line-height: 1.85; color: var(--text); font-weight: 500; unicode-bidi: plaintext; text-align: start; }
         .meta-level-badge { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 800; color: var(--accent); background: rgba(139,92,246,0.09); border: 1.5px solid rgba(139,92,246,0.28); white-space: nowrap; }
         .review-hint-flag { display: inline-block; margin-inline-start: 8px; font-size: 11px; font-weight: 700; color: #92400E; background: rgba(180,83,9,0.08); border-radius: 8px; padding: 2px 7px; }
-        .start-btn { width: 100%; padding: 16px; border: 1px solid rgba(139,92,246,0.25); border-radius: var(--radius); font-family: var(--font-heebo), sans-serif; font-size: 16px; font-weight: 800; color: #fff; cursor: pointer; background: linear-gradient(135deg, #241E7A 0%, #1E1B4B 100%); box-shadow: 0 12px 30px -10px rgba(30,27,75,0.45); transition: all 0.25s cubic-bezier(.4,0,.2,1); margin-top: auto; letter-spacing: 0.05em; }
-        .start-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 16px 38px -12px rgba(30,27,75,0.55); }
+        .start-btn { width: 100%; padding: 15px; border: none; border-radius: 999px; font-family: inherit; font-size: 16px; font-weight: 500; color: #fff; cursor: pointer; background: #7C3AED; box-shadow: 0 14px 30px -16px rgba(124,58,237,0.6); transition: all 0.2s ease; margin-top: auto; }
+        .start-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 18px 34px -16px rgba(124,58,237,0.7); }
         .start-btn:active:not(:disabled) { transform: translateY(-1px); }
         .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
         .chat-link { display: block; text-align: center; margin-top: 12px; padding: 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--surface); color: var(--text2); font-family: var(--font-heebo), sans-serif; font-size: 14px; font-weight: 700; text-decoration: none; transition: all 0.25s; }
