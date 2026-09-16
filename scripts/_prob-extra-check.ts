@@ -113,17 +113,28 @@ const BAGRUT_MIN = 20;
  *  part above the archive's hardest-part average by 15%, and its AVERAGE part at
  *  least the archive's HARDEST-part average (the archive's average part is ~12). */
 const R3_BAGRUT_HARDEST = 1.15;
+/** The archive bar round 3 was authored against (hardest-part average, fixed
+ *  detectors). The live bar moves whenever someone edits an archived solution —
+ *  it went 16.6 → 16.9 overnight (3e538bd's audit fixes) and turned six finished
+ *  questions red without a word of theirs changing. A threshold belongs to the
+ *  ruler that took it, so round 3 keeps its own; exam-reach still reports live. */
+const R3_BAR = 16.6;
 const R3_BAGRUT_MEAN = 1.0;
 /**
  * Pairs a READING found to be different questions where the signature cannot
  * see the difference (it has no notion of the KIND of condition an unknown is
  * recovered from). Keyed on the exact pair, so a new twin still fails.
  */
-const READ_NOT_A_RESTATEMENT: Record<string, string> = {
+const READ_NOT_A_RESTATEMENT: Record<string, string[]> = {
   // 105 recovers p from "none of 5 = 0.00243" (a fifth root); 201 from
   // "P(2) = 6·P(3)" (a ratio of terms, linear). pr-bernoulli verifier, 2026-09-15.
-  'pr-x-ber-201': 'pr-x-ber-105',
+  'pr-x-ber-201': ['pr-x-ber-105'],
+  // pbn-003 runs BACKWARDS — p from a given "at least one of 3 = 0.936", by a cube
+  // root — while pbn-002 and x-ber-202 compute "at least k" forwards. Its ask
+  // ("מהי הסתברות הפגיעה שלו") names no letter, so the parameter detector misses it.
+  'prob-pbn-003': ['prob-pbn-002', 'pr-x-ber-202'],
 };
+const readAsDifferent = (a: string, b: string) => !!READ_NOT_A_RESTATEMENT[a]?.includes(b) || !!READ_NOT_A_RESTATEMENT[b]?.includes(a);
 
 /** `1.5 + 0.3 === 1.8000000000000003`: a threshold met exactly must pass. */
 const EPS = 1e-6;
@@ -680,8 +691,8 @@ function checkBagrut(stageId: string, prefix: string) {
     const mean = scores.length ? scores.reduce((a, c) => a + c, 0) / scores.length : 0;
     if (max < BAR.score * 0.9) err(w, 'bagrut-below-exam-bar', `hardest part ${max.toFixed(1)} vs the real 571 bar ${BAR.score.toFixed(1)}`);
     if (isR3Bagrut(w)) {
-      if (max < BAR.score * R3_BAGRUT_HARDEST - EPS) err(w, 'round3-bagrut-hardest-below', `hardest part ${max.toFixed(2)} < ${(BAR.score * R3_BAGRUT_HARDEST).toFixed(2)} (the exam's hardest-part average × ${R3_BAGRUT_HARDEST}); "ברמת בגרות הרבה יותר"`);
-      if (mean < BAR.score * R3_BAGRUT_MEAN - EPS) err(w, 'round3-bagrut-mean-below', `average part ${mean.toFixed(2)} < ${(BAR.score * R3_BAGRUT_MEAN).toFixed(2)} (the exam's hardest-part average)`);
+      if (max < R3_BAR * R3_BAGRUT_HARDEST - EPS) err(w, 'round3-bagrut-hardest-below', `hardest part ${max.toFixed(2)} < ${(R3_BAR * R3_BAGRUT_HARDEST).toFixed(2)} (the exam's hardest-part average × ${R3_BAGRUT_HARDEST}); "ברמת בגרות הרבה יותר"`);
+      if (mean < R3_BAR * R3_BAGRUT_MEAN - EPS) err(w, 'round3-bagrut-mean-below', `average part ${mean.toFixed(2)} < ${(R3_BAR * R3_BAGRUT_MEAN).toFixed(2)} (the exam's hardest-part average)`);
     }
     if (!anyParam && !anyReverse) err(w, 'bagrut-no-parameter-or-reverse', 'a real 571 question opens on "מצאו את P/x" or turns backwards with "ידוע ש…"');
     console.log(`   🎓 ${w}: ${parts.length} parts · part scores ${scores.map((s) => s.toFixed(0)).join('/')} · mean ${mean.toFixed(1)} · hardest ${max.toFixed(1)} = ${((max / (BAR.score || 1)) * 100).toFixed(0)}% of the exam bar`);
@@ -727,7 +738,7 @@ function checkStage(stageId: string): boolean {
           // when the round-2 question is not clearly (2+) above its twin.
           const twin = lowerSigsR1.get(signature(q));
           const twinQ = twin ? older.find((x) => x.id === twin) : undefined;
-          if (twinQ && s - difficulty(twinQ).score < 2 - EPS && READ_NOT_A_RESTATEMENT[q.id] !== twin) err(q.id, 'round2-mid-restatement', `same ask + mechanisms as ${twin}, and only ${(s - difficulty(twinQ).score).toFixed(1)} above it`);
+          if (twinQ && s - difficulty(twinQ).score < 2 - EPS && !readAsDifferent(q.id, twin)) err(q.id, 'round2-mid-restatement', `same ask + mechanisms as ${twin}, and only ${(s - difficulty(twinQ).score).toFixed(1)} above it`);
         }
       }
       // (round 2's own "≥4 per rung" target retired 2026-09-14: RUNG_MIN = 20 is the
@@ -857,7 +868,7 @@ function checkStage(stageId: string): boolean {
   for (const q of rung('hard')) {
     for (const twin of lowerSigs.get(signature(q)) ?? []) {
       const gap = (scoreOf.get(q.id) ?? 0) - (scoreOf.get(twin) ?? 0);
-      if (gap >= 3 - EPS) continue;
+      if (gap >= 3 - EPS || readAsDifferent(q.id, twin)) continue;
       const where = isR3(twin) && !isR3(q.id) ? twin : q.id;
       err(where, 'hard-is-a-restatement', `${q.id} (hard) is only ${gap.toFixed(1)} above ${twin} (lower rung), with the same ask and mechanisms (${signature(q)})`);
     }
