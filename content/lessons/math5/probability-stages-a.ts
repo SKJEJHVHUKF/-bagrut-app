@@ -99,6 +99,8 @@ export const PROBABILITY_STAGES_A: SubTopic[] = [
           ],
           answer: '\u2066P(מספר זוגי) $= \\dfrac{1}{2}$\u2069',
         },
+        // Owner, 2026-09-16: shown right below this example.
+        exampleVideo: { youtubeId: 'vaLGxNm38hE', title: 'דוגמה לחישוב הסתברות פשוטה' },
         drill: {
           id: 'prob-pb-drill-001',
           difficulty: 'easy',

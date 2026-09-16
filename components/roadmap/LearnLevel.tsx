@@ -131,6 +131,24 @@ export function LearnLevel({
                   <WorkedExampleCard example={step.example} index={exampleCount++} />
                 </div>
               )}
+              {step.example && step.exampleVideo && (
+                <div className="mt-4 surface-premium rounded-2xl p-4 sm:p-5">
+                  <div className="flex items-center gap-2.5 mb-3 pb-3 border-b border-slate-900/[0.06]">
+                    <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 shadow-sm shadow-violet-500/30">
+                      <Play className="w-3.5 h-3.5 text-white fill-white" />
+                    </div>
+                    <div className="font-black text-slate-900 lesson-title">{step.exampleVideo.title}</div>
+                  </div>
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${step.exampleVideo.youtubeId}?rel=0`}
+                    title={step.exampleVideo.title}
+                    className="w-full aspect-video rounded-xl bg-slate-900"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+              )}
               {step.drill && <MicroDrill drill={step.drill} onAnswered={onDrillAnswered} />}
             </motion.div>
           ))}

@@ -336,6 +336,9 @@ export type SubTopicLessonStep = {
   formula?: Formula;
   /** Optional fully-worked example (rendered via WorkedExampleCard). */
   example?: WorkedExample;
+  /** Optional video shown right below this step's `example` (ignored if
+   *  there is no example). Same shape as SubTopic.video. */
+  exampleVideo?: { youtubeId: string; title: string };
   /** Optional inline diagram(s) for this step. */
   diagrams?: DiagramSpec[];
   /** Optional micro-drill — ONE short question the student answers RIGHT
