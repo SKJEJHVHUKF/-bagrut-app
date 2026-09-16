@@ -738,7 +738,7 @@ function checkStage(stageId: string): boolean {
           // when the round-2 question is not clearly (2+) above its twin.
           const twin = lowerSigsR1.get(signature(q));
           const twinQ = twin ? older.find((x) => x.id === twin) : undefined;
-          if (twinQ && s - difficulty(twinQ).score < 2 - EPS && !readAsDifferent(q.id, twin)) err(q.id, 'round2-mid-restatement', `same ask + mechanisms as ${twin}, and only ${(s - difficulty(twinQ).score).toFixed(1)} above it`);
+          if (twinQ && s - difficulty(twinQ).score < 2 - EPS && !readAsDifferent(q.id, twinQ.id)) err(q.id, 'round2-mid-restatement', `same ask + mechanisms as ${twin}, and only ${(s - difficulty(twinQ).score).toFixed(1)} above it`);
         }
       }
       // (round 2's own "≥4 per rung" target retired 2026-09-14: RUNG_MIN = 20 is the
@@ -858,7 +858,6 @@ function checkStage(stageId: string): boolean {
   // first 322 made shipped 206 fail, and "no ✗ naming your ids" still passed).
   const lowerSigs = new Map<string, string[]>();
   for (const q of [...rung('easy'), ...rung('mid')]) lowerSigs.set(signature(q), [...(lowerSigs.get(signature(q)) ?? []), q.id]);
-  const newest = (ids: string[]) => ids.find(isR3) ?? ids[0];
   // The SCORE GAP decides, not the shared signature alone (the טריגונומטריה port:
   // a twin at 11.0 = 11.0 was a real restatement, twins +1…+3 apart mostly were
   // not). With rungs of 20 inside one tool family, same-ask-same-mechanisms is

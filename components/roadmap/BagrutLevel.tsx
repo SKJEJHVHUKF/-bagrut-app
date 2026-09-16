@@ -33,6 +33,8 @@ type StoredBagrutRun = {
   status: Record<string, 'correct' | 'wrong'>;
   isRetry: boolean;
   drafts: Record<string, PartDraft>;
+  /** The question the student is on — the rung shows one at a time. */
+  page?: number;
 };
 
 /** Which question of the rung the student reached, per sub-topic. A viewer
@@ -78,12 +80,10 @@ export function BagrutLevel({
   // Per-part outcome of the CURRENT question, keyed by "<questionId>.<partIndex>".
   const [status, setStatus] = useState<Record<string, 'correct' | 'wrong'>>({});
   const count = level.bagrut.length;
+  // The page is restored with the round below, once storage is readable (a
+  // server render has none): from the synced run when it has one, else from
+  // this device's last position.
   const [qi, setQi] = useState(0);
-  // Read after mount, never during render: the rung can open straight from the
-  // URL, and a server render has no storage to agree with.
-  useEffect(() => {
-    setQi(readPosition(subId, count));
-  }, [subId, count]);
 
   const q = level.bagrut[Math.min(qi, count - 1)];
   const totalParts = q?.parts.length ?? 0;
@@ -125,8 +125,12 @@ export function BagrutLevel({
     setStatus(ok ? (run.status ?? {}) : {});
     setIsRetry(ok ? !!run.isRetry : false);
     setDrafts(ok ? (run.drafts ?? {}) : {});
+    const page = ok ? run.page : undefined;
+    const hasPage = typeof page === 'number' && Number.isInteger(page) && page >= 0 && page < count;
+    if (hasPage) setQi(page);
     setResult(null);
     setRestoreNonce((n) => n + 1);
+    return hasPage;
   }
 
   // Resume the saved round once localStorage is readable (see RoadmapLevelRunner).
@@ -134,7 +138,7 @@ export function BagrutLevel({
   const [restored, setRestored] = useState(false);
   if (hydrated && !restored) {
     setRestored(true);
-    applyRun(loadRun(topic, subId, level.kind));
+    if (!applyRun(loadRun(topic, subId, level.kind))) setQi(readPosition(subId, count));
   }
 
   // A newer round arrived from another device through sync.
@@ -156,10 +160,10 @@ export function BagrutLevel({
     const touched = Object.keys(status).length > 0 || Object.values(drafts).some(
       (d) => d.hintsShown > 0 || d.stepsShown >= 0 || !!d.answer || d.parts.some(Boolean) || !!d.checkResult,
     );
-    if (!touched && !isRetry) return; // nothing to resume yet
-    const data: StoredBagrutRun = { sig, status, isRetry, drafts };
+    if (!touched && !isRetry && qi === 0) return; // nothing to resume yet
+    const data: StoredBagrutRun = { sig, status, isRetry, drafts, page: qi };
     saveRun(topic, subId, level.kind, data);
-  }, [restored, result, status, isRetry, drafts, sig, topic, subId, level.kind]);
+  }, [restored, result, status, isRetry, drafts, qi, sig, topic, subId, level.kind]);
 
   // One stable callback per part: a fresh arrow each render would re-fire the
   // card's report effect on every render.
@@ -174,7 +178,7 @@ export function BagrutLevel({
       }),
     );
     return out;
-  }, [level.bagrut]);
+  }, [level.bagrut, setDrafts]);
 
   function finish() {
     setResult(onSubmit(correctParts, totalParts, { viaRetry: isRetry }));
