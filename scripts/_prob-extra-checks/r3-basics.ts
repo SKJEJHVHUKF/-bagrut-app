@@ -271,7 +271,11 @@ const solve = (f: (x: number) => number, target: number, lo = 0, hi = 1, step = 
   const game = (p: number) => {
     const ps = [0.4, p, 0.4, p];
     let y = 0, o = 0, miss = 1;
-    ps.forEach((h, i) => { (i % 2 ? (o += miss * h) : (y += miss * h)); miss *= 1 - h; });
+    ps.forEach((h, i) => {
+      if (i % 2) o += miss * h;
+      else y += miss * h;
+      miss *= 1 - h;
+    });
     return { y, o, tie: miss };
   };
   const p = solve((v) => game(v).tie, 0.09)[0];

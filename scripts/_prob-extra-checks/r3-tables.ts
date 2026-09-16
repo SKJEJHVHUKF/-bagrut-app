@@ -568,7 +568,6 @@ const urnOf = (p: Pop, key: (i: Ind) => string) => p.flatMap(([i, c]) => Array.f
   checkLive('16ב', 'prob-bag-x-tab-16/ב', P(pop, (i) => i.c === 1 || i.r !== 'first'));
   const fee = (i: Ind) => (i.r === 'first' ? 200 : 300) * (i.c ? 2 : 1);
   checkLive('16ג', 'prob-bag-x-tab-16/ג', tuples(pop, 2, ([a, b]) => fee(a) + fee(b) >= 800));
-  const pf = P(pop, (i) => i.r === 'fail');
   checkLive('16ד', 'prob-bag-x-tab-16/ד', tuples(pop, 3, ([a, b, c]) => a.r !== 'fail' && b.r !== 'fail' && c.r === 'fail' && c.c === 1));
   // 16ה: all tables with the three margins, private-first = 0.68 - s; scan commercial row (s, re, fail) in 1/100
   const vals: number[] = [];
