@@ -27,6 +27,7 @@
 // history, so the server can count the assistant turns in it and refuse.
 
 import { logCost } from '@/lib/mathscan/cost';
+import { checkGlobalBudget, logAgentUsage } from '@/lib/agents/guard';
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
@@ -151,6 +152,11 @@ export async function POST(request: Request) {
         { status: 429 }
       );
     }
+
+    // Site-wide budget brake — this route's cost is tracked in scan_log,
+    // which the global brake never reads. See lib/agents/guard.ts.
+    const globalBlock = await checkGlobalBudget(supabase);
+    if (globalBlock) return globalBlock;
 
     let body: {
       grounding?: TutorPromptGrounding;
@@ -291,6 +297,8 @@ data: ${JSON.stringify(data)}
         // after the response has finished may be frozen mid-write.
         try {
           await supabase.from('scan_log').insert({ source: 'tutor' });
+          // Also feed the global budget brake — see lib/agents/guard.ts.
+          await logAgentUsage(supabase, user.id, 'scan');
         } catch {
           // Table missing → no quota tracking, feature still works.
         }

@@ -34,6 +34,7 @@ import { normalizeQuestionText, fingerprint } from '@/lib/question-match';
 import { findSimilarCached, getCachedSolution, putCachedSolution } from '@/lib/solution-cache';
 import { bumpServed, reportWrong, searchBank, upsertIntoBank } from '@/lib/mathscan/bank';
 import { decideSolveQuota } from '@/lib/mathscan/quota';
+import { checkGlobalBudget, logAgentUsage } from '@/lib/agents/guard';
 import { logCost } from '@/lib/mathscan/cost';
 import { findUniversityNotation } from '@/lib/tichon-notation';
 import { solveWithCas, compareWithCas } from '@/lib/mathscan/verify-solution';
@@ -459,6 +460,13 @@ async function handleJson(request: Request) {
     );
   }
 
+  // Site-wide budget brake — scan-solve runs the vision model (SOLVE_MODEL,
+  // the priciest call in the app) but tracked its cost in a table
+  // (scan_log) the global brake never reads, so it could spend past the
+  // daily ceiling that every other billable route already respects.
+  const globalBlock = await checkGlobalBudget(supabase);
+  if (globalBlock) return globalBlock;
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return json({ error: 'Server configuration error' }, { status: 500 });
 
@@ -628,6 +636,9 @@ ${question}`,
           }
           // scan_log is per-user (RLS own rows) — stays on the student's client.
           await supabase.from('scan_log').insert({ source: 'ai' });
+          // Also feed the global budget brake (lib/agents/guard.ts) — without
+          // this, ai_calls_today() never saw scan-solve's spend.
+          await logAgentUsage(supabase, user.id, 'scan');
         } catch {
           // Storage and logging must never take the solution down with them.
         }

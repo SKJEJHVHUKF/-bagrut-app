@@ -35,9 +35,9 @@ export function jsonError(error: string, status: number): Response {
  *  missing header on one is itself suspect — cookie auth is CSRF-able without
  *  this check. Same rule as /api/admin.
  *
- *  Exported so /api/attempt uses this copy rather than growing its own: two
- *  literals of the same CSRF check is how a fix to one leaves the other
- *  broken. */
+ *  Exported so /api/attempt, admin/users and admin/teachers all use this
+ *  copy rather than growing their own: two literals of the same CSRF check
+ *  is how a fix to one leaves the others broken. */
 export function sameOrigin(request: Request): boolean {
   const origin = request.headers.get('origin');
   const host = request.headers.get('host');

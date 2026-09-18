@@ -19,23 +19,11 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdmin, isTeacher, teacherRate, teacherWeeklyHours, teacherSince } from '@/lib/access';
 import { buildPay } from '@/lib/teacher-pay';
+// Same CSRF check and error shape as /api/teacher/*, imported rather than
+// re-implemented — see lib/teacher-guard.ts's own docstring on this.
+import { jsonError, sameOrigin } from '@/lib/teacher-guard';
 
 export const dynamic = 'force-dynamic';
-
-function jsonError(error: string, status: number): Response {
-  return Response.json({ error }, { status });
-}
-
-function sameOrigin(request: Request): boolean {
-  const origin = request.headers.get('origin');
-  const host = request.headers.get('host');
-  if (!origin || !host) return false;
-  try {
-    return new URL(origin).host.toLowerCase() === host.toLowerCase();
-  } catch {
-    return false;
-  }
-}
 
 // ponytail: third local copy of the admin gate (users/ and activity/ have their
 // own). Worth hoisting into lib/ on the fourth, not before — a shared guard

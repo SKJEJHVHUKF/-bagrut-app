@@ -273,5 +273,6 @@ export const GENERATOR_MAX_TOKENS = 3200;
 /** `ai_generation_log.kind` values written by these routes. `kind` is plain
  *  text with no CHECK constraint, so adding a value needs no SQL migration.
  *  'tutor' = the 6 Pro tutor endpoints (lib/ai-tutor.ts), 'chat' = /api/chat,
- *  'check' = /api/check-answer. */
-export type AgentKind = 'tutor' | 'grade' | 'teach' | 'practice' | 'chat' | 'check';
+ *  'check' = /api/check-answer, 'scan' = /api/scan-solve (logged only to feed
+ *  the global budget brake — scan-solve's own per-user quota is scan_log). */
+export type AgentKind = 'tutor' | 'grade' | 'teach' | 'practice' | 'chat' | 'check' | 'scan';

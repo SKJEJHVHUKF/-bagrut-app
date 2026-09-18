@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { checkGlobalBudget } from '@/lib/agents/guard';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { serveFromPool } from '@/lib/question-pool';
@@ -268,6 +269,12 @@ export async function POST(request: Request) {
         { status: 429 }
       );
     }
+
+    // Site-wide budget brake — this route already writes to ai_generation_log
+    // (below) so it's counted, but it never read the count back before
+    // spending. See lib/agents/guard.ts.
+    const globalBlock = await checkGlobalBudget(supabase);
+    if (globalBlock) return globalBlock;
 
     // ===== 5. API KEY CHECK =====
     const apiKey = process.env.ANTHROPIC_API_KEY;

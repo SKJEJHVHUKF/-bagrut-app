@@ -205,6 +205,25 @@ async function globalDayCount(supabase: SupabaseServerClient): Promise<number | 
   }
 }
 
+/**
+ * The global budget brake, standalone — for routes that don't go through
+ * `guardAgentRequest` at all (their own bespoke per-user quota, e.g. `/api/chat`'s
+ * V1/V2 reserve or `/api/scan-solve`'s scan_log cap) but still spend against the
+ * same Anthropic bill and must still trip the same site-wide ceiling. Call this
+ * right before the model call commits, not earlier — same rule `guardAgentRequest`
+ * follows: nothing free-tier or cache-served should ever see this response.
+ */
+export async function checkGlobalBudget(supabase: SupabaseServerClient): Promise<Response | null> {
+  const spentToday = await globalDayCount(supabase);
+  if (spentToday !== null && spentToday >= GLOBAL_DAILY_LIMIT) {
+    return tooMany('התכונות החכמות בהפסקה עד מחר — כל שאר האפליקציה פתוחה.', {
+      globalLimit: true,
+      retryAfterSeconds: 3600,
+    });
+  }
+  return null;
+}
+
 /** Rows for this user + kind since `sinceIso`. `null` = table unavailable. */
 async function countSince(
   supabase: SupabaseServerClient,
@@ -349,16 +368,8 @@ export async function guardAgentRequest(
 
   // 6b. GLOBAL daily ceiling — the budget brake. Checked after the per-user
   // hourly one so an individual abuser is still named by the specific message.
-  const spentToday = await globalDayCount(supabase);
-  if (spentToday !== null && spentToday >= GLOBAL_DAILY_LIMIT) {
-    return {
-      ok: false,
-      response: tooMany('התכונות החכמות בהפסקה עד מחר — כל שאר האפליקציה פתוחה.', {
-        globalLimit: true,
-        retryAfterSeconds: 3600,
-      }),
-    };
-  }
+  const globalBlock = await checkGlobalBudget(supabase);
+  if (globalBlock) return { ok: false, response: globalBlock };
 
   // 7. per-user daily cap (tier-based)
   const dailyCap = isPro ? opts.proDaily : opts.freeDaily;

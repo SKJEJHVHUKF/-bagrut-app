@@ -19,7 +19,7 @@ import { readFacts, writeFacts, mergeFact, renderMemoryBlock } from '@/lib/tutor
 // One copy of the injection guard, in one place. This file used to keep its
 // own literal of the same regex — which is exactly how a fix in one copy
 // leaves the other one broken.
-import { BLACKLIST, logAgentUsage } from '@/lib/agents/guard';
+import { BLACKLIST, checkGlobalBudget, logAgentUsage } from '@/lib/agents/guard';
 
 // Hobby plan needs an explicit ceiling. Haiku 4.5 with a tight 6-message
 // context + max_tokens=800 typically finishes in 5-15s, well under 60s.
@@ -520,6 +520,18 @@ data: ${JSON.stringify(data)}
     }
 
     const learned = await findLearnedAnswer(clientTrace);
+
+    // ===== 9b-ii. GLOBAL BUDGET BRAKE =====
+    // Chat is the highest-traffic model call in the app and was the one route
+    // that recorded into the global counter (logAgentUsage below) without ever
+    // reading it back — every other billable route trips this ceiling, chat
+    // alone could spend past it. Only reached once a model call is certain
+    // (learned === null); a cache hit never sees this check, same rule the
+    // credit-taking step below follows.
+    if (!learned) {
+      const globalBlock = await checkGlobalBudget(supabase);
+      if (globalBlock) return globalBlock;
+    }
 
     // ===== 9c. TAKE ONE AI CREDIT =====
     //

@@ -1,4 +1,5 @@
 import { logCost } from '@/lib/mathscan/cost';
+import { checkGlobalBudget, logAgentUsage } from '@/lib/agents/guard';
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getFingerprint, looksLikeBot } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
@@ -175,6 +176,11 @@ export async function POST(request: Request) {
       );
     }
 
+    // Site-wide budget brake — this route's cost is tracked in scan_log,
+    // which the global brake never reads. See lib/agents/guard.ts.
+    const globalBlock = await checkGlobalBudget(supabase);
+    if (globalBlock) return globalBlock;
+
     const contentType = request.headers.get('content-type') || '';
     if (!contentType.includes('multipart/form-data')) {
       return Response.json({ error: 'Expected multipart/form-data' }, { status: 415 });
@@ -265,6 +271,8 @@ export async function POST(request: Request) {
     void supabase.from('scan_log').insert({ source: 'audit' }).then(({ error }) => {
       if (error) console.error('[scan_log] audit insert failed:', error.message);
     });
+    // Also feed the global budget brake — see lib/agents/guard.ts.
+    void logAgentUsage(supabase, user.id, 'scan');
 
     return Response.json(parsed, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
