@@ -81,7 +81,10 @@ export async function POST(request: Request): Promise<Response> {
     })
     .select('id')
     .single();
-  if (error) return jsonError(error.message, 400);
+  if (error) {
+    console.error('[teacher/assignments POST]', error.message);
+    return jsonError('שגיאת שרת ביצירת המטלה', 400);
+  }
 
   return Response.json({ id: data?.id ?? null });
 }
@@ -100,7 +103,10 @@ export async function DELETE(request: Request): Promise<Response> {
     .delete()
     .eq('id', id)
     .eq('teacher_id', ctx.teacher.id);
-  if (error) return jsonError(error.message, 400);
+  if (error) {
+    console.error('[teacher/assignments DELETE]', error.message);
+    return jsonError('שגיאת שרת במחיקת המטלה', 400);
+  }
 
   return Response.json({ ok: true });
 }

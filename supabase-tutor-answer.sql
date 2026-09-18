@@ -85,3 +85,11 @@ as $$
      set hits = hits + 1, last_hit_at = now()
    where id = row_id;
 $$;
+
+-- Same reasoning as supabase-ai-daily-usage.sql: `security definer` + the
+-- Postgres default (EXECUTE granted to PUBLIC on every new function) means
+-- any authenticated browser session could call this RPC directly and bump
+-- an arbitrary row's hit count, bypassing the service-role-only contract
+-- the table comment above claims. Lock it down. (security hardening, 2026-09-18)
+revoke execute on function public.increment_tutor_answer_hit(bigint) from public, anon, authenticated;
+grant execute on function public.increment_tutor_answer_hit(bigint) to service_role;

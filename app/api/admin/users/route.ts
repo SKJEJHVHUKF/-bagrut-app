@@ -83,7 +83,10 @@ export async function GET(request: Request) {
   let page: number | null = 1;
   while (page && page <= 10) {
     const { data, error } = await ctx.admin.auth.admin.listUsers({ page, perPage: 1000 });
-    if (error) return jsonError(error.message, 500);
+    if (error) {
+      console.error('[admin/users GET]', error.message);
+      return jsonError('שגיאת שרת', 500);
+    }
     all.push(...data.users);
     page = data.nextPage;
   }
@@ -115,7 +118,10 @@ export async function POST(request: Request) {
     email_confirm: true,
     user_metadata: name ? { name } : undefined,
   });
-  if (error) return jsonError(error.message, 400);
+  if (error) {
+    console.error('[admin/users POST]', error.message);
+    return jsonError('שגיאת שרת ביצירת המשתמש', 400);
+  }
   return Response.json({ user: data.user ? toRow(data.user) : null });
 }
 
@@ -167,7 +173,10 @@ export async function PATCH(request: Request) {
   if (Object.keys(patch).length === 0) return jsonError('אין מה לעדכן', 400);
 
   const { error } = await ctx.admin.auth.admin.updateUserById(id, { app_metadata: patch });
-  if (error) return jsonError(error.message, 400);
+  if (error) {
+    console.error('[admin/users PATCH]', error.message);
+    return jsonError('שגיאת שרת בעדכון המשתמש', 400);
+  }
   return Response.json({ ok: true });
 }
 
@@ -181,6 +190,9 @@ export async function DELETE(request: Request) {
   if (id === ctx.selfId) return jsonError('אי אפשר למחוק את חשבון המנהל שאתה מחובר אליו', 400);
 
   const { error } = await ctx.admin.auth.admin.deleteUser(id);
-  if (error) return jsonError(error.message, 400);
+  if (error) {
+    console.error('[admin/users DELETE]', error.message);
+    return jsonError('שגיאת שרת במחיקת המשתמש', 400);
+  }
   return Response.json({ ok: true });
 }

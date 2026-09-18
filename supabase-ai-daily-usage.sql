@@ -149,3 +149,23 @@ $$;
 
 comment on table public.ai_daily_usage is
   'One row per student per Israeli day. A credit is reserved before the model call and released if it fails — see supabase-ai-daily-usage.sql.';
+
+-- ============================================================
+-- Lock the RPCs to service_role. (security hardening, 2026-09-18)
+-- ============================================================
+--
+-- `security definer` makes these run with the table owner's privileges, but
+-- Postgres still grants EXECUTE on every new function to PUBLIC by default —
+-- and Supabase's anon/authenticated roles inherit from PUBLIC. Without this
+-- revoke, any signed-in student could call POST /rest/v1/rpc/reserve_ai_call
+-- directly with someone else's p_user uuid: lock a classmate's quota to 0,
+-- reset/inflate it, or read their usage count. None of the three functions
+-- checks that p_user is the caller — the app-layer service-role client was
+-- the only thing standing between a student and another student's row.
+revoke execute on function public.reserve_ai_call(uuid, integer) from public, anon, authenticated;
+revoke execute on function public.release_ai_call(uuid) from public, anon, authenticated;
+revoke execute on function public.read_ai_usage(uuid, integer) from public, anon, authenticated;
+
+grant execute on function public.reserve_ai_call(uuid, integer) to service_role;
+grant execute on function public.release_ai_call(uuid) to service_role;
+grant execute on function public.read_ai_usage(uuid, integer) to service_role;

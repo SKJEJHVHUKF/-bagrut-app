@@ -209,7 +209,10 @@ export async function POST(request: Request): Promise<Response> {
   const { error } = await db
     .from('teacher_students')
     .upsert({ teacher_id: teacherId, student_id: studentId }, { onConflict: 'teacher_id,student_id' });
-  if (error) return jsonError(error.message, 400);
+  if (error) {
+    console.error('[admin/teachers POST]', error.message);
+    return jsonError('שגיאת שרת', 400);
+  }
   return Response.json({ ok: true });
 }
 
@@ -227,7 +230,10 @@ export async function DELETE(request: Request): Promise<Response> {
     .delete()
     .eq('teacher_id', teacherId)
     .eq('student_id', studentId);
-  if (error) return jsonError(error.message, 400);
+  if (error) {
+    console.error('[admin/teachers DELETE]', error.message);
+    return jsonError('שגיאת שרת', 400);
+  }
   return Response.json({ ok: true });
 }
 
@@ -252,7 +258,10 @@ export async function PATCH(request: Request): Promise<Response> {
       .delete()
       .eq('teacher_id', teacherId)
       .eq('week_start', weekStart);
-    if (error) return jsonError(error.message, 400);
+    if (error) {
+      console.error('[admin/teachers PATCH clear]', error.message);
+      return jsonError('שגיאת שרת', 400);
+    }
     return Response.json({ ok: true, cleared: true });
   }
 
@@ -266,6 +275,9 @@ export async function PATCH(request: Request): Promise<Response> {
     { teacher_id: teacherId, week_start: weekStart, hours, note, updated_at: new Date().toISOString() },
     { onConflict: 'teacher_id,week_start' }
   );
-  if (error) return jsonError(error.message, 400);
+  if (error) {
+    console.error('[admin/teachers PATCH]', error.message);
+    return jsonError('שגיאת שרת', 400);
+  }
   return Response.json({ ok: true });
 }
